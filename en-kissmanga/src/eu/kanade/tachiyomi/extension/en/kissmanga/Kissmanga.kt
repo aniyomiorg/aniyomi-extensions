@@ -15,7 +15,7 @@ import java.util.regex.Pattern
 
 class Kissmanga : ParsedHttpSource() {
 
-    override val id: Long = 14
+    override val id: Long = 4
 
     override val name = "Kissmanga"
 
