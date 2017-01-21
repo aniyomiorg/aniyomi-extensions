@@ -1,0 +1,44 @@
+android {
+    compileSdkVersion 25
+    buildToolsVersion "25.0.2"
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    sourceSets.main {
+        manifest.srcFile '../AndroidManifest.xml'
+        java.srcDirs = ['src']
+        resources.srcDirs = ['src']
+        aidl.srcDirs = ['src']
+        renderscript.srcDirs = ['src']
+        res.srcDirs = ['res']
+        assets.srcDirs = ['assets']
+    }
+
+    defaultConfig {
+        minSdkVersion 16
+        targetSdkVersion 25
+        applicationIdSuffix pkgNameSuffix
+        versionCode extVersionCode
+        versionName "$libVersion.$extVersionSuffix"
+        manifestPlaceholders = [
+                appName: appName,
+                extClass: extClass,
+        ]
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    provided "eu.kanade.tachiyomi:extensions-library:$libVersion"
+    provided "com.squareup.okhttp3:okhttp:3.5.0"
+    provided 'io.reactivex:rxjava:1.2.4'
+    provided 'org.jsoup:jsoup:1.10.1'
+    provided "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+}

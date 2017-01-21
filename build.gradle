@@ -1,0 +1,21 @@
+buildscript {
+    ext.kotlin_version = '1.0.6'
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.2.3'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        jcenter()
+        maven { url 'https://dl.bintray.com/inorichi/tachiyomi' }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
