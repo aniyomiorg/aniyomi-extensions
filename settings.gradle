@@ -1,13 +1,7 @@
-include 'en-mangafox',
-        'en-mangahere',
-        'en-kissmanga',
-        'en-mangasee',
-        'en-readmangatoday',
-        'en-mangaeden',
-        'en-perveden',
-        'de-wiemanga',
-        'it-mangaeden',
-        'it-perveden',
-        'ru-mangachan',
-        'ru-mintmanga',
-        'ru-readmanga'
+new File(rootDir, "src").eachDir { dir ->
+    dir.eachDir { subdir ->
+        String name = ":${dir.name}-${subdir.name}"
+        include name
+        project(name).projectDir = new File("src/${dir.name}/${subdir.name}")
+    }
+}
