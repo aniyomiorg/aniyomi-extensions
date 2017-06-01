@@ -6,8 +6,12 @@ ext {
     pkgNameSuffix = "en.kissmanga"
     extClass = '.Kissmanga'
     extVersionCode = 1
-    extVersionSuffix = 1
+    extVersionSuffix = 2
     libVersion = '1.0'
+}
+
+dependencies {
+    provided project(':duktape-stub')
 }
 
 apply from: "$rootDir/common.gradle"

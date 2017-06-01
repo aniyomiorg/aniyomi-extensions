@@ -55,7 +55,7 @@ class Mangafox : ParsedHttpSource() {
     override fun latestUpdatesNextPageSelector() = "a:has(span.next)"
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = HttpUrl.parse("$baseUrl/search.php?name_method=cw&author_method=cw&artist_method=cw&advopts=1").newBuilder().addQueryParameter("name", query)
+        val url = HttpUrl.parse("$baseUrl/search.php?name_method=cw&author_method=cw&artist_method=cw&advopts=1")!!.newBuilder().addQueryParameter("name", query)
         (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
             when (filter) {
                 is Status -> url.addQueryParameter(filter.id, filter.state.toString())
@@ -168,7 +168,7 @@ class Mangafox : ParsedHttpSource() {
     private class Type : Filter.Select<String>("Type", arrayOf("Any", "Japanese Manga", "Korean Manhwa", "Chinese Manhua"))
     private class OrderBy : Filter.Sort("Order by",
             arrayOf("Series name", "Rating", "Views", "Total chapters", "Last chapter"),
-            Selection(2, false))
+            Filter.Sort.Selection(2, false))
     private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Genres", genres)
 
     override fun getFilterList() = FilterList(
