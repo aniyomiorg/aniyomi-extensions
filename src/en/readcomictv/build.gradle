@@ -2,11 +2,11 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: ReadComic.tv'
+    appName = 'Tachiyomi: ReadComicWebsite'
     pkgNameSuffix = "en.readcomictv"
     extClass = '.Readcomictv'
-    extVersionCode = 1
-    extVersionSuffix = 1
+    extVersionCode = 2
+    extVersionSuffix = 2
     libVersion = '1.0'
 }
 

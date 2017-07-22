@@ -15,9 +15,9 @@ import java.text.SimpleDateFormat
 class Readcomictv : ParsedHttpSource() {
 
     override val lang = "en"
-    override val name = "Readcomictv"
+    override val name = "ReadComicsWebsite"
     override val supportsLatest = true
-    override val baseUrl = "http://readcomics.tv"
+    override val baseUrl = "http://readcomics.website"
 
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
@@ -52,7 +52,7 @@ class Readcomictv : ParsedHttpSource() {
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
-        return GET("http://readcomics.tv/comic-updates/$page",headers)
+        return GET(baseUrl + "/comic-updates/$page",headers)
     }
 
     override fun latestUpdatesSelector(): String {
@@ -89,7 +89,7 @@ class Readcomictv : ParsedHttpSource() {
     override fun popularMangaNextPageSelector(): String? = ".general-nav :last-child"
 
     override fun popularMangaRequest(page: Int): Request {
-        return GET("http://readcomics.tv/popular-comic/$page",headers)
+        return GET(baseUrl + "/popular-comic/$page",headers)
     }
 
     override fun popularMangaSelector(): String = ".manga-box h3 a"
@@ -106,7 +106,7 @@ class Readcomictv : ParsedHttpSource() {
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        return GET("http://readcomics.tv/advanced-search?key=$query&page=$page",headers)
+        return GET(baseUrl + "/advanced-search?key=$query&page=$page",headers)
     }
 
     override fun searchMangaSelector(): String {
