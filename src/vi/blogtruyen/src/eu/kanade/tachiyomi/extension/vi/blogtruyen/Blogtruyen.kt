@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.source.online.vietnamese
+package eu.kanade.tachiyomi.extension.vi.blogtruyen
 
 import android.util.Log
 import eu.kanade.tachiyomi.network.GET
@@ -14,7 +14,7 @@ import java.text.SimpleDateFormat
 
 class Blogtruyen : ParsedHttpSource() {
 
-    override val name = "BlogTruyen"
+    override val name = "Blogtruyen"
 
     override val baseUrl = "http://blogtruyen.com"
 
@@ -26,14 +26,14 @@ class Blogtruyen : ParsedHttpSource() {
 
     override fun popularMangaSelector() = "div.list span.tiptip.fs-12.ellipsis"
 
-    override fun latestUpdatesSelector() = popularMangaSelector()
+    override fun latestUpdatesSelector() = "section.list-mainpage.listview > div > div > div > div.fl-l"
 
     override fun popularMangaRequest(page: Int): Request {
         return GET("$baseUrl/ajax/Search/AjaxLoadListManga?key=tatca&orderBy=3&p=$page", headers)
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/ajax/Search/AjaxLoadListManga?key=tatca&orderBy=5&p=$page", headers)
+        return GET("$baseUrl/page-$page", headers)
     }
 
     override fun popularMangaFromElement(element: Element): SManga {
@@ -46,25 +46,31 @@ class Blogtruyen : ParsedHttpSource() {
     }
 
     override fun latestUpdatesFromElement(element: Element): SManga {
-        return popularMangaFromElement(element)
+        val manga = SManga.create()
+        element.select("a").first().let {
+            manga.setUrlWithoutDomain(it.attr("href"))
+            manga.title = element.select("img").first().attr("alt").toString()
+            //manga.thumbnail_url = element.select("img").first().attr("src").toString()
+        }
+        return manga
     }
 
     override fun popularMangaNextPageSelector() = "div.paging:last-child:not(.current_page)"
 
-    override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
+    override fun latestUpdatesNextPageSelector() =  "ul.pagination.paging.list-unstyled > li:nth-last-child(2) > a"
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         var temp = "$baseUrl/timkiem/nangcao/1/0"
-        val genres = mutableListOf<String>()
-        val genresEx = mutableListOf<String>()
+        val genres = mutableListOf<Int>()
+        val genresEx = mutableListOf<Int>()
         var aut = ""
         (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
             when (filter) {
                 is GenreList -> filter.state.forEach {
                     genre ->
                     when (genre.state) {
-                        Filter.TriState.STATE_INCLUDE -> genres.add(genre.name.toLowerCase())
-                        Filter.TriState.STATE_EXCLUDE -> genresEx.add(genre.name.toLowerCase())
+                        Filter.TriState.STATE_INCLUDE -> genres.add(genre.id)
+                        Filter.TriState.STATE_EXCLUDE -> genresEx.add(genre.id)
                     }
                 }
                 is Author -> {
@@ -173,6 +179,7 @@ class Blogtruyen : ParsedHttpSource() {
             Genre("Harem", 12),
             Genre("Historical", 13),
             Genre("Horror", 14),
+            Genre("Isekai/Dị Giới", 63),
             Genre("Josei", 15),
             Genre("Live Action", 16),
             Genre("Magic", 46),
@@ -184,7 +191,7 @@ class Blogtruyen : ParsedHttpSource() {
             Genre("Mecha", 21),
             Genre("Mystery", 22),
             Genre("Nấu ăn", 56),
-            Genre("NTR", 61),
+            Genre("NTR", 62),
             Genre("One shot", 23),
             Genre("Psychological", 24),
             Genre("Romance", 25),
