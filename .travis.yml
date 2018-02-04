@@ -10,8 +10,10 @@ android:
   - android-sdk-license-.+
 before_install:
 - yes | sdkmanager "platforms;android-27" # workaround for accepting the license
-- openssl aes-256-cbc -K $encrypted_5ba4ee4c096f_key -iv $encrypted_5ba4ee4c096f_iv -in "$PWD/.travis/secrets.tar.enc" -out secrets.tar -d
-- tar xf secrets.tar
+- if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+    openssl aes-256-cbc -K $encrypted_5ba4ee4c096f_key -iv $encrypted_5ba4ee4c096f_iv -in "$PWD/.travis/secrets.tar.enc" -out secrets.tar -d;
+    tar xf secrets.tar;
+  fi
 - mkdir "$ANDROID_HOME/licenses" || true
 - echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > "$ANDROID_HOME/licenses/android-sdk-license"
 - echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
