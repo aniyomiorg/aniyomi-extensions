@@ -90,18 +90,18 @@
   {
     "name": "Tachiyomi: Mangahere",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangahere",
-    "apk": "tachiyomi-en.mangahere-v1.2.3.apk",
+    "apk": "tachiyomi-en.mangahere-v1.2.4.apk",
     "lang": "en",
-    "code": 5,
-    "version": "1.2.3"
+    "code": 6,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: MangaPark",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangapark",
-    "apk": "tachiyomi-en.mangapark-v1.0.2.apk",
+    "apk": "tachiyomi-en.mangapark-v1.0.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.0.2"
+    "code": 3,
+    "version": "1.0.3"
   },
   {
     "name": "Tachiyomi: Mangasee",
@@ -218,10 +218,10 @@
   {
     "name": "Tachiyomi: Sen Manga",
     "pkg": "eu.kanade.tachiyomi.extension.ja.senmanga",
-    "apk": "tachiyomi-ja.senmanga-v1.0.1.apk",
+    "apk": "tachiyomi-ja.senmanga-v1.2.1.apk",
     "lang": "ja",
-    "code": 1,
-    "version": "1.0.1"
+    "code": 2,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: Mangachan",
