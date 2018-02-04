@@ -146,10 +146,10 @@
   {
     "name": "Tachiyomi: ReadComicOnline",
     "pkg": "eu.kanade.tachiyomi.extension.en.readcomiconline",
-    "apk": "tachiyomi-en.readcomiconline-v1.0.1.apk",
+    "apk": "tachiyomi-en.readcomiconline-v1.2.1.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.0.1"
+    "code": 2,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: ReadComicWebsite",
