@@ -7,6 +7,7 @@ import okhttp3.HttpUrl
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.net.URLEncoder
 import java.text.SimpleDateFormat
 
 class Mangadex : ParsedHttpSource() {
@@ -21,7 +22,27 @@ class Mangadex : ParsedHttpSource() {
 
     private val internalLang = "gb"
 
-    override val client = network.cloudflareClient
+    override val client = network.cloudflareClient.newBuilder()
+            .addNetworkInterceptor { chain ->
+                val newReq = chain
+                        .request()
+                        .newBuilder()
+                        .addHeader("Cookie", cookiesHeader)
+                        .build()
+
+                chain.proceed(newReq)
+            }.build()!!
+
+    private val cookiesHeader by lazy {
+        val cookies = mutableMapOf<String, String>()
+        cookies.put("mangadex_h_toggle", "1")
+        buildCookies(cookies)
+    }
+
+    private fun buildCookies(cookies: Map<String, String>)
+            = cookies.entries.map {
+        "${URLEncoder.encode(it.key, "UTF-8")}=${URLEncoder.encode(it.value, "UTF-8")}"
+    }.joinToString(separator = "; ", postfix = ";")
 
     override fun popularMangaSelector() = ".table-responsive tbody tr"
 
@@ -33,7 +54,8 @@ class Mangadex : ParsedHttpSource() {
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/$page", headers)
+        val pageStr = if (page != 1) ((page * 20) - 20) else ""
+        return GET("$baseUrl/1/$page", headers)
     }
 
     override fun popularMangaFromElement(element: Element): SManga {
@@ -57,25 +79,41 @@ class Mangadex : ParsedHttpSource() {
 
     override fun popularMangaNextPageSelector() = ".pagination li:not(.disabled) span[title*=last page]:not(disabled)"
 
-    override fun latestUpdatesNextPageSelector() = null
+    override fun latestUpdatesNextPageSelector() = ".pagination li:not(.disabled) span[title*=last page]:not(disabled)"
+
+    override fun searchMangaNextPageSelector() = ".pagination li:not(.disabled) span[title*=last page]:not(disabled)"
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = HttpUrl.parse("$baseUrl/?page=search")!!.newBuilder().addQueryParameter("title", query)
+        val byGenre = filters.find { it is GenreList }
         val genres = mutableListOf<String>()
-
-        (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
-            when (filter) {
-                is TextField -> url.addQueryParameter(filter.key, filter.state)
-                is GenreList -> filter.state.forEach { genre ->
-                    when (genre.state) {
-                        true -> genres.add(genre.id)
-                    }
+        if (byGenre != null) {
+            byGenre as GenreList
+            byGenre.state.forEach { genre ->
+                when (genre.state) {
+                    true -> genres.add(genre.id)
                 }
             }
         }
-        if (genres.isNotEmpty()) url.addQueryParameter("genre", genres.joinToString(","))
+        //do browse by letter if set
+        val byLetter = filters.find { it is ByLetter }
+        if (byLetter != null && (byLetter as ByLetter).state != 0) {
+            val s = byLetter.values[byLetter.state]
+            val pageStr = if (page != 1) (((page - 1) * 100)).toString() else "0"
+            val url = HttpUrl.parse("$baseUrl/titles/")!!.newBuilder().addPathSegment(s).addPathSegment(pageStr)
+            return GET(url.toString(), headers)
 
-        return GET(url.toString(), headers)
+        } else {
+            //do traditional search
+            val url = HttpUrl.parse("$baseUrl/?page=search")!!.newBuilder().addQueryParameter("title", query)
+            filters.forEach { filter ->
+                when (filter) {
+                    is TextField -> url.addQueryParameter(filter.key, filter.state)
+                }
+            }
+            if (genres.isNotEmpty()) url.addQueryParameter("genres", genres.joinToString(","))
+
+            return GET(url.toString(), headers)
+        }
     }
 
     override fun searchMangaSelector() = ".table.table-striped.table-hover.table-condensed tbody tr"
@@ -83,8 +121,6 @@ class Mangadex : ParsedHttpSource() {
     override fun searchMangaFromElement(element: Element): SManga {
         return popularMangaFromElement(element)
     }
-
-    override fun searchMangaNextPageSelector() = null
 
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
@@ -126,15 +162,25 @@ class Mangadex : ParsedHttpSource() {
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
         val url = document.baseUri()
-        document.select("#jump_page").first().select("option").forEach {
-            pages.add(Page(pages.size, url + "/" + it.attr("value")))
+        val select = document.select("#jump_page")
+        //if its a regular manga get the pages from the drop down selector
+        if (select.isNotEmpty()) {
+            select.first().select("option").forEach {
+                pages.add(Page(pages.size, url + "/" + it.attr("value")))
+            }
+        } else {
+            //webtoon get all the image urls on the one page
+            document.select(".edit.webtoon").forEach {
+                pages.add(Page(pages.size, "", it.attr("src")))
+            }
         }
+
         return pages
     }
 
     override fun imageUrlParse(document: Document): String {
         val attr = document.select("#current_page").first().attr("src")
-
+        //some images are hosted elsewhere
         if (attr.startsWith("http")) {
             return attr
         }
@@ -152,13 +198,17 @@ class Mangadex : ParsedHttpSource() {
     private class TextField(name: String, val key: String) : Filter.Text(name)
     private class Genre(val id: String, name: String) : Filter.CheckBox(name)
     private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Genres", genres)
+    private class ByLetter : Filter.Select<String>("Browse By Letter", arrayOf("", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"))
 
 
     override fun getFilterList() = FilterList(
             TextField("Author", "author"),
             TextField("Artist", "artist"),
-            GenreList(getGenreList())
-    )
+            GenreList(getGenreList()),
+            Filter.Header("Note: Browsing by Letter"),
+            Filter.Header("Ignores other Search Fields"),
+            ByLetter())
+
 
     private fun getGenreList() = listOf(
             Genre("1", "4-koma"),
