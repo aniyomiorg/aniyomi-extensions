@@ -7,11 +7,11 @@ TOOLS="$(ls -d ${ANDROID_HOME}/build-tools/* | tail -1)"
 mkdir -p repo/apk
 mkdir -p repo/icon
 
-cp -f apk/* repo/apk || true
+cp -f apk/* repo/apk
 
 cd repo
 
-APKS=( apk/*".apk"* )
+APKS=( ../apk/*".apk"* )
 
 for APK in ${APKS[@]}; do
     FILENAME=$(basename ${APK})
