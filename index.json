@@ -8,6 +8,14 @@
     "version": "1.0.1"
   },
   {
+    "name": "Tachiyomi: MangaDex",
+    "pkg": "eu.kanade.tachiyomi.extension.all.mangadex",
+    "apk": "tachiyomi-all.mangadex-v1.2.4.apk",
+    "lang": "all",
+    "code": 4,
+    "version": "1.2.4"
+  },
+  {
     "name": "Tachiyomi: nhentai",
     "pkg": "eu.kanade.tachiyomi.extension.all.nhentai",
     "apk": "tachiyomi-all.nhentai-v1.0.1.apk",
@@ -54,14 +62,6 @@
     "lang": "en",
     "code": 1,
     "version": "1.0.1"
-  },
-  {
-    "name": "Tachiyomi: MangaDex",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangadex",
-    "apk": "tachiyomi-en.mangadex-v1.2.3.apk",
-    "lang": "en",
-    "code": 3,
-    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Mangaeden",
