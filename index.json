@@ -224,6 +224,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: Union Mangás",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.unionmangas",
+    "apk": "tachiyomi-pt.unionmangas-v1.2.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Mangachan",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mangachan",
     "apk": "tachiyomi-ru.mangachan-v1.2.0.apk",
