@@ -10,10 +10,10 @@
   {
     "name": "Tachiyomi: MangaDex",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangadex",
-    "apk": "tachiyomi-all.mangadex-v1.2.4.apk",
+    "apk": "tachiyomi-all.mangadex-v1.2.5.apk",
     "lang": "all",
-    "code": 4,
-    "version": "1.2.4"
+    "code": 5,
+    "version": "1.2.5"
   },
   {
     "name": "Tachiyomi: nhentai",
@@ -42,10 +42,10 @@
   {
     "name": "Tachiyomi: Hentai2Read",
     "pkg": "eu.kanade.tachiyomi.extension.en.hentai2read",
-    "apk": "tachiyomi-en.hentai2read-v1.0.1.apk",
+    "apk": "tachiyomi-en.hentai2read-v1.2.1.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.0.1"
+    "code": 3,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: Kissmanga",
