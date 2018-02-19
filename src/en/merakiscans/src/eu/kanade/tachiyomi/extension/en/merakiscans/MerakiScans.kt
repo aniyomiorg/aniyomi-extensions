@@ -32,7 +32,7 @@ class MerakiScans : ParsedHttpSource() {
         }
     }
 
-    override fun popularMangaSelector() = "div.mng_lst > div.nde > div.det > a"
+    override fun popularMangaSelector() = "div.mng_lst > div.row > div.item > div.det > a"
 
     override fun latestUpdatesSelector() = popularMangaSelector()
 
@@ -49,7 +49,7 @@ class MerakiScans : ParsedHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element) = popularMangaFromElement(element)
 
-    override fun popularMangaNextPageSelector() = "div.next > a.gbutton:contains(Next »)"
+    override fun popularMangaNextPageSelector() = null
 
     override fun latestUpdatesNextPageSelector() = popularMangaNextPageSelector()
 
@@ -70,13 +70,17 @@ class MerakiScans : ParsedHttpSource() {
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
         val infoElement = document.select("div.mng_det > div.mng_ifo")
 
-        infoElement.select("div.det > p").forEachIndexed { i, el ->
+        infoElement.select("div > p").forEachIndexed { i, el ->
             if (i == 0) {
                 description = el.text().trim()
             }
             when (el.select("b").text().trim()) {
-                "Author" -> author = el.select("a").text()?.trim()
-                "Artist" -> artist = el.select("a").text()?.trim()
+                "Author" -> author = el.select("a").map {
+                    it.text().trim()
+                }.joinToString(", ")
+                "Artist" -> artist = el.select("a").map {
+                    it.text().trim()
+                }.joinToString(", ")
                 "Category" -> genre = el.select("a").map {
                         it.text().trim()
                     }.joinToString(", ")
