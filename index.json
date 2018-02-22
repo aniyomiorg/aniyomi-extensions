@@ -192,6 +192,14 @@
     "version": "1.0.1"
   },
   {
+    "name": "Tachiyomi: xkcd",
+    "pkg": "eu.kanade.tachiyomi.extension.en.xkcd",
+    "apk": "tachiyomi-en.xkcd-v1.2.0.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.0"
+  },
+  {
     "name": "Tachiyomi: HentaiFantasy",
     "pkg": "eu.kanade.tachiyomi.extension.it.hentaifantasy",
     "apk": "tachiyomi-it.hentaifantasy-v1.0.1.apk",
