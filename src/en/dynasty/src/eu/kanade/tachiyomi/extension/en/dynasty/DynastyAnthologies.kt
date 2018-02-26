@@ -13,10 +13,10 @@ class DynastyAnthologies : DynastyScans() {
     override fun popularMangaInitialUrl() = "$baseUrl/anthologies?view=cover"
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        return GET("$baseUrl/search?q=$query&classes[]=Series&sort=", headers)
+        return GET("$baseUrl/search?q=$query&classes%5B%5D=Anthology&sort=", headers)
     }
 
-     override fun mangaDetailsParse(document: Document): SManga {
+    override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
         manga.thumbnail_url = baseUrl + document.select("div.span2 > img").attr("src")
         parseHeader(document, manga)

@@ -4,9 +4,9 @@ apply plugin: 'kotlin-android'
 ext {
     appName = 'Tachiyomi: Dynasty'
     pkgNameSuffix = "en.dynasty"
-    extClass = '.DynastyAnthologies; .DynastyIssues; .DynastySeries; .DynastyDoujins'
-    extVersionCode = 2
-    extVersionSuffix = 2
+    extClass = '.DynastyFactory'
+    extVersionCode = 3
+    extVersionSuffix = 3
     libVersion = '1.2'
 }
 
