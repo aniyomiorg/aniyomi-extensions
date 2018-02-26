@@ -294,5 +294,13 @@
     "lang": "vi",
     "code": 1,
     "version": "1.0.1"
+  },
+  {
+    "name": "Tachiyomi: Dmzj",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.dmzj",
+    "apk": "tachiyomi-zh.dmzj-v1.0.0.apk",
+    "lang": "zh",
+    "code": 1,
+    "version": "1.0.0"
   }
 ]
