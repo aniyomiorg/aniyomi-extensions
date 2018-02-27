@@ -50,10 +50,10 @@
   {
     "name": "Tachiyomi: Kissmanga",
     "pkg": "eu.kanade.tachiyomi.extension.en.kissmanga",
-    "apk": "tachiyomi-en.kissmanga-v1.2.0.apk",
+    "apk": "tachiyomi-en.kissmanga-v1.2.1.apk",
     "lang": "en",
-    "code": 3,
-    "version": "1.2.0"
+    "code": 4,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: Mangacow",
