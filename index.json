@@ -298,9 +298,9 @@
   {
     "name": "Tachiyomi: Dmzj",
     "pkg": "eu.kanade.tachiyomi.extension.zh.dmzj",
-    "apk": "tachiyomi-zh.dmzj-v1.0.0.apk",
+    "apk": "tachiyomi-zh.dmzj-v1.0.2.apk",
     "lang": "zh",
-    "code": 1,
-    "version": "1.0.0"
+    "code": 2,
+    "version": "1.0.2"
   }
 ]
