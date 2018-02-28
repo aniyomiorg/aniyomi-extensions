@@ -45,7 +45,7 @@ class Dmzj : HttpSource() {
                 url = "/comic/$cid.json"
             })
         }
-        return MangasPage(ret, arr.length() != 0)
+        return MangasPage(ret, false)
     }
 
     private fun mangaFromJSON2(json: String): MangasPage {
@@ -128,6 +128,11 @@ class Dmzj : HttpSource() {
             tmparr.add(arr.getJSONObject(i).getString("tag_name"))
         }
         genre = tmparr.joinToString(", ")
+        status = when(obj.getJSONArray("status").getJSONObject(0).getInt("tag_id")) {
+            2310 -> SManga.COMPLETED
+            2309 -> SManga.ONGOING
+            else -> SManga.UNKNOWN
+        }
 
         description = obj.getString("description")
     }
@@ -145,7 +150,7 @@ class Dmzj : HttpSource() {
                 val chapter = arr2.getJSONObject(j)
                 ret.add(SChapter.create().apply {
                     name = "$prefix: ${chapter.getString("chapter_title")}"
-                    date_upload = chapter.getString("updatetime").toLong()
+                    date_upload = chapter.getString("updatetime").toLong()*1000 //milliseconds
                     url = "/chapter/$cid/${chapter.getString("chapter_id")}.json"
                 })
             }
@@ -237,8 +242,8 @@ class Dmzj : HttpSource() {
     ))
 
     private class SortFilter : UriPartFilter("排序", arrayOf(
-            Pair("更新", "1"),
-            Pair("人气", "0")
+            Pair("人气", "0"),
+            Pair("更新", "1")
     ))
 
     private class ReaderFilter : UriPartFilter("读者", arrayOf(
