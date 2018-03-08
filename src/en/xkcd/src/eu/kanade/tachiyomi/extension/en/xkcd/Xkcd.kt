@@ -63,7 +63,12 @@ class Xkcd : ParsedHttpSource() {
 
     override fun pageListParse(response: Response): List<Page> {
         var jsonData = response.body()!!.string()
-        jsonData = jsonData.replace("\\u00e2\\u0080\\u0094", "\\u2014").replace("\\u00c3\\u00a9", "\\u00e9").replace("\\u00e2\\u0080\\u0093", "\\u2014").replace("\\u00c3\\u00b3", "\\u00F3")
+        jsonData = jsonData.replace("\\u00e2\\u0080\\u0094", "\\u2014")
+                .replace("\\u00c3\\u00a9", "\\u00e9")
+                .replace("\\u00e2\\u0080\\u0093", "\\u2014")
+                .replace("\\u00c3\\u00b3", "\\u00F3")
+                .replace("#", "%23")
+                .replace("&eacute;", "\\u00e9")
         val json = JsonParser().parse(jsonData).asJsonObject
 
         //the comic get hd if  1084 or higher
@@ -76,14 +81,14 @@ class Xkcd : ParsedHttpSource() {
         pages.add(Page(0, "", imageUrl))
 
         //create a text image for the alt text
-        var titleWords = json["safe_title"].string.splitToSequence(" ")
+        var titleWords = json["title"].string.splitToSequence(" ")
         var altTextWords = json["alt"].string.splitToSequence(" ")
 
         var builder = StringBuilder()
         var count = 0
 
         for (i in titleWords) {
-            if (count != 0 && count.rem(6) == 0) {
+            if (count != 0 && count.rem(7) == 0) {
                 builder.append("%0A")
             }
             builder.append(i).append("+")
@@ -141,7 +146,7 @@ class Xkcd : ParsedHttpSource() {
     companion object {
         const val thumbnailUrl = "https://fakeimg.pl/550x780/ffffff/6E7B91/?text=xkcd&font=museo"
         const val baseAltTextUrl = "https://fakeimg.pl/1500x2126/ffffff/000000/?text="
-        const val baseAltTextPostUrl = "&font_size=64&font=museo"
+        const val baseAltTextPostUrl = "&font_size=42&font=museo"
         const val comicsAfter1084Ext = "_2x.png"
         const val defaultExt = ".png"
     }
