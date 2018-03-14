@@ -1,6 +1,5 @@
-package eu.kanade.tachiyomi.extension.en.jaiminisbox
+package eu.kanade.tachiyomi.extension.all.foolslide
 
-import android.util.Base64
 import com.github.salomonbrys.kotson.get
 import com.google.gson.JsonParser
 import eu.kanade.tachiyomi.network.GET
@@ -17,26 +16,23 @@ import org.jsoup.nodes.Element
 import java.text.ParseException
 import java.text.SimpleDateFormat
 
-class JaiminisBox : ParsedHttpSource() {
-
-    override val name = "Jaimini's Box"
-
-    override val baseUrl = "https://jaiminisbox.com"
-
-    override val lang = "en"
+/**
+ * Created by Carlos on 3/14/2018.
+ */
+open class FoolSlide(override val name: String, override val baseUrl: String, override val lang: String, private val urlModifier: String = "") : ParsedHttpSource() {
 
     override val supportsLatest = true
 
     override fun popularMangaSelector() = "div.group"
 
     override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/reader/directory/$page/", headers)
+        return GET("$baseUrl$urlModifier/directory/$page/", headers)
     }
 
     override fun latestUpdatesSelector() = "div.group"
 
     override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/reader/latest/$page/")
+        return GET("$baseUrl$urlModifier/latest/$page/")
     }
 
     override fun popularMangaFromElement(element: Element): SManga {
@@ -72,7 +68,7 @@ class JaiminisBox : ParsedHttpSource() {
             add("search", query)
         }
 
-        return POST("$baseUrl/reader/search/", headers, form.build())
+        return POST("$baseUrl$urlModifier/search/", headers, form.build())
     }
 
     override fun searchMangaSelector() = "div.group"
@@ -122,10 +118,8 @@ class JaiminisBox : ParsedHttpSource() {
     override fun pageListParse(document: Document): List<Page> {
 
         val doc = document.toString()
-
-        val base64Json = doc.substringAfter("JSON.parse(atob(\"").substringBefore("\"));")
-        val decodeJson = String(Base64.decode(base64Json, Base64.DEFAULT))
-        val json = JsonParser().parse(decodeJson).asJsonArray
+        val jsonstr = doc.substringAfter("var pages = ").substringBefore(";")
+        val json = JsonParser().parse(jsonstr).asJsonArray
         val pages = mutableListOf<Page>()
         json.forEach {
             pages.add(Page(pages.size, "", it.get("url").asString))
