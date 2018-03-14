@@ -8,6 +8,14 @@
     "version": "1.0.1"
   },
   {
+    "name": "Tachiyomi: FoolSlide",
+    "pkg": "eu.kanade.tachiyomi.extension.all.foolslide",
+    "apk": "tachiyomi-all.foolslide-v1.2.0.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.0"
+  },
+  {
     "name": "Tachiyomi: MangaDex",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangadex",
     "apk": "tachiyomi-all.mangadex-v1.2.17.apk",
@@ -54,14 +62,6 @@
     "lang": "en",
     "code": 3,
     "version": "1.2.1"
-  },
-  {
-    "name": "Tachiyomi: Jaiminis Box",
-    "pkg": "eu.kanade.tachiyomi.extension.en.jaiminisbox",
-    "apk": "tachiyomi-en.jaiminisbox-v1.2.0.apk",
-    "lang": "en",
-    "code": 1,
-    "version": "1.2.0"
   },
   {
     "name": "Tachiyomi: Kissmanga",
