@@ -42,10 +42,10 @@
   {
     "name": "Tachiyomi: nhentai",
     "pkg": "eu.kanade.tachiyomi.extension.all.nhentai",
-    "apk": "tachiyomi-all.nhentai-v1.0.1.apk",
+    "apk": "tachiyomi-all.nhentai-v1.2.0.apk",
     "lang": "all",
-    "code": 1,
-    "version": "1.0.1"
+    "code": 2,
+    "version": "1.2.0"
   },
   {
     "name": "Tachiyomi: WieManga",
