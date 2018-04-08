@@ -26,10 +26,10 @@
   {
     "name": "Tachiyomi: My Manga Reader CMS (Many sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mmrcms",
-    "apk": "tachiyomi-all.mmrcms-v1.2.1.apk",
+    "apk": "tachiyomi-all.mmrcms-v1.2.2.apk",
     "lang": "all",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: MyReadingManga",
@@ -130,10 +130,10 @@
   {
     "name": "Tachiyomi: Manga Rock",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangarock",
-    "apk": "tachiyomi-en.mangarock-v1.0.1.apk",
+    "apk": "tachiyomi-en.mangarock-v1.0.2.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.0.1"
+    "code": 3,
+    "version": "1.0.2"
   },
   {
     "name": "Tachiyomi: Mangasee",
