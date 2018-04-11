@@ -25,6 +25,7 @@ class MyMangaReaderCMSSource(override val lang: String,
                              private val tagMappings: List<Pair<String, String>>?) : HttpSource() {
     private val jsonParser = JsonParser()
     private val itemUrlPath = Uri.parse(itemUrl).pathSegments.first()
+    private val parsedBaseUrl = Uri.parse(baseUrl)
 
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/filterList?page=$page&sortBy=views&asc=false")
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
@@ -51,7 +52,7 @@ class MyMangaReaderCMSSource(override val lang: String,
                     .map {
                         SManga.create().apply {
                             val segment = it["data"].string
-                            setUrlWithoutDomain(itemUrl + segment)
+                            url = getUrlWithoutBaseUrl(itemUrl + segment)
                             title = it["value"].string
 
                             // Guess thumbnails
@@ -69,7 +70,7 @@ class MyMangaReaderCMSSource(override val lang: String,
         return MangasPage(document.getElementsByClass("col-sm-6").map {
             SManga.create().apply {
                 val urlElement = it.getElementsByClass("chart-title")
-                setUrlWithoutDomain(urlElement.attr("href"))
+                url = getUrlWithoutBaseUrl(urlElement.attr("href"))
                 title = urlElement.text().trim()
                 thumbnail_url = it.select(".media-left img").attr("src")
 
@@ -79,6 +80,28 @@ class MyMangaReaderCMSSource(override val lang: String,
                 }
             }
         }, document.select(".pagination a[rel=next]").isNotEmpty())
+    }
+
+    private fun getUrlWithoutBaseUrl(newUrl: String): String {
+        val parsedNewUrl = Uri.parse(newUrl)
+        val newPathSegments = parsedNewUrl.pathSegments.toMutableList()
+
+        for(i in parsedBaseUrl.pathSegments) {
+            if(i.trim().equals(newPathSegments.first(), true)) {
+                newPathSegments.removeAt(0)
+            } else break
+        }
+
+        val builtUrl = parsedNewUrl.buildUpon().path("/")
+        newPathSegments.forEach { builtUrl.appendPath(it) }
+
+        var out = builtUrl.build().encodedPath
+        if (parsedNewUrl.encodedQuery != null)
+            out += "?" + parsedNewUrl.encodedQuery
+        if (parsedNewUrl.encodedFragment != null)
+            out += "#" + parsedNewUrl.encodedFragment
+
+        return out
     }
 
     override fun mangaDetailsParse(response:Response) = SManga.create().apply {
@@ -180,7 +203,7 @@ class MyMangaReaderCMSSource(override val lang: String,
 
         val chapter = SChapter.create()
 
-        chapter.setUrlWithoutDomain(url)
+        chapter.url = getUrlWithoutBaseUrl(url)
         chapter.name = titleWrapper.text()
 
         // Parse date
