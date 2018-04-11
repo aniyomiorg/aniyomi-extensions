@@ -274,26 +274,26 @@
   {
     "name": "Tachiyomi: Mangachan",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mangachan",
-    "apk": "tachiyomi-ru.mangachan-v1.2.0.apk",
+    "apk": "tachiyomi-ru.mangachan-v1.2.6.apk",
     "lang": "ru",
-    "code": 5,
-    "version": "1.2.0"
+    "code": 6,
+    "version": "1.2.6"
   },
   {
     "name": "Tachiyomi: Mintmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mintmanga",
-    "apk": "tachiyomi-ru.mintmanga-v1.2.0.apk",
+    "apk": "tachiyomi-ru.mintmanga-v1.2.4.apk",
     "lang": "ru",
     "code": 4,
-    "version": "1.2.0"
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: Readmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.readmanga",
-    "apk": "tachiyomi-ru.readmanga-v1.2.0.apk",
+    "apk": "tachiyomi-ru.readmanga-v1.2.4.apk",
     "lang": "ru",
     "code": 4,
-    "version": "1.2.0"
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: AcademyVN",
