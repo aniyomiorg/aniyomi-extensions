@@ -280,6 +280,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: Desu",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.desu",
+    "apk": "tachiyomi-ru.desu-v1.0.0.apk",
+    "lang": "ru",
+    "code": 1,
+    "version": "1.0.0"
+  },
+  {
     "name": "Tachiyomi: Mangachan",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mangachan",
     "apk": "tachiyomi-ru.mangachan-v1.2.6.apk",
