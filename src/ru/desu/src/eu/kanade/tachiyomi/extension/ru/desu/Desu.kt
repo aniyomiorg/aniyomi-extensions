@@ -45,8 +45,8 @@ class Desu : HttpSource() {
         description = obj.getString("description")
 
         status = when (obj.getString("status")) {
-            "ongoing" -> SManga.COMPLETED
-            "released" -> SManga.ONGOING
+            "ongoing" -> SManga.ONGOING
+            "released" -> SManga.COMPLETED
             else -> SManga.UNKNOWN
         }
     }
