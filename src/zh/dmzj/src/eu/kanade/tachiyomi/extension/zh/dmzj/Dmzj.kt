@@ -26,6 +26,16 @@ class Dmzj : HttpSource() {
         "http:$url"
     else url
 
+    private fun myGet(url: String) = GET(url)
+            .newBuilder()
+            .header("User-Agent",
+                    "Mozilla/5.0 (X11; Linux x86_64) " +
+                            "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                            "Chrome/56.0.2924.87 " +
+                            "Safari/537.36 " +
+                            "Tachiyomi/1.0")
+            .build()!!
+
     private fun mangaFromJSON1(json: String): MangasPage {
         val arr = JSONArray(json)
         val ret = ArrayList<SManga>(arr.length())
@@ -69,11 +79,11 @@ class Dmzj : HttpSource() {
         return MangasPage(ret, arr.length() != 0)
     }
 
-    override fun popularMangaRequest(page: Int) = GET("http://v2.api.dmzj.com/classify/0/0/${page-1}.json")
+    override fun popularMangaRequest(page: Int) = myGet("http://v2.api.dmzj.com/classify/0/0/${page-1}.json")
 
     override fun popularMangaParse(response: Response) = searchMangaParse(response)
 
-    override fun latestUpdatesRequest(page: Int) = GET("http://v2.api.dmzj.com/classify/0/1/${page-1}.json")
+    override fun latestUpdatesRequest(page: Int) = myGet("http://v2.api.dmzj.com/classify/0/1/${page-1}.json")
 
     override fun latestUpdatesParse(response: Response): MangasPage = searchMangaParse(response)
 
@@ -81,7 +91,7 @@ class Dmzj : HttpSource() {
         if (query != "") {
             val uri = Uri.parse("http://s.acg.dmzj.com/comicsum/search.php").buildUpon()
             uri.appendQueryParameter("s", query)
-            return GET(uri.toString())
+            return myGet(uri.toString())
         } else {
             var params = filters.map {
                 if (it !is SortFilter && it is UriPartFilter) {
@@ -94,7 +104,7 @@ class Dmzj : HttpSource() {
 
             val order = filters.filter { it is SortFilter }.map { (it as UriPartFilter).toUriPart() }.joinToString("")
 
-            return GET("http://v2.api.dmzj.com/classify/$params/$order/${page-1}.json")
+            return myGet("http://v2.api.dmzj.com/classify/$params/$order/${page-1}.json")
         }
     }
 
