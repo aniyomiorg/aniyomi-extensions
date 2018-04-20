@@ -6,8 +6,8 @@ ext {
     pkgNameSuffix = "ja.rawlh"
     extClass = '.Rawlh'
     extVersionCode = 1
-    extVersionSuffix = 0
-    libVersion = '1.0'
+    extVersionSuffix = 1
+    libVersion = '1.1'
 }
 
 apply from: "$rootDir/common.gradle"
