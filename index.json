@@ -154,10 +154,10 @@
   {
     "name": "Tachiyomi: Mangazuki",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangazuki",
-    "apk": "tachiyomi-en.mangazuki-v1.0.1.apk",
+    "apk": "tachiyomi-en.mangazuki-v1.0.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.0.1"
+    "code": 2,
+    "version": "1.0.2"
   },
   {
     "name": "Tachiyomi: MerakiScans",
@@ -258,10 +258,10 @@
   {
     "name": "Tachiyomi: RawLH",
     "pkg": "eu.kanade.tachiyomi.extension.ja.rawlh",
-    "apk": "tachiyomi-ja.rawlh-v1.0.0.apk",
+    "apk": "tachiyomi-ja.rawlh-v1.2.0.apk",
     "lang": "ja",
-    "code": 1,
-    "version": "1.0.0"
+    "code": 2,
+    "version": "1.2.0"
   },
   {
     "name": "Tachiyomi: Sen Manga",
