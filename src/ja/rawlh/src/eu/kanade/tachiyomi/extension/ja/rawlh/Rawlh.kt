@@ -7,6 +7,7 @@ import okhttp3.HttpUrl
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.util.Calendar
 
 class Rawlh : ParsedHttpSource() {
 
@@ -106,12 +107,42 @@ class Rawlh : ParsedHttpSource() {
 
     override fun chapterFromElement(element: Element): SChapter {
         val urlElement = element.select("td a").first()
+        val timeElement = element.select("td time").first()
 
         val chapter = SChapter.create()
         chapter.setUrlWithoutDomain("/" + urlElement.attr("href"))
         chapter.name = urlElement.text()
-        chapter.date_upload = 0
+        chapter.date_upload = parseChapterDate(timeElement.text())
         return chapter
+    }
+
+    private fun parseChapterDate(date: String): Long {
+        val value = date.split(' ')[0].toInt()
+        return when {
+            "hour(s) ago" in date -> Calendar.getInstance().apply {
+                add(Calendar.HOUR_OF_DAY, value * -1)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+            "day(s) ago" in date -> Calendar.getInstance().apply {
+                add(Calendar.DATE, value * -1)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+            "week(s) ago" in date -> Calendar.getInstance().apply {
+                add(Calendar.DATE, value * 7 * -1)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+            "month(s) ago" in date -> Calendar.getInstance().apply {
+                add(Calendar.MONTH, value * -1)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+            else -> {
+                return 0
+            }
+        }
     }
 
 

@@ -5,9 +5,9 @@ ext {
     appName = 'Tachiyomi: RawLH'
     pkgNameSuffix = "ja.rawlh"
     extClass = '.Rawlh'
-    extVersionCode = 1
+    extVersionCode = 2
     extVersionSuffix = 0
-    libVersion = '1.0'
+    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"
