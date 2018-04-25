@@ -128,16 +128,91 @@ open class FoolSlide(override val name: String, override val baseUrl: String, ov
         return chapter
     }
 
-    open fun parseChapterDate(date: String): Long {
+    open fun parseChapterDate(date: String): Long? {
+        val lcDate = date.toLowerCase()
+        if (lcDate.endsWith(" ago"))
+            parseRelativeDate(lcDate)?.let { return it }
+
+        //Handle 'yesterday' and 'today'
+        var relativeDate: Calendar? = null
+        if (lcDate.startsWith("yesterday")) {
+            relativeDate = Calendar.getInstance()
+            relativeDate.add(Calendar.DAY_OF_MONTH, -1) //yesterday
+        } else if (lcDate.startsWith("today")) {
+            relativeDate = Calendar.getInstance()
+        }
+
+        relativeDate?.timeInMillis?.let {
+            return it
+        }
+
+        var result = DATE_FORMAT_1.parseOrNull(date)
+
+        for(dateFormat in DATE_FORMATS_WITH_ORDINAL_SUFFIXES) {
+            if (result == null)
+                result = dateFormat.parseOrNull(date)
+            else
+                break
+        }
+
+        for(dateFormat in DATE_FORMATS_WITH_ORDINAL_SUFFIXES_NO_YEAR) {
+            if (result == null) {
+                result = dateFormat.parseOrNull(date)
+
+                if(result != null) {
+                    // Result parsed but no year, copy current year over
+                    result = Calendar.getInstance().apply {
+                        time = result
+                        set(Calendar.YEAR, Calendar.getInstance().get(Calendar.YEAR))
+                    }.time
+                }
+            } else break
+        }
+
+        return result?.time ?: 0L
+    }
+
+    /**
+     * Parses dates in this form:
+     * `11 days ago`
+     */
+    private fun parseRelativeDate(date: String): Long? {
+        val trimmedDate = date.split(" ")
+
+        if (trimmedDate[2] != "ago") return null
+
+        val number = trimmedDate[0].toIntOrNull() ?: return null
+        val unit = trimmedDate[1].removeSuffix("s") // Remove 's' suffix
+
+        val now = Calendar.getInstance()
+
+        // Map English unit to Java unit
+        val javaUnit = when (unit) {
+            "year", "yr" -> Calendar.YEAR
+            "month" -> Calendar.MONTH
+            "week", "wk" -> Calendar.WEEK_OF_MONTH
+            "day" -> Calendar.DAY_OF_MONTH
+            "hour", "hr" -> Calendar.HOUR
+            "minute", "min" -> Calendar.MINUTE
+            "second", "sec" -> Calendar.SECOND
+            else -> return null
+        }
+
+        now.add(javaUnit, -number)
+
+        return now.timeInMillis
+    }
+
+    private fun SimpleDateFormat.parseOrNull(string: String): Date? {
         return try {
-            SimpleDateFormat("yyyy.MM.dd", Locale.US).parse(date).time
-        } catch (e: ParseException) {
-            0L
+            parse(string)
+        } catch(e: ParseException) {
+            null
         }
     }
 
     override fun pageListRequest(chapter: SChapter)
-        = allowAdult(super.pageListRequest(chapter))
+            = allowAdult(super.pageListRequest(chapter))
 
     override fun pageListParse(document: Document): List<Page> {
         val doc = document.toString()
@@ -157,4 +232,14 @@ open class FoolSlide(override val name: String, override val baseUrl: String, ov
 
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used")
 
+    companion object {
+        private val ORDINAL_SUFFIXES = listOf("st", "nd", "rd", "th")
+        private val DATE_FORMAT_1 = SimpleDateFormat("yyyy.MM.dd", Locale.US)
+        private val DATE_FORMATS_WITH_ORDINAL_SUFFIXES = ORDINAL_SUFFIXES.map {
+            SimpleDateFormat("dd'$it' MMMM, yyyy", Locale.US)
+        }
+        private val DATE_FORMATS_WITH_ORDINAL_SUFFIXES_NO_YEAR = ORDINAL_SUFFIXES.map {
+            SimpleDateFormat("dd'$it' MMMM", Locale.US)
+        }
+    }
 }
