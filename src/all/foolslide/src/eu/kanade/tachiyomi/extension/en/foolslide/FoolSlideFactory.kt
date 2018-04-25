@@ -10,7 +10,6 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SManga
 import okhttp3.Request
 import org.jsoup.nodes.Document
-import java.util.*
 
 class FoolSlideFactory : SourceFactory {
     override fun createSources(): List<Source> = getAllFoolSlide()
@@ -65,59 +64,6 @@ class JaminisBox : FoolSlide("Jaimini's Box", "https://jaiminisbox.com", "en", "
             pages.add(Page(pages.size, "", it["url"].asString))
         }
         return pages
-    }
-
-    override fun parseChapterDate(date: String): Long {
-        try {
-            val lcDate = date.toLowerCase()
-            if (lcDate.endsWith("ago"))
-                return parseRelativeDate(lcDate)
-
-            //Handle 'yesterday' and 'today'
-            var relativeDate: Calendar? = null
-            if (lcDate.startsWith("yesterday")) {
-                relativeDate = Calendar.getInstance()
-                relativeDate.add(Calendar.DAY_OF_MONTH, -1) //yesterday
-            } else if (lcDate.startsWith("today")) {
-                relativeDate = Calendar.getInstance()
-            }
-
-            return relativeDate?.timeInMillis
-                    ?: super.parseChapterDate(date)
-        } catch(t: Throwable) {
-            return 0L
-        }
-    }
-
-    /**
-     * Parses dates in this form:
-     * `11 days ago`
-     */
-    private fun parseRelativeDate(date: String): Long {
-        val trimmedDate = date.split(" ")
-
-        if (trimmedDate[2] != "ago") return 0
-
-        val number = trimmedDate[0].toIntOrNull() ?: return 0
-        val unit = trimmedDate[1].removeSuffix("s") //Remove 's' suffix
-
-        val now = Calendar.getInstance()
-
-        //Map English unit to Java unit
-        val javaUnit = when (unit) {
-            "year", "yr" -> Calendar.YEAR
-            "month" -> Calendar.MONTH
-            "week" -> Calendar.WEEK_OF_MONTH
-            "day" -> Calendar.DAY_OF_MONTH
-            "hour", "hr" -> Calendar.HOUR
-            "minute", "min" -> Calendar.MINUTE
-            "second", "sec" -> Calendar.SECOND
-            else -> return 0
-        }
-
-        now.add(javaUnit, -number)
-
-        return now.timeInMillis
     }
 }
 
