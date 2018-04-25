@@ -367,7 +367,8 @@ open class Mangadex(override val lang: String, private val internalLang: String,
             Genre("37", "Yaoi"),
             Genre("38", "Yuri"),
             Genre("39", "[no chapters]"),
-            Genre("40", "Game")
+            Genre("40", "Game"),
+            Genre("41", "Isekai")
     )
 
     companion object {
