@@ -4,13 +4,11 @@ import com.github.salomonbrys.kotson.get
 import com.google.gson.JsonParser
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.source.model.FilterList
-import eu.kanade.tachiyomi.source.model.Page
-import eu.kanade.tachiyomi.source.model.SChapter
-import eu.kanade.tachiyomi.source.model.SManga
+import eu.kanade.tachiyomi.source.model.*
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.FormBody
 import okhttp3.Request
+import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.text.ParseException
@@ -28,9 +26,21 @@ open class FoolSlide(override val name: String, override val baseUrl: String, ov
         return GET("$baseUrl$urlModifier/directory/$page/", headers)
     }
 
+    private val latestUpdatesUrls = HashSet<String>()
+
+    override fun latestUpdatesParse(response: Response): MangasPage {
+        val mp = super.latestUpdatesParse(response)
+        val mangas = mp.mangas.distinctBy { it.url }.filterNot { latestUpdatesUrls.contains(it.url) }
+        latestUpdatesUrls.addAll(mangas.map { it.url })
+        return MangasPage(mangas, mp.hasNextPage)
+    }
+
     override fun latestUpdatesSelector() = "div.group"
 
     override fun latestUpdatesRequest(page: Int): Request {
+        if (page == 1) {
+            latestUpdatesUrls.clear()
+        }
         return GET("$baseUrl$urlModifier/latest/$page/")
     }
 
