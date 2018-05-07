@@ -10,10 +10,10 @@
   {
     "name": "Tachiyomi: FoolSlide",
     "pkg": "eu.kanade.tachiyomi.extension.all.foolslide",
-    "apk": "tachiyomi-all.foolslide-v1.2.4.apk",
+    "apk": "tachiyomi-all.foolslide-v1.2.5.apk",
     "lang": "all",
-    "code": 4,
-    "version": "1.2.4"
+    "code": 5,
+    "version": "1.2.5"
   },
   {
     "name": "Tachiyomi: MangaDex",
