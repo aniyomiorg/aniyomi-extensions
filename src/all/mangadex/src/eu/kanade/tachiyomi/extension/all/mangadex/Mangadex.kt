@@ -1,10 +1,15 @@
 package eu.kanade.tachiyomi.extension.all.mangadex
 
+import android.app.Application
+import android.content.SharedPreferences
+import android.support.v7.preference.ListPreference
+import android.support.v7.preference.PreferenceScreen
 import com.github.salomonbrys.kotson.*
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.*
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.HttpUrl
@@ -15,11 +20,14 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.net.URLEncoder
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-open class Mangadex(override val lang: String, private val internalLang: String, private val langCode: Int) : ParsedHttpSource() {
+open class Mangadex(override val lang: String, private val internalLang: String, private val langCode: Int) : ConfigurableSource, ParsedHttpSource() {
+
 
     override val name = "MangaDex"
 
@@ -27,7 +35,12 @@ open class Mangadex(override val lang: String, private val internalLang: String,
 
     override val supportsLatest = true
 
-    override val client = clientBuilder(ALL)
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    private fun clientBuilder(): OkHttpClient = clientBuilder(getShowR18())
+
 
     private fun clientBuilder(r18Toggle: Int): OkHttpClient = network.cloudflareClient.newBuilder()
             .connectTimeout(10, TimeUnit.SECONDS)
@@ -97,6 +110,22 @@ open class Mangadex(override val lang: String, private val internalLang: String,
 
     override fun searchMangaNextPageSelector() = ".pagination li:not(.disabled) span[title*=last page]:not(disabled)"
 
+    override fun fetchPopularManga(page: Int): Observable<MangasPage> {
+        return clientBuilder().newCall(popularMangaRequest(page))
+                .asObservableSuccess()
+                .map { response ->
+                    popularMangaParse(response)
+                }
+    }
+
+    override fun fetchLatestUpdates(page: Int): Observable<MangasPage> {
+        return clientBuilder().newCall(latestUpdatesRequest(page))
+                .asObservableSuccess()
+                .map { response ->
+                    latestUpdatesParse(response)
+                }
+    }
+
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         return getSearchClient(filters).newCall(searchMangaRequest(page, query, filters))
                 .asObservableSuccess()
@@ -105,8 +134,6 @@ open class Mangadex(override val lang: String, private val internalLang: String,
                 }
     }
 
-    /* get search client based off r18 filter.  This will always return default client builder now until r18 solution is found or login is add
-     */
     private fun getSearchClient(filters: FilterList): OkHttpClient {
         filters.forEach { filter ->
             when (filter) {
@@ -165,7 +192,7 @@ open class Mangadex(override val lang: String, private val internalLang: String,
     }
 
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
-        return client.newCall(apiRequest(manga))
+        return clientBuilder().newCall(apiRequest(manga))
                 .asObservableSuccess()
                 .map { response ->
                     mangaDetailsParse(response).apply { initialized = true }
@@ -192,11 +219,18 @@ open class Mangadex(override val lang: String, private val internalLang: String,
         var jsonData = response.body()!!.string()
         val json = JsonParser().parse(jsonData).asJsonObject
         val mangaJson = json.getAsJsonObject("manga")
+        manga.title = baseUrl + mangaJson.get("title").string
         manga.thumbnail_url = baseUrl + mangaJson.get("cover_url").string
         manga.description = cleanString(mangaJson.get("description").string)
         manga.author = mangaJson.get("author").string
         manga.artist = mangaJson.get("artist").string
-        manga.status = parseStatus(mangaJson.get("status").int)
+        val finalChapterNumber = mangaJson.get("last_chapter").int
+        if (finalChapterNumber != 0) {
+            manga.status = SManga.COMPLETED
+        } else {
+            manga.status = parseStatus(mangaJson.get("status").int)
+        }
+
         var genres = mutableListOf<String>()
 
         mangaJson.get("genres").asJsonArray.forEach { id ->
@@ -219,7 +253,7 @@ open class Mangadex(override val lang: String, private val internalLang: String,
     override fun chapterListSelector() = ""
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        return client.newCall(apiRequest(manga))
+        return clientBuilder().newCall(apiRequest(manga))
                 .asObservableSuccess()
                 .map { response ->
                     chapterListParse(response)
@@ -230,6 +264,9 @@ open class Mangadex(override val lang: String, private val internalLang: String,
         val now = Date().time
         var jsonData = response.body()!!.string()
         val json = JsonParser().parse(jsonData).asJsonObject
+        val mangaJson = json.getAsJsonObject("manga")
+
+        val finalChapterNumber = mangaJson.get("last_chapter").double
         val chapterJson = json.getAsJsonObject("chapter")
         val chapters = mutableListOf<SChapter>()
 
@@ -238,13 +275,13 @@ open class Mangadex(override val lang: String, private val internalLang: String,
             val chapterElement = jsonElement.asJsonObject
             if (chapterElement.get("lang_code").string == internalLang && (chapterElement.get("timestamp").asLong * 1000) <= now) {
                 chapterElement.toString()
-                chapters.add(chapterFromJson(key, chapterElement))
+                chapters.add(chapterFromJson(key, chapterElement, finalChapterNumber))
             }
         }
         return chapters
     }
 
-    private fun chapterFromJson(chapterId: String, chapterJson: JsonObject): SChapter {
+    private fun chapterFromJson(chapterId: String, chapterJson: JsonObject, finalChapterNumber: Double): SChapter {
         val chapter = SChapter.create()
         chapter.url = BASE_CHAPTER + chapterId
         var chapterName = mutableListOf<String>()
@@ -258,6 +295,9 @@ open class Mangadex(override val lang: String, private val internalLang: String,
         if (chapterJson.get("title").string.isNotBlank()) {
             chapterName.add("-")
             chapterName.add(chapterJson.get("title").string)
+        }
+        if (finalChapterNumber != 0.00 && chapterJson.get("chapter").double == finalChapterNumber) {
+            chapterName.add(" [END]")
         }
 
         chapter.name = cleanString(chapterName.joinToString(" "))
@@ -302,7 +342,6 @@ open class Mangadex(override val lang: String, private val internalLang: String,
 
     private fun parseStatus(status: Int) = when (status) {
         1 -> SManga.ONGOING
-        2 -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 
@@ -313,6 +352,28 @@ open class Mangadex(override val lang: String, private val internalLang: String,
         }
         return baseUrl + attr
     }
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val myPref = ListPreference(screen.context).apply {
+            key = SHOW_R18_PREF_Title
+            title = SHOW_R18_PREF_Title
+
+            title = SHOW_R18_PREF_Title
+            entries = arrayOf("Show No R18+", "Show All", "Show Only R18+")
+            entryValues = arrayOf("0", "1", "2")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = this.findIndexOfValue(selected)
+                preferences.edit().putInt(SHOW_R18_PREF, index).commit()
+            }
+        }
+        screen.addPreference(myPref)
+    }
+
+    private fun getShowR18(): Int = preferences.getInt(SHOW_R18_PREF, 0)
+
 
     private class TextField(name: String, val key: String) : Filter.Text(name)
     private class Genre(val id: String, name: String) : Filter.CheckBox(name)
@@ -376,6 +437,8 @@ open class Mangadex(override val lang: String, private val internalLang: String,
         private const val NO_R18 = 0
         private const val ALL = 1
         private const val ONLY_R18 = 2
+        private const val SHOW_R18_PREF_Title = "Default R18 Setting"
+        private const val SHOW_R18_PREF = "showR18Default"
         private const val URL = "/api/3640f3fb/"
         private const val BASE_CHAPTER = "/chapter/"
 
