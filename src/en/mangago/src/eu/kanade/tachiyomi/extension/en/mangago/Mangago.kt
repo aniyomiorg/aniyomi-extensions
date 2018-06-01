@@ -310,24 +310,32 @@ class Mangago : ParsedHttpSource() {
 
     companion object {
         private const val IMGSRCS_DECODE_JS = """
+            function replacePos(a, b, c)
+            {
+                return (a.substr(0, b) + c) + a.substring((b + 1), a.length);
+            }
 
-function replacePos(a, b, l) {
-    return a.substr(0, b) + l + a.substring(b + 1, a.length)
-}
+            function dorder(a, b)
+            {
+                for (j = (b.length - 1); j >= 0; j--)
+                {
+                    for (i = (a.length - 1); (i - b[j]) >= 0; i--)
+                    {
+                        if ((i % 2) != 0)
+                        {
+                            temp = a[i - b[j]];
+                            a = replacePos(a, (i - b[j]), a[i]);
+                            a = replacePos(a, i, temp);
+                        }
+                    }
+                }
+                return a;
+            }
 
-function dorder(a, b) {
-    var l = a.length;
-    for (j = 3; 2 <= j; j--)
-        for (i = l - 1; 0 <= i - (b[j] - 0); i--) 0 != i % 2 && (temp = a[i - (b[j] - 0)], a = replacePos(a, i - (b[j] - 0), a[i]), a = replacePos(a, i, temp));
-    for (j = 1; 0 <= j; j--)
-        for (i = l - 1; 0 <= i - (b[j] - 0); i--) 0 != i % 2 && (temp = a[i - (b[j] - 0)], a = replacePos(a, i - (b[j] - 0), a[i]), a = replacePos(a, i, temp));
-    return a
-}
-
-(function() {
-    return dorder(imgsrcs, "6857");
-})();
-"""
+            (function() {
+                return dorder(imgsrcs, "2617");
+                })();
+            """
 
         private const val IMAGE_DESCRAMBLER_JS = """
 (function() {
@@ -350,7 +358,6 @@ _deskeys["9ae6640761b947e61624671ef841ee78"] = "62a25a21a75a42a61a73a59a23a19a66
 _deskeys.f4ab0903149b5d94baba796a5cf05938 = "40a37a55a73a18a42a15a59a50a13a22a63a52a58a6a80a47a17a38a71a74a70a30a11a10a19a0a31a36a21a51a68a1a3a14a66a45a2a79a7a76a75a8a67a20a78a25a69a43a28a35a60a4a23a65a54a34a9a5a39a27a57a26a33a12a24a46a72a56a44a49a61a64a29a53a48a32a62a41a16a77";
 _deskeys.f5baf770212313f5e9532ec5e6103b61 = "55a69a78a75a38a25a20a60a6a80a46a5a48a18a23a24a17a67a64a70a63a57a22a10a49a19a8a16a11a12a61a76a34a27a54a73a44a0a56a3a15a29a28a13a4a2a7a77a74a35a37a26a30a58a9a71a50a1a43a79a47a32a14a53a52a66a72a59a68a31a42a45a62a51a40a39a33a65a41a36a21";
 _deskeys.e2169a4bfd805e9aa21d3112d498d68c = "54a34a68a69a26a20a66a1a67a74a22a39a63a70a5a37a75a15a6a14a62a50a46a35a44a45a28a8a40a25a29a76a51a77a17a47a0a42a2a9a48a27a13a64a58a57a18a30a80a23a61a36a60a59a71a32a7a38a41a78a12a49a43a79a24a31a52a19a3a53a72a10a73a11a33a16a4a55a65a21a56";
-
 var l = "18a72a69a64a13a1a43a3aa42a23a66a26a19a51a54a78a34a17a31a35a15a58a29a61a48a73a74a44a52a60a24a63a20a32a7a45a53a75a55a62a59a41a76a68a2a36a21a10a38a33a71a40a67a22a4a50a80a65a27a37a47a70a14a28a16a6a56a30a57a5a11a79a9a77a46a39a25a49a8a12";
   for (mk in _deskeys) {
     if (img.indexOf(mk) > 0) {
@@ -381,7 +388,6 @@ var l = "18a72a69a64a13a1a43a3aa42a23a66a26a19a51a54a78a34a17a31a35a15a58a29a61a
   return result;
 })();
             """
-
         // Allow destructuring up to 6 items for lists
         private operator fun <T> List<T>.component6() = get(5)
     }
