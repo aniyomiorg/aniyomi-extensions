@@ -48,6 +48,14 @@
     "version": "1.2.0"
   },
   {
+    "name": "Tachiyomi: WPManga (Many sources)",
+    "pkg": "eu.kanade.tachiyomi.extension.all.wpmanga",
+    "apk": "tachiyomi-all.wpmanga-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: WieManga",
     "pkg": "eu.kanade.tachiyomi.extension.de.wiemanga",
     "apk": "tachiyomi-de.wiemanga-v1.2.0.apk",
