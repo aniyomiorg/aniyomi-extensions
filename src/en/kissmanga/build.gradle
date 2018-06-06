@@ -5,8 +5,8 @@ ext {
     appName = 'Tachiyomi: Kissmanga'
     pkgNameSuffix = "en.kissmanga"
     extClass = '.Kissmanga'
-    extVersionCode = 6
-    extVersionSuffix = 3
+    extVersionCode = 7
+    extVersionSuffix = 4
     libVersion = '1.2'
 }
 
