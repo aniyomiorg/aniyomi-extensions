@@ -114,10 +114,10 @@
   {
     "name": "Tachiyomi: Mangago",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangago",
-    "apk": "tachiyomi-en.mangago-v1.2.2.apk",
+    "apk": "tachiyomi-en.mangago-v1.2.3.apk",
     "lang": "en",
-    "code": 3,
-    "version": "1.2.2"
+    "code": 4,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Mangahere",
