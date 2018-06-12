@@ -322,34 +322,34 @@
   {
     "name": "Tachiyomi: AcademyVN",
     "pkg": "eu.kanade.tachiyomi.extension.vi.academyvn",
-    "apk": "tachiyomi-vi.academyvn-v1.2.1.apk",
+    "apk": "tachiyomi-vi.academyvn-v1.2.2.apk",
     "lang": "vi",
-    "code": 2,
-    "version": "1.2.1"
+    "code": 3,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Blogtruyen",
     "pkg": "eu.kanade.tachiyomi.extension.vi.blogtruyen",
-    "apk": "tachiyomi-vi.blogtruyen-v1.0.1.apk",
+    "apk": "tachiyomi-vi.blogtruyen-v1.2.1.apk",
     "lang": "vi",
-    "code": 1,
-    "version": "1.0.1"
+    "code": 2,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: IuTruyenTranh",
     "pkg": "eu.kanade.tachiyomi.extension.vi.iutruyentranh",
-    "apk": "tachiyomi-vi.iutruyentranh-v1.2.1.apk",
+    "apk": "tachiyomi-vi.iutruyentranh-v1.2.2.apk",
     "lang": "vi",
-    "code": 2,
-    "version": "1.2.1"
+    "code": 3,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: TruyenTranhLh",
     "pkg": "eu.kanade.tachiyomi.extension.vi.truyentranhlh",
-    "apk": "tachiyomi-vi.truyentranhlh-v1.2.1.apk",
+    "apk": "tachiyomi-vi.truyentranhlh-v1.2.2.apk",
     "lang": "vi",
-    "code": 2,
-    "version": "1.2.1"
+    "code": 3,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Dmzj",
