@@ -5,9 +5,9 @@ ext {
     appName = 'Tachiyomi: TruyenTranhLh'
     pkgNameSuffix = "vi.truyentranhlh"
     extClass = '.Truyentrnahlh'
-    extVersionCode = 1
+    extVersionCode = 2
     extVersionSuffix = 1
-    libVersion = '1.0'
+    libVersion = '1.2'
 }
 
 dependencies {
