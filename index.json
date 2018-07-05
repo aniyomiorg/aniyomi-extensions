@@ -346,10 +346,10 @@
   {
     "name": "Tachiyomi: TruyenTranhLh",
     "pkg": "eu.kanade.tachiyomi.extension.vi.truyentranhlh",
-    "apk": "tachiyomi-vi.truyentranhlh-v1.2.2.apk",
+    "apk": "tachiyomi-vi.truyentranhlh-v1.2.3.apk",
     "lang": "vi",
-    "code": 3,
-    "version": "1.2.2"
+    "code": 4,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Dmzj",
