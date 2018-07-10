@@ -10,10 +10,10 @@
   {
     "name": "Tachiyomi: FoolSlide",
     "pkg": "eu.kanade.tachiyomi.extension.all.foolslide",
-    "apk": "tachiyomi-all.foolslide-v1.2.7.apk",
+    "apk": "tachiyomi-all.foolslide-v1.2.8.apk",
     "lang": "all",
-    "code": 7,
-    "version": "1.2.7"
+    "code": 8,
+    "version": "1.2.8"
   },
   {
     "name": "Tachiyomi: MangaDex",
@@ -50,10 +50,10 @@
   {
     "name": "Tachiyomi: WPManga (Many sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmanga",
-    "apk": "tachiyomi-all.wpmanga-v1.2.1.apk",
+    "apk": "tachiyomi-all.wpmanga-v1.2.2.apk",
     "lang": "all",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: WieManga",
