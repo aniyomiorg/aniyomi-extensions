@@ -5,9 +5,9 @@ ext {
     appName = 'Tachiyomi: Desu'
     pkgNameSuffix = "ru.desu"
     extClass = '.Desu'
-    extVersionCode = 2
-    extVersionSuffix = 1
-    libVersion = '1.0'
+    extVersionCode = 3
+    extVersionSuffix = 2
+    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"
