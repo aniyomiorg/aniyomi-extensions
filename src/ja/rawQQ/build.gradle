@@ -2,11 +2,11 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: RawLH'
-    pkgNameSuffix = "ja.rawlh"
-    extClass = '.Rawlh'
-    extVersionCode = 3
-    extVersionSuffix = 1
+    appName = 'Tachiyomi: RawQQ'
+    pkgNameSuffix = "ja.rawqq"
+    extClass = '.Rawqq'
+    extVersionCode = 1
+    extVersionSuffix = 0
     libVersion = '1.2'
 }
 

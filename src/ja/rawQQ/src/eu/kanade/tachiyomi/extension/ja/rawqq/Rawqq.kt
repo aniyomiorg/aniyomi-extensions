@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.ja.rawlh
+package eu.kanade.tachiyomi.extension.ja.rawqq
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.*
@@ -9,11 +9,11 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.util.*
 
-class Rawlh : ParsedHttpSource() {
+class Rawqq : ParsedHttpSource() {
 
-    override val name = "RawLH"
+    override val name = "RawQQ"
 
-    override val baseUrl = "http://lhscan.net"
+    override val baseUrl = "http://rawqq.com"
 
     override val lang = "ja"
 
@@ -33,15 +33,15 @@ class Rawlh : ParsedHttpSource() {
                 is TextField -> url.addQueryParameter(filter.key, filter.state)
                 is GenreList -> {
 
-                    var genre = String()
-                    var ungenre = String()
+                    var genre = mutableListOf<String>()
+                    var ungenre = mutableListOf<String>()
 
-                    filter.state.forEach {
-                        if (it.isIncluded()) genre += ",${it.name}"
-                        if (it.isExcluded()) ungenre += ",${it.name}"
+                    filter.state.forEach {it ->
+                        if (it.isIncluded()) genre.add(it.name)
+                        if (it.isExcluded()) ungenre.add(it.name)
                     }
-                    url.addQueryParameter("genre", genre)
-                    url.addQueryParameter("ungenre", ungenre)
+                    url.addQueryParameter("genre", genre.joinToString())
+                    url.addQueryParameter("ungenre", ungenre.joinToString())
                 }
             }
         }
@@ -77,23 +77,24 @@ class Rawlh : ParsedHttpSource() {
 
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
-    private fun searchGenresNextPageSelector() = popularMangaNextPageSelector()
-
 
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
         val infoElement = document.select("div.row").first()
         manga.author = infoElement.select("small a.btn.btn-xs.btn-info").first()?.text()
-        manga.genre = infoElement.select("ul.manga-info li:nth-child(3) small").first()?.text()
         manga.status = parseStatus(infoElement.select("a.btn.btn-xs.btn-success").first().text())
 
-        manga.description = document.select("div.row > p").first()?.text()
+        manga.description = document.select("div.content").first()?.text()
         val imgUrl = document.select("img.thumbnail").first()?.attr("src")
         if (imgUrl!!.startsWith("app/")) {
             manga.thumbnail_url = "$baseUrl/$imgUrl"
         } else {
             manga.thumbnail_url = imgUrl
         }
+        var genres = mutableListOf<String>()
+        infoElement.select("div.row small a.btn.btn-xs.btn-danger")?.forEach { it -> genres.add(it.text())}
+        manga.genre = genres.joinToString(", ")
+
         return manga
     }
 
@@ -103,11 +104,13 @@ class Rawlh : ParsedHttpSource() {
         else -> SManga.UNKNOWN
     }
 
-    override fun chapterListSelector() = " table.table.table-hover tbody tr"
+    //override fun chapterListSelector() = " table.table.table-hover tbody tr"
+    override fun chapterListSelector() = " div#list-chapters.list-wrap p"
+
 
     override fun chapterFromElement(element: Element): SChapter {
-        val urlElement = element.select("td a").first()
-        val timeElement = element.select("td time").first()
+        val urlElement = element.select("span.title a").first()
+        val timeElement = element.select("span.publishedDate time").first()
 
         val chapter = SChapter.create()
         chapter.setUrlWithoutDomain("/" + urlElement.attr("href"))
@@ -164,7 +167,7 @@ class Rawlh : ParsedHttpSource() {
     private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Genre", genres)
     private class Genre(name: String, val id: String = name.replace(' ', '+')) : Filter.TriState(name)
 
-    // TODO: Country
+
     override fun getFilterList() = FilterList(
             TextField("Author", "author"),
             TextField("Group", "group"),
@@ -172,10 +175,7 @@ class Rawlh : ParsedHttpSource() {
             GenreList(getGenreList())
     )
 
-    /* [...document.querySelectorAll("div.panel-body a")].map((el,i) =>
-    *  { return `Genre("${el.innerHTML}")` }).join(',\n')
-    *  on http://rawlh.com/search
-    */
+
     private fun getGenreList() = listOf(
             Genre("4-Koma"),
             Genre("Action"),
