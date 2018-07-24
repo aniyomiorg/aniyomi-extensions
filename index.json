@@ -106,10 +106,10 @@
   {
     "name": "Tachiyomi: Mangafox",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangafox",
-    "apk": "tachiyomi-en.mangafox-v1.2.0.apk",
+    "apk": "tachiyomi-en.mangafox-v1.2.1.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.2.0"
+    "code": 3,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: Mangago",
