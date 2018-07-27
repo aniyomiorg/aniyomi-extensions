@@ -194,10 +194,10 @@
   {
     "name": "Tachiyomi: ReadComicWebsite",
     "pkg": "eu.kanade.tachiyomi.extension.en.readcomictv",
-    "apk": "tachiyomi-en.readcomictv-v1.0.2.apk",
+    "apk": "tachiyomi-en.readcomictv-v1.0.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.0.2"
+    "code": 3,
+    "version": "1.0.3"
   },
   {
     "name": "Tachiyomi: ReadMangaToday",
