@@ -110,5 +110,277 @@
     "lang": "en",
     "code": 3,
     "version": "1.2.1"
+  },
+  {
+    "name": "Tachiyomi: Mangafree",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangafree",
+    "apk": "tachiyomi-en.mangafree-v1.2.2.apk",
+    "lang": "en",
+    "code": 2,
+    "version": "1.2.2"
+  },
+  {
+    "name": "Tachiyomi: Mangago",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangago",
+    "apk": "tachiyomi-en.mangago-v1.2.5.apk",
+    "lang": "en",
+    "code": 6,
+    "version": "1.2.5"
+  },
+  {
+    "name": "Tachiyomi: Mangahere",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangahere",
+    "apk": "tachiyomi-en.mangahere-v1.2.4.apk",
+    "lang": "en",
+    "code": 6,
+    "version": "1.2.4"
+  },
+  {
+    "name": "Tachiyomi: MangaKakalot",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangakakalot",
+    "apk": "tachiyomi-en.mangakakalot-v1.2.2.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.2"
+  },
+  {
+    "name": "Tachiyomi: MangaPark",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangapark",
+    "apk": "tachiyomi-en.mangapark-v1.0.3.apk",
+    "lang": "en",
+    "code": 3,
+    "version": "1.0.3"
+  },
+  {
+    "name": "Tachiyomi: Manga Rock",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangarock",
+    "apk": "tachiyomi-en.mangarock-v1.0.2.apk",
+    "lang": "en",
+    "code": 3,
+    "version": "1.0.2"
+  },
+  {
+    "name": "Tachiyomi: Mangasee",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangasee",
+    "apk": "tachiyomi-en.mangasee-v1.0.2.apk",
+    "lang": "en",
+    "code": 2,
+    "version": "1.0.2"
+  },
+  {
+    "name": "Tachiyomi: Mangastream",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangastream",
+    "apk": "tachiyomi-en.mangastream-v1.0.2.apk",
+    "lang": "en",
+    "code": 2,
+    "version": "1.0.2"
+  },
+  {
+    "name": "Tachiyomi: Mangazuki",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangazuki",
+    "apk": "tachiyomi-en.mangazuki-v1.0.2.apk",
+    "lang": "en",
+    "code": 2,
+    "version": "1.0.2"
+  },
+  {
+    "name": "Tachiyomi: MerakiScans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.merakiscans",
+    "apk": "tachiyomi-en.merakiscans-v1.2.1.apk",
+    "lang": "en",
+    "code": 2,
+    "version": "1.2.1"
+  },
+  {
+    "name": "Tachiyomi: Perveden",
+    "pkg": "eu.kanade.tachiyomi.extension.en.perveden",
+    "apk": "tachiyomi-en.perveden-v1.0.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.0.1"
+  },
+  {
+    "name": "Tachiyomi: ReadComicOnline",
+    "pkg": "eu.kanade.tachiyomi.extension.en.readcomiconline",
+    "apk": "tachiyomi-en.readcomiconline-v1.2.3.apk",
+    "lang": "en",
+    "code": 4,
+    "version": "1.2.3"
+  },
+  {
+    "name": "Tachiyomi: ReadComicWebsite",
+    "pkg": "eu.kanade.tachiyomi.extension.en.readcomictv",
+    "apk": "tachiyomi-en.readcomictv-v1.0.3.apk",
+    "lang": "en",
+    "code": 3,
+    "version": "1.0.3"
+  },
+  {
+    "name": "Tachiyomi: ReadMangaToday",
+    "pkg": "eu.kanade.tachiyomi.extension.en.readmangatoday",
+    "apk": "tachiyomi-en.readmangatoday-v1.2.2.apk",
+    "lang": "en",
+    "code": 5,
+    "version": "1.2.2"
+  },
+  {
+    "name": "Tachiyomi: ShoujoSense",
+    "pkg": "eu.kanade.tachiyomi.extension.en.shoujosense",
+    "apk": "tachiyomi-en.shoujosense-v1.0.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.0.1"
+  },
+  {
+    "name": "Tachiyomi: Tapastic",
+    "pkg": "eu.kanade.tachiyomi.extension.en.tapastic",
+    "apk": "tachiyomi-en.tapastic-v1.0.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.0.1"
+  },
+  {
+    "name": "Tachiyomi: Webtoons",
+    "pkg": "eu.kanade.tachiyomi.extension.en.webtoons",
+    "apk": "tachiyomi-en.webtoons-v1.2.3.apk",
+    "lang": "en",
+    "code": 4,
+    "version": "1.2.3"
+  },
+  {
+    "name": "Tachiyomi: xkcd",
+    "pkg": "eu.kanade.tachiyomi.extension.en.xkcd",
+    "apk": "tachiyomi-en.xkcd-v1.2.4.apk",
+    "lang": "en",
+    "code": 4,
+    "version": "1.2.4"
+  },
+  {
+    "name": "Tachiyomi: HentaiFantasy",
+    "pkg": "eu.kanade.tachiyomi.extension.it.hentaifantasy",
+    "apk": "tachiyomi-it.hentaifantasy-v1.0.1.apk",
+    "lang": "it",
+    "code": 1,
+    "version": "1.0.1"
+  },
+  {
+    "name": "Tachiyomi: Mangaeden",
+    "pkg": "eu.kanade.tachiyomi.extension.it.mangaeden",
+    "apk": "tachiyomi-it.mangaeden-v1.0.1.apk",
+    "lang": "it",
+    "code": 1,
+    "version": "1.0.1"
+  },
+  {
+    "name": "Tachiyomi: Perveden",
+    "pkg": "eu.kanade.tachiyomi.extension.it.perveden",
+    "apk": "tachiyomi-it.perveden-v1.0.1.apk",
+    "lang": "it",
+    "code": 1,
+    "version": "1.0.1"
+  },
+  {
+    "name": "Tachiyomi: RawLH",
+    "pkg": "eu.kanade.tachiyomi.extension.ja.rawlh",
+    "apk": "tachiyomi-ja.rawlh-v1.2.2.apk",
+    "lang": "ja",
+    "code": 4,
+    "version": "1.2.2"
+  },
+  {
+    "name": "Tachiyomi: RawQQ",
+    "pkg": "eu.kanade.tachiyomi.extension.ja.rawqq",
+    "apk": "tachiyomi-ja.rawqq-v1.2.0.apk",
+    "lang": "ja",
+    "code": 1,
+    "version": "1.2.0"
+  },
+  {
+    "name": "Tachiyomi: Sen Manga",
+    "pkg": "eu.kanade.tachiyomi.extension.ja.senmanga",
+    "apk": "tachiyomi-ja.senmanga-v1.2.1.apk",
+    "lang": "ja",
+    "code": 2,
+    "version": "1.2.1"
+  },
+  {
+    "name": "Tachiyomi: Union Mangás",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.unionmangas",
+    "apk": "tachiyomi-pt.unionmangas-v1.2.2.apk",
+    "lang": "pt",
+    "code": 2,
+    "version": "1.2.2"
+  },
+  {
+    "name": "Tachiyomi: Desu",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.desu",
+    "apk": "tachiyomi-ru.desu-v1.2.3.apk",
+    "lang": "ru",
+    "code": 4,
+    "version": "1.2.3"
+  },
+  {
+    "name": "Tachiyomi: Mangachan",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.mangachan",
+    "apk": "tachiyomi-ru.mangachan-v1.2.6.apk",
+    "lang": "ru",
+    "code": 6,
+    "version": "1.2.6"
+  },
+  {
+    "name": "Tachiyomi: Mintmanga",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.mintmanga",
+    "apk": "tachiyomi-ru.mintmanga-v1.2.5.apk",
+    "lang": "ru",
+    "code": 5,
+    "version": "1.2.5"
+  },
+  {
+    "name": "Tachiyomi: Readmanga",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.readmanga",
+    "apk": "tachiyomi-ru.readmanga-v1.2.5.apk",
+    "lang": "ru",
+    "code": 5,
+    "version": "1.2.5"
+  },
+  {
+    "name": "Tachiyomi: AcademyVN",
+    "pkg": "eu.kanade.tachiyomi.extension.vi.academyvn",
+    "apk": "tachiyomi-vi.academyvn-v1.2.2.apk",
+    "lang": "vi",
+    "code": 3,
+    "version": "1.2.2"
+  },
+  {
+    "name": "Tachiyomi: Blogtruyen",
+    "pkg": "eu.kanade.tachiyomi.extension.vi.blogtruyen",
+    "apk": "tachiyomi-vi.blogtruyen-v1.2.1.apk",
+    "lang": "vi",
+    "code": 2,
+    "version": "1.2.1"
+  },
+  {
+    "name": "Tachiyomi: IuTruyenTranh",
+    "pkg": "eu.kanade.tachiyomi.extension.vi.iutruyentranh",
+    "apk": "tachiyomi-vi.iutruyentranh-v1.2.2.apk",
+    "lang": "vi",
+    "code": 3,
+    "version": "1.2.2"
+  },
+  {
+    "name": "Tachiyomi: TruyenTranhLh",
+    "pkg": "eu.kanade.tachiyomi.extension.vi.truyentranhlh",
+    "apk": "tachiyomi-vi.truyentranhlh-v1.2.3.apk",
+    "lang": "vi",
+    "code": 4,
+    "version": "1.2.3"
+  },
+  {
+    "name": "Tachiyomi: Dmzj",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.dmzj",
+    "apk": "tachiyomi-zh.dmzj-v1.0.4.apk",
+    "lang": "zh",
+    "code": 4,
+    "version": "1.0.4"
   }
 ]
