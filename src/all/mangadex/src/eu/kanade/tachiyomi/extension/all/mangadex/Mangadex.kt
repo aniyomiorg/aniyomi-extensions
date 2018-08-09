@@ -249,8 +249,9 @@ open class Mangadex(override val lang: String, private val internalLang: String,
         }
 
         val genres = mutableListOf<String>()
+        val genreList = getGenreList()
         mangaJson.get("genres").asJsonArray.forEach { id ->
-            GENRE_LIST.find { it -> it.id == id.string }?.let { genre ->
+            genreList.find { it -> it.id == id.string }?.let { genre ->
                 genres.add(genre.name)
             }
         }
@@ -424,39 +425,10 @@ open class Mangadex(override val lang: String, private val internalLang: String,
             R18(),
             Demographic(),
             OriginalLanguage(),
-            GenreList(GENRE_LIST)
+            GenreList(getGenreList())
     )
 
-    companion object {
-        private val WHITESPACE_REGEX = "\\s".toRegex()
-
-        // This number matches to the cookie
-        private const val NO_R18 = 0
-        private const val ALL = 1
-        private const val ONLY_R18 = 2
-
-        private const val SHOW_R18_PREF_Title = "Default R18 Setting"
-        private const val SHOW_R18_PREF = "showR18Default"
-
-        private const val API_MANGA = "/api/manga/"
-        private const val API_CHAPTER = "/api/chapter/"
-
-        private val SOURCE_LANG_LIST = listOf(
-                Pair("All", "0"),
-                Pair("Japanese", "2"),
-                Pair("English", "1"),
-                Pair("Polish", "3"),
-                Pair("German", "8"),
-                Pair("French", "10"),
-                Pair("Vietnamese", "12"),
-                Pair("Chinese", "21"),
-                Pair("Indonesian", "27"),
-                Pair("Korean", "28"),
-                Pair("Spanish (LATAM)", "29"),
-                Pair("Thai", "32"),
-                Pair("Filipino", "34")
-        )
-        private val GENRE_LIST = listOf(
+    private fun getGenreList() =listOf(
                 Genre("1", "4-koma"),
                 Genre("2", "Action"),
                 Genre("3", "Adventure"),
@@ -498,6 +470,35 @@ open class Mangadex(override val lang: String, private val internalLang: String,
                 Genre("39", "[no chapters]"),
                 Genre("40", "Game"),
                 Genre("41", "Isekai"))
+
+    companion object {
+        private val WHITESPACE_REGEX = "\\s".toRegex()
+
+        // This number matches to the cookie
+        private const val NO_R18 = 0
+        private const val ALL = 1
+        private const val ONLY_R18 = 2
+
+        private const val SHOW_R18_PREF_Title = "Default R18 Setting"
+        private const val SHOW_R18_PREF = "showR18Default"
+
+        private const val API_MANGA = "/api/manga/"
+        private const val API_CHAPTER = "/api/chapter/"
+
+        private val SOURCE_LANG_LIST = listOf(
+                Pair("All", "0"),
+                Pair("Japanese", "2"),
+                Pair("English", "1"),
+                Pair("Polish", "3"),
+                Pair("German", "8"),
+                Pair("French", "10"),
+                Pair("Vietnamese", "12"),
+                Pair("Chinese", "21"),
+                Pair("Indonesian", "27"),
+                Pair("Korean", "28"),
+                Pair("Spanish (LATAM)", "29"),
+                Pair("Thai", "32"),
+                Pair("Filipino", "34"))
     }
 
 }
