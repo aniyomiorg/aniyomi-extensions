@@ -18,10 +18,10 @@
   {
     "name": "Tachiyomi: MangaDex",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangadex",
-    "apk": "tachiyomi-all.mangadex-v1.2.34.apk",
+    "apk": "tachiyomi-all.mangadex-v1.2.35.apk",
     "lang": "all",
-    "code": 34,
-    "version": "1.2.34"
+    "code": 35,
+    "version": "1.2.35"
   },
   {
     "name": "Tachiyomi: My Manga Reader CMS (Many sources)",
