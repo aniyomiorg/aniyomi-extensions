@@ -256,6 +256,14 @@
     "version": "1.2.4"
   },
   {
+    "name": "Tachiyomi: LeoManga",
+    "pkg": "eu.kanade.tachiyomi.extension.es.leomanga",
+    "apk": "tachiyomi-es.leomanga-v1.0.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "1.0.1"
+  },
+  {
     "name": "Tachiyomi: HentaiFantasy",
     "pkg": "eu.kanade.tachiyomi.extension.it.hentaifantasy",
     "apk": "tachiyomi-it.hentaifantasy-v1.0.1.apk",
