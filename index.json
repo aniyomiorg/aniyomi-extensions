@@ -26,10 +26,10 @@
   {
     "name": "Tachiyomi: My Manga Reader CMS (Many sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mmrcms",
-    "apk": "tachiyomi-all.mmrcms-v1.2.6.apk",
+    "apk": "tachiyomi-all.mmrcms-v1.2.7.apk",
     "lang": "all",
-    "code": 6,
-    "version": "1.2.6"
+    "code": 7,
+    "version": "1.2.7"
   },
   {
     "name": "Tachiyomi: MyReadingManga",
@@ -262,6 +262,14 @@
     "lang": "es",
     "code": 1,
     "version": "1.0.1"
+  },
+  {
+    "name": "Tachiyomi: Japscan",
+    "pkg": "eu.kanade.tachiyomi.extension.fr.japscan",
+    "apk": "tachiyomi-fr.japscan-v1.2.0.apk",
+    "lang": "fr",
+    "code": 1,
+    "version": "1.2.0"
   },
   {
     "name": "Tachiyomi: HentaiFantasy",
