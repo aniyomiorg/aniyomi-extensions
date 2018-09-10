@@ -298,18 +298,18 @@
   {
     "name": "Tachiyomi: RawLH",
     "pkg": "eu.kanade.tachiyomi.extension.ja.rawlh",
-    "apk": "tachiyomi-ja.rawlh-v1.2.2.apk",
+    "apk": "tachiyomi-ja.rawlh-v1.2.3.apk",
     "lang": "ja",
-    "code": 4,
-    "version": "1.2.2"
+    "code": 5,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: RawQQ",
     "pkg": "eu.kanade.tachiyomi.extension.ja.rawqq",
-    "apk": "tachiyomi-ja.rawqq-v1.2.0.apk",
+    "apk": "tachiyomi-ja.rawqq-v1.2.1.apk",
     "lang": "ja",
-    "code": 1,
-    "version": "1.2.0"
+    "code": 2,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: Sen Manga",
