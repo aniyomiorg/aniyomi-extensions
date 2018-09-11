@@ -326,5 +326,85 @@
     "lang": "pt",
     "code": 3,
     "version": "1.2.3"
+  },
+  {
+    "name": "Tachiyomi: ComX",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.comx",
+    "apk": "tachiyomi-ru.comx-v1.0.1.apk",
+    "lang": "ru",
+    "code": 1,
+    "version": "1.0.1"
+  },
+  {
+    "name": "Tachiyomi: Desu",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.desu",
+    "apk": "tachiyomi-ru.desu-v1.2.3.apk",
+    "lang": "ru",
+    "code": 4,
+    "version": "1.2.3"
+  },
+  {
+    "name": "Tachiyomi: Mangachan",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.mangachan",
+    "apk": "tachiyomi-ru.mangachan-v1.2.6.apk",
+    "lang": "ru",
+    "code": 6,
+    "version": "1.2.6"
+  },
+  {
+    "name": "Tachiyomi: Mintmanga",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.mintmanga",
+    "apk": "tachiyomi-ru.mintmanga-v1.2.7.apk",
+    "lang": "ru",
+    "code": 7,
+    "version": "1.2.7"
+  },
+  {
+    "name": "Tachiyomi: Readmanga",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.readmanga",
+    "apk": "tachiyomi-ru.readmanga-v1.2.7.apk",
+    "lang": "ru",
+    "code": 7,
+    "version": "1.2.7"
+  },
+  {
+    "name": "Tachiyomi: AcademyVN",
+    "pkg": "eu.kanade.tachiyomi.extension.vi.academyvn",
+    "apk": "tachiyomi-vi.academyvn-v1.2.2.apk",
+    "lang": "vi",
+    "code": 3,
+    "version": "1.2.2"
+  },
+  {
+    "name": "Tachiyomi: Blogtruyen",
+    "pkg": "eu.kanade.tachiyomi.extension.vi.blogtruyen",
+    "apk": "tachiyomi-vi.blogtruyen-v1.2.1.apk",
+    "lang": "vi",
+    "code": 2,
+    "version": "1.2.1"
+  },
+  {
+    "name": "Tachiyomi: IuTruyenTranh",
+    "pkg": "eu.kanade.tachiyomi.extension.vi.iutruyentranh",
+    "apk": "tachiyomi-vi.iutruyentranh-v1.2.2.apk",
+    "lang": "vi",
+    "code": 3,
+    "version": "1.2.2"
+  },
+  {
+    "name": "Tachiyomi: TruyenTranhLh",
+    "pkg": "eu.kanade.tachiyomi.extension.vi.truyentranhlh",
+    "apk": "tachiyomi-vi.truyentranhlh-v1.2.3.apk",
+    "lang": "vi",
+    "code": 4,
+    "version": "1.2.3"
+  },
+  {
+    "name": "Tachiyomi: Dmzj",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.dmzj",
+    "apk": "tachiyomi-zh.dmzj-v1.0.4.apk",
+    "lang": "zh",
+    "code": 4,
+    "version": "1.0.4"
   }
 ]
