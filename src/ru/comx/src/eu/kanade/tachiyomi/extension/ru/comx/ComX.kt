@@ -37,7 +37,7 @@ class ComX : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
         manga.thumbnail_url = baseUrl + element.select("img").first().attr("src")
-        element.select("a").first().let {
+        element.select("div.info-poster1 a").first().let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.text()
         }
@@ -90,9 +90,10 @@ class ComX : ParsedHttpSource() {
 
         val text = infoElement.select("*").text()
         if (!text.contains("Добавить описание на комикс")) {
-            manga.description = text
-                    .removeRange(0,  text.indexOf("Отслеживать"))
-                    .removeRange(text.indexOf("Читать комикс"), text.length)
+            val fromRemove = "Отслеживать"
+            val toRemove = "Читать комикс"
+            val desc = text.removeRange(0,  text.indexOf(fromRemove)+fromRemove.length)
+            manga.description = desc.removeRange(desc.indexOf(toRemove)+toRemove.length, desc.length)
         }
 
         val src = infoElement.select("img").attr("src")

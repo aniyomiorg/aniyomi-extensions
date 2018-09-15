@@ -5,9 +5,9 @@ ext {
     appName = 'Tachiyomi: ComX'
     pkgNameSuffix = 'ru.comx'
     extClass = '.ComX'
-    extVersionCode = 1
-    extVersionSuffix = 1
-    libVersion = '1.0'
+    extVersionCode = 2
+    extVersionSuffix = 2
+    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"
