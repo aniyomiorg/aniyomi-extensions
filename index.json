@@ -162,10 +162,10 @@
   {
     "name": "Tachiyomi: Mangasee",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangasee",
-    "apk": "tachiyomi-en.mangasee-v1.0.2.apk",
+    "apk": "tachiyomi-en.mangasee-v1.2.1.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.0.2"
+    "code": 3,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: Mangastream",
