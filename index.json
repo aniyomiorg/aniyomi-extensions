@@ -128,6 +128,14 @@
     "version": "1.2.5"
   },
   {
+    "name": "Tachiyomi: Mangahasu",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangahasu",
+    "apk": "tachiyomi-en.mangahasu-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Mangahere",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangahere",
     "apk": "tachiyomi-en.mangahere-v1.2.4.apk",
