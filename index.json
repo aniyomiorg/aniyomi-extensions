@@ -376,6 +376,14 @@
     "version": "1.2.7"
   },
   {
+    "name": "Tachiyomi: Selfmanga",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.selfmanga",
+    "apk": "tachiyomi-ru.selfmanga-v1.2.1.apk",
+    "lang": "ru",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: AcademyVN",
     "pkg": "eu.kanade.tachiyomi.extension.vi.academyvn",
     "apk": "tachiyomi-vi.academyvn-v1.2.2.apk",
