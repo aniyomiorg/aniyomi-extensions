@@ -101,12 +101,11 @@ class Mangahasu: ParsedHttpSource() {
     }
 
     override fun prepareNewChapter(chapter: SChapter, manga: SManga) {
-        val basic = Regex("""\s*([0-9]+)(\s-\s)([0-9]+)\s*""")
+        val basic = Regex("""Chapter\s([0-9]+)""")
         when {
             basic.containsMatchIn(chapter.name) -> {
                 basic.find(chapter.name)?.let {
-                    val number = it.groups[3]?.value!!
-                    chapter.chapter_number = number.toFloat()
+                    chapter.chapter_number = it.groups[1]?.value!!.toFloat()
                 }
             }
         }
