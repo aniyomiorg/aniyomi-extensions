@@ -360,6 +360,14 @@
     "version": "1.2.6"
   },
   {
+    "name": "Tachiyomi: Mangalib",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.mangalib",
+    "apk": "tachiyomi-ru.mangalib-v1.2.1.apk",
+    "lang": "ru",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Mintmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mintmanga",
     "apk": "tachiyomi-ru.mintmanga-v1.2.7.apk",
