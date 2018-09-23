@@ -408,6 +408,14 @@
     "version": "1.2.2"
   },
   {
+    "name": "Tachiyomi: Yaoilib",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.yaoilib",
+    "apk": "tachiyomi-ru.yaoilib-v1.2.1.apk",
+    "lang": "ru",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: AcademyVN",
     "pkg": "eu.kanade.tachiyomi.extension.vi.academyvn",
     "apk": "tachiyomi-vi.academyvn-v1.2.2.apk",
