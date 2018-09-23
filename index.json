@@ -368,6 +368,14 @@
     "version": "1.2.6"
   },
   {
+    "name": "Tachiyomi: Mangahub",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.mangahub",
+    "apk": "tachiyomi-ru.mangahub-v1.2.1.apk",
+    "lang": "ru",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Mangalib",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mangalib",
     "apk": "tachiyomi-ru.mangalib-v1.2.1.apk",
