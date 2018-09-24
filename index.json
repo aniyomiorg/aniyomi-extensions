@@ -392,6 +392,14 @@
     "version": "1.2.7"
   },
   {
+    "name": "Tachiyomi: Onlinecomics",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.onlinecomics",
+    "apk": "tachiyomi-ru.onlinecomics-v1.2.1.apk",
+    "lang": "ru",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Readmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.readmanga",
     "apk": "tachiyomi-ru.readmanga-v1.2.7.apk",
