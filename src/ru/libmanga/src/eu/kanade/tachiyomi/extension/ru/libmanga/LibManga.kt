@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.ru.yaoilib
+package eu.kanade.tachiyomi.extension.ru.libmanga
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.*
@@ -11,11 +11,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import org.json.JSONObject
 
-class Yaoilib : ParsedHttpSource() {
-
-    override val name = "Yaoilib"
-
-    override val baseUrl = "https://yaoilib.me"
+open class LibManga(override val name: String, override val baseUrl: String, private val staticUrl: String) : ParsedHttpSource() {
 
     override val lang = "ru"
 
@@ -76,13 +72,13 @@ class Yaoilib : ParsedHttpSource() {
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
         // Parse script
-        val script = document.select("script:not([src])").first().html()
+        val script = document.select("script:containsData(window.__info)").first().html()
         val json: String = script.replace("window.__info = ", "")
         val chapterInfo = JSONObject(json)
         val pagesJson = chapterInfo.getJSONArray("pages")
         for (i in 0..(pagesJson.length() - 1)) {
             val page = pagesJson.getJSONObject(i)
-            pages.add(Page(page.getInt("page_slug"), "", "https://img1.yaoilib.me" + chapterInfo.getString("imgUrl") + page.getString("page_image")))
+            pages.add(Page(page.getInt("page_slug"), "", staticUrl + chapterInfo.getString("imgUrl") + page.getString("page_image")))
         }
         return pages
     }
@@ -162,7 +158,7 @@ class Yaoilib : ParsedHttpSource() {
     /*
     * Use console
     * Object.entries(__FILTER_ITEMS__.types).map(([k, v]) => `SearchFilter("${v.label}", "${v.id}")`).join(',\n')
-    * on https:/yaoilib.me/manga-list
+    * on /manga-list
     */
     private fun getCategoryList() = listOf(
             SearchFilter("Манга", "1"),
@@ -177,7 +173,7 @@ class Yaoilib : ParsedHttpSource() {
     /*
     * Use console
     * Object.entries(__FILTER_ITEMS__.status).map(([k, v]) => `SearchFilter("${v.label}", "${v.id}")`).join(',\n')
-    * on https://yaoilib.me/manga-list
+    * on /manga-list
     */
     private fun getStatusList() = listOf(
             SearchFilter("продолжается", "1"),
@@ -188,7 +184,7 @@ class Yaoilib : ParsedHttpSource() {
     /*
     * Use console
     * __FILTER_ITEMS__.genres.map(it => `SearchFilter("${it.name}", "${it.id}")`).join(',\n')
-    * on https://yaoilib.me/manga-list
+    * on /manga-list
     */
     private fun getGenreList() = listOf(
             SearchFilter("арт", "32"),
