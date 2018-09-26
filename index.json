@@ -360,6 +360,14 @@
     "version": "1.2.3"
   },
   {
+    "name": "Tachiyomi: LibManga",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.libmanga",
+    "apk": "tachiyomi-ru.libmanga-v1.2.1.apk",
+    "lang": "ru",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Mangachan",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mangachan",
     "apk": "tachiyomi-ru.mangachan-v1.2.6.apk",
@@ -374,14 +382,6 @@
     "lang": "ru",
     "code": 1,
     "version": "1.2.1"
-  },
-  {
-    "name": "Tachiyomi: Mangalib",
-    "pkg": "eu.kanade.tachiyomi.extension.ru.mangalib",
-    "apk": "tachiyomi-ru.mangalib-v1.2.2.apk",
-    "lang": "ru",
-    "code": 2,
-    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Mintmanga",
@@ -414,14 +414,6 @@
     "lang": "ru",
     "code": 2,
     "version": "1.2.2"
-  },
-  {
-    "name": "Tachiyomi: Yaoilib",
-    "pkg": "eu.kanade.tachiyomi.extension.ru.yaoilib",
-    "apk": "tachiyomi-ru.yaoilib-v1.2.1.apk",
-    "lang": "ru",
-    "code": 1,
-    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: AcademyVN",
