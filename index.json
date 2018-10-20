@@ -272,14 +272,6 @@
     "version": "1.2.4"
   },
   {
-    "name": "Tachiyomi: LeoManga",
-    "pkg": "eu.kanade.tachiyomi.extension.es.leomanga",
-    "apk": "tachiyomi-es.leomanga-v1.0.1.apk",
-    "lang": "es",
-    "code": 1,
-    "version": "1.0.1"
-  },
-  {
     "name": "Tachiyomi: TuMangaOnline",
     "pkg": "eu.kanade.tachiyomi.extension.es.tumangaonline",
     "apk": "tachiyomi-es.tumangaonline-v1.2.2.apk",
