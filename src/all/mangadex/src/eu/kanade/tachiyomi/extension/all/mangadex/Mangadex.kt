@@ -338,6 +338,10 @@ open class Mangadex(override val lang: String, private val internalLang: String,
             }
             chapterName.add(chapterJson.get("title").string)
         }
+        //if volume, chapter and title is empty its a oneshot
+        if(chapterName.isEmpty()){
+            chapterName.add("Oneshot")
+        }
         if ((status == 2 || status == 3) && doesFinalChapterExist(finalChapterNumber, chapterJson)) {
             chapterName.add("[END]")
         }
