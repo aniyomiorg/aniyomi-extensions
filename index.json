@@ -466,9 +466,9 @@
   {
     "name": "Tachiyomi: Manhuaren",
     "pkg": "eu.kanade.tachiyomi.extension.zh.manhuaren",
-    "apk": "tachiyomi-zh.manhuaren-v1.2.1.apk",
+    "apk": "tachiyomi-zh.manhuaren-v1.2.2.apk",
     "lang": "zh",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   }
 ]
