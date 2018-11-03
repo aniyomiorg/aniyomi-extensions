@@ -322,10 +322,10 @@
   {
     "name": "Tachiyomi: RawLH",
     "pkg": "eu.kanade.tachiyomi.extension.ja.rawlh",
-    "apk": "tachiyomi-ja.rawlh-v1.2.6.apk",
+    "apk": "tachiyomi-ja.rawlh-v1.2.7.apk",
     "lang": "ja",
-    "code": 6,
-    "version": "1.2.6"
+    "code": 7,
+    "version": "1.2.7"
   },
   {
     "name": "Tachiyomi: RawQQ",
