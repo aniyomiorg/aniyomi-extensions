@@ -448,6 +448,14 @@
     "version": "1.2.2"
   },
   {
+    "name": "Tachiyomi: HentaiVN",
+    "pkg": "eu.kanade.tachiyomi.extension.vi.hentaivn",
+    "apk": "tachiyomi-vi.hentaivn-v1.2.1.apk",
+    "lang": "vi",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: IuTruyenTranh",
     "pkg": "eu.kanade.tachiyomi.extension.vi.iutruyentranh",
     "apk": "tachiyomi-vi.iutruyentranh-v1.2.3.apk",
