@@ -64,6 +64,14 @@
     "version": "1.2.2"
   },
   {
+    "name": "Tachiyomi: Arc-Relight",
+    "pkg": "eu.kanade.tachiyomi.extension.en.arcrelight",
+    "apk": "tachiyomi-en.arcrelight-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Dynasty",
     "pkg": "eu.kanade.tachiyomi.extension.en.dynasty",
     "apk": "tachiyomi-en.dynasty-v1.2.9.apk",
