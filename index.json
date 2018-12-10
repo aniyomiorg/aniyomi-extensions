@@ -298,10 +298,10 @@
   {
     "name": "Tachiyomi: Japscan",
     "pkg": "eu.kanade.tachiyomi.extension.fr.japscan",
-    "apk": "tachiyomi-fr.japscan-v1.2.3.apk",
+    "apk": "tachiyomi-fr.japscan-v1.2.4.apk",
     "lang": "fr",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: HentaiFantasy",
