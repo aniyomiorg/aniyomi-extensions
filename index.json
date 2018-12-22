@@ -72,6 +72,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: Boredom Society",
+    "pkg": "eu.kanade.tachiyomi.extension.en.boredomsociety",
+    "apk": "tachiyomi-en.boredomsociety-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Dynasty",
     "pkg": "eu.kanade.tachiyomi.extension.en.dynasty",
     "apk": "tachiyomi-en.dynasty-v1.2.9.apk",
