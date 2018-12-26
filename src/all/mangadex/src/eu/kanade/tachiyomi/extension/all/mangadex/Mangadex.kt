@@ -168,12 +168,39 @@ open class Mangadex(override val lang: String, private val internalLang: String,
                         url.addQueryParameter("source_lang", number)
                     }
                 }
+                is ContentList -> {
+                    filter.state.forEach { content ->
+                        if (content.isExcluded()) {
+                            genresToExclude.add(content.id)
+                        } else if (content.isIncluded()) {
+                            genresToInclude.add(content.id)
+                        }
+                    }
+                }
+                is FormatList -> {
+                    filter.state.forEach { format ->
+                        if (format.isExcluded()) {
+                            genresToExclude.add(format.id)
+                        } else if (format.isIncluded()) {
+                            genresToInclude.add(format.id)
+                        }
+                    }
+                }
                 is GenreList -> {
                     filter.state.forEach { genre ->
                         if (genre.isExcluded()) {
                             genresToExclude.add(genre.id)
                         } else if (genre.isIncluded()) {
                             genresToInclude.add(genre.id)
+                        }
+                    }
+                }
+                is ThemeList -> {
+                    filter.state.forEach { theme ->
+                        if (theme.isExcluded()) {
+                            genresToExclude.add(theme.id)
+                        } else if (theme.isIncluded()) {
+                            genresToInclude.add(theme.id)
                         }
                     }
                 }
@@ -192,10 +219,10 @@ open class Mangadex(override val lang: String, private val internalLang: String,
         // Manually append genres list to avoid commas being encoded
         var urlToUse = url.toString()
         if (genresToInclude.isNotEmpty()) {
-            urlToUse += "&genres_inc=" + genresToInclude.joinToString(",")
+            urlToUse += "&tags_inc=" + genresToInclude.joinToString(",")
         }
         if (genresToExclude.isNotEmpty()) {
-            urlToUse += "&genres_exc=" + genresToExclude.joinToString(",")
+            urlToUse += "&tags_exc=" + genresToExclude.joinToString(",")
         }
 
         return GET(urlToUse, headers)
@@ -251,6 +278,8 @@ open class Mangadex(override val lang: String, private val internalLang: String,
         val finalChapterNumber = getFinalChapter(mangaJson)
         if ((status == 2 || status == 3) && chapterJson != null && isMangaCompleted(finalChapterNumber, chapterJson)) {
             manga.status = SManga.COMPLETED
+        } else if (status == 2 && chapterJson.takeIf { it.size() > 0 }?.get(chapterJson.keys().elementAt(0))?.obj?.get("title")?.string?.trim() == "Oneshot"){
+            manga.status = SManga.COMPLETED
         } else {
             manga.status = parseStatus(status)
         }
@@ -288,7 +317,7 @@ open class Mangadex(override val lang: String, private val internalLang: String,
                 }
     }
 
-    private fun getFinalChapter(jsonObj: JsonObject) = jsonObj.get("last_chapter").string.trim()
+    private fun getFinalChapter(jsonObj: JsonObject): String = jsonObj.get("last_chapter").string.trim()
 
     private fun isMangaCompleted(finalChapterNumber: String, chapterJson: JsonObject): Boolean {
         val count = chapterJson.entrySet()
@@ -314,7 +343,6 @@ open class Mangadex(override val lang: String, private val internalLang: String,
         chapterJson?.forEach { key, jsonElement ->
             val chapterElement = jsonElement.asJsonObject
             if (chapterElement.get("lang_code").string == internalLang && (chapterElement.get("timestamp").asLong * 1000) <= now) {
-                chapterElement.toString()
                 chapters.add(chapterFromJson(key, chapterElement, finalChapterNumber, status))
             }
         }
@@ -424,10 +452,13 @@ open class Mangadex(override val lang: String, private val internalLang: String,
 
 
     private class TextField(name: String, val key: String) : Filter.Text(name)
-    private class Genre(val id: String, name: String) : Filter.TriState(name)
-    private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Genres", genres)
+    private class Tag(val id: String, name: String) : Filter.TriState(name)
+    private class ContentList(contents: List<Tag>) : Filter.Group<Tag>("Content", contents)
+    private class FormatList(formats: List<Tag>) : Filter.Group<Tag>("Format", formats)
+    private class GenreList(genres: List<Tag>) : Filter.Group<Tag>("Genres", genres)
     private class R18 : Filter.Select<String>("R18+", arrayOf("Default", "Show all", "Show only", "Show none"))
     private class Demographic : Filter.Select<String>("Demographic", arrayOf("All", "Shounen", "Shoujo", "Seinen", "Josei"))
+    private class ThemeList(themes: List<Tag>) : Filter.Group<Tag>("Themes", themes)
 
     class SortFilter : Filter.Sort("Sort",
             sortables.map { it.first }.toTypedArray(),
@@ -442,51 +473,101 @@ open class Mangadex(override val lang: String, private val internalLang: String,
             SortFilter(),
             Demographic(),
             OriginalLanguage(),
-            GenreList(getGenreList())
+            ContentList(getContentList()),
+            FormatList(getFormatList()),
+            GenreList(getGenreList()),
+            ThemeList(getThemeList())
     )
 
+    private fun getContentList() = listOf(
+            Tag("9", "Ecchi"),
+            Tag("32", "Smut"),
+            Tag("49", "Gore"),
+            Tag("50", "Sexual Violence")
+    ).sortedWith(compareBy { it.name })
+
+    private fun getFormatList() = listOf(
+            Tag("1", "4-koma"),
+            Tag("4", "Award Winning"),
+            Tag("7", "Doujinshi"),
+            Tag("21", "Oneshot"),
+            Tag("36", "Long Strip"),
+            Tag("42", "Adaption"),
+            Tag("43", "Anthology"),
+            Tag("44", "Web Comic"),
+            Tag("45", "Full Color"),
+            Tag("46", "User Created"),
+            Tag("47", "Official Colored"),
+            Tag("48", "Fan Colored")
+    ).sortedWith(compareBy { it.name })
+
     private fun getGenreList() = listOf(
-            Genre("1", "4-koma"),
-            Genre("2", "Action"),
-            Genre("3", "Adventure"),
-            Genre("4", "Award Winning"),
-            Genre("5", "Comedy"),
-            Genre("6", "Cooking"),
-            Genre("7", "Doujinshi"),
-            Genre("8", "Drama"),
-            Genre("9", "Ecchi"),
-            Genre("10", "Fantasy"),
-            Genre("11", "Gender Bender"),
-            Genre("12", "Harem"),
-            Genre("13", "Historical"),
-            Genre("14", "Horror"),
-            Genre("15", "Josei"),
-            Genre("16", "Martial Arts"),
-            Genre("17", "Mecha"),
-            Genre("18", "Medical"),
-            Genre("19", "Music"),
-            Genre("20", "Mystery"),
-            Genre("21", "Oneshot"),
-            Genre("22", "Psychological"),
-            Genre("23", "Romance"),
-            Genre("24", "School Life"),
-            Genre("25", "Sci-Fi"),
-            Genre("26", "Seinen"),
-            Genre("27", "Shoujo"),
-            Genre("28", "Shoujo Ai"),
-            Genre("29", "Shounen"),
-            Genre("30", "Shounen Ai"),
-            Genre("31", "Slice of Life"),
-            Genre("32", "Smut"),
-            Genre("33", "Sports"),
-            Genre("34", "Supernatural"),
-            Genre("35", "Tragedy"),
-            Genre("36", "Webtoon"),
-            Genre("37", "Yaoi"),
-            Genre("38", "Yuri"),
-            Genre("39", "[no chapters]"),
-            Genre("40", "Game"),
-            Genre("41", "Isekai"))
+            Tag("2", "Action"),
+            Tag("3", "Adventure"),
+            Tag("5", "Comedy"),
+            Tag("6", "Cooking"),
+            Tag("8", "Drama"),
+            Tag("10", "Fantasy"),
+            Tag("13", "Historical"),
+            Tag("14", "Horror"),
+            Tag("15", "Josei"),
+            Tag("17", "Mecha"),
+            Tag("18", "Medical"),
+            Tag("20", "Mystery"),
+            Tag("22", "Psychological"),
+            Tag("23", "Romance"),
+            Tag("25", "Sci-Fi"),
+            Tag("28", "Shoujo Ai"),
+            Tag("30", "Shounen Ai"),
+            Tag("31", "Slice of Life"),
+            Tag("33", "Sports"),
+            Tag("35", "Tragedy"),
+            Tag("37", "Yaoi"),
+            Tag("38", "Yuri"),
+            Tag("41", "Isekai"),
+            Tag("51", "Crime"),
+            Tag("52", "Magical Girls"),
+            Tag("53", "Philosophical"),
+            Tag("54", "Superhero"),
+            Tag("55", "Thriller"),
+            Tag("56", "Wuxia")
+    ).sortedWith(compareBy { it.name })
+
+    private fun getThemeList() = listOf(
+            Tag("12", "Harem"),
+            Tag("16", "Martial Arts"),
+            Tag("19", "Music"),
+            Tag("24", "School Life"),
+            Tag("34", "Supernatural"),
+            Tag("40", "Video Games"),
+            Tag("57", "Aliens"),
+            Tag("58", "Animals"),
+            Tag("59", "Crossdressing"),
+            Tag("60", "Demons"),
+            Tag("61", "Delinquents"),
+            Tag("62", "Genderswap"),
+            Tag("63", "Ghosts"),
+            Tag("64", "Monster Girls"),
+            Tag("65", "Loli"),
+            Tag("66", "Magic"),
+            Tag("67", "Military"),
+            Tag("68", "Monsters"),
+            Tag("69", "Ninja"),
+            Tag("70", "Office Workers"),
+            Tag("71", "Police"),
+            Tag("72", "Post-Apocalyptic"),
+            Tag("73", "Reincarnation"),
+            Tag("74", "Reverse Harem"),
+            Tag("75", "Samurai"),
+            Tag("76", "Shota"),
+            Tag("77", "Survival"),
+            Tag("78", "Time Travel"),
+            Tag("79", "Vampires"),
+            Tag("80", "Traditional Games"),
+            Tag("81", "Virtual Reality"),
+            Tag("82", "Zombies"),
+            Tag("83", "Incest")
+    ).sortedWith(compareBy { it.name })
 
 
     companion object {
