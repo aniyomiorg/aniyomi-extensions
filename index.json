@@ -232,6 +232,14 @@
     "version": "1.0.1"
   },
   {
+    "name": "Tachiyomi: Questionable Content",
+    "pkg": "eu.kanade.tachiyomi.extension.en.questionablecontent",
+    "apk": "tachiyomi-en.questionablecontent-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: ReadComicOnline",
     "pkg": "eu.kanade.tachiyomi.extension.en.readcomiconline",
     "apk": "tachiyomi-en.readcomiconline-v1.2.4.apk",
