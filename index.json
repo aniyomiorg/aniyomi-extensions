@@ -1,5 +1,13 @@
 [
   {
+    "name": "Tachiyomi: ComiCake",
+    "pkg": "eu.kanade.tachiyomi.extension.all.comicake",
+    "apk": "tachiyomi-all.comicake-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: E-Hentai",
     "pkg": "eu.kanade.tachiyomi.extension.all.ehentai",
     "apk": "tachiyomi-all.ehentai-v1.0.1.apk",
@@ -10,10 +18,10 @@
   {
     "name": "Tachiyomi: FoolSlide",
     "pkg": "eu.kanade.tachiyomi.extension.all.foolslide",
-    "apk": "tachiyomi-all.foolslide-v1.2.10.apk",
+    "apk": "tachiyomi-all.foolslide-v1.2.11.apk",
     "lang": "all",
-    "code": 10,
-    "version": "1.2.10"
+    "code": 11,
+    "version": "1.2.11"
   },
   {
     "name": "Tachiyomi: MangaDex",
