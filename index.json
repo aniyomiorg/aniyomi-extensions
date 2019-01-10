@@ -376,6 +376,14 @@
     "version": "1.2.2"
   },
   {
+    "name": "Tachiyomi: Central de Mangás",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.centraldemangas",
+    "apk": "tachiyomi-pt.centraldemangas-v1.2.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Mangá Livre",
     "pkg": "eu.kanade.tachiyomi.extension.pt.mangalivre",
     "apk": "tachiyomi-pt.mangalivre-v1.2.2.apk",
@@ -392,12 +400,28 @@
     "version": "1.2.2"
   },
   {
+    "name": "Tachiyomi: Saikai Scan",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.saikaiscan",
+    "apk": "tachiyomi-pt.saikaiscan-v1.2.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Union Mangás",
     "pkg": "eu.kanade.tachiyomi.extension.pt.unionmangas",
     "apk": "tachiyomi-pt.unionmangas-v1.2.5.apk",
     "lang": "pt",
     "code": 5,
     "version": "1.2.5"
+  },
+  {
+    "name": "Tachiyomi: YES Mangás",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.yesmangas",
+    "apk": "tachiyomi-pt.yesmangas-v1.2.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: ComX",
