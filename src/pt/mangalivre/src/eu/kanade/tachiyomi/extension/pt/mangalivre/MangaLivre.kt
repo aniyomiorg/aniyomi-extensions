@@ -140,41 +140,25 @@ class MangaLivre : HttpSource() {
         val isCompleted = document.select("div#series-data span.series-author i.complete-series").first() != null
         val cGenre = document.select("div#series-data ul.tags li").joinToString { it!!.text() }
 
-        val seriesAuthor = if (isCompleted) {
-            document.select("div#series-data span.series-author").first()!!.nextSibling().toString().substringBeforeLast("+")
-        } else {
-            document.select("div#series-data span.series-author").first()!!.text().substringBeforeLast("+")
-        }
+        val seriesAuthor = document.select("div#series-data span.series-author").text()
+                .substringAfter("Completo").substringBefore("+")
 
         val authors = seriesAuthor.split("&")
                 .map { it.trim() }
 
         val cAuthor = authors.filter { !it.contains("(Arte)") }
-                .map { author ->
-                  if (author.contains(", ")) {
-                      val authorSplit = author.split(", ")
-                      authorSplit[1] + " " + authorSplit[0]
-                  } else {
-                      author
-                  }
-                }
+                .map { it.split(", ").reversed().joinToString(" ") }
 
         val cArtist = authors.filter { it.contains("(Arte)") }
                 .map { it.replace("\\(Arte\\)".toRegex(), "").trim() }
-                .map { author ->
-                  if (author.contains(", ")) {
-                      val authorSplit = author.split(", ")
-                      authorSplit[1] + " " + authorSplit[0]
-                  } else {
-                      author
-                  }
-                }
+                .map { it.split(", ").reversed().joinToString(" ") }
 
         // Check if the manga was removed by the publisher.
-        val cStatus = if (document.select("div.series-blocked-img").first() == null) {
-            if (isCompleted) SManga.COMPLETED else SManga.ONGOING
-        } else {
-            SManga.LICENSED
+        var seriesBlocked = document.select("div.series-blocked-img").first()
+        val cStatus = when {
+            seriesBlocked == null && isCompleted -> SManga.COMPLETED
+            seriesBlocked == null && !isCompleted -> SManga.ONGOING
+            else -> SManga.LICENSED
         }
 
         return SManga.create().apply {
@@ -243,11 +227,14 @@ class MangaLivre : HttpSource() {
     private fun chapterListItemParse(obj: JsonObject): SChapter {
         val scan = obj["releases"]!!.asJsonObject!!.entrySet().first().value.obj
         val cName = obj["chapter_name"]!!.asString
+        
+        val scanlators = scan["scanlators"]!!.asJsonArray
+                .joinToString { it.asJsonObject["name"].asString }
 
         return SChapter.create().apply {
             name = "Cap. ${obj["number"]!!.asString}" + (if (cName == "") "" else " - $cName")
-            date_upload = parseChapterDate(obj["date"].nullString)
-            scanlator = scan["scanlators"]!!.asJsonArray.get(0)!!.asJsonObject["name"].nullString
+            date_upload = parseChapterDate(obj["date_created"].asString.substring(0, 10))
+            scanlator = scanlators
             url = scan["link"]!!.nullString ?: ""
             chapter_number = obj["number"]!!.asString.toFloatOrNull() ?: "1".toFloat()
         }
@@ -255,7 +242,7 @@ class MangaLivre : HttpSource() {
 
     private fun parseChapterDate(date: String?) : Long {
         return try {
-            SimpleDateFormat("dd/MM/yy", Locale.ENGLISH).parse(date).time
+            SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(date).time
         } catch (e: ParseException) {
             0L
         }
