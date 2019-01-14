@@ -384,6 +384,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: MangaHost",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.mangahost",
+    "apk": "tachiyomi-pt.mangahost-v1.2.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Mangá Livre",
     "pkg": "eu.kanade.tachiyomi.extension.pt.mangalivre",
     "apk": "tachiyomi-pt.mangalivre-v1.2.3.apk",
