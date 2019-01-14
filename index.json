@@ -386,18 +386,18 @@
   {
     "name": "Tachiyomi: Mangá Livre",
     "pkg": "eu.kanade.tachiyomi.extension.pt.mangalivre",
-    "apk": "tachiyomi-pt.mangalivre-v1.2.2.apk",
+    "apk": "tachiyomi-pt.mangalivre-v1.2.3.apk",
     "lang": "pt",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: mangásPROJECT",
     "pkg": "eu.kanade.tachiyomi.extension.pt.mangasproject",
-    "apk": "tachiyomi-pt.mangasproject-v1.2.2.apk",
+    "apk": "tachiyomi-pt.mangasproject-v1.2.3.apk",
     "lang": "pt",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Saikai Scan",
