@@ -18,10 +18,10 @@
   {
     "name": "Tachiyomi: FoolSlide",
     "pkg": "eu.kanade.tachiyomi.extension.all.foolslide",
-    "apk": "tachiyomi-all.foolslide-v1.2.11.apk",
+    "apk": "tachiyomi-all.foolslide-v1.2.12.apk",
     "lang": "all",
-    "code": 11,
-    "version": "1.2.11"
+    "code": 12,
+    "version": "1.2.12"
   },
   {
     "name": "Tachiyomi: MangaDex",
@@ -230,6 +230,14 @@
     "lang": "en",
     "code": 4,
     "version": "1.2.4"
+  },
+  {
+    "name": "Tachiyomi: NANI? Scans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.naniscans",
+    "apk": "tachiyomi-en.naniscans-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: Perveden",
