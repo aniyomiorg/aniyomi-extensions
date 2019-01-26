@@ -48,12 +48,12 @@
     "version": "1.2.18"
   },
   {
-    "name": "Tachiyomi: nhentai",
+    "name": "Tachiyomi: NHentai",
     "pkg": "eu.kanade.tachiyomi.extension.all.nhentai",
-    "apk": "tachiyomi-all.nhentai-v1.2.3.apk",
+    "apk": "tachiyomi-all.nhentai-v1.2.4.apk",
     "lang": "all",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: WPManga (Many sources)",
