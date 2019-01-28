@@ -18,10 +18,10 @@
   {
     "name": "Tachiyomi: FoolSlide",
     "pkg": "eu.kanade.tachiyomi.extension.all.foolslide",
-    "apk": "tachiyomi-all.foolslide-v1.2.12.apk",
+    "apk": "tachiyomi-all.foolslide-v1.2.13.apk",
     "lang": "all",
-    "code": 12,
-    "version": "1.2.12"
+    "code": 13,
+    "version": "1.2.13"
   },
   {
     "name": "Tachiyomi: MangaDex",
@@ -74,10 +74,10 @@
   {
     "name": "Tachiyomi: Arc-Relight",
     "pkg": "eu.kanade.tachiyomi.extension.en.arcrelight",
-    "apk": "tachiyomi-en.arcrelight-v1.2.1.apk",
+    "apk": "tachiyomi-en.arcrelight-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Boredom Society",
