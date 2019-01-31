@@ -192,6 +192,14 @@
     "version": "1.2.5"
   },
   {
+    "name": "Tachiyomi: Manga Plus by Shueisha",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangaplus",
+    "apk": "tachiyomi-en.mangaplus-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Manga Rock",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangarock",
     "apk": "tachiyomi-en.mangarock-v1.0.5.apk",
