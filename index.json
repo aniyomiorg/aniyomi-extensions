@@ -298,10 +298,10 @@
   {
     "name": "Tachiyomi: Tapastic",
     "pkg": "eu.kanade.tachiyomi.extension.en.tapastic",
-    "apk": "tachiyomi-en.tapastic-v1.0.1.apk",
+    "apk": "tachiyomi-en.tapastic-v1.0.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.0.1"
+    "code": 2,
+    "version": "1.0.2"
   },
   {
     "name": "Tachiyomi: Webcomics",
