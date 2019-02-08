@@ -218,10 +218,10 @@
   {
     "name": "Tachiyomi: Mangastream",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangastream",
-    "apk": "tachiyomi-en.mangastream-v1.0.2.apk",
+    "apk": "tachiyomi-en.mangastream-v1.0.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.0.2"
+    "code": 3,
+    "version": "1.0.3"
   },
   {
     "name": "Tachiyomi: Mangazuki",
