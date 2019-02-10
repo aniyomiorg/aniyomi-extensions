@@ -10,10 +10,10 @@
   {
     "name": "Tachiyomi: E-Hentai",
     "pkg": "eu.kanade.tachiyomi.extension.all.ehentai",
-    "apk": "tachiyomi-all.ehentai-v1.0.1.apk",
+    "apk": "tachiyomi-all.ehentai-v1.0.2.apk",
     "lang": "all",
-    "code": 1,
-    "version": "1.0.1"
+    "code": 2,
+    "version": "1.0.2"
   },
   {
     "name": "Tachiyomi: FoolSlide",
