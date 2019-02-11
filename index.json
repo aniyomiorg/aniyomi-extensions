@@ -282,10 +282,10 @@
   {
     "name": "Tachiyomi: ReadMangaToday",
     "pkg": "eu.kanade.tachiyomi.extension.en.readmangatoday",
-    "apk": "tachiyomi-en.readmangatoday-v1.2.5.apk",
+    "apk": "tachiyomi-en.readmangatoday-v1.2.6.apk",
     "lang": "en",
-    "code": 5,
-    "version": "1.2.5"
+    "code": 6,
+    "version": "1.2.6"
   },
   {
     "name": "Tachiyomi: ShoujoSense",
