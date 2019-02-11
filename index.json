@@ -346,10 +346,10 @@
   {
     "name": "Tachiyomi: HentaiFantasy",
     "pkg": "eu.kanade.tachiyomi.extension.it.hentaifantasy",
-    "apk": "tachiyomi-it.hentaifantasy-v1.0.1.apk",
+    "apk": "tachiyomi-it.hentaifantasy-v1.0.2.apk",
     "lang": "it",
-    "code": 1,
-    "version": "1.0.1"
+    "code": 2,
+    "version": "1.0.2"
   },
   {
     "name": "Tachiyomi: Mangaeden",
