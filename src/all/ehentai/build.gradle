@@ -5,8 +5,8 @@ ext {
     appName = 'Tachiyomi: E-Hentai'
     pkgNameSuffix = 'all.ehentai'
     extClass = '.EHJapanese; .EHEnglish; .EHChinese; .EHDutch; .EHFrench; .EHGerman; .EHHungarian; .EHItalian; .EHKorean; .EHPolish; .EHPolish; .EHPortuguese; .EHRussian; .EHSpanish; .EHThai; .EHVietnamese; .EHSpeechless; .EHOther'
-    extVersionCode = 2
-    libVersion = '1.0'
+    extVersionCode = 1
+    libVersion = '1.2'
 }
 
 apply from: "$rootDir/common.gradle"
