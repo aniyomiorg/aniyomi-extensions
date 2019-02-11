@@ -66,10 +66,10 @@
   {
     "name": "Tachiyomi: WieManga",
     "pkg": "eu.kanade.tachiyomi.extension.de.wiemanga",
-    "apk": "tachiyomi-de.wiemanga-v1.2.2.apk",
+    "apk": "tachiyomi-de.wiemanga-v1.2.3.apk",
     "lang": "de",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Arc-Relight",
