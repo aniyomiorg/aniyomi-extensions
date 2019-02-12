@@ -402,10 +402,10 @@
   {
     "name": "Tachiyomi: MangaShow.Me",
     "pkg": "eu.kanade.tachiyomi.extension.ko.mangashowme",
-    "apk": "tachiyomi-ko.mangashowme-v1.2.2.apk",
+    "apk": "tachiyomi-ko.mangashowme-v1.2.3.apk",
     "lang": "ko",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: NewToki",
