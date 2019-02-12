@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit
  **/
 class MangaShowMe : ParsedHttpSource() {
     override val name = "MangaShow.Me"
-    override val baseUrl = "https://mangashow.me"
+    override val baseUrl = "https://mangashow2.me"
     override val lang: String = "ko"
 
     // Latest updates currently returns duplicate manga as it separates manga into chapters
@@ -33,6 +33,21 @@ class MangaShowMe : ParsedHttpSource() {
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .addInterceptor(ImageDecoderInterceptor())
+            .addInterceptor { chain ->
+                val req = chain.request()
+                var res: Response? = null
+
+                for (_i in 0..10) {
+                    try {
+                        res = chain.proceed(req)
+                    } catch (e: javax.net.ssl.SSLHandshakeException) {
+                        if (e.message.toString().contains("Connection reset by peer")) continue
+                    }
+                    break
+                }
+
+                res ?: chain.proceed(req)
+            }
             .addInterceptor { chain ->
                 val response = chain.proceed(chain.request())
                 if (response.code() == 503) {
