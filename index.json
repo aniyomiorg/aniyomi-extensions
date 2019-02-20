@@ -56,6 +56,14 @@
     "version": "1.2.5"
   },
   {
+    "name": "Tachiyomi: NineHentai",
+    "pkg": "eu.kanade.tachiyomi.extension.all.ninehentai",
+    "apk": "tachiyomi-all.ninehentai-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: WPManga (Many sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmanga",
     "apk": "tachiyomi-all.wpmanga-v1.2.3.apk",
