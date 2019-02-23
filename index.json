@@ -528,6 +528,14 @@
     "version": "1.2.2"
   },
   {
+    "name": "Tachiyomi: Mangaonlinebiz",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.mangaonlinebiz",
+    "apk": "tachiyomi-ru.mangaonlinebiz-v1.2.1.apk",
+    "lang": "ru",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Mintmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mintmanga",
     "apk": "tachiyomi-ru.mintmanga-v1.2.9.apk",
