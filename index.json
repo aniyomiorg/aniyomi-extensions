@@ -602,10 +602,10 @@
   {
     "name": "Tachiyomi: IuTruyenTranh",
     "pkg": "eu.kanade.tachiyomi.extension.vi.iutruyentranh",
-    "apk": "tachiyomi-vi.iutruyentranh-v1.2.3.apk",
+    "apk": "tachiyomi-vi.iutruyentranh-v1.2.4.apk",
     "lang": "vi",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: TruyenTranhLh",
