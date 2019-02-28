@@ -194,10 +194,10 @@
   {
     "name": "Tachiyomi: MangaNelo",
     "pkg": "eu.kanade.tachiyomi.extension.en.manganelo",
-    "apk": "tachiyomi-en.manganelo-v1.2.2.apk",
+    "apk": "tachiyomi-en.manganelo-v1.2.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: MangaPark",
