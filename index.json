@@ -410,18 +410,18 @@
   {
     "name": "Tachiyomi: JMana",
     "pkg": "eu.kanade.tachiyomi.extension.ko.jmana",
-    "apk": "tachiyomi-ko.jmana-v1.2.3.apk",
+    "apk": "tachiyomi-ko.jmana-v1.2.4.apk",
     "lang": "ko",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: MangaShow.Me",
     "pkg": "eu.kanade.tachiyomi.extension.ko.mangashowme",
-    "apk": "tachiyomi-ko.mangashowme-v1.2.5.apk",
+    "apk": "tachiyomi-ko.mangashowme-v1.2.6.apk",
     "lang": "ko",
-    "code": 5,
-    "version": "1.2.5"
+    "code": 6,
+    "version": "1.2.6"
   },
   {
     "name": "Tachiyomi: NewToki",
