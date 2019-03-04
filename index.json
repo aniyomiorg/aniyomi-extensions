@@ -90,10 +90,10 @@
   {
     "name": "Tachiyomi: Boredom Society",
     "pkg": "eu.kanade.tachiyomi.extension.en.boredomsociety",
-    "apk": "tachiyomi-en.boredomsociety-v1.2.3.apk",
+    "apk": "tachiyomi-en.boredomsociety-v1.2.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: Dragon Ball Multiverse",
@@ -162,10 +162,10 @@
   {
     "name": "Tachiyomi: Mangago",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangago",
-    "apk": "tachiyomi-en.mangago-v1.2.6.apk",
+    "apk": "tachiyomi-en.mangago-v1.2.7.apk",
     "lang": "en",
-    "code": 6,
-    "version": "1.2.6"
+    "code": 7,
+    "version": "1.2.7"
   },
   {
     "name": "Tachiyomi: Mangahasu",
@@ -354,10 +354,10 @@
   {
     "name": "Tachiyomi: Japscan",
     "pkg": "eu.kanade.tachiyomi.extension.fr.japscan",
-    "apk": "tachiyomi-fr.japscan-v1.2.5.apk",
+    "apk": "tachiyomi-fr.japscan-v1.2.6.apk",
     "lang": "fr",
-    "code": 5,
-    "version": "1.2.5"
+    "code": 6,
+    "version": "1.2.6"
   },
   {
     "name": "Tachiyomi: Neumanga",
@@ -394,18 +394,18 @@
   {
     "name": "Tachiyomi: RawLH",
     "pkg": "eu.kanade.tachiyomi.extension.ja.rawlh",
-    "apk": "tachiyomi-ja.rawlh-v1.2.8.apk",
+    "apk": "tachiyomi-ja.rawlh-v1.2.9.apk",
     "lang": "ja",
-    "code": 8,
-    "version": "1.2.8"
+    "code": 9,
+    "version": "1.2.9"
   },
   {
     "name": "Tachiyomi: RawQQ",
     "pkg": "eu.kanade.tachiyomi.extension.ja.rawqq",
-    "apk": "tachiyomi-ja.rawqq-v1.2.3.apk",
+    "apk": "tachiyomi-ja.rawqq-v1.2.4.apk",
     "lang": "ja",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: Sen Manga",
@@ -522,18 +522,18 @@
   {
     "name": "Tachiyomi: LibManga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.libmanga",
-    "apk": "tachiyomi-ru.libmanga-v1.2.3.apk",
+    "apk": "tachiyomi-ru.libmanga-v1.2.4.apk",
     "lang": "ru",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: Mangachan",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mangachan",
-    "apk": "tachiyomi-ru.mangachan-v1.2.6.apk",
+    "apk": "tachiyomi-ru.mangachan-v1.2.7.apk",
     "lang": "ru",
-    "code": 6,
-    "version": "1.2.6"
+    "code": 7,
+    "version": "1.2.7"
   },
   {
     "name": "Tachiyomi: Mangahub",
