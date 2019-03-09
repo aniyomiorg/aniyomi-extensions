@@ -242,10 +242,10 @@
   {
     "name": "Tachiyomi: Mangazuki",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangazuki",
-    "apk": "tachiyomi-en.mangazuki-v1.0.3.apk",
+    "apk": "tachiyomi-en.mangazuki-v1.0.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "1.0.3"
+    "code": 4,
+    "version": "1.0.4"
   },
   {
     "name": "Tachiyomi: MerakiScans",
