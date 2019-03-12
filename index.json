@@ -354,10 +354,10 @@
   {
     "name": "Tachiyomi: Japscan",
     "pkg": "eu.kanade.tachiyomi.extension.fr.japscan",
-    "apk": "tachiyomi-fr.japscan-v1.2.7.apk",
+    "apk": "tachiyomi-fr.japscan-v1.2.8.apk",
     "lang": "fr",
-    "code": 7,
-    "version": "1.2.7"
+    "code": 8,
+    "version": "1.2.8"
   },
   {
     "name": "Tachiyomi: Neumanga",
@@ -418,26 +418,26 @@
   {
     "name": "Tachiyomi: JMana",
     "pkg": "eu.kanade.tachiyomi.extension.ko.jmana",
-    "apk": "tachiyomi-ko.jmana-v1.2.4.apk",
+    "apk": "tachiyomi-ko.jmana-v1.2.5.apk",
     "lang": "ko",
-    "code": 4,
-    "version": "1.2.4"
+    "code": 5,
+    "version": "1.2.5"
   },
   {
     "name": "Tachiyomi: MangaShow.Me",
     "pkg": "eu.kanade.tachiyomi.extension.ko.mangashowme",
-    "apk": "tachiyomi-ko.mangashowme-v1.2.6.apk",
+    "apk": "tachiyomi-ko.mangashowme-v1.2.7.apk",
     "lang": "ko",
-    "code": 6,
-    "version": "1.2.6"
+    "code": 7,
+    "version": "1.2.7"
   },
   {
     "name": "Tachiyomi: NewToki",
     "pkg": "eu.kanade.tachiyomi.extension.ko.newtoki",
-    "apk": "tachiyomi-ko.newtoki-v1.2.4.apk",
+    "apk": "tachiyomi-ko.newtoki-v1.2.5.apk",
     "lang": "ko",
-    "code": 4,
-    "version": "1.2.4"
+    "code": 5,
+    "version": "1.2.5"
   },
   {
     "name": "Tachiyomi: Central de Mangás",
