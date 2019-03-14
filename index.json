@@ -352,6 +352,14 @@
     "version": "1.2.8"
   },
   {
+    "name": "Tachiyomi: Mangakawaii",
+    "pkg": "eu.kanade.tachiyomi.extension.fr.mangakawaii",
+    "apk": "tachiyomi-fr.mangakawaii-v1.2.1.apk",
+    "lang": "fr",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Neumanga",
     "pkg": "eu.kanade.tachiyomi.extension.id.neumanga",
     "apk": "tachiyomi-id.neumanga-v1.0.2.apk",
