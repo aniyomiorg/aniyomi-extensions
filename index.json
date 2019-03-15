@@ -32,6 +32,14 @@
     "version": "1.2.53"
   },
   {
+    "name": "Tachiyomi: MangAdventure",
+    "pkg": "eu.kanade.tachiyomi.extension.all.mangadventure",
+    "apk": "tachiyomi-all.mangadventure-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: My Manga Reader CMS (Many sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mmrcms",
     "apk": "tachiyomi-all.mmrcms-v1.2.15.apk",
@@ -78,14 +86,6 @@
     "lang": "de",
     "code": 3,
     "version": "1.2.3"
-  },
-  {
-    "name": "Tachiyomi: Arc-Relight",
-    "pkg": "eu.kanade.tachiyomi.extension.en.arcrelight",
-    "apk": "tachiyomi-en.arcrelight-v1.2.2.apk",
-    "lang": "en",
-    "code": 2,
-    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Boredom Society",
