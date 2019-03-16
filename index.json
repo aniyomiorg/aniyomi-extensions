@@ -520,6 +520,14 @@
     "version": "1.2.4"
   },
   {
+    "name": "Tachiyomi: Henchan",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.henchan",
+    "apk": "tachiyomi-ru.henchan-v1.2.1.apk",
+    "lang": "ru",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: LibManga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.libmanga",
     "apk": "tachiyomi-ru.libmanga-v1.2.4.apk",
