@@ -66,10 +66,10 @@
   {
     "name": "Tachiyomi: NineHentai",
     "pkg": "eu.kanade.tachiyomi.extension.all.ninehentai",
-    "apk": "tachiyomi-all.ninehentai-v1.2.1.apk",
+    "apk": "tachiyomi-all.ninehentai-v1.2.2.apk",
     "lang": "all",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: WPManga (Many sources)",
@@ -522,10 +522,10 @@
   {
     "name": "Tachiyomi: Henchan",
     "pkg": "eu.kanade.tachiyomi.extension.ru.henchan",
-    "apk": "tachiyomi-ru.henchan-v1.2.3.apk",
+    "apk": "tachiyomi-ru.henchan-v1.2.4.apk",
     "lang": "ru",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: LibManga",
