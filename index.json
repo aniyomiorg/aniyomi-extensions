@@ -250,10 +250,10 @@
   {
     "name": "Tachiyomi: Manhwahentai",
     "pkg": "eu.kanade.tachiyomi.extension.en.manhwahentai",
-    "apk": "tachiyomi-en.manhwahentai-v1.2.1.apk",
+    "apk": "tachiyomi-en.manhwahentai-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: MerakiScans",
@@ -370,10 +370,10 @@
   {
     "name": "Tachiyomi: Komikgo",
     "pkg": "eu.kanade.tachiyomi.extension.id.komikgo",
-    "apk": "tachiyomi-id.komikgo-v1.2.1.apk",
+    "apk": "tachiyomi-id.komikgo-v1.2.2.apk",
     "lang": "id",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Neumanga",
@@ -450,10 +450,10 @@
   {
     "name": "Tachiyomi: Manhwahand",
     "pkg": "eu.kanade.tachiyomi.extension.ko.manhwahand",
-    "apk": "tachiyomi-ko.manhwahand-v1.2.1.apk",
+    "apk": "tachiyomi-ko.manhwahand-v1.2.2.apk",
     "lang": "ko",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: NewToki",
