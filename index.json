@@ -58,10 +58,10 @@
   {
     "name": "Tachiyomi: NHentai",
     "pkg": "eu.kanade.tachiyomi.extension.all.nhentai",
-    "apk": "tachiyomi-all.nhentai-v1.2.6.apk",
+    "apk": "tachiyomi-all.nhentai-v1.2.7.apk",
     "lang": "all",
-    "code": 6,
-    "version": "1.2.6"
+    "code": 7,
+    "version": "1.2.7"
   },
   {
     "name": "Tachiyomi: NineHentai",
