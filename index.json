@@ -626,18 +626,18 @@
   {
     "name": "Tachiyomi: HocVienTruyenTranh",
     "pkg": "eu.kanade.tachiyomi.extension.vi.academyvn",
-    "apk": "tachiyomi-vi.academyvn-v1.2.5.apk",
+    "apk": "tachiyomi-vi.academyvn-v1.2.6.apk",
     "lang": "vi",
-    "code": 5,
-    "version": "1.2.5"
+    "code": 6,
+    "version": "1.2.6"
   },
   {
     "name": "Tachiyomi: BlogTruyen",
     "pkg": "eu.kanade.tachiyomi.extension.vi.blogtruyen",
-    "apk": "tachiyomi-vi.blogtruyen-v1.2.3.apk",
+    "apk": "tachiyomi-vi.blogtruyen-v1.2.4.apk",
     "lang": "vi",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: HentaiVN",
@@ -658,10 +658,10 @@
   {
     "name": "Tachiyomi: TruyenTranhLH",
     "pkg": "eu.kanade.tachiyomi.extension.vi.truyentranhlh",
-    "apk": "tachiyomi-vi.truyentranhlh-v1.2.5.apk",
+    "apk": "tachiyomi-vi.truyentranhlh-v1.2.6.apk",
     "lang": "vi",
-    "code": 5,
-    "version": "1.2.5"
+    "code": 6,
+    "version": "1.2.6"
   },
   {
     "name": "Tachiyomi: Dmzj",
