@@ -6,6 +6,7 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.*
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -116,7 +117,12 @@ class TruyenTranhLH : HttpSource() {
         manga.genre = infoElement.select("a.btn.btn-xs.btn-danger").joinToString { it.text() }
         manga.description = document.select("h3:contains(Sơ lược) + p").text()
         manga.status = infoElement.select("a.btn.btn-xs.btn-success").last()?.text().orEmpty().let { parseStatus(it) }
-        manga.thumbnail_url = document.select("img.thumbnail").first()?.attr("src")
+        val imgUrl = document.select("img.thumbnail").first()?.attr("src")
+        if (imgUrl!!.startsWith("app/")) {
+            manga.thumbnail_url = "$baseUrl/$imgUrl"
+        } else {
+            manga.thumbnail_url = imgUrl
+        }
         return manga
     }
 
@@ -177,18 +183,18 @@ class TruyenTranhLH : HttpSource() {
     override fun pageListParse(response: Response): List<Page> {
         val document = response.asJsoup()
         val pages = mutableListOf<Page>()
-        var i = 0
         document.select("div.chapter-content > img").forEach {
-            var url = it.attr("src")
-            if (StringUtil.isBlank(url)) {
-                url = it.attr("data-original")
-            }
-            pages.add(Page(i++, "", url))
+            pages.add(Page(pages.size, "", it.attr("src")))
         }
         return pages
     }
 
-    override fun imageUrlRequest(page: Page) = GET(page.url)
+    override fun imageRequest(page: Page): Request {
+        val imgHeader = Headers.Builder().apply {
+            add("Referer", baseUrl)
+        }.build()
+        return GET(page.imageUrl!!, imgHeader)
+    }
 
     override fun imageUrlParse(response: Response): String {
         return ""
