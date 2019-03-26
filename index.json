@@ -554,10 +554,10 @@
   {
     "name": "Tachiyomi: Henchan",
     "pkg": "eu.kanade.tachiyomi.extension.ru.henchan",
-    "apk": "tachiyomi-ru.henchan-v1.2.6.apk",
+    "apk": "tachiyomi-ru.henchan-v1.2.7.apk",
     "lang": "ru",
-    "code": 6,
-    "version": "1.2.6"
+    "code": 7,
+    "version": "1.2.7"
   },
   {
     "name": "Tachiyomi: LibManga",
@@ -598,6 +598,14 @@
     "lang": "ru",
     "code": 9,
     "version": "1.2.9"
+  },
+  {
+    "name": "Tachiyomi: Nude-Moon",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.nudemoon",
+    "apk": "tachiyomi-ru.nudemoon-v1.2.1.apk",
+    "lang": "ru",
+    "code": 1,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: Onlinecomics",
