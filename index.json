@@ -66,10 +66,10 @@
   {
     "name": "Tachiyomi: NineHentai",
     "pkg": "eu.kanade.tachiyomi.extension.all.ninehentai",
-    "apk": "tachiyomi-all.ninehentai-v1.2.2.apk",
+    "apk": "tachiyomi-all.ninehentai-v1.2.3.apk",
     "lang": "all",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: WPManga (Many sources)",
@@ -202,10 +202,10 @@
   {
     "name": "Tachiyomi: MangaPark",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangapark",
-    "apk": "tachiyomi-en.mangapark-v1.2.8.apk",
+    "apk": "tachiyomi-en.mangapark-v1.2.9.apk",
     "lang": "en",
-    "code": 8,
-    "version": "1.2.8"
+    "code": 9,
+    "version": "1.2.9"
   },
   {
     "name": "Tachiyomi: Manga Plus by Shueisha",
@@ -218,10 +218,10 @@
   {
     "name": "Tachiyomi: Manga Rock",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangarock",
-    "apk": "tachiyomi-en.mangarock-v1.0.5.apk",
+    "apk": "tachiyomi-en.mangarock-v1.0.6.apk",
     "lang": "en",
-    "code": 5,
-    "version": "1.0.5"
+    "code": 6,
+    "version": "1.0.6"
   },
   {
     "name": "Tachiyomi: Mangasee",
