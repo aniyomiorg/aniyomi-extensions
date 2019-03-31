@@ -442,18 +442,18 @@
   {
     "name": "Tachiyomi: JMana",
     "pkg": "eu.kanade.tachiyomi.extension.ko.jmana",
-    "apk": "tachiyomi-ko.jmana-v1.2.5.apk",
+    "apk": "tachiyomi-ko.jmana-v1.2.6.apk",
     "lang": "ko",
-    "code": 5,
-    "version": "1.2.5"
+    "code": 6,
+    "version": "1.2.6"
   },
   {
-    "name": "Tachiyomi: MangaShow.Me",
+    "name": "Tachiyomi: ManaMoa (MangaShow.Me)",
     "pkg": "eu.kanade.tachiyomi.extension.ko.mangashowme",
-    "apk": "tachiyomi-ko.mangashowme-v1.2.7.apk",
+    "apk": "tachiyomi-ko.mangashowme-v1.2.8.apk",
     "lang": "ko",
-    "code": 7,
-    "version": "1.2.7"
+    "code": 8,
+    "version": "1.2.8"
   },
   {
     "name": "Tachiyomi: Manhwahand",
@@ -466,10 +466,10 @@
   {
     "name": "Tachiyomi: NewToki",
     "pkg": "eu.kanade.tachiyomi.extension.ko.newtoki",
-    "apk": "tachiyomi-ko.newtoki-v1.2.5.apk",
+    "apk": "tachiyomi-ko.newtoki-v1.2.6.apk",
     "lang": "ko",
-    "code": 5,
-    "version": "1.2.5"
+    "code": 6,
+    "version": "1.2.6"
   },
   {
     "name": "Tachiyomi: Central de Mangás",
