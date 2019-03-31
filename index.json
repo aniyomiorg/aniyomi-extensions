@@ -448,12 +448,12 @@
     "version": "1.2.6"
   },
   {
-    "name": "Tachiyomi: ManaMoa (MangaShow.Me)",
+    "name": "Tachiyomi: MangaShow.Me (ManaMoa)",
     "pkg": "eu.kanade.tachiyomi.extension.ko.mangashowme",
-    "apk": "tachiyomi-ko.mangashowme-v1.2.8.apk",
+    "apk": "tachiyomi-ko.mangashowme-v1.2.9.apk",
     "lang": "ko",
-    "code": 8,
-    "version": "1.2.8"
+    "code": 9,
+    "version": "1.2.9"
   },
   {
     "name": "Tachiyomi: Manhwahand",
