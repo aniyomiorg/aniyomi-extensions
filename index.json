@@ -624,6 +624,14 @@
     "version": "1.2.9"
   },
   {
+    "name": "Tachiyomi: Risens Team",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.risensteam",
+    "apk": "tachiyomi-ru.risensteam-v1.2.1.apk",
+    "lang": "ru",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Selfmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.selfmanga",
     "apk": "tachiyomi-ru.selfmanga-v1.2.3.apk",
