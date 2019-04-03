@@ -218,10 +218,10 @@
   {
     "name": "Tachiyomi: Manga Rock",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangarock",
-    "apk": "tachiyomi-en.mangarock-v1.2.9.apk",
+    "apk": "tachiyomi-en.mangarock-v1.2.10.apk",
     "lang": "en",
-    "code": 9,
-    "version": "1.2.9"
+    "code": 10,
+    "version": "1.2.10"
   },
   {
     "name": "Tachiyomi: Mangasee",
