@@ -466,10 +466,10 @@
   {
     "name": "Tachiyomi: Manhwahand",
     "pkg": "eu.kanade.tachiyomi.extension.ko.manhwahand",
-    "apk": "tachiyomi-ko.manhwahand-v1.2.2.apk",
+    "apk": "tachiyomi-ko.manhwahand-v1.2.3.apk",
     "lang": "ko",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: NewToki",
