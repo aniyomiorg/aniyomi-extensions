@@ -416,6 +416,14 @@
     "version": "1.0.2"
   },
   {
+    "name": "Tachiyomi: Mangaworld",
+    "pkg": "eu.kanade.tachiyomi.extension.it.mangaworld",
+    "apk": "tachiyomi-it.mangaworld-v1.2.1.apk",
+    "lang": "it",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Perveden",
     "pkg": "eu.kanade.tachiyomi.extension.it.perveden",
     "apk": "tachiyomi-it.perveden-v1.0.2.apk",
