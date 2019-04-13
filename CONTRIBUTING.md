@@ -32,7 +32,7 @@ apply from: "$rootDir/common.gradle"
 | Field | Description |
 | ----- | ----------- |
 | `appName` | The name of the Android application. By prefixing it with `Tachiyomi: `, it will be easier to locate with an Android package manager. |
-| `pkgNameSuffix` | A unique suffic added to `eu.kanade.tachiyomi.extension`. The language and the site name should be enough. Remember your catalogue code implementation must be placed in this package. |
+| `pkgNameSuffix` | A unique suffix added to `eu.kanade.tachiyomi.extension`. The language and the site name should be enough. Remember your catalogue code implementation must be placed in this package. |
 | `extClass` | Points to the catalogue class. You can use a relative path starting with a dot (the package name is the base path). This is required for Tachiyomi to instantiate the catalogue. |
 | `extVersionCode` | The version code of the catalogue. This must be increased with any change to the implementation and cannot be `0`. |
 | `libVersion` | The version of the [extensions library](https://github.com/inorichi/tachiyomi-extensions-lib)* used. |
