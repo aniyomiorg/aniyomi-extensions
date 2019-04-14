@@ -128,6 +128,14 @@
     "version": "1.2.9"
   },
   {
+    "name": "Tachiyomi: LHTranslation",
+    "pkg": "eu.kanade.tachiyomi.extension.en.lhtranslation",
+    "apk": "tachiyomi-en.lhtranslation-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Mangacow",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangacow",
     "apk": "tachiyomi-en.mangacow-v1.0.1.apk",
@@ -190,6 +198,14 @@
     "lang": "en",
     "code": 4,
     "version": "1.2.4"
+  },
+  {
+    "name": "Tachiyomi: MangaLife",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangalife",
+    "apk": "tachiyomi-en.mangalife-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: MangaNelo",
