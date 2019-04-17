@@ -400,6 +400,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: Komikcast",
+    "pkg": "eu.kanade.tachiyomi.extension.id.komikcast",
+    "apk": "tachiyomi-id.komikcast-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Komikgo",
     "pkg": "eu.kanade.tachiyomi.extension.id.komikgo",
     "apk": "tachiyomi-id.komikgo-v1.2.2.apk",
