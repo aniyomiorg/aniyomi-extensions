@@ -376,6 +376,14 @@
     "version": "1.2.5"
   },
   {
+    "name": "Tachiyomi: DoujinHentai",
+    "pkg": "eu.kanade.tachiyomi.extension.es.doujinhentai",
+    "apk": "tachiyomi-es.doujinhentai-v1.2.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Ikuhentai",
     "pkg": "eu.kanade.tachiyomi.extension.es.ikuhentai",
     "apk": "tachiyomi-es.ikuhentai-v1.2.1.apk",
