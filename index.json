@@ -80,6 +80,14 @@
     "version": "1.2.2"
   },
   {
+    "name": "Tachiyomi: Webtoons",
+    "pkg": "eu.kanade.tachiyomi.extension.all.webtoons",
+    "apk": "tachiyomi-all.webtoons-v1.2.6.apk",
+    "lang": "all",
+    "code": 6,
+    "version": "1.2.6"
+  },
+  {
     "name": "Tachiyomi: WPManga (Many sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmanga",
     "apk": "tachiyomi-all.wpmanga-v1.2.3.apk",
@@ -358,14 +366,6 @@
     "lang": "en",
     "code": 1,
     "version": "1.2.1"
-  },
-  {
-    "name": "Tachiyomi: Webtoons",
-    "pkg": "eu.kanade.tachiyomi.extension.en.webtoons",
-    "apk": "tachiyomi-en.webtoons-v1.2.6.apk",
-    "lang": "en",
-    "code": 6,
-    "version": "1.2.6"
   },
   {
     "name": "Tachiyomi: xkcd",
