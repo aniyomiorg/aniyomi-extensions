@@ -762,10 +762,10 @@
   {
     "name": "Tachiyomi: Dmzj",
     "pkg": "eu.kanade.tachiyomi.extension.zh.dmzj",
-    "apk": "tachiyomi-zh.dmzj-v1.0.4.apk",
+    "apk": "tachiyomi-zh.dmzj-v1.2.5.apk",
     "lang": "zh",
-    "code": 4,
-    "version": "1.0.4"
+    "code": 5,
+    "version": "1.2.5"
   },
   {
     "name": "Tachiyomi: Manhuaren",
