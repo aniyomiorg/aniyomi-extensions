@@ -754,10 +754,10 @@
   {
     "name": "Tachiyomi: NetTruyen",
     "pkg": "eu.kanade.tachiyomi.extension.vi.nettruyen",
-    "apk": "tachiyomi-vi.nettruyen-v1.2.1.apk",
+    "apk": "tachiyomi-vi.nettruyen-v1.2.2.apk",
     "lang": "vi",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: TruyenTranhLH",
