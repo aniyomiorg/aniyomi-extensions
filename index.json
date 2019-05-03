@@ -2,10 +2,10 @@
   {
     "name": "Tachiyomi: ComiCake",
     "pkg": "eu.kanade.tachiyomi.extension.all.comicake",
-    "apk": "tachiyomi-all.comicake-v1.2.2.apk",
+    "apk": "tachiyomi-all.comicake-v1.2.3.apk",
     "lang": "all",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: E-Hentai",
