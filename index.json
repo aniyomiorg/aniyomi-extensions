@@ -26,10 +26,10 @@
   {
     "name": "Tachiyomi: MangaDex",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangadex",
-    "apk": "tachiyomi-all.mangadex-v1.2.54.apk",
+    "apk": "tachiyomi-all.mangadex-v1.2.55.apk",
     "lang": "all",
-    "code": 54,
-    "version": "1.2.54"
+    "code": 55,
+    "version": "1.2.55"
   },
   {
     "name": "Tachiyomi: MangAdventure",
@@ -74,10 +74,10 @@
   {
     "name": "Tachiyomi: NineManga",
     "pkg": "eu.kanade.tachiyomi.extension.all.ninemanga",
-    "apk": "tachiyomi-all.ninemanga-v1.2.2.apk",
+    "apk": "tachiyomi-all.ninemanga-v1.2.3.apk",
     "lang": "all",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Webtoons",
@@ -778,9 +778,9 @@
   {
     "name": "Tachiyomi: Manhuaren",
     "pkg": "eu.kanade.tachiyomi.extension.zh.manhuaren",
-    "apk": "tachiyomi-zh.manhuaren-v1.2.4.apk",
+    "apk": "tachiyomi-zh.manhuaren-v1.2.5.apk",
     "lang": "zh",
-    "code": 4,
-    "version": "1.2.4"
+    "code": 5,
+    "version": "1.2.5"
   }
 ]
