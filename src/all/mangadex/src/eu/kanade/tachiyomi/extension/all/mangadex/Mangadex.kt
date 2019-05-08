@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.extension.all.mangadex
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.os.SystemClock
 import android.support.v7.preference.ListPreference
 import android.support.v7.preference.PreferenceScreen
 import com.github.salomonbrys.kotson.forEach
@@ -27,6 +28,7 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.Headers
 import okhttp3.HttpUrl
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -39,25 +41,7 @@ import uy.kohesive.injekt.api.get
 import java.net.URLEncoder
 import java.util.Date
 import java.util.concurrent.TimeUnit
-import kotlin.collections.List
-import kotlin.collections.Map
-import kotlin.collections.count
-import kotlin.collections.elementAt
-import kotlin.collections.filter
-import kotlin.collections.first
-import kotlin.collections.forEach
-import kotlin.collections.isNotEmpty
-import kotlin.collections.joinToString
-import kotlin.collections.listOf
-import kotlin.collections.map
-import kotlin.collections.mapNotNull
-import kotlin.collections.mutableListOf
-import kotlin.collections.mutableMapOf
-import kotlin.collections.plus
 import kotlin.collections.set
-import kotlin.collections.sortedWith
-import kotlin.collections.toMap
-import kotlin.collections.toTypedArray
 
 open class Mangadex(override val lang: String, private val internalLang: String, private val langCode: Int) : ConfigurableSource, ParsedHttpSource() {
 
@@ -73,11 +57,48 @@ open class Mangadex(override val lang: String, private val internalLang: String,
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    private val requestsPerSecond = 4
+    private val lastRequests = ArrayList<Long>(requestsPerSecond)
+    private val rateLimitInterceptor = Interceptor {
+        synchronized(this) {
+            val now = SystemClock.elapsedRealtime()
+            val waitTime = if (lastRequests.size < requestsPerSecond) {
+                0
+            } else {
+                val oldestReq = lastRequests[0]
+                val newestReq = lastRequests[requestsPerSecond - 1]
+
+                if (newestReq - oldestReq > 1000) {
+                    0
+                } else {
+                    oldestReq + 1000 - now // Remaining time for the next second
+                }
+            }
+
+            if (lastRequests.size == requestsPerSecond) {
+                lastRequests.removeAt(0)
+            }
+            if (waitTime > 0) {
+                lastRequests.add(now + waitTime)
+                Thread.sleep(waitTime) // Sleep inside synchronized to pause queued requests
+            } else {
+                lastRequests.add(now)
+            }
+        }
+
+        it.proceed(it.request())
+    }
+
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+            .addNetworkInterceptor(rateLimitInterceptor)
+            .build()
+
     private fun clientBuilder(): OkHttpClient = clientBuilder(getShowR18())
 
     private fun clientBuilder(r18Toggle: Int): OkHttpClient = network.cloudflareClient.newBuilder()
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
+            .addNetworkInterceptor(rateLimitInterceptor)
             .addNetworkInterceptor { chain ->
                 val originalCookies = chain.request().header("Cookie") ?: ""
                 val newReq = chain
