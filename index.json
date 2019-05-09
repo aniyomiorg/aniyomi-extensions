@@ -408,6 +408,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: TMOHentai",
+    "pkg": "eu.kanade.tachiyomi.extension.es.tmohentai",
+    "apk": "tachiyomi-es.tmohentai-v1.2.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: TuMangaOnline",
     "pkg": "eu.kanade.tachiyomi.extension.es.tumangaonline",
     "apk": "tachiyomi-es.tumangaonline-v1.2.3.apk",
