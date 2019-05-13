@@ -790,5 +790,13 @@
     "lang": "zh",
     "code": 5,
     "version": "1.2.5"
+  },
+  {
+    "name": "Tachiyomi: Pufei",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.pufei",
+    "apk": "tachiyomi-zh.pufei-v1.2.1.apk",
+    "lang": "zh",
+    "code": 1,
+    "version": "1.2.1"
   }
 ]
