@@ -800,6 +800,14 @@
     "version": "1.2.7"
   },
   {
+    "name": "Tachiyomi: BainianManga",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.bainianmanga",
+    "apk": "tachiyomi-zh.bainianmanga-v1.2.1.apk",
+    "lang": "zh",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Dmzj",
     "pkg": "eu.kanade.tachiyomi.extension.zh.dmzj",
     "apk": "tachiyomi-zh.dmzj-v1.2.5.apk",
