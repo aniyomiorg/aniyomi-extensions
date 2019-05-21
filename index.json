@@ -800,6 +800,14 @@
     "version": "1.2.5"
   },
   {
+    "name": "Tachiyomi: Manhuadui",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.manhuadui",
+    "apk": "tachiyomi-zh.manhuadui-v1.2.1.apk",
+    "lang": "zh",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Manhuaren",
     "pkg": "eu.kanade.tachiyomi.extension.zh.manhuaren",
     "apk": "tachiyomi-zh.manhuaren-v1.2.5.apk",
