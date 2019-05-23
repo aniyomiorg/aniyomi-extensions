@@ -26,10 +26,10 @@
   {
     "name": "Tachiyomi: MangaDex",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangadex",
-    "apk": "tachiyomi-all.mangadex-v1.2.57.apk",
+    "apk": "tachiyomi-all.mangadex-v1.2.58.apk",
     "lang": "all",
-    "code": 57,
-    "version": "1.2.57"
+    "code": 58,
+    "version": "1.2.58"
   },
   {
     "name": "Tachiyomi: MangAdventure",
@@ -58,10 +58,10 @@
   {
     "name": "Tachiyomi: NHentai",
     "pkg": "eu.kanade.tachiyomi.extension.all.nhentai",
-    "apk": "tachiyomi-all.nhentai-v1.2.10.apk",
+    "apk": "tachiyomi-all.nhentai-v1.2.11.apk",
     "lang": "all",
-    "code": 10,
-    "version": "1.2.10"
+    "code": 11,
+    "version": "1.2.11"
   },
   {
     "name": "Tachiyomi: NineHentai",
