@@ -26,10 +26,10 @@
   {
     "name": "Tachiyomi: MangaDex",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangadex",
-    "apk": "tachiyomi-all.mangadex-v1.2.59.apk",
+    "apk": "tachiyomi-all.mangadex-v1.2.60.apk",
     "lang": "all",
-    "code": 59,
-    "version": "1.2.59"
+    "code": 60,
+    "version": "1.2.60"
   },
   {
     "name": "Tachiyomi: MangAdventure",
@@ -58,10 +58,10 @@
   {
     "name": "Tachiyomi: NHentai",
     "pkg": "eu.kanade.tachiyomi.extension.all.nhentai",
-    "apk": "tachiyomi-all.nhentai-v1.2.12.apk",
+    "apk": "tachiyomi-all.nhentai-v1.2.13.apk",
     "lang": "all",
-    "code": 12,
-    "version": "1.2.12"
+    "code": 13,
+    "version": "1.2.13"
   },
   {
     "name": "Tachiyomi: NineHentai",
@@ -706,10 +706,10 @@
   {
     "name": "Tachiyomi: Mintmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mintmanga",
-    "apk": "tachiyomi-ru.mintmanga-v1.2.11.apk",
+    "apk": "tachiyomi-ru.mintmanga-v1.2.12.apk",
     "lang": "ru",
-    "code": 11,
-    "version": "1.2.11"
+    "code": 12,
+    "version": "1.2.12"
   },
   {
     "name": "Tachiyomi: Nude-Moon",
@@ -730,10 +730,10 @@
   {
     "name": "Tachiyomi: Readmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.readmanga",
-    "apk": "tachiyomi-ru.readmanga-v1.2.11.apk",
+    "apk": "tachiyomi-ru.readmanga-v1.2.12.apk",
     "lang": "ru",
-    "code": 11,
-    "version": "1.2.11"
+    "code": 12,
+    "version": "1.2.12"
   },
   {
     "name": "Tachiyomi: Risens Team",
