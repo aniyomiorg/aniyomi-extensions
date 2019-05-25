@@ -6,8 +6,8 @@ new File(rootDir, "src").eachDir { dir ->
     }
 }
 
-include ':extension-lib'
-project(':extension-lib').projectDir = new File("lib/extension-lib")
+include ':lib-ratelimit'
+project(':lib-ratelimit').projectDir = new File("lib/ratelimit")
 
 include ':duktape-stub'
 project(':duktape-stub').projectDir = new File("lib/duktape-stub")

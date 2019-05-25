@@ -5,12 +5,8 @@ ext {
     appName = 'Tachiyomi: NHentai'
     pkgNameSuffix = 'all.nhentai'
     extClass = '.NHEnglish; .NHJapanese; .NHChinese'
-    extVersionCode = 12
+    extVersionCode = 13
     libVersion = '1.2'
-}
-
-dependencies {
-    implementation project(':extension-lib')
 }
 
 apply from: "$rootDir/common.gradle"
