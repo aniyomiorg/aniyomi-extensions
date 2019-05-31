@@ -40,6 +40,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: MANGA Plus by SHUEISHA",
+    "pkg": "eu.kanade.tachiyomi.extension.all.mangaplus",
+    "apk": "tachiyomi-all.mangaplus-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: My Manga Reader CMS (Many sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mmrcms",
     "apk": "tachiyomi-all.mmrcms-v1.2.17.apk",
@@ -250,10 +258,10 @@
   {
     "name": "Tachiyomi: Manga Plus by Shueisha",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangaplus",
-    "apk": "tachiyomi-en.mangaplus-v1.2.3.apk",
+    "apk": "tachiyomi-en.mangaplus-v1.2.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: Manga Rock",
