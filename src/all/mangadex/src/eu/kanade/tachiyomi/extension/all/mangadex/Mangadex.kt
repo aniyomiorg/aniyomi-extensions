@@ -468,6 +468,11 @@ open class Mangadex(override val lang: String, private val internalLang: String,
 
     override fun chapterFromElement(element: Element) = throw Exception("Not used")
 
+    override fun pageListRequest(chapter: SChapter): Request {
+        val server = getServer()
+        return GET("$baseUrl${chapter.url}?server=$server")
+    }
+
     override fun pageListParse(document: Document) = throw Exception("Not used")
 
     override fun pageListParse(response: Response): List<Page> {
@@ -532,13 +537,29 @@ open class Mangadex(override val lang: String, private val internalLang: String,
                 preferences.edit().putInt(SHOW_THUMBNAIL_PREF, index).commit()
             }
         }
+        val serverPref = ListPreference(screen.context).apply {
+            key = SERVER_PREF_Title
+            title = SERVER_PREF_Title
+            entries = arrayOf("Auto", "North America", "North America 2", "Europe", "Europe 2", "Rest of the World")
+            entryValues = arrayOf("0", "na", "na2", "eu", "eu2", "row")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = this.findIndexOfValue(selected)
+                val entry = entryValues.get(index) as String
+                preferences.edit().putString(SERVER_PREF, entry).commit()
+            }
+        }
 
         screen.addPreference(myPref)
         screen.addPreference(thumbsPref)
+        screen.addPreference(serverPref)
     }
 
     private fun getShowR18(): Int = preferences.getInt(SHOW_R18_PREF, 0)
     private fun getShowThumbnail(): Int = preferences.getInt(SHOW_THUMBNAIL_PREF, 0)
+    private fun getServer(): String = preferences.getString(SERVER_PREF, "0")
 
 
     private class TextField(name: String, val key: String) : Filter.Text(name)
@@ -682,6 +703,9 @@ open class Mangadex(override val lang: String, private val internalLang: String,
 
         private const val SHOW_THUMBNAIL_PREF_Title = "Default thumbnail quality"
         private const val SHOW_THUMBNAIL_PREF = "showThumbnailDefault"
+
+        private const val SERVER_PREF_Title = "Image server"
+        private const val SERVER_PREF = "imageServer"
 
         private const val API_MANGA = "/api/manga/"
         private const val API_CHAPTER = "/api/chapter/"
