@@ -698,10 +698,10 @@
   {
     "name": "Tachiyomi: Mangachan",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mangachan",
-    "apk": "tachiyomi-ru.mangachan-v1.2.7.apk",
+    "apk": "tachiyomi-ru.mangachan-v1.2.8.apk",
     "lang": "ru",
-    "code": 7,
-    "version": "1.2.7"
+    "code": 8,
+    "version": "1.2.8"
   },
   {
     "name": "Tachiyomi: Mangahub",
