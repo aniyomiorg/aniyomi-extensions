@@ -16,41 +16,41 @@ class FoolSlideFactory : SourceFactory {
 
 fun getAllFoolSlide(): List<Source> {
     return listOf(
-            JaminisBox(),
-            HelveticaScans(),
-            SenseScans(),
-            SeaOtterScans(),
-            KireiCake(),
-            HiranoMoeScansBureau(),
-            SilentSky(),
-            Mangatellers(),
-            IskultripScans(),
-            PinkFatale(),
-            AnataNoMotokare(),
-            HatigarmScans(),
-            DeathTollScans(),
-            DKThias(),
-            MangaichiScanlationDivision(),
-            WorldThree(),
-            TheCatScans(),
-            AngelicScanlations(),
-            DokiFansubs(),
-            YuriIsm(),
-            AjiaNoScantrad(),
-            OneTimeScans(),
-            TsubasaSociety(),
-            Helheim(),
-            MangaScouts(),
-            StormInHeaven(),
-            Lilyreader(),
-            MidnightHaven(),
-            Russification(),
-            NieznaniReader(),
-            EvilFlowers(),
-            AkaiYuhiMunTeam(),
-            LupiTeam(),
-            HotChocolateScans(),
-            HentaiCafe()
+        JaminisBox(),
+        HelveticaScans(),
+        SenseScans(),
+        SeaOtterScans(),
+        KireiCake(),
+        HiranoMoeScansBureau(),
+        SilentSky(),
+        Mangatellers(),
+        IskultripScans(),
+        PinkFatale(),
+        AnataNoMotokare(),
+        DeathTollScans(),
+        DKThias(),
+        MangaichiScanlationDivision(),
+        WorldThree(),
+        TheCatScans(),
+        AngelicScanlations(),
+        DokiFansubs(),
+        YuriIsm(),
+        AjiaNoScantrad(),
+        OneTimeScans(),
+        TsubasaSociety(),
+        Helheim(),
+        MangaScouts(),
+        StormInHeaven(),
+        Lilyreader(),
+        MidnightHaven(),
+        Russification(),
+        NieznaniReader(),
+        EvilFlowers(),
+        AkaiYuhiMunTeam(),
+        LupiTeam(),
+        HotChocolateScans(),
+        HentaiCafe(),
+        ShoujoSense()
     )
 }
 
@@ -97,23 +97,6 @@ class IskultripScans : FoolSlide("Iskultrip Scans", "http://www.maryfaye.net", "
 class PinkFatale : FoolSlide("PinkFatale", "http://manga.pinkfatale.net", "en")
 
 class AnataNoMotokare : FoolSlide("Anata no Motokare", "https://motokare.maos.ca", "en")
-
-// Has other languages too but it is difficult to differentiate between them
-class HatigarmScans : FoolSlide("Hatigarm Scans", "http://hatigarmscans.net", "en", "/hs") {
-    override fun chapterListSelector() = "div.list-group div.list-group-item:not(.active)"
-
-    override val chapterDateSelector = "div.label"
-
-    override val chapterUrlSelector = ".title > a"
-
-    override fun popularMangaSelector() = ".well > a"
-
-    override fun latestUpdatesSelector() = "div.latest > div.row"
-
-    override val mangaDetailsInfoSelector = "div.col-md-9"
-
-    override val mangaDetailsThumbnailSelector = "div.thumb > img"
-}
 
 class DeathTollScans : FoolSlide("Death Toll Scans", "https://reader.deathtollscans.net", "en")
 
@@ -180,6 +163,8 @@ class NieznaniReader : FoolSlide("Nieznani", "http://reader.nieznani.mynindo.pl"
 class EvilFlowers : FoolSlide("Evil Flowers", "http://reader.evilflowers.com", "en")
 
 class AkaiYuhiMunTeam : FoolSlide("AkaiYuhiMun team", "https://akaiyuhimun.ru", "ru", "/manga")
+
+class ShoujoSense : FoolSlide("ShoujoSense", "http://reader.shoujosense.com", "en")
 
 class LupiTeam : FoolSlide("LupiTeam", "https://lupiteam.net", "it", "/reader") {
     override fun mangaDetailsParse(document: Document): SManga {
