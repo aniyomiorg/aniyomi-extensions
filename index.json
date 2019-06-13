@@ -618,10 +618,10 @@
   {
     "name": "Tachiyomi: MangaHost",
     "pkg": "eu.kanade.tachiyomi.extension.pt.mangahost",
-    "apk": "tachiyomi-pt.mangahost-v1.2.5.apk",
+    "apk": "tachiyomi-pt.mangahost-v1.2.6.apk",
     "lang": "pt",
-    "code": 5,
-    "version": "1.2.5"
+    "code": 6,
+    "version": "1.2.6"
   },
   {
     "name": "Tachiyomi: Mangá Livre",
