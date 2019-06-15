@@ -272,6 +272,14 @@
     "version": "1.2.4"
   },
   {
+    "name": "Tachiyomi: Mangareader",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangareader",
+    "apk": "tachiyomi-en.mangareader-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Manga Rock",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangarock",
     "apk": "tachiyomi-en.mangarock-v1.2.11.apk",
