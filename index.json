@@ -304,6 +304,14 @@
     "version": "1.0.3"
   },
   {
+    "name": "Tachiyomi: Mangatown",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangatown",
+    "apk": "tachiyomi-en.mangatown-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Mangazuki",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangazuki",
     "apk": "tachiyomi-en.mangazuki-v1.0.5.apk",
