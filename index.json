@@ -616,6 +616,14 @@
     "version": "1.2.8"
   },
   {
+    "name": "Tachiyomi: AnimaRegia",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.animaregia",
+    "apk": "tachiyomi-pt.animaregia-v1.2.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Central de Mangás",
     "pkg": "eu.kanade.tachiyomi.extension.pt.centraldemangas",
     "apk": "tachiyomi-pt.centraldemangas-v1.2.1.apk",
