@@ -274,10 +274,10 @@
   {
     "name": "Tachiyomi: Mangareader",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangareader",
-    "apk": "tachiyomi-en.mangareader-v1.2.1.apk",
+    "apk": "tachiyomi-en.mangareader-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Manga Rock",
@@ -306,10 +306,10 @@
   {
     "name": "Tachiyomi: Mangatown",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangatown",
-    "apk": "tachiyomi-en.mangatown-v1.2.1.apk",
+    "apk": "tachiyomi-en.mangatown-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Mangazuki",
@@ -354,10 +354,10 @@
   {
     "name": "Tachiyomi: PsychoPlay",
     "pkg": "eu.kanade.tachiyomi.extension.en.psychoplay",
-    "apk": "tachiyomi-en.psychoplay-v1.2.1.apk",
+    "apk": "tachiyomi-en.psychoplay-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Questionable Content",
