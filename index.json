@@ -384,6 +384,14 @@
     "version": "1.2.6"
   },
   {
+    "name": "Tachiyomi: Renaissance Scans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.renascans",
+    "apk": "tachiyomi-en.renascans-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: ShoujoSense",
     "pkg": "eu.kanade.tachiyomi.extension.en.shoujosense",
     "apk": "tachiyomi-en.shoujosense-v1.0.2.apk",
