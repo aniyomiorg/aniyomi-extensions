@@ -152,6 +152,14 @@
     "version": "1.2.9"
   },
   {
+    "name": "Tachiyomi: Heaven Manga",
+    "pkg": "eu.kanade.tachiyomi.extension.en.heavenmanga",
+    "apk": "tachiyomi-en.heavenmanga-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Hentai2Read",
     "pkg": "eu.kanade.tachiyomi.extension.en.hentai2read",
     "apk": "tachiyomi-en.hentai2read-v1.2.4.apk",
