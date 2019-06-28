@@ -192,6 +192,14 @@
     "version": "1.0.2"
   },
   {
+    "name": "Tachiyomi: Mangafox",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangafox",
+    "apk": "tachiyomi-en.mangafox-v1.2.3.apk",
+    "lang": "en",
+    "code": 3,
+    "version": "1.2.3"
+  },
+  {
     "name": "Tachiyomi: Mangafree",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangafree",
     "apk": "tachiyomi-en.mangafree-v1.2.3.apk",
