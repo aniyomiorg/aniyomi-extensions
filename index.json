@@ -330,10 +330,10 @@
   {
     "name": "Tachiyomi: PsychoPlay",
     "pkg": "eu.kanade.tachiyomi.extension.en.psychoplay",
-    "apk": "tachiyomi-en.psychoplay-v1.2.2.apk",
+    "apk": "tachiyomi-en.psychoplay-v1.2.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Questionable Content",
