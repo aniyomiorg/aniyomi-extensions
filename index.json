@@ -280,6 +280,14 @@
     "version": "1.2.11"
   },
   {
+    "name": "Tachiyomi: Mangasail",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangasail",
+    "apk": "tachiyomi-en.mangasail-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Mangasee",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangasee",
     "apk": "tachiyomi-en.mangasee-v1.2.4.apk",
