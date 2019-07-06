@@ -34,10 +34,10 @@
   {
     "name": "Tachiyomi: Madara",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.1.apk",
+    "apk": "tachiyomi-all.madara-v1.2.2.apk",
     "lang": "all",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: MangaDex",
@@ -208,14 +208,6 @@
     "version": "1.0.2"
   },
   {
-    "name": "Tachiyomi: Mangafox",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangafox",
-    "apk": "tachiyomi-en.mangafox-v1.2.3.apk",
-    "lang": "en",
-    "code": 3,
-    "version": "1.2.3"
-  },
-  {
     "name": "Tachiyomi: Mangafree",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangafree",
     "apk": "tachiyomi-en.mangafree-v1.2.3.apk",
@@ -350,14 +342,6 @@
     "lang": "en",
     "code": 2,
     "version": "1.0.2"
-  },
-  {
-    "name": "Tachiyomi: PsychoPlay",
-    "pkg": "eu.kanade.tachiyomi.extension.en.psychoplay",
-    "apk": "tachiyomi-en.psychoplay-v1.2.3.apk",
-    "lang": "en",
-    "code": 3,
-    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Questionable Content",
