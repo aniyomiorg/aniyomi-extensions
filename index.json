@@ -184,6 +184,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: HolyManga",
+    "pkg": "eu.kanade.tachiyomi.extension.en.holymanga",
+    "apk": "tachiyomi-en.holymanga-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Kissmanga",
     "pkg": "eu.kanade.tachiyomi.extension.en.kissmanga",
     "apk": "tachiyomi-en.kissmanga-v1.2.9.apk",
