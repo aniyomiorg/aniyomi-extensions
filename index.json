@@ -880,6 +880,14 @@
     "version": "1.2.5"
   },
   {
+    "name": "Tachiyomi: Hanhankuman",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.hanhankuman",
+    "apk": "tachiyomi-zh.hanhankuman-v1.2.1.apk",
+    "lang": "zh",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: ManhuaDB",
     "pkg": "eu.kanade.tachiyomi.extension.zh.manhuadb",
     "apk": "tachiyomi-zh.manhuadb-v1.2.1.apk",
