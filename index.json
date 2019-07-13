@@ -112,14 +112,6 @@
     "version": "1.2.7"
   },
   {
-    "name": "Tachiyomi: WPManga (Many sources)",
-    "pkg": "eu.kanade.tachiyomi.extension.all.wpmanga",
-    "apk": "tachiyomi-all.wpmanga-v1.2.3.apk",
-    "lang": "all",
-    "code": 3,
-    "version": "1.2.3"
-  },
-  {
     "name": "Tachiyomi: WieManga",
     "pkg": "eu.kanade.tachiyomi.extension.de.wiemanga",
     "apk": "tachiyomi-de.wiemanga-v1.2.3.apk",
@@ -320,14 +312,6 @@
     "version": "1.2.2"
   },
   {
-    "name": "Tachiyomi: Mangazuki",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangazuki",
-    "apk": "tachiyomi-en.mangazuki-v1.0.5.apk",
-    "lang": "en",
-    "code": 5,
-    "version": "1.0.5"
-  },
-  {
     "name": "Tachiyomi: MerakiScans",
     "pkg": "eu.kanade.tachiyomi.extension.en.merakiscans",
     "apk": "tachiyomi-en.merakiscans-v1.2.5.apk",
@@ -382,14 +366,6 @@
     "lang": "en",
     "code": 2,
     "version": "1.2.2"
-  },
-  {
-    "name": "Tachiyomi: ShoujoSense",
-    "pkg": "eu.kanade.tachiyomi.extension.en.shoujosense",
-    "apk": "tachiyomi-en.shoujosense-v1.0.2.apk",
-    "lang": "en",
-    "code": 2,
-    "version": "1.0.2"
   },
   {
     "name": "Tachiyomi: Sleepy Panda Scans",
