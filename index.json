@@ -672,6 +672,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: Zinnes",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.zinnes",
+    "apk": "tachiyomi-pt.zinnes-v1.2.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: AComics",
     "pkg": "eu.kanade.tachiyomi.extension.ru.acomics",
     "apk": "tachiyomi-ru.acomics-v1.2.2.apk",
