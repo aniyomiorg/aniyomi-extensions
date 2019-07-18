@@ -66,10 +66,10 @@
   {
     "name": "Tachiyomi: My Manga Reader CMS (Many sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mmrcms",
-    "apk": "tachiyomi-all.mmrcms-v1.2.20.apk",
+    "apk": "tachiyomi-all.mmrcms-v1.2.21.apk",
     "lang": "all",
-    "code": 20,
-    "version": "1.2.20"
+    "code": 21,
+    "version": "1.2.21"
   },
   {
     "name": "Tachiyomi: MyReadingManga",
@@ -478,6 +478,14 @@
     "lang": "id",
     "code": 2,
     "version": "1.2.2"
+  },
+  {
+    "name": "Tachiyomi: Maid - Manga",
+    "pkg": "eu.kanade.tachiyomi.extension.id.maidmanga",
+    "apk": "tachiyomi-id.maidmanga-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: Mangashiro",
