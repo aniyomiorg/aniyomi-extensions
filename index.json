@@ -34,10 +34,18 @@
   {
     "name": "Tachiyomi: Madara",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.6.apk",
+    "apk": "tachiyomi-all.madara-v1.2.7.apk",
     "lang": "all",
-    "code": 6,
-    "version": "1.2.6"
+    "code": 7,
+    "version": "1.2.7"
+  },
+  {
+    "name": "Tachiyomi: MangaCards (Valhalla, NANI?)",
+    "pkg": "eu.kanade.tachiyomi.extension.all.mangacards",
+    "apk": "tachiyomi-all.mangacards-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: MangaDex",
@@ -150,6 +158,14 @@
     "lang": "en",
     "code": 9,
     "version": "1.2.9"
+  },
+  {
+    "name": "Tachiyomi: Guya",
+    "pkg": "eu.kanade.tachiyomi.extension.en.guya",
+    "apk": "tachiyomi-en.guya-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: Heaven Manga",
