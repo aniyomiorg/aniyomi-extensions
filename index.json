@@ -600,14 +600,6 @@
     "version": "1.2.12"
   },
   {
-    "name": "Tachiyomi: Manhwahand",
-    "pkg": "eu.kanade.tachiyomi.extension.ko.manhwahand",
-    "apk": "tachiyomi-ko.manhwahand-v1.2.3.apk",
-    "lang": "ko",
-    "code": 3,
-    "version": "1.2.3"
-  },
-  {
     "name": "Tachiyomi: Naver Comic",
     "pkg": "eu.kanade.tachiyomi.extension.ko.navercomic",
     "apk": "tachiyomi-ko.navercomic-v1.2.2.apk",
