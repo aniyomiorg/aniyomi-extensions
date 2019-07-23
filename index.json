@@ -328,6 +328,14 @@
     "version": "1.2.2"
   },
   {
+    "name": "Tachiyomi: Man Manga",
+    "pkg": "eu.kanade.tachiyomi.extension.en.manmanga",
+    "apk": "tachiyomi-en.manmanga-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: MerakiScans",
     "pkg": "eu.kanade.tachiyomi.extension.en.merakiscans",
     "apk": "tachiyomi-en.merakiscans-v1.2.5.apk",
