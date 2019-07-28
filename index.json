@@ -528,6 +528,14 @@
     "version": "1.0.3"
   },
   {
+    "name": "Tachiyomi: Pecinta Komik",
+    "pkg": "eu.kanade.tachiyomi.extension.id.pecintakomik",
+    "apk": "tachiyomi-id.pecintakomik-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: HentaiFantasy",
     "pkg": "eu.kanade.tachiyomi.extension.it.hentaifantasy",
     "apk": "tachiyomi-it.hentaifantasy-v1.0.2.apk",
