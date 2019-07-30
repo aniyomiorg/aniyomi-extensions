@@ -170,10 +170,10 @@
   {
     "name": "Tachiyomi: Guya",
     "pkg": "eu.kanade.tachiyomi.extension.en.guya",
-    "apk": "tachiyomi-en.guya-v1.2.1.apk",
+    "apk": "tachiyomi-en.guya-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Heaven Manga",
