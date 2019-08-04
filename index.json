@@ -376,6 +376,14 @@
     "version": "1.0.2"
   },
   {
+    "name": "Tachiyomi: Pururin",
+    "pkg": "eu.kanade.tachiyomi.extension.en.pururin",
+    "apk": "tachiyomi-en.pururin-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Questionable Content",
     "pkg": "eu.kanade.tachiyomi.extension.en.questionablecontent",
     "apk": "tachiyomi-en.questionablecontent-v1.2.4.apk",
