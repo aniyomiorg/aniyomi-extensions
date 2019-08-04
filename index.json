@@ -2,34 +2,34 @@
   {
     "name": "Tachiyomi: ComiCake",
     "pkg": "eu.kanade.tachiyomi.extension.all.comicake",
-    "apk": "tachiyomi-all.comicake-v1.2.3.apk",
-    "lang": "all",
-    "code": 3,
-    "version": "1.2.3"
-  },
-  {
-    "name": "Tachiyomi: E-Hentai",
-    "pkg": "eu.kanade.tachiyomi.extension.all.ehentai",
-    "apk": "tachiyomi-all.ehentai-v1.2.4.apk",
+    "apk": "tachiyomi-all.comicake-v1.2.4.apk",
     "lang": "all",
     "code": 4,
     "version": "1.2.4"
   },
   {
+    "name": "Tachiyomi: E-Hentai",
+    "pkg": "eu.kanade.tachiyomi.extension.all.ehentai",
+    "apk": "tachiyomi-all.ehentai-v1.2.5.apk",
+    "lang": "all",
+    "code": 5,
+    "version": "1.2.5"
+  },
+  {
     "name": "Tachiyomi: FoolSlide",
     "pkg": "eu.kanade.tachiyomi.extension.all.foolslide",
-    "apk": "tachiyomi-all.foolslide-v1.2.21.apk",
+    "apk": "tachiyomi-all.foolslide-v1.2.22.apk",
     "lang": "all",
-    "code": 21,
-    "version": "1.2.21"
+    "code": 22,
+    "version": "1.2.22"
   },
   {
     "name": "Tachiyomi: Genkan (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.genkan",
-    "apk": "tachiyomi-all.genkan-v1.2.2.apk",
+    "apk": "tachiyomi-all.genkan-v1.2.3.apk",
     "lang": "all",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Madara",
