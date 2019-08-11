@@ -34,10 +34,10 @@
   {
     "name": "Tachiyomi: Madara",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.8.apk",
+    "apk": "tachiyomi-all.madara-v1.2.9.apk",
     "lang": "all",
-    "code": 8,
-    "version": "1.2.8"
+    "code": 9,
+    "version": "1.2.9"
   },
   {
     "name": "Tachiyomi: MangaCards (Valhalla, NANI?)",
