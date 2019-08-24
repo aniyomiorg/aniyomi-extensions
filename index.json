@@ -352,6 +352,14 @@
     "version": "1.2.2"
   },
   {
+    "name": "Tachiyomi: Manhwa18",
+    "pkg": "eu.kanade.tachiyomi.extension.en.manhwa18",
+    "apk": "tachiyomi-en.manhwa18-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Man Manga",
     "pkg": "eu.kanade.tachiyomi.extension.en.manmanga",
     "apk": "tachiyomi-en.manmanga-v1.2.1.apk",
