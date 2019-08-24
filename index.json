@@ -962,10 +962,10 @@
   {
     "name": "Tachiyomi: Manhuadui",
     "pkg": "eu.kanade.tachiyomi.extension.zh.manhuadui",
-    "apk": "tachiyomi-zh.manhuadui-v1.2.3.apk",
+    "apk": "tachiyomi-zh.manhuadui-v1.2.4.apk",
     "lang": "zh",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: ManHuaGui",
