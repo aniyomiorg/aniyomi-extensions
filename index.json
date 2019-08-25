@@ -18,10 +18,10 @@
   {
     "name": "Tachiyomi: FoolSlide",
     "pkg": "eu.kanade.tachiyomi.extension.all.foolslide",
-    "apk": "tachiyomi-all.foolslide-v1.2.23.apk",
+    "apk": "tachiyomi-all.foolslide-v1.2.24.apk",
     "lang": "all",
-    "code": 23,
-    "version": "1.2.23"
+    "code": 24,
+    "version": "1.2.24"
   },
   {
     "name": "Tachiyomi: Genkan (multiple sources)",
@@ -90,10 +90,10 @@
   {
     "name": "Tachiyomi: MyReadingManga",
     "pkg": "eu.kanade.tachiyomi.extension.all.myreadingmanga",
-    "apk": "tachiyomi-all.myreadingmanga-v1.2.22.apk",
+    "apk": "tachiyomi-all.myreadingmanga-v1.2.23.apk",
     "lang": "all",
-    "code": 22,
-    "version": "1.2.22"
+    "code": 23,
+    "version": "1.2.23"
   },
   {
     "name": "Tachiyomi: NHentai",
