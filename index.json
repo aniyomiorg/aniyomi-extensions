@@ -42,10 +42,10 @@
   {
     "name": "Tachiyomi: MangaCards (Valhalla, NANI?)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangacards",
-    "apk": "tachiyomi-all.mangacards-v1.2.1.apk",
+    "apk": "tachiyomi-all.mangacards-v1.2.2.apk",
     "lang": "all",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: MangaDex",
