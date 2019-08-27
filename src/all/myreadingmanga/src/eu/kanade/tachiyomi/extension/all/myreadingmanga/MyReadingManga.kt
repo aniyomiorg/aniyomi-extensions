@@ -10,6 +10,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 open class MyReadingManga(override val lang: String) : ParsedHttpSource() {
@@ -151,7 +152,7 @@ open class MyReadingManga(override val lang: String) : ParsedHttpSource() {
     }
 
     private fun parseDate(date: String): Long {
-        return SimpleDateFormat("MMM dd, yyyy").parse(date).time
+        return SimpleDateFormat("MMM dd, yyyy", Locale.US ).parse(date).time
     }
 
     private fun createChapter(pageNumber: String, mangaUrl: String, date: Long, chname: String): SChapter {
