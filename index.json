@@ -632,6 +632,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: Rawdevart",
+    "pkg": "eu.kanade.tachiyomi.extension.ja.rawdevart",
+    "apk": "tachiyomi-ja.rawdevart-v1.2.1.apk",
+    "lang": "ja",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: RawLH",
     "pkg": "eu.kanade.tachiyomi.extension.ja.rawlh",
     "apk": "tachiyomi-ja.rawlh-v1.2.9.apk",
