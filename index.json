@@ -282,10 +282,10 @@
   {
     "name": "Tachiyomi: MangaKakalot",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangakakalot",
-    "apk": "tachiyomi-en.mangakakalot-v1.2.6.apk",
+    "apk": "tachiyomi-en.mangakakalot-v1.2.7.apk",
     "lang": "en",
-    "code": 6,
-    "version": "1.2.6"
+    "code": 7,
+    "version": "1.2.7"
   },
   {
     "name": "Tachiyomi: MangaLife",
