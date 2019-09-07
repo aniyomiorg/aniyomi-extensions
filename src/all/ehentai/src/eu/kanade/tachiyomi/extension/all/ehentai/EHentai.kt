@@ -236,6 +236,9 @@ open class EHentai(override val lang: String, private val ehLang: String) : Http
 
         cookies["uconfig"] = buildSettings(settings)
 
+        // Bypass "Offensive For Everyone" content warning
+        cookies["nw"] = "1"
+
         buildCookies(cookies)
     }
 
