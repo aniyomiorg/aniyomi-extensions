@@ -250,10 +250,10 @@
   {
     "name": "Tachiyomi: Mangaeden",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangaeden",
-    "apk": "tachiyomi-en.mangaeden-v1.0.2.apk",
+    "apk": "tachiyomi-en.mangaeden-v1.2.2.apk",
     "lang": "en",
     "code": 2,
-    "version": "1.0.2"
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Mangafree",
@@ -346,10 +346,10 @@
   {
     "name": "Tachiyomi: Mangastream",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangastream",
-    "apk": "tachiyomi-en.mangastream-v1.0.3.apk",
+    "apk": "tachiyomi-en.mangastream-v1.2.3.apk",
     "lang": "en",
     "code": 3,
-    "version": "1.0.3"
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Mangatown",
@@ -394,10 +394,10 @@
   {
     "name": "Tachiyomi: Perveden",
     "pkg": "eu.kanade.tachiyomi.extension.en.perveden",
-    "apk": "tachiyomi-en.perveden-v1.0.2.apk",
+    "apk": "tachiyomi-en.perveden-v1.2.2.apk",
     "lang": "en",
     "code": 2,
-    "version": "1.0.2"
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Pururin",
@@ -450,10 +450,10 @@
   {
     "name": "Tachiyomi: Tapastic",
     "pkg": "eu.kanade.tachiyomi.extension.en.tapastic",
-    "apk": "tachiyomi-en.tapastic-v1.0.3.apk",
+    "apk": "tachiyomi-en.tapastic-v1.2.3.apk",
     "lang": "en",
     "code": 3,
-    "version": "1.0.3"
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Toonily",
@@ -578,10 +578,10 @@
   {
     "name": "Tachiyomi: Neumanga",
     "pkg": "eu.kanade.tachiyomi.extension.id.neumanga",
-    "apk": "tachiyomi-id.neumanga-v1.0.3.apk",
+    "apk": "tachiyomi-id.neumanga-v1.2.3.apk",
     "lang": "id",
     "code": 3,
-    "version": "1.0.3"
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Pecinta Komik",
@@ -594,18 +594,18 @@
   {
     "name": "Tachiyomi: HentaiFantasy",
     "pkg": "eu.kanade.tachiyomi.extension.it.hentaifantasy",
-    "apk": "tachiyomi-it.hentaifantasy-v1.0.2.apk",
+    "apk": "tachiyomi-it.hentaifantasy-v1.2.2.apk",
     "lang": "it",
     "code": 2,
-    "version": "1.0.2"
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Mangaeden",
     "pkg": "eu.kanade.tachiyomi.extension.it.mangaeden",
-    "apk": "tachiyomi-it.mangaeden-v1.0.2.apk",
+    "apk": "tachiyomi-it.mangaeden-v1.2.2.apk",
     "lang": "it",
     "code": 2,
-    "version": "1.0.2"
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Mangaworld",
@@ -618,10 +618,10 @@
   {
     "name": "Tachiyomi: Perveden",
     "pkg": "eu.kanade.tachiyomi.extension.it.perveden",
-    "apk": "tachiyomi-it.perveden-v1.0.2.apk",
+    "apk": "tachiyomi-it.perveden-v1.2.2.apk",
     "lang": "it",
     "code": 2,
-    "version": "1.0.2"
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Nikkangecchan",
