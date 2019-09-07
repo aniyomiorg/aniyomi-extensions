@@ -34,10 +34,10 @@
   {
     "name": "Tachiyomi: Komga",
     "pkg": "eu.kanade.tachiyomi.extension.all.komga",
-    "apk": "tachiyomi-all.komga-v1.2.1.apk",
+    "apk": "tachiyomi-all.komga-v1.2.2.apk",
     "lang": "all",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Madara",
@@ -312,12 +312,12 @@
     "version": "1.2.9"
   },
   {
-    "name": "Tachiyomi: Mangareader",
+    "name": "Tachiyomi: Mangareader & Mangapanda",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangareader",
-    "apk": "tachiyomi-en.mangareader-v1.2.3.apk",
+    "apk": "tachiyomi-en.mangareader-v1.2.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: Manga Rock",
