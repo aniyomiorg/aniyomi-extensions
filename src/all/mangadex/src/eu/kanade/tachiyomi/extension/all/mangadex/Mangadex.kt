@@ -482,6 +482,10 @@ open class Mangadex(override val lang: String, private val internalLang: String,
     override fun chapterFromElement(element: Element) = throw Exception("Not used")
 
     override fun pageListRequest(chapter: SChapter): Request {
+        if (chapter.scanlator == "MangaPlus") {
+            throw Exception("Chapter is licensed; use the MangaPlus extension")
+        }
+
         val server = getServer()
         return GET("$baseUrl${chapter.url}?server=$server")
     }
