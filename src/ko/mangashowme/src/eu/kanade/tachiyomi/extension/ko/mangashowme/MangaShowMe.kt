@@ -36,9 +36,13 @@ import java.util.concurrent.TimeUnit
  *     `manga_list` returns latest 'added' manga. not a chapter updates.
  **/
 class ManaMoa : ConfigurableSource, ParsedHttpSource() {
+
     override val name = "ManaMoa"
-    private val defaultBaseUrl = "https://manamoa3.net"
+
+    // This keeps updating: https://twitter.com/manamoa20
+    private val defaultBaseUrl = "https://manamoa13.net"
     override val baseUrl by lazy { getPrefBaseUrl() }
+
     override val lang: String = "ko"
 
     // Latest updates currently returns duplicate manga as it separates manga into chapters
@@ -287,7 +291,7 @@ class ManaMoa : ConfigurableSource, ParsedHttpSource() {
         screen.addPreference(baseUrlPref)
     }
 
-    private fun getPrefBaseUrl(): String = preferences.getString(BASE_URL_PREF, defaultBaseUrl)
+    private fun getPrefBaseUrl(): String = preferences.getString(BASE_URL_PREF, defaultBaseUrl)!!
 
     override fun getFilterList() = getFilters()
 
