@@ -66,10 +66,10 @@
   {
     "name": "Tachiyomi: MangAdventure",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangadventure",
-    "apk": "tachiyomi-all.mangadventure-v1.2.2.apk",
+    "apk": "tachiyomi-all.mangadventure-v1.2.3.apk",
     "lang": "all",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: MANGA Plus by SHUEISHA",
