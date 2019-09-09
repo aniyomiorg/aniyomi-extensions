@@ -426,10 +426,10 @@
   {
     "name": "Tachiyomi: ReadMangaToday",
     "pkg": "eu.kanade.tachiyomi.extension.en.readmangatoday",
-    "apk": "tachiyomi-en.readmangatoday-v1.2.7.apk",
+    "apk": "tachiyomi-en.readmangatoday-v1.2.8.apk",
     "lang": "en",
-    "code": 7,
-    "version": "1.2.7"
+    "code": 8,
+    "version": "1.2.8"
   },
   {
     "name": "Tachiyomi: Renaissance Scans",
