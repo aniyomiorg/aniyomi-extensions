@@ -960,6 +960,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: Comico",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.comico",
+    "apk": "tachiyomi-zh.comico-v1.2.1.apk",
+    "lang": "zh",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Dmzj",
     "pkg": "eu.kanade.tachiyomi.extension.zh.dmzj",
     "apk": "tachiyomi-zh.dmzj-v1.2.6.apk",
