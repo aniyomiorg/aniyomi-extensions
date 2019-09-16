@@ -746,10 +746,10 @@
   {
     "name": "Tachiyomi: mangásPROJECT",
     "pkg": "eu.kanade.tachiyomi.extension.pt.mangasproject",
-    "apk": "tachiyomi-pt.mangasproject-v1.2.4.apk",
+    "apk": "tachiyomi-pt.mangasproject-v1.2.5.apk",
     "lang": "pt",
-    "code": 4,
-    "version": "1.2.4"
+    "code": 5,
+    "version": "1.2.5"
   },
   {
     "name": "Tachiyomi: Saikai Scan",
