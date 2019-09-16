@@ -736,14 +736,6 @@
     "version": "1.2.6"
   },
   {
-    "name": "Tachiyomi: Mangá Livre",
-    "pkg": "eu.kanade.tachiyomi.extension.pt.mangalivre",
-    "apk": "tachiyomi-pt.mangalivre-v1.2.4.apk",
-    "lang": "pt",
-    "code": 4,
-    "version": "1.2.4"
-  },
-  {
     "name": "Tachiyomi: mangásPROJECT",
     "pkg": "eu.kanade.tachiyomi.extension.pt.mangasproject",
     "apk": "tachiyomi-pt.mangasproject-v1.2.5.apk",
