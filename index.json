@@ -720,6 +720,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: Golden Mangás",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.goldenmangas",
+    "apk": "tachiyomi-pt.goldenmangas-v1.2.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: HipercooL",
     "pkg": "eu.kanade.tachiyomi.extension.pt.hipercool",
     "apk": "tachiyomi-pt.hipercool-v1.2.2.apk",
