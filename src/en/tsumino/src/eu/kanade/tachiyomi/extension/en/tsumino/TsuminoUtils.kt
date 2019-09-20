@@ -1,9 +1,8 @@
 package eu.kanade.tachiyomi.extension.en.tsumino
 
+import eu.kanade.tachiyomi.source.model.SChapter
+import okhttp3.Response
 import org.jsoup.nodes.Document
-import java.lang.StringBuilder
-import java.text.SimpleDateFormat
-import java.util.*
 
 class TsuminoUtils {
     companion object {
@@ -21,7 +20,7 @@ class TsuminoUtils {
             return stringBuilder.toString()
         }
 
-        fun getGroups(document: Document): String? {
+        private fun getGroups(document: Document): String? {
             val stringBuilder = StringBuilder()
             val groups = document.select("#Group a")
 
@@ -40,6 +39,7 @@ class TsuminoUtils {
             val pages = document.select("#Pages").text()
             val parodies = document.select("#Parody a")
             val characters = document.select("#Character a")
+            val tags = document.select("#Tag a")
 
             stringBuilder.append("Pages: $pages")
 
@@ -66,17 +66,45 @@ class TsuminoUtils {
                         stringBuilder.append(", ")
                 }
             }
+
+            if (tags.size > 0) {
+                stringBuilder.append("\n\n")
+                stringBuilder.append("Tags: ")
+
+                tags.forEach {
+                    stringBuilder.append(it.text())
+
+                    if (it != tags.last())
+                        stringBuilder.append(", ")
+                }
+            }
+
             return stringBuilder.toString()
         }
 
-        fun getDate(document: Document): Long {
-            val timeString = document.select("#Uploaded").text()
-            return try {
-                SimpleDateFormat("yyyy MMMMM dd", Locale.ENGLISH).parse(timeString).time
-            }catch (e: Exception) {
-                0
-            }
+        fun getCollection(document: Document, selector: String): List<SChapter> {
+            return document.select(selector).map { element ->
+                SChapter.create().apply {
+                    val chapterNum = element.select("span")[0].text()
+                    val chapterName = element.select("span")[1].text()
+                    name = "$chapterNum. $chapterName"
+                    scanlator = getGroups(document)
+                    url = element.attr("href").replace("entry", "Read/Index")
+                }
+            }.reversed()
         }
 
+        fun getChapter(document: Document, response: Response): List<SChapter> {
+            val chapterList = mutableListOf<SChapter>()
+            val chapter = SChapter.create().apply {
+                name = "Chapter"
+                scanlator = getGroups(document)
+                chapter_number = 1f
+                url = response.request().url().encodedPath().
+                    replace("entry", "Read/Index")
+            }
+            chapterList.add(chapter)
+            return chapterList
+        }
     }
 }
