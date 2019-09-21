@@ -98,10 +98,10 @@
   {
     "name": "Tachiyomi: MyReadingManga",
     "pkg": "eu.kanade.tachiyomi.extension.all.myreadingmanga",
-    "apk": "tachiyomi-all.myreadingmanga-v1.2.24.apk",
+    "apk": "tachiyomi-all.myreadingmanga-v1.2.25.apk",
     "lang": "all",
-    "code": 24,
-    "version": "1.2.24"
+    "code": 25,
+    "version": "1.2.25"
   },
   {
     "name": "Tachiyomi: NHentai",
