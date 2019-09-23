@@ -184,6 +184,14 @@
     "version": "1.2.9"
   },
   {
+    "name": "Tachiyomi: GetManhwa",
+    "pkg": "eu.kanade.tachiyomi.extension.en.getmanhwa",
+    "apk": "tachiyomi-en.getmanhwa-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Gunnerkrigg Court",
     "pkg": "eu.kanade.tachiyomi.extension.en.gunnerkriggcourt",
     "apk": "tachiyomi-en.gunnerkriggcourt-v1.2.1.apk",
