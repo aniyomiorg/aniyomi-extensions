@@ -1,12 +1,14 @@
 package eu.kanade.tachiyomi.extension.all.myreadingmanga
 import android.net.Uri
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.*
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.*
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -118,7 +120,17 @@ open class MyReadingManga(override val lang: String) : ParsedHttpSource() {
     private fun cleanTitle(title: String) = title.substringBeforeLast("[").substringAfterLast("]").substringBeforeLast("(")
     private fun cleanAuthor(title: String) = title.substringAfter("[").substringBefore("]")
 
-    override fun mangaDetailsParse(document: Document): SManga {
+    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
+        val needCover = manga.thumbnail_url.isNullOrEmpty()
+
+        return client.newCall(mangaDetailsRequest(manga))
+            .asObservableSuccess()
+            .map { response ->
+                mangaDetailsParse(response.asJsoup(), needCover).apply { initialized = true }
+            }
+    }
+
+    private fun mangaDetailsParse(document: Document, needCover: Boolean): SManga {
         val manga = SManga.create()
         manga.author = cleanAuthor(document.select("h1").text())
         manga.artist = cleanAuthor(document.select("h1").text())
@@ -130,8 +142,16 @@ open class MyReadingManga(override val lang: String) : ParsedHttpSource() {
             "Completed" -> SManga.COMPLETED
             else -> SManga.UNKNOWN
         }
+
+        if (needCover) {
+            manga.thumbnail_url = getThumbnail(client.newCall(GET("$baseUrl/search/?search=${document.location()}", headers))
+                .execute().asJsoup().select("div.wdm_results div.p_content img").first().attr("abs:src"))
+        }
+
         return manga
     }
+
+    override fun mangaDetailsParse(document: Document) = throw Exception("Not used")
 
     override fun chapterListSelector() = ".entry-pagination a"
 
@@ -142,15 +162,16 @@ open class MyReadingManga(override val lang: String) : ParsedHttpSource() {
         val date = parseDate(document.select(".entry-time").text())
         val mangaUrl = document.baseUri()
         val chfirstname = document.select(".chapter-class a[href*=$mangaUrl]")?.first()?.text()?.ifEmpty { "Ch. 1" }?.capitalize() ?:"Ch. 1"
+        val scangroup= document.select(".entry-terms a[href*=group]")?.first()?.text()
         //create first chapter since its on main manga page
-        chapters.add(createChapter("1", document.baseUri(), date, chfirstname))
+        chapters.add(createChapter("1", document.baseUri(), date, chfirstname, scangroup))
         //see if there are multiple chapters or not
         document.select(chapterListSelector())?.let { it ->
             it.forEach {
                 if (!it.text().contains("Next »", true)) {
                     val pageNumber = it.text()
                     val chname = document.select(".chapter-class a[href$=/$pageNumber/]")?.text()?.ifEmpty { "Ch. $pageNumber" }?.capitalize() ?:"Ch. $pageNumber"
-                    chapters.add(createChapter(it.text(), document.baseUri(), date, chname))
+                    chapters.add(createChapter(it.text(), document.baseUri(), date, chname, scangroup))
                 }
             }
         }
@@ -163,11 +184,12 @@ open class MyReadingManga(override val lang: String) : ParsedHttpSource() {
         return SimpleDateFormat("MMM dd, yyyy", Locale.US ).parse(date).time
     }
 
-    private fun createChapter(pageNumber: String, mangaUrl: String, date: Long, chname: String): SChapter {
+    private fun createChapter(pageNumber: String, mangaUrl: String, date: Long, chname: String, scangroup: String?): SChapter {
         val chapter = SChapter.create()
         chapter.setUrlWithoutDomain("$mangaUrl/$pageNumber")
         chapter.name = chname
         chapter.date_upload = date
+        chapter.scanlator = scangroup
         return chapter
     }
 
