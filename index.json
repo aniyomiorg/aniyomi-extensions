@@ -586,10 +586,10 @@
   {
     "name": "Tachiyomi: Maid - Manga",
     "pkg": "eu.kanade.tachiyomi.extension.id.maidmanga",
-    "apk": "tachiyomi-id.maidmanga-v1.2.1.apk",
+    "apk": "tachiyomi-id.maidmanga-v1.2.2.apk",
     "lang": "id",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Mangashiro",
@@ -610,10 +610,10 @@
   {
     "name": "Tachiyomi: Pecinta Komik",
     "pkg": "eu.kanade.tachiyomi.extension.id.pecintakomik",
-    "apk": "tachiyomi-id.pecintakomik-v1.2.1.apk",
+    "apk": "tachiyomi-id.pecintakomik-v1.2.2.apk",
     "lang": "id",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: HentaiFantasy",
