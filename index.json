@@ -722,10 +722,10 @@
   {
     "name": "Tachiyomi: NewToki",
     "pkg": "eu.kanade.tachiyomi.extension.ko.newtoki",
-    "apk": "tachiyomi-ko.newtoki-v1.2.8.apk",
+    "apk": "tachiyomi-ko.newtoki-v1.2.9.apk",
     "lang": "ko",
-    "code": 8,
-    "version": "1.2.8"
+    "code": 9,
+    "version": "1.2.9"
   },
   {
     "name": "Tachiyomi: AnimaRegia",
@@ -1074,9 +1074,9 @@
   {
     "name": "Tachiyomi: Tohomh123",
     "pkg": "eu.kanade.tachiyomi.extension.zh.tohomh123",
-    "apk": "tachiyomi-zh.tohomh123-v1.2.1.apk",
+    "apk": "tachiyomi-zh.tohomh123-v1.2.2.apk",
     "lang": "zh",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   }
 ]
