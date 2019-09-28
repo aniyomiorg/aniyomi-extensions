@@ -128,6 +128,14 @@
     "version": "1.2.4"
   },
   {
+    "name": "Tachiyomi: Toomics",
+    "pkg": "eu.kanade.tachiyomi.extension.all.toomics",
+    "apk": "tachiyomi-all.toomics-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Webtoons",
     "pkg": "eu.kanade.tachiyomi.extension.all.webtoons",
     "apk": "tachiyomi-all.webtoons-v1.2.9.apk",
@@ -610,10 +618,10 @@
   {
     "name": "Tachiyomi: Pecinta Komik",
     "pkg": "eu.kanade.tachiyomi.extension.id.pecintakomik",
-    "apk": "tachiyomi-id.pecintakomik-v1.2.2.apk",
+    "apk": "tachiyomi-id.pecintakomik-v1.2.3.apk",
     "lang": "id",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: HentaiFantasy",
