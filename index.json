@@ -592,6 +592,14 @@
     "version": "1.2.2"
   },
   {
+    "name": "Tachiyomi: Kiryuu",
+    "pkg": "eu.kanade.tachiyomi.extension.id.kiryuu",
+    "apk": "tachiyomi-id.kiryuu-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Komikcast",
     "pkg": "eu.kanade.tachiyomi.extension.id.komikcast",
     "apk": "tachiyomi-id.komikcast-v1.2.4.apk",
@@ -638,6 +646,14 @@
     "lang": "id",
     "code": 3,
     "version": "1.2.3"
+  },
+  {
+    "name": "Tachiyomi: West Manga",
+    "pkg": "eu.kanade.tachiyomi.extension.id.westmanga",
+    "apk": "tachiyomi-id.westmanga-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: HentaiFantasy",
