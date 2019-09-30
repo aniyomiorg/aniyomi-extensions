@@ -1082,10 +1082,10 @@
   {
     "name": "Tachiyomi: Manhuadui",
     "pkg": "eu.kanade.tachiyomi.extension.zh.manhuadui",
-    "apk": "tachiyomi-zh.manhuadui-v1.2.4.apk",
+    "apk": "tachiyomi-zh.manhuadui-v1.2.5.apk",
     "lang": "zh",
-    "code": 4,
-    "version": "1.2.4"
+    "code": 5,
+    "version": "1.2.5"
   },
   {
     "name": "Tachiyomi: ManHuaGui",
