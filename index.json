@@ -152,6 +152,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: Shqqaa Manga",
+    "pkg": "eu.kanade.tachiyomi.extension.ar.shqqaa",
+    "apk": "tachiyomi-ar.shqqaa-v1.2.1.apk",
+    "lang": "ar",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: WieManga",
     "pkg": "eu.kanade.tachiyomi.extension.de.wiemanga",
     "apk": "tachiyomi-de.wiemanga-v1.2.3.apk",
@@ -610,10 +618,10 @@
   {
     "name": "Tachiyomi: Mangashiro",
     "pkg": "eu.kanade.tachiyomi.extension.id.mangashiro",
-    "apk": "tachiyomi-id.mangashiro-v1.2.1.apk",
+    "apk": "tachiyomi-id.mangashiro-v1.2.2.apk",
     "lang": "id",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Neumanga",
