@@ -592,6 +592,14 @@
     "version": "1.2.2"
   },
   {
+    "name": "Tachiyomi: Scantrad",
+    "pkg": "eu.kanade.tachiyomi.extension.fr.scantrad",
+    "apk": "tachiyomi-fr.scantrad-v1.2.1.apk",
+    "lang": "fr",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Kiryuu",
     "pkg": "eu.kanade.tachiyomi.extension.id.kiryuu",
     "apk": "tachiyomi-id.kiryuu-v1.2.1.apk",
