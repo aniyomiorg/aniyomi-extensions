@@ -624,6 +624,14 @@
     "version": "1.2.2"
   },
   {
+    "name": "Tachiyomi: Komik Indo",
+    "pkg": "eu.kanade.tachiyomi.extension.id.komikindo",
+    "apk": "tachiyomi-id.komikindo-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Maid - Manga",
     "pkg": "eu.kanade.tachiyomi.extension.id.maidmanga",
     "apk": "tachiyomi-id.maidmanga-v1.2.2.apk",
