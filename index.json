@@ -912,12 +912,12 @@
     "version": "1.2.11"
   },
   {
-    "name": "Tachiyomi: LibManga",
+    "name": "Tachiyomi: MangaLib",
     "pkg": "eu.kanade.tachiyomi.extension.ru.libmanga",
-    "apk": "tachiyomi-ru.libmanga-v1.2.6.apk",
+    "apk": "tachiyomi-ru.libmanga-v1.2.7.apk",
     "lang": "ru",
-    "code": 6,
-    "version": "1.2.6"
+    "code": 7,
+    "version": "1.2.7"
   },
   {
     "name": "Tachiyomi: Mangachan",
