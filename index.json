@@ -16,6 +16,14 @@
     "version": "1.2.6"
   },
   {
+    "name": "Tachiyomi: FMReader (multiple aggregators)",
+    "pkg": "eu.kanade.tachiyomi.extension.all.fmreader",
+    "apk": "tachiyomi-all.fmreader-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: FoolSlide",
     "pkg": "eu.kanade.tachiyomi.extension.all.foolslide",
     "apk": "tachiyomi-all.foolslide-v1.2.27.apk",
