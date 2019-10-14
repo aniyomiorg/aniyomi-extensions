@@ -882,10 +882,10 @@
   {
     "name": "Tachiyomi: Union Mangás",
     "pkg": "eu.kanade.tachiyomi.extension.pt.unionmangas",
-    "apk": "tachiyomi-pt.unionmangas-v1.2.8.apk",
+    "apk": "tachiyomi-pt.unionmangas-v1.2.9.apk",
     "lang": "pt",
-    "code": 8,
-    "version": "1.2.8"
+    "code": 9,
+    "version": "1.2.9"
   },
   {
     "name": "Tachiyomi: YES Mangás",
@@ -1146,10 +1146,10 @@
   {
     "name": "Tachiyomi: Manhuaren",
     "pkg": "eu.kanade.tachiyomi.extension.zh.manhuaren",
-    "apk": "tachiyomi-zh.manhuaren-v1.2.5.apk",
+    "apk": "tachiyomi-zh.manhuaren-v1.2.6.apk",
     "lang": "zh",
-    "code": 5,
-    "version": "1.2.5"
+    "code": 6,
+    "version": "1.2.6"
   },
   {
     "name": "Tachiyomi: Pufei",
