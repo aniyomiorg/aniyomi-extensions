@@ -826,10 +826,10 @@
   {
     "name": "Tachiyomi: Central de Mangás",
     "pkg": "eu.kanade.tachiyomi.extension.pt.centraldemangas",
-    "apk": "tachiyomi-pt.centraldemangas-v1.2.1.apk",
+    "apk": "tachiyomi-pt.centraldemangas-v1.2.2.apk",
     "lang": "pt",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Golden Mangás",
@@ -874,10 +874,10 @@
   {
     "name": "Tachiyomi: Saikai Scan",
     "pkg": "eu.kanade.tachiyomi.extension.pt.saikaiscan",
-    "apk": "tachiyomi-pt.saikaiscan-v1.2.1.apk",
+    "apk": "tachiyomi-pt.saikaiscan-v1.2.2.apk",
     "lang": "pt",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Union Mangás",
