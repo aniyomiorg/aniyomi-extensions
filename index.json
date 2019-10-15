@@ -24,12 +24,12 @@
     "version": "1.2.1"
   },
   {
-    "name": "Tachiyomi: FoolSlide",
+    "name": "Tachiyomi: FoolSlide (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.foolslide",
-    "apk": "tachiyomi-all.foolslide-v1.2.27.apk",
+    "apk": "tachiyomi-all.foolslide-v1.2.28.apk",
     "lang": "all",
-    "code": 27,
-    "version": "1.2.27"
+    "code": 28,
+    "version": "1.2.28"
   },
   {
     "name": "Tachiyomi: Genkan (multiple sources)",
@@ -280,14 +280,6 @@
     "version": "1.2.9"
   },
   {
-    "name": "Tachiyomi: LHTranslation",
-    "pkg": "eu.kanade.tachiyomi.extension.en.lhtranslation",
-    "apk": "tachiyomi-en.lhtranslation-v1.2.4.apk",
-    "lang": "en",
-    "code": 4,
-    "version": "1.2.4"
-  },
-  {
     "name": "Tachiyomi: Mangaeden",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangaeden",
     "apk": "tachiyomi-en.mangaeden-v1.2.2.apk",
@@ -414,14 +406,6 @@
     "lang": "en",
     "code": 2,
     "version": "1.2.2"
-  },
-  {
-    "name": "Tachiyomi: Manhwa18",
-    "pkg": "eu.kanade.tachiyomi.extension.en.manhwa18",
-    "apk": "tachiyomi-en.manhwa18-v1.2.1.apk",
-    "lang": "en",
-    "code": 1,
-    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: Man Manga",
@@ -760,22 +744,6 @@
     "version": "1.2.1"
   },
   {
-    "name": "Tachiyomi: RawLH",
-    "pkg": "eu.kanade.tachiyomi.extension.ja.rawlh",
-    "apk": "tachiyomi-ja.rawlh-v1.2.11.apk",
-    "lang": "ja",
-    "code": 11,
-    "version": "1.2.11"
-  },
-  {
-    "name": "Tachiyomi: RawQQ",
-    "pkg": "eu.kanade.tachiyomi.extension.ja.rawqq",
-    "apk": "tachiyomi-ja.rawqq-v1.2.4.apk",
-    "lang": "ja",
-    "code": 4,
-    "version": "1.2.4"
-  },
-  {
     "name": "Tachiyomi: Sen Manga",
     "pkg": "eu.kanade.tachiyomi.extension.ja.senmanga",
     "apk": "tachiyomi-ja.senmanga-v1.2.3.apk",
@@ -1070,14 +1038,6 @@
     "lang": "vi",
     "code": 5,
     "version": "1.2.5"
-  },
-  {
-    "name": "Tachiyomi: TruyenTranhLH",
-    "pkg": "eu.kanade.tachiyomi.extension.vi.truyentranhlh",
-    "apk": "tachiyomi-vi.truyentranhlh-v1.2.7.apk",
-    "lang": "vi",
-    "code": 7,
-    "version": "1.2.7"
   },
   {
     "name": "Tachiyomi: BainianManga",
