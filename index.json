@@ -1122,10 +1122,10 @@
   {
     "name": "Tachiyomi: ManhuaDB",
     "pkg": "eu.kanade.tachiyomi.extension.zh.manhuadb",
-    "apk": "tachiyomi-zh.manhuadb-v1.2.1.apk",
+    "apk": "tachiyomi-zh.manhuadb-v1.2.2.apk",
     "lang": "zh",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Manhuadui",
