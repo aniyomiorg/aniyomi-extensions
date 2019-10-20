@@ -610,10 +610,10 @@
   {
     "name": "Tachiyomi: Scantrad",
     "pkg": "eu.kanade.tachiyomi.extension.fr.scantrad",
-    "apk": "tachiyomi-fr.scantrad-v1.2.1.apk",
+    "apk": "tachiyomi-fr.scantrad-v1.2.2.apk",
     "lang": "fr",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Baca Manga",
