@@ -592,6 +592,14 @@
     "version": "1.2.10"
   },
   {
+    "name": "Tachiyomi: Zahard",
+    "pkg": "eu.kanade.tachiyomi.extension.es.zahard",
+    "apk": "tachiyomi-es.zahard-v1.2.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Japscan",
     "pkg": "eu.kanade.tachiyomi.extension.fr.japscan",
     "apk": "tachiyomi-fr.japscan-v1.2.12.apk",
