@@ -1090,10 +1090,10 @@
   {
     "name": "Tachiyomi: Dmzj",
     "pkg": "eu.kanade.tachiyomi.extension.zh.dmzj",
-    "apk": "tachiyomi-zh.dmzj-v1.2.6.apk",
+    "apk": "tachiyomi-zh.dmzj-v1.2.7.apk",
     "lang": "zh",
-    "code": 6,
-    "version": "1.2.6"
+    "code": 7,
+    "version": "1.2.7"
   },
   {
     "name": "Tachiyomi: Hanhankuman",
