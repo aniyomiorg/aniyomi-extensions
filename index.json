@@ -18,10 +18,10 @@
   {
     "name": "Tachiyomi: FMReader (multiple aggregators)",
     "pkg": "eu.kanade.tachiyomi.extension.all.fmreader",
-    "apk": "tachiyomi-all.fmreader-v1.2.1.apk",
+    "apk": "tachiyomi-all.fmreader-v1.2.2.apk",
     "lang": "all",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: FoolSlide (multiple sources)",
@@ -50,10 +50,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.21.apk",
+    "apk": "tachiyomi-all.madara-v1.2.22.apk",
     "lang": "all",
-    "code": 21,
-    "version": "1.2.21"
+    "code": 22,
+    "version": "1.2.22"
   },
   {
     "name": "Tachiyomi: MangaCards (Valhalla, NANI?)",
@@ -1090,10 +1090,10 @@
   {
     "name": "Tachiyomi: Dmzj",
     "pkg": "eu.kanade.tachiyomi.extension.zh.dmzj",
-    "apk": "tachiyomi-zh.dmzj-v1.2.7.apk",
+    "apk": "tachiyomi-zh.dmzj-v1.2.8.apk",
     "lang": "zh",
-    "code": 7,
-    "version": "1.2.7"
+    "code": 8,
+    "version": "1.2.8"
   },
   {
     "name": "Tachiyomi: Hanhankuman",
