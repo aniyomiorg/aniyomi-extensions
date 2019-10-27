@@ -2,10 +2,10 @@
   {
     "name": "Tachiyomi: ComiCake",
     "pkg": "eu.kanade.tachiyomi.extension.all.comicake",
-    "apk": "tachiyomi-all.comicake-v1.2.6.apk",
+    "apk": "tachiyomi-all.comicake-v1.2.7.apk",
     "lang": "all",
-    "code": 6,
-    "version": "1.2.6"
+    "code": 7,
+    "version": "1.2.7"
   },
   {
     "name": "Tachiyomi: E-Hentai",
@@ -18,26 +18,26 @@
   {
     "name": "Tachiyomi: FMReader (multiple aggregators)",
     "pkg": "eu.kanade.tachiyomi.extension.all.fmreader",
-    "apk": "tachiyomi-all.fmreader-v1.2.2.apk",
+    "apk": "tachiyomi-all.fmreader-v1.2.3.apk",
     "lang": "all",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: FoolSlide (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.foolslide",
-    "apk": "tachiyomi-all.foolslide-v1.2.28.apk",
+    "apk": "tachiyomi-all.foolslide-v1.2.29.apk",
     "lang": "all",
-    "code": 28,
-    "version": "1.2.28"
+    "code": 29,
+    "version": "1.2.29"
   },
   {
     "name": "Tachiyomi: Genkan (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.genkan",
-    "apk": "tachiyomi-all.genkan-v1.2.7.apk",
+    "apk": "tachiyomi-all.genkan-v1.2.8.apk",
     "lang": "all",
-    "code": 7,
-    "version": "1.2.7"
+    "code": 8,
+    "version": "1.2.8"
   },
   {
     "name": "Tachiyomi: Komga",
@@ -50,34 +50,34 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.22.apk",
+    "apk": "tachiyomi-all.madara-v1.2.23.apk",
     "lang": "all",
-    "code": 22,
-    "version": "1.2.22"
+    "code": 23,
+    "version": "1.2.23"
   },
   {
     "name": "Tachiyomi: MangaCards (Valhalla, NANI?)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangacards",
-    "apk": "tachiyomi-all.mangacards-v1.2.4.apk",
+    "apk": "tachiyomi-all.mangacards-v1.2.5.apk",
     "lang": "all",
-    "code": 4,
-    "version": "1.2.4"
+    "code": 5,
+    "version": "1.2.5"
   },
   {
     "name": "Tachiyomi: MangaDex",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangadex",
-    "apk": "tachiyomi-all.mangadex-v1.2.68.apk",
+    "apk": "tachiyomi-all.mangadex-v1.2.69.apk",
     "lang": "all",
-    "code": 68,
-    "version": "1.2.68"
+    "code": 69,
+    "version": "1.2.69"
   },
   {
     "name": "Tachiyomi: MangAdventure",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangadventure",
-    "apk": "tachiyomi-all.mangadventure-v1.2.3.apk",
+    "apk": "tachiyomi-all.mangadventure-v1.2.4.apk",
     "lang": "all",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: MANGA Plus by SHUEISHA",
@@ -90,10 +90,10 @@
   {
     "name": "Tachiyomi: Mangatensei",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangatensei",
-    "apk": "tachiyomi-all.mangatensei-v1.2.2.apk",
+    "apk": "tachiyomi-all.mangatensei-v1.2.3.apk",
     "lang": "all",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: My Manga Reader CMS (Many sources)",
