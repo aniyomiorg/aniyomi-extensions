@@ -7,6 +7,7 @@ import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.Companion.getTags
 import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.Companion.getTime
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -23,7 +24,10 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 
-open class NHentai(override val lang: String, private val nhLang: String) : ParsedHttpSource() {
+open class NHentai(
+    override val lang: String,
+    private val nhLang: String
+) : ParsedHttpSource() {
 
     final override val baseUrl = "https://nhentai.net"
 
@@ -63,8 +67,8 @@ open class NHentai(override val lang: String, private val nhLang: String) : Pars
         return if (query.startsWith(PREFIX_ID_SEARCH)) {
             val id = query.removePrefix(PREFIX_ID_SEARCH)
             client.newCall(searchMangaByIdRequest(id))
-                    .asObservableSuccess()
-                    .map { response -> searchMangaByIdParse(response, id) }
+                .asObservableSuccess()
+                .map { response -> searchMangaByIdParse(response, id) }
         } else {
             return super.fetchSearchManga(page, query, filters)
         }
@@ -72,8 +76,8 @@ open class NHentai(override val lang: String, private val nhLang: String) : Pars
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = HttpUrl.parse("$baseUrl/search")!!.newBuilder()
-                .addQueryParameter("q", "$query +$nhLang")
-                .addQueryParameter("page", page.toString())
+            .addQueryParameter("q", "$query +$nhLang")
+            .addQueryParameter("page", page.toString())
 
         filters.forEach {
             when (it) {
@@ -147,5 +151,7 @@ open class NHentai(override val lang: String, private val nhLang: String) : Pars
     companion object {
         const val PREFIX_ID_SEARCH = "id:"
     }
+
+    private class SortFilter : Filter.Select<String>("Sort", arrayOf("Popular", "Date"))
 
 }
