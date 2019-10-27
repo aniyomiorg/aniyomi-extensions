@@ -5,14 +5,14 @@ import eu.kanade.tachiyomi.source.SourceFactory
 
 class GenkanFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
-            LeviatanScans(),
-            LeviatanScansES(),
-            PsychoPlay(),
-            OneShotScans(),
-            KaguyaDex(),
-            KomiScans(),
-            HunlightScans(),
-            WoweScans()
+        LeviatanScans(),
+        LeviatanScansES(),
+        PsychoPlay(),
+        OneShotScans(),
+        KaguyaDex(),
+        KomiScans(),
+        HunlightScans(),
+        WoweScans()
     )
 }
 

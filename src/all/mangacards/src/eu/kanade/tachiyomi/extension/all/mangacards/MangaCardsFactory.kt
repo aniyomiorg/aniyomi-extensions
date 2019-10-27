@@ -14,4 +14,3 @@ class MangaCardsFactory : SourceFactory {
 class ValhallaScans : MangaCards("Valhalla Scans", "https://valhallascans.com", "en")
 class NaniScans : MangaCards("NANI? Scans", "https://naniscans.xyz", "en")
 class IneptBastards : MangaCards("Inept Bastards", "https://ineptbastards.xyz", "en")
-

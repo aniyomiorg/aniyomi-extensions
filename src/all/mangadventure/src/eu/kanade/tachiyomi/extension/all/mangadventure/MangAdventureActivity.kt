@@ -31,7 +31,7 @@ class MangAdventureActivity : Activity() {
     }
 
     private fun logInvalidIntent(intent: Intent) {
-        val msg = "Failed to parse URI from intent"
-        Log.e("MangAdventureActivity",  "$msg $intent")
+        Log.e("MangAdventureActivity", "Failed to parse URI from intent: $intent")
     }
+
 }

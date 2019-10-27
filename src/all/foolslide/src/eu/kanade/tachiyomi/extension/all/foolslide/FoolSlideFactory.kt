@@ -12,41 +12,36 @@ import okhttp3.Request
 import org.jsoup.nodes.Document
 
 class FoolSlideFactory : SourceFactory {
-    override fun createSources(): List<Source> = getAllFoolSlide()
-}
-
-fun getAllFoolSlide(): List<Source> {
-    return listOf(
-            JaminisBox(),
-            SenseScans(),
-            KireiCake(),
-            SilentSky(),
-            Mangatellers(),
-            IskultripScans(),
-            AnataNoMotokare(),
-            DeathTollScans(),
-            DKThias(),
-            WorldThree(),
-            DokiFansubs(),
-            YuriIsm(),
-            AjiaNoScantrad(),
-            OneTimeScans(),
-            TsubasaSociety(),
-            MangaScouts(),
-            StormInHeaven(),
-            Lilyreader(),
-            Russification(),
-            EvilFlowers(),
-            AkaiYuhiMunTeam(),
-            LupiTeam(),
-            HentaiCafe(),
-            TheCatScans(),
-            ZandynoFansub()
+    override fun createSources(): List<Source> = listOf(
+        JaminisBox(),
+        SenseScans(),
+        KireiCake(),
+        SilentSky(),
+        Mangatellers(),
+        IskultripScans(),
+        AnataNoMotokare(),
+        DeathTollScans(),
+        DKThias(),
+        WorldThree(),
+        DokiFansubs(),
+        YuriIsm(),
+        AjiaNoScantrad(),
+        OneTimeScans(),
+        TsubasaSociety(),
+        MangaScouts(),
+        StormInHeaven(),
+        Lilyreader(),
+        Russification(),
+        EvilFlowers(),
+        AkaiYuhiMunTeam(),
+        LupiTeam(),
+        HentaiCafe(),
+        TheCatScans(),
+        ZandynoFansub()
     )
 }
 
 class JaminisBox : FoolSlide("Jaimini's Box", "https://jaiminisbox.com", "en", "/reader") {
-
     override fun pageListParse(document: Document): List<Page> {
         val doc = document.toString()
         var jsonstr = doc.substringAfter("var pages = ").substringBefore(";")
@@ -132,7 +127,6 @@ class LupiTeam : FoolSlide("LupiTeam", "https://lupiteam.net", "it", "/reader") 
 
         return manga
     }
-
 }
 
 class ZandynoFansub : FoolSlide("Zandy no Fansub", "http://zandynofansub.aishiteru.org", "en", "/reader")

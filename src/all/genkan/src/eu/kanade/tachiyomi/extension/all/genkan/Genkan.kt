@@ -1,7 +1,11 @@
 package eu.kanade.tachiyomi.extension.all.genkan
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.source.model.*
+import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.MangasPage
+import eu.kanade.tachiyomi.source.model.Page
+import eu.kanade.tachiyomi.source.model.SChapter
+import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
@@ -11,12 +15,13 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
 
 abstract class Genkan(
-        override val name: String,
-        override val baseUrl: String,
-        override val lang: String
+    override val name: String,
+    override val baseUrl: String,
+    override val lang: String
 ) : ParsedHttpSource() {
 
     override val supportsLatest = true
@@ -88,7 +93,7 @@ abstract class Genkan(
 
     private fun styleToUrl(element: Element): String {
         return element.attr("style").substringAfter("(").substringBefore(")")
-            .let{ if (it.startsWith("http")) it else baseUrl + it }
+            .let { if (it.startsWith("http")) it else baseUrl + it }
     }
 
     override fun mangaDetailsParse(document: Document): SManga {
@@ -155,11 +160,11 @@ abstract class Genkan(
         val pages = mutableListOf<Page>()
 
         val allImages = document.select("div#pages-container + script").first().data()
-                .substringAfter("[").substringBefore("];")
-                .replace(Regex("""["\\]"""), "")
-                .split(",")
+            .substringAfter("[").substringBefore("];")
+            .replace(Regex("""["\\]"""), "")
+            .split(",")
 
-        for (i in 0 until allImages.size) {
+        for (i in allImages.indices) {
             pages.add(Page(i, "", allImages[i]))
         }
 
@@ -178,9 +183,9 @@ abstract class Genkan(
 // For sites using the older Genkan CMS that didn't have a search function
 
 abstract class GenkanOriginal(
-        override val name: String,
-        override val baseUrl: String,
-        override val lang: String
+    override val name: String,
+    override val baseUrl: String,
+    override val lang: String
 ) : Genkan(name, baseUrl, lang) {
 
     private var searchQuery = ""
@@ -223,7 +228,7 @@ abstract class GenkanOriginal(
     // search additional pages if called
     private fun searchMorePages(): MutableList<SManga> {
         searchPage++
-        val nextPage =  client.newCall(popularMangaRequest(searchPage)).execute().asJsoup()
+        val nextPage = client.newCall(popularMangaRequest(searchPage)).execute().asJsoup()
         val searchMatches = mutableListOf<SManga>()
         searchMatches.addAll(getMatchesFrom(nextPage))
         nextPageSelectorElement = nextPage.select(searchMangaNextPageSelector())
@@ -238,4 +243,3 @@ abstract class GenkanOriginal(
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
 }
-

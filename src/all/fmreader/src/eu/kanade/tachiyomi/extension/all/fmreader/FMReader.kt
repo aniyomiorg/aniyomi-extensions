@@ -1,17 +1,27 @@
 package eu.kanade.tachiyomi.extension.all.fmreader
 
-// For sites based on the Flat-Manga CMS
-
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.source.model.*
+import eu.kanade.tachiyomi.source.model.Filter
+import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.MangasPage
+import eu.kanade.tachiyomi.source.model.Page
+import eu.kanade.tachiyomi.source.model.SChapter
+import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.Headers
+import okhttp3.HttpUrl
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.*
-import java.util.*
+import java.util.Calendar
 
-abstract class FMReader (
+/**
+ * For sites based on the Flat-Manga CMS
+ */
+abstract class FMReader(
     override val name: String,
     override val baseUrl: String,
     override val lang: String
@@ -43,10 +53,8 @@ abstract class FMReader (
                 }
                 is TextField -> url.addQueryParameter(filter.key, filter.state)
                 is GenreList -> {
-
                     var genre = String()
                     var ungenre = String()
-
                     filter.state.forEach {
                         if (it.isIncluded()) genre += ",${it.name}"
                         if (it.isExcluded()) ungenre += ",${it.name}"
@@ -79,7 +87,7 @@ abstract class FMReader (
         val mangas = mutableListOf<SManga>()
         var hasNextPage = true
 
-        document.select(popularMangaSelector()).map{ mangas.add(popularMangaFromElement(it)) }
+        document.select(popularMangaSelector()).map { mangas.add(popularMangaFromElement(it)) }
 
         // check if there's a next page
         document.select(popularMangaNextPageSelector()).first().text().split(" ").let {
@@ -108,7 +116,7 @@ abstract class FMReader (
             manga.setUrlWithoutDomain(it.attr("abs:href"))
             manga.title = it.text()
         }
-        manga.thumbnail_url = element.select("img").let{
+        manga.thumbnail_url = element.select("img").let {
             if (it.hasAttr("src")) {
                 it.attr("abs:src")
             } else {
@@ -160,11 +168,11 @@ abstract class FMReader (
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
 
-        element.select(chapterUrlSelector).first().let{
+        element.select(chapterUrlSelector).first().let {
             chapter.setUrlWithoutDomain(it.attr("abs:href"))
             chapter.name = it.text()
         }
-        chapter.date_upload = element.select(chapterTimeSelector).let{ if(it.hasText()) parseChapterDate(it.text()) else 0 }
+        chapter.date_upload = element.select(chapterTimeSelector).let { if (it.hasText()) parseChapterDate(it.text()) else 0 }
 
         return chapter
     }
@@ -177,7 +185,7 @@ abstract class FMReader (
 
     private fun parseChapterDate(date: String): Long {
         val value = date.split(' ')[dateValueIndex].toInt()
-        val dateWord = date.split(' ')[dateWordIndex].let{
+        val dateWord = date.split(' ')[dateWordIndex].let {
             if (it.contains("(")) {
                 it.substringBefore("(")
             } else {
@@ -227,7 +235,7 @@ abstract class FMReader (
         val pages = mutableListOf<Page>()
 
         document.select("img.chapter-img").forEachIndexed { i, img ->
-            pages.add(Page(i, "", img.attr("abs:data-src").let{ if (it.isNotEmpty()) it else img.attr("abs:src") }))
+            pages.add(Page(i, "", img.attr("abs:data-src").let { if (it.isNotEmpty()) it else img.attr("abs:src") }))
         }
         return pages
     }

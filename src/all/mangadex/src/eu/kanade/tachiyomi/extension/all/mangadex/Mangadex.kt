@@ -43,7 +43,11 @@ import java.util.Date
 import java.util.concurrent.TimeUnit
 import kotlin.collections.set
 
-open class Mangadex(override val lang: String, private val internalLang: String, private val langCode: Int) : ConfigurableSource, ParsedHttpSource() {
+abstract class Mangadex(
+    override val lang: String,
+    private val internalLang: String,
+    private val langCode: Int
+) : ConfigurableSource, ParsedHttpSource() {
 
     override val name = "MangaDex"
 
@@ -60,27 +64,27 @@ open class Mangadex(override val lang: String, private val internalLang: String,
     private val rateLimitInterceptor = RateLimitInterceptor(4)
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-            .addNetworkInterceptor(rateLimitInterceptor)
-            .build()
+        .addNetworkInterceptor(rateLimitInterceptor)
+        .build()
 
     private fun clientBuilder(): OkHttpClient = clientBuilder(getShowR18())
 
     private fun clientBuilder(r18Toggle: Int): OkHttpClient = network.cloudflareClient.newBuilder()
-            .connectTimeout(10, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .addNetworkInterceptor(rateLimitInterceptor)
-            .addNetworkInterceptor { chain ->
-                val originalCookies = chain.request().header("Cookie") ?: ""
-                val newReq = chain
-                        .request()
-                        .newBuilder()
-                        .header("Cookie", "$originalCookies; ${cookiesHeader(r18Toggle, langCode)}")
-                        .build()
-                chain.proceed(newReq)
-            }.build()!!
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .addNetworkInterceptor(rateLimitInterceptor)
+        .addNetworkInterceptor { chain ->
+            val originalCookies = chain.request().header("Cookie") ?: ""
+            val newReq = chain
+                .request()
+                .newBuilder()
+                .header("Cookie", "$originalCookies; ${cookiesHeader(r18Toggle, langCode)}")
+                .build()
+            chain.proceed(newReq)
+        }.build()!!
 
     override fun headersBuilder() = Headers.Builder().apply {
-        add("User-Agent", "Tachiyomi "+ System.getProperty("http.agent"))
+        add("User-Agent", "Tachiyomi " + System.getProperty("http.agent"))
     }
 
     private fun cookiesHeader(r18Toggle: Int, langCode: Int): String {
@@ -150,36 +154,36 @@ open class Mangadex(override val lang: String, private val internalLang: String,
 
     override fun fetchPopularManga(page: Int): Observable<MangasPage> {
         return clientBuilder().newCall(popularMangaRequest(page))
-                .asObservableSuccess()
-                .map { response ->
-                    popularMangaParse(response)
-                }
+            .asObservableSuccess()
+            .map { response ->
+                popularMangaParse(response)
+            }
     }
 
     override fun fetchLatestUpdates(page: Int): Observable<MangasPage> {
         return clientBuilder().newCall(latestUpdatesRequest(page))
-                .asObservableSuccess()
-                .map { response ->
-                    latestUpdatesParse(response)
-                }
+            .asObservableSuccess()
+            .map { response ->
+                latestUpdatesParse(response)
+            }
     }
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         return if (query.startsWith(PREFIX_ID_SEARCH)) {
             val realQuery = query.removePrefix(PREFIX_ID_SEARCH)
             client.newCall(searchMangaByIdRequest(realQuery))
-                    .asObservableSuccess()
-                    .map { response ->
-                        val details = mangaDetailsParse(response)
-                        details.url = "/manga/$realQuery/"
-                        MangasPage(listOf(details), false)
-                    }
+                .asObservableSuccess()
+                .map { response ->
+                    val details = mangaDetailsParse(response)
+                    details.url = "/manga/$realQuery/"
+                    MangasPage(listOf(details), false)
+                }
         } else {
             getSearchClient(filters).newCall(searchMangaRequest(page, query, filters))
-                    .asObservableSuccess()
-                    .map { response ->
-                        searchMangaParse(response)
-                    }
+                .asObservableSuccess()
+                .map { response ->
+                    searchMangaParse(response)
+                }
         }
     }
 
@@ -205,8 +209,8 @@ open class Mangadex(override val lang: String, private val internalLang: String,
 
         // Do traditional search
         val url = HttpUrl.parse("$baseUrl/?page=search")!!.newBuilder()
-                .addQueryParameter("p", page.toString())
-                .addQueryParameter("title", query.replace(WHITESPACE_REGEX, " "))
+            .addQueryParameter("p", page.toString())
+            .addQueryParameter("title", query.replace(WHITESPACE_REGEX, " "))
 
         filters.forEach { filter ->
             when (filter) {
@@ -323,10 +327,10 @@ open class Mangadex(override val lang: String, private val internalLang: String,
 
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
         return clientBuilder().newCall(apiRequest(manga))
-                .asObservableSuccess()
-                .map { response ->
-                    mangaDetailsParse(response).apply { initialized = true }
-                }
+            .asObservableSuccess()
+            .map { response ->
+                mangaDetailsParse(response).apply { initialized = true }
+            }
     }
 
     private fun apiRequest(manga: SManga): Request {
@@ -362,14 +366,14 @@ open class Mangadex(override val lang: String, private val internalLang: String,
         val finalChapterNumber = getFinalChapter(mangaJson)
         if ((status == 2 || status == 3) && chapterJson != null && isMangaCompleted(chapterJson, finalChapterNumber)) {
             manga.status = SManga.COMPLETED
-        } else if (status == 2 && chapterJson != null && isOneshot(chapterJson, finalChapterNumber)){
+        } else if (status == 2 && chapterJson != null && isOneshot(chapterJson, finalChapterNumber)) {
             manga.status = SManga.COMPLETED
         } else {
             manga.status = parseStatus(status)
         }
 
         val genres = (if (mangaJson.get("hentai").int == 1) listOf("Hentai") else listOf()) +
-                mangaJson.get("genres").asJsonArray.mapNotNull { GENRES[it.toString()] }
+            mangaJson.get("genres").asJsonArray.mapNotNull { GENRES[it.toString()] }
         manga.genre = genres.joinToString(", ")
 
         return manga
@@ -395,10 +399,10 @@ open class Mangadex(override val lang: String, private val internalLang: String,
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
         return clientBuilder().newCall(apiRequest(manga))
-                .asObservableSuccess()
-                .map { response ->
-                    chapterListParse(response)
-                }
+            .asObservableSuccess()
+            .map { response ->
+                chapterListParse(response)
+            }
     }
 
     private fun getFinalChapter(jsonObj: JsonObject): String = jsonObj.get("last_chapter").string.trim()
@@ -414,8 +418,8 @@ open class Mangadex(override val lang: String, private val internalLang: String,
 
     private fun isMangaCompleted(chapterJson: JsonObject, finalChapterNumber: String): Boolean {
         val count = chapterJson.entrySet()
-                .filter { it.value.asJsonObject.get("lang_code").string == internalLang }
-                .filter { doesFinalChapterExist(finalChapterNumber, it.value) }.count()
+            .filter { it.value.asJsonObject.get("lang_code").string == internalLang }
+            .filter { doesFinalChapterExist(finalChapterNumber, it.value) }.count()
         return count != 0
     }
 
@@ -460,7 +464,7 @@ open class Mangadex(override val lang: String, private val internalLang: String,
             chapterName.add(chapterJson.get("title").string)
         }
         //if volume, chapter and title is empty its a oneshot
-        if(chapterName.isEmpty()){
+        if (chapterName.isEmpty()) {
             chapterName.add("Oneshot")
         }
         if ((status == 2 || status == 3) && doesFinalChapterExist(finalChapterNumber, chapterJson)) {
@@ -611,17 +615,17 @@ open class Mangadex(override val lang: String, private val internalLang: String,
     private class R18 : Filter.Select<String>("R18+", arrayOf("Default", "Show all", "Show only", "Show none"))
 
     private fun getDemographic() = listOf(
-            Tag("1", "Shounen"),
-            Tag("2", "Shoujo"),
-            Tag("3", "Seinen"),
-            Tag("4", "Josei")
+        Tag("1", "Shounen"),
+        Tag("2", "Shoujo"),
+        Tag("3", "Seinen"),
+        Tag("4", "Josei")
     ).sortedWith(compareBy { it.name })
 
     private fun getPublicationStatus() = listOf(
-            Tag("1", "Ongoing"),
-            Tag("2", "Completed"),
-            Tag("3", "Cancelled"),
-            Tag("4", "Hiatus")
+        Tag("1", "Ongoing"),
+        Tag("2", "Completed"),
+        Tag("3", "Cancelled"),
+        Tag("4", "Hiatus")
     ).sortedWith(compareBy { it.name })
 
     private class ThemeList(themes: List<Tag>) : Filter.Group<Tag>("Themes", themes)
@@ -630,115 +634,115 @@ open class Mangadex(override val lang: String, private val internalLang: String,
 
     // default selection (Rating Descending) matches popularMangaRequest url
     class SortFilter : Filter.Sort("Sort",
-            sortables.map { it.first }.toTypedArray(),
-            Selection(3, false))
+        sortables.map { it.first }.toTypedArray(),
+        Selection(3, false))
 
     private class OriginalLanguage : Filter.Select<String>("Original Language", SOURCE_LANG_LIST.map { it.first }.toTypedArray())
 
     override fun getFilterList() = FilterList(
-            TextField("Author", "author"),
-            TextField("Artist", "artist"),
-            R18(),
-            SortFilter(),
-            Demographic(getDemographic()),
-            PublicationStatus(getPublicationStatus()),
-            OriginalLanguage(),
-            ContentList(getContentList()),
-            FormatList(getFormatList()),
-            GenreList(getGenreList()),
-            ThemeList(getThemeList()),
-            TagInclusionMode(),
-            TagExclusionMode()
+        TextField("Author", "author"),
+        TextField("Artist", "artist"),
+        R18(),
+        SortFilter(),
+        Demographic(getDemographic()),
+        PublicationStatus(getPublicationStatus()),
+        OriginalLanguage(),
+        ContentList(getContentList()),
+        FormatList(getFormatList()),
+        GenreList(getGenreList()),
+        ThemeList(getThemeList()),
+        TagInclusionMode(),
+        TagExclusionMode()
     )
 
     private fun getContentList() = listOf(
-            Tag("9", "Ecchi"),
-            Tag("32", "Smut"),
-            Tag("49", "Gore"),
-            Tag("50", "Sexual Violence")
+        Tag("9", "Ecchi"),
+        Tag("32", "Smut"),
+        Tag("49", "Gore"),
+        Tag("50", "Sexual Violence")
     ).sortedWith(compareBy { it.name })
 
     private fun getFormatList() = listOf(
-            Tag("1", "4-koma"),
-            Tag("4", "Award Winning"),
-            Tag("7", "Doujinshi"),
-            Tag("21", "Oneshot"),
-            Tag("36", "Long Strip"),
-            Tag("42", "Adaptation"),
-            Tag("43", "Anthology"),
-            Tag("44", "Web Comic"),
-            Tag("45", "Full Color"),
-            Tag("46", "User Created"),
-            Tag("47", "Official Colored"),
-            Tag("48", "Fan Colored")
+        Tag("1", "4-koma"),
+        Tag("4", "Award Winning"),
+        Tag("7", "Doujinshi"),
+        Tag("21", "Oneshot"),
+        Tag("36", "Long Strip"),
+        Tag("42", "Adaptation"),
+        Tag("43", "Anthology"),
+        Tag("44", "Web Comic"),
+        Tag("45", "Full Color"),
+        Tag("46", "User Created"),
+        Tag("47", "Official Colored"),
+        Tag("48", "Fan Colored")
     ).sortedWith(compareBy { it.name })
 
     private fun getGenreList() = listOf(
-            Tag("2", "Action"),
-            Tag("3", "Adventure"),
-            Tag("5", "Comedy"),
-            Tag("8", "Drama"),
-            Tag("10", "Fantasy"),
-            Tag("13", "Historical"),
-            Tag("14", "Horror"),
-            Tag("17", "Mecha"),
-            Tag("18", "Medical"),
-            Tag("20", "Mystery"),
-            Tag("22", "Psychological"),
-            Tag("23", "Romance"),
-            Tag("25", "Sci-Fi"),
-            Tag("28", "Shoujo Ai"),
-            Tag("30", "Shounen Ai"),
-            Tag("31", "Slice of Life"),
-            Tag("33", "Sports"),
-            Tag("35", "Tragedy"),
-            Tag("37", "Yaoi"),
-            Tag("38", "Yuri"),
-            Tag("41", "Isekai"),
-            Tag("51", "Crime"),
-            Tag("52", "Magical Girls"),
-            Tag("53", "Philosophical"),
-            Tag("54", "Superhero"),
-            Tag("55", "Thriller"),
-            Tag("56", "Wuxia")
+        Tag("2", "Action"),
+        Tag("3", "Adventure"),
+        Tag("5", "Comedy"),
+        Tag("8", "Drama"),
+        Tag("10", "Fantasy"),
+        Tag("13", "Historical"),
+        Tag("14", "Horror"),
+        Tag("17", "Mecha"),
+        Tag("18", "Medical"),
+        Tag("20", "Mystery"),
+        Tag("22", "Psychological"),
+        Tag("23", "Romance"),
+        Tag("25", "Sci-Fi"),
+        Tag("28", "Shoujo Ai"),
+        Tag("30", "Shounen Ai"),
+        Tag("31", "Slice of Life"),
+        Tag("33", "Sports"),
+        Tag("35", "Tragedy"),
+        Tag("37", "Yaoi"),
+        Tag("38", "Yuri"),
+        Tag("41", "Isekai"),
+        Tag("51", "Crime"),
+        Tag("52", "Magical Girls"),
+        Tag("53", "Philosophical"),
+        Tag("54", "Superhero"),
+        Tag("55", "Thriller"),
+        Tag("56", "Wuxia")
     ).sortedWith(compareBy { it.name })
 
     private fun getThemeList() = listOf(
-            Tag("6", "Cooking"),
-            Tag("11", "Gyaru"),
-            Tag("12", "Harem"),
-            Tag("16", "Martial Arts"),
-            Tag("19", "Music"),
-            Tag("24", "School Life"),
-            Tag("34", "Supernatural"),
-            Tag("40", "Video Games"),
-            Tag("57", "Aliens"),
-            Tag("58", "Animals"),
-            Tag("59", "Crossdressing"),
-            Tag("60", "Demons"),
-            Tag("61", "Delinquents"),
-            Tag("62", "Genderswap"),
-            Tag("63", "Ghosts"),
-            Tag("64", "Monster Girls"),
-            Tag("65", "Loli"),
-            Tag("66", "Magic"),
-            Tag("67", "Military"),
-            Tag("68", "Monsters"),
-            Tag("69", "Ninja"),
-            Tag("70", "Office Workers"),
-            Tag("71", "Police"),
-            Tag("72", "Post-Apocalyptic"),
-            Tag("73", "Reincarnation"),
-            Tag("74", "Reverse Harem"),
-            Tag("75", "Samurai"),
-            Tag("76", "Shota"),
-            Tag("77", "Survival"),
-            Tag("78", "Time Travel"),
-            Tag("79", "Vampires"),
-            Tag("80", "Traditional Games"),
-            Tag("81", "Virtual Reality"),
-            Tag("82", "Zombies"),
-            Tag("83", "Incest")
+        Tag("6", "Cooking"),
+        Tag("11", "Gyaru"),
+        Tag("12", "Harem"),
+        Tag("16", "Martial Arts"),
+        Tag("19", "Music"),
+        Tag("24", "School Life"),
+        Tag("34", "Supernatural"),
+        Tag("40", "Video Games"),
+        Tag("57", "Aliens"),
+        Tag("58", "Animals"),
+        Tag("59", "Crossdressing"),
+        Tag("60", "Demons"),
+        Tag("61", "Delinquents"),
+        Tag("62", "Genderswap"),
+        Tag("63", "Ghosts"),
+        Tag("64", "Monster Girls"),
+        Tag("65", "Loli"),
+        Tag("66", "Magic"),
+        Tag("67", "Military"),
+        Tag("68", "Monsters"),
+        Tag("69", "Ninja"),
+        Tag("70", "Office Workers"),
+        Tag("71", "Police"),
+        Tag("72", "Post-Apocalyptic"),
+        Tag("73", "Reincarnation"),
+        Tag("74", "Reverse Harem"),
+        Tag("75", "Samurai"),
+        Tag("76", "Shota"),
+        Tag("77", "Survival"),
+        Tag("78", "Time Travel"),
+        Tag("79", "Vampires"),
+        Tag("80", "Traditional Games"),
+        Tag("81", "Virtual Reality"),
+        Tag("82", "Zombies"),
+        Tag("83", "Incest")
     ).sortedWith(compareBy { it.name })
 
     private val GENRES = (getContentList() + getFormatList() + getGenreList() + getThemeList()).map { it.id to it.name }.toMap()
@@ -768,26 +772,26 @@ open class Mangadex(override val lang: String, private val internalLang: String,
         const val PREFIX_ID_SEARCH = "id:"
 
         private val sortables = listOf(
-                Triple("Update date", 0, 1),
-                Triple("Alphabetically", 2, 3),
-                Triple("Number of comments", 4, 5),
-                Triple("Rating", 6, 7),
-                Triple("Views", 8, 9),
-                Triple("Follows", 10, 11))
+            Triple("Update date", 0, 1),
+            Triple("Alphabetically", 2, 3),
+            Triple("Number of comments", 4, 5),
+            Triple("Rating", 6, 7),
+            Triple("Views", 8, 9),
+            Triple("Follows", 10, 11))
 
         private val SOURCE_LANG_LIST = listOf(
-                Pair("All", "0"),
-                Pair("Japanese", "2"),
-                Pair("English", "1"),
-                Pair("Polish", "3"),
-                Pair("German", "8"),
-                Pair("French", "10"),
-                Pair("Vietnamese", "12"),
-                Pair("Chinese", "21"),
-                Pair("Indonesian", "27"),
-                Pair("Korean", "28"),
-                Pair("Spanish (LATAM)", "29"),
-                Pair("Thai", "32"),
-                Pair("Filipino", "34"))
+            Pair("All", "0"),
+            Pair("Japanese", "2"),
+            Pair("English", "1"),
+            Pair("Polish", "3"),
+            Pair("German", "8"),
+            Pair("French", "10"),
+            Pair("Vietnamese", "12"),
+            Pair("Chinese", "21"),
+            Pair("Indonesian", "27"),
+            Pair("Korean", "28"),
+            Pair("Spanish (LATAM)", "29"),
+            Pair("Thai", "32"),
+            Pair("Filipino", "34"))
     }
 }

@@ -3,30 +3,42 @@ package eu.kanade.tachiyomi.extension.all.madara
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservable
-import eu.kanade.tachiyomi.source.model.*
+import eu.kanade.tachiyomi.source.model.Filter
+import eu.kanade.tachiyomi.source.model.FilterList
+import eu.kanade.tachiyomi.source.model.MangasPage
+import eu.kanade.tachiyomi.source.model.Page
+import eu.kanade.tachiyomi.source.model.SChapter
+import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
-import okhttp3.*
-import java.text.ParseException
-import java.text.SimpleDateFormat
-import java.util.*
-import java.util.concurrent.TimeUnit
+import okhttp3.CacheControl
+import okhttp3.FormBody
+import okhttp3.HttpUrl
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+import java.util.concurrent.TimeUnit
 
-open class Madara(
-        override val name: String,
-        override val baseUrl: String,
-        override val lang: String,
-        private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
+abstract class Madara(
+    override val name: String,
+    override val baseUrl: String,
+    override val lang: String,
+    private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.US)
 ) : ParsedHttpSource() {
+
+    override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .build()
-
-    override val supportsLatest = true
 
     // Popular Manga
 
@@ -42,7 +54,7 @@ open class Madara(
             }
 
             select("img").first()?.let {
-                manga.thumbnail_url = it.absUrl(if(it.hasAttr("data-src")) "data-src" else "src")
+                manga.thumbnail_url = it.absUrl(if (it.hasAttr("data-src")) "data-src" else "src")
             }
         }
 
@@ -52,7 +64,7 @@ open class Madara(
     override fun popularMangaRequest(page: Int): Request {
         val form = FormBody.Builder().apply {
             add("action", "madara_load_more")
-            add("page", (page-1).toString())
+            add("page", (page - 1).toString())
             add("template", "madara-core/content/content-archive")
             add("vars[orderby]", "meta_value_num")
             add("vars[paged]", "1")
@@ -81,7 +93,7 @@ open class Madara(
     override fun latestUpdatesRequest(page: Int): Request {
         val form = FormBody.Builder().apply {
             add("action", "madara_load_more")
-            add("page", (page-1).toString())
+            add("page", (page - 1).toString())
             add("template", "madara-core/content/content-archive")
             add("vars[orderby]", "meta_value_num")
             add("vars[paged]", "1")
@@ -107,7 +119,7 @@ open class Madara(
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         return client.newCall(searchMangaRequest(page, query, filters))
             .asObservable().doOnNext { response ->
-                if(!response.isSuccessful) {
+                if (!response.isSuccessful) {
                     response.close()
                     // Error message for exceeding last page
                     if (response.code() == 404)
@@ -129,17 +141,17 @@ open class Madara(
         filters.forEach { filter ->
             when (filter) {
                 is AuthorFilter -> {
-                    if(filter.state.isNotBlank()) {
+                    if (filter.state.isNotBlank()) {
                         url.addQueryParameter("author", filter.state)
                     }
                 }
                 is ArtistFilter -> {
-                    if(filter.state.isNotBlank()) {
+                    if (filter.state.isNotBlank()) {
                         url.addQueryParameter("artist", filter.state)
                     }
                 }
                 is YearFilter -> {
-                    if(filter.state.isNotBlank()) {
+                    if (filter.state.isNotBlank()) {
                         url.addQueryParameter("release", filter.state)
                     }
                 }
@@ -151,7 +163,7 @@ open class Madara(
                     }
                 }
                 is OrderByFilter -> {
-                    if(filter.state != 0) {
+                    if (filter.state != 0) {
                         url.addQueryParameter("m_orderby", filter.toUriPart())
                     }
                 }
@@ -165,28 +177,28 @@ open class Madara(
     private class YearFilter : Filter.Text("Year of Released")
     private class StatusFilter(status: List<Tag>) : Filter.Group<Tag>("Status", status)
     private class OrderByFilter : UriPartFilter("Order By", arrayOf(
-            Pair("<select>", ""),
-            Pair("Latest", "latest"),
-            Pair("A-Z", "alphabet"),
-            Pair("Rating", "rating"),
-            Pair("Trending", "trending"),
-            Pair("Most Views", "views"),
-            Pair("New", "new-manga")
+        Pair("<select>", ""),
+        Pair("Latest", "latest"),
+        Pair("A-Z", "alphabet"),
+        Pair("Rating", "rating"),
+        Pair("Trending", "trending"),
+        Pair("Most Views", "views"),
+        Pair("New", "new-manga")
     ))
 
     override fun getFilterList() = FilterList(
-            AuthorFilter(),
-            ArtistFilter(),
-            YearFilter(),
-            StatusFilter(getStatusList()),
-            OrderByFilter()
+        AuthorFilter(),
+        ArtistFilter(),
+        YearFilter(),
+        StatusFilter(getStatusList()),
+        OrderByFilter()
     )
 
     private fun getStatusList() = listOf(
-            Tag("end" , "Completed"),
-            Tag("on-going" , "Ongoing"),
-            Tag("canceled" , "Canceled"),
-            Tag("on-hold" , "On Hold")
+        Tag("end", "Completed"),
+        Tag("on-going", "Ongoing"),
+        Tag("canceled", "Canceled"),
+        Tag("on-hold", "On Hold")
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -207,7 +219,7 @@ open class Madara(
                 manga.title = it.ownText()
             }
             select("img").first()?.let {
-                manga.thumbnail_url = it.absUrl(if(it.hasAttr("data-src")) "data-src" else "src")
+                manga.thumbnail_url = it.absUrl(if (it.hasAttr("data-src")) "data-src" else "src")
             }
         }
 
@@ -241,10 +253,10 @@ open class Madara(
                 }
             }
             select("div.summary_image img").first()?.let {
-                manga.thumbnail_url = it.absUrl(if(it.hasAttr("data-src")) "data-src" else "src")
+                manga.thumbnail_url = it.absUrl(if (it.hasAttr("data-src")) "data-src" else "src")
             }
             select("div.summary-content").last()?.let {
-                manga.status = when(it.text()) {
+                manga.status = when (it.text()) {
                     // I don't know what's the corresponding for COMPLETED and LICENSED
                     // There's no support for "Canceled" or "On Hold"
                     "Completed" -> SManga.COMPLETED
@@ -271,7 +283,7 @@ open class Madara(
         with(element) {
             select("a").first()?.let { urlElement ->
                 chapter.url = urlElement.attr("abs:href").let {
-                    it.substringBefore("?style=paged") + if(!it.endsWith("?style=list")) "?style=list" else ""
+                    it.substringBefore("?style=paged") + if (!it.endsWith("?style=list")) "?style=list" else ""
                 }
                 chapter.name = urlElement.text()
             }
@@ -353,8 +365,8 @@ open class Madara(
 
     override fun pageListParse(document: Document): List<Page> {
         return document.select(pageListParseSelector).mapIndexed { index, element ->
-            Page(index, "", element.select("img").first()?.let{
-                it.absUrl(if(it.hasAttr("data-src")) "data-src" else "src")
+            Page(index, "", element.select("img").first()?.let {
+                it.absUrl(if (it.hasAttr("data-src")) "data-src" else "src")
             })
         }
     }

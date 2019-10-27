@@ -26,7 +26,7 @@ import java.util.Locale
  *
  * @property categories the available manga categories of the site.
  */
-open class MangAdventure(
+abstract class MangAdventure(
     override val name: String,
     override val baseUrl: String,
     val categories: Array<String> = DEFAULT_CATEGORIES
