@@ -1,12 +1,11 @@
 ---
 name: "Source Request"
-about: Suggest a Source for Tachiyomi
 title: "[Source Request] Source Name"
+about: "Suggest a new source for Tachiyomi"
 labels: "Source Request"
-assignees: ''
-
 ---
+
 ### Source Website
-The website for this source can be found [here](website_url).
+Website can be found at <website_url>.
 
 ### Other Details

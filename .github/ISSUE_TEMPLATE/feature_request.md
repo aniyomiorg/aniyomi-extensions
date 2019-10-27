@@ -1,9 +1,8 @@
 ---
 name: "🌟 Feature request"
-about: Suggest a feature to improve a source
-title: "[Feature Request] Source name : Short Description"
-labels: "feature request"
-assignees: ''
-
+title: "[Feature Request] <source name>: <short description>"
+about: "Suggest a feature to improve a source"
+labels: "enhancement"
 ---
+
 ### What feature should be added to this source?
