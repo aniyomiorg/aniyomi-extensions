@@ -786,10 +786,10 @@
   {
     "name": "Tachiyomi: JMana",
     "pkg": "eu.kanade.tachiyomi.extension.ko.jmana",
-    "apk": "tachiyomi-ko.jmana-v1.2.8.apk",
+    "apk": "tachiyomi-ko.jmana-v1.2.9.apk",
     "lang": "ko",
-    "code": 8,
-    "version": "1.2.8"
+    "code": 9,
+    "version": "1.2.9"
   },
   {
     "name": "Tachiyomi: ManaMoa (MangaShow.Me)",
