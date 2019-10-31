@@ -74,10 +74,10 @@
   {
     "name": "Tachiyomi: MangaDex",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangadex",
-    "apk": "tachiyomi-all.mangadex-v1.2.69.apk",
+    "apk": "tachiyomi-all.mangadex-v1.2.70.apk",
     "lang": "all",
-    "code": 69,
-    "version": "1.2.69"
+    "code": 70,
+    "version": "1.2.70"
   },
   {
     "name": "Tachiyomi: MangAdventure",
