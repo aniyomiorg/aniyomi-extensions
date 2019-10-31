@@ -104,6 +104,14 @@
     "version": "1.2.3"
   },
   {
+    "name": "Tachiyomi: Mangatoon (Limited)",
+    "pkg": "eu.kanade.tachiyomi.extension.all.mangatoon",
+    "apk": "tachiyomi-all.mangatoon-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: My Manga Reader CMS (Many sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mmrcms",
     "apk": "tachiyomi-all.mmrcms-v1.2.22.apk",
@@ -458,10 +466,10 @@
   {
     "name": "Tachiyomi: Pururin",
     "pkg": "eu.kanade.tachiyomi.extension.en.pururin",
-    "apk": "tachiyomi-en.pururin-v1.2.1.apk",
+    "apk": "tachiyomi-en.pururin-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Questionable Content",
