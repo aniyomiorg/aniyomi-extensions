@@ -124,6 +124,13 @@ abstract class MangaBox (
 
     open val descriptionSelector = "div#noidungm"
 
+    override fun mangaDetailsRequest(manga: SManga): Request {
+        if (manga.url.startsWith("http")) {
+            return GET(manga.url, headers)
+        }
+        return super.mangaDetailsRequest(manga)
+    }
+
     override fun mangaDetailsParse(document: Document): SManga {
         val manga = SManga.create()
         val infoElement = document.select(mangaDetailsMainSelector).first()
@@ -144,6 +151,13 @@ abstract class MangaBox (
         status.contains("Ongoing") -> SManga.ONGOING
         status.contains("Completed") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
+    }
+
+    override fun chapterListRequest(manga: SManga): Request {
+        if (manga.url.startsWith("http")) {
+            return GET(manga.url, headers)
+        }
+        return super.chapterListRequest(manga)
     }
 
     override fun chapterListSelector() = "div.chapter-list div.row"
@@ -189,6 +203,13 @@ abstract class MangaBox (
         }
 
         return 0L
+    }
+
+    override fun pageListRequest(chapter: SChapter): Request {
+        if (chapter.url.startsWith("http")) {
+            return GET(chapter.url, headers)
+        }
+        return super.pageListRequest(chapter)
     }
 
     open val pageListSelector = "div#vungdoc img"
