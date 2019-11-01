@@ -50,10 +50,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.23.apk",
+    "apk": "tachiyomi-all.madara-v1.2.24.apk",
     "lang": "all",
-    "code": 23,
-    "version": "1.2.23"
+    "code": 24,
+    "version": "1.2.24"
   },
   {
     "name": "Tachiyomi: MangaBox (Mangakakalot and others)",
@@ -1130,10 +1130,10 @@
   {
     "name": "Tachiyomi: Kuaikanmanhua",
     "pkg": "eu.kanade.tachiyomi.extension.zh.kuaikanmanhua",
-    "apk": "tachiyomi-zh.kuaikanmanhua-v1.2.1.apk",
+    "apk": "tachiyomi-zh.kuaikanmanhua-v1.2.2.apk",
     "lang": "zh",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: ManhuaDB",
