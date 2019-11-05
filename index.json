@@ -1,5 +1,13 @@
 [
   {
+    "name": "Tachiyomi: BoomManga, ManManga, TwinsComics",
+    "pkg": "eu.kanade.tachiyomi.extension.all.boommanga",
+    "apk": "tachiyomi-all.boommanga-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: ComiCake",
     "pkg": "eu.kanade.tachiyomi.extension.all.comicake",
     "apk": "tachiyomi-all.comicake-v1.2.7.apk",
@@ -610,10 +618,10 @@
   {
     "name": "Tachiyomi: TuMangaOnline",
     "pkg": "eu.kanade.tachiyomi.extension.es.tumangaonline",
-    "apk": "tachiyomi-es.tumangaonline-v1.2.10.apk",
+    "apk": "tachiyomi-es.tumangaonline-v1.2.11.apk",
     "lang": "es",
-    "code": 10,
-    "version": "1.2.10"
+    "code": 11,
+    "version": "1.2.11"
   },
   {
     "name": "Tachiyomi: Zahard",
