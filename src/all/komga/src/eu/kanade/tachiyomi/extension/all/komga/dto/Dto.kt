@@ -1,6 +1,11 @@
 package eu.kanade.tachiyomi.extension.all.komga.dto
 
-data class SerieDto(
+data class LibraryDto(
+    val id: Long,
+    val name: String
+)
+
+data class SeriesDto(
     val id: Long,
     val name: String,
     val lastModified: String?
@@ -10,6 +15,8 @@ data class BookDto(
     val id: Long,
     val name: String,
     val lastModified: String?,
+    val sizeBytes: Long,
+    val size: String,
     val metadata: BookMetadataDto
 )
 
