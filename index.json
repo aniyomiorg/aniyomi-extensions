@@ -594,18 +594,18 @@
   {
     "name": "Tachiyomi: LectorManga",
     "pkg": "eu.kanade.tachiyomi.extension.es.lectormanga",
-    "apk": "tachiyomi-es.lectormanga-v1.2.1.apk",
+    "apk": "tachiyomi-es.lectormanga-v1.2.2.apk",
     "lang": "es",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: MangaMx",
     "pkg": "eu.kanade.tachiyomi.extension.es.mangamx",
-    "apk": "tachiyomi-es.mangamx-v1.2.1.apk",
+    "apk": "tachiyomi-es.mangamx-v1.2.2.apk",
     "lang": "es",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: TMOHentai",
