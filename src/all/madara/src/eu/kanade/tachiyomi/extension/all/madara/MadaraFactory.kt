@@ -53,6 +53,7 @@ class MadaraFactory : SourceFactory {
         GetManhwa(),
         AllPornComic(),
         Milftoon(),
+        ToonManga(),
         Hiperdex()
     )
 }
@@ -235,6 +236,8 @@ class Milftoon : Madara("Milftoon", "https://milftoon.xxx", "en") {
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/page/$page/?m_orderby=views", headers)
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/page/$page/?m_orderby=latest", headers)
 }
+
+class ToonManga : Madara("ToonManga", "https://toonmanga.com/", "en")
 
 class Hiperdex : Madara("Hiperdex", "https://hiperdex.com", "en") {
     override fun getGenreList() = listOf(
