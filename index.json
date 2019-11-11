@@ -320,14 +320,6 @@
     "version": "1.2.2"
   },
   {
-    "name": "Tachiyomi: Mangafree",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangafree",
-    "apk": "tachiyomi-en.mangafree-v1.2.4.apk",
-    "lang": "en",
-    "code": 4,
-    "version": "1.2.4"
-  },
-  {
     "name": "Tachiyomi: Mangahasu",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangahasu",
     "apk": "tachiyomi-en.mangahasu-v1.2.5.apk",
@@ -352,14 +344,6 @@
     "version": "1.2.3"
   },
   {
-    "name": "Tachiyomi: MangaKakalot",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangakakalot",
-    "apk": "tachiyomi-en.mangakakalot-v1.2.8.apk",
-    "lang": "en",
-    "code": 8,
-    "version": "1.2.8"
-  },
-  {
     "name": "Tachiyomi: MangaKisa",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangakisa",
     "apk": "tachiyomi-en.mangakisa-v1.2.1.apk",
@@ -374,14 +358,6 @@
     "lang": "en",
     "code": 1,
     "version": "1.2.1"
-  },
-  {
-    "name": "Tachiyomi: MangaNelo",
-    "pkg": "eu.kanade.tachiyomi.extension.en.manganelo",
-    "apk": "tachiyomi-en.manganelo-v1.2.4.apk",
-    "lang": "en",
-    "code": 4,
-    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: MangaOwl",
