@@ -586,10 +586,10 @@
   {
     "name": "Tachiyomi: MangaMx",
     "pkg": "eu.kanade.tachiyomi.extension.es.mangamx",
-    "apk": "tachiyomi-es.mangamx-v1.2.2.apk",
+    "apk": "tachiyomi-es.mangamx-v1.2.3.apk",
     "lang": "es",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: TMOHentai",
