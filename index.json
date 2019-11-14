@@ -826,10 +826,10 @@
   {
     "name": "Tachiyomi: NewToki",
     "pkg": "eu.kanade.tachiyomi.extension.ko.newtoki",
-    "apk": "tachiyomi-ko.newtoki-v1.2.9.apk",
+    "apk": "tachiyomi-ko.newtoki-v1.2.10.apk",
     "lang": "ko",
-    "code": 9,
-    "version": "1.2.9"
+    "code": 10,
+    "version": "1.2.10"
   },
   {
     "name": "Tachiyomi: AnimaRegia",
