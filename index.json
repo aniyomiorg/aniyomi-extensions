@@ -576,6 +576,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: InManga",
+    "pkg": "eu.kanade.tachiyomi.extension.es.inmanga",
+    "apk": "tachiyomi-es.inmanga-v1.2.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: LectorManga",
     "pkg": "eu.kanade.tachiyomi.extension.es.lectormanga",
     "apk": "tachiyomi-es.lectormanga-v1.2.2.apk",
