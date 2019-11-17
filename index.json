@@ -104,12 +104,12 @@
     "version": "1.2.3"
   },
   {
-    "name": "Tachiyomi: Mangatensei",
+    "name": "Tachiyomi: Mangatensei (and others)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangatensei",
-    "apk": "tachiyomi-all.mangatensei-v1.2.3.apk",
+    "apk": "tachiyomi-all.mangatensei-v1.2.4.apk",
     "lang": "all",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: Mangatoon (Limited)",
