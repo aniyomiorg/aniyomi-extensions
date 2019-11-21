@@ -8,12 +8,9 @@ import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers
-import okhttp3.HttpUrl
-import okhttp3.Request
-import okhttp3.Response
+import okhttp3.*
 import java.text.SimpleDateFormat
-import java.util.Locale
+import java.util.*
 
 class MadaraFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
@@ -202,6 +199,8 @@ class ChibiManga : Madara("Chibi Manga", "http://www.cmreader.info/", "en") {
 }
 
 class ZinManga : Madara("Zin Translator", "https://zinmanga.com/", "en") {
+    override fun headersBuilder(): Headers.Builder = super.headersBuilder()
+        .add("Referer", "https://zinmanga.com/")
     override fun searchMangaNextPageSelector() = "nav.navigation-ajax"
 }
 
@@ -225,8 +224,6 @@ class GetManhwa : Madara("GetManhwa", "https://getmanhwa.co", "en") {
     override fun searchMangaNextPageSelector() = "nav.navigation-ajax"
 }
 class AllPornComic : Madara("AllPornComic", "https://allporncomic.com", "en") {
-    override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("User-Agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:70.0) Gecko/20100101 Firefox/70.0")
     override fun searchMangaNextPageSelector() = "a[rel=next]"
     override fun getGenreList() = listOf(
         Genre("3D", "3d"),
