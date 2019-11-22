@@ -130,10 +130,10 @@
   {
     "name": "Tachiyomi: MyReadingManga",
     "pkg": "eu.kanade.tachiyomi.extension.all.myreadingmanga",
-    "apk": "tachiyomi-all.myreadingmanga-v1.2.28.apk",
+    "apk": "tachiyomi-all.myreadingmanga-v1.2.29.apk",
     "lang": "all",
-    "code": 28,
-    "version": "1.2.28"
+    "code": 29,
+    "version": "1.2.29"
   },
   {
     "name": "Tachiyomi: NHentai",
@@ -338,10 +338,10 @@
   {
     "name": "Tachiyomi: Mangahere",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangahere",
-    "apk": "tachiyomi-en.mangahere-v1.2.10.apk",
+    "apk": "tachiyomi-en.mangahere-v1.2.11.apk",
     "lang": "en",
-    "code": 10,
-    "version": "1.2.10"
+    "code": 11,
+    "version": "1.2.11"
   },
   {
     "name": "Tachiyomi: Mangahub",
