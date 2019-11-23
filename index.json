@@ -202,10 +202,10 @@
   {
     "name": "Tachiyomi: WieManga",
     "pkg": "eu.kanade.tachiyomi.extension.de.wiemanga",
-    "apk": "tachiyomi-de.wiemanga-v1.2.3.apk",
+    "apk": "tachiyomi-de.wiemanga-v1.2.4.apk",
     "lang": "de",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: Boredom Society",
