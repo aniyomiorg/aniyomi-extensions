@@ -264,14 +264,6 @@
     "version": "1.2.9"
   },
   {
-    "name": "Tachiyomi: GetManhwa",
-    "pkg": "eu.kanade.tachiyomi.extension.en.getmanhwa",
-    "apk": "tachiyomi-en.getmanhwa-v1.2.1.apk",
-    "lang": "en",
-    "code": 1,
-    "version": "1.2.1"
-  },
-  {
     "name": "Tachiyomi: Gunnerkrigg Court",
     "pkg": "eu.kanade.tachiyomi.extension.en.gunnerkriggcourt",
     "apk": "tachiyomi-en.gunnerkriggcourt-v1.2.1.apk",
@@ -560,14 +552,6 @@
     "version": "1.2.5"
   },
   {
-    "name": "Tachiyomi: DoujinHentai",
-    "pkg": "eu.kanade.tachiyomi.extension.es.doujinhentai",
-    "apk": "tachiyomi-es.doujinhentai-v1.2.2.apk",
-    "lang": "es",
-    "code": 2,
-    "version": "1.2.2"
-  },
-  {
     "name": "Tachiyomi: HeavenManga",
     "pkg": "eu.kanade.tachiyomi.extension.es.heavenmanga",
     "apk": "tachiyomi-es.heavenmanga-v1.2.3.apk",
@@ -678,14 +662,6 @@
     "lang": "id",
     "code": 4,
     "version": "1.2.4"
-  },
-  {
-    "name": "Tachiyomi: Komikgo",
-    "pkg": "eu.kanade.tachiyomi.extension.id.komikgo",
-    "apk": "tachiyomi-id.komikgo-v1.2.2.apk",
-    "lang": "id",
-    "code": 2,
-    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Komik Indo",
