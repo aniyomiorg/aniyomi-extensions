@@ -160,6 +160,14 @@
     "version": "1.2.7"
   },
   {
+    "name": "Tachiyomi: Simply Hentai",
+    "pkg": "eu.kanade.tachiyomi.extension.all.simplyhentai",
+    "apk": "tachiyomi-all.simplyhentai-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Toomics",
     "pkg": "eu.kanade.tachiyomi.extension.all.toomics",
     "apk": "tachiyomi-all.toomics-v1.2.1.apk",
@@ -930,10 +938,10 @@
   {
     "name": "Tachiyomi: ComX",
     "pkg": "eu.kanade.tachiyomi.extension.ru.comx",
-    "apk": "tachiyomi-ru.comx-v1.2.3.apk",
+    "apk": "tachiyomi-ru.comx-v1.2.4.apk",
     "lang": "ru",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: Desu",
