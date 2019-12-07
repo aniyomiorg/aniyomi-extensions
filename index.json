@@ -512,12 +512,12 @@
     "version": "1.2.1"
   },
   {
-    "name": "Tachiyomi: Tapastic",
+    "name": "Tachiyomi: Tapas",
     "pkg": "eu.kanade.tachiyomi.extension.en.tapastic",
-    "apk": "tachiyomi-en.tapastic-v1.2.3.apk",
+    "apk": "tachiyomi-en.tapastic-v1.2.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: Toonily",
