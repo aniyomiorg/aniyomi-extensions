@@ -42,10 +42,10 @@
   {
     "name": "Tachiyomi: Genkan (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.genkan",
-    "apk": "tachiyomi-all.genkan-v1.2.8.apk",
+    "apk": "tachiyomi-all.genkan-v1.2.9.apk",
     "lang": "all",
-    "code": 8,
-    "version": "1.2.8"
+    "code": 9,
+    "version": "1.2.9"
   },
   {
     "name": "Tachiyomi: Komga",
@@ -58,10 +58,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.34.apk",
+    "apk": "tachiyomi-all.madara-v1.2.35.apk",
     "lang": "all",
-    "code": 34,
-    "version": "1.2.34"
+    "code": 35,
+    "version": "1.2.35"
   },
   {
     "name": "Tachiyomi: MangaBox (Mangakakalot and others)",
