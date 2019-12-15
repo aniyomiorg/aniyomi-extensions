@@ -304,6 +304,14 @@
     "version": "1.2.5"
   },
   {
+    "name": "Tachiyomi: HentaiFox",
+    "pkg": "eu.kanade.tachiyomi.extension.en.hentaifox",
+    "apk": "tachiyomi-en.hentaifox-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: HentaiNexus",
     "pkg": "eu.kanade.tachiyomi.extension.en.hentainexus",
     "apk": "tachiyomi-en.hentainexus-v1.2.1.apk",
@@ -462,6 +470,14 @@
     "lang": "en",
     "code": 5,
     "version": "1.2.5"
+  },
+  {
+    "name": "Tachiyomi: MyHentaiGallery",
+    "pkg": "eu.kanade.tachiyomi.extension.en.myhentaigallery",
+    "apk": "tachiyomi-en.myhentaigallery-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: Perveden",
