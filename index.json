@@ -632,6 +632,14 @@
     "version": "1.2.12"
   },
   {
+    "name": "Tachiyomi: VCPVMP",
+    "pkg": "eu.kanade.tachiyomi.extension.es.vcpvmp",
+    "apk": "tachiyomi-es.vcpvmp-v1.2.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Zahard",
     "pkg": "eu.kanade.tachiyomi.extension.es.zahard",
     "apk": "tachiyomi-es.zahard-v1.2.1.apk",
@@ -1107,6 +1115,14 @@
     "name": "Tachiyomi: BainianManga",
     "pkg": "eu.kanade.tachiyomi.extension.zh.bainianmanga",
     "apk": "tachiyomi-zh.bainianmanga-v1.2.1.apk",
+    "lang": "zh",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
+    "name": "Tachiyomi: BH3",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.bh3",
+    "apk": "tachiyomi-zh.bh3-v1.2.1.apk",
     "lang": "zh",
     "code": 1,
     "version": "1.2.1"
