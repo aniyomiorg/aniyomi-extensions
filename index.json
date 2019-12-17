@@ -544,14 +544,6 @@
     "version": "1.2.4"
   },
   {
-    "name": "Tachiyomi: Toonily",
-    "pkg": "eu.kanade.tachiyomi.extension.en.toonily",
-    "apk": "tachiyomi-en.toonily-v1.2.3.apk",
-    "lang": "en",
-    "code": 3,
-    "version": "1.2.3"
-  },
-  {
     "name": "Tachiyomi: Tsumino",
     "pkg": "eu.kanade.tachiyomi.extension.en.tsumino",
     "apk": "tachiyomi-en.tsumino-v1.2.2.apk",
