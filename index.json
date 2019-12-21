@@ -896,6 +896,14 @@
     "version": "1.2.2"
   },
   {
+    "name": "Tachiyomi: HQ Now!",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.hqnow",
+    "apk": "tachiyomi-pt.hqnow-v1.2.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: MangaHost",
     "pkg": "eu.kanade.tachiyomi.extension.pt.mangahost",
     "apk": "tachiyomi-pt.mangahost-v1.2.6.apk",
