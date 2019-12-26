@@ -440,14 +440,6 @@
     "version": "1.2.5"
   },
   {
-    "name": "Tachiyomi: Mangastream",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangastream",
-    "apk": "tachiyomi-en.mangastream-v1.2.4.apk",
-    "lang": "en",
-    "code": 4,
-    "version": "1.2.4"
-  },
-  {
     "name": "Tachiyomi: Mangatown",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangatown",
     "apk": "tachiyomi-en.mangatown-v1.2.3.apk",
@@ -818,10 +810,10 @@
   {
     "name": "Tachiyomi: Sen Manga",
     "pkg": "eu.kanade.tachiyomi.extension.ja.senmanga",
-    "apk": "tachiyomi-ja.senmanga-v1.2.3.apk",
+    "apk": "tachiyomi-ja.senmanga-v1.2.4.apk",
     "lang": "ja",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: JMana",
