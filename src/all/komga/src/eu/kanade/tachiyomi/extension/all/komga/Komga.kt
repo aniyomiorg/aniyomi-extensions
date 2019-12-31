@@ -51,6 +51,18 @@ open class Komga : ConfigurableSource, HttpSource() {
                         url.addQueryParameter("library_id", libraryToInclude.joinToString(","))
                     }
                 }
+                is Filter.Sort -> {
+                    var sortCriteria = when (filter.state?.index) {
+                        0 -> "name"
+                        1 -> "createdDate"
+                        2 -> "lastModifiedDate"
+                        else -> ""
+                    }
+                    if (sortCriteria.isNotEmpty()) {
+                        sortCriteria += "," + if (filter.state?.ascending!!) "asc" else "desc"
+                        url.addQueryParameter("sort", sortCriteria)
+                    }
+                }
             }
         }
 
@@ -69,18 +81,16 @@ open class Komga : ConfigurableSource, HttpSource() {
     }
 
     override fun chapterListRequest(manga: SManga): Request =
-        GET("$baseUrl${manga.url}/books?size=1000", headers)
+        GET("$baseUrl${manga.url}/books?size=1000&media_status=READY", headers)
 
     override fun chapterListParse(response: Response): List<SChapter> {
         val page = gson.fromJson<PageWrapperDto<BookDto>>(response.body()?.charStream()!!)
-        val chapterListUrl = response.request().url().newBuilder()
-            .removeAllQueryParameters("size").build().toString()
 
-        return page.content.mapIndexed { i, book ->
+        return page.content.map { book ->
             SChapter.create().apply {
-                chapter_number = (i + 1).toFloat()
+                chapter_number = book.number
                 name = "${book.name} (${book.size})"
-                url = "$chapterListUrl/${book.id}"
+                url = "$baseUrl/api/v1/books/${book.id}"
                 date_upload = parseDate(book.lastModified)
             }
         }.sortedByDescending { it.chapter_number }
@@ -115,9 +125,9 @@ open class Komga : ConfigurableSource, HttpSource() {
 
     private fun SeriesDto.toSManga(): SManga =
         SManga.create().apply {
-            title = this@toSManga.name
-            url = "/api/v1/series/${this@toSManga.id}"
-            thumbnail_url = "$baseUrl/api/v1/series/${this@toSManga.id}/thumbnail"
+            title = name
+            url = "/api/v1/series/${id}"
+            thumbnail_url = "$baseUrl/api/v1/series/${id}/thumbnail"
             status = SManga.UNKNOWN
         }
 
@@ -140,10 +150,12 @@ open class Komga : ConfigurableSource, HttpSource() {
 
     private class LibraryFilter(val id: Long, name: String) : Filter.CheckBox(name, false)
     private class LibraryGroup(libraries: List<LibraryFilter>) : Filter.Group<LibraryFilter>("Libraries", libraries)
+    private class SeriesSort : Filter.Sort("Sort", arrayOf("Alphabetically", "Date added", "Date updated"), Filter.Sort.Selection(0, true))
 
     override fun getFilterList(): FilterList =
         FilterList(
-            LibraryGroup(libraries.map { LibraryFilter(it.id, it.name) }.sortedBy { it.name })
+            LibraryGroup(libraries.map { LibraryFilter(it.id, it.name) }.sortedBy { it.name }),
+            SeriesSort()
         )
 
     private var libraries = emptyList<LibraryDto>()
