@@ -280,6 +280,14 @@
     "version": "1.2.10"
   },
   {
+    "name": "Tachiyomi: Cyanide & Happiness",
+    "pkg": "eu.kanade.tachiyomi.extension.en.explosm",
+    "apk": "tachiyomi-en.explosm-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Gunnerkrigg Court",
     "pkg": "eu.kanade.tachiyomi.extension.en.gunnerkriggcourt",
     "apk": "tachiyomi-en.gunnerkriggcourt-v1.2.1.apk",
@@ -342,6 +350,14 @@
     "lang": "en",
     "code": 9,
     "version": "1.2.9"
+  },
+  {
+    "name": "Tachiyomi: Latis Books",
+    "pkg": "eu.kanade.tachiyomi.extension.en.latisbooks",
+    "apk": "tachiyomi-en.latisbooks-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: MangaDog",
