@@ -66,10 +66,10 @@
   {
     "name": "Tachiyomi: MangaBox (Mangakakalot and others)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangabox",
-    "apk": "tachiyomi-all.mangabox-v1.2.9.apk",
+    "apk": "tachiyomi-all.mangabox-v1.2.10.apk",
     "lang": "all",
-    "code": 9,
-    "version": "1.2.9"
+    "code": 10,
+    "version": "1.2.10"
   },
   {
     "name": "Tachiyomi: MangaCards (Valhalla, NANI?)",
