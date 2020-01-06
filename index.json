@@ -274,10 +274,10 @@
   {
     "name": "Tachiyomi: Dynasty",
     "pkg": "eu.kanade.tachiyomi.extension.en.dynasty",
-    "apk": "tachiyomi-en.dynasty-v1.2.10.apk",
+    "apk": "tachiyomi-en.dynasty-v1.2.11.apk",
     "lang": "en",
-    "code": 10,
-    "version": "1.2.10"
+    "code": 11,
+    "version": "1.2.11"
   },
   {
     "name": "Tachiyomi: Cyanide & Happiness",
@@ -370,10 +370,10 @@
   {
     "name": "Tachiyomi: Mangaeden",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangaeden",
-    "apk": "tachiyomi-en.mangaeden-v1.2.2.apk",
+    "apk": "tachiyomi-en.mangaeden-v1.2.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Mangahasu",
@@ -578,10 +578,10 @@
   {
     "name": "Tachiyomi: vgperson",
     "pkg": "eu.kanade.tachiyomi.extension.en.vgperson",
-    "apk": "tachiyomi-en.vgperson-v1.2.1.apk",
+    "apk": "tachiyomi-en.vgperson-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Webcomics",
@@ -786,18 +786,18 @@
   {
     "name": "Tachiyomi: HentaiFantasy",
     "pkg": "eu.kanade.tachiyomi.extension.it.hentaifantasy",
-    "apk": "tachiyomi-it.hentaifantasy-v1.2.2.apk",
+    "apk": "tachiyomi-it.hentaifantasy-v1.2.3.apk",
     "lang": "it",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Mangaeden",
     "pkg": "eu.kanade.tachiyomi.extension.it.mangaeden",
-    "apk": "tachiyomi-it.mangaeden-v1.2.2.apk",
+    "apk": "tachiyomi-it.mangaeden-v1.2.3.apk",
     "lang": "it",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Mangaworld",
@@ -1050,10 +1050,10 @@
   {
     "name": "Tachiyomi: Mintmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mintmanga",
-    "apk": "tachiyomi-ru.mintmanga-v1.2.16.apk",
+    "apk": "tachiyomi-ru.mintmanga-v1.2.17.apk",
     "lang": "ru",
-    "code": 16,
-    "version": "1.2.16"
+    "code": 17,
+    "version": "1.2.17"
   },
   {
     "name": "Tachiyomi: Nude-Moon",
@@ -1074,10 +1074,10 @@
   {
     "name": "Tachiyomi: Readmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.readmanga",
-    "apk": "tachiyomi-ru.readmanga-v1.2.15.apk",
+    "apk": "tachiyomi-ru.readmanga-v1.2.16.apk",
     "lang": "ru",
-    "code": 15,
-    "version": "1.2.15"
+    "code": 16,
+    "version": "1.2.16"
   },
   {
     "name": "Tachiyomi: Risens Team",
