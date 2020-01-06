@@ -87,11 +87,11 @@ class MangaOnl : MangaBox("MangaOnl", "https://mangaonl.com", "en") {
     override val popularUrlPath = "story-list-ty-topview-st-all-ca-all-"
     override val latestUrlPath = "story-list-ty-latest-st-all-ca-all-"
     override fun popularMangaSelector() = "div.story_item"
-    override val mangaDetailsMainSelector = "div.panel_story_info"
-    override val thumbnailSelector = "img.story_avatar"
-    override val descriptionSelector = "div.panel_story_info_description"
-    override fun chapterListSelector() = "div.chapter_list_title + ul li"
-    override val pageListSelector = "div.container_readchapter img"
+    override val mangaDetailsMainSelector = "div.panel_story_info, ${super.mangaDetailsMainSelector}"
+    override val thumbnailSelector = "img.story_avatar, ${super.thumbnailSelector}"
+    override val descriptionSelector = "div.panel_story_info_description, ${super.descriptionSelector}"
+    override fun chapterListSelector() = "div.chapter_list_title + ul li, ${super.chapterListSelector()}"
+    override val pageListSelector = "div.container_readchapter img, ${super.pageListSelector}"
     override fun getFilterList() = FilterList()
 }
 
