@@ -170,10 +170,10 @@
   {
     "name": "Tachiyomi: Toomics",
     "pkg": "eu.kanade.tachiyomi.extension.all.toomics",
-    "apk": "tachiyomi-all.toomics-v1.2.1.apk",
+    "apk": "tachiyomi-all.toomics-v1.2.2.apk",
     "lang": "all",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Webtoons",
