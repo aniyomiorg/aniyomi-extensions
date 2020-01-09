@@ -291,11 +291,26 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
     }
 
     override fun pageListParse(response: Response): List<Page> = mutableListOf<Page>().apply {
+        val chapterID = response.request().url().toString().substringAfter("viewer/").substringBefore("/cascade")
         val body = response.asJsoup()
-
-        body.select("div#viewer-container > div.viewer-image-container > img.viewer-image")?.forEach {
-            add(Page(size, "", it.attr("src")))
+        
+        //alternative lookup img.viewer-image:eq(1)
+        body.select("div#viewer-container > div.viewer-image-container > img.viewer-image[src*=$chapterID]:not([style=display:none;])")?.forEach {   
+            add(Page(size, "", getImage(it)))
         }
+    }
+    
+    private fun getImage(element: Element): String {
+        var url =
+            when {
+                element.attr("data-src").endsWith(".jpg") || element.attr("data-src").endsWith(".png") || element.attr("data-src").endsWith(".jpeg") -> element.attr("data-src")
+                element.attr("src").endsWith(".jpg") || element.attr("src").endsWith(".png") || element.attr("src").endsWith(".jpeg") -> element.attr("src")
+                else -> throw Exception("Extension needs update, post issue to GitHub") //element.attr("data-lazy-src")
+            }
+        if (url.startsWith("//")) {
+            url = "http:$url"
+        }
+        return url
     }
 
     override fun pageListParse(document: Document) = throw UnsupportedOperationException("Not used")
