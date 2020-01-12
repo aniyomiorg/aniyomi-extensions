@@ -834,10 +834,10 @@
   {
     "name": "Tachiyomi: Rawdevart",
     "pkg": "eu.kanade.tachiyomi.extension.ja.rawdevart",
-    "apk": "tachiyomi-ja.rawdevart-v1.2.2.apk",
+    "apk": "tachiyomi-ja.rawdevart-v1.2.3.apk",
     "lang": "ja",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Rawkuma",
