@@ -64,7 +64,8 @@ class MadaraFactory : SourceFactory {
         Toonily(),
         PlotTwistScan(),
         MangaKomi(),
-        Wakamics()
+        Wakamics(),
+        TeabeerComics()
     )
 }
 
@@ -137,15 +138,7 @@ class MangazukiClubKO : Madara("Mangazuki.club", "https://mangazuki.club/", "ko"
 
 class FirstKissManga : Madara("1st Kiss", "https://1stkissmanga.com/", "en",
     dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.US)) {
-    override val pageListParseSelector = "div.reading-content img"
-    private val cdnUrl = "1stkissmanga.b-cdn.net"
-    override fun imageRequest(page: Page): Request {
-        val cdnHeaders = Headers.Builder().apply {
-            add("Referer", baseUrl)
-            add("Host", cdnUrl)
-        }.build()
-        return if (page.imageUrl!!.contains(cdnUrl)) GET(page.imageUrl!!, cdnHeaders) else GET(page.imageUrl!!, headers)
-    }
+    override fun headersBuilder(): Headers.Builder = super.headersBuilder().add("Referer", baseUrl)
 }
 
 class MangaSY : Madara("Manga SY", "https://www.mangasy.com/", "en")
@@ -396,4 +389,6 @@ class PlotTwistScan : Madara("Plot Twist No Fansub", "https://www.plotwistscan.c
 class MangaKomi : Madara("MangaKomi", "https://mangakomi.com", "en")
 
 class Wakamics : Madara("Wakamics", "https://wakamics.com", "en")
+
+class TeabeerComics : Madara("Teabeer Comics", "https://teabeercomics.com/", "en")
 
