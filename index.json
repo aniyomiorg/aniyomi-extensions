@@ -1168,6 +1168,14 @@
     "version": "1.2.5"
   },
   {
+    "name": "Tachiyomi: TruyenQQ",
+    "pkg": "eu.kanade.tachiyomi.extension.vi.truyenqq",
+    "apk": "tachiyomi-vi.truyenqq-v1.2.1.apk",
+    "lang": "vi",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: BainianManga",
     "pkg": "eu.kanade.tachiyomi.extension.zh.bainianmanga",
     "apk": "tachiyomi-zh.bainianmanga-v1.2.1.apk",
