@@ -1272,6 +1272,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: Qimiaomh",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.qimiaomh",
+    "apk": "tachiyomi-zh.qimiaomh-v1.2.1.apk",
+    "lang": "zh",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Tohomh123",
     "pkg": "eu.kanade.tachiyomi.extension.zh.tohomh123",
     "apk": "tachiyomi-zh.tohomh123-v1.2.2.apk",
