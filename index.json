@@ -776,6 +776,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: Mangakyo",
+    "pkg": "eu.kanade.tachiyomi.extension.id.mangakyo",
+    "apk": "tachiyomi-id.mangakyo-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Mangashiro",
     "pkg": "eu.kanade.tachiyomi.extension.id.mangashiro",
     "apk": "tachiyomi-id.mangashiro-v1.2.2.apk",
