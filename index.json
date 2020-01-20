@@ -1184,6 +1184,14 @@
     "version": "1.2.5"
   },
   {
+    "name": "Tachiyomi: Ngon Phong",
+    "pkg": "eu.kanade.tachiyomi.extension.vi.ngonphong",
+    "apk": "tachiyomi-vi.ngonphong-v1.2.1.apk",
+    "lang": "vi",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: TruyenQQ",
     "pkg": "eu.kanade.tachiyomi.extension.vi.truyenqq",
     "apk": "tachiyomi-vi.truyenqq-v1.2.2.apk",
