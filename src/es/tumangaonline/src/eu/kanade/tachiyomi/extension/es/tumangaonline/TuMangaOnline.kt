@@ -279,8 +279,8 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
             else -> throw UnsupportedOperationException("Unknown method. Open help ticket")
         }
 
-        val url = getBuilder(goto,getHeaders,formBody,method).substringBeforeLast("/") + "/cascade"
-        // Get /cascade instead of /paginate to get all pages at once
+        val url = getBuilder(goto,getHeaders,formBody,method).substringBeforeLast("/") + "/${getPageMethod()}"
+        // Getting /cascade instead of /paginated can get all pages at once
 
         val headers = headersBuilder()
             .add("User-Agent", userAgent)
@@ -290,34 +290,23 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
         return GET(url, headers)
     }
 
-    override fun pageListParse(response: Response): List<Page> = mutableListOf<Page>().apply {
-        val chapterID = response.request().url().toString().substringAfter("viewer/").substringBefore("/cascade")
-        val body = response.asJsoup()
-        
-        //alternative lookup img.viewer-image:eq(1)
-        body.select("div#viewer-container > div.viewer-image-container > img.viewer-image[src*=$chapterID]:not([style=display:none;])")?.forEach {   
-            add(Page(size, "", getImage(it)))
-        }
-    }
-    
-    private fun getImage(element: Element): String {
-        var url =
-            when {
-                element.attr("data-src").endsWith(".jpg") || element.attr("data-src").endsWith(".png") || element.attr("data-src").endsWith(".jpeg") -> element.attr("data-src")
-                element.attr("src").endsWith(".jpg") || element.attr("src").endsWith(".png") || element.attr("src").endsWith(".jpeg") -> element.attr("src")
-                else -> throw Exception("Extension needs update, post issue to GitHub") //element.attr("data-lazy-src")
+    override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
+        if (getPageMethod()=="cascade") {
+            val style = document.select("style:containsData(height: 0px)").html()
+            val hiddenClass = style.substringAfter("._").substringBefore("{")
+            document.select( " .img-container > .viewer-img:not(._$hiddenClass)").forEach {
+                add(Page(size, "", it.attr("src")))
             }
-        if (url.startsWith("//")) {
-            url = "http:$url"
+        } else {
+            val pageList = document.select("#viewer-pages-select").first().select("option").map { it.attr("value").toInt() }
+            val url = document.baseUri()
+            pageList.forEach {
+                add(Page(it, "$url/$it"))
+            }
         }
-        return url
     }
 
-    override fun pageListParse(document: Document) = throw UnsupportedOperationException("Not used")
-
-    override fun imageUrlRequest(page: Page) = GET(page.url, headers)
-
-    override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used")
+    override fun imageUrlParse(document: Document): String = document.select("div.viewer-container > div.img-container > img.viewer-image").attr("src")
 
     private class Types : UriPartFilter("Tipo", arrayOf(
         Pair("Ver todo", ""),
@@ -440,6 +429,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
     }
 
     // Preferences Code
+
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
         val deduppref = androidx.preference.ListPreference(screen.context).apply {
             key = DEDUP_PREF_Title
@@ -455,7 +445,23 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
                 preferences.edit().putString(DEDUP_PREF, entry).commit()
             }
         }
+
+        val pageMethod = androidx.preference.ListPreference(screen.context).apply {
+            key = PAGEGET_PREF_Title
+            title = PAGEGET_PREF_Title
+            entries = arrayOf("Cascada", "Paginada")
+            entryValues = arrayOf("cascade", "paginated")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = this.findIndexOfValue(selected)
+                val entry = entryValues.get(index) as String
+                preferences.edit().putString(PAGEGET_PREF, entry).commit()
+            }
+        }
         screen.addPreference(deduppref)
+        screen.addPreference(pageMethod)
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -473,13 +479,34 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
                 preferences.edit().putString(DEDUP_PREF, entry).commit()
             }
         }
+
+        val pageMethod = ListPreference(screen.context).apply {
+            key = PAGEGET_PREF_Title
+            title = PAGEGET_PREF_Title
+            entries = arrayOf("Cascada", "Paginada")
+            entryValues = arrayOf("cascade", "paginated")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = this.findIndexOfValue(selected)
+                val entry = entryValues.get(index) as String
+                preferences.edit().putString(PAGEGET_PREF, entry).commit()
+            }
+        }
         screen.addPreference(deduppref)
+        screen.addPreference(pageMethod)
+
     }
 
     private fun getduppref() = preferences.getString(DEDUP_PREF, "all")
+    private fun getPageMethod() = preferences.getString(PAGEGET_PREF, "cascade")
+
 
     companion object {
         private const val DEDUP_PREF_Title = "Chapter List Scanlator Preference"
         private const val DEDUP_PREF = "deduppref"
+        private const val PAGEGET_PREF_Title = "Método para obtener imágenes"
+        private const val PAGEGET_PREF = "pagemethodpref"
     }
 }
