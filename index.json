@@ -674,10 +674,10 @@
   {
     "name": "Tachiyomi: TuMangaOnline",
     "pkg": "eu.kanade.tachiyomi.extension.es.tumangaonline",
-    "apk": "tachiyomi-es.tumangaonline-v1.2.17.apk",
+    "apk": "tachiyomi-es.tumangaonline-v1.2.18.apk",
     "lang": "es",
-    "code": 17,
-    "version": "1.2.17"
+    "code": 18,
+    "version": "1.2.18"
   },
   {
     "name": "Tachiyomi: VCPVMP",
@@ -702,6 +702,14 @@
     "lang": "fr",
     "code": 13,
     "version": "1.2.13"
+  },
+  {
+    "name": "Tachiyomi: LireScan",
+    "pkg": "eu.kanade.tachiyomi.extension.fr.lirescan",
+    "apk": "tachiyomi-fr.lirescan-v1.2.1.apk",
+    "lang": "fr",
+    "code": 1,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: Mangakawaii",
