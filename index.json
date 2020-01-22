@@ -832,6 +832,14 @@
     "version": "1.2.3"
   },
   {
+    "name": "Tachiyomi: ItaScan",
+    "pkg": "eu.kanade.tachiyomi.extension.it.itascan",
+    "apk": "tachiyomi-it.itascan-v1.2.1.apk",
+    "lang": "it",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Mangaeden",
     "pkg": "eu.kanade.tachiyomi.extension.it.mangaeden",
     "apk": "tachiyomi-it.mangaeden-v1.2.3.apk",
