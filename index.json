@@ -690,10 +690,10 @@
   {
     "name": "Tachiyomi: TuMangaOnline",
     "pkg": "eu.kanade.tachiyomi.extension.es.tumangaonline",
-    "apk": "tachiyomi-es.tumangaonline-v1.2.19.apk",
+    "apk": "tachiyomi-es.tumangaonline-v1.2.20.apk",
     "lang": "es",
-    "code": 19,
-    "version": "1.2.19"
+    "code": 20,
+    "version": "1.2.20"
   },
   {
     "name": "Tachiyomi: VCPVMP",
@@ -1266,10 +1266,10 @@
   {
     "name": "Tachiyomi: Gufeng Manhua",
     "pkg": "eu.kanade.tachiyomi.extension.zh.gufengmh",
-    "apk": "tachiyomi-zh.gufengmh-v1.2.1.apk",
+    "apk": "tachiyomi-zh.gufengmh-v1.2.2.apk",
     "lang": "zh",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Hanhankuman",
