@@ -1264,6 +1264,14 @@
     "version": "1.2.8"
   },
   {
+    "name": "Tachiyomi: Gufeng Manhua",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.gufengmh",
+    "apk": "tachiyomi-zh.gufengmh-v1.2.1.apk",
+    "lang": "zh",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Hanhankuman",
     "pkg": "eu.kanade.tachiyomi.extension.zh.hanhankuman",
     "apk": "tachiyomi-zh.hanhankuman-v1.2.3.apk",
