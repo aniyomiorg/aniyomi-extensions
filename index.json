@@ -666,10 +666,10 @@
   {
     "name": "Tachiyomi: LectorManga",
     "pkg": "eu.kanade.tachiyomi.extension.es.lectormanga",
-    "apk": "tachiyomi-es.lectormanga-v1.2.4.apk",
+    "apk": "tachiyomi-es.lectormanga-v1.2.5.apk",
     "lang": "es",
-    "code": 4,
-    "version": "1.2.4"
+    "code": 5,
+    "version": "1.2.5"
   },
   {
     "name": "Tachiyomi: MangaMx & Doujin-Yang",
@@ -690,10 +690,10 @@
   {
     "name": "Tachiyomi: TuMangaOnline",
     "pkg": "eu.kanade.tachiyomi.extension.es.tumangaonline",
-    "apk": "tachiyomi-es.tumangaonline-v1.2.20.apk",
+    "apk": "tachiyomi-es.tumangaonline-v1.2.21.apk",
     "lang": "es",
-    "code": 20,
-    "version": "1.2.20"
+    "code": 21,
+    "version": "1.2.21"
   },
   {
     "name": "Tachiyomi: VCPVMP",
