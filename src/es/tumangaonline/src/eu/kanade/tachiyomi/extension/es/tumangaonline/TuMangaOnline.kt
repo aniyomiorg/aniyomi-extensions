@@ -200,6 +200,8 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
     private val scriptselector = "addEventListener"
 
     override fun chapterListParse(response: Response): List<SChapter> {
+        time1 = SimpleDateFormat("yyyy-M-d k:m:s", Locale.US).format(Date()) //Emulate when the chapter pate is opened
+        
         val document = response.asJsoup()
         val chapterurl = response.request().url().toString()
         val script = document.select("script:containsData($scriptselector)").html()
@@ -233,7 +235,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
     private fun oneShotChapterListSelector() = "div.chapter-list-element > ul.list-group li.list-group-item"
 
     private fun oneShotChapterFromElement(element: Element, chapterurl: String, chapteridselector: String) = SChapter.create().apply {
-        setUrlWithoutDomain(element.select("div.row > .text-right > a").attr("href"))
+        url = "$chapterurl#${element.select("div.row > .text-right > form").attr("id")}"
         name = "One Shot"
         scanlator = element.select("div.col-md-6.text-truncate")?.text()
         date_upload = element.select("span.badge.badge-primary.p-2").first()?.text()?.let { parseChapterDate(it) } ?: 0
@@ -242,7 +244,7 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
     private fun regularChapterListSelector() = "div.chapters > ul.list-group li.p-0.list-group-item"
 
     private fun regularChapterFromElement(element: Element, chname: String, number: Float, chapterurl: String, chapteridselector: String) = SChapter.create().apply {
-        setUrlWithoutDomain(element.select("div.row > .text-right > a").attr("href"))
+        url = "$chapterurl#${element.select("div.row > .text-right > form").attr("id")}"
         name = chname
         chapter_number = number
         scanlator = element.select("div.col-md-6.text-truncate")?.text()
@@ -250,13 +252,40 @@ class TuMangaOnline : ConfigurableSource, ParsedHttpSource() {
     }
 
     private fun parseChapterDate(date: String): Long = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(date).time
-
+    private var time1 = SimpleDateFormat("yyyy-M-d k:m:s", Locale.US).format(Date()) //Grab time at app launch, can be updated
+    
     override fun pageListRequest(chapter: SChapter): Request {
+        val (chapterURL, chapterID) = chapter.url.split("#")
+        val response = client.newCall(GET(chapterURL, headers)).execute() //Get chapter page for current token
+        val document = response.asJsoup()
+        val geturl = document.select("form#$chapterID").attr("action") //Get redirect URL
+        val token = document.select("form#$chapterID input").attr("value") //Get token
+        val method = document.select("form#$chapterID").attr("method") //Check POST or GET
+        val time2 = SimpleDateFormat("yyyy-M-d k:m:s", Locale.US).format(Date()) //Get time of chapter request
+        
+        val getHeaders = headersBuilder()
+            .add("User-Agent", userAgent)
+            .add("Referer", chapterURL)
+            .add("Content-Type", "application/x-www-form-urlencoded")
+            .build()
+
+        val formBody = when (method) { 
+            "GET" -> null
+            "POST" -> FormBody.Builder()
+                .add("_token", token)
+                .add("time", time1)
+                .add("time2", time2)
+                .build()
+            else -> throw UnsupportedOperationException("Unknown method. Open GitHub issue")
+        }
+
+        val url = getBuilder(geturl,getHeaders,formBody,method).substringBeforeLast("/") + "/${getPageMethod()}"
+        
         val headers = headersBuilder()
             .add("User-Agent", userAgent)
-            .add("Referer", "$baseUrl/library/manga/")
+            .add("Referer", chapterURL)
             .build()
-        val url = getBuilder(baseUrl + chapter.url,headers,null,"GET").substringBeforeLast("/") + "/${getPageMethod()}"
+        
         return GET(url, headers)
     }
 
