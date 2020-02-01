@@ -930,10 +930,10 @@
   {
     "name": "Tachiyomi: ManaMoa",
     "pkg": "eu.kanade.tachiyomi.extension.ko.mangashowme",
-    "apk": "tachiyomi-ko.mangashowme-v1.2.16.apk",
+    "apk": "tachiyomi-ko.mangashowme-v1.2.17.apk",
     "lang": "ko",
-    "code": 16,
-    "version": "1.2.16"
+    "code": 17,
+    "version": "1.2.17"
   },
   {
     "name": "Tachiyomi: Naver Comic",
