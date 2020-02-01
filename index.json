@@ -56,6 +56,14 @@
     "version": "1.2.6"
   },
   {
+    "name": "Tachiyomi: LANraragi",
+    "pkg": "eu.kanade.tachiyomi.extension.all.lanraragi",
+    "apk": "tachiyomi-all.lanraragi-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
     "apk": "tachiyomi-all.madara-v1.2.51.apk",
