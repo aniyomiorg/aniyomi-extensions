@@ -226,10 +226,10 @@
   {
     "name": "Tachiyomi: Team X",
     "pkg": "eu.kanade.tachiyomi.extension.ar.teamx",
-    "apk": "tachiyomi-ar.teamx-v1.2.1.apk",
+    "apk": "tachiyomi-ar.teamx-v1.2.2.apk",
     "lang": "ar",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: WieManga",
