@@ -26,6 +26,10 @@ public class Preference {
         throw new RuntimeException("Stub!");
     }
 
+    public void setEnabled(boolean enabled)  {
+        throw new RuntimeException("Stub!");
+    }
+
     public String getKey() {
         throw new RuntimeException("Stub!");
     }
