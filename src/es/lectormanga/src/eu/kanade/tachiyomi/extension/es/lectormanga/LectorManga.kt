@@ -270,13 +270,15 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
         }
 
         val newurl = getBuilder(geturl,getHeaders,formBody,method)
-        val url =  if (newurl.contains("paginated")) {
+        val url =  if (getPageMethod()=="cascade" && newurl.contains("paginated")) {
             newurl.substringBefore("paginated") + "cascade"
+        } else if (getPageMethod()=="paginated" && newurl.contains("cascade")) {
+            newurl.substringBefore("cascade") + "paginated"
         } else newurl
 
         val headers = headersBuilder()
             .add("User-Agent", userAgent)
-            .add("Referer", "$baseUrl/library/manga/")
+            .add("Referer", newurl)
             .build()
 
         // Get /cascade instead of /paginate to get all pages at once
@@ -284,12 +286,21 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
     }
 
     override fun pageListParse(document: Document): List<Page> = mutableListOf<Page>().apply {
-        document.select("div#viewer-container > div.viewer-image-container > img.viewer-image")?.forEach {
-            add(Page(size, "", it.attr("src")))
+        if (getPageMethod()=="cascade") {
+            val style = document.select("style:containsData(height)").html()
+            document.select( "img[id]").filterNot { it.attr("id") in style }.forEach {
+                add(Page(size, "", it.attr("src")))
+            }
+        } else {
+            val pageList = document.select("#viewer-pages-select").first().select("option").map { it.attr("value").toInt() }
+            val url = document.baseUri().substringBefore("/paginated") //Accounts for url ending in number "/paginated/1"
+            pageList.forEach {
+                add(Page(it, "$url/paginated/$it"))
+            }
         }
     }
 
-    override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used")
+    override fun imageUrlParse(document: Document): String = document.select("img.viewer-image").attr("src")
 
     private class Types : UriPartFilter("Tipo", arrayOf(
             Pair("Ver todo", ""),
@@ -412,6 +423,7 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
     }
 
     // Preferences Code
+
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
         val deduppref = androidx.preference.ListPreference(screen.context).apply {
             key = DEDUP_PREF_Title
@@ -427,7 +439,23 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
                 preferences.edit().putString(DEDUP_PREF, entry).commit()
             }
         }
+
+        val pageMethod = androidx.preference.ListPreference(screen.context).apply {
+            key = PAGEGET_PREF_Title
+            title = PAGEGET_PREF_Title
+            entries = arrayOf("Cascada", "Paginada")
+            entryValues = arrayOf("cascade", "paginated")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = this.findIndexOfValue(selected)
+                val entry = entryValues.get(index) as String
+                preferences.edit().putString(PAGEGET_PREF, entry).commit()
+            }
+        }
         screen.addPreference(deduppref)
+        screen.addPreference(pageMethod)
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -445,14 +473,34 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
                 preferences.edit().putString(DEDUP_PREF, entry).commit()
             }
         }
+
+        val pageMethod = ListPreference(screen.context).apply {
+            key = PAGEGET_PREF_Title
+            title = PAGEGET_PREF_Title
+            entries = arrayOf("Cascada", "Paginada")
+            entryValues = arrayOf("cascade", "paginated")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = this.findIndexOfValue(selected)
+                val entry = entryValues.get(index) as String
+                preferences.edit().putString(PAGEGET_PREF, entry).commit()
+            }
+        }
         screen.addPreference(deduppref)
+        screen.addPreference(pageMethod)
+
     }
 
     private fun getduppref() = preferences.getString(DEDUP_PREF, "all")
+    private fun getPageMethod() = preferences.getString(PAGEGET_PREF, "cascade")
+
 
     companion object {
         private const val DEDUP_PREF_Title = "Chapter List Scanlator Preference"
         private const val DEDUP_PREF = "deduppref"
+        private const val PAGEGET_PREF_Title = "Método para obtener imágenes"
+        private const val PAGEGET_PREF = "pagemethodpref"
     }
-
 }
