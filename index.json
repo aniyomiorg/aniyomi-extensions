@@ -674,10 +674,10 @@
   {
     "name": "Tachiyomi: LectorManga",
     "pkg": "eu.kanade.tachiyomi.extension.es.lectormanga",
-    "apk": "tachiyomi-es.lectormanga-v1.2.5.apk",
+    "apk": "tachiyomi-es.lectormanga-v1.2.6.apk",
     "lang": "es",
-    "code": 5,
-    "version": "1.2.5"
+    "code": 6,
+    "version": "1.2.6"
   },
   {
     "name": "Tachiyomi: MangaMx & Doujin-Yang",
@@ -698,10 +698,10 @@
   {
     "name": "Tachiyomi: TuMangaOnline",
     "pkg": "eu.kanade.tachiyomi.extension.es.tumangaonline",
-    "apk": "tachiyomi-es.tumangaonline-v1.2.21.apk",
+    "apk": "tachiyomi-es.tumangaonline-v1.2.22.apk",
     "lang": "es",
-    "code": 21,
-    "version": "1.2.21"
+    "code": 22,
+    "version": "1.2.22"
   },
   {
     "name": "Tachiyomi: VCPVMP",
@@ -1330,10 +1330,10 @@
   {
     "name": "Tachiyomi: Pufei",
     "pkg": "eu.kanade.tachiyomi.extension.zh.pufei",
-    "apk": "tachiyomi-zh.pufei-v1.2.2.apk",
+    "apk": "tachiyomi-zh.pufei-v1.2.3.apk",
     "lang": "zh",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Qimiaomh",
