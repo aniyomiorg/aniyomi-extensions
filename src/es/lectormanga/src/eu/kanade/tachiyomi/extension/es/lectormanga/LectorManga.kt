@@ -42,7 +42,7 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
         .followRedirects(true)
         .build()!!
 
-    private val userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36"
+    private val userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.87 Safari/537.36"
 
     override fun headersBuilder(): Headers.Builder {
         return Headers.Builder()
@@ -187,16 +187,13 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
 
     override fun searchMangaNextPageSelector() = popularMangaNextPageSelector()
 
-    private val scriptselector = "disqus_config"
-
     override fun chapterListParse(response: Response): List<SChapter> {
-        time1 = SimpleDateFormat("yyyy-M-d k:m:s", Locale.US).format(Date()) //Emulate when the chapter page is opened
+        time = serverTime() //Get time when the chapter page is opened
 
         val document = response.asJsoup()
         val chapterurl = response.request().url().toString()
-        val script = document.select("script:containsData($scriptselector)").html()
-        val chapteridselector = script.substringAfter("getAttribute(\"").substringBefore("\"")
-
+        val chapteridselector = "" 
+        
         // One-shot
         if (document.select("#chapters").isEmpty()) {
             return document.select(oneShotChapterListSelector()).map { oneShotChapterFromElement(it, chapterurl, chapteridselector) }
@@ -242,16 +239,21 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
     }
 
     private fun parseChapterDate(date: String): Long = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(date).time
-    private var time1 = SimpleDateFormat("yyyy-M-d k:m:s", Locale.US).format(Date()) //Grab time at app launch, can be updated
-
+    private var time = serverTime() //Grab time at app launch, can be updated
+    private fun serverTime() :String {
+        val formatter = SimpleDateFormat("yyyy-MM-dd kk:mm:ss", Locale.US)
+        formatter.timeZone = TimeZone.getTimeZone("GMT+1") //Convert time to match server
+        return formatter.format(Date())
+    }
+    
     override fun pageListRequest(chapter: SChapter): Request {
         val (chapterURL, chapterID) = chapter.url.split("#")
         val response = client.newCall(GET(chapterURL, headers)).execute() //Get chapter page for current token
         val document = response.asJsoup()
-        val geturl = document.select("form#$chapterID").attr("action") //Get redirect URL
+        val geturl = document.select("form#$chapterID").attr("action")+"/$time" //Get redirect URL
         val token = document.select("form#$chapterID input").attr("value") //Get token
         val method = document.select("form#$chapterID").attr("method") //Check POST or GET
-        val time2 = SimpleDateFormat("yyyy-M-d k:m:s", Locale.US).format(Date()) //Get time of chapter request
+        time = serverTime() //Update time for next chapter
 
        val getHeaders = headersBuilder()
             .add("User-Agent", userAgent)
@@ -263,8 +265,6 @@ class LectorManga : ConfigurableSource, ParsedHttpSource() {
             "GET" -> null
             "POST" -> FormBody.Builder()
                 .add("_token", token)
-                .add("time", time1)
-                .add("time2", time2)
                 .build()
             else -> throw UnsupportedOperationException("Unknown method. Open GitHub issue")
         }
