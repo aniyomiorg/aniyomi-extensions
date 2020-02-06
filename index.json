@@ -698,10 +698,10 @@
   {
     "name": "Tachiyomi: TuMangaOnline",
     "pkg": "eu.kanade.tachiyomi.extension.es.tumangaonline",
-    "apk": "tachiyomi-es.tumangaonline-v1.2.23.apk",
+    "apk": "tachiyomi-es.tumangaonline-v1.2.24.apk",
     "lang": "es",
-    "code": 23,
-    "version": "1.2.23"
+    "code": 24,
+    "version": "1.2.24"
   },
   {
     "name": "Tachiyomi: VCPVMP",
