@@ -66,10 +66,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.53.apk",
+    "apk": "tachiyomi-all.madara-v1.2.54.apk",
     "lang": "all",
-    "code": 53,
-    "version": "1.2.53"
+    "code": 54,
+    "version": "1.2.54"
   },
   {
     "name": "Tachiyomi: MangaBox (Mangakakalot and others)",
