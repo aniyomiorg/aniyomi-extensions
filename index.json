@@ -1024,6 +1024,14 @@
     "version": "1.2.7"
   },
   {
+    "name": "Tachiyomi: MangaYabu!",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.mangayabu",
+    "apk": "tachiyomi-pt.mangayabu-v1.2.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Saikai Scan",
     "pkg": "eu.kanade.tachiyomi.extension.pt.saikaiscan",
     "apk": "tachiyomi-pt.saikaiscan-v1.2.2.apk",
