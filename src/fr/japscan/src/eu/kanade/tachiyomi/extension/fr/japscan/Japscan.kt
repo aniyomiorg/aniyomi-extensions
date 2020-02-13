@@ -4,24 +4,15 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Rect
+import android.net.Uri
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
-import eu.kanade.tachiyomi.source.model.FilterList
-import eu.kanade.tachiyomi.source.model.MangasPage
-import eu.kanade.tachiyomi.source.model.Page
-import eu.kanade.tachiyomi.source.model.SChapter
-import eu.kanade.tachiyomi.source.model.SManga
+import eu.kanade.tachiyomi.source.model.*
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.MediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.ResponseBody
+import okhttp3.*
 import org.apache.commons.lang3.StringUtils
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.text.ParseException
@@ -66,18 +57,22 @@ class Japscan : ParsedHttpSource() {
         }
     }
 
-    override fun popularMangaSelector() = "#top_mangas_week li > span"
-
+	//Popular
     override fun popularMangaRequest(page: Int): Request {
-        return GET(baseUrl, headers)
+        return GET("$baseUrl/mangas/", headers)
     }
+    override fun popularMangaParse(response: Response): MangasPage {
+        val document = response.asJsoup()
+        pageNumberDoc = document
 
-    override fun latestUpdatesSelector() = "#chapters > div:eq(0) > h3.text-truncate"
-
-    override fun latestUpdatesRequest(page: Int): Request {
-        return GET(baseUrl, headers)
+        val mangas = document.select(popularMangaSelector()).map { element ->
+            popularMangaFromElement(element)
+        }
+        val hasNextPage = false
+        return MangasPage(mangas, hasNextPage)
     }
-
+    override fun popularMangaNextPageSelector(): String? = null
+    override fun popularMangaSelector() = "#top_mangas_week li > span"
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
         element.select("a").first().let {
@@ -92,64 +87,50 @@ class Japscan : ParsedHttpSource() {
         }
         return manga
     }
-
+    
+    //Latest
+    override fun latestUpdatesRequest(page: Int): Request {
+        return GET(baseUrl, headers)
+    }
+    override fun latestUpdatesParse(response: Response): MangasPage {
+        val document = response.asJsoup()
+        val mangas = document.select(latestUpdatesSelector())
+            .distinctBy { element -> element.select("a").attr("href") }
+            .map { element -> latestUpdatesFromElement(element)
+            }
+        val hasNextPage = false
+        return MangasPage(mangas, hasNextPage)
+    }
+    override fun latestUpdatesNextPageSelector() :String? = null
+    override fun latestUpdatesSelector() = "#chapters > div > h3.text-truncate"
     override fun latestUpdatesFromElement(element: Element): SManga = popularMangaFromElement(element)
 
-    override fun popularMangaNextPageSelector() = "#theresnone"
-
-    override fun latestUpdatesNextPageSelector() = "#theresnone"
-
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
-        val stripped = StringUtils.stripAccents(query)
-        return client.newCall(searchMangaRequest(stripped[0], page))
-            .asObservableSuccess()
-            .map { response ->
-                searchMangaParse(response, stripped)
+    //"Search"
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        if (query.isNullOrEmpty()) {
+            val uri = Uri.parse(baseUrl).buildUpon()
+                .appendPath("mangas")
+            filters.forEach { filter ->
+                when (filter) {
+                    is TextField -> uri.appendPath(filter.state)
+                    is PageList -> uri.appendPath(filter.values[filter.state].toString())
+                }
             }
+            return GET(uri.toString(), headers)
+        } else
+            throw Exception("Search unavailable, use filter to browse by page")
     }
 
-    private fun searchMangaRequest(char: Char, page: Int): Request {
-        return if (char.isLetter()) GET("$baseUrl/mangas/${char.toUpperCase()}/$page", headers) else GET("$baseUrl/mangas/0-9/$page", headers)
-    }
-
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList) = throw Exception("Not used")
-
-    private fun searchMangaParse(response: Response, query: String): MangasPage {
-        val mangas = mutableListOf<SManga>()
-        var document = response.asJsoup()
-        var continueSearch = true
-        var page = 1
-
-        while (continueSearch) {
-            document.select(searchMangaSelector())
-                .filter { it.select("p a").text().contains(query, ignoreCase = true) }
-                .map { mangas.add(searchMangaFromElement(it)) }
-            if (document.select(searchMangaNextPageSelector()).isNotEmpty()) {
-                page++
-                document = client.newCall(searchMangaRequest(query[0], page)).execute().asJsoup()
-            } else {
-                continueSearch = false
-            }
+    override fun searchMangaNextPageSelector(): String? = null //"li.page-item:last-child:not(li.active)"
+    override fun searchMangaSelector(): String = "div.card div.p-2"
+    override fun searchMangaFromElement(element: Element): SManga = SManga.create().apply {
+        thumbnail_url = baseUrl+element.select("img").attr("src").substringAfter(baseUrl)
+        element.select("p a").let {
+            title = it.text()
+            url = it.attr("href")
         }
 
-        return MangasPage(mangas, false)
     }
-
-    override fun searchMangaSelector() = "div.row div.flex-wrap div"
-
-    override fun searchMangaFromElement(element: Element): SManga {
-        val manga = SManga.create()
-
-        element.select("p a").let{
-            manga.title = it.text()
-            manga.setUrlWithoutDomain(it.attr("href"))
-        }
-        manga.thumbnail_url = element.select("img").attr("abs:src")
-
-        return manga
-    }
-
-    override fun searchMangaNextPageSelector() = "ul.pagination li.active + li"
 
     override fun mangaDetailsParse(document: Document): SManga {
         val infoElement = document.select("div#main > .card > .card-body").first()
@@ -262,4 +243,28 @@ class Japscan : ParsedHttpSource() {
         result.compress(Bitmap.CompressFormat.PNG, 100, output)
         return output.toByteArray()
     }
+	
+	//Filters
+    private class TextField(name: String, val key: String) : Filter.Text(name)
+    private class PageList(pages: Array<Int>): Filter.Select<Int>("Page #", arrayOf(0,*pages))
+    override fun getFilterList():FilterList {
+        val totalPages = pageNumberDoc?.select("li.page-item:last-child a")?.text()
+        val pagelist = mutableListOf<Int>()
+        var filterList:FilterList = if (!totalPages.isNullOrEmpty()) {
+            for (i in 0 until totalPages.toInt()) {
+                pagelist.add(i+1)
+            }
+            FilterList(
+                Filter.Header("Page alphabétique"),
+                PageList(pagelist.toTypedArray())
+            )
+        } else FilterList(
+            Filter.Header("Page alphabétique"),
+            TextField("Page #", "page"),
+            Filter.Header("Appuyez sur reset pour la liste")
+            )
+        return filterList
+    }
+
+    private var pageNumberDoc : Document? = null
 }
