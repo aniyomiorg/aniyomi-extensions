@@ -722,10 +722,10 @@
   {
     "name": "Tachiyomi: Japscan",
     "pkg": "eu.kanade.tachiyomi.extension.fr.japscan",
-    "apk": "tachiyomi-fr.japscan-v1.2.14.apk",
+    "apk": "tachiyomi-fr.japscan-v1.2.15.apk",
     "lang": "fr",
-    "code": 14,
-    "version": "1.2.14"
+    "code": 15,
+    "version": "1.2.15"
   },
   {
     "name": "Tachiyomi: LireScan",
