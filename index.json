@@ -488,14 +488,6 @@
     "version": "1.2.4"
   },
   {
-    "name": "Tachiyomi: Manga Rock",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangarock",
-    "apk": "tachiyomi-en.mangarock-v1.2.16.apk",
-    "lang": "en",
-    "code": 16,
-    "version": "1.2.16"
-  },
-  {
     "name": "Tachiyomi: Mangasail",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangasail",
     "apk": "tachiyomi-en.mangasail-v1.2.1.apk",
@@ -846,14 +838,6 @@
     "lang": "id",
     "code": 3,
     "version": "1.2.3"
-  },
-  {
-    "name": "Tachiyomi: West Manga",
-    "pkg": "eu.kanade.tachiyomi.extension.id.westmanga",
-    "apk": "tachiyomi-id.westmanga-v1.2.1.apk",
-    "lang": "id",
-    "code": 1,
-    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: HentaiFantasy",
