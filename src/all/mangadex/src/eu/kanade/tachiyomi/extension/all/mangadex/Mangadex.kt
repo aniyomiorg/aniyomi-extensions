@@ -48,16 +48,15 @@ abstract class Mangadex(
 
     private val rateLimitInterceptor = RateLimitInterceptor(4)
 
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+    override val client: OkHttpClient = network.client.newBuilder()
         .addNetworkInterceptor(rateLimitInterceptor)
         .build()
 
     private fun clientBuilder(): OkHttpClient = clientBuilder(getShowR18())
 
-    private fun clientBuilder(r18Toggle: Int): OkHttpClient = network.cloudflareClient.newBuilder()
+    private fun clientBuilder(r18Toggle: Int): OkHttpClient = client.newBuilder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
-        .addNetworkInterceptor(rateLimitInterceptor)
         .addNetworkInterceptor { chain ->
             val originalCookies = chain.request().header("Cookie") ?: ""
             val newReq = chain
