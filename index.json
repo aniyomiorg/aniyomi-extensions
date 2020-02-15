@@ -536,6 +536,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: Oglaf",
+    "pkg": "eu.kanade.tachiyomi.extension.en.oglaf",
+    "apk": "tachiyomi-en.oglaf-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Patch Friday",
     "pkg": "eu.kanade.tachiyomi.extension.en.patchfriday",
     "apk": "tachiyomi-en.patchfriday-v1.2.1.apk",
@@ -922,10 +930,10 @@
   {
     "name": "Tachiyomi: ManaMoa",
     "pkg": "eu.kanade.tachiyomi.extension.ko.mangashowme",
-    "apk": "tachiyomi-ko.mangashowme-v1.2.17.apk",
+    "apk": "tachiyomi-ko.mangashowme-v1.2.18.apk",
     "lang": "ko",
-    "code": 17,
-    "version": "1.2.17"
+    "code": 18,
+    "version": "1.2.18"
   },
   {
     "name": "Tachiyomi: Naver Comic",
