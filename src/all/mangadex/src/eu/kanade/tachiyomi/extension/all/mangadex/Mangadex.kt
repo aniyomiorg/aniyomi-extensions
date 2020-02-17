@@ -23,13 +23,14 @@ import org.jsoup.parser.Parser
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.net.URLEncoder
 import java.util.Date
 import java.util.concurrent.TimeUnit
+import kotlin.collections.set
 
 abstract class Mangadex(
     override val lang: String,
-    private val internalLang: String,
-    private val langCode: Int
+    private val internalLang: String
 ) : ConfigurableSource, ParsedHttpSource() {
 
     override val name = "MangaDex"
@@ -47,13 +48,37 @@ abstract class Mangadex(
     private val rateLimitInterceptor = RateLimitInterceptor(4)
 
     override val client: OkHttpClient = network.client.newBuilder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
         .addNetworkInterceptor(rateLimitInterceptor)
         .build()
 
+    private fun clientBuilder(): OkHttpClient = clientBuilder(getShowR18())
+
+    private fun clientBuilder(r18Toggle: Int): OkHttpClient = network.client.newBuilder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .addNetworkInterceptor(rateLimitInterceptor)
+        .addNetworkInterceptor { chain ->
+            val originalCookies = chain.request().header("Cookie") ?: ""
+            val newReq = chain
+                .request()
+                .newBuilder()
+                .header("Cookie", "$originalCookies; ${cookiesHeader(r18Toggle)}")
+                .build()
+            chain.proceed(newReq)
+        }.build()!!
+
     override fun headersBuilder() = Headers.Builder().apply {
         add("User-Agent", "Tachiyomi " + System.getProperty("http.agent"))
+    }
+
+    private fun cookiesHeader(r18Toggle: Int): String {
+        val cookies = mutableMapOf<String, String>()
+        cookies["mangadex_h_toggle"] = r18Toggle.toString()
+        return buildCookies(cookies)
+    }
+
+    private fun buildCookies(cookies: Map<String, String>) = cookies.entries.joinToString(separator = "; ", postfix = ";") {
+        "${URLEncoder.encode(it.key, "UTF-8")}=${URLEncoder.encode(it.value, "UTF-8")}"
     }
 
     override fun popularMangaSelector() = "div.manga-entry"
@@ -110,6 +135,22 @@ abstract class Mangadex(
 
     override fun searchMangaNextPageSelector() = ".pagination li:not(.disabled) span[title*=last page]:not(disabled)"
 
+    override fun fetchPopularManga(page: Int): Observable<MangasPage> {
+        return clientBuilder().newCall(popularMangaRequest(page))
+            .asObservableSuccess()
+            .map { response ->
+                popularMangaParse(response)
+            }
+    }
+
+    override fun fetchLatestUpdates(page: Int): Observable<MangasPage> {
+        return clientBuilder().newCall(latestUpdatesRequest(page))
+            .asObservableSuccess()
+            .map { response ->
+                latestUpdatesParse(response)
+            }
+    }
+
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
         return if (query.startsWith(PREFIX_ID_SEARCH)) {
             val realQuery = query.removePrefix(PREFIX_ID_SEARCH)
@@ -121,12 +162,28 @@ abstract class Mangadex(
                     MangasPage(listOf(details), false)
                 }
         } else {
-            client.newCall(searchMangaRequest(page, query, filters))
+            getSearchClient(filters).newCall(searchMangaRequest(page, query, filters))
                 .asObservableSuccess()
                 .map { response ->
                     searchMangaParse(response)
                 }
         }
+    }
+
+    private fun getSearchClient(filters: FilterList): OkHttpClient {
+        filters.forEach { filter ->
+            when (filter) {
+                is R18 -> {
+                    return when (filter.state) {
+                        1 -> clientBuilder(ALL)
+                        2 -> clientBuilder(ONLY_R18)
+                        3 -> clientBuilder(NO_R18)
+                        else -> clientBuilder()
+                    }
+                }
+            }
+        }
+        return clientBuilder()
     }
 
     private var groupSearch = ""
@@ -280,7 +337,7 @@ abstract class Mangadex(
     }
 
     override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
-        return client.newCall(apiRequest(manga))
+        return clientBuilder().newCall(apiRequest(manga))
             .asObservableSuccess()
             .map { response ->
                 mangaDetailsParse(response).apply { initialized = true }
@@ -352,7 +409,7 @@ abstract class Mangadex(
     override fun chapterListSelector() = ""
 
     override fun fetchChapterList(manga: SManga): Observable<List<SChapter>> {
-        return client.newCall(apiRequest(manga))
+        return clientBuilder().newCall(apiRequest(manga))
             .asObservableSuccess()
             .map { response ->
                 chapterListParse(response)
@@ -522,6 +579,21 @@ abstract class Mangadex(
     }
 
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
+        val myPref = androidx.preference.ListPreference(screen.context).apply {
+            key = SHOW_R18_PREF_Title
+            title = SHOW_R18_PREF_Title
+
+            title = SHOW_R18_PREF_Title
+            entries = arrayOf("Show No R18+", "Show All", "Show Only R18+")
+            entryValues = arrayOf("0", "1", "2")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = this.findIndexOfValue(selected)
+                preferences.edit().putInt(SHOW_R18_PREF, index).commit()
+            }
+        }
         val thumbsPref = androidx.preference.ListPreference(screen.context).apply {
             key = SHOW_THUMBNAIL_PREF_Title
             title = SHOW_THUMBNAIL_PREF_Title
@@ -550,11 +622,27 @@ abstract class Mangadex(
             }
         }
 
+        screen.addPreference(myPref)
         screen.addPreference(thumbsPref)
         screen.addPreference(serverPref)
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val myPref = ListPreference(screen.context).apply {
+            key = SHOW_R18_PREF_Title
+            title = SHOW_R18_PREF_Title
+
+            title = SHOW_R18_PREF_Title
+            entries = arrayOf("Show No R18+", "Show All", "Show Only R18+")
+            entryValues = arrayOf("0", "1", "2")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = this.findIndexOfValue(selected)
+                preferences.edit().putInt(SHOW_R18_PREF, index).commit()
+            }
+        }
         val thumbsPref = ListPreference(screen.context).apply {
             key = SHOW_THUMBNAIL_PREF_Title
             title = SHOW_THUMBNAIL_PREF_Title
@@ -583,10 +671,12 @@ abstract class Mangadex(
             }
         }
 
+        screen.addPreference(myPref)
         screen.addPreference(thumbsPref)
         screen.addPreference(serverPref)
     }
 
+    private fun getShowR18(): Int = preferences.getInt(SHOW_R18_PREF, 0)
     private fun getShowThumbnail(): Int = preferences.getInt(SHOW_THUMBNAIL_PREF, 0)
     private fun getServer(): String {
         val default = SERVER_PREF_ENTRY_VALUES.first()
@@ -601,6 +691,7 @@ abstract class Mangadex(
     private class ContentList(contents: List<Tag>) : Filter.Group<Tag>("Content", contents)
     private class FormatList(formats: List<Tag>) : Filter.Group<Tag>("Format", formats)
     private class GenreList(genres: List<Tag>) : Filter.Group<Tag>("Genres", genres)
+    private class R18 : Filter.Select<String>("R18+", arrayOf("Default", "Show all", "Show only", "Show none"))
     private class ScanGroup(name: String) : Filter.Text(name)
 
     private fun getDemographic() = listOf(
@@ -631,6 +722,7 @@ abstract class Mangadex(
     override fun getFilterList() = FilterList(
         TextField("Author", "author"),
         TextField("Artist", "artist"),
+        R18(),
         SortFilter(),
         Demographic(getDemographic()),
         PublicationStatus(getPublicationStatus()),
@@ -740,6 +832,14 @@ abstract class Mangadex(
 
     companion object {
         private val WHITESPACE_REGEX = "\\s".toRegex()
+
+        // This number matches to the cookie
+        private const val NO_R18 = 0
+        private const val ALL = 1
+        private const val ONLY_R18 = 2
+
+        private const val SHOW_R18_PREF_Title = "Default R18 Setting"
+        private const val SHOW_R18_PREF = "showR18Default"
 
         private const val LOW_QUALITY = 1
 
