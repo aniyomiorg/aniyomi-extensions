@@ -682,10 +682,10 @@
   {
     "name": "Tachiyomi: LectorManga",
     "pkg": "eu.kanade.tachiyomi.extension.es.lectormanga",
-    "apk": "tachiyomi-es.lectormanga-v1.2.7.apk",
+    "apk": "tachiyomi-es.lectormanga-v1.2.8.apk",
     "lang": "es",
-    "code": 7,
-    "version": "1.2.7"
+    "code": 8,
+    "version": "1.2.8"
   },
   {
     "name": "Tachiyomi: MangaMx & Doujin-Yang",
