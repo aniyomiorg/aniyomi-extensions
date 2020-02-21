@@ -362,10 +362,10 @@
   {
     "name": "Tachiyomi: HolyManga & HeavenManga",
     "pkg": "eu.kanade.tachiyomi.extension.en.holymanga",
-    "apk": "tachiyomi-en.holymanga-v1.2.2.apk",
+    "apk": "tachiyomi-en.holymanga-v1.2.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Kissmanga",
@@ -746,10 +746,10 @@
   {
     "name": "Tachiyomi: Scantrad",
     "pkg": "eu.kanade.tachiyomi.extension.fr.scantrad",
-    "apk": "tachiyomi-fr.scantrad-v1.2.4.apk",
+    "apk": "tachiyomi-fr.scantrad-v1.2.5.apk",
     "lang": "fr",
-    "code": 4,
-    "version": "1.2.4"
+    "code": 5,
+    "version": "1.2.5"
   },
   {
     "name": "Tachiyomi: Baca Manga",
