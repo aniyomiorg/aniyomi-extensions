@@ -210,10 +210,10 @@
   {
     "name": "Tachiyomi: Manga.ae",
     "pkg": "eu.kanade.tachiyomi.extension.ar.mangaae",
-    "apk": "tachiyomi-ar.mangaae-v1.2.3.apk",
+    "apk": "tachiyomi-ar.mangaae-v1.2.4.apk",
     "lang": "ar",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: Shqqaa Manga",
