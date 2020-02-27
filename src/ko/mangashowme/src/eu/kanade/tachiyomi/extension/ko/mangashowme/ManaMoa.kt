@@ -11,6 +11,7 @@ import android.support.v7.preference.PreferenceScreen
 import android.widget.Toast
 import eu.kanade.tachiyomi.extension.BuildConfig
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.*
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
@@ -20,6 +21,7 @@ import org.json.JSONArray
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
+import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.IOException
@@ -44,19 +46,21 @@ class ManaMoa : ConfigurableSource, ParsedHttpSource() {
     override val name = "ManaMoa"
 
     // This keeps updating: https://twitter.com/manamoa24
-    private val defaultBaseUrl = "https://manamoa27.net"
+    private val defaultBaseUrl = "https://manamoa29.net"
     override val baseUrl by lazy { getCurrentBaseUrl() }
 
     override val lang: String = "ko"
 
     // Latest updates currently returns duplicate manga as it separates manga into chapters
-    override val supportsLatest = false
+    // But allowing to fetch from chapters with experimental setting.
+    override val supportsLatest by lazy { getExperimentLatest() }
+
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-            .connectTimeout(10, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .addInterceptor(ImageDecoderInterceptor())
-            .addInterceptor(ImageUrlHandlerInterceptor())
-            .build()!!
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .addInterceptor(ImageDecoderInterceptor())
+        .addInterceptor(ImageUrlHandlerInterceptor())
+        .build()!!
 
     override fun popularMangaSelector() = "div.manga-list-gallery > div > div.post-row"
 
@@ -97,7 +101,22 @@ class ManaMoa : ConfigurableSource, ParsedHttpSource() {
     override fun searchMangaFromElement(element: Element) = popularMangaFromElement(element)
     override fun searchMangaNextPageSelector() = popularMangaSelector()
     override fun searchMangaParse(response: Response) = popularMangaParse(response)
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = searchComplexFilterMangaRequestBuilder(baseUrl, page, query, filters)
+    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+        return if (query.startsWith(PREFIX_ID_SEARCH)) {
+            val realQuery = query.removePrefix(PREFIX_ID_SEARCH)
+            val urlPath = "/bbs/page.php?hid=manga_detail&manga_id=$realQuery"
+            client.newCall(GET("$baseUrl$urlPath"))
+                .asObservableSuccess()
+                .map { response ->
+                    val details = mangaDetailsParse(response)
+                    details.url = urlPath
+                    MangasPage(listOf(details), false)
+                }
+        } else super.fetchSearchManga(page, query, filters)
+    }
+
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request =
+        searchComplexFilterMangaRequestBuilder(baseUrl, page, query, filters)
 
 
     override fun mangaDetailsParse(document: Document): SManga {
@@ -120,7 +139,7 @@ class ManaMoa : ConfigurableSource, ParsedHttpSource() {
         }
 
         val manga = SManga.create()
-        manga.title = info.select("div.red").html()
+        manga.title = info.select("div.red.title").html().trim()
         // They using background-image style tag for cover. extract url from style attribute.
         manga.thumbnail_url = urlFinder(thumbnailElement.attr("style"))
         manga.description =
@@ -259,10 +278,29 @@ class ManaMoa : ConfigurableSource, ParsedHttpSource() {
 
 
     // Latest not supported
-    override fun latestUpdatesSelector() = throw UnsupportedOperationException("This method should not be called!")
-    override fun latestUpdatesFromElement(element: Element) = throw UnsupportedOperationException("This method should not be called!")
-    override fun latestUpdatesRequest(page: Int) = throw UnsupportedOperationException("This method should not be called!")
-    override fun latestUpdatesNextPageSelector() = throw UnsupportedOperationException("This method should not be called!")
+    override fun latestUpdatesSelector() = ".post-row > div.media.post-list"
+
+    override fun latestUpdatesFromElement(element: Element): SManga {
+        val linkElement = element.select("a.btn-primary")
+        val rawTitle = element.select(".post-subject > a").first().ownText()
+
+        // TODO: Make Clear Regex.
+        val chapterRegex = Regex("""((?:\s+)(?:(?:(?:[0-9]+권)?(?:[0-9]+부)?(?:[0-9]*?시즌[0-9]*?)?)?(?:\s*)(?:(?:[0-9]+)(?:[-.](?:[0-9]+))?)?(?:\s*[~,]\s*)?(?:[0-9]+)(?:[-.](?:[0-9]+))?)(?:화))""")
+        val title = rawTitle.trim().replace(chapterRegex, "")
+        //val regexSpecialChapter = Regex("(부록|단편|외전|.+편)")
+        //val lastTitleWord = excludeChapterTitle.split(" ").last()
+        //val title = excludeChapterTitle.replace(lastTitleWord, lastTitleWord.replace(regexSpecialChapter, ""))
+
+        val manga = SManga.create()
+        manga.url = linkElement.attr("href")
+        manga.title = title
+        manga.thumbnail_url = element.select(".img-item > img").attr("src")
+        manga.initialized = false
+        return manga
+    }
+
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/bbs/board.php?bo_table=manga" + if (page > 1) "&page=$page" else "")
+    override fun latestUpdatesNextPageSelector() = "ul.pagination > li:not(.disabled)"
 
 
     //We are able to get the image URL directly from the page list
@@ -321,8 +359,26 @@ class ManaMoa : ConfigurableSource, ParsedHttpSource() {
             }
         }
 
+        val latestExperimentPref = androidx.preference.CheckBoxPreference(screen.context).apply {
+            key = EXPERIMENTAL_LATEST_PREF_TITLE
+            title = EXPERIMENTAL_LATEST_PREF_TITLE
+            summary = EXPERIMENTAL_LATEST_PREF_SUMMARY
+
+            setOnPreferenceChangeListener { _, newValue ->
+                try {
+                    val res = preferences.edit().putBoolean(EXPERIMENTAL_LATEST_PREF, newValue as Boolean).commit()
+                    Toast.makeText(screen.context, RESTART_TACHIYOMI, Toast.LENGTH_LONG).show()
+                    res
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    false
+                }
+            }
+        }
+
         screen.addPreference(baseUrlPref)
         screen.addPreference(autoFetchUrlPref)
+        screen.addPreference(latestExperimentPref)
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -364,8 +420,26 @@ class ManaMoa : ConfigurableSource, ParsedHttpSource() {
             }
         }
 
+        val latestExperimentPref = CheckBoxPreference(screen.context).apply {
+            key = EXPERIMENTAL_LATEST_PREF_TITLE
+            title = EXPERIMENTAL_LATEST_PREF_TITLE
+            summary = EXPERIMENTAL_LATEST_PREF_SUMMARY
+
+            setOnPreferenceChangeListener { _, newValue ->
+                try {
+                    val res = preferences.edit().putBoolean(EXPERIMENTAL_LATEST_PREF, newValue as Boolean).commit()
+                    Toast.makeText(screen.context, RESTART_TACHIYOMI, Toast.LENGTH_LONG).show()
+                    res
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    false
+                }
+            }
+        }
+
         screen.addPreference(baseUrlPref)
         screen.addPreference(autoFetchUrlPref)
+        screen.addPreference(latestExperimentPref)
     }
 
     private fun getCurrentBaseUrl(): String {
@@ -414,6 +488,7 @@ class ManaMoa : ConfigurableSource, ParsedHttpSource() {
 
 
     private fun getPrefBaseUrl(): String = preferences.getString(BASE_URL_PREF, defaultBaseUrl)!!
+    private fun getExperimentLatest(): Boolean = preferences.getBoolean(EXPERIMENTAL_LATEST_PREF, false)
 
     override fun getFilterList() = getFilters()
 
@@ -429,6 +504,11 @@ class ManaMoa : ConfigurableSource, ParsedHttpSource() {
             "Experimental, May cause Tachiyomi *very* unstable.\n" +
                 "Requires Android Oreo or newer."
 
+        // Setting: Experimental Latest Fetcher
+        private const val EXPERIMENTAL_LATEST_PREF_TITLE = "Enable Latest (Experimental)"
+        private const val EXPERIMENTAL_LATEST_PREF = "fetchLatestExperiment"
+        private const val EXPERIMENTAL_LATEST_PREF_SUMMARY = "Fetch Latest Manga using Latest Chapters. May has duplicates or invalid name."
+
         private const val RESTART_TACHIYOMI = "Restart Tachiyomi to apply new setting."
 
         // Image Decoder
@@ -437,5 +517,8 @@ class ManaMoa : ConfigurableSource, ParsedHttpSource() {
 
         // Url Handler
         internal const val MINIMUM_IMAGE_SIZE = 10000
+
+        // Activity Url Handler
+        const val PREFIX_ID_SEARCH = "id:"
     }
 }
