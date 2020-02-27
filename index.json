@@ -1138,10 +1138,10 @@
   {
     "name": "Tachiyomi: Mintmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mintmanga",
-    "apk": "tachiyomi-ru.mintmanga-v1.2.17.apk",
+    "apk": "tachiyomi-ru.mintmanga-v1.2.18.apk",
     "lang": "ru",
-    "code": 17,
-    "version": "1.2.17"
+    "code": 18,
+    "version": "1.2.18"
   },
   {
     "name": "Tachiyomi: Nude-Moon",
@@ -1162,10 +1162,10 @@
   {
     "name": "Tachiyomi: Readmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.readmanga",
-    "apk": "tachiyomi-ru.readmanga-v1.2.16.apk",
+    "apk": "tachiyomi-ru.readmanga-v1.2.17.apk",
     "lang": "ru",
-    "code": 16,
-    "version": "1.2.16"
+    "code": 17,
+    "version": "1.2.17"
   },
   {
     "name": "Tachiyomi: Risens Team",
@@ -1178,10 +1178,10 @@
   {
     "name": "Tachiyomi: Selfmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.selfmanga",
-    "apk": "tachiyomi-ru.selfmanga-v1.2.5.apk",
+    "apk": "tachiyomi-ru.selfmanga-v1.2.6.apk",
     "lang": "ru",
-    "code": 5,
-    "version": "1.2.5"
+    "code": 6,
+    "version": "1.2.6"
   },
   {
     "name": "Tachiyomi: HocVienTruyenTranh",
