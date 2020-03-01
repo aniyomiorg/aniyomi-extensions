@@ -1,7 +1,7 @@
 [
   {
     "name": "Tachiyomi: BoomManga, ManManga, TwinsComics",
-    "pkg": "eu.kanade.tachiyomi.extension.all.boommanga",
+    "pkg": "eu.kanade.tachiyomi.extension.all.boommanga\n10",
     "apk": "tachiyomi-all.boommanga-v1.2.3.apk",
     "lang": "all",
     "code": 3,
@@ -9,7 +9,7 @@
   },
   {
     "name": "Tachiyomi: ComiCake",
-    "pkg": "eu.kanade.tachiyomi.extension.all.comicake",
+    "pkg": "eu.kanade.tachiyomi.extension.all.comicake\n10",
     "apk": "tachiyomi-all.comicake-v1.2.7.apk",
     "lang": "all",
     "code": 7,
@@ -17,7 +17,7 @@
   },
   {
     "name": "Tachiyomi: E-Hentai",
-    "pkg": "eu.kanade.tachiyomi.extension.all.ehentai",
+    "pkg": "eu.kanade.tachiyomi.extension.all.ehentai\n10",
     "apk": "tachiyomi-all.ehentai-v1.2.7.apk",
     "lang": "all",
     "code": 7,
@@ -25,7 +25,7 @@
   },
   {
     "name": "Tachiyomi: FMReader (multiple aggregators)",
-    "pkg": "eu.kanade.tachiyomi.extension.all.fmreader",
+    "pkg": "eu.kanade.tachiyomi.extension.all.fmreader\n10",
     "apk": "tachiyomi-all.fmreader-v1.2.7.apk",
     "lang": "all",
     "code": 7,
@@ -33,7 +33,7 @@
   },
   {
     "name": "Tachiyomi: FoolSlide (multiple sources)",
-    "pkg": "eu.kanade.tachiyomi.extension.all.foolslide",
+    "pkg": "eu.kanade.tachiyomi.extension.all.foolslide\n10",
     "apk": "tachiyomi-all.foolslide-v1.2.36.apk",
     "lang": "all",
     "code": 36,
@@ -41,7 +41,7 @@
   },
   {
     "name": "Tachiyomi: Genkan (multiple sources)",
-    "pkg": "eu.kanade.tachiyomi.extension.all.genkan",
+    "pkg": "eu.kanade.tachiyomi.extension.all.genkan\n10",
     "apk": "tachiyomi-all.genkan-v1.2.14.apk",
     "lang": "all",
     "code": 14,
@@ -49,7 +49,7 @@
   },
   {
     "name": "Tachiyomi: Komga",
-    "pkg": "eu.kanade.tachiyomi.extension.all.komga",
+    "pkg": "eu.kanade.tachiyomi.extension.all.komga\n10",
     "apk": "tachiyomi-all.komga-v1.2.7.apk",
     "lang": "all",
     "code": 7,
@@ -57,7 +57,7 @@
   },
   {
     "name": "Tachiyomi: LANraragi",
-    "pkg": "eu.kanade.tachiyomi.extension.all.lanraragi",
+    "pkg": "eu.kanade.tachiyomi.extension.all.lanraragi\n10",
     "apk": "tachiyomi-all.lanraragi-v1.2.1.apk",
     "lang": "all",
     "code": 1,
@@ -65,7 +65,7 @@
   },
   {
     "name": "Tachiyomi: Madara (multiple sources)",
-    "pkg": "eu.kanade.tachiyomi.extension.all.madara",
+    "pkg": "eu.kanade.tachiyomi.extension.all.madara\n10",
     "apk": "tachiyomi-all.madara-v1.2.58.apk",
     "lang": "all",
     "code": 58,
@@ -73,7 +73,7 @@
   },
   {
     "name": "Tachiyomi: MangaBox (Mangakakalot and others)",
-    "pkg": "eu.kanade.tachiyomi.extension.all.mangabox",
+    "pkg": "eu.kanade.tachiyomi.extension.all.mangabox\n10",
     "apk": "tachiyomi-all.mangabox-v1.2.14.apk",
     "lang": "all",
     "code": 14,
@@ -81,7 +81,7 @@
   },
   {
     "name": "Tachiyomi: MangaCards (Valhalla, NANI?)",
-    "pkg": "eu.kanade.tachiyomi.extension.all.mangacards",
+    "pkg": "eu.kanade.tachiyomi.extension.all.mangacards\n10",
     "apk": "tachiyomi-all.mangacards-v1.2.7.apk",
     "lang": "all",
     "code": 7,
@@ -89,7 +89,7 @@
   },
   {
     "name": "Tachiyomi: MangaDex",
-    "pkg": "eu.kanade.tachiyomi.extension.all.mangadex",
+    "pkg": "eu.kanade.tachiyomi.extension.all.mangadex\n10",
     "apk": "tachiyomi-all.mangadex-v1.2.84.apk",
     "lang": "all",
     "code": 84,
@@ -97,7 +97,7 @@
   },
   {
     "name": "Tachiyomi: MangAdventure",
-    "pkg": "eu.kanade.tachiyomi.extension.all.mangadventure",
+    "pkg": "eu.kanade.tachiyomi.extension.all.mangadventure\n10",
     "apk": "tachiyomi-all.mangadventure-v1.2.6.apk",
     "lang": "all",
     "code": 6,
@@ -105,7 +105,7 @@
   },
   {
     "name": "Tachiyomi: MANGA Plus by SHUEISHA",
-    "pkg": "eu.kanade.tachiyomi.extension.all.mangaplus",
+    "pkg": "eu.kanade.tachiyomi.extension.all.mangaplus\n10",
     "apk": "tachiyomi-all.mangaplus-v1.2.3.apk",
     "lang": "all",
     "code": 3,
@@ -113,7 +113,7 @@
   },
   {
     "name": "Tachiyomi: Mangatensei (and others)",
-    "pkg": "eu.kanade.tachiyomi.extension.all.mangatensei",
+    "pkg": "eu.kanade.tachiyomi.extension.all.mangatensei\n10",
     "apk": "tachiyomi-all.mangatensei-v1.2.5.apk",
     "lang": "all",
     "code": 5,
@@ -121,7 +121,7 @@
   },
   {
     "name": "Tachiyomi: Mangatoon (Limited)",
-    "pkg": "eu.kanade.tachiyomi.extension.all.mangatoon",
+    "pkg": "eu.kanade.tachiyomi.extension.all.mangatoon\n10",
     "apk": "tachiyomi-all.mangatoon-v1.2.1.apk",
     "lang": "all",
     "code": 1,
@@ -129,7 +129,7 @@
   },
   {
     "name": "Tachiyomi: My Manga Reader CMS (Many sources)",
-    "pkg": "eu.kanade.tachiyomi.extension.all.mmrcms",
+    "pkg": "eu.kanade.tachiyomi.extension.all.mmrcms\n10",
     "apk": "tachiyomi-all.mmrcms-v1.2.30.apk",
     "lang": "all",
     "code": 30,
@@ -137,7 +137,7 @@
   },
   {
     "name": "Tachiyomi: MyReadingManga",
-    "pkg": "eu.kanade.tachiyomi.extension.all.myreadingmanga",
+    "pkg": "eu.kanade.tachiyomi.extension.all.myreadingmanga\n10",
     "apk": "tachiyomi-all.myreadingmanga-v1.2.33.apk",
     "lang": "all",
     "code": 33,
@@ -145,7 +145,7 @@
   },
   {
     "name": "Tachiyomi: NHentai",
-    "pkg": "eu.kanade.tachiyomi.extension.all.nhentai",
+    "pkg": "eu.kanade.tachiyomi.extension.all.nhentai\n10",
     "apk": "tachiyomi-all.nhentai-v1.2.16.apk",
     "lang": "all",
     "code": 16,
@@ -153,7 +153,7 @@
   },
   {
     "name": "Tachiyomi: NineHentai",
-    "pkg": "eu.kanade.tachiyomi.extension.all.ninehentai",
+    "pkg": "eu.kanade.tachiyomi.extension.all.ninehentai\n10",
     "apk": "tachiyomi-all.ninehentai-v1.2.5.apk",
     "lang": "all",
     "code": 5,
@@ -161,7 +161,7 @@
   },
   {
     "name": "Tachiyomi: NineManga",
-    "pkg": "eu.kanade.tachiyomi.extension.all.ninemanga",
+    "pkg": "eu.kanade.tachiyomi.extension.all.ninemanga\n10",
     "apk": "tachiyomi-all.ninemanga-v1.2.8.apk",
     "lang": "all",
     "code": 8,
@@ -169,7 +169,7 @@
   },
   {
     "name": "Tachiyomi: NOISE Manga",
-    "pkg": "eu.kanade.tachiyomi.extension.all.noisemanga",
+    "pkg": "eu.kanade.tachiyomi.extension.all.noisemanga\n10",
     "apk": "tachiyomi-all.noisemanga-v1.2.1.apk",
     "lang": "all",
     "code": 1,
@@ -177,7 +177,7 @@
   },
   {
     "name": "Tachiyomi: Simply Hentai",
-    "pkg": "eu.kanade.tachiyomi.extension.all.simplyhentai",
+    "pkg": "eu.kanade.tachiyomi.extension.all.simplyhentai\n10",
     "apk": "tachiyomi-all.simplyhentai-v1.2.1.apk",
     "lang": "all",
     "code": 1,
@@ -185,7 +185,7 @@
   },
   {
     "name": "Tachiyomi: Toomics",
-    "pkg": "eu.kanade.tachiyomi.extension.all.toomics",
+    "pkg": "eu.kanade.tachiyomi.extension.all.toomics\n10",
     "apk": "tachiyomi-all.toomics-v1.2.2.apk",
     "lang": "all",
     "code": 2,
@@ -193,7 +193,7 @@
   },
   {
     "name": "Tachiyomi: Webtoons",
-    "pkg": "eu.kanade.tachiyomi.extension.all.webtoons",
+    "pkg": "eu.kanade.tachiyomi.extension.all.webtoons\n10",
     "apk": "tachiyomi-all.webtoons-v1.2.15.apk",
     "lang": "all",
     "code": 15,
@@ -201,7 +201,7 @@
   },
   {
     "name": "Tachiyomi: WP Manga Stream",
-    "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
+    "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream\n10",
     "apk": "tachiyomi-all.wpmangastream-v1.2.6.apk",
     "lang": "all",
     "code": 6,
@@ -209,7 +209,7 @@
   },
   {
     "name": "Tachiyomi: Manga.ae",
-    "pkg": "eu.kanade.tachiyomi.extension.ar.mangaae",
+    "pkg": "eu.kanade.tachiyomi.extension.ar.mangaae\n10",
     "apk": "tachiyomi-ar.mangaae-v1.2.4.apk",
     "lang": "ar",
     "code": 4,
@@ -217,7 +217,7 @@
   },
   {
     "name": "Tachiyomi: Shqqaa Manga",
-    "pkg": "eu.kanade.tachiyomi.extension.ar.shqqaa",
+    "pkg": "eu.kanade.tachiyomi.extension.ar.shqqaa\n10",
     "apk": "tachiyomi-ar.shqqaa-v1.2.1.apk",
     "lang": "ar",
     "code": 1,
@@ -225,7 +225,7 @@
   },
   {
     "name": "Tachiyomi: Team X",
-    "pkg": "eu.kanade.tachiyomi.extension.ar.teamx",
+    "pkg": "eu.kanade.tachiyomi.extension.ar.teamx\n10",
     "apk": "tachiyomi-ar.teamx-v1.2.2.apk",
     "lang": "ar",
     "code": 2,
@@ -233,7 +233,7 @@
   },
   {
     "name": "Tachiyomi: WieManga",
-    "pkg": "eu.kanade.tachiyomi.extension.de.wiemanga",
+    "pkg": "eu.kanade.tachiyomi.extension.de.wiemanga\n10",
     "apk": "tachiyomi-de.wiemanga-v1.2.4.apk",
     "lang": "de",
     "code": 4,
@@ -241,7 +241,7 @@
   },
   {
     "name": "Tachiyomi: Boredom Society",
-    "pkg": "eu.kanade.tachiyomi.extension.en.boredomsociety",
+    "pkg": "eu.kanade.tachiyomi.extension.en.boredomsociety\n10",
     "apk": "tachiyomi-en.boredomsociety-v1.2.4.apk",
     "lang": "en",
     "code": 4,
@@ -249,7 +249,7 @@
   },
   {
     "name": "Tachiyomi: Clone Manga",
-    "pkg": "eu.kanade.tachiyomi.extension.en.clonemanga",
+    "pkg": "eu.kanade.tachiyomi.extension.en.clonemanga\n10",
     "apk": "tachiyomi-en.clonemanga-v1.2.1.apk",
     "lang": "en",
     "code": 1,
@@ -257,7 +257,7 @@
   },
   {
     "name": "Tachiyomi: ComicExtra",
-    "pkg": "eu.kanade.tachiyomi.extension.en.comicextra",
+    "pkg": "eu.kanade.tachiyomi.extension.en.comicextra\n10",
     "apk": "tachiyomi-en.comicextra-v1.2.4.apk",
     "lang": "en",
     "code": 4,
@@ -265,7 +265,7 @@
   },
   {
     "name": "Tachiyomi: Comicpunch",
-    "pkg": "eu.kanade.tachiyomi.extension.en.comicpunch",
+    "pkg": "eu.kanade.tachiyomi.extension.en.comicpunch\n10",
     "apk": "tachiyomi-en.comicpunch-v1.2.1.apk",
     "lang": "en",
     "code": 1,
@@ -273,7 +273,7 @@
   },
   {
     "name": "Tachiyomi: Dilbert",
-    "pkg": "eu.kanade.tachiyomi.extension.en.dilbert",
+    "pkg": "eu.kanade.tachiyomi.extension.en.dilbert\n10",
     "apk": "tachiyomi-en.dilbert-v1.2.2.apk",
     "lang": "en",
     "code": 2,
@@ -281,7 +281,7 @@
   },
   {
     "name": "Tachiyomi: Dragon Ball Multiverse",
-    "pkg": "eu.kanade.tachiyomi.extension.en.dragonball_multiverse",
+    "pkg": "eu.kanade.tachiyomi.extension.en.dragonball_multiverse\n10",
     "apk": "tachiyomi-en.dragonball_multiverse-v1.2.3.apk",
     "lang": "en",
     "code": 3,
@@ -289,7 +289,7 @@
   },
   {
     "name": "Tachiyomi: Dynasty",
-    "pkg": "eu.kanade.tachiyomi.extension.en.dynasty",
+    "pkg": "eu.kanade.tachiyomi.extension.en.dynasty\n10",
     "apk": "tachiyomi-en.dynasty-v1.2.11.apk",
     "lang": "en",
     "code": 11,
@@ -297,7 +297,7 @@
   },
   {
     "name": "Tachiyomi: Existential Comics",
-    "pkg": "eu.kanade.tachiyomi.extension.en.existentialcomics",
+    "pkg": "eu.kanade.tachiyomi.extension.en.existentialcomics\n10",
     "apk": "tachiyomi-en.existentialcomics-v1.2.2.apk",
     "lang": "en",
     "code": 2,
@@ -305,7 +305,7 @@
   },
   {
     "name": "Tachiyomi: Cyanide & Happiness",
-    "pkg": "eu.kanade.tachiyomi.extension.en.explosm",
+    "pkg": "eu.kanade.tachiyomi.extension.en.explosm\n10",
     "apk": "tachiyomi-en.explosm-v1.2.2.apk",
     "lang": "en",
     "code": 2,
@@ -313,7 +313,7 @@
   },
   {
     "name": "Tachiyomi: Gunnerkrigg Court",
-    "pkg": "eu.kanade.tachiyomi.extension.en.gunnerkriggcourt",
+    "pkg": "eu.kanade.tachiyomi.extension.en.gunnerkriggcourt\n10",
     "apk": "tachiyomi-en.gunnerkriggcourt-v1.2.1.apk",
     "lang": "en",
     "code": 1,
@@ -321,7 +321,7 @@
   },
   {
     "name": "Tachiyomi: Guya",
-    "pkg": "eu.kanade.tachiyomi.extension.en.guya",
+    "pkg": "eu.kanade.tachiyomi.extension.en.guya\n10",
     "apk": "tachiyomi-en.guya-v1.2.10.apk",
     "lang": "en",
     "code": 10,
@@ -329,7 +329,7 @@
   },
   {
     "name": "Tachiyomi: Hentai2Read",
-    "pkg": "eu.kanade.tachiyomi.extension.en.hentai2read",
+    "pkg": "eu.kanade.tachiyomi.extension.en.hentai2read\n10",
     "apk": "tachiyomi-en.hentai2read-v1.2.5.apk",
     "lang": "en",
     "code": 5,
@@ -337,7 +337,7 @@
   },
   {
     "name": "Tachiyomi: HentaiFox",
-    "pkg": "eu.kanade.tachiyomi.extension.en.hentaifox",
+    "pkg": "eu.kanade.tachiyomi.extension.en.hentaifox\n10",
     "apk": "tachiyomi-en.hentaifox-v1.2.1.apk",
     "lang": "en",
     "code": 1,
@@ -345,7 +345,7 @@
   },
   {
     "name": "Tachiyomi: HentaiNexus",
-    "pkg": "eu.kanade.tachiyomi.extension.en.hentainexus",
+    "pkg": "eu.kanade.tachiyomi.extension.en.hentainexus\n10",
     "apk": "tachiyomi-en.hentainexus-v1.2.1.apk",
     "lang": "en",
     "code": 1,
@@ -353,7 +353,7 @@
   },
   {
     "name": "Tachiyomi: Hiveworks Comics",
-    "pkg": "eu.kanade.tachiyomi.extension.en.hiveworks",
+    "pkg": "eu.kanade.tachiyomi.extension.en.hiveworks\n10",
     "apk": "tachiyomi-en.hiveworks-v1.2.1.apk",
     "lang": "en",
     "code": 1,
@@ -361,7 +361,7 @@
   },
   {
     "name": "Tachiyomi: HolyManga & HeavenManga",
-    "pkg": "eu.kanade.tachiyomi.extension.en.holymanga",
+    "pkg": "eu.kanade.tachiyomi.extension.en.holymanga\n10",
     "apk": "tachiyomi-en.holymanga-v1.2.3.apk",
     "lang": "en",
     "code": 3,
@@ -369,7 +369,7 @@
   },
   {
     "name": "Tachiyomi: Kissmanga",
-    "pkg": "eu.kanade.tachiyomi.extension.en.kissmanga",
+    "pkg": "eu.kanade.tachiyomi.extension.en.kissmanga\n10",
     "apk": "tachiyomi-en.kissmanga-v1.2.11.apk",
     "lang": "en",
     "code": 11,
@@ -377,7 +377,7 @@
   },
   {
     "name": "Tachiyomi: Latis Books",
-    "pkg": "eu.kanade.tachiyomi.extension.en.latisbooks",
+    "pkg": "eu.kanade.tachiyomi.extension.en.latisbooks\n10",
     "apk": "tachiyomi-en.latisbooks-v1.2.1.apk",
     "lang": "en",
     "code": 1,
@@ -385,7 +385,7 @@
   },
   {
     "name": "Tachiyomi: Manga Cruzers",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangacruzers",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangacruzers\n10",
     "apk": "tachiyomi-en.mangacruzers-v1.2.1.apk",
     "lang": "en",
     "code": 1,
@@ -393,7 +393,7 @@
   },
   {
     "name": "Tachiyomi: MangaDog",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangadog",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangadog\n10",
     "apk": "tachiyomi-en.mangadog-v1.2.1.apk",
     "lang": "en",
     "code": 1,
@@ -401,7 +401,7 @@
   },
   {
     "name": "Tachiyomi: Mangaeden",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangaeden",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangaeden\n10",
     "apk": "tachiyomi-en.mangaeden-v1.2.4.apk",
     "lang": "en",
     "code": 4,
@@ -409,7 +409,7 @@
   },
   {
     "name": "Tachiyomi: Mangafreak",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangafreak",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangafreak\n10",
     "apk": "tachiyomi-en.mangafreak-v1.2.1.apk",
     "lang": "en",
     "code": 1,
@@ -417,7 +417,7 @@
   },
   {
     "name": "Tachiyomi: Mangahasu",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangahasu",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangahasu\n10",
     "apk": "tachiyomi-en.mangahasu-v1.2.6.apk",
     "lang": "en",
     "code": 6,
@@ -425,7 +425,7 @@
   },
   {
     "name": "Tachiyomi: Mangahere",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangahere",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangahere\n10",
     "apk": "tachiyomi-en.mangahere-v1.2.12.apk",
     "lang": "en",
     "code": 12,
@@ -433,7 +433,7 @@
   },
   {
     "name": "Tachiyomi: Mangahub",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangahub",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangahub\n10",
     "apk": "tachiyomi-en.mangahub-v1.2.5.apk",
     "lang": "en",
     "code": 5,
@@ -441,7 +441,7 @@
   },
   {
     "name": "Tachiyomi: MangaKisa",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangakisa",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangakisa\n10",
     "apk": "tachiyomi-en.mangakisa-v1.2.2.apk",
     "lang": "en",
     "code": 2,
@@ -449,7 +449,7 @@
   },
   {
     "name": "Tachiyomi: MangaLife",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangalife",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangalife\n10",
     "apk": "tachiyomi-en.mangalife-v1.2.4.apk",
     "lang": "en",
     "code": 4,
@@ -457,7 +457,7 @@
   },
   {
     "name": "Tachiyomi: Manga Linkz",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangalinkz",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangalinkz\n10",
     "apk": "tachiyomi-en.mangalinkz-v1.2.1.apk",
     "lang": "en",
     "code": 1,
@@ -465,7 +465,7 @@
   },
   {
     "name": "Tachiyomi: MangaMainac",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangamainac",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangamainac\n10",
     "apk": "tachiyomi-en.mangamainac-v1.2.1.apk",
     "lang": "en",
     "code": 1,
@@ -473,7 +473,7 @@
   },
   {
     "name": "Tachiyomi: MangaOwl",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangaowl",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangaowl\n10",
     "apk": "tachiyomi-en.mangaowl-v1.2.3.apk",
     "lang": "en",
     "code": 3,
@@ -481,7 +481,7 @@
   },
   {
     "name": "Tachiyomi: MangaPark",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangapark",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangapark\n10",
     "apk": "tachiyomi-en.mangapark-v1.2.10.apk",
     "lang": "en",
     "code": 10,
@@ -489,7 +489,7 @@
   },
   {
     "name": "Tachiyomi: Mangareader & Mangapanda",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangareader",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangareader\n10",
     "apk": "tachiyomi-en.mangareader-v1.2.4.apk",
     "lang": "en",
     "code": 4,
@@ -497,7 +497,7 @@
   },
   {
     "name": "Tachiyomi: Mangasail",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangasail",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangasail\n10",
     "apk": "tachiyomi-en.mangasail-v1.2.1.apk",
     "lang": "en",
     "code": 1,
@@ -505,7 +505,7 @@
   },
   {
     "name": "Tachiyomi: Mangasee",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangasee",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangasee\n10",
     "apk": "tachiyomi-en.mangasee-v1.2.5.apk",
     "lang": "en",
     "code": 5,
@@ -513,7 +513,7 @@
   },
   {
     "name": "Tachiyomi: Mangatown",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangatown",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangatown\n10",
     "apk": "tachiyomi-en.mangatown-v1.2.4.apk",
     "lang": "en",
     "code": 4,
@@ -521,7 +521,7 @@
   },
   {
     "name": "Tachiyomi: Man Manga",
-    "pkg": "eu.kanade.tachiyomi.extension.en.manmanga",
+    "pkg": "eu.kanade.tachiyomi.extension.en.manmanga\n10",
     "apk": "tachiyomi-en.manmanga-v1.2.1.apk",
     "lang": "en",
     "code": 1,
@@ -529,7 +529,7 @@
   },
   {
     "name": "Tachiyomi: MerakiScans",
-    "pkg": "eu.kanade.tachiyomi.extension.en.merakiscans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.merakiscans\n10",
     "apk": "tachiyomi-en.merakiscans-v1.2.6.apk",
     "lang": "en",
     "code": 6,
@@ -537,7 +537,7 @@
   },
   {
     "name": "Tachiyomi: MyHentaiGallery",
-    "pkg": "eu.kanade.tachiyomi.extension.en.myhentaigallery",
+    "pkg": "eu.kanade.tachiyomi.extension.en.myhentaigallery\n10",
     "apk": "tachiyomi-en.myhentaigallery-v1.2.1.apk",
     "lang": "en",
     "code": 1,
@@ -545,7 +545,7 @@
   },
   {
     "name": "Tachiyomi: Oglaf",
-    "pkg": "eu.kanade.tachiyomi.extension.en.oglaf",
+    "pkg": "eu.kanade.tachiyomi.extension.en.oglaf\n10",
     "apk": "tachiyomi-en.oglaf-v1.2.1.apk",
     "lang": "en",
     "code": 1,
@@ -553,7 +553,7 @@
   },
   {
     "name": "Tachiyomi: Patch Friday",
-    "pkg": "eu.kanade.tachiyomi.extension.en.patchfriday",
+    "pkg": "eu.kanade.tachiyomi.extension.en.patchfriday\n10",
     "apk": "tachiyomi-en.patchfriday-v1.2.1.apk",
     "lang": "en",
     "code": 1,
@@ -561,7 +561,7 @@
   },
   {
     "name": "Tachiyomi: Perveden",
-    "pkg": "eu.kanade.tachiyomi.extension.en.perveden",
+    "pkg": "eu.kanade.tachiyomi.extension.en.perveden\n10",
     "apk": "tachiyomi-en.perveden-v1.2.3.apk",
     "lang": "en",
     "code": 3,
@@ -569,7 +569,7 @@
   },
   {
     "name": "Tachiyomi: Pururin",
-    "pkg": "eu.kanade.tachiyomi.extension.en.pururin",
+    "pkg": "eu.kanade.tachiyomi.extension.en.pururin\n10",
     "apk": "tachiyomi-en.pururin-v1.2.2.apk",
     "lang": "en",
     "code": 2,
@@ -577,7 +577,7 @@
   },
   {
     "name": "Tachiyomi: Questionable Content",
-    "pkg": "eu.kanade.tachiyomi.extension.en.questionablecontent",
+    "pkg": "eu.kanade.tachiyomi.extension.en.questionablecontent\n10",
     "apk": "tachiyomi-en.questionablecontent-v1.2.4.apk",
     "lang": "en",
     "code": 4,
@@ -585,7 +585,7 @@
   },
   {
     "name": "Tachiyomi: ReadComicOnline",
-    "pkg": "eu.kanade.tachiyomi.extension.en.readcomiconline",
+    "pkg": "eu.kanade.tachiyomi.extension.en.readcomiconline\n10",
     "apk": "tachiyomi-en.readcomiconline-v1.2.7.apk",
     "lang": "en",
     "code": 7,
@@ -593,7 +593,7 @@
   },
   {
     "name": "Tachiyomi: ReadMangaToday",
-    "pkg": "eu.kanade.tachiyomi.extension.en.readmangatoday",
+    "pkg": "eu.kanade.tachiyomi.extension.en.readmangatoday\n10",
     "apk": "tachiyomi-en.readmangatoday-v1.2.8.apk",
     "lang": "en",
     "code": 8,
@@ -601,7 +601,7 @@
   },
   {
     "name": "Tachiyomi: Renaissance Scans",
-    "pkg": "eu.kanade.tachiyomi.extension.en.renascans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.renascans\n10",
     "apk": "tachiyomi-en.renascans-v1.2.2.apk",
     "lang": "en",
     "code": 2,
@@ -609,7 +609,7 @@
   },
   {
     "name": "Tachiyomi: Sleepy Panda Scans",
-    "pkg": "eu.kanade.tachiyomi.extension.en.sleepypandascans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.sleepypandascans\n10",
     "apk": "tachiyomi-en.sleepypandascans-v1.2.3.apk",
     "lang": "en",
     "code": 3,
@@ -617,7 +617,7 @@
   },
   {
     "name": "Tachiyomi: Tapas",
-    "pkg": "eu.kanade.tachiyomi.extension.en.tapastic",
+    "pkg": "eu.kanade.tachiyomi.extension.en.tapastic\n10",
     "apk": "tachiyomi-en.tapastic-v1.2.4.apk",
     "lang": "en",
     "code": 4,
@@ -625,7 +625,7 @@
   },
   {
     "name": "Tachiyomi: Tsumino",
-    "pkg": "eu.kanade.tachiyomi.extension.en.tsumino",
+    "pkg": "eu.kanade.tachiyomi.extension.en.tsumino\n10",
     "apk": "tachiyomi-en.tsumino-v1.2.2.apk",
     "lang": "en",
     "code": 2,
@@ -633,7 +633,7 @@
   },
   {
     "name": "Tachiyomi: vgperson",
-    "pkg": "eu.kanade.tachiyomi.extension.en.vgperson",
+    "pkg": "eu.kanade.tachiyomi.extension.en.vgperson\n10",
     "apk": "tachiyomi-en.vgperson-v1.2.3.apk",
     "lang": "en",
     "code": 3,
@@ -641,7 +641,7 @@
   },
   {
     "name": "Tachiyomi: Webcomics",
-    "pkg": "eu.kanade.tachiyomi.extension.en.webcomics",
+    "pkg": "eu.kanade.tachiyomi.extension.en.webcomics\n10",
     "apk": "tachiyomi-en.webcomics-v1.2.3.apk",
     "lang": "en",
     "code": 3,
@@ -649,7 +649,7 @@
   },
   {
     "name": "Tachiyomi: Wutopia",
-    "pkg": "eu.kanade.tachiyomi.extension.en.wutopia",
+    "pkg": "eu.kanade.tachiyomi.extension.en.wutopia\n10",
     "apk": "tachiyomi-en.wutopia-v1.2.1.apk",
     "lang": "en",
     "code": 1,
@@ -657,7 +657,7 @@
   },
   {
     "name": "Tachiyomi: xkcd",
-    "pkg": "eu.kanade.tachiyomi.extension.en.xkcd",
+    "pkg": "eu.kanade.tachiyomi.extension.en.xkcd\n10",
     "apk": "tachiyomi-en.xkcd-v1.2.5.apk",
     "lang": "en",
     "code": 5,
@@ -665,7 +665,7 @@
   },
   {
     "name": "Tachiyomi: HeavenManga",
-    "pkg": "eu.kanade.tachiyomi.extension.es.heavenmanga",
+    "pkg": "eu.kanade.tachiyomi.extension.es.heavenmanga\n10",
     "apk": "tachiyomi-es.heavenmanga-v1.2.4.apk",
     "lang": "es",
     "code": 4,
@@ -673,7 +673,7 @@
   },
   {
     "name": "Tachiyomi: Ikuhentai",
-    "pkg": "eu.kanade.tachiyomi.extension.es.ikuhentai",
+    "pkg": "eu.kanade.tachiyomi.extension.es.ikuhentai\n10",
     "apk": "tachiyomi-es.ikuhentai-v1.2.1.apk",
     "lang": "es",
     "code": 1,
@@ -681,7 +681,7 @@
   },
   {
     "name": "Tachiyomi: InManga",
-    "pkg": "eu.kanade.tachiyomi.extension.es.inmanga",
+    "pkg": "eu.kanade.tachiyomi.extension.es.inmanga\n10",
     "apk": "tachiyomi-es.inmanga-v1.2.1.apk",
     "lang": "es",
     "code": 1,
@@ -689,7 +689,7 @@
   },
   {
     "name": "Tachiyomi: LectorManga",
-    "pkg": "eu.kanade.tachiyomi.extension.es.lectormanga",
+    "pkg": "eu.kanade.tachiyomi.extension.es.lectormanga\n10",
     "apk": "tachiyomi-es.lectormanga-v1.2.8.apk",
     "lang": "es",
     "code": 8,
@@ -697,7 +697,7 @@
   },
   {
     "name": "Tachiyomi: MangaMx & Doujin-Yang",
-    "pkg": "eu.kanade.tachiyomi.extension.es.mangamx",
+    "pkg": "eu.kanade.tachiyomi.extension.es.mangamx\n10",
     "apk": "tachiyomi-es.mangamx-v1.2.5.apk",
     "lang": "es",
     "code": 5,
@@ -705,7 +705,7 @@
   },
   {
     "name": "Tachiyomi: TMOHentai",
-    "pkg": "eu.kanade.tachiyomi.extension.es.tmohentai",
+    "pkg": "eu.kanade.tachiyomi.extension.es.tmohentai\n10",
     "apk": "tachiyomi-es.tmohentai-v1.2.1.apk",
     "lang": "es",
     "code": 1,
@@ -713,7 +713,7 @@
   },
   {
     "name": "Tachiyomi: VCPVMP",
-    "pkg": "eu.kanade.tachiyomi.extension.es.vcpvmp",
+    "pkg": "eu.kanade.tachiyomi.extension.es.vcpvmp\n10",
     "apk": "tachiyomi-es.vcpvmp-v1.2.1.apk",
     "lang": "es",
     "code": 1,
@@ -721,7 +721,7 @@
   },
   {
     "name": "Tachiyomi: Zahard",
-    "pkg": "eu.kanade.tachiyomi.extension.es.zahard",
+    "pkg": "eu.kanade.tachiyomi.extension.es.zahard\n10",
     "apk": "tachiyomi-es.zahard-v1.2.1.apk",
     "lang": "es",
     "code": 1,
@@ -729,7 +729,7 @@
   },
   {
     "name": "Tachiyomi: Japscan",
-    "pkg": "eu.kanade.tachiyomi.extension.fr.japscan",
+    "pkg": "eu.kanade.tachiyomi.extension.fr.japscan\n10",
     "apk": "tachiyomi-fr.japscan-v1.2.16.apk",
     "lang": "fr",
     "code": 16,
@@ -737,7 +737,7 @@
   },
   {
     "name": "Tachiyomi: LireScan",
-    "pkg": "eu.kanade.tachiyomi.extension.fr.lirescan",
+    "pkg": "eu.kanade.tachiyomi.extension.fr.lirescan\n10",
     "apk": "tachiyomi-fr.lirescan-v1.2.1.apk",
     "lang": "fr",
     "code": 1,
@@ -745,7 +745,7 @@
   },
   {
     "name": "Tachiyomi: Mangakawaii",
-    "pkg": "eu.kanade.tachiyomi.extension.fr.mangakawaii",
+    "pkg": "eu.kanade.tachiyomi.extension.fr.mangakawaii\n10",
     "apk": "tachiyomi-fr.mangakawaii-v1.2.4.apk",
     "lang": "fr",
     "code": 4,
@@ -753,7 +753,7 @@
   },
   {
     "name": "Tachiyomi: Scantrad",
-    "pkg": "eu.kanade.tachiyomi.extension.fr.scantrad",
+    "pkg": "eu.kanade.tachiyomi.extension.fr.scantrad\n10",
     "apk": "tachiyomi-fr.scantrad-v1.2.5.apk",
     "lang": "fr",
     "code": 5,
@@ -761,7 +761,7 @@
   },
   {
     "name": "Tachiyomi: Baca Manga",
-    "pkg": "eu.kanade.tachiyomi.extension.id.bacamanga",
+    "pkg": "eu.kanade.tachiyomi.extension.id.bacamanga\n10",
     "apk": "tachiyomi-id.bacamanga-v1.2.1.apk",
     "lang": "id",
     "code": 1,
@@ -769,7 +769,7 @@
   },
   {
     "name": "Tachiyomi: Kiryuu",
-    "pkg": "eu.kanade.tachiyomi.extension.id.kiryuu",
+    "pkg": "eu.kanade.tachiyomi.extension.id.kiryuu\n10",
     "apk": "tachiyomi-id.kiryuu-v1.2.1.apk",
     "lang": "id",
     "code": 1,
@@ -777,7 +777,7 @@
   },
   {
     "name": "Tachiyomi: Komikcast",
-    "pkg": "eu.kanade.tachiyomi.extension.id.komikcast",
+    "pkg": "eu.kanade.tachiyomi.extension.id.komikcast\n10",
     "apk": "tachiyomi-id.komikcast-v1.2.4.apk",
     "lang": "id",
     "code": 4,
@@ -785,7 +785,7 @@
   },
   {
     "name": "Tachiyomi: Komik Indo",
-    "pkg": "eu.kanade.tachiyomi.extension.id.komikindo",
+    "pkg": "eu.kanade.tachiyomi.extension.id.komikindo\n10",
     "apk": "tachiyomi-id.komikindo-v1.2.1.apk",
     "lang": "id",
     "code": 1,
@@ -793,7 +793,7 @@
   },
   {
     "name": "Tachiyomi: Maid - Manga",
-    "pkg": "eu.kanade.tachiyomi.extension.id.maidmanga",
+    "pkg": "eu.kanade.tachiyomi.extension.id.maidmanga\n10",
     "apk": "tachiyomi-id.maidmanga-v1.2.2.apk",
     "lang": "id",
     "code": 2,
@@ -801,7 +801,7 @@
   },
   {
     "name": "Tachiyomi: Manga Indo",
-    "pkg": "eu.kanade.tachiyomi.extension.id.mangaindo",
+    "pkg": "eu.kanade.tachiyomi.extension.id.mangaindo\n10",
     "apk": "tachiyomi-id.mangaindo-v1.2.1.apk",
     "lang": "id",
     "code": 1,
@@ -809,7 +809,7 @@
   },
   {
     "name": "Tachiyomi: Mangaku",
-    "pkg": "eu.kanade.tachiyomi.extension.id.mangaku",
+    "pkg": "eu.kanade.tachiyomi.extension.id.mangaku\n10",
     "apk": "tachiyomi-id.mangaku-v1.2.1.apk",
     "lang": "id",
     "code": 1,
@@ -817,7 +817,7 @@
   },
   {
     "name": "Tachiyomi: Mangakyo",
-    "pkg": "eu.kanade.tachiyomi.extension.id.mangakyo",
+    "pkg": "eu.kanade.tachiyomi.extension.id.mangakyo\n10",
     "apk": "tachiyomi-id.mangakyo-v1.2.1.apk",
     "lang": "id",
     "code": 1,
@@ -825,7 +825,7 @@
   },
   {
     "name": "Tachiyomi: Mangashiro",
-    "pkg": "eu.kanade.tachiyomi.extension.id.mangashiro",
+    "pkg": "eu.kanade.tachiyomi.extension.id.mangashiro\n10",
     "apk": "tachiyomi-id.mangashiro-v1.2.3.apk",
     "lang": "id",
     "code": 3,
@@ -833,7 +833,7 @@
   },
   {
     "name": "Tachiyomi: Neumanga",
-    "pkg": "eu.kanade.tachiyomi.extension.id.neumanga",
+    "pkg": "eu.kanade.tachiyomi.extension.id.neumanga\n10",
     "apk": "tachiyomi-id.neumanga-v1.2.3.apk",
     "lang": "id",
     "code": 3,
@@ -841,7 +841,7 @@
   },
   {
     "name": "Tachiyomi: OtakuFile",
-    "pkg": "eu.kanade.tachiyomi.extension.id.otakufile",
+    "pkg": "eu.kanade.tachiyomi.extension.id.otakufile\n10",
     "apk": "tachiyomi-id.otakufile-v1.2.1.apk",
     "lang": "id",
     "code": 1,
@@ -849,7 +849,7 @@
   },
   {
     "name": "Tachiyomi: Pecinta Komik",
-    "pkg": "eu.kanade.tachiyomi.extension.id.pecintakomik",
+    "pkg": "eu.kanade.tachiyomi.extension.id.pecintakomik\n10",
     "apk": "tachiyomi-id.pecintakomik-v1.2.3.apk",
     "lang": "id",
     "code": 3,
@@ -857,7 +857,7 @@
   },
   {
     "name": "Tachiyomi: HentaiFantasy",
-    "pkg": "eu.kanade.tachiyomi.extension.it.hentaifantasy",
+    "pkg": "eu.kanade.tachiyomi.extension.it.hentaifantasy\n10",
     "apk": "tachiyomi-it.hentaifantasy-v1.2.3.apk",
     "lang": "it",
     "code": 3,
@@ -865,7 +865,7 @@
   },
   {
     "name": "Tachiyomi: ItaScan",
-    "pkg": "eu.kanade.tachiyomi.extension.it.itascan",
+    "pkg": "eu.kanade.tachiyomi.extension.it.itascan\n10",
     "apk": "tachiyomi-it.itascan-v1.2.1.apk",
     "lang": "it",
     "code": 1,
@@ -873,7 +873,7 @@
   },
   {
     "name": "Tachiyomi: Mangaeden",
-    "pkg": "eu.kanade.tachiyomi.extension.it.mangaeden",
+    "pkg": "eu.kanade.tachiyomi.extension.it.mangaeden\n10",
     "apk": "tachiyomi-it.mangaeden-v1.2.4.apk",
     "lang": "it",
     "code": 4,
@@ -881,7 +881,7 @@
   },
   {
     "name": "Tachiyomi: Mangaworld",
-    "pkg": "eu.kanade.tachiyomi.extension.it.mangaworld",
+    "pkg": "eu.kanade.tachiyomi.extension.it.mangaworld\n10",
     "apk": "tachiyomi-it.mangaworld-v1.2.1.apk",
     "lang": "it",
     "code": 1,
@@ -889,7 +889,7 @@
   },
   {
     "name": "Tachiyomi: Perveden",
-    "pkg": "eu.kanade.tachiyomi.extension.it.perveden",
+    "pkg": "eu.kanade.tachiyomi.extension.it.perveden\n10",
     "apk": "tachiyomi-it.perveden-v1.2.3.apk",
     "lang": "it",
     "code": 3,
@@ -897,7 +897,7 @@
   },
   {
     "name": "Tachiyomi: Nikkangecchan",
-    "pkg": "eu.kanade.tachiyomi.extension.ja.nikkangecchan",
+    "pkg": "eu.kanade.tachiyomi.extension.ja.nikkangecchan\n10",
     "apk": "tachiyomi-ja.nikkangecchan-v1.2.1.apk",
     "lang": "ja",
     "code": 1,
@@ -905,7 +905,7 @@
   },
   {
     "name": "Tachiyomi: Rawdevart",
-    "pkg": "eu.kanade.tachiyomi.extension.ja.rawdevart",
+    "pkg": "eu.kanade.tachiyomi.extension.ja.rawdevart\n10",
     "apk": "tachiyomi-ja.rawdevart-v1.2.4.apk",
     "lang": "ja",
     "code": 4,
@@ -913,7 +913,7 @@
   },
   {
     "name": "Tachiyomi: Rawkuma",
-    "pkg": "eu.kanade.tachiyomi.extension.ja.rawkuma",
+    "pkg": "eu.kanade.tachiyomi.extension.ja.rawkuma\n10",
     "apk": "tachiyomi-ja.rawkuma-v1.2.3.apk",
     "lang": "ja",
     "code": 3,
@@ -921,7 +921,7 @@
   },
   {
     "name": "Tachiyomi: Sen Manga",
-    "pkg": "eu.kanade.tachiyomi.extension.ja.senmanga",
+    "pkg": "eu.kanade.tachiyomi.extension.ja.senmanga\n10",
     "apk": "tachiyomi-ja.senmanga-v1.2.4.apk",
     "lang": "ja",
     "code": 4,
@@ -929,7 +929,7 @@
   },
   {
     "name": "Tachiyomi: JMana",
-    "pkg": "eu.kanade.tachiyomi.extension.ko.jmana",
+    "pkg": "eu.kanade.tachiyomi.extension.ko.jmana\n10",
     "apk": "tachiyomi-ko.jmana-v1.2.9.apk",
     "lang": "ko",
     "code": 9,
@@ -937,7 +937,7 @@
   },
   {
     "name": "Tachiyomi: ManaMoa",
-    "pkg": "eu.kanade.tachiyomi.extension.ko.mangashowme",
+    "pkg": "eu.kanade.tachiyomi.extension.ko.mangashowme\n10",
     "apk": "tachiyomi-ko.mangashowme-v1.2.19.apk",
     "lang": "ko",
     "code": 19,
@@ -945,7 +945,7 @@
   },
   {
     "name": "Tachiyomi: Naver Comic",
-    "pkg": "eu.kanade.tachiyomi.extension.ko.navercomic",
+    "pkg": "eu.kanade.tachiyomi.extension.ko.navercomic\n10",
     "apk": "tachiyomi-ko.navercomic-v1.2.2.apk",
     "lang": "ko",
     "code": 2,
@@ -953,7 +953,7 @@
   },
   {
     "name": "Tachiyomi: NewToki",
-    "pkg": "eu.kanade.tachiyomi.extension.ko.newtoki",
+    "pkg": "eu.kanade.tachiyomi.extension.ko.newtoki\n10",
     "apk": "tachiyomi-ko.newtoki-v1.2.11.apk",
     "lang": "ko",
     "code": 11,
@@ -961,7 +961,7 @@
   },
   {
     "name": "Tachiyomi: AnimaRegia",
-    "pkg": "eu.kanade.tachiyomi.extension.pt.animaregia",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.animaregia\n10",
     "apk": "tachiyomi-pt.animaregia-v1.2.1.apk",
     "lang": "pt",
     "code": 1,
@@ -969,7 +969,7 @@
   },
   {
     "name": "Tachiyomi: Central de Mangás",
-    "pkg": "eu.kanade.tachiyomi.extension.pt.centraldemangas",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.centraldemangas\n10",
     "apk": "tachiyomi-pt.centraldemangas-v1.2.2.apk",
     "lang": "pt",
     "code": 2,
@@ -977,7 +977,7 @@
   },
   {
     "name": "Tachiyomi: Golden Mangás",
-    "pkg": "eu.kanade.tachiyomi.extension.pt.goldenmangas",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.goldenmangas\n10",
     "apk": "tachiyomi-pt.goldenmangas-v1.2.2.apk",
     "lang": "pt",
     "code": 2,
@@ -985,7 +985,7 @@
   },
   {
     "name": "Tachiyomi: HipercooL",
-    "pkg": "eu.kanade.tachiyomi.extension.pt.hipercool",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.hipercool\n10",
     "apk": "tachiyomi-pt.hipercool-v1.2.2.apk",
     "lang": "pt",
     "code": 2,
@@ -993,7 +993,7 @@
   },
   {
     "name": "Tachiyomi: HQ Dragon",
-    "pkg": "eu.kanade.tachiyomi.extension.pt.hqdragon",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.hqdragon\n10",
     "apk": "tachiyomi-pt.hqdragon-v1.2.2.apk",
     "lang": "pt",
     "code": 2,
@@ -1001,7 +1001,7 @@
   },
   {
     "name": "Tachiyomi: HQ Now!",
-    "pkg": "eu.kanade.tachiyomi.extension.pt.hqnow",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.hqnow\n10",
     "apk": "tachiyomi-pt.hqnow-v1.2.2.apk",
     "lang": "pt",
     "code": 2,
@@ -1009,7 +1009,7 @@
   },
   {
     "name": "Tachiyomi: MangaHost",
-    "pkg": "eu.kanade.tachiyomi.extension.pt.mangahost",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.mangahost\n10",
     "apk": "tachiyomi-pt.mangahost-v1.2.7.apk",
     "lang": "pt",
     "code": 7,
@@ -1017,7 +1017,7 @@
   },
   {
     "name": "Tachiyomi: mangásPROJECT",
-    "pkg": "eu.kanade.tachiyomi.extension.pt.mangasproject",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.mangasproject\n10",
     "apk": "tachiyomi-pt.mangasproject-v1.2.7.apk",
     "lang": "pt",
     "code": 7,
@@ -1025,7 +1025,7 @@
   },
   {
     "name": "Tachiyomi: MangaYabu!",
-    "pkg": "eu.kanade.tachiyomi.extension.pt.mangayabu",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.mangayabu\n10",
     "apk": "tachiyomi-pt.mangayabu-v1.2.1.apk",
     "lang": "pt",
     "code": 1,
@@ -1033,7 +1033,7 @@
   },
   {
     "name": "Tachiyomi: Saikai Scan",
-    "pkg": "eu.kanade.tachiyomi.extension.pt.saikaiscan",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.saikaiscan\n10",
     "apk": "tachiyomi-pt.saikaiscan-v1.2.2.apk",
     "lang": "pt",
     "code": 2,
@@ -1041,7 +1041,7 @@
   },
   {
     "name": "Tachiyomi: Union Mangás",
-    "pkg": "eu.kanade.tachiyomi.extension.pt.unionmangas",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.unionmangas\n10",
     "apk": "tachiyomi-pt.unionmangas-v1.2.11.apk",
     "lang": "pt",
     "code": 11,
@@ -1049,7 +1049,7 @@
   },
   {
     "name": "Tachiyomi: YES Mangás",
-    "pkg": "eu.kanade.tachiyomi.extension.pt.yesmangas",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.yesmangas\n10",
     "apk": "tachiyomi-pt.yesmangas-v1.2.2.apk",
     "lang": "pt",
     "code": 2,
@@ -1057,7 +1057,7 @@
   },
   {
     "name": "Tachiyomi: Zinnes",
-    "pkg": "eu.kanade.tachiyomi.extension.pt.zinnes",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.zinnes\n10",
     "apk": "tachiyomi-pt.zinnes-v1.2.1.apk",
     "lang": "pt",
     "code": 1,
@@ -1065,7 +1065,7 @@
   },
   {
     "name": "Tachiyomi: AComics",
-    "pkg": "eu.kanade.tachiyomi.extension.ru.acomics",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.acomics\n10",
     "apk": "tachiyomi-ru.acomics-v1.2.2.apk",
     "lang": "ru",
     "code": 2,
@@ -1073,7 +1073,7 @@
   },
   {
     "name": "Tachiyomi: Anibe",
-    "pkg": "eu.kanade.tachiyomi.extension.ru.anibe",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.anibe\n10",
     "apk": "tachiyomi-ru.anibe-v1.2.1.apk",
     "lang": "ru",
     "code": 1,
@@ -1081,7 +1081,7 @@
   },
   {
     "name": "Tachiyomi: ComX",
-    "pkg": "eu.kanade.tachiyomi.extension.ru.comx",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.comx\n10",
     "apk": "tachiyomi-ru.comx-v1.2.4.apk",
     "lang": "ru",
     "code": 4,
@@ -1089,7 +1089,7 @@
   },
   {
     "name": "Tachiyomi: Desu",
-    "pkg": "eu.kanade.tachiyomi.extension.ru.desu",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.desu\n10",
     "apk": "tachiyomi-ru.desu-v1.2.5.apk",
     "lang": "ru",
     "code": 5,
@@ -1097,7 +1097,7 @@
   },
   {
     "name": "Tachiyomi: Henchan",
-    "pkg": "eu.kanade.tachiyomi.extension.ru.henchan",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.henchan\n10",
     "apk": "tachiyomi-ru.henchan-v1.2.14.apk",
     "lang": "ru",
     "code": 14,
@@ -1105,7 +1105,7 @@
   },
   {
     "name": "Tachiyomi: MangaLib",
-    "pkg": "eu.kanade.tachiyomi.extension.ru.libmanga",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.libmanga\n10",
     "apk": "tachiyomi-ru.libmanga-v1.2.13.apk",
     "lang": "ru",
     "code": 13,
@@ -1113,7 +1113,7 @@
   },
   {
     "name": "Tachiyomi: Mangachan",
-    "pkg": "eu.kanade.tachiyomi.extension.ru.mangachan",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.mangachan\n10",
     "apk": "tachiyomi-ru.mangachan-v1.2.8.apk",
     "lang": "ru",
     "code": 8,
@@ -1121,7 +1121,7 @@
   },
   {
     "name": "Tachiyomi: Mangahub",
-    "pkg": "eu.kanade.tachiyomi.extension.ru.mangahub",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.mangahub\n10",
     "apk": "tachiyomi-ru.mangahub-v1.2.7.apk",
     "lang": "ru",
     "code": 7,
@@ -1129,7 +1129,7 @@
   },
   {
     "name": "Tachiyomi: Mangaonlinebiz",
-    "pkg": "eu.kanade.tachiyomi.extension.ru.mangaonlinebiz",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.mangaonlinebiz\n10",
     "apk": "tachiyomi-ru.mangaonlinebiz-v1.2.7.apk",
     "lang": "ru",
     "code": 7,
@@ -1137,7 +1137,7 @@
   },
   {
     "name": "Tachiyomi: Mintmanga",
-    "pkg": "eu.kanade.tachiyomi.extension.ru.mintmanga",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.mintmanga\n10",
     "apk": "tachiyomi-ru.mintmanga-v1.2.18.apk",
     "lang": "ru",
     "code": 18,
@@ -1145,7 +1145,7 @@
   },
   {
     "name": "Tachiyomi: Nude-Moon",
-    "pkg": "eu.kanade.tachiyomi.extension.ru.nudemoon",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.nudemoon\n10",
     "apk": "tachiyomi-ru.nudemoon-v1.2.3.apk",
     "lang": "ru",
     "code": 3,
@@ -1153,7 +1153,7 @@
   },
   {
     "name": "Tachiyomi: Onlinecomics",
-    "pkg": "eu.kanade.tachiyomi.extension.ru.onlinecomics",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.onlinecomics\n10",
     "apk": "tachiyomi-ru.onlinecomics-v1.2.1.apk",
     "lang": "ru",
     "code": 1,
@@ -1161,7 +1161,7 @@
   },
   {
     "name": "Tachiyomi: Readmanga",
-    "pkg": "eu.kanade.tachiyomi.extension.ru.readmanga",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.readmanga\n10",
     "apk": "tachiyomi-ru.readmanga-v1.2.17.apk",
     "lang": "ru",
     "code": 17,
@@ -1169,7 +1169,7 @@
   },
   {
     "name": "Tachiyomi: Risens Team",
-    "pkg": "eu.kanade.tachiyomi.extension.ru.risensteam",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.risensteam\n10",
     "apk": "tachiyomi-ru.risensteam-v1.2.1.apk",
     "lang": "ru",
     "code": 1,
@@ -1177,7 +1177,7 @@
   },
   {
     "name": "Tachiyomi: Selfmanga",
-    "pkg": "eu.kanade.tachiyomi.extension.ru.selfmanga",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.selfmanga\n10",
     "apk": "tachiyomi-ru.selfmanga-v1.2.6.apk",
     "lang": "ru",
     "code": 6,
@@ -1185,7 +1185,7 @@
   },
   {
     "name": "Tachiyomi: HocVienTruyenTranh",
-    "pkg": "eu.kanade.tachiyomi.extension.vi.academyvn",
+    "pkg": "eu.kanade.tachiyomi.extension.vi.academyvn\n10",
     "apk": "tachiyomi-vi.academyvn-v1.2.6.apk",
     "lang": "vi",
     "code": 6,
@@ -1193,7 +1193,7 @@
   },
   {
     "name": "Tachiyomi: BlogTruyen",
-    "pkg": "eu.kanade.tachiyomi.extension.vi.blogtruyen",
+    "pkg": "eu.kanade.tachiyomi.extension.vi.blogtruyen\n10",
     "apk": "tachiyomi-vi.blogtruyen-v1.2.6.apk",
     "lang": "vi",
     "code": 6,
@@ -1201,7 +1201,7 @@
   },
   {
     "name": "Tachiyomi: HentaiVN",
-    "pkg": "eu.kanade.tachiyomi.extension.vi.hentaivn",
+    "pkg": "eu.kanade.tachiyomi.extension.vi.hentaivn\n10",
     "apk": "tachiyomi-vi.hentaivn-v1.2.4.apk",
     "lang": "vi",
     "code": 4,
@@ -1209,7 +1209,7 @@
   },
   {
     "name": "Tachiyomi: IuTruyenTranh",
-    "pkg": "eu.kanade.tachiyomi.extension.vi.iutruyentranh",
+    "pkg": "eu.kanade.tachiyomi.extension.vi.iutruyentranh\n10",
     "apk": "tachiyomi-vi.iutruyentranh-v1.2.4.apk",
     "lang": "vi",
     "code": 4,
@@ -1217,7 +1217,7 @@
   },
   {
     "name": "Tachiyomi: MeDocTruyenTranh",
-    "pkg": "eu.kanade.tachiyomi.extension.vi.medoctruyentranh",
+    "pkg": "eu.kanade.tachiyomi.extension.vi.medoctruyentranh\n10",
     "apk": "tachiyomi-vi.medoctruyentranh-v1.2.2.apk",
     "lang": "vi",
     "code": 2,
@@ -1225,7 +1225,7 @@
   },
   {
     "name": "Tachiyomi: NetTruyen",
-    "pkg": "eu.kanade.tachiyomi.extension.vi.nettruyen",
+    "pkg": "eu.kanade.tachiyomi.extension.vi.nettruyen\n10",
     "apk": "tachiyomi-vi.nettruyen-v1.2.5.apk",
     "lang": "vi",
     "code": 5,
@@ -1233,7 +1233,7 @@
   },
   {
     "name": "Tachiyomi: Ngon Phong",
-    "pkg": "eu.kanade.tachiyomi.extension.vi.ngonphong",
+    "pkg": "eu.kanade.tachiyomi.extension.vi.ngonphong\n10",
     "apk": "tachiyomi-vi.ngonphong-v1.2.1.apk",
     "lang": "vi",
     "code": 1,
@@ -1241,7 +1241,7 @@
   },
   {
     "name": "Tachiyomi: TruyenQQ",
-    "pkg": "eu.kanade.tachiyomi.extension.vi.truyenqq",
+    "pkg": "eu.kanade.tachiyomi.extension.vi.truyenqq\n10",
     "apk": "tachiyomi-vi.truyenqq-v1.2.2.apk",
     "lang": "vi",
     "code": 2,
@@ -1249,7 +1249,7 @@
   },
   {
     "name": "Tachiyomi: BainianManga",
-    "pkg": "eu.kanade.tachiyomi.extension.zh.bainianmanga",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.bainianmanga\n10",
     "apk": "tachiyomi-zh.bainianmanga-v1.2.2.apk",
     "lang": "zh",
     "code": 2,
@@ -1257,7 +1257,7 @@
   },
   {
     "name": "Tachiyomi: BH3",
-    "pkg": "eu.kanade.tachiyomi.extension.zh.bh3",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.bh3\n10",
     "apk": "tachiyomi-zh.bh3-v1.2.1.apk",
     "lang": "zh",
     "code": 1,
@@ -1265,7 +1265,7 @@
   },
   {
     "name": "Tachiyomi: Comico",
-    "pkg": "eu.kanade.tachiyomi.extension.zh.comico",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.comico\n10",
     "apk": "tachiyomi-zh.comico-v1.2.1.apk",
     "lang": "zh",
     "code": 1,
@@ -1273,7 +1273,7 @@
   },
   {
     "name": "Tachiyomi: Dmzj",
-    "pkg": "eu.kanade.tachiyomi.extension.zh.dmzj",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.dmzj\n10",
     "apk": "tachiyomi-zh.dmzj-v1.2.8.apk",
     "lang": "zh",
     "code": 8,
@@ -1281,7 +1281,7 @@
   },
   {
     "name": "Tachiyomi: Gufeng Manhua",
-    "pkg": "eu.kanade.tachiyomi.extension.zh.gufengmh",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.gufengmh\n10",
     "apk": "tachiyomi-zh.gufengmh-v1.2.3.apk",
     "lang": "zh",
     "code": 3,
@@ -1289,7 +1289,7 @@
   },
   {
     "name": "Tachiyomi: Hanhankuman",
-    "pkg": "eu.kanade.tachiyomi.extension.zh.hanhankuman",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.hanhankuman\n10",
     "apk": "tachiyomi-zh.hanhankuman-v1.2.3.apk",
     "lang": "zh",
     "code": 3,
@@ -1297,7 +1297,7 @@
   },
   {
     "name": "Tachiyomi: Kuaikanmanhua",
-    "pkg": "eu.kanade.tachiyomi.extension.zh.kuaikanmanhua",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.kuaikanmanhua\n10",
     "apk": "tachiyomi-zh.kuaikanmanhua-v1.2.2.apk",
     "lang": "zh",
     "code": 2,
@@ -1305,7 +1305,7 @@
   },
   {
     "name": "Tachiyomi: ManhuaDB",
-    "pkg": "eu.kanade.tachiyomi.extension.zh.manhuadb",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.manhuadb\n10",
     "apk": "tachiyomi-zh.manhuadb-v1.2.2.apk",
     "lang": "zh",
     "code": 2,
@@ -1313,7 +1313,7 @@
   },
   {
     "name": "Tachiyomi: Manhuadui",
-    "pkg": "eu.kanade.tachiyomi.extension.zh.manhuadui",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.manhuadui\n10",
     "apk": "tachiyomi-zh.manhuadui-v1.2.6.apk",
     "lang": "zh",
     "code": 6,
@@ -1321,7 +1321,7 @@
   },
   {
     "name": "Tachiyomi: ManHuaGui",
-    "pkg": "eu.kanade.tachiyomi.extension.zh.manhuagui",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.manhuagui\n10",
     "apk": "tachiyomi-zh.manhuagui-v1.2.1.apk",
     "lang": "zh",
     "code": 1,
@@ -1329,7 +1329,7 @@
   },
   {
     "name": "Tachiyomi: Manhuaren",
-    "pkg": "eu.kanade.tachiyomi.extension.zh.manhuaren",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.manhuaren\n10",
     "apk": "tachiyomi-zh.manhuaren-v1.2.7.apk",
     "lang": "zh",
     "code": 7,
@@ -1337,7 +1337,7 @@
   },
   {
     "name": "Tachiyomi: Pufei",
-    "pkg": "eu.kanade.tachiyomi.extension.zh.pufei",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.pufei\n10",
     "apk": "tachiyomi-zh.pufei-v1.2.3.apk",
     "lang": "zh",
     "code": 3,
@@ -1345,7 +1345,7 @@
   },
   {
     "name": "Tachiyomi: Qimiaomh",
-    "pkg": "eu.kanade.tachiyomi.extension.zh.qimiaomh",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.qimiaomh\n10",
     "apk": "tachiyomi-zh.qimiaomh-v1.2.1.apk",
     "lang": "zh",
     "code": 1,
@@ -1353,7 +1353,7 @@
   },
   {
     "name": "Tachiyomi: Tohomh123",
-    "pkg": "eu.kanade.tachiyomi.extension.zh.tohomh123",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.tohomh123\n10",
     "apk": "tachiyomi-zh.tohomh123-v1.2.2.apk",
     "lang": "zh",
     "code": 2,
@@ -1361,7 +1361,7 @@
   },
   {
     "name": "Tachiyomi: WNACG",
-    "pkg": "eu.kanade.tachiyomi.extension.zh.wnacg",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.wnacg\n10",
     "apk": "tachiyomi-zh.wnacg-v1.2.2.apk",
     "lang": "zh",
     "code": 2,
