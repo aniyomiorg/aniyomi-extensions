@@ -1250,10 +1250,10 @@
   {
     "name": "Tachiyomi: BainianManga",
     "pkg": "eu.kanade.tachiyomi.extension.zh.bainianmanga",
-    "apk": "tachiyomi-zh.bainianmanga-v1.2.1.apk",
+    "apk": "tachiyomi-zh.bainianmanga-v1.2.2.apk",
     "lang": "zh",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: BH3",
