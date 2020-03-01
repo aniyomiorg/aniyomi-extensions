@@ -1,6 +1,3 @@
-include ':lib-extension'
-project(':lib-extension').projectDir = new File("lib/extension")
-
 include ':lib-ratelimit'
 project(':lib-ratelimit').projectDir = new File("lib/ratelimit")
 
