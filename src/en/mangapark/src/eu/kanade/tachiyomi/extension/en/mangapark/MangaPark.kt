@@ -1,22 +1,34 @@
 package eu.kanade.tachiyomi.extension.en.mangapark
 
+import android.annotation.SuppressLint
+import android.app.Application
+import android.content.SharedPreferences
+import android.support.v7.preference.ListPreference
+import android.support.v7.preference.PreferenceScreen
 import android.net.Uri
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Request
+import okhttp3.Response
 import org.json.JSONArray
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import kotlin.math.absoluteValue
 
-class MangaPark : ParsedHttpSource() {
+
+class MangaPark : ConfigurableSource, ParsedHttpSource() {
 
     override val lang = "en"
 
@@ -75,9 +87,10 @@ class MangaPark : ParsedHttpSource() {
         val coverElement = element.getElementsByClass("cover").first()
         url = coverElement.attr("href")
         title = coverElement.attr("title")
+        thumbnail_url = coverElement.select("img").attr("abs:src")
     }
 
-
+    @SuppressLint("DefaultLocale")
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
         val coverElement = document.select(".cover > img").first()
 
@@ -86,8 +99,7 @@ class MangaPark : ParsedHttpSource() {
         thumbnail_url = cleanUrl(coverElement.attr("src"))
 
         document.select(".attr > tbody > tr").forEach {
-            val type = it.getElementsByTag("th").first().text().trim().toLowerCase()
-            when (type) {
+            when (it.getElementsByTag("th").first().text().trim().toLowerCase()) {
                 "author(s)" -> {
                     author = it.getElementsByTag("a").joinToString(transform = Element::text)
                 }
@@ -109,20 +121,58 @@ class MangaPark : ParsedHttpSource() {
 
         description = document.getElementsByClass("summary").text().trim()
     }
+    
+    override fun chapterListParse(response: Response): List<SChapter> {
+        fun List<SChapter>.getMissingChapters(allChapters: List<SChapter>): List<SChapter> {
+            val chapterNums = this.map { it.chapter_number }
+            return allChapters.filter { it.chapter_number !in chapterNums }.distinctBy { it.chapter_number }
+        }
 
-    //TODO MangaPark has "versioning"
-    //TODO Previously we just use the version that is expanded by default however this caused an issue when a manga didnt have an expanded version
-    //TODO if we just choose one to expand it will cause potential missing chapters
-    //TODO right now all versions are combined so no chapters are missed
-    //TODO Maybe make it possible for users to view the other versions as well?
-    override fun chapterListSelector() = ".stream .volume .chapter li"
+        fun List<SChapter>.filterOrAll(source: String): List<SChapter>{
+            val chapters = this.filter { it.scanlator!!.contains(source) }
+            return if (chapters.isNotEmpty()) {
+                (chapters + chapters.getMissingChapters(this)).sortedByDescending { it.chapter_number }
+            } else {
+                this
+            }
+        }
 
-    override fun chapterFromElement(element: Element) = SChapter.create().apply {
-        url = element.select(".tit > a").first().attr("href").replaceAfterLast("/", "")
-        name = element.select(".tit > a").first().text()
-        date_upload = parseDate(element.select(".time").first().text().trim())
+        val mangaBySource = response.asJsoup().select("div[id^=stream]").map { sourceElement ->
+            sourceElement.select(chapterListSelector()).map { chapterFromElement(it, sourceElement.select("i + span").text()) }
+        }
+        return when (getSourcePref()) {
+            // source with most chapters along with chapters that source doesn't have
+            "most" -> {
+                val chapters = mangaBySource.maxBy { it.count() }!!
+                (chapters + chapters.getMissingChapters(mangaBySource.flatten())).sortedByDescending { it.chapter_number }
+            }
+            // "smart list" - try not to miss a chapter and avoid dupes
+            "smart" -> mangaBySource.flatten().distinctBy { it.chapter_number }.sortedByDescending { it.chapter_number }
+            // use a specific source + any missing chapters, display all if none available from that source
+            "rock" -> mangaBySource.flatten().filterOrAll("Rock")
+            "duck" -> mangaBySource.flatten().filterOrAll("Duck")
+            "mini" -> mangaBySource.flatten().filterOrAll("Mini")
+            "fox" -> mangaBySource.flatten().filterOrAll("Fox")
+            "panda" -> mangaBySource.flatten().filterOrAll("Panda")
+            // all sources, all chapters
+            else -> mangaBySource.flatten()
+        }
     }
 
+    override fun chapterListSelector() = ".volume .chapter li"
+
+    private fun chapterFromElement(element: Element, source: String) = SChapter.create().apply {
+        url = element.select(".tit > a").first().attr("href").replaceAfterLast("/", "")
+        name = element.select(".tit > a").first().text()
+        // Get the chapter number or create a unique one if it's not available
+        chapter_number = Regex("""\b\d+\.?\d?\b""").find(name)?.value?.toFloatOrNull() ?: ".${name.hashCode().absoluteValue}".toFloat()
+        date_upload = parseDate(element.select(".time").first().text().trim())
+        scanlator = source
+    }
+
+    override fun chapterFromElement(element: Element): SChapter = throw UnsupportedOperationException("Not used")
+
+    @SuppressLint("DefaultLocale")
     private fun parseDate(date: String): Long {
         val lcDate = date.toLowerCase()
         if (lcDate.endsWith("ago")) return parseRelativeDate(lcDate)
@@ -331,8 +381,8 @@ class MangaPark : ParsedHttpSource() {
             GenreFilter("zombies", "Zombies")
     )), UriFilter {
         override fun addToUri(uri: Uri.Builder) {
-            uri.appendQueryParameter("genres", state.filter { it.isIncluded() }.map { it.uriParam }.joinToString(","))
-            uri.appendQueryParameter("genres-exclude", state.filter { it.isExcluded() }.map { it.uriParam }.joinToString(","))
+            uri.appendQueryParameter("genres", state.filter { it.isIncluded() }.joinToString(",") { it.uriParam })
+            uri.appendQueryParameter("genres-exclude", state.filter { it.isExcluded() }.joinToString(",") { it.uriParam })
         }
     }
 
@@ -419,4 +469,62 @@ class MangaPark : ParsedHttpSource() {
         fun addToUri(uri: Uri.Builder)
     }
 
+    // Preferences
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
+        val myPref = androidx.preference.ListPreference(screen.context).apply {
+            key = SOURCE_PREF_TITLE
+            title = SOURCE_PREF_TITLE
+            entries = sourceArray.map { it.first }.toTypedArray()
+            entryValues = sourceArray.map { it.second }.toTypedArray()
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = this.findIndexOfValue(selected)
+                val entry = entryValues.get(index) as String
+                preferences.edit().putString(SOURCE_PREF, entry).commit()
+            }
+        }
+        screen.addPreference(myPref)
+    }
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val myPref = ListPreference(screen.context).apply {
+            key = SOURCE_PREF_TITLE
+            title = SOURCE_PREF_TITLE
+            entries = sourceArray.map { it.first }.toTypedArray()
+            entryValues = sourceArray.map { it.second }.toTypedArray()
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = this.findIndexOfValue(selected)
+                val entry = entryValues.get(index) as String
+                preferences.edit().putString(SOURCE_PREF, entry).commit()
+            }
+        }
+        screen.addPreference(myPref)
+    }
+    private fun getSourcePref(): String? = preferences.getString(SOURCE_PREF, "all")
+    
+    companion object {
+        private const val SOURCE_PREF_TITLE = "Chapter List Source"
+        private const val SOURCE_PREF = "Manga_Park_Source"
+        private val sourceArray = arrayOf(
+            Pair("All sources, all chapters","all"),
+            Pair("Source with most chapters","most"),
+            Pair("Smart list","smart"),
+            Pair("Prioritize source: Rock","rock"),
+            Pair("Prioritize source: Duck","duck"),
+            Pair("Prioritize source: Mini","mini"),
+            Pair("Prioritize source: Fox","fox"),
+            Pair("Prioritize source: Panda","panda")
+        )
+    }
+    
 }
