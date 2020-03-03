@@ -130,10 +130,10 @@
   {
     "name": "Tachiyomi: My Manga Reader CMS (Many sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mmrcms",
-    "apk": "tachiyomi-all.mmrcms-v1.2.30.apk",
+    "apk": "tachiyomi-all.mmrcms-v1.2.31.apk",
     "lang": "all",
-    "code": 30,
-    "version": "1.2.30"
+    "code": 31,
+    "version": "1.2.31"
   },
   {
     "name": "Tachiyomi: MyReadingManga",
@@ -298,10 +298,10 @@
   {
     "name": "Tachiyomi: Existential Comics",
     "pkg": "eu.kanade.tachiyomi.extension.en.existentialcomics",
-    "apk": "tachiyomi-en.existentialcomics-v1.2.2.apk",
+    "apk": "tachiyomi-en.existentialcomics-v1.2.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Cyanide & Happiness",
