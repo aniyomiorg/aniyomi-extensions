@@ -536,6 +536,14 @@
     "version": "1.2.6"
   },
   {
+    "name": "Tachiyomi: MyAnimeList Free Manga",
+    "pkg": "eu.kanade.tachiyomi.extension.en.myanimelist",
+    "apk": "tachiyomi-en.myanimelist-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: MyHentaiGallery",
     "pkg": "eu.kanade.tachiyomi.extension.en.myhentaigallery",
     "apk": "tachiyomi-en.myhentaigallery-v1.2.1.apk",
