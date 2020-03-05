@@ -368,6 +368,14 @@
     "version": "1.2.3"
   },
   {
+    "name": "Tachiyomi: HonkaiImpact3",
+    "pkg": "eu.kanade.tachiyomi.extension.en.honkaiimpact",
+    "apk": "tachiyomi-en.honkaiimpact-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Kissmanga",
     "pkg": "eu.kanade.tachiyomi.extension.en.kissmanga",
     "apk": "tachiyomi-en.kissmanga-v1.2.11.apk",
