@@ -1154,10 +1154,10 @@
   {
     "name": "Tachiyomi: Mintmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mintmanga",
-    "apk": "tachiyomi-ru.mintmanga-v1.2.19.apk",
+    "apk": "tachiyomi-ru.mintmanga-v1.2.20.apk",
     "lang": "ru",
-    "code": 19,
-    "version": "1.2.19"
+    "code": 20,
+    "version": "1.2.20"
   },
   {
     "name": "Tachiyomi: Nude-Moon",
