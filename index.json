@@ -1136,6 +1136,14 @@
     "version": "1.2.8"
   },
   {
+    "name": "Tachiyomi: MangaClub",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.mangaclub",
+    "apk": "tachiyomi-ru.mangaclub-v1.2.1.apk",
+    "lang": "ru",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Mangahub",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mangahub",
     "apk": "tachiyomi-ru.mangahub-v1.2.7.apk",
