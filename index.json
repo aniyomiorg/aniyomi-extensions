@@ -904,6 +904,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: Novelle Leggere",
+    "pkg": "eu.kanade.tachiyomi.extension.it.novelleleggere",
+    "apk": "tachiyomi-it.novelleleggere-v1.2.1.apk",
+    "lang": "it",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Perveden",
     "pkg": "eu.kanade.tachiyomi.extension.it.perveden",
     "apk": "tachiyomi-it.perveden-v1.2.3.apk",
