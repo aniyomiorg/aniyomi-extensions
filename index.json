@@ -26,10 +26,10 @@
   {
     "name": "Tachiyomi: E-Hentai",
     "pkg": "eu.kanade.tachiyomi.extension.all.ehentai",
-    "apk": "tachiyomi-all.ehentai-v1.2.8.apk",
+    "apk": "tachiyomi-all.ehentai-v1.2.9.apk",
     "lang": "all",
-    "code": 8,
-    "version": "1.2.8"
+    "code": 9,
+    "version": "1.2.9"
   },
   {
     "name": "Tachiyomi: FMReader (multiple aggregators)",
