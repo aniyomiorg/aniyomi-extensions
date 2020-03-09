@@ -8,6 +8,14 @@
     "version": "1.2.3"
   },
   {
+    "name": "Tachiyomi: Ciayo Comics",
+    "pkg": "eu.kanade.tachiyomi.extension.all.ciayo",
+    "apk": "tachiyomi-all.ciayo-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: ComiCake",
     "pkg": "eu.kanade.tachiyomi.extension.all.comicake",
     "apk": "tachiyomi-all.comicake-v1.2.7.apk",
