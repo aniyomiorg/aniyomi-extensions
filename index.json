@@ -688,6 +688,14 @@
     "version": "1.2.5"
   },
   {
+    "name": "Tachiyomi: Doujin-Yang",
+    "pkg": "eu.kanade.tachiyomi.extension.es.doujinyang",
+    "apk": "tachiyomi-es.doujinyang-v1.2.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: HeavenManga",
     "pkg": "eu.kanade.tachiyomi.extension.es.heavenmanga",
     "apk": "tachiyomi-es.heavenmanga-v1.2.4.apk",
@@ -722,10 +730,10 @@
   {
     "name": "Tachiyomi: MangaMx & Doujin-Yang",
     "pkg": "eu.kanade.tachiyomi.extension.es.mangamx",
-    "apk": "tachiyomi-es.mangamx-v1.2.5.apk",
+    "apk": "tachiyomi-es.mangamx-v1.2.6.apk",
     "lang": "es",
-    "code": 5,
-    "version": "1.2.5"
+    "code": 6,
+    "version": "1.2.6"
   },
   {
     "name": "Tachiyomi: TMOHentai",
