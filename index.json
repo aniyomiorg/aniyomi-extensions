@@ -122,10 +122,10 @@
   {
     "name": "Tachiyomi: Mangatensei (and others)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangatensei",
-    "apk": "tachiyomi-all.mangatensei-v1.2.5.apk",
+    "apk": "tachiyomi-all.mangatensei-v1.2.6.apk",
     "lang": "all",
-    "code": 5,
-    "version": "1.2.5"
+    "code": 6,
+    "version": "1.2.6"
   },
   {
     "name": "Tachiyomi: Mangatoon (Limited)",
@@ -642,10 +642,10 @@
   {
     "name": "Tachiyomi: Tapas",
     "pkg": "eu.kanade.tachiyomi.extension.en.tapastic",
-    "apk": "tachiyomi-en.tapastic-v1.2.5.apk",
+    "apk": "tachiyomi-en.tapastic-v1.2.6.apk",
     "lang": "en",
-    "code": 5,
-    "version": "1.2.5"
+    "code": 6,
+    "version": "1.2.6"
   },
   {
     "name": "Tachiyomi: Tsumino",
