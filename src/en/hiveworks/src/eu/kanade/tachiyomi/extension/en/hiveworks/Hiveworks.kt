@@ -184,6 +184,7 @@ class Hiveworks : ParsedHttpSource() {
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
+        val url = response.request().url().toString()
         val document = response.asJsoup()
         val baseUrl = document.select("div script").html().substringAfter("href='").substringBefore("'")
         val elements = document.select(chapterListSelector())
@@ -191,6 +192,9 @@ class Hiveworks : ParsedHttpSource() {
         val chapters = mutableListOf<SChapter>()
         for (i in 1 until elements.size) {
             chapters.add(createChapter(elements[i], baseUrl))
+        }
+        when {
+            "checkpleasecomic" in url -> chapters.retainAll { it.name.endsWith("01") || it.name.endsWith(" 1") }
         }
         chapters.reverse()
         return chapters
