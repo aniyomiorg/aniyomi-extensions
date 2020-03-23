@@ -1242,10 +1242,10 @@
   {
     "name": "Tachiyomi: HocVienTruyenTranh",
     "pkg": "eu.kanade.tachiyomi.extension.vi.academyvn",
-    "apk": "tachiyomi-vi.academyvn-v1.2.6.apk",
+    "apk": "tachiyomi-vi.academyvn-v1.2.7.apk",
     "lang": "vi",
-    "code": 6,
-    "version": "1.2.6"
+    "code": 7,
+    "version": "1.2.7"
   },
   {
     "name": "Tachiyomi: BlogTruyen",
