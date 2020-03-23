@@ -362,10 +362,10 @@
   {
     "name": "Tachiyomi: Hiveworks Comics",
     "pkg": "eu.kanade.tachiyomi.extension.en.hiveworks",
-    "apk": "tachiyomi-en.hiveworks-v1.2.3.apk",
+    "apk": "tachiyomi-en.hiveworks-v1.2.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: HolyManga & HeavenManga",
