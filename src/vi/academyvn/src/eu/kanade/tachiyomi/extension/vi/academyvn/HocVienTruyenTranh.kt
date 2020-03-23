@@ -39,6 +39,7 @@ class HocVienTruyenTranh : ParsedHttpSource() {
         element.select("a").first().let {
             manga.setUrlWithoutDomain(it.attr("href"))
             manga.title = it.attr("title")
+            manga.thumbnail_url = it.attr("data-thumbnail")
         }
         return manga
     }
@@ -135,6 +136,11 @@ class HocVienTruyenTranh : ParsedHttpSource() {
             pages.add(Page(pages.size, "", it.attr("src")))
         }
         return pages
+    }
+
+    override fun imageRequest(page: Page): Request {
+        val imgHeaders = headersBuilder().add("Referer", page.url).build()
+        return GET(page.imageUrl!!, imgHeaders)
     }
 
     override fun imageUrlRequest(page: Page) = GET(page.url)
