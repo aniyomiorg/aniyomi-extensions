@@ -1090,10 +1090,10 @@
   {
     "name": "Tachiyomi: Super Hentais",
     "pkg": "eu.kanade.tachiyomi.extension.pt.superhentais",
-    "apk": "tachiyomi-pt.superhentais-v1.2.1.apk",
+    "apk": "tachiyomi-pt.superhentais-v1.2.2.apk",
     "lang": "pt",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Union Mangás",
