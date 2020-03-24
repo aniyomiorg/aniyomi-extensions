@@ -1402,10 +1402,10 @@
   {
     "name": "Tachiyomi: Pufei",
     "pkg": "eu.kanade.tachiyomi.extension.zh.pufei",
-    "apk": "tachiyomi-zh.pufei-v1.2.3.apk",
+    "apk": "tachiyomi-zh.pufei-v1.2.4.apk",
     "lang": "zh",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: Qimiaomh",
