@@ -386,10 +386,10 @@
   {
     "name": "Tachiyomi: Kissmanga",
     "pkg": "eu.kanade.tachiyomi.extension.en.kissmanga",
-    "apk": "tachiyomi-en.kissmanga-v1.2.11.apk",
+    "apk": "tachiyomi-en.kissmanga-v1.2.12.apk",
     "lang": "en",
-    "code": 11,
-    "version": "1.2.11"
+    "code": 12,
+    "version": "1.2.12"
   },
   {
     "name": "Tachiyomi: Latis Books",
