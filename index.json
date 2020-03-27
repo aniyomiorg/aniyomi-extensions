@@ -560,6 +560,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: MyHentaiComics",
+    "pkg": "eu.kanade.tachiyomi.extension.en.myhentaicomics",
+    "apk": "tachiyomi-en.myhentaicomics-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: MyHentaiGallery",
     "pkg": "eu.kanade.tachiyomi.extension.en.myhentaigallery",
     "apk": "tachiyomi-en.myhentaigallery-v1.2.1.apk",
