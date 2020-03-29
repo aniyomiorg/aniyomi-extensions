@@ -183,7 +183,7 @@ class Japscan : ParsedHttpSource() {
     override fun searchMangaParse(response: Response): MangasPage {
         if ("live-search" in response.request().url().toString()) {
             val body = response.body()!!.string()
-            val json = JsonParser.parseString(body).asJsonArray
+            val json = JsonParser().parse(body).asJsonArray
             val mangas = json.map { jsonElement ->
                 searchMangaFromJson(jsonElement)
             }
