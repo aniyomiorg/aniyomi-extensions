@@ -74,10 +74,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.64.apk",
+    "apk": "tachiyomi-all.madara-v1.2.65.apk",
     "lang": "all",
-    "code": 64,
-    "version": "1.2.64"
+    "code": 65,
+    "version": "1.2.65"
   },
   {
     "name": "Tachiyomi: MangaBox (Mangakakalot and others)",
@@ -498,10 +498,10 @@
   {
     "name": "Tachiyomi: MangaPark",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangapark",
-    "apk": "tachiyomi-en.mangapark-v1.2.10.apk",
+    "apk": "tachiyomi-en.mangapark-v1.2.11.apk",
     "lang": "en",
-    "code": 10,
-    "version": "1.2.10"
+    "code": 11,
+    "version": "1.2.11"
   },
   {
     "name": "Tachiyomi: Mangareader & Mangapanda",
@@ -578,10 +578,10 @@
   {
     "name": "Tachiyomi: Oglaf",
     "pkg": "eu.kanade.tachiyomi.extension.en.oglaf",
-    "apk": "tachiyomi-en.oglaf-v1.2.1.apk",
+    "apk": "tachiyomi-en.oglaf-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Patch Friday",
