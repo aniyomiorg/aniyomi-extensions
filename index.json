@@ -624,6 +624,14 @@
     "version": "1.2.8"
   },
   {
+    "name": "Tachiyomi: ReadM",
+    "pkg": "eu.kanade.tachiyomi.extension.en.readm",
+    "apk": "tachiyomi-en.readm-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Renaissance Scans",
     "pkg": "eu.kanade.tachiyomi.extension.en.renascans",
     "apk": "tachiyomi-en.renascans-v1.2.2.apk",
