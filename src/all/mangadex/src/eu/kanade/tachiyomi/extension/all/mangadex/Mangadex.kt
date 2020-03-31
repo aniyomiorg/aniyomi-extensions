@@ -33,6 +33,10 @@ abstract class Mangadex(
     private val internalLang: String
 ) : ConfigurableSource, ParsedHttpSource() {
 
+    init {
+
+    }
+
     override val name = "MangaDex"
 
     override val baseUrl = "https://mangadex.org"
@@ -43,6 +47,10 @@ abstract class Mangadex(
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    private val mangadexDescription : MangadexDescription by lazy {
+        MangadexDescription(internalLang)
     }
 
     private val rateLimitInterceptor = RateLimitInterceptor(4)
@@ -381,7 +389,7 @@ abstract class Mangadex(
         val chapterJson = json.getAsJsonObject("chapter")
         manga.title = cleanString(mangaJson.get("title").string)
         manga.thumbnail_url = cdnUrl + mangaJson.get("cover_url").string
-        manga.description = cleanString(mangaJson.get("description").string)
+        manga.description = cleanString(mangadexDescription.clean(internalLang, mangaJson.get("description").string))
         manga.author = mangaJson.get("author").string
         manga.artist = mangaJson.get("artist").string
         val status = mangaJson.get("status").int
