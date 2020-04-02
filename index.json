@@ -1266,10 +1266,10 @@
   {
     "name": "Tachiyomi: BlogTruyen",
     "pkg": "eu.kanade.tachiyomi.extension.vi.blogtruyen",
-    "apk": "tachiyomi-vi.blogtruyen-v1.2.7.apk",
+    "apk": "tachiyomi-vi.blogtruyen-v1.2.8.apk",
     "lang": "vi",
-    "code": 7,
-    "version": "1.2.7"
+    "code": 8,
+    "version": "1.2.8"
   },
   {
     "name": "Tachiyomi: HentaiVN",
