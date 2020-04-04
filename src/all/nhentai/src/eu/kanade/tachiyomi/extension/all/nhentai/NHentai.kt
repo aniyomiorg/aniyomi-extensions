@@ -5,10 +5,11 @@ import android.content.SharedPreferences
 import android.support.v7.preference.ListPreference
 import android.support.v7.preference.PreferenceScreen
 import eu.kanade.tachiyomi.extension.BuildConfig
-import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.Companion.getArtists
-import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.Companion.getGroups
-import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.Companion.getTags
-import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.Companion.getTime
+import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getArtists
+import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getGroups
+import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getTagDescription
+import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getTags
+import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getTime
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -139,16 +140,24 @@ open class NHentai(
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        val url = HttpUrl.parse("$baseUrl/search")!!.newBuilder()
-            .addQueryParameter("q", "$query +$nhLang")
-            .addQueryParameter("page", page.toString())
+        val favoriteFilter = filters.findInstance<FavoriteFilter>()
+        if (favoriteFilter != null && favoriteFilter.state) {
+            val url = HttpUrl.parse("$baseUrl/favorites")!!.newBuilder()
+                .addQueryParameter("q", query)
+                .addQueryParameter("page", page.toString())
 
-        for (filter in if (filters.isEmpty()) getFilterList() else filters) {
-            when (filter) {
-                is SortFilter -> url.addQueryParameter("sort", filter.values[filter.state].toLowerCase())
+            return GET(url.toString(), headers)
+        } else {
+            val url = HttpUrl.parse("$baseUrl/search")!!.newBuilder()
+                .addQueryParameter("q", "$query +$nhLang")
+                .addQueryParameter("page", page.toString())
+
+            filters.findInstance<SortFilter>()?.let { f ->
+                url.addQueryParameter("sort", f.values[f.state].toLowerCase())
             }
+
+            return GET(url.toString(), headers)
         }
-        return GET(url.toString(), headers)
     }
 
     private fun searchMangaByIdRequest(id: String) = GET("$baseUrl/g/$id", headers)
@@ -157,6 +166,17 @@ open class NHentai(
         val details = mangaDetailsParse(response)
         details.url = "/g/$id/"
         return MangasPage(listOf(details), false)
+    }
+
+    override fun searchMangaParse(response: Response): MangasPage {
+        if (response.request().url().toString().contains("/login/")) {
+            val document = response.asJsoup()
+            if (document.select(".fa-sign-in").isNotEmpty()) {
+                throw Exception("Log in via WebView to view favorites")
+            }
+        }
+
+        return super.searchMangaParse(response)
     }
 
     override fun searchMangaFromElement(element: Element) = latestUpdatesFromElement(element)
@@ -181,7 +201,8 @@ open class NHentai(
                 .plus("Length: ${document.select("div#info div:contains(pages)").text()}\n")
                 .plus("Favorited by: ${document.select("div#info i.fa-heart + span span").text().removeSurrounding("(", ")")}\n")
                 .plus("Categories: ${document.select("div.field-name:contains(Categories) span.tags a").first()?.ownText()}\n\n")
-                .plus(getTags(document))
+                .plus(getTagDescription(document))
+            genre = getTags(document)
         }
     }
 
@@ -218,15 +239,23 @@ open class NHentai(
         return pageList
     }
 
-    override fun getFilterList(): FilterList = FilterList(SortFilter())
+    override fun getFilterList(): FilterList = FilterList(
+        SortFilter(),
+        Filter.Header("Sort is ignored if favorites only"),
+        FavoriteFilter()
+    )
 
     override fun imageUrlParse(document: Document) = throw UnsupportedOperationException("Not used")
+
+    private class FavoriteFilter : Filter.CheckBox("Show favorites only", false)
+
+    private class SortFilter : Filter.Select<String>("Sort", arrayOf("Popular", "Date"))
+
+    private inline fun <reified T> Iterable<*>.findInstance() = find { it is T } as? T
 
     companion object {
         const val PREFIX_ID_SEARCH = "id:"
         private const val TITLE_PREF = "Display manga title as:"
     }
-
-    private class SortFilter : Filter.Select<String>("Sort", arrayOf("Popular", "Date"))
 
 }
