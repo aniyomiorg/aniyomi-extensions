@@ -434,10 +434,10 @@
   {
     "name": "Tachiyomi: Mangahere",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangahere",
-    "apk": "tachiyomi-en.mangahere-v1.2.12.apk",
+    "apk": "tachiyomi-en.mangahere-v1.2.13.apk",
     "lang": "en",
-    "code": 12,
-    "version": "1.2.12"
+    "code": 13,
+    "version": "1.2.13"
   },
   {
     "name": "Tachiyomi: Mangahub",
@@ -1202,10 +1202,10 @@
   {
     "name": "Tachiyomi: Mangaonlinebiz",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mangaonlinebiz",
-    "apk": "tachiyomi-ru.mangaonlinebiz-v1.2.7.apk",
+    "apk": "tachiyomi-ru.mangaonlinebiz-v1.2.8.apk",
     "lang": "ru",
-    "code": 7,
-    "version": "1.2.7"
+    "code": 8,
+    "version": "1.2.8"
   },
   {
     "name": "Tachiyomi: Mintmanga",
