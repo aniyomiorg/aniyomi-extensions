@@ -8,7 +8,6 @@ import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SManga
-import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Request
 import org.jsoup.nodes.Document
 
@@ -22,8 +21,6 @@ class FoolSlideFactory : SourceFactory {
         IskultripScans(),
         AnataNoMotokare(),
         DeathTollScans(),
-        DKThias(),
-        WorldThree(),
         DokiFansubs(),
         YuriIsm(),
         AjiaNoScantrad(),
@@ -33,7 +30,6 @@ class FoolSlideFactory : SourceFactory {
         Lilyreader(),
         Russification(),
         EvilFlowers(),
-        AkaiYuhiMunTeam(),
         LupiTeam(),
         HentaiCafe(),
         TheCatScans(),
@@ -66,7 +62,15 @@ class TheCatScans : FoolSlide("The Cat Scans", "https://reader2.thecatscans.com/
 
 class SenseScans : FoolSlide("Sense-Scans", "http://sensescans.com", "en", "/reader")
 
-class KireiCake : FoolSlide("Kirei Cake", "https://reader.kireicake.com", "en")
+class KireiCake : FoolSlide("Kirei Cake", "https://reader.kireicake.com", "en") {
+    override fun mangaDetailsParse(document: Document): SManga {
+        return SManga.create().apply {
+            description = document.select("$mangaDetailsInfoSelector li:has(b:contains(description))")
+                .first()?.ownText()?.substringAfter(":")
+            thumbnail_url = getDetailsThumbnail(document)
+        }
+    }
+}
 
 class SilentSky : FoolSlide("Silent Sky", "https://reader.silentsky-scans.net", "en")
 
@@ -81,14 +85,6 @@ class IskultripScans : FoolSlide("Iskultrip Scans", "http://www.maryfaye.net", "
 class AnataNoMotokare : FoolSlide("Anata no Motokare", "https://motokare.xyz", "en", "/reader")
 
 class DeathTollScans : FoolSlide("Death Toll Scans", "https://reader.deathtollscans.net", "en")
-
-class DKThias : FoolSlide("DKThias Scanlations", "http://reader.dkthias.com", "en", "/reader") {
-    override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl$urlModifier/list/$page/", headers)
-    }
-}
-
-class WorldThree : FoolSlide("World Three", "http://www.slide.world-three.org", "en")
 
 class DokiFansubs : FoolSlide("Doki Fansubs", "https://kobato.hologfx.com", "en", "/reader")
 
@@ -108,8 +104,6 @@ class Russification : FoolSlide("Русификация", "https://rusmanga.ru",
 
 class EvilFlowers : FoolSlide("Evil Flowers", "http://reader.evilflowers.com", "en")
 
-class AkaiYuhiMunTeam : FoolSlide("AkaiYuhiMun team", "https://akaiyuhimun.ru", "ru", "/manga")
-
 class LupiTeam : FoolSlide("LupiTeam", "https://lupiteam.net", "it", "/reader") {
     override fun mangaDetailsParse(document: Document): SManga {
         val infoElement = document.select(mangaDetailsInfoSelector).first().text()
@@ -125,7 +119,7 @@ class LupiTeam : FoolSlide("LupiTeam", "https://lupiteam.net", "it", "/reader") 
             else -> SManga.UNKNOWN
         }
         manga.description = infoElement.substringAfter("Trama: ")
-        manga.thumbnail_url = document.select(mangaDetailsThumbnailSelector).first()?.absUrl("src")
+        manga.thumbnail_url = getDetailsThumbnail(document)
 
         return manga
     }
@@ -143,9 +137,7 @@ class BaixarHentai : FoolSlide("Baixar Hentai", "https://leitura.baixarhentai.ne
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
             title = document.select("h1.title").text()
-            thumbnail_url = document.select("div.thumbnail img").firstOrNull()?.attr("abs:src") ?:
-                client.newCall(GET(document.select("div.title a").last().attr("abs:href"), headers)).execute().asJsoup()
-                    .let { pageListParse(it).firstOrNull()?.imageUrl }
+            thumbnail_url = getDetailsThumbnail(document, "div.title a")
         }
     }
 }
