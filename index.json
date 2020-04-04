@@ -42,10 +42,10 @@
   {
     "name": "Tachiyomi: FoolSlide (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.foolslide",
-    "apk": "tachiyomi-all.foolslide-v1.2.36.apk",
+    "apk": "tachiyomi-all.foolslide-v1.2.37.apk",
     "lang": "all",
-    "code": 36,
-    "version": "1.2.36"
+    "code": 37,
+    "version": "1.2.37"
   },
   {
     "name": "Tachiyomi: Genkan (multiple sources)",
@@ -82,10 +82,10 @@
   {
     "name": "Tachiyomi: MangaBox (Mangakakalot and others)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangabox",
-    "apk": "tachiyomi-all.mangabox-v1.2.16.apk",
+    "apk": "tachiyomi-all.mangabox-v1.2.17.apk",
     "lang": "all",
-    "code": 16,
-    "version": "1.2.16"
+    "code": 17,
+    "version": "1.2.17"
   },
   {
     "name": "Tachiyomi: MangaDex",
