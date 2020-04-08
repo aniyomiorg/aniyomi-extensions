@@ -1408,6 +1408,14 @@
     "version": "1.2.7"
   },
   {
+    "name": "Tachiyomi: OneManHua",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.onemanhua",
+    "apk": "tachiyomi-zh.onemanhua-v1.2.1.apk",
+    "lang": "zh",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Pufei",
     "pkg": "eu.kanade.tachiyomi.extension.zh.pufei",
     "apk": "tachiyomi-zh.pufei-v1.2.4.apk",
