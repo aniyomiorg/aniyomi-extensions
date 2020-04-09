@@ -200,6 +200,14 @@
     "version": "1.2.15"
   },
   {
+    "name": "Tachiyomi: WP-Comics",
+    "pkg": "eu.kanade.tachiyomi.extension.all.wpcomics",
+    "apk": "tachiyomi-all.wpcomics-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: WP Manga Stream",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
     "apk": "tachiyomi-all.wpmangastream-v1.2.6.apk",
