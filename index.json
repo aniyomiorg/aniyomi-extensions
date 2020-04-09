@@ -456,6 +456,14 @@
     "version": "1.2.5"
   },
   {
+    "name": "Tachiyomi: MangaJar",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangajar",
+    "apk": "tachiyomi-en.mangajar-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: MangaKisa",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangakisa",
     "apk": "tachiyomi-en.mangakisa-v1.2.2.apk",
