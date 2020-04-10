@@ -140,6 +140,8 @@ open class NHentai(
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
+        val filters = if (filters.isEmpty()) getFilterList() else filters
+
         val favoriteFilter = filters.findInstance<FavoriteFilter>()
         if (favoriteFilter != null && favoriteFilter.state) {
             val url = HttpUrl.parse("$baseUrl/favorites")!!.newBuilder()
