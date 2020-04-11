@@ -1106,10 +1106,10 @@
   {
     "name": "Tachiyomi: mangásPROJECT",
     "pkg": "eu.kanade.tachiyomi.extension.pt.mangasproject",
-    "apk": "tachiyomi-pt.mangasproject-v1.2.9.apk",
+    "apk": "tachiyomi-pt.mangasproject-v1.2.10.apk",
     "lang": "pt",
-    "code": 9,
-    "version": "1.2.9"
+    "code": 10,
+    "version": "1.2.10"
   },
   {
     "name": "Tachiyomi: MangaYabu!",
