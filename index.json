@@ -1288,6 +1288,14 @@
     "version": "1.2.6"
   },
   {
+    "name": "Tachiyomi: Nekopost",
+    "pkg": "eu.kanade.tachiyomi.extension.th.nekopost",
+    "apk": "tachiyomi-th.nekopost-v1.2.1.apk",
+    "lang": "th",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: HocVienTruyenTranh",
     "pkg": "eu.kanade.tachiyomi.extension.vi.academyvn",
     "apk": "tachiyomi-vi.academyvn-v1.2.8.apk",
