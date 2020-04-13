@@ -50,10 +50,10 @@
   {
     "name": "Tachiyomi: Genkan (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.genkan",
-    "apk": "tachiyomi-all.genkan-v1.2.16.apk",
+    "apk": "tachiyomi-all.genkan-v1.2.17.apk",
     "lang": "all",
-    "code": 16,
-    "version": "1.2.16"
+    "code": 17,
+    "version": "1.2.17"
   },
   {
     "name": "Tachiyomi: Komga",
