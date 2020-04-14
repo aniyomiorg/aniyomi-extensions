@@ -224,6 +224,14 @@
     "version": "1.2.5"
   },
   {
+    "name": "Tachiyomi: MangaLink",
+    "pkg": "eu.kanade.tachiyomi.extension.ar.mangalink",
+    "apk": "tachiyomi-ar.mangalink-v1.2.1.apk",
+    "lang": "ar",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Shqqaa Manga",
     "pkg": "eu.kanade.tachiyomi.extension.ar.shqqaa",
     "apk": "tachiyomi-ar.shqqaa-v1.2.1.apk",
@@ -1250,10 +1258,10 @@
   {
     "name": "Tachiyomi: Nude-Moon",
     "pkg": "eu.kanade.tachiyomi.extension.ru.nudemoon",
-    "apk": "tachiyomi-ru.nudemoon-v1.2.3.apk",
+    "apk": "tachiyomi-ru.nudemoon-v1.2.4.apk",
     "lang": "ru",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: Onlinecomics",
