@@ -912,6 +912,14 @@
     "version": "1.2.3"
   },
   {
+    "name": "Tachiyomi: ManhuaID",
+    "pkg": "eu.kanade.tachiyomi.extension.id.manhuaid",
+    "apk": "tachiyomi-id.manhuaid-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Neumanga",
     "pkg": "eu.kanade.tachiyomi.extension.id.neumanga",
     "apk": "tachiyomi-id.neumanga-v1.2.3.apk",
