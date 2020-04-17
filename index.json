@@ -450,10 +450,10 @@
   {
     "name": "Tachiyomi: Mangahere",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangahere",
-    "apk": "tachiyomi-en.mangahere-v1.2.13.apk",
+    "apk": "tachiyomi-en.mangahere-v1.2.14.apk",
     "lang": "en",
-    "code": 13,
-    "version": "1.2.13"
+    "code": 14,
+    "version": "1.2.14"
   },
   {
     "name": "Tachiyomi: Mangahub",
@@ -642,10 +642,10 @@
   {
     "name": "Tachiyomi: ReadMangaToday",
     "pkg": "eu.kanade.tachiyomi.extension.en.readmangatoday",
-    "apk": "tachiyomi-en.readmangatoday-v1.2.8.apk",
+    "apk": "tachiyomi-en.readmangatoday-v1.2.9.apk",
     "lang": "en",
-    "code": 8,
-    "version": "1.2.8"
+    "code": 9,
+    "version": "1.2.9"
   },
   {
     "name": "Tachiyomi: ReadM",
