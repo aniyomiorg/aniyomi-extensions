@@ -74,10 +74,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.69.apk",
+    "apk": "tachiyomi-all.madara-v1.2.70.apk",
     "lang": "all",
-    "code": 69,
-    "version": "1.2.69"
+    "code": 70,
+    "version": "1.2.70"
   },
   {
     "name": "Tachiyomi: MangaBox (Mangakakalot and others)",
@@ -202,10 +202,10 @@
   {
     "name": "Tachiyomi: WP-Comics",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpcomics",
-    "apk": "tachiyomi-all.wpcomics-v1.2.2.apk",
+    "apk": "tachiyomi-all.wpcomics-v1.2.3.apk",
     "lang": "all",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: WP Manga Stream",
@@ -818,10 +818,10 @@
   {
     "name": "Tachiyomi: Mangakawaii",
     "pkg": "eu.kanade.tachiyomi.extension.fr.mangakawaii",
-    "apk": "tachiyomi-fr.mangakawaii-v1.2.4.apk",
+    "apk": "tachiyomi-fr.mangakawaii-v1.2.5.apk",
     "lang": "fr",
-    "code": 4,
-    "version": "1.2.4"
+    "code": 5,
+    "version": "1.2.5"
   },
   {
     "name": "Tachiyomi: Scantrad",
