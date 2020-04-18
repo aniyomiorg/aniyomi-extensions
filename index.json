@@ -1258,10 +1258,10 @@
   {
     "name": "Tachiyomi: Mintmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mintmanga",
-    "apk": "tachiyomi-ru.mintmanga-v1.2.20.apk",
+    "apk": "tachiyomi-ru.mintmanga-v1.2.21.apk",
     "lang": "ru",
-    "code": 20,
-    "version": "1.2.20"
+    "code": 21,
+    "version": "1.2.21"
   },
   {
     "name": "Tachiyomi: Nude-Moon",
@@ -1282,10 +1282,10 @@
   {
     "name": "Tachiyomi: Readmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.readmanga",
-    "apk": "tachiyomi-ru.readmanga-v1.2.17.apk",
+    "apk": "tachiyomi-ru.readmanga-v1.2.18.apk",
     "lang": "ru",
-    "code": 17,
-    "version": "1.2.17"
+    "code": 18,
+    "version": "1.2.18"
   },
   {
     "name": "Tachiyomi: Risens Team",
