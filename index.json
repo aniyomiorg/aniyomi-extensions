@@ -832,6 +832,14 @@
     "version": "1.2.5"
   },
   {
+    "name": "Tachiyomi: Bacakomik",
+    "pkg": "eu.kanade.tachiyomi.extension.id.bacakomik",
+    "apk": "tachiyomi-id.bacakomik-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Baca Manga",
     "pkg": "eu.kanade.tachiyomi.extension.id.bacamanga",
     "apk": "tachiyomi-id.bacamanga-v1.2.1.apk",
