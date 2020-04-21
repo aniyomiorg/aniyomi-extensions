@@ -658,10 +658,10 @@
   {
     "name": "Tachiyomi: Renaissance Scans",
     "pkg": "eu.kanade.tachiyomi.extension.en.renascans",
-    "apk": "tachiyomi-en.renascans-v1.2.2.apk",
+    "apk": "tachiyomi-en.renascans-v1.2.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Sleepy Panda Scans",
