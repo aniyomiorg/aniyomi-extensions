@@ -202,10 +202,10 @@
   {
     "name": "Tachiyomi: WP-Comics",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpcomics",
-    "apk": "tachiyomi-all.wpcomics-v1.2.3.apk",
+    "apk": "tachiyomi-all.wpcomics-v1.2.4.apk",
     "lang": "all",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: WP Manga Stream",
