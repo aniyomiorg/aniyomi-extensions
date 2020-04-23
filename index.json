@@ -248,6 +248,14 @@
     "version": "1.2.4"
   },
   {
+    "name": "Tachiyomi: Manga Tube",
+    "pkg": "eu.kanade.tachiyomi.extension.de.mangatube",
+    "apk": "tachiyomi-de.mangatube-v1.2.1.apk",
+    "lang": "de",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: WieManga",
     "pkg": "eu.kanade.tachiyomi.extension.de.wiemanga",
     "apk": "tachiyomi-de.wiemanga-v1.2.4.apk",
@@ -934,6 +942,14 @@
     "lang": "id",
     "code": 3,
     "version": "1.2.3"
+  },
+  {
+    "name": "Tachiyomi: Ngomik",
+    "pkg": "eu.kanade.tachiyomi.extension.id.ngomik",
+    "apk": "tachiyomi-id.ngomik-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: OtakuFile",
