@@ -162,10 +162,10 @@
   {
     "name": "Tachiyomi: NineManga",
     "pkg": "eu.kanade.tachiyomi.extension.all.ninemanga",
-    "apk": "tachiyomi-all.ninemanga-v1.2.8.apk",
+    "apk": "tachiyomi-all.ninemanga-v1.2.9.apk",
     "lang": "all",
-    "code": 8,
-    "version": "1.2.8"
+    "code": 9,
+    "version": "1.2.9"
   },
   {
     "name": "Tachiyomi: NOISE Manga",
@@ -402,10 +402,10 @@
   {
     "name": "Tachiyomi: Kissmanga",
     "pkg": "eu.kanade.tachiyomi.extension.en.kissmanga",
-    "apk": "tachiyomi-en.kissmanga-v1.2.16.apk",
+    "apk": "tachiyomi-en.kissmanga-v1.2.17.apk",
     "lang": "en",
-    "code": 16,
-    "version": "1.2.16"
+    "code": 17,
+    "version": "1.2.17"
   },
   {
     "name": "Tachiyomi: Latis Books",
