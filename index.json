@@ -992,14 +992,6 @@
     "version": "1.2.4"
   },
   {
-    "name": "Tachiyomi: Mangaworld",
-    "pkg": "eu.kanade.tachiyomi.extension.it.mangaworld",
-    "apk": "tachiyomi-it.mangaworld-v1.2.2.apk",
-    "lang": "it",
-    "code": 2,
-    "version": "1.2.2"
-  },
-  {
     "name": "Tachiyomi: Novelle Leggere",
     "pkg": "eu.kanade.tachiyomi.extension.it.novelleleggere",
     "apk": "tachiyomi-it.novelleleggere-v1.2.1.apk",
