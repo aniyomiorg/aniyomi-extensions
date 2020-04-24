@@ -10,6 +10,7 @@ import eu.kanade.tachiyomi.extension.en.tsumino.TsuminoUtils.Companion.getChapte
 import eu.kanade.tachiyomi.extension.en.tsumino.TsuminoUtils.Companion.getDesc
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.*
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
@@ -19,6 +20,7 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 
 class Tsumino: ParsedHttpSource() {
 
@@ -100,6 +102,25 @@ class Tsumino: ParsedHttpSource() {
             .build()
 
         return POST("$baseUrl/Search/Operate/", headers, body)
+    }
+
+    private fun searchMangaByIdRequest(id: String) = GET("$baseUrl/entry/$id", headers)
+
+    private fun searchMangaByIdParse(response: Response, id: String): MangasPage {
+        val details = mangaDetailsParse(response)
+        details.url = "/entry/$id"
+        return MangasPage(listOf(details), false)
+    }
+
+    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+        return if (query.startsWith(PREFIX_ID_SEARCH)) {
+            val id = query.removePrefix(PREFIX_ID_SEARCH)
+            client.newCall(searchMangaByIdRequest(id))
+                .asObservableSuccess()
+                .map { response -> searchMangaByIdParse(response, id) }
+        } else {
+            super.fetchSearchManga(page, query, filters)
+        }
     }
 
     override fun searchMangaParse(response: Response): MangasPage = latestUpdatesParse(response)
@@ -214,6 +235,7 @@ class Tsumino: ParsedHttpSource() {
     class ExcludeParodiesFilter : Filter.CheckBox("Exclude parodies")
 
     enum class SortType {
+        Popularity,
         Newest,
         Oldest,
         Alphabetical,
@@ -222,7 +244,6 @@ class Tsumino: ParsedHttpSource() {
         Views,
         Random,
         Comments,
-        Popularity
     }
 
     enum class LengthType(val id: Int) {
@@ -232,4 +253,7 @@ class Tsumino: ParsedHttpSource() {
         Long(3)
     }
 
+    companion object {
+        const val PREFIX_ID_SEARCH = "id:"
+    }
 }
