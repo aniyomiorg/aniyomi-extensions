@@ -594,10 +594,10 @@
   {
     "name": "Tachiyomi: MyHentaiGallery",
     "pkg": "eu.kanade.tachiyomi.extension.en.myhentaigallery",
-    "apk": "tachiyomi-en.myhentaigallery-v1.2.1.apk",
+    "apk": "tachiyomi-en.myhentaigallery-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Oglaf",
@@ -1178,10 +1178,10 @@
   {
     "name": "Tachiyomi: Union Mangás",
     "pkg": "eu.kanade.tachiyomi.extension.pt.unionmangas",
-    "apk": "tachiyomi-pt.unionmangas-v1.2.12.apk",
+    "apk": "tachiyomi-pt.unionmangas-v1.2.13.apk",
     "lang": "pt",
-    "code": 12,
-    "version": "1.2.12"
+    "code": 13,
+    "version": "1.2.13"
   },
   {
     "name": "Tachiyomi: YES Mangás",
