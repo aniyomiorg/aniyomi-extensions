@@ -82,10 +82,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.75.apk",
+    "apk": "tachiyomi-all.madara-v1.2.76.apk",
     "lang": "all",
-    "code": 75,
-    "version": "1.2.75"
+    "code": 76,
+    "version": "1.2.76"
   },
   {
     "name": "Tachiyomi: MangaBox (Mangakakalot and others)",
@@ -106,10 +106,10 @@
   {
     "name": "Tachiyomi: MangAdventure",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangadventure",
-    "apk": "tachiyomi-all.mangadventure-v1.2.6.apk",
+    "apk": "tachiyomi-all.mangadventure-v1.2.7.apk",
     "lang": "all",
-    "code": 6,
-    "version": "1.2.6"
+    "code": 7,
+    "version": "1.2.7"
   },
   {
     "name": "Tachiyomi: MANGA Plus by SHUEISHA",
