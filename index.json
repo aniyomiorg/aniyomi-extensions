@@ -904,6 +904,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: MangaKita",
+    "pkg": "eu.kanade.tachiyomi.extension.id.mangakita",
+    "apk": "tachiyomi-id.mangakita-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Mangaku",
     "pkg": "eu.kanade.tachiyomi.extension.id.mangaku",
     "apk": "tachiyomi-id.mangaku-v1.2.1.apk",
