@@ -24,6 +24,14 @@
     "version": "1.2.7"
   },
   {
+    "name": "Tachiyomi: Dragon Ball Multiverse",
+    "pkg": "eu.kanade.tachiyomi.extension.all.dragonball_multiverse",
+    "apk": "tachiyomi-all.dragonball_multiverse-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: E-Hentai",
     "pkg": "eu.kanade.tachiyomi.extension.all.ehentai",
     "apk": "tachiyomi-all.ehentai-v1.2.10.apk",
@@ -302,14 +310,6 @@
     "lang": "en",
     "code": 2,
     "version": "1.2.2"
-  },
-  {
-    "name": "Tachiyomi: Dragon Ball Multiverse",
-    "pkg": "eu.kanade.tachiyomi.extension.en.dragonball_multiverse",
-    "apk": "tachiyomi-en.dragonball_multiverse-v1.2.3.apk",
-    "lang": "en",
-    "code": 3,
-    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: Dynasty",
