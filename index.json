@@ -738,10 +738,10 @@
   {
     "name": "Tachiyomi: HeavenManga",
     "pkg": "eu.kanade.tachiyomi.extension.es.heavenmanga",
-    "apk": "tachiyomi-es.heavenmanga-v1.2.4.apk",
+    "apk": "tachiyomi-es.heavenmanga-v1.2.5.apk",
     "lang": "es",
-    "code": 4,
-    "version": "1.2.4"
+    "code": 5,
+    "version": "1.2.5"
   },
   {
     "name": "Tachiyomi: Ikuhentai",
