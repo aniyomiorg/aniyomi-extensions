@@ -1336,6 +1336,14 @@
     "version": "1.2.2"
   },
   {
+    "name": "Tachiyomi: SeriManga",
+    "pkg": "eu.kanade.tachiyomi.extension.tr.serimanga",
+    "apk": "tachiyomi-tr.serimanga-v1.2.1.apk",
+    "lang": "tr",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: HocVienTruyenTranh",
     "pkg": "eu.kanade.tachiyomi.extension.vi.academyvn",
     "apk": "tachiyomi-vi.academyvn-v1.2.8.apk",
