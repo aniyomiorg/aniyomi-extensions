@@ -762,10 +762,10 @@
   {
     "name": "Tachiyomi: MangaMx & Doujin-Yang",
     "pkg": "eu.kanade.tachiyomi.extension.es.mangamx",
-    "apk": "tachiyomi-es.mangamx-v1.2.6.apk",
+    "apk": "tachiyomi-es.mangamx-v1.2.7.apk",
     "lang": "es",
-    "code": 6,
-    "version": "1.2.6"
+    "code": 7,
+    "version": "1.2.7"
   },
   {
     "name": "Tachiyomi: TMOHentai",
