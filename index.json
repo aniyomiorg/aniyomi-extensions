@@ -1058,10 +1058,10 @@
   {
     "name": "Tachiyomi: JMana",
     "pkg": "eu.kanade.tachiyomi.extension.ko.jmana",
-    "apk": "tachiyomi-ko.jmana-v1.2.9.apk",
+    "apk": "tachiyomi-ko.jmana-v1.2.10.apk",
     "lang": "ko",
-    "code": 9,
-    "version": "1.2.9"
+    "code": 10,
+    "version": "1.2.10"
   },
   {
     "name": "Tachiyomi: ManaMoa",
