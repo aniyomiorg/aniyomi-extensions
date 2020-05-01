@@ -224,6 +224,14 @@
     "version": "1.2.8"
   },
   {
+    "name": "Tachiyomi: zBulu",
+    "pkg": "eu.kanade.tachiyomi.extension.all.zbulu",
+    "apk": "tachiyomi-all.zbulu-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Manga.ae",
     "pkg": "eu.kanade.tachiyomi.extension.ar.mangaae",
     "apk": "tachiyomi-ar.mangaae-v1.2.6.apk",
@@ -382,14 +390,6 @@
     "lang": "en",
     "code": 4,
     "version": "1.2.4"
-  },
-  {
-    "name": "Tachiyomi: HolyManga & HeavenManga",
-    "pkg": "eu.kanade.tachiyomi.extension.en.holymanga",
-    "apk": "tachiyomi-en.holymanga-v1.2.3.apk",
-    "lang": "en",
-    "code": 3,
-    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: HonkaiImpact3",
