@@ -234,10 +234,10 @@
   {
     "name": "Tachiyomi: Manga.ae",
     "pkg": "eu.kanade.tachiyomi.extension.ar.mangaae",
-    "apk": "tachiyomi-ar.mangaae-v1.2.6.apk",
+    "apk": "tachiyomi-ar.mangaae-v1.2.7.apk",
     "lang": "ar",
-    "code": 6,
-    "version": "1.2.6"
+    "code": 7,
+    "version": "1.2.7"
   },
   {
     "name": "Tachiyomi: MangaLink",
