@@ -1336,6 +1336,14 @@
     "version": "1.2.2"
   },
   {
+    "name": "Tachiyomi: MangaDenizi",
+    "pkg": "eu.kanade.tachiyomi.extension.tr.mangadenizi",
+    "apk": "tachiyomi-tr.mangadenizi-v1.2.1.apk",
+    "lang": "tr",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: SeriManga",
     "pkg": "eu.kanade.tachiyomi.extension.tr.serimanga",
     "apk": "tachiyomi-tr.serimanga-v1.2.3.apk",
