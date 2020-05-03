@@ -20,6 +20,8 @@ I acknowledge that:
 ---
 
 ### Source Website
-Website can be found at **put website URL here**.
+- Name: ?
+- Link: ?
+- Language(s): ?
 
 ### Other Details

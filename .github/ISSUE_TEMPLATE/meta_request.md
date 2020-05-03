@@ -2,6 +2,7 @@
 name: "🧠 Meta feature request"
 title: "[Meta]"
 about: "Suggest improvements to the project"
+labels: "meta"
 ---
 
 **PLEASE READ THIS**

@@ -20,12 +20,12 @@ I acknowledge that:
 ---
 
 ### Device information
-* Tachiyomi version: ?
-* Android version: ?
+- Tachiyomi version: ?
+- Android version: ?
 
 ### Source information
-* Source name: ?
-* Source extension version: ?
+- Name: ?
+- Extension version: ?
 
 ## Steps to reproduce
 1. First Step
