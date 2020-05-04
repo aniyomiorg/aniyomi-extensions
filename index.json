@@ -592,6 +592,14 @@
     "version": "1.2.2"
   },
   {
+    "name": "Tachiyomi: NANI? Scans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.naniscans",
+    "apk": "tachiyomi-en.naniscans-v1.2.3.apk",
+    "lang": "en",
+    "code": 3,
+    "version": "1.2.3"
+  },
+  {
     "name": "Tachiyomi: Oglaf",
     "pkg": "eu.kanade.tachiyomi.extension.en.oglaf",
     "apk": "tachiyomi-en.oglaf-v1.2.3.apk",
