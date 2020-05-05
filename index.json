@@ -842,10 +842,10 @@
   {
     "name": "Tachiyomi: Mangakawaii",
     "pkg": "eu.kanade.tachiyomi.extension.fr.mangakawaii",
-    "apk": "tachiyomi-fr.mangakawaii-v1.2.7.apk",
+    "apk": "tachiyomi-fr.mangakawaii-v1.2.8.apk",
     "lang": "fr",
-    "code": 7,
-    "version": "1.2.7"
+    "code": 8,
+    "version": "1.2.8"
   },
   {
     "name": "Tachiyomi: Scantrad",
