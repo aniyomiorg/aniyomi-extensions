@@ -82,18 +82,18 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.87.apk",
+    "apk": "tachiyomi-all.madara-v1.2.88.apk",
     "lang": "all",
-    "code": 87,
-    "version": "1.2.87"
+    "code": 88,
+    "version": "1.2.88"
   },
   {
     "name": "Tachiyomi: MangaBox (Mangakakalot and others)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangabox",
-    "apk": "tachiyomi-all.mangabox-v1.2.20.apk",
+    "apk": "tachiyomi-all.mangabox-v1.2.21.apk",
     "lang": "all",
-    "code": 20,
-    "version": "1.2.20"
+    "code": 21,
+    "version": "1.2.21"
   },
   {
     "name": "Tachiyomi: MangaDex",
@@ -218,10 +218,10 @@
   {
     "name": "Tachiyomi: WP Manga Stream",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
-    "apk": "tachiyomi-all.wpmangastream-v1.2.8.apk",
+    "apk": "tachiyomi-all.wpmangastream-v1.2.9.apk",
     "lang": "all",
-    "code": 8,
-    "version": "1.2.8"
+    "code": 9,
+    "version": "1.2.9"
   },
   {
     "name": "Tachiyomi: zBulu",
@@ -666,10 +666,10 @@
   {
     "name": "Tachiyomi: ReadManhwa",
     "pkg": "eu.kanade.tachiyomi.extension.en.readmanhwa",
-    "apk": "tachiyomi-en.readmanhwa-v1.2.1.apk",
+    "apk": "tachiyomi-en.readmanhwa-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: ReadM",
@@ -850,10 +850,10 @@
   {
     "name": "Tachiyomi: Mangakawaii",
     "pkg": "eu.kanade.tachiyomi.extension.fr.mangakawaii",
-    "apk": "tachiyomi-fr.mangakawaii-v1.2.8.apk",
+    "apk": "tachiyomi-fr.mangakawaii-v1.2.9.apk",
     "lang": "fr",
-    "code": 8,
-    "version": "1.2.8"
+    "code": 9,
+    "version": "1.2.9"
   },
   {
     "name": "Tachiyomi: Scantrad",
