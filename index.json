@@ -1040,6 +1040,14 @@
     "version": "1.2.3"
   },
   {
+    "name": "Tachiyomi: MangaRaw",
+    "pkg": "eu.kanade.tachiyomi.extension.ja.mangaraw",
+    "apk": "tachiyomi-ja.mangaraw-v1.2.1.apk",
+    "lang": "ja",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Nikkangecchan",
     "pkg": "eu.kanade.tachiyomi.extension.ja.nikkangecchan",
     "apk": "tachiyomi-ja.nikkangecchan-v1.2.1.apk",
