@@ -61,7 +61,7 @@ Notice that we're using `compileOnly` instead of `implementation`, since the app
 
 #### Extensions library
 
-Extensions rely on stubs defined in [tachiyomi-extensions-lib](https://github.com/tachiyomi/extensions-lib), which simply provides some interfaces for compiling extensions. These interfaces match what's found in the main Tachiyomi app. The exact version used is configured with `libVersion`. The latest version should be preferred.
+Extensions rely on stubs defined in [tachiyomi-extensions-lib](https://github.com/tachiyomiorg/extensions-lib), which simply provides some interfaces for compiling extensions. These interfaces match what's found in the main Tachiyomi app. The exact version used is configured with `libVersion`. The latest version should be preferred.
 
 
 #### Duktape stub
