@@ -400,6 +400,14 @@
     "version": "1.2.1"
   },
   {
+    "name": "Tachiyomi: INKR",
+    "pkg": "eu.kanade.tachiyomi.extension.en.inkr",
+    "apk": "tachiyomi-en.inkr-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Latis Books",
     "pkg": "eu.kanade.tachiyomi.extension.en.latisbooks",
     "apk": "tachiyomi-en.latisbooks-v1.2.1.apk",
