@@ -1258,10 +1258,10 @@
   {
     "name": "Tachiyomi: ComX",
     "pkg": "eu.kanade.tachiyomi.extension.ru.comx",
-    "apk": "tachiyomi-ru.comx-v1.2.5.apk",
+    "apk": "tachiyomi-ru.comx-v1.2.6.apk",
     "lang": "ru",
-    "code": 5,
-    "version": "1.2.5"
+    "code": 6,
+    "version": "1.2.6"
   },
   {
     "name": "Tachiyomi: Desu",
@@ -1282,18 +1282,18 @@
   {
     "name": "Tachiyomi: MangaLib",
     "pkg": "eu.kanade.tachiyomi.extension.ru.libmanga",
-    "apk": "tachiyomi-ru.libmanga-v1.2.15.apk",
+    "apk": "tachiyomi-ru.libmanga-v1.2.16.apk",
     "lang": "ru",
-    "code": 15,
-    "version": "1.2.15"
+    "code": 16,
+    "version": "1.2.16"
   },
   {
     "name": "Tachiyomi: Mangachan",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mangachan",
-    "apk": "tachiyomi-ru.mangachan-v1.2.8.apk",
+    "apk": "tachiyomi-ru.mangachan-v1.2.9.apk",
     "lang": "ru",
-    "code": 8,
-    "version": "1.2.8"
+    "code": 9,
+    "version": "1.2.9"
   },
   {
     "name": "Tachiyomi: MangaClub",
@@ -1322,10 +1322,10 @@
   {
     "name": "Tachiyomi: Mintmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mintmanga",
-    "apk": "tachiyomi-ru.mintmanga-v1.2.21.apk",
+    "apk": "tachiyomi-ru.mintmanga-v1.2.22.apk",
     "lang": "ru",
-    "code": 21,
-    "version": "1.2.21"
+    "code": 22,
+    "version": "1.2.22"
   },
   {
     "name": "Tachiyomi: Nude-Moon",
@@ -1346,10 +1346,10 @@
   {
     "name": "Tachiyomi: Readmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.readmanga",
-    "apk": "tachiyomi-ru.readmanga-v1.2.18.apk",
+    "apk": "tachiyomi-ru.readmanga-v1.2.19.apk",
     "lang": "ru",
-    "code": 18,
-    "version": "1.2.18"
+    "code": 19,
+    "version": "1.2.19"
   },
   {
     "name": "Tachiyomi: Risens Team",
