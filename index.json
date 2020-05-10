@@ -280,14 +280,6 @@
     "version": "1.2.4"
   },
   {
-    "name": "Tachiyomi: Boredom Society",
-    "pkg": "eu.kanade.tachiyomi.extension.en.boredomsociety",
-    "apk": "tachiyomi-en.boredomsociety-v1.2.4.apk",
-    "lang": "en",
-    "code": 4,
-    "version": "1.2.4"
-  },
-  {
     "name": "Tachiyomi: Clone Manga",
     "pkg": "eu.kanade.tachiyomi.extension.en.clonemanga",
     "apk": "tachiyomi-en.clonemanga-v1.2.1.apk",
@@ -998,14 +990,6 @@
     "lang": "id",
     "code": 1,
     "version": "1.2.1"
-  },
-  {
-    "name": "Tachiyomi: Pecinta Komik",
-    "pkg": "eu.kanade.tachiyomi.extension.id.pecintakomik",
-    "apk": "tachiyomi-id.pecintakomik-v1.2.3.apk",
-    "lang": "id",
-    "code": 3,
-    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: HentaiFantasy",
