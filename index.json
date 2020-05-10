@@ -1266,10 +1266,10 @@
   {
     "name": "Tachiyomi: Henchan",
     "pkg": "eu.kanade.tachiyomi.extension.ru.henchan",
-    "apk": "tachiyomi-ru.henchan-v1.2.15.apk",
+    "apk": "tachiyomi-ru.henchan-v1.2.16.apk",
     "lang": "ru",
-    "code": 15,
-    "version": "1.2.15"
+    "code": 16,
+    "version": "1.2.16"
   },
   {
     "name": "Tachiyomi: MangaLib",
