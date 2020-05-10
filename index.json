@@ -1362,10 +1362,10 @@
   {
     "name": "Tachiyomi: Nekopost",
     "pkg": "eu.kanade.tachiyomi.extension.th.nekopost",
-    "apk": "tachiyomi-th.nekopost-v1.2.2.apk",
+    "apk": "tachiyomi-th.nekopost-v1.2.3.apk",
     "lang": "th",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: MangaDenizi",
