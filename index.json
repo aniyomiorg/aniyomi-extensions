@@ -394,10 +394,10 @@
   {
     "name": "Tachiyomi: INKR",
     "pkg": "eu.kanade.tachiyomi.extension.en.inkr",
-    "apk": "tachiyomi-en.inkr-v1.2.1.apk",
+    "apk": "tachiyomi-en.inkr-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Latis Books",
@@ -546,10 +546,10 @@
   {
     "name": "Tachiyomi: Mangasee",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangasee",
-    "apk": "tachiyomi-en.mangasee-v1.2.6.apk",
+    "apk": "tachiyomi-en.mangasee-v1.2.7.apk",
     "lang": "en",
-    "code": 6,
-    "version": "1.2.6"
+    "code": 7,
+    "version": "1.2.7"
   },
   {
     "name": "Tachiyomi: Mangatown",
