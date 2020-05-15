@@ -426,10 +426,10 @@
   {
     "name": "Tachiyomi: Mangaeden",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangaeden",
-    "apk": "tachiyomi-en.mangaeden-v1.2.4.apk",
+    "apk": "tachiyomi-en.mangaeden-v1.2.5.apk",
     "lang": "en",
-    "code": 4,
-    "version": "1.2.4"
+    "code": 5,
+    "version": "1.2.5"
   },
   {
     "name": "Tachiyomi: Mangafreak",
@@ -1000,20 +1000,12 @@
     "version": "1.2.3"
   },
   {
-    "name": "Tachiyomi: ItaScan",
-    "pkg": "eu.kanade.tachiyomi.extension.it.itascan",
-    "apk": "tachiyomi-it.itascan-v1.2.1.apk",
-    "lang": "it",
-    "code": 1,
-    "version": "1.2.1"
-  },
-  {
     "name": "Tachiyomi: Mangaeden",
     "pkg": "eu.kanade.tachiyomi.extension.it.mangaeden",
-    "apk": "tachiyomi-it.mangaeden-v1.2.4.apk",
+    "apk": "tachiyomi-it.mangaeden-v1.2.5.apk",
     "lang": "it",
-    "code": 4,
-    "version": "1.2.4"
+    "code": 5,
+    "version": "1.2.5"
   },
   {
     "name": "Tachiyomi: Novelle Leggere",
