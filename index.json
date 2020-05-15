@@ -536,6 +536,14 @@
     "version": "1.2.4"
   },
   {
+    "name": "Tachiyomi: MangaRock.es",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangarockes",
+    "apk": "tachiyomi-en.mangarockes-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Mangasail",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangasail",
     "apk": "tachiyomi-en.mangasail-v1.2.1.apk",
