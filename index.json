@@ -674,10 +674,10 @@
   {
     "name": "Tachiyomi: ReadManhwa",
     "pkg": "eu.kanade.tachiyomi.extension.en.readmanhwa",
-    "apk": "tachiyomi-en.readmanhwa-v1.2.2.apk",
+    "apk": "tachiyomi-en.readmanhwa-v1.2.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: ReadM",
