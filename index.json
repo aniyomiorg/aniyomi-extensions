@@ -714,10 +714,10 @@
   {
     "name": "Tachiyomi: Tapas",
     "pkg": "eu.kanade.tachiyomi.extension.en.tapastic",
-    "apk": "tachiyomi-en.tapastic-v1.2.8.apk",
+    "apk": "tachiyomi-en.tapastic-v1.2.9.apk",
     "lang": "en",
-    "code": 8,
-    "version": "1.2.8"
+    "code": 9,
+    "version": "1.2.9"
   },
   {
     "name": "Tachiyomi: Tsumino",
