@@ -58,10 +58,10 @@
   {
     "name": "Tachiyomi: Genkan (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.genkan",
-    "apk": "tachiyomi-all.genkan-v1.2.18.apk",
+    "apk": "tachiyomi-all.genkan-v1.2.19.apk",
     "lang": "all",
-    "code": 18,
-    "version": "1.2.18"
+    "code": 19,
+    "version": "1.2.19"
   },
   {
     "name": "Tachiyomi: Komga",
@@ -1314,10 +1314,10 @@
   {
     "name": "Tachiyomi: Mintmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mintmanga",
-    "apk": "tachiyomi-ru.mintmanga-v1.2.22.apk",
+    "apk": "tachiyomi-ru.mintmanga-v1.2.23.apk",
     "lang": "ru",
-    "code": 22,
-    "version": "1.2.22"
+    "code": 23,
+    "version": "1.2.23"
   },
   {
     "name": "Tachiyomi: Nude-Moon",
@@ -1338,10 +1338,10 @@
   {
     "name": "Tachiyomi: Readmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.readmanga",
-    "apk": "tachiyomi-ru.readmanga-v1.2.19.apk",
+    "apk": "tachiyomi-ru.readmanga-v1.2.20.apk",
     "lang": "ru",
-    "code": 19,
-    "version": "1.2.19"
+    "code": 20,
+    "version": "1.2.20"
   },
   {
     "name": "Tachiyomi: Risens Team",
@@ -1354,10 +1354,10 @@
   {
     "name": "Tachiyomi: Selfmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.selfmanga",
-    "apk": "tachiyomi-ru.selfmanga-v1.2.6.apk",
+    "apk": "tachiyomi-ru.selfmanga-v1.2.7.apk",
     "lang": "ru",
-    "code": 6,
-    "version": "1.2.6"
+    "code": 7,
+    "version": "1.2.7"
   },
   {
     "name": "Tachiyomi: Nekopost",
