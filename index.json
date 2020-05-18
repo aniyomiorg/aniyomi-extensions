@@ -346,10 +346,10 @@
   {
     "name": "Tachiyomi: Guya",
     "pkg": "eu.kanade.tachiyomi.extension.en.guya",
-    "apk": "tachiyomi-en.guya-v1.2.10.apk",
+    "apk": "tachiyomi-en.guya-v1.2.11.apk",
     "lang": "en",
-    "code": 10,
-    "version": "1.2.10"
+    "code": 11,
+    "version": "1.2.11"
   },
   {
     "name": "Tachiyomi: Hentai2Read",
