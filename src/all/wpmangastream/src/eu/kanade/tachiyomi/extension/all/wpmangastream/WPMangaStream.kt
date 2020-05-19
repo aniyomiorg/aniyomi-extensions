@@ -167,7 +167,7 @@ abstract class WPMangaStream(
                 author = infoElement.select("span:contains(Author:)").firstOrNull()?.ownText()
                 artist = author
                 description = infoElement.select("div.desc p").joinToString("\n") { it.text() }
-                thumbnail_url = infoElement.select("img").imgAttr()
+                thumbnail_url = infoElement.select("div.thumb img").imgAttr()
             }
         }
     }
