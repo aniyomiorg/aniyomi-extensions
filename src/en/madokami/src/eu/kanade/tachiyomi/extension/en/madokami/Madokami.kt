@@ -4,6 +4,9 @@ import android.app.Application
 import android.content.SharedPreferences
 import android.support.v7.preference.EditTextPreference
 import android.support.v7.preference.PreferenceScreen
+import com.github.salomonbrys.kotson.fromJson
+import com.google.gson.Gson
+import com.google.gson.JsonArray
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -20,6 +23,7 @@ import kotlin.collections.ArrayList
 import okhttp3.Credentials
 import okhttp3.HttpUrl
 import okhttp3.Request
+import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
@@ -30,6 +34,8 @@ class Madokami : ConfigurableSource, ParsedHttpSource() {
     override val baseUrl = "https://manga.madokami.al"
     override val lang = "en"
     override val supportsLatest = false
+
+    private val gson = Gson()
 
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.ENGLISH)
 
@@ -99,6 +105,8 @@ class Madokami : ConfigurableSource, ParsedHttpSource() {
 
     override fun chapterListRequest(manga: SManga) = authenticate(GET("$baseUrl/" + manga.url, headers))
 
+    override fun chapterListParse(response: Response): List<SChapter> = super.chapterListParse(response).reversed()
+
     /**
      * Returns the Jsoup selector that returns a list of [Element] corresponding to each chapter.
      */
@@ -142,16 +150,15 @@ class Madokami : ConfigurableSource, ParsedHttpSource() {
     override fun pageListParse(document: Document): List<Page> {
         val element = document.select("div#reader")
         val path = element.attr("data-path")
-        val filestring = element.attr("data-files")
-        val files = filestring.trim('[', ']').split(",")
+        val files = gson.fromJson<JsonArray>(element.attr("data-files"))
         val pages = ArrayList<Page>()
-        for ((index, filename) in files.withIndex()) {
+        for ((index, file) in files.withIndex()) {
             val url = HttpUrl.Builder()
                 .scheme("https")
                 .host("manga.madokami.al")
                 .addPathSegments("reader/image")
                 .addEncodedQueryParameter("path", URLEncoder.encode(path, "UTF-8"))
-                .addEncodedQueryParameter("file", URLEncoder.encode(filename.trim('"').replace("\\/", "/"), "UTF-8"))
+                .addEncodedQueryParameter("file", URLEncoder.encode(file.asString, "UTF-8"))
                 .build().url()
             pages.add(Page(index, url.toExternalForm(), url.toExternalForm()))
         }
