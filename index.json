@@ -42,26 +42,26 @@
   {
     "name": "Tachiyomi: FMReader (multiple aggregators)",
     "pkg": "eu.kanade.tachiyomi.extension.all.fmreader",
-    "apk": "tachiyomi-all.fmreader-v1.2.13.apk",
+    "apk": "tachiyomi-all.fmreader-v1.2.15.apk",
     "lang": "all",
-    "code": 13,
-    "version": "1.2.13"
+    "code": 15,
+    "version": "1.2.15"
   },
   {
     "name": "Tachiyomi: FoolSlide (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.foolslide",
-    "apk": "tachiyomi-all.foolslide-v1.2.47.apk",
+    "apk": "tachiyomi-all.foolslide-v1.2.48.apk",
     "lang": "all",
-    "code": 47,
-    "version": "1.2.47"
+    "code": 48,
+    "version": "1.2.48"
   },
   {
     "name": "Tachiyomi: Genkan (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.genkan",
-    "apk": "tachiyomi-all.genkan-v1.2.19.apk",
+    "apk": "tachiyomi-all.genkan-v1.2.20.apk",
     "lang": "all",
-    "code": 19,
-    "version": "1.2.19"
+    "code": 20,
+    "version": "1.2.20"
   },
   {
     "name": "Tachiyomi: Komga",
