@@ -90,10 +90,10 @@
   {
     "name": "Tachiyomi: MangaBox (Mangakakalot and others)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangabox",
-    "apk": "tachiyomi-all.mangabox-v1.2.21.apk",
+    "apk": "tachiyomi-all.mangabox-v1.2.22.apk",
     "lang": "all",
-    "code": 21,
-    "version": "1.2.21"
+    "code": 22,
+    "version": "1.2.22"
   },
   {
     "name": "Tachiyomi: MangaDex",
