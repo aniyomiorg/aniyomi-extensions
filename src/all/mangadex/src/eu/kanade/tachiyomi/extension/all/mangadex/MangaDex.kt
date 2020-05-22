@@ -45,7 +45,7 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
-abstract class Mangadex(
+abstract class MangaDex(
     override val lang: String,
     private val internalLang: String
 ) : ConfigurableSource, ParsedHttpSource() {
@@ -108,11 +108,11 @@ abstract class Mangadex(
 
     // url matches default SortFilter selection (Rating Descending)
     override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/titles/7/$page/", headersBuilder().build())
+        return GET("$baseUrl/titles/7/$page/", headersBuilder().build(), CacheControl.FORCE_NETWORK)
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/updates/$page", headersBuilder().build())
+        return GET("$baseUrl/updates/$page", headersBuilder().build(), CacheControl.FORCE_NETWORK)
     }
 
     override fun popularMangaFromElement(element: Element): SManga {
@@ -568,7 +568,7 @@ abstract class Mangadex(
 
         val server = getServer()
         val saver = getUseDataSaver()
-        return GET("$baseUrl${chapter.url}?server=$server&saver=$saver", headers)
+        return GET("$baseUrl${chapter.url}?server=$server&saver=$saver", headers, CacheControl.FORCE_NETWORK)
     }
 
     override fun pageListParse(document: Document) = throw Exception("Not used")

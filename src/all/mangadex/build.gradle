@@ -4,8 +4,8 @@ apply plugin: 'kotlin-android'
 ext {
     appName = 'Tachiyomi: MangaDex'
     pkgNameSuffix = 'all.mangadex'
-    extClass = '.MangadexFactory'
-    extVersionCode = 91
+    extClass = '.MangaDexFactory'
+    extVersionCode = 92
     libVersion = '1.2'
 }
 
