@@ -218,10 +218,10 @@
   {
     "name": "Tachiyomi: WP Manga Stream",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
-    "apk": "tachiyomi-all.wpmangastream-v1.2.13.apk",
+    "apk": "tachiyomi-all.wpmangastream-v1.2.14.apk",
     "lang": "all",
-    "code": 13,
-    "version": "1.2.13"
+    "code": 14,
+    "version": "1.2.14"
   },
   {
     "name": "Tachiyomi: zBulu",
