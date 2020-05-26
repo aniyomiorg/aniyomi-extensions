@@ -82,10 +82,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.99.apk",
+    "apk": "tachiyomi-all.madara-v1.2.100.apk",
     "lang": "all",
-    "code": 99,
-    "version": "1.2.99"
+    "code": 100,
+    "version": "1.2.100"
   },
   {
     "name": "Tachiyomi: MangaBox (Mangakakalot and others)",
@@ -1434,10 +1434,10 @@
   {
     "name": "Tachiyomi: MeDocTruyenTranh",
     "pkg": "eu.kanade.tachiyomi.extension.vi.medoctruyentranh",
-    "apk": "tachiyomi-vi.medoctruyentranh-v1.2.2.apk",
+    "apk": "tachiyomi-vi.medoctruyentranh-v1.2.3.apk",
     "lang": "vi",
-    "code": 2,
-    "version": "1.2.2"
+    "code": 3,
+    "version": "1.2.3"
   },
   {
     "name": "Tachiyomi: NetTruyen",
