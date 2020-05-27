@@ -184,6 +184,14 @@
     "version": "1.2.2"
   },
   {
+    "name": "Tachiyomi: Paprika",
+    "pkg": "eu.kanade.tachiyomi.extension.all.paprika",
+    "apk": "tachiyomi-all.paprika-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Simply Hentai",
     "pkg": "eu.kanade.tachiyomi.extension.all.simplyhentai",
     "apk": "tachiyomi-all.simplyhentai-v1.2.1.apk",
