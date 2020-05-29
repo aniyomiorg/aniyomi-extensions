@@ -1146,10 +1146,10 @@
   {
     "name": "Tachiyomi: Golden Mangás",
     "pkg": "eu.kanade.tachiyomi.extension.pt.goldenmangas",
-    "apk": "tachiyomi-pt.goldenmangas-v1.2.4.apk",
+    "apk": "tachiyomi-pt.goldenmangas-v1.2.5.apk",
     "lang": "pt",
-    "code": 4,
-    "version": "1.2.4"
+    "code": 5,
+    "version": "1.2.5"
   },
   {
     "name": "Tachiyomi: HipercooL",
