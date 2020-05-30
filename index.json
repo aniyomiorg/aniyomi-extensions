@@ -912,6 +912,14 @@
     "version": "1.2.2"
   },
   {
+    "name": "Tachiyomi: Kombatch",
+    "pkg": "eu.kanade.tachiyomi.extension.id.kombatch",
+    "apk": "tachiyomi-id.kombatch-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Komikcast",
     "pkg": "eu.kanade.tachiyomi.extension.id.komikcast",
     "apk": "tachiyomi-id.komikcast-v1.2.4.apk",
