@@ -58,10 +58,10 @@
   {
     "name": "Tachiyomi: FoolSlide (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.foolslide",
-    "apk": "tachiyomi-all.foolslide-v1.2.49.apk",
+    "apk": "tachiyomi-all.foolslide-v1.2.50.apk",
     "lang": "all",
-    "code": 49,
-    "version": "1.2.49"
+    "code": 50,
+    "version": "1.2.50"
   },
   {
     "name": "Tachiyomi: Genkan (multiple sources)",
