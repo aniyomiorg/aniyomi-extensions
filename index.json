@@ -138,10 +138,10 @@
   {
     "name": "Tachiyomi: My Manga Reader CMS (Many sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mmrcms",
-    "apk": "tachiyomi-all.mmrcms-v1.2.40.apk",
+    "apk": "tachiyomi-all.mmrcms-v1.2.41.apk",
     "lang": "all",
-    "code": 40,
-    "version": "1.2.40"
+    "code": 41,
+    "version": "1.2.41"
   },
   {
     "name": "Tachiyomi: MyReadingManga",
@@ -1134,14 +1134,6 @@
     "lang": "ko",
     "code": 11,
     "version": "1.2.11"
-  },
-  {
-    "name": "Tachiyomi: AnimaRegia",
-    "pkg": "eu.kanade.tachiyomi.extension.pt.animaregia",
-    "apk": "tachiyomi-pt.animaregia-v1.2.2.apk",
-    "lang": "pt",
-    "code": 2,
-    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Central de Mangás",
