@@ -90,10 +90,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.105.apk",
+    "apk": "tachiyomi-all.madara-v1.2.106.apk",
     "lang": "all",
-    "code": 105,
-    "version": "1.2.105"
+    "code": 106,
+    "version": "1.2.106"
   },
   {
     "name": "Tachiyomi: MangaBox (Mangakakalot and others)",
@@ -266,10 +266,10 @@
   {
     "name": "Tachiyomi: Team X",
     "pkg": "eu.kanade.tachiyomi.extension.ar.teamx",
-    "apk": "tachiyomi-ar.teamx-v1.2.4.apk",
+    "apk": "tachiyomi-ar.teamx-v1.2.5.apk",
     "lang": "ar",
-    "code": 4,
-    "version": "1.2.4"
+    "code": 5,
+    "version": "1.2.5"
   },
   {
     "name": "Tachiyomi: Manga Tube",
