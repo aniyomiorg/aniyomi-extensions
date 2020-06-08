@@ -418,10 +418,10 @@
   {
     "name": "Tachiyomi: Madokami",
     "pkg": "eu.kanade.tachiyomi.extension.en.madokami",
-    "apk": "tachiyomi-en.madokami-v1.2.3.apk",
+    "apk": "tachiyomi-en.madokami-v1.2.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: Manga Cruzers",
