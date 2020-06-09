@@ -7,6 +7,7 @@ import android.support.v7.preference.PreferenceScreen
 import eu.kanade.tachiyomi.extension.BuildConfig
 import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getArtists
 import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getGroups
+import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getNumPages
 import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getTagDescription
 import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getTags
 import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getTime
@@ -200,9 +201,8 @@ open class NHentai(
             description = "Full English and Japanese titles:\n"
                 .plus("$fullTitle\n")
                 .plus("${document.select("div#info h2").text()}\n\n")
-                .plus("Length: ${document.select("div#info div:contains(pages)").text()}\n")
+                .plus("Pages: ${getNumPages(document)}\n")
                 .plus("Favorited by: ${document.select("div#info i.fa-heart + span span").text().removeSurrounding("(", ")")}\n")
-                .plus("Categories: ${document.select("div.field-name:contains(Categories) span.tags a").first()?.ownText()}\n\n")
                 .plus(getTagDescription(document))
             genre = getTags(document)
         }
