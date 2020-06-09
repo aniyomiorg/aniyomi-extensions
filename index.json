@@ -408,6 +408,14 @@
     "version": "1.2.2"
   },
   {
+    "name": "Tachiyomi: Kill Six Billion Demons",
+    "pkg": "eu.kanade.tachiyomi.extension.en.killsixbilliondemons",
+    "apk": "tachiyomi-en.killsixbilliondemons-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Latis Books",
     "pkg": "eu.kanade.tachiyomi.extension.en.latisbooks",
     "apk": "tachiyomi-en.latisbooks-v1.2.1.apk",
