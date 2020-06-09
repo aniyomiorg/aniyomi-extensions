@@ -1,20 +1,28 @@
 # Contributing
 
-Before you start, please note that the ability to use following technologies is **required** and it's not possible for us to teach you any of them.
+## Prerequisites
 
-- basic [Android software development](https://en.wikipedia.org/wiki/Android_software_development) using [Kotlin](https://kotlinlang.org/)
-- web scraping
-    - [OkHttp](https://square.github.io/okhttp/)
-    - [JSoup](https://jsoup.org/)
+Before you start, please note that the ability to use following technologies is **required** and that existing contributors will not actively teach them to you.
+
+- Basic [Android development](https://developer.android.com/)
+- [Kotlin](https://kotlinlang.org/)
+- Web scraping
     - [HTML](https://developer.mozilla.org/en-US/docs/Web/HTML)
     - [CSS selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors)
+    - [OkHttp](https://square.github.io/okhttp/)
+    - [JSoup](https://jsoup.org/)
+
+### Tools
+
+- [Android Studio](https://developer.android.com/studio)
+- Emulator or phone with developer options enabled and a recent version of Tachiyomi installed
 
 
 ## Writing an extension
 
 The quickest way to get started is to copy an existing extension's folder structure and renaming it as needed. Of course, that also means that there's plenty of existing extensions that you can reference as you go!
 
-### Setting up a module
+### Setting up a new Gradle module
 
 Make sure that your new extension's `build.gradle` file follows the following structure:
 
@@ -35,19 +43,58 @@ apply from: "$rootDir/common.gradle"
 
 | Field | Description |
 | ----- | ----------- |
-| `appName` | The name of the Android application. By prefixing it with `Tachiyomi: `, it will be easier to locate with an Android package manager. |
-| `pkgNameSuffix` | A unique suffix added to `eu.kanade.tachiyomi.extension`. The language and the site name should be enough. Remember your catalogue code implementation must be placed in this package. |
-| `extClass` | Points to the catalogue class. You can use a relative path starting with a dot (the package name is the base path). This is required for Tachiyomi to find and instantiate the catalogue. |
-| `extVersionCode` | The version code of the catalogue. This must be a positive integer and increased with any change to the implementation. |
-| `libVersion` | The version of the [extensions library](https://github.com/inorichi/tachiyomi-extensions-lib) used. |
+| `appName` | The name of the Android application. Should be prefixed with `Tachiyomi: `. |
+| `pkgNameSuffix` | A unique suffix added to `eu.kanade.tachiyomi.extension`. The language and the site name should be enough. Remember your extension code implementation must be placed in this package. |
+| `extClass` | Points to the class that implements `Source`. You can use a relative path starting with a dot (the package name is the base path). This is used to find and instantiate the source(s). |
+| `extVersionCode` | The extension version code. This must be a positive integer and incremented with any change to the code. |
+| `libVersion` | The version of the [extensions library](https://github.com/tachiyomiorg/extensions-lib) used. |
 
-The catalogue's version name is based off of `libVersion` and `extVersionCode`. With the example used above, the version of the catalogue would be `1.2.1`.
+The extension's version name is based off of `libVersion` and `extVersionCode`. With the example used above, the version of the catalogue would be `1.2.1`.
 
-#### Extensions library
+### Core dependencies
 
-Extensions rely on [extensions-lib](https://github.com/tachiyomiorg/extensions-lib), which simply provides some interfaces and stubs to compile extentsions. The actual implementations are in the [app](https://github.com/inorichi/tachiyomi) inside `eu.kanade.tachiyomi.source` package which you can find it [here](https://github.com/inorichi/tachiyomi/tree/dev/app/src/main/java/eu/kanade/tachiyomi/source), reading the code inside there will help you with writing your extension.
+#### Extension API
 
-### general guidelines and extension workflow
+Extensions rely on [extensions-lib](https://github.com/tachiyomiorg/extensions-lib), which provides some interfaces and stubs from the [app](https://github.com/inorichi/tachiyomi) for compilation purposes. The actual implementations can be found [here](https://github.com/inorichi/tachiyomi/tree/dev/app/src/main/java/eu/kanade/tachiyomi/source). Referencing the actual implementation will help with understanding extensions' call flow.
+
+#### Duktape stub
+
+[`duktape-stub`](https://github.com/inorichi/tachiyomi-extensions/tree/master/lib/duktape-stub) provides stubs for using Duktape functionality without pulling in the full library. Functionality is bundled into the main Tachiyomi app.
+
+```
+dependencies {
+    compileOnly project(':duktape-stub')
+}
+```
+
+#### Rate limiting library
+
+[`lib-ratelimit`](https://github.com/inorichi/tachiyomi-extensions/tree/master/lib/ratelimit) is a library for adding rate limiting functionality as an [OkHttp interceptor](https://square.github.io/okhttp/interceptors/).
+
+```
+dependencies {
+    implementation project(':lib-ratelimit')
+}
+```
+
+#### Additional dependencies
+
+You may find yourself needing additional functionality and wanting to add more dependencies to your `build.gradle` file. Since extensions are run within the main Tachiyomi app, you can make use of [its dependencies](https://github.com/inorichi/tachiyomi/blob/master/app/build.gradle).
+
+For example, an extension that needs Gson could add the following:
+
+```
+dependencies {
+    compileOnly 'com.google.code.gson:gson:2.8.2'
+}
+```
+
+Notice that we're using `compileOnly` instead of `implementation`, since the app already contains it. You could use `implementation` instead for a new dependency, or you prefer not to rely on whatever the main app has at the expense of app size.
+
+Note that using `compileOnly` restricts you to versions that must be compatible with those used in Tachiyomi v0.8.5+ for proper backwards compatibility.
+
+### Extension call flow
+
 - **Extension Main Class**
     - The extension Main class which is refrenced and defined by `extClass`(inside `build.gradle`) should be inherited from either `SourceFactory` or one of `Source` children: `HttpSource` or `ParsedHttpSource`.
     - `SourceFactory` is used to expose multiple `Source`s, only use it when there's **minor difference** between your target sources or they are essentially mirrors to the same website.
@@ -82,47 +129,14 @@ Extensions rely on [extensions-lib](https://github.com/tachiyomiorg/extensions-l
 - **Chapter Pages**
     - When user opens a chapter, `fetchPageList` will be called and it will return a list of `Page`
     - While a chapter is open the reader will call `fetchImageUrl` to get URLs for each page of the manga
-- **Notes**
-    - Some time while you are writing code, you may find no use for some inherited methods, if so just override them and throw exceptions: `throw Exception("Not used")`
-    - You probably will find `getUrlWithoutDomain` useful when parsing the target source URLs.
-    - If possible try to stick to the general workflow from`ParsedHttpSource` and `HttpSource`, breaking them may cause you more headache than necessary.
-    -  When reading the code documentation it helps to follow the subsequent called methods in the the default implementation from the `app`, while trying to grasp the general workflow.
 
-### Additional dependencies
+### Misc notes
 
-You may find yourself needing additional functionality and wanting to add more dependencies to your `build.gradle` file. Since extensions are run within the main Tachiyomi app, you can make use of [its dependencies](https://github.com/inorichi/tachiyomi/blob/master/app/build.gradle).
+- Some time while you are writing code, you may find no use for some inherited methods, if so just override them and throw exceptions: `throw Exception("Not used")`
+- You probably will find `getUrlWithoutDomain` useful when parsing the target source URLs.
+- If possible try to stick to the general workflow from`ParsedHttpSource` and `HttpSource`, breaking them may cause you more headache than necessary.
+-  When reading the code documentation it helps to follow the subsequent called methods in the the default implementation from the `app`, while trying to grasp the general workflow.
 
-For example, an extension that needs Gson could add the following:
-
-```
-dependencies {
-    compileOnly 'com.google.code.gson:gson:2.8.2'
-}
-```
-
-Notice that we're using `compileOnly` instead of `implementation`, since the app already contains it. You could use `implementation` instead, if it's a new dependency, or you prefer not to rely on whatever the main app has (at the expense of app size).
-
-### Core stubs and libraries
-
-#### Duktape stub
-
-[`duktape-stub`](https://github.com/inorichi/tachiyomi-extensions/tree/master/lib/duktape-stub) provides stubs for using Duktape functionality without pulling in the full library. Functionality is bundled into the main Tachiyomi app.
-
-```
-dependencies {
-    compileOnly project(':duktape-stub')
-}
-```
-
-#### Rate limiting library
-
-[`lib-ratelimit`](https://github.com/inorichi/tachiyomi-extensions/tree/master/lib/ratelimit) is a library for adding rate limiting functionality.
-
-```
-dependencies {
-    implementation project(':lib-ratelimit')
-}
-```
 
 
 ## Running
@@ -131,7 +145,7 @@ To aid in local development, you can use the following run configuration to laun
 
 ![](https://i.imgur.com/STy0UFY.png)
 
-If you're running a dev/debug build of Tachiyomi:
+If you're running a Preview or debug build of Tachiyomi:
 
 ```
 -W -S -n eu.kanade.tachiyomi.debug/eu.kanade.tachiyomi.ui.main.MainActivity -a eu.kanade.tachiyomi.SHOW_CATALOGUES
@@ -142,9 +156,10 @@ And for a release build of Tachiyomi:
 ```
 -W -S -n eu.kanade.tachiyomi/eu.kanade.tachiyomi.ui.main.MainActivity -a eu.kanade.tachiyomi.SHOW_CATALOGUES
 ```
-## Debugging
-- You are encouraged to clone the app itself and make your own debug build, then you can attach Android Studio's debugger to the app, and then you can print logs in the code and debug your extension using `Logcat`([link](https://developer.android.com/studio/debug/am-logcat) to Android Studio documentation for `Logcat`)
-- Directly debugging your extension(steeping through your extension code) is not possible, but if you keep both projects(tachiyomi and tachiyomi-extensions) open in Android Studio, you can debug the app itself and hence calls to your code.
+
+### Debugging
+
+Directly debugging your extension (i.e steping through the extension code) is not possible due to the way that extension code is loaded into the app. However, logs printed from extensions (via [`Logcat`](https://developer.android.com/studio/debug/am-logcat)) do work.
 
 
 ## Building
