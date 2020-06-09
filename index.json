@@ -1050,10 +1050,10 @@
   {
     "name": "Tachiyomi: Mangaeden",
     "pkg": "eu.kanade.tachiyomi.extension.it.mangaeden",
-    "apk": "tachiyomi-it.mangaeden-v1.2.5.apk",
+    "apk": "tachiyomi-it.mangaeden-v1.2.6.apk",
     "lang": "it",
-    "code": 5,
-    "version": "1.2.5"
+    "code": 6,
+    "version": "1.2.6"
   },
   {
     "name": "Tachiyomi: Novelle Leggere",
