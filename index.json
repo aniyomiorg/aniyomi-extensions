@@ -546,10 +546,10 @@
   {
     "name": "Tachiyomi: MangaPark",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangapark",
-    "apk": "tachiyomi-en.mangapark-v1.2.13.apk",
+    "apk": "tachiyomi-en.mangapark-v1.2.14.apk",
     "lang": "en",
-    "code": 13,
-    "version": "1.2.13"
+    "code": 14,
+    "version": "1.2.14"
   },
   {
     "name": "Tachiyomi: Mangareader & Mangapanda",
@@ -642,10 +642,10 @@
   {
     "name": "Tachiyomi: NineAnime",
     "pkg": "eu.kanade.tachiyomi.extension.en.nineanime",
-    "apk": "tachiyomi-en.nineanime-v1.2.1.apk",
+    "apk": "tachiyomi-en.nineanime-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1"
+    "code": 2,
+    "version": "1.2.2"
   },
   {
     "name": "Tachiyomi: Oglaf",
@@ -786,10 +786,10 @@
   {
     "name": "Tachiyomi: xkcd",
     "pkg": "eu.kanade.tachiyomi.extension.en.xkcd",
-    "apk": "tachiyomi-en.xkcd-v1.2.6.apk",
+    "apk": "tachiyomi-en.xkcd-v1.2.7.apk",
     "lang": "en",
-    "code": 6,
-    "version": "1.2.6"
+    "code": 7,
+    "version": "1.2.7"
   },
   {
     "name": "Tachiyomi: Doujin-Yang",
@@ -1530,10 +1530,10 @@
   {
     "name": "Tachiyomi: Dmzj",
     "pkg": "eu.kanade.tachiyomi.extension.zh.dmzj",
-    "apk": "tachiyomi-zh.dmzj-v1.2.8.apk",
+    "apk": "tachiyomi-zh.dmzj-v1.2.9.apk",
     "lang": "zh",
-    "code": 8,
-    "version": "1.2.8"
+    "code": 9,
+    "version": "1.2.9"
   },
   {
     "name": "Tachiyomi: Gufeng Manhua",
