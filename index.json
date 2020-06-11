@@ -106,10 +106,10 @@
   {
     "name": "Tachiyomi: MangaDex",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangadex",
-    "apk": "tachiyomi-all.mangadex-v1.2.92.apk",
+    "apk": "tachiyomi-all.mangadex-v1.2.93.apk",
     "lang": "all",
-    "code": 92,
-    "version": "1.2.92"
+    "code": 93,
+    "version": "1.2.93"
   },
   {
     "name": "Tachiyomi: MangAdventure",
@@ -1378,10 +1378,10 @@
   {
     "name": "Tachiyomi: Remanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.remanga",
-    "apk": "tachiyomi-ru.remanga-v1.2.4.apk",
+    "apk": "tachiyomi-ru.remanga-v1.2.5.apk",
     "lang": "ru",
-    "code": 4,
-    "version": "1.2.4"
+    "code": 5,
+    "version": "1.2.5"
   },
   {
     "name": "Tachiyomi: Risens Team",
