@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import android.support.v7.preference.ListPreference
 import android.support.v7.preference.PreferenceScreen
-import eu.kanade.tachiyomi.extension.BuildConfig
 import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getArtists
 import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getGroups
 import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getNumPages
@@ -22,7 +21,6 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -45,10 +43,6 @@ open class NHentai(
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
-
-    override fun headersBuilder() = Headers.Builder().apply {
-        add("User-Agent", "Tachiyomi/${BuildConfig.VERSION_NAME} ${System.getProperty("http.agent")}")
-    }
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
