@@ -10,6 +10,7 @@ import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getNumPages
 import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getTagDescription
 import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getTags
 import eu.kanade.tachiyomi.extension.all.nhentai.NHUtils.getTime
+import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -42,7 +43,10 @@ open class NHentai(
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    private val rateLimitInterceptor = RateLimitInterceptor(4)
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .addNetworkInterceptor(rateLimitInterceptor)
+        .build()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
