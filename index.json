@@ -218,10 +218,10 @@
   {
     "name": "Tachiyomi: WP-Comics",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpcomics",
-    "apk": "tachiyomi-all.wpcomics-v1.2.7.apk",
+    "apk": "tachiyomi-all.wpcomics-v1.2.8.apk",
     "lang": "all",
-    "code": 7,
-    "version": "1.2.7"
+    "code": 8,
+    "version": "1.2.8"
   },
   {
     "name": "Tachiyomi: WP Mangstream (multiple sources)",
