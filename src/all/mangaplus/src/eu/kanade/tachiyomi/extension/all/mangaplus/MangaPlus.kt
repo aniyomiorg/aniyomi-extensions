@@ -40,7 +40,7 @@ abstract class MangaPlus(
     private val langCode: Language
 ) : HttpSource(), ConfigurableSource {
 
-    override val name = "Manga Plus by Shueisha"
+    override val name = "MANGA Plus by SHUEISHA"
 
     override val baseUrl = "https://mangaplus.shueisha.co.jp"
 
@@ -196,8 +196,8 @@ abstract class MangaPlus(
         val isCompleted = details.nonAppearanceInfo.contains(COMPLETE_REGEX)
 
         return SManga.create().apply {
-            author = title.author
-            artist = title.author
+            author = title.author.replace(" / ", ", ")
+            artist = author
             description = details.overview + "\n\n" + details.viewingPeriodDescription
             status = if (isCompleted) SManga.COMPLETED else SManga.ONGOING
             thumbnail_url = title.portraitImageUrl.toWeservUrl()
