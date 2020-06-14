@@ -720,14 +720,6 @@
     "version": "1.2.3"
   },
   {
-    "name": "Tachiyomi: Renaissance Scans",
-    "pkg": "eu.kanade.tachiyomi.extension.en.renascans",
-    "apk": "tachiyomi-en.renascans-v1.2.3.apk",
-    "lang": "en",
-    "code": 3,
-    "version": "1.2.3"
-  },
-  {
     "name": "Tachiyomi: Sleepy Panda Scans",
     "pkg": "eu.kanade.tachiyomi.extension.en.sleepypandascans",
     "apk": "tachiyomi-en.sleepypandascans-v1.2.3.apk",
@@ -1470,14 +1462,6 @@
     "lang": "vi",
     "code": 3,
     "version": "1.2.3"
-  },
-  {
-    "name": "Tachiyomi: NetTruyen",
-    "pkg": "eu.kanade.tachiyomi.extension.vi.nettruyen",
-    "apk": "tachiyomi-vi.nettruyen-v1.2.5.apk",
-    "lang": "vi",
-    "code": 5,
-    "version": "1.2.5"
   },
   {
     "name": "Tachiyomi: Ngon Phong",
