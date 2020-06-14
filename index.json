@@ -1144,6 +1144,14 @@
     "version": "1.2.11"
   },
   {
+    "name": "Tachiyomi: Toonkor",
+    "pkg": "eu.kanade.tachiyomi.extension.ko.toonkor",
+    "apk": "tachiyomi-ko.toonkor-v1.2.1.apk",
+    "lang": "ko",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Central de Mangás",
     "pkg": "eu.kanade.tachiyomi.extension.pt.centraldemangas",
     "apk": "tachiyomi-pt.centraldemangas-v1.2.3.apk",
@@ -1450,10 +1458,10 @@
   {
     "name": "Tachiyomi: IuTruyenTranh",
     "pkg": "eu.kanade.tachiyomi.extension.vi.iutruyentranh",
-    "apk": "tachiyomi-vi.iutruyentranh-v1.2.4.apk",
+    "apk": "tachiyomi-vi.iutruyentranh-v1.2.5.apk",
     "lang": "vi",
-    "code": 4,
-    "version": "1.2.4"
+    "code": 5,
+    "version": "1.2.5"
   },
   {
     "name": "Tachiyomi: MeDocTruyenTranh",
