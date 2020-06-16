@@ -24,10 +24,45 @@ Before you start, please note that the ability to use following technologies is 
 
 ## Writing an extension
 
-The quickest way to get started is to copy an existing extension's folder structure and renaming it as needed. Of course, that also means that there's plenty of existing extensions that you can reference as you go!
+The quickest way to get started is to copy an existing extension's folder structure and renaming it as needed. We also recommend reading through a few existing extensions' code before you start.
 
 ### Setting up a new Gradle module
 
+Each extension should reside in `src/<lang>/<mysourcename>`. Use `all` as `<lang>` if your target source supports multiple languages or if it could support multiple sources.
+
+#### Extension file structure
+
+The simplest extension structure looks like this:
+
+```console
+$ tree src/<lang>/<mysourcename>/
+src/<lang>/<mysourcename>/
+├── build.gradle
+├── res
+│   ├── mipmap-hdpi
+│   │   └── ic_launcher.png
+│   ├── mipmap-mdpi
+│   │   └── ic_launcher.png
+│   ├── mipmap-xhdpi
+│   │   └── ic_launcher.png
+│   ├── mipmap-xxhdpi
+│   │   └── ic_launcher.png
+│   ├── mipmap-xxxhdpi
+│   │   └── ic_launcher.png
+│   └── web_hi_res_512.png
+└── src
+    └── eu
+        └── kanade
+            └── tachiyomi
+                └── extension
+                    └── <lang>
+                        └── <mysourcename>
+                            └── <MySourceName>.kt
+
+13 directories, 8 files
+```
+
+#### build.gradle
 Make sure that your new extension's `build.gradle` file follows the following structure:
 
 ```groovy
@@ -35,9 +70,9 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: My source name'
-    pkgNameSuffix = 'lang.mysourcename'
-    extClass = '.MySourceName'
+    appName = 'Tachiyomi: <My source name>'
+    pkgNameSuffix = '<lang>.<mysourcename>'
+    extClass = '.<MySourceName>'
     extVersionCode = 1
     libVersion = '1.2'
 }
@@ -53,7 +88,7 @@ apply from: "$rootDir/common.gradle"
 | `extVersionCode` | The extension version code. This must be a positive integer and incremented with any change to the code. |
 | `libVersion` | The version of the [extensions library](https://github.com/tachiyomiorg/extensions-lib) used. |
 
-The extension's version name is based off of `libVersion` and `extVersionCode`. With the example used above, the version of the catalogue would be `1.2.1`.
+The extension's version name is generated automatically by concatenating `libVersion` and `extVersionCode`. With the example used above, the version would be `1.2.1`.
 
 ### Core dependencies
 
@@ -107,20 +142,19 @@ dependencies {
 
 Notice that we're using `compileOnly` instead of `implementation`, since the app already contains it. You could use `implementation` instead for a new dependency, or you prefer not to rely on whatever the main app has at the expense of app size.
 
-Note that using `compileOnly` restricts you to versions that must be compatible with those used in Tachiyomi v0.8.5+ for proper backwards compatibility.
+Note that using `compileOnly` restricts you to versions that must be compatible with those used in [Tachiyomi v0.8.5+](https://github.com/inorichi/tachiyomi/blob/82141cec6e612885fef4fa70092e29e99d60adbb/app/build.gradle#L104) for proper backwards compatibility.
 
-### Extension call flow
+### Extension main class
 
-#### Main class
+The class which is refrenced and defined by `extClass` in `build.gradle`. This class should implement either `SourceFactory` or one of the `Source` implementations: `HttpSource` or `ParsedHttpSource`.
 
-The class which is refrenced and defined by `extClass` in `build.gradle`.
+| Class | Description |
+| ----- | ----------- |
+|`SourceFactory`| Used to expose multiple `Source`s. Use it when there's minor differences between your target sources or they are essentially mirrors to the same website. |
+| `HttpSource`| For online source, where requests are made using HTTP. |
+| `ParsedHttpSource`| Similar to `HttpSource`, but has methods useful for scraping pages. |
 
-This class should implement either `SourceFactory` or one of the `Source` implementations: `HttpSource` or `ParsedHttpSource`.
-    - `SourceFactory`: used to expose multiple `Source`s. Use it when there's minor differences between your target sources or they are essentially mirrors to the same website.
-    - `HttpSource`: for online source, where requests are made using HTTP.
-    - `ParsedHttpSource`: similar to `HttpSource`, but has methods useful for scraping pages.
-
-Key variables:
+#### Main class key variables
 
 | Field | Description |
 | ----- | ----------- |
@@ -128,46 +162,50 @@ Key variables:
 | `baseUrl` | Base URL of the source without any trailing slashes. |
 | `lang` | An ISO 639-1 compliant language code (two letters in lower case). |
 | `id` | Identifier of your source, automatically set in `HttpSource`. It should only be manually overriden if you need to copy an existing autogenerated ID. |
- 
+
+
+### Extension call flow
+
 #### Popular Manga
 
 a.k.a. the "Browse" source entry point in the app.
 
 - The app calls `fetchPopularManga` with `page=1`, and it returns a `MangasPage` and will continue to call it for next pages, when the user scrolls the manga list and more results must be fetched (until you pass `MangasPage.hasNextPage` as `false` which marks the end of the found manga list).
 - While passing magnas here you should at least set `url`, `title` and `thumbnail_url`.
-    - If `thumbnail_url` is not set, `fetchMangaDetails` will be called.
+    - If `thumbnail_url` is not set, `fetchMangaDetails` will be **immediately** called.
 
 #### Latest Manga
 
 a.k.a. the "Latest" source entry point in the app.
 
 - Used if `supportsLatest` is `true` for a source
-- Similar to popular manga, but should be fetching the latest items from a source.
+- Similar to popular manga, but should be fetching the latest entries from a source.
 
 #### Manga Search
 
-- `getFilterList` will be called to get all filters and filter types. **TODO: explain more about `Filter`**
 - When the user searches inside the app, `fetchSearchManga` will be called and the rest of the flow is similar to what happens with `fetchPopularManga`.
-- If search functionality is not available, return `Observable.just(MangasPage(emptyList(), false))`
+    - If search functionality is not available, return `Observable.just(MangasPage(emptyList(), false))`
+- `getFilterList` will be called to get all filters and filter types. **TODO: explain more about `Filter`**
 
 #### Manga Details
 
 - When user taps on a manga, `fetchMangaDetails` and `fetchChapterList` will be called and the results will be cached.
-- `fetchMangaDetails` is called to update a manga's details from when it was initialized earlier
-    - Note: During a backup, only `url` and `title` are stored, and to restore the rest of the manga data the app calls `fetchMangaDetails`, so all fields should be filled in if possible.
-- `fetchChapterList` is called to display the chapter list. This should be sorted descending by date.
-- `SManga.initialized` tells the app if it should call `fetchMangaDetails`. If you are overriding `fetchMangaDetails`, make sure to pass it as `true`.
+- `fetchMangaDetails` is called to update a manga's details from when it was initialized earlier.
+    - During a backup, only `url` and `title` are stored. To restore the rest of the manga data, the app calls `fetchMangaDetails`, so all fields should be (re)filled in if possible.
+    - `SManga.initialized` tells the app if it should call `fetchMangaDetails`. If you are overriding `fetchMangaDetails`, make sure to pass it as `true`.
+- `fetchChapterList` is called to display the chapter list.
+    - The list should be sorted descending by date/chapter number.
+    - If `Page.imageUrl`s are available immediately, you should pass them here. Otherwise, you should set `page.url` to a page that contains them and override `imageUrlParse` to fill those `imageUrl`s.
 
 #### Chapter
 
-- After a chapter list for the manga is fetched, `prepareNewChapter` will be called.
+- After a chapter list for the manga is fetched and the app is going to cache the data, `prepareNewChapter` will be called.
 
 #### Chapter Pages
 
 - When user opens a chapter, `fetchPageList` will be called and it will return a list of `Page`s.
-- While a chapter is open the reader will call `fetchImageUrl` to get URLs for each page of the manga.
-- Chapter pages start from `0`.
-- If `Page.imageUrl`s are available immediately, you should pass them here. Otherwise, you should set `page.url` to a page that contains them and override `imageUrlParse` to fill those `imageUrl`s.
+- While a chapter is open in the reader or is being downloaded, `fetchImageUrl` will be called to get URLs for each page of the manga.
+- Chapter pages numbers start from `0`.
 
 ### Misc notes
 
@@ -194,9 +232,9 @@ And for a release build of Tachiyomi:
 -W -S -n eu.kanade.tachiyomi/eu.kanade.tachiyomi.ui.main.MainActivity -a eu.kanade.tachiyomi.SHOW_CATALOGUES
 ```
 
-### Debugging
+## Debugging
 
-Directly debugging your extension (i.e steping through the extension code) is not possible due to the way that extension code is loaded into the app. However, logs printed from extensions (via [`Logcat`](https://developer.android.com/studio/debug/am-logcat)) do work.
+Directly debugging your extension (i.e stepping through the extension code) is not possible due to the way that extension code is loaded into the app. However, logs printed from extensions (via [`Logcat`](https://developer.android.com/studio/debug/am-logcat)) do work.
 
 
 ## Building
