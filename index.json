@@ -744,6 +744,14 @@
     "version": "1.2.10"
   },
   {
+    "name": "Tachiyomi: TimelessLeaf",
+    "pkg": "eu.kanade.tachiyomi.extension.en.timelessleaf",
+    "apk": "tachiyomi-en.timelessleaf-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1"
+  },
+  {
     "name": "Tachiyomi: Tsumino",
     "pkg": "eu.kanade.tachiyomi.extension.en.tsumino",
     "apk": "tachiyomi-en.tsumino-v1.2.3.apk",
