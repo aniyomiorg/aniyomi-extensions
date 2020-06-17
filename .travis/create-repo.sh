@@ -39,4 +39,4 @@ for APK in ${APKS[@]}; do
         --arg version "$VNAME" \
         '{name:$name, pkg:$pkg, apk:$apk, lang:$lang, code:$code, version:$version}'
 
-done | jq -sr '[.[]]' > index.json
+done | jq -scr '[.[]]' > index.json
