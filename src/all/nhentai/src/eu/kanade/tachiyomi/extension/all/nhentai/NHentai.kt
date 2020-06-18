@@ -128,14 +128,26 @@ open class NHentai(
     override fun popularMangaNextPageSelector() = latestUpdatesNextPageSelector()
 
     override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
-        return if (query.startsWith(PREFIX_ID_SEARCH)) {
-            val id = query.removePrefix(PREFIX_ID_SEARCH)
-            client.newCall(searchMangaByIdRequest(id))
-                .asObservableSuccess()
-                .map { response -> searchMangaByIdParse(response, id) }
-        } else {
-            return super.fetchSearchManga(page, query, filters)
+        return when {
+            query.startsWith(PREFIX_ID_SEARCH) -> {
+                val id = query.removePrefix(PREFIX_ID_SEARCH)
+                client.newCall(searchMangaByIdRequest(id))
+                    .asObservableSuccess()
+                    .map { response -> searchMangaByIdParse(response, id) }
+            }
+            query.isQueryIdNumbers() -> {
+                client.newCall(searchMangaByIdRequest(query))
+                    .asObservableSuccess()
+                    .map { response -> searchMangaByIdParse(response, query) }
+            }
+            else -> super.fetchSearchManga(page, query, filters)
         }
+    }
+
+    // The website redirects for any number <= 400000
+    private fun String.isQueryIdNumbers(): Boolean {
+        val int = this.toIntOrNull() ?: return false
+        return int <= 400000
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
