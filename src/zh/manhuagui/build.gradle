@@ -5,12 +5,15 @@ ext {
     appName = 'Tachiyomi: ManHuaGui'
     pkgNameSuffix = 'zh.manhuagui'
     extClass = '.Manhuagui'
-    extVersionCode = 1
+    extVersionCode = 2
     libVersion = '1.2'
 }
 
 dependencies {
+    implementation project(':lib-ratelimit')
     compileOnly project(':duktape-stub')
+    compileOnly "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
+    compileOnly "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
 }
 
 apply from: "$rootDir/common.gradle"
