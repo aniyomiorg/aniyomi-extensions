@@ -29,6 +29,7 @@ import rx.Observable
 class MadaraFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
         AdonisFansub(),
+        AhStudios(),
         AllPornComic(),
         AoCTranslations(),
         AsuraScans(),
@@ -126,7 +127,7 @@ class MadaraFactory : SourceFactory {
         FirstKissManhua(),
         HeroManhua(),
         MartialScans(),
-        MangaYosh(),        
+        MangaYosh(),
         MangaReadOrg(),
         TurkceManga(),
         EinherjarScan(),
@@ -153,6 +154,8 @@ class MadaraFactory : SourceFactory {
         // MangaStein(),
     )
 }
+
+class AhStudios : Madara("AhStudios", "https://ahstudios.net", "es")
 
 class AsuraScans : Madara("AsuraScans", "https://asurascans.com", "en")
 
@@ -607,7 +610,7 @@ class MangaKiss : Madara("MangaKiss", "https://mangakiss.org", "en", SimpleDateF
     override fun headersBuilder(): Headers.Builder = super.headersBuilder().add("Referer", baseUrl)
 }
 
-class MangaDods : Madara("MangaDods", "https://www.mangadods.com", "en", SimpleDateFormat("dd/MM/yyyy", Locale.US))
+class MangaDods : Madara("MangaDods", "https://www.mangadods.com", "en", SimpleDateFormat("yyyy-MM-dd", Locale.US))
 
 class MangaStream : Madara("MangaStream", "https://www.mangastream.cc", "en") {
     override fun getGenreList() = listOf(
