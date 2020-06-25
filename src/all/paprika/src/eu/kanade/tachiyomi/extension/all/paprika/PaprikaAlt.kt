@@ -19,16 +19,16 @@ abstract class PaprikaAlt(
     override fun popularMangaSelector() = "div.anipost"
 
     override fun popularMangaFromElement(element: Element): SManga {
-        //Log.d("Paprika", "processing popular element")
+        // Log.d("Paprika", "processing popular element")
         return SManga.create().apply {
             element.select("a:has(h2)").let {
                 setUrlWithoutDomain(it.attr("href"))
                 title = it.text()
-                //Log.d("Paprika", "manga url: $url")
-                //Log.d("Paprika", "manga title: $title")
+                // Log.d("Paprika", "manga url: $url")
+                // Log.d("Paprika", "manga title: $title")
             }
             thumbnail_url = element.select("img").attr("abs:src")
-            //Log.d("Paprika", "manga thumb: $thumbnail_url")
+            // Log.d("Paprika", "manga thumb: $thumbnail_url")
         }
     }
 
@@ -64,7 +64,7 @@ abstract class PaprikaAlt(
             }
             description = document.select("#noidungm").joinToString("\n") { it.text() }
 
-            //Log.d("Paprika", "mangaDetials")
+            // Log.d("Paprika", "mangaDetials")
         }
     }
 

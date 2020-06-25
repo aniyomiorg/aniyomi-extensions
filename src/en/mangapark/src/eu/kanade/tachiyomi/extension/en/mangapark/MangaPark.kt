@@ -148,7 +148,7 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
                         chapterFromElement(chapterElement, sourceName, lastNum)
                             .also { lastNum = it.chapter_number }
                     }
-                    .distinctBy { it.chapter_number }  // there's even duplicate chapters within a source ( -.- )
+                    .distinctBy { it.chapter_number } // there's even duplicate chapters within a source ( -.- )
             }
 
         return when (getSourcePref()) {

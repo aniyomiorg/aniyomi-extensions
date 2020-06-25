@@ -196,7 +196,7 @@ open class MangaMx : ParsedHttpSource() {
         val encoded = document.select("script:containsData(unicap)").firstOrNull()
             ?.data()?.substringAfter("'")?.substringBefore("'")?.reversed()
             ?: throw Exception("unicap not found")
-        
+
         val drop = encoded.length % 4
         val decoded = Base64.decode(encoded.dropLast(drop), Base64.DEFAULT).toString(Charset.defaultCharset())
         val path = decoded.substringBefore("||")
