@@ -1,8 +1,10 @@
 package eu.kanade.tachiyomi.extension.all.genkan
 
+import eu.kanade.tachiyomi.annotations.MultiSource
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
 
+@MultiSource
 class GenkanFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
         LeviatanScans(),

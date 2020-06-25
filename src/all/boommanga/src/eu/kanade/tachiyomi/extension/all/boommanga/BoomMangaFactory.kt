@@ -1,11 +1,13 @@
 package eu.kanade.tachiyomi.extension.all.boommanga
 
+import eu.kanade.tachiyomi.annotations.MultiSource
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
 import eu.kanade.tachiyomi.source.model.SManga
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
+@MultiSource
 class BoomMangaFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
         BoomMangacom(),

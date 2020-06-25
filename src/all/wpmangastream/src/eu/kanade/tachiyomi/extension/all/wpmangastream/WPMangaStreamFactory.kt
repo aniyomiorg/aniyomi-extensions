@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.all.wpmangastream
 
+import eu.kanade.tachiyomi.annotations.MultiSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.Source
@@ -21,6 +22,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 
+@MultiSource
 class WPMangaStreamFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
         Kiryuu(),

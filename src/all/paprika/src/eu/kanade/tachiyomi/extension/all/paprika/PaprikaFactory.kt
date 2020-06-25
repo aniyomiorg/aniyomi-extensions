@@ -1,8 +1,10 @@
 package eu.kanade.tachiyomi.extension.all.paprika
 
+import eu.kanade.tachiyomi.annotations.MultiSource
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
 
+@MultiSource
 class PaprikaFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
         MangazukiXyz(),

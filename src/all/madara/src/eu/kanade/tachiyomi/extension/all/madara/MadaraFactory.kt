@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.extension.all.madara
 
 import android.annotation.SuppressLint
+import eu.kanade.tachiyomi.annotations.MultiSource
 import eu.kanade.tachiyomi.lib.dataimage.DataImageInterceptor
 import eu.kanade.tachiyomi.lib.dataimage.dataImageAsUrl
 import eu.kanade.tachiyomi.network.GET
@@ -26,6 +27,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 
+@MultiSource
 class MadaraFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
         AdonisFansub(),

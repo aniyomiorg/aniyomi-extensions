@@ -7,6 +7,7 @@ import android.support.v7.preference.PreferenceScreen
 import android.widget.Toast
 import com.github.salomonbrys.kotson.get
 import com.google.gson.JsonParser
+import eu.kanade.tachiyomi.annotations.MultiSource
 import eu.kanade.tachiyomi.extension.BuildConfig
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -24,6 +25,7 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
+@MultiSource
 class FoolSlideFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
         JaiminisBox(),

@@ -1,3 +1,5 @@
+include(':annotations')
+
 include ':lib-ratelimit'
 project(':lib-ratelimit').projectDir = new File("lib/ratelimit")
 
