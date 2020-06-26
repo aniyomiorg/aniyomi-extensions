@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: zBulu'
+    extName = 'zBulu'
     pkgNameSuffix = 'all.zbulu'
     extClass = '.ZbuluFactory'
     extVersionCode = 1

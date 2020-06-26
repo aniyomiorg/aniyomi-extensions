@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: Questionable Content'
+    extName = 'Questionable Content'
     pkgNameSuffix = 'en.questionablecontent'
     extClass = '.QuestionableContent'
     extVersionCode = 6

@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: Scantrad'
+    extName = 'Scantrad'
     pkgNameSuffix = 'fr.scantrad'
     extClass = '.Scantrad'
     extVersionCode = 5

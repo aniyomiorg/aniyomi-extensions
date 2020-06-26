@@ -38,7 +38,7 @@ android {
         versionName "$libVersion.$extVersionCode"
         setProperty("archivesBaseName", "tachiyomi-$pkgNameSuffix-v$versionName")
         manifestPlaceholders = [
-                appName : appName,
+                appName : "Tachiyomi: $extName",
                 extClass: extClass,
         ]
     }

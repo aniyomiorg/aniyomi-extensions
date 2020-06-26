@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: Kill Six Billion Demons'
+    extName = 'Kill Six Billion Demons'
     pkgNameSuffix = 'en.killsixbilliondemons'
     extClass = '.KillSixBillionDemons'
     extVersionCode = 3

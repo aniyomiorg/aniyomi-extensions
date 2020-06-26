@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: Wutopia'
+    extName = 'Wutopia'
     pkgNameSuffix = 'en.wutopia'
     extClass = '.Wutopia'
     extVersionCode = 1

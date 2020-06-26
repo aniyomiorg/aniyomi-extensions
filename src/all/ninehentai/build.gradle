@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: NineHentai'
+    extName = 'NineHentai'
     pkgNameSuffix = 'all.ninehentai'
     extClass = '.NineHentai'
     extVersionCode = 7

@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: Mangareader & Mangapanda'
+    extName = 'Mangareader & Mangapanda'
     pkgNameSuffix = 'en.mangareader'
     extClass = '.MRPFactory'
     extVersionCode = 4

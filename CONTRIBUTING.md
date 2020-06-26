@@ -70,7 +70,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: <My source name>'
+    extName = '<My source name>'
     pkgNameSuffix = '<lang>.<mysourcename>'
     extClass = '.<MySourceName>'
     extVersionCode = 1
@@ -82,7 +82,7 @@ apply from: "$rootDir/common.gradle"
 
 | Field | Description |
 | ----- | ----------- |
-| `appName` | The name of the Android application. Should be prefixed with `Tachiyomi: `. |
+| `extName` | The name of the extension. |
 | `pkgNameSuffix` | A unique suffix added to `eu.kanade.tachiyomi.extension`. The language and the site name should be enough. Remember your extension code implementation must be placed in this package. |
 | `extClass` | Points to the class that implements `Source`. You can use a relative path starting with a dot (the package name is the base path). This is used to find and instantiate the source(s). |
 | `extVersionCode` | The extension version code. This must be a positive integer and incremented with any change to the code. |

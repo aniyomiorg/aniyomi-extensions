@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: Pururin'
+    extName = 'Pururin'
     pkgNameSuffix = 'en.pururin'
     extClass = '.Pururin'
     extVersionCode = 2

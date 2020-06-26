@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: Risens Team'
+    extName = 'Risens Team'
     pkgNameSuffix = 'ru.risensteam'
     extClass = '.RisensTeam'
     extVersionCode = 1

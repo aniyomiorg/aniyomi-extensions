@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: Shonen Jump+'
+    extName = 'Shonen Jump+'
     pkgNameSuffix = 'ja.shonenjumpplus'
     extClass = '.ShonenJumpPlus'
     extVersionCode = 1

@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: Hentai2Read'
+    extName = 'Hentai2Read'
     pkgNameSuffix = 'en.hentai2read'
     extClass = '.Hentai2Read'
     extVersionCode = 9

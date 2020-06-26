@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: Doujin-Yang'
+    extName = 'Doujin-Yang'
     pkgNameSuffix = 'es.doujinyang'
     extClass = '.DoujinYang'
     extVersionCode = 2

@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: Dynasty'
+    extName = 'Dynasty'
     pkgNameSuffix = 'en.dynasty'
     extClass = '.DynastyFactory'
     extVersionCode = 11

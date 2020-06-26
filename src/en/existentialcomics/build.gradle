@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: Existential Comics'
+    extName = 'Existential Comics'
     pkgNameSuffix = 'en.existentialcomics'
     extClass = '.ExistentialComics'
     extVersionCode = 4

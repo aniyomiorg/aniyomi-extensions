@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: vgperson'
+    extName = 'vgperson'
     pkgNameSuffix = 'en.vgperson'
     extClass = '.Vgperson'
     extVersionCode = 4

@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: Ngomik'
+    extName = 'Ngomik'
     pkgNameSuffix = 'id.ngomik'
     extClass = '.Ngomik'
     extVersionCode = 1

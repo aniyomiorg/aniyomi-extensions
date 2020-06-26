@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    appName = 'Tachiyomi: VCPVMP'
+    extName = 'VCPVMP'
     pkgNameSuffix = "es.vcpvmp"
     extClass = '.VCPVMPFactory'
     extVersionCode = 2
