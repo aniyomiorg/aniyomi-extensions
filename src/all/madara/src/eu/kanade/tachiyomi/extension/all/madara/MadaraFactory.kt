@@ -96,6 +96,7 @@ class MadaraFactory : SourceFactory {
         NovelFrance(),
         OnManga(),
         PlotTwistScan(),
+        PMScans(),
         PojokManga(),
         PornComix(),
         RaiderScans(),
@@ -148,7 +149,8 @@ class MadaraFactory : SourceFactory {
         TruyenTranhAudioOnline(),
         MangaTurf(),
         SheaManga(),
-        FurioScans()
+        FurioScans(),
+        Mangareceh()
         // Removed by request of site owner
         // EarlyManga(),
         // MangaGecesi(),
@@ -295,6 +297,8 @@ class Manga3asq : Madara("مانجا العاشق", "https://3asq.org", "ar")
 class Indiancomicsonline : Madara("Indian Comics Online", "http://www.indiancomicsonline.com", "hi")
 
 class AdonisFansub : Madara("Adonis Fansub", "https://manga.adonisfansub.com", "tr") {
+    override fun headersBuilder(): Headers.Builder = Headers.Builder()
+        .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/77.0")
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/manga/page/$page/?m_orderby=views", headers)
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/manga/page/$page/?m_orderby=latest", headers)
 }
@@ -687,6 +691,8 @@ class MangaLord : Madara("Manga Lord", "https://mangalord.com", "en")
 
 class PornComix : Madara("PornComix", "https://www.porncomixonline.net", "en")
 
+class PMScans : Madara("PMScans", "http://www.pmscans.com", "en")
+
 class MangaRead : Madara("Manga Read", "https://mangaread.co", "en", SimpleDateFormat("yyyy-MM-dd", Locale.US))
 
 class UnknownScans : Madara("Unknown Scans", "https://unknoscans.com", "en")
@@ -1025,3 +1031,5 @@ class MangaTurf : Madara("Manga Turf", "https://mangaturf.com", "en")
 class SheaManga : Madara("Shea Manga", "https://sheamanga.my.id", "id")
 
 class FurioScans : Madara("Furio Scans", "https://furioscans.com", "pt-BR", SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()))
+
+class Mangareceh : Madara("Mangareceh", "https://mangareceh.id", "id")
