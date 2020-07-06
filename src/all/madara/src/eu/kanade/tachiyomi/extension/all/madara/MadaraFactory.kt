@@ -150,7 +150,9 @@ class MadaraFactory : SourceFactory {
         MangaTurf(),
         SheaManga(),
         FurioScans(),
-        Mangareceh()
+        Mangareceh(),
+        KlanKomik(),
+        ComicKiba()
         // Removed by request of site owner
         // EarlyManga(),
         // MangaGecesi(),
@@ -1183,3 +1185,9 @@ class SheaManga : Madara("Shea Manga", "https://sheamanga.my.id", "id")
 class FurioScans : Madara("Furio Scans", "https://furioscans.com", "pt-BR", SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()))
 
 class Mangareceh : Madara("Mangareceh", "https://mangareceh.id", "id")
+
+class ComicKiba : Madara("ComicKiba", "https://comickiba.com", "en") {
+    override val pageListParseSelector = "li.blocks-gallery-item img:nth-child(1)"
+}
+
+class KlanKomik : Madara("KlanKomik", "https://klankomik.com", "id")
