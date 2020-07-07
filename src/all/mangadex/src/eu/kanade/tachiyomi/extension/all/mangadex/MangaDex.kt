@@ -55,7 +55,7 @@ abstract class MangaDex(
 
     override val baseUrl = "https://www.mangadex.org"
 
-    private val cdnUrl = "https://www.mangadex.org" // "https://s0.mangadex.org"
+    private val cdnUrl = "https://mangadex.org" // "https://s0.mangadex.org"
 
     override val supportsLatest = true
 
@@ -590,26 +590,51 @@ abstract class MangaDex(
         val server = json.get("server").string
 
         pageArray.forEach {
-            val url = "$server$hash/${it.asString}"
-            pages.add(Page(pages.size, "", getImageUrl(url)))
+            val url = "$hash/${it.asString}"
+            pages.add(Page(pages.size, "$server,${response.request().url()},${Date().time}", url))
         }
 
         return pages
     }
+
+    override fun imageRequest(page: Page): Request {
+        val url = when {
+            // Legacy
+            page.url.isEmpty() -> page.imageUrl!!
+            // Some images are hosted elsewhere
+            !page.url.startsWith("http") -> baseUrl + page.url.substringBefore(",") + page.imageUrl
+            // New chapters on MD servers
+            page.url.contains("https://mangadex.org/data") -> page.url.substringBefore(",") + page.imageUrl
+            // MD@Home token handling
+            else -> {
+                val tokenLifespan = 5 * 60 * 1000
+                val data = page.url.split(",")
+                var tokenedServer = data[0]
+                if (Date().time - data[2].toLong() > tokenLifespan) {
+                    val tokenRequestUrl = data[1]
+                    val cacheControl = if (Date().time - (tokenTracker[tokenRequestUrl] ?: 0) > tokenLifespan) {
+                        tokenTracker[tokenRequestUrl] = Date().time
+                        CacheControl.FORCE_NETWORK
+                    } else {
+                        CacheControl.FORCE_CACHE
+                    }
+                    val jsonData = client.newCall(GET(tokenRequestUrl, headers, cacheControl)).execute().body()!!.string()
+                    tokenedServer = JsonParser().parse(jsonData).asJsonObject.get("server").string
+                }
+                tokenedServer + page.imageUrl
+            }
+        }
+        return GET(url, headers)
+    }
+
+    // chapter url where we get the token, last request time
+    private val tokenTracker = hashMapOf<String, Long>()
 
     override fun imageUrlParse(document: Document): String = ""
 
     private fun parseStatus(status: Int) = when (status) {
         1 -> SManga.ONGOING
         else -> SManga.UNKNOWN
-    }
-
-    private fun getImageUrl(attr: String): String {
-        // Some images are hosted elsewhere
-        if (attr.startsWith("http")) {
-            return attr
-        }
-        return baseUrl + attr
     }
 
     override fun setupPreferenceScreen(screen: androidx.preference.PreferenceScreen) {
