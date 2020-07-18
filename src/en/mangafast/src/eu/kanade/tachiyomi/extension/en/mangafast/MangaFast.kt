@@ -81,7 +81,13 @@ class MangaFast: ParsedHttpSource() {
 
     override fun pageListParse(document: Document): List<Page> {
         return document.select("div.chp2 > img").mapIndexed { i, element ->
-            Page(i, "", element.attr("abs:src"))
+            var url = element.attr("abs:data-src")
+
+            if (url.isEmpty()) {
+                url = element.attr("abs:src")
+            }
+
+            Page(i, "", url)
         }
     }
 
