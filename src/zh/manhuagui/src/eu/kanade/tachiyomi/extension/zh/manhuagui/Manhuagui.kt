@@ -224,7 +224,7 @@ class Manhuagui : ConfigurableSource, ParsedHttpSource() {
         manga.description = document.select("div#intro-all").text().trim()
         manga.thumbnail_url = document.select("p.hcover > img").attr("abs:src")
         manga.artist = document.select("span:contains(漫画作者) > a , span:contains(漫畫作者) > a").text().trim()
-        manga.genre = document.select("span:contains(漫画剧情) > a , span:contains(漫畫劇情) > a").text().trim()
+        manga.genre = document.select("span:contains(漫画剧情) > a , span:contains(漫畫劇情) > a").text().trim().replace(" ", ", ")
         manga.status = when (document.select("div.book-detail > ul.detail-list > li.status > span > span").first().text()) {
             "连载中" -> SManga.ONGOING
             "已完结" -> SManga.COMPLETED
@@ -252,13 +252,15 @@ class Manhuagui : ConfigurableSource, ParsedHttpSource() {
             error("R18作品显示开关未开启或未生效") // "R18 setting didn't enabled or became effective"
 
         val html = document.html()
-        val re = Regex("""window\[".*?"](\(.*\)\s*\{[\s\S]+}\s*\(.*\))""")
+        // These "\" can't be remove: \}
+        val re = Regex("""window\[".*?"\](\(.*\)\s*\{[\s\S]+\}\s*\(.*\))""")
         val imgCode = re.find(html)?.groups?.get(1)?.value
         val imgDecode = Duktape.create().use {
             it.evaluate(jsDecodeFunc + imgCode) as String
         }
 
-        val re2 = Regex("""\{.*}""")
+        // \}
+        val re2 = Regex("""\{.*\}""")
         val imgJsonStr = re2.find(imgDecode)?.groups?.get(0)?.value
         val imageJson: Comic = gson.fromJson(imgJsonStr, Comic::class.java)
 
