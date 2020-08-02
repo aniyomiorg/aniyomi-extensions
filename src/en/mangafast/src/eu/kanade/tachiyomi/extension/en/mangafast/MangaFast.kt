@@ -6,12 +6,12 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import java.text.SimpleDateFormat
+import java.util.Locale
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import java.util.Locale
-import java.text.SimpleDateFormat
 
-class MangaFast: ParsedHttpSource() {
+class MangaFast : ParsedHttpSource() {
     override val name = "MangaFast"
 
     override val baseUrl = "https://mangafast.net"

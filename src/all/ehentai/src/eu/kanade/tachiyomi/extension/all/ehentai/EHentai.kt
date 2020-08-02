@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.SharedPreferences
 import android.net.Uri
+import android.support.v7.preference.CheckBoxPreference as LegacyCheckBoxPreference
+import android.support.v7.preference.PreferenceScreen as LegacyPreferenceScreen
 import androidx.preference.CheckBoxPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.network.GET
@@ -22,6 +24,7 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import java.net.URLEncoder
 import okhttp3.CacheControl
 import okhttp3.CookieJar
 import okhttp3.Headers
@@ -31,9 +34,6 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.net.URLEncoder
-import android.support.v7.preference.CheckBoxPreference as LegacyCheckBoxPreference
-import android.support.v7.preference.PreferenceScreen as LegacyPreferenceScreen
 
 open class EHentai(override val lang: String, private val ehLang: String) : ConfigurableSource, HttpSource() {
 

@@ -6,9 +6,9 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import java.text.SimpleDateFormat
 import java.util.Locale
+import org.json.JSONObject
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import org.json.JSONObject
 
 open class WebtoonsDefault(
     override val lang: String,
@@ -43,11 +43,11 @@ open class WebtoonsDefault(
 
     override fun pageListParse(document: Document): List<Page> {
         val pages = document.select("div#_imageList > img").mapIndexed { i, element -> Page(i, "", element.attr("data-url")) }
-        
+
         if (pages.isNotEmpty()) { return pages }
 
         val docString = document.toString()
-        
+
         val docUrlRegex = Regex("documentURL:.*?'(.*?)'")
         val motiontoonPathRegex = Regex("jpg:.*?'(.*?)\\{")
 
