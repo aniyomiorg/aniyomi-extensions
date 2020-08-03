@@ -146,10 +146,10 @@
   {
     "name": "Tachiyomi: MyReadingManga",
     "pkg": "eu.kanade.tachiyomi.extension.all.myreadingmanga",
-    "apk": "tachiyomi-all.myreadingmanga-v1.2.37.apk",
+    "apk": "tachiyomi-all.myreadingmanga-v1.2.38.apk",
     "lang": "all",
-    "code": 37,
-    "version": "1.2.37"
+    "code": 38,
+    "version": "1.2.38"
   },
   {
     "name": "Tachiyomi: NHentai",
@@ -986,10 +986,10 @@
   {
     "name": "Tachiyomi: Scantrad",
     "pkg": "eu.kanade.tachiyomi.extension.fr.scantrad",
-    "apk": "tachiyomi-fr.scantrad-v1.2.5.apk",
+    "apk": "tachiyomi-fr.scantrad-v1.2.6.apk",
     "lang": "fr",
-    "code": 5,
-    "version": "1.2.5"
+    "code": 6,
+    "version": "1.2.6"
   },
   {
     "name": "Tachiyomi: Bacakomik",
