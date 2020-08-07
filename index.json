@@ -906,10 +906,10 @@
   {
     "name": "Tachiyomi: LectorManga",
     "pkg": "eu.kanade.tachiyomi.extension.es.lectormanga",
-    "apk": "tachiyomi-es.lectormanga-v1.2.12.apk",
+    "apk": "tachiyomi-es.lectormanga-v1.2.13.apk",
     "lang": "es",
-    "code": 12,
-    "version": "1.2.12"
+    "code": 13,
+    "version": "1.2.13"
   },
   {
     "name": "Tachiyomi: MangaMx",
@@ -918,6 +918,14 @@
     "lang": "es",
     "code": 8,
     "version": "1.2.8"
+  },
+  {
+    "name": "Tachiyomi: Plot Twist No Fansub",
+    "pkg": "eu.kanade.tachiyomi.extension.es.plottwistnofansub",
+    "apk": "tachiyomi-es.plottwistnofansub-v1.2.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "1.2.1"
   },
   {
     "name": "Tachiyomi: TMOHentai",
@@ -930,10 +938,10 @@
   {
     "name": "Tachiyomi: TuMangaOnline",
     "pkg": "eu.kanade.tachiyomi.extension.es.tumangaonline",
-    "apk": "tachiyomi-es.tumangaonline-v1.2.27.apk",
+    "apk": "tachiyomi-es.tumangaonline-v1.2.28.apk",
     "lang": "es",
-    "code": 27,
-    "version": "1.2.27"
+    "code": 28,
+    "version": "1.2.28"
   },
   {
     "name": "Tachiyomi: VCPVMP",
