@@ -226,10 +226,10 @@
   {
     "name": "Tachiyomi: WP Mangstream (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
-    "apk": "tachiyomi-all.wpmangastream-v1.2.19.apk",
+    "apk": "tachiyomi-all.wpmangastream-v1.2.20.apk",
     "lang": "all",
-    "code": 19,
-    "version": "1.2.19"
+    "code": 20,
+    "version": "1.2.20"
   },
   {
     "name": "Tachiyomi: zBulu",
