@@ -226,10 +226,10 @@
   {
     "name": "Tachiyomi: WP Mangstream (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
-    "apk": "tachiyomi-all.wpmangastream-v1.2.20.apk",
+    "apk": "tachiyomi-all.wpmangastream-v1.2.21.apk",
     "lang": "all",
-    "code": 20,
-    "version": "1.2.20"
+    "code": 21,
+    "version": "1.2.21"
   },
   {
     "name": "Tachiyomi: zBulu",
@@ -898,10 +898,10 @@
   {
     "name": "Tachiyomi: Kumanga",
     "pkg": "eu.kanade.tachiyomi.extension.es.kumanga",
-    "apk": "tachiyomi-es.kumanga-v1.2.3.apk",
+    "apk": "tachiyomi-es.kumanga-v1.2.4.apk",
     "lang": "es",
-    "code": 3,
-    "version": "1.2.3"
+    "code": 4,
+    "version": "1.2.4"
   },
   {
     "name": "Tachiyomi: LectorManga",
