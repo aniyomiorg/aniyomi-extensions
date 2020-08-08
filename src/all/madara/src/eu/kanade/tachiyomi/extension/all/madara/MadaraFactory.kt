@@ -152,7 +152,8 @@ class MadaraFactory : SourceFactory {
         Skymanga(),
         ToonilyNet(),
         BestManga(),
-        TwilightScans()
+        TwilightScans(),
+        DetectiveConanAr()
         // Removed by request of site owner
         // EarlyManga(),
         // MangaGecesi(),
@@ -1205,3 +1206,5 @@ class ToonilyNet : Madara("Toonily.net", "https://toonily.net", "en")
 class BestManga : Madara("BestManga", "https://bestmanga.club", "ru", SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()))
 
 class TwilightScans : Madara("Twilight Scans", "https://twilightscans.com", "en")
+
+class DetectiveConanAr : Madara("شبكة كونان العربية", "https://www.manga.detectiveconanar.com", "ar")
