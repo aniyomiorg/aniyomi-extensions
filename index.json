@@ -42,7 +42,7 @@
     "lang": "all",
     "code": 13,
     "version": "1.2.13",
-    "nsfw": 0
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: Emerald",
@@ -60,7 +60,7 @@
     "lang": "all",
     "code": 20,
     "version": "1.2.20",
-    "nsfw": 0
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: FoolSlide (multiple sources)",
@@ -186,7 +186,7 @@
     "lang": "all",
     "code": 7,
     "version": "1.2.7",
-    "nsfw": 0
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: NineManga",
@@ -222,7 +222,7 @@
     "lang": "all",
     "code": 1,
     "version": "1.2.1",
-    "nsfw": 0
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: Toomics",
@@ -402,7 +402,7 @@
     "lang": "en",
     "code": 1,
     "version": "1.2.1",
-    "nsfw": 0
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: Existential Comics",
@@ -456,7 +456,7 @@
     "lang": "en",
     "code": 9,
     "version": "1.2.9",
-    "nsfw": 0
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: HentaiFox",
@@ -465,7 +465,7 @@
     "lang": "en",
     "code": 2,
     "version": "1.2.2",
-    "nsfw": 0
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: HentaiNexus",
@@ -474,7 +474,7 @@
     "lang": "en",
     "code": 2,
     "version": "1.2.2",
-    "nsfw": 0
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: Hiveworks Comics",
@@ -753,7 +753,7 @@
     "lang": "en",
     "code": 2,
     "version": "1.2.2",
-    "nsfw": 0
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: MyHentaiGallery",
@@ -762,7 +762,7 @@
     "lang": "en",
     "code": 2,
     "version": "1.2.2",
-    "nsfw": 0
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: NANI? Scans",
@@ -996,7 +996,7 @@
     "lang": "es",
     "code": 1,
     "version": "1.2.1",
-    "nsfw": 0
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: InManga",
@@ -1050,7 +1050,7 @@
     "lang": "es",
     "code": 3,
     "version": "1.2.3",
-    "nsfw": 0
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: TuMangaOnline",
@@ -1284,7 +1284,7 @@
     "lang": "it",
     "code": 3,
     "version": "1.2.3",
-    "nsfw": 0
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: Mangaeden",
@@ -1311,7 +1311,7 @@
     "lang": "it",
     "code": 3,
     "version": "1.2.3",
-    "nsfw": 0
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: MangaRaw",
@@ -1437,7 +1437,7 @@
     "lang": "pt",
     "code": 4,
     "version": "1.2.4",
-    "nsfw": 0
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: HQ Dragon",
@@ -1491,7 +1491,7 @@
     "lang": "pt",
     "code": 1,
     "version": "1.2.1",
-    "nsfw": 0
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: Saikai Scan",
@@ -1509,7 +1509,7 @@
     "lang": "pt",
     "code": 3,
     "version": "1.2.3",
-    "nsfw": 0
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: Tao Sect",
@@ -1770,7 +1770,7 @@
     "lang": "vi",
     "code": 5,
     "version": "1.2.5",
-    "nsfw": 0
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: IuTruyenTranh",
