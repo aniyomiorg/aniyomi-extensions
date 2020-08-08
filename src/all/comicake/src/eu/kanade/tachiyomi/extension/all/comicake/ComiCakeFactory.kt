@@ -1,10 +1,8 @@
 package eu.kanade.tachiyomi.extension.all.comicake
 
-import eu.kanade.tachiyomi.annotations.MultiSource
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
 
-@MultiSource
 class ComiCakeFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
         LetItGoScans(),

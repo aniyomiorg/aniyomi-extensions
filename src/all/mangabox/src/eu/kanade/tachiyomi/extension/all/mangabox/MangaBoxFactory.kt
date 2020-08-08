@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.all.mangabox
 
-import eu.kanade.tachiyomi.annotations.MultiSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
@@ -15,7 +14,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Element
 
-@MultiSource
 class MangaBoxFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
         Mangakakalot(),

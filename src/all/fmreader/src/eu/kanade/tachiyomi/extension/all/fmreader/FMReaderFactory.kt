@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.extension.all.fmreader
 
-import eu.kanade.tachiyomi.annotations.MultiSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -22,7 +21,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 
-@MultiSource
 class FMReaderFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
         LHTranslation(),

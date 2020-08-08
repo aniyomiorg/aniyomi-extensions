@@ -1,10 +1,8 @@
 package eu.kanade.tachiyomi.extension.all.emerald
 
-import eu.kanade.tachiyomi.annotations.MultiSource
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
 
-@MultiSource
 class EmeraldFactory : SourceFactory {
     override fun createSources(): List<Source> = languages.map { Mangawindow(it.first, it.second) } + languages.map { Batoto(it.first, it.second) }
 }
