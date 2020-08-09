@@ -54,6 +54,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: EroMuse (8muses and Erofus)",
+    "pkg": "eu.kanade.tachiyomi.extension.all.eromuse",
+    "apk": "tachiyomi-all.eromuse-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 1
+  },
+  {
     "name": "Tachiyomi: FMReader (multiple aggregators)",
     "pkg": "eu.kanade.tachiyomi.extension.all.fmreader",
     "apk": "tachiyomi-all.fmreader-v1.2.20.apk",
@@ -69,7 +78,7 @@
     "lang": "all",
     "code": 51,
     "version": "1.2.51",
-    "nsfw": 0
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: Genkan (multiple sources)",
