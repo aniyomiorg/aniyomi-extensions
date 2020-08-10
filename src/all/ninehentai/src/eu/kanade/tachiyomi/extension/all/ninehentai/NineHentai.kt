@@ -7,6 +7,7 @@ import com.github.salomonbrys.kotson.string
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.JsonParser
+import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
@@ -25,9 +26,10 @@ import okhttp3.RequestBody
 import okhttp3.Response
 import rx.Observable
 
-open class NineHentai : HttpSource() {
+@Nsfw
+class NineHentai : HttpSource() {
 
-    final override val baseUrl = "https://9hentai.com"
+    override val baseUrl = "https://9hentai.com"
 
     override val name = "NineHentai"
 

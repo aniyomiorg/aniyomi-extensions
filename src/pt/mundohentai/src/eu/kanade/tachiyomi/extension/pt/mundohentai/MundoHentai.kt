@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.pt.mundohentai
 
+import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -14,6 +15,7 @@ import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
+@Nsfw
 class MundoHentai : ParsedHttpSource() {
 
     override val name = "Mundo Hentai"

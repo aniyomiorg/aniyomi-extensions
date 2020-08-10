@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.all.eromuse
 
+import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
@@ -12,6 +13,7 @@ import okhttp3.Response
 import rx.Observable
 
 @ExperimentalStdlibApi
+@Nsfw
 class EroMuseFactory : SourceFactory {
     override fun createSources(): List<Source> = listOf(
         EroMuse("8Muses", "https://comics.8muses.com"),
