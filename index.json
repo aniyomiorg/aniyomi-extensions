@@ -164,10 +164,10 @@
   {
     "name": "Tachiyomi: My Manga Reader CMS (Many sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mmrcms",
-    "apk": "tachiyomi-all.mmrcms-v1.2.46.apk",
+    "apk": "tachiyomi-all.mmrcms-v1.2.47.apk",
     "lang": "all",
-    "code": 46,
-    "version": "1.2.46",
+    "code": 47,
+    "version": "1.2.47",
     "nsfw": 0
   },
   {
@@ -1019,10 +1019,10 @@
   {
     "name": "Tachiyomi: Kumanga",
     "pkg": "eu.kanade.tachiyomi.extension.es.kumanga",
-    "apk": "tachiyomi-es.kumanga-v1.2.4.apk",
+    "apk": "tachiyomi-es.kumanga-v1.2.5.apk",
     "lang": "es",
-    "code": 4,
-    "version": "1.2.4",
+    "code": 5,
+    "version": "1.2.5",
     "nsfw": 0
   },
   {
