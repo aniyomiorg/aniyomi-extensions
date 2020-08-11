@@ -90,6 +90,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Hitomi.la",
+    "pkg": "eu.kanade.tachiyomi.extension.all.hitomi",
+    "apk": "tachiyomi-all.hitomi-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 1
+  },
+  {
     "name": "Tachiyomi: Komga",
     "pkg": "eu.kanade.tachiyomi.extension.all.komga",
     "apk": "tachiyomi-all.komga-v1.2.13.apk",
@@ -776,10 +785,10 @@
   {
     "name": "Tachiyomi: NANI? Scans",
     "pkg": "eu.kanade.tachiyomi.extension.en.naniscans",
-    "apk": "tachiyomi-en.naniscans-v1.2.3.apk",
+    "apk": "tachiyomi-en.naniscans-v1.2.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "1.2.3",
+    "code": 4,
+    "version": "1.2.4",
     "nsfw": 0
   },
   {
