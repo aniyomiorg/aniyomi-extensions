@@ -64,27 +64,22 @@ class MyMangaReaderCMSSource(
         }
     }
 
-    /**
-     * Search through a list of titles client-side or let the server do it
-     */
-    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
-        return if (name == "Mangas.pw") {
-            selfSearch(query)
-        } else {
-            super.fetchSearchManga(page, query, filters)
-        }
-    }
-
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        // Query overrides everything
         val url: Uri.Builder
-        if (query.isNotBlank()) {
-            url = Uri.parse("$baseUrl/search")!!.buildUpon()
-            url.appendQueryParameter("query", query)
-        } else {
-            url = Uri.parse("$baseUrl/filterList?page=$page")!!.buildUpon()
-            filters.filterIsInstance<UriFilter>()
+        when {
+            name == "Mangas.pw" -> {
+                url = Uri.parse("$baseUrl/search")!!.buildUpon()
+                url.appendQueryParameter("q", query)
+            }
+            query.isNotBlank() -> {
+                url = Uri.parse("$baseUrl/search")!!.buildUpon()
+                url.appendQueryParameter("query", query)
+            }
+            else -> {
+                url = Uri.parse("$baseUrl/filterList?page=$page")!!.buildUpon()
+                filters.filterIsInstance<UriFilter>()
                     .forEach { it.addToUri(url) }
+            }
         }
         return GET(url.toString(), headers)
     }
@@ -113,20 +108,22 @@ class MyMangaReaderCMSSource(
 
     override fun popularMangaParse(response: Response) = internalMangaParse(response)
     override fun searchMangaParse(response: Response): MangasPage {
-        return if (response.request().url().queryParameter("query")?.isNotBlank() == true) {
+        return if (listOf("query", "q").any { it in response.request().url().queryParameterNames() }) {
             // If a search query was specified, use search instead!
-            MangasPage(jsonParser
-                    .parse(response.body()!!.string())["suggestions"].array
-                    .map {
-                        SManga.create().apply {
-                            val segment = it["data"].string
-                            url = getUrlWithoutBaseUrl(itemUrl + segment)
-                            title = it["value"].string
+            val jsonArray = jsonParser.parse(response.body()!!.string()).let {
+                if (name == "Mangas.pw") it.array else it["suggestions"].array
+            }
+            MangasPage(jsonArray
+                .map {
+                    SManga.create().apply {
+                        val segment = it["data"].string
+                        url = getUrlWithoutBaseUrl(itemUrl + segment)
+                        title = it["value"].string
 
-                            // Guess thumbnails
-                            // thumbnail_url = "$baseUrl/uploads/manga/$segment/cover/cover_250x350.jpg"
-                        }
-                    }, false)
+                        // Guess thumbnails
+                        // thumbnail_url = "$baseUrl/uploads/manga/$segment/cover/cover_250x350.jpg"
+                    }
+                }, false)
         } else {
             internalMangaParse(response)
         }
@@ -139,19 +136,30 @@ class MyMangaReaderCMSSource(
 
         if (document.location().contains("page=1")) latestTitles.clear()
 
-        val mangas = document.select(latestUpdatesSelector()).map { element -> latestUpdatesFromElement(element) }
+        val mangas = document.select(latestUpdatesSelector())
+            .map { element ->
+                if (element.hasClass("manga-item")) latestUpdatesFromElement(element) else gridLatestUpdatesFromElement(element)
+            }
             .distinctBy { manga -> manga.title }
             .filterNot { manga -> manga.title in latestTitles }
             .also { list -> latestTitles.addAll(list.map { it.title }) }
 
         return MangasPage(mangas, document.select(latestUpdatesNextPageSelector()) != null)
     }
-    private fun latestUpdatesSelector() = "div.mangalist div.manga-item"
+    private fun latestUpdatesSelector() = "div.mangalist div.manga-item, div.grid-manga tr"
     private fun latestUpdatesNextPageSelector() = "a[rel=next]"
     private fun latestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
         url = element.select("a").first().attr("abs:href").substringAfter(baseUrl) // intentionally not using setUrlWithoutDomain
         title = element.select("a").first().text().trim()
         thumbnail_url = "$baseUrl/uploads/manga/${url.substringAfterLast('/')}/cover/cover_250x350.jpg"
+    }
+    // MangaYu, for instance, needs this
+    private fun gridLatestUpdatesFromElement(element: Element): SManga = SManga.create().apply {
+        element.select("a.chart-title").let {
+            setUrlWithoutDomain(it.attr("href"))
+            title = it.text()
+        }
+        thumbnail_url = element.select("img").attr("abs:src")
     }
 
     private fun internalMangaParse(response: Response): MangasPage {
