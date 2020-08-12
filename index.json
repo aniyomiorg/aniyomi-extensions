@@ -92,10 +92,10 @@
   {
     "name": "Tachiyomi: Hitomi.la",
     "pkg": "eu.kanade.tachiyomi.extension.all.hitomi",
-    "apk": "tachiyomi-all.hitomi-v1.2.1.apk",
+    "apk": "tachiyomi-all.hitomi-v1.2.2.apk",
     "lang": "all",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 1
   },
   {
@@ -191,10 +191,10 @@
   {
     "name": "Tachiyomi: NHentai",
     "pkg": "eu.kanade.tachiyomi.extension.all.nhentai",
-    "apk": "tachiyomi-all.nhentai-v1.2.27.apk",
+    "apk": "tachiyomi-all.nhentai-v1.2.28.apk",
     "lang": "all",
-    "code": 27,
-    "version": "1.2.27",
+    "code": 28,
+    "version": "1.2.28",
     "nsfw": 1
   },
   {
