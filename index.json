@@ -56,10 +56,10 @@
   {
     "name": "Tachiyomi: EroMuse (8muses and Erofus)",
     "pkg": "eu.kanade.tachiyomi.extension.all.eromuse",
-    "apk": "tachiyomi-all.eromuse-v1.2.1.apk",
+    "apk": "tachiyomi-all.eromuse-v1.2.2.apk",
     "lang": "all",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 1
   },
   {
@@ -74,10 +74,10 @@
   {
     "name": "Tachiyomi: FoolSlide (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.foolslide",
-    "apk": "tachiyomi-all.foolslide-v1.2.51.apk",
+    "apk": "tachiyomi-all.foolslide-v1.2.52.apk",
     "lang": "all",
-    "code": 51,
-    "version": "1.2.51",
+    "code": 52,
+    "version": "1.2.52",
     "nsfw": 1
   },
   {
@@ -1107,6 +1107,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Kangaryu",
+    "pkg": "eu.kanade.tachiyomi.extension.fr.kangaryu",
+    "apk": "tachiyomi-fr.kangaryu-v1.2.1.apk",
+    "lang": "fr",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: LireScan",
     "pkg": "eu.kanade.tachiyomi.extension.fr.lirescan",
     "apk": "tachiyomi-fr.lirescan-v1.2.1.apk",
@@ -1613,11 +1622,11 @@
   {
     "name": "Tachiyomi: Henchan",
     "pkg": "eu.kanade.tachiyomi.extension.ru.henchan",
-    "apk": "tachiyomi-ru.henchan-v1.2.16.apk",
+    "apk": "tachiyomi-ru.henchan-v1.2.17.apk",
     "lang": "ru",
-    "code": 16,
-    "version": "1.2.16",
-    "nsfw": 0
+    "code": 17,
+    "version": "1.2.17",
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: MangaLib",
@@ -1739,10 +1748,10 @@
   {
     "name": "Tachiyomi: MangaDenizi",
     "pkg": "eu.kanade.tachiyomi.extension.tr.mangadenizi",
-    "apk": "tachiyomi-tr.mangadenizi-v1.2.2.apk",
+    "apk": "tachiyomi-tr.mangadenizi-v1.2.3.apk",
     "lang": "tr",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 0
   },
   {
