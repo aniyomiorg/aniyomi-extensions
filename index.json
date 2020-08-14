@@ -182,11 +182,11 @@
   {
     "name": "Tachiyomi: MyReadingManga",
     "pkg": "eu.kanade.tachiyomi.extension.all.myreadingmanga",
-    "apk": "tachiyomi-all.myreadingmanga-v1.2.38.apk",
+    "apk": "tachiyomi-all.myreadingmanga-v1.2.39.apk",
     "lang": "all",
-    "code": 38,
-    "version": "1.2.38",
-    "nsfw": 0
+    "code": 39,
+    "version": "1.2.39",
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: NHentai",
@@ -1082,11 +1082,11 @@
   {
     "name": "Tachiyomi: VCPVMP",
     "pkg": "eu.kanade.tachiyomi.extension.es.vcpvmp",
-    "apk": "tachiyomi-es.vcpvmp-v1.2.2.apk",
+    "apk": "tachiyomi-es.vcpvmp-v1.2.3.apk",
     "lang": "es",
-    "code": 2,
-    "version": "1.2.2",
-    "nsfw": 0
+    "code": 3,
+    "version": "1.2.3",
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: Zahard",
