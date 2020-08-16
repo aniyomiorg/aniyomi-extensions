@@ -630,15 +630,6 @@
     "nsfw": 0
   },
   {
-    "name": "Tachiyomi: MangaKisa",
-    "pkg": "eu.kanade.tachiyomi.extension.en.mangakisa",
-    "apk": "tachiyomi-en.mangakisa-v1.2.3.apk",
-    "lang": "en",
-    "code": 3,
-    "version": "1.2.3",
-    "nsfw": 0
-  },
-  {
     "name": "Tachiyomi: MangaLife",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangalife",
     "apk": "tachiyomi-en.mangalife-v1.2.8.apk",
