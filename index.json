@@ -173,10 +173,10 @@
   {
     "name": "Tachiyomi: My Manga Reader CMS (Many sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mmrcms",
-    "apk": "tachiyomi-all.mmrcms-v1.2.48.apk",
+    "apk": "tachiyomi-all.mmrcms-v1.2.49.apk",
     "lang": "all",
-    "code": 48,
-    "version": "1.2.48",
+    "code": 49,
+    "version": "1.2.49",
     "nsfw": 1
   },
   {
@@ -686,10 +686,10 @@
   {
     "name": "Tachiyomi: Mangareader & Mangapanda",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangareader",
-    "apk": "tachiyomi-en.mangareader-v1.2.5.apk",
+    "apk": "tachiyomi-en.mangareader-v1.2.6.apk",
     "lang": "en",
-    "code": 5,
-    "version": "1.2.5",
+    "code": 6,
+    "version": "1.2.6",
     "nsfw": 0
   },
   {
