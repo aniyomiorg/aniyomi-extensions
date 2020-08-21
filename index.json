@@ -668,10 +668,10 @@
   {
     "name": "Tachiyomi: MangaOwl",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangaowl",
-    "apk": "tachiyomi-en.mangaowl-v1.2.6.apk",
+    "apk": "tachiyomi-en.mangaowl-v1.2.7.apk",
     "lang": "en",
-    "code": 6,
-    "version": "1.2.6",
+    "code": 7,
+    "version": "1.2.7",
     "nsfw": 0
   },
   {
