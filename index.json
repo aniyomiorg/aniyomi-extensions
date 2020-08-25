@@ -74,10 +74,10 @@
   {
     "name": "Tachiyomi: FoolSlide (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.foolslide",
-    "apk": "tachiyomi-all.foolslide-v1.2.52.apk",
+    "apk": "tachiyomi-all.foolslide-v1.2.53.apk",
     "lang": "all",
-    "code": 52,
-    "version": "1.2.52",
+    "code": 53,
+    "version": "1.2.53",
     "nsfw": 1
   },
   {
@@ -173,10 +173,10 @@
   {
     "name": "Tachiyomi: My Manga Reader CMS (Many sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mmrcms",
-    "apk": "tachiyomi-all.mmrcms-v1.2.50.apk",
+    "apk": "tachiyomi-all.mmrcms-v1.2.51.apk",
     "lang": "all",
-    "code": 50,
-    "version": "1.2.50",
+    "code": 51,
+    "version": "1.2.51",
     "nsfw": 1
   },
   {
