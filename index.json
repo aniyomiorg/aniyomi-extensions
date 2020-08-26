@@ -182,10 +182,10 @@
   {
     "name": "Tachiyomi: MyReadingManga",
     "pkg": "eu.kanade.tachiyomi.extension.all.myreadingmanga",
-    "apk": "tachiyomi-all.myreadingmanga-v1.2.39.apk",
+    "apk": "tachiyomi-all.myreadingmanga-v1.2.40.apk",
     "lang": "all",
-    "code": 39,
-    "version": "1.2.39",
+    "code": 40,
+    "version": "1.2.40",
     "nsfw": 1
   },
   {
