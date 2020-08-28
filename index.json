@@ -1242,15 +1242,6 @@
     "nsfw": 0
   },
   {
-    "name": "Tachiyomi: Mangakyo",
-    "pkg": "eu.kanade.tachiyomi.extension.id.mangakyo",
-    "apk": "tachiyomi-id.mangakyo-v1.2.2.apk",
-    "lang": "id",
-    "code": 2,
-    "version": "1.2.2",
-    "nsfw": 0
-  },
-  {
     "name": "Tachiyomi: Mangashiro",
     "pkg": "eu.kanade.tachiyomi.extension.id.mangashiro",
     "apk": "tachiyomi-id.mangashiro-v1.2.4.apk",
@@ -1712,10 +1703,10 @@
   {
     "name": "Tachiyomi: Risens Team",
     "pkg": "eu.kanade.tachiyomi.extension.ru.risensteam",
-    "apk": "tachiyomi-ru.risensteam-v1.2.1.apk",
+    "apk": "tachiyomi-ru.risensteam-v1.2.2.apk",
     "lang": "ru",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -1892,10 +1883,10 @@
   {
     "name": "Tachiyomi: Jinmantiantang",
     "pkg": "eu.kanade.tachiyomi.extension.zh.jinmantiantang",
-    "apk": "tachiyomi-zh.jinmantiantang-v1.2.2.apk",
+    "apk": "tachiyomi-zh.jinmantiantang-v1.2.3.apk",
     "lang": "zh",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 1
   },
   {
