@@ -243,6 +243,15 @@
     "nsfw": 1
   },
   {
+    "name": "Tachiyomi: The Library of Ohara",
+    "pkg": "eu.kanade.tachiyomi.extension.all.thelibraryofohara",
+    "apk": "tachiyomi-all.thelibraryofohara-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Toomics",
     "pkg": "eu.kanade.tachiyomi.extension.all.toomics",
     "apk": "tachiyomi-all.toomics-v1.2.4.apk",
