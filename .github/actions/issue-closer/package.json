@@ -1,7 +1,7 @@
 {
   "name": "issue-closer",
   "version": "1.0.0",
-  "description": "GitHub action to automatically close issues based on regexs matching",
+  "description": "GitHub action to automatically close issues",
   "main": "lib/action.js",
   "scripts": {
     "postinstall": "ncc build src/main.ts"
