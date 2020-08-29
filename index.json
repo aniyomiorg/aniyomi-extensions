@@ -1541,10 +1541,10 @@
   {
     "name": "Tachiyomi: Union Mangás",
     "pkg": "eu.kanade.tachiyomi.extension.pt.unionmangas",
-    "apk": "tachiyomi-pt.unionmangas-v1.2.15.apk",
+    "apk": "tachiyomi-pt.unionmangas-v1.2.16.apk",
     "lang": "pt",
-    "code": 15,
-    "version": "1.2.15",
+    "code": 16,
+    "version": "1.2.16",
     "nsfw": 0
   },
   {
