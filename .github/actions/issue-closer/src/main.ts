@@ -16,7 +16,7 @@ async function run() {
         const context = github.context;
         const payload = context.payload;
 
-        // Do nothing if it's wasn't being opened or it's not an issue
+        // Do nothing if it wasn't being opened or it's not an issue
         if (payload.action !== 'opened' || !payload.issue) {
             return;
         }
