@@ -1,0 +1,22 @@
+name: Issue matching auto-closer
+description: Automatically close issues based on regexs matching.
+author: arkon
+branding:
+  icon: alert-circle
+  color: red
+inputs:
+  repo-token:
+    required: true
+    description: GitHub token
+  type:
+    required: true
+    description: Either "body" or "title", indicating what to run the regex against.
+  regex:
+    required: true
+    description: Regular expression pattern which if matched closes the issue.
+  message:
+    required: true
+    description: Message to post when closing the issue.
+runs:
+  using: node12
+  main: dist/index.js
