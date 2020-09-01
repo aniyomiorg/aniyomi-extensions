@@ -45,6 +45,15 @@
     "nsfw": 1
   },
   {
+    "name": "Tachiyomi: EliMangas",
+    "pkg": "eu.kanade.tachiyomi.extension.all.elimangas",
+    "apk": "tachiyomi-all.elimangas-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Emerald",
     "pkg": "eu.kanade.tachiyomi.extension.all.emerald",
     "apk": "tachiyomi-all.emerald-v1.2.1.apk",
@@ -1379,10 +1388,10 @@
   {
     "name": "Tachiyomi: JMana",
     "pkg": "eu.kanade.tachiyomi.extension.ko.jmana",
-    "apk": "tachiyomi-ko.jmana-v1.2.10.apk",
+    "apk": "tachiyomi-ko.jmana-v1.2.11.apk",
     "lang": "ko",
-    "code": 10,
-    "version": "1.2.10",
+    "code": 11,
+    "version": "1.2.11",
     "nsfw": 0
   },
   {
