@@ -128,10 +128,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.131.apk",
+    "apk": "tachiyomi-all.madara-v1.2.132.apk",
     "lang": "all",
-    "code": 131,
-    "version": "1.2.131",
+    "code": 132,
+    "version": "1.2.132",
     "nsfw": 1
   },
   {
@@ -146,10 +146,10 @@
   {
     "name": "Tachiyomi: MangaDex",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangadex",
-    "apk": "tachiyomi-all.mangadex-v1.2.95.apk",
+    "apk": "tachiyomi-all.mangadex-v1.2.96.apk",
     "lang": "all",
-    "code": 95,
-    "version": "1.2.95",
+    "code": 96,
+    "version": "1.2.96",
     "nsfw": 1
   },
   {
