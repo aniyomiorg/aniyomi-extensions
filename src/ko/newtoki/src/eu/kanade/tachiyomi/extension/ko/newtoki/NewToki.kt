@@ -41,7 +41,7 @@ open class NewToki(override val name: String, private val defaultBaseUrl: String
         val linkElement = element.getElementsByTag("a").first()
 
         val manga = SManga.create()
-        manga.setUrlWithoutDomain(linkElement.attr("href"))
+        manga.setUrlWithoutDomain(linkElement.attr("href").substringBefore("?"))
         manga.title = element.select("span.title").first().ownText()
         manga.thumbnail_url = linkElement.getElementsByTag("img").attr("src")
         return manga
@@ -166,7 +166,8 @@ open class NewToki(override val name: String, private val defaultBaseUrl: String
     }
 
     override fun pageListParse(document: Document): List<Page> {
-        return document.select("article > div  div > img")
+        // <article> - <div> - optional <div> - <div> - optional <p> - <img>
+        return document.select("article > div div img")
             .filterNot { !it.hasAttr("data-original") || it.attr("data-original").contains("blank.gif") }
             .mapIndexed { i, img -> Page(i, "", img.attr("abs:data-original")) }
     }
