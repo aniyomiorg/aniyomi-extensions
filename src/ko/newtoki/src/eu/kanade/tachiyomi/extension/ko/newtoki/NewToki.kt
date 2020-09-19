@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.extension.ko.newtoki
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.SharedPreferences
+import android.support.v7.preference.CheckBoxPreference
 import android.support.v7.preference.EditTextPreference
 import android.support.v7.preference.PreferenceScreen
 import android.widget.Toast
@@ -20,11 +21,14 @@ import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.net.URI
+import java.net.URISyntaxException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
@@ -82,12 +86,33 @@ open class NewToki(override val name: String, private val defaultBaseUrl: String
             client.newCall(GET("$baseUrl$urlPath"))
                 .asObservableSuccess()
                 .map { response ->
-                    // TODO: Fix the error which caused by shares id field with detail and each chapters in the source
-                    val details = mangaDetailsParse(response.asJsoup())
-                    details.url = urlPath
-                    MangasPage(listOf(details), false)
+                    // the id is matches any of 'post' from their CMS board.
+                    // Includes Manga Details Page, Chapters, Comments, and etcs...
+                    actualMangaParseById(urlPath, response)
                 }
         } else super.fetchSearchManga(page, query, filters)
+    }
+
+    private fun actualMangaParseById(urlPath: String, response: Response): MangasPage {
+        val document = response.asJsoup()
+
+        // Only exists on detail page.
+        val firstChapterButton = document.select("tr > th > button.btn-blue").first()
+        // only exists on chapter with proper manga detail page.
+        val fullListButton = document.select(".comic-navbar .toon-nav a").last()
+
+        val list: List<SManga> = if (firstChapterButton?.text()?.contains("첫회보기") ?: false) { // Check this page is detail page
+            val details = mangaDetailsParse(document)
+            details.url = urlPath
+            listOf(details)
+        } else if (fullListButton?.text()?.contains("전체목록") ?: false) { // Check this page is chapter page
+            val url = fullListButton.attr("abs:href")
+            val details = mangaDetailsParse(client.newCall(GET(url)).execute())
+            details.url = getUrlPath(url)
+            listOf(details)
+        } else emptyList()
+
+        return MangasPage(list, false)
     }
 
     override fun mangaDetailsParse(document: Document): SManga {
@@ -181,11 +206,18 @@ open class NewToki(override val name: String, private val defaultBaseUrl: String
         }
     }
 
+    private val htmlDataRegex = Regex("""html_data\+='([^']+)'""")
+
     override fun pageListParse(document: Document): List<Page> {
-        // <article> - <div> - optional <div> - <div> - optional <p> - <img>
-        return document.select("article > div div img")
-            .filterNot { !it.hasAttr("data-original") || it.attr("data-original").contains("blank.gif") }
-            .mapIndexed { i, img -> Page(i, "", img.attr("abs:data-original")) }
+        val script = document.select("script:containsData(html_data)").firstOrNull()?.data() ?: throw Exception("script not found")
+
+        return htmlDataRegex.findAll(script).map { it.groupValues[1] }
+            .asIterable()
+            .flatMap { it.split(".") }
+            .joinToString("") { it.toIntOrNull(16)?.toChar()?.toString() ?: "" }
+            .let { Jsoup.parse(it) }
+            .select("img[alt]")
+            .mapIndexed { i, img -> Page(i, "", if (img.hasAttr("abs:data-original")) img.attr("abs:data-original") else img.attr("abs:content")) }
     }
 
     override fun latestUpdatesSelector() = popularMangaSelector()
@@ -224,7 +256,27 @@ open class NewToki(override val name: String, private val defaultBaseUrl: String
             }
         }
 
+        val latestExperimentPref = androidx.preference.CheckBoxPreference(screen.context).apply {
+            key = EXPERIMENTAL_LATEST_PREF_TITLE
+            title = EXPERIMENTAL_LATEST_PREF_TITLE
+            summary = EXPERIMENTAL_LATEST_PREF_SUMMARY
+
+            setOnPreferenceChangeListener { _, newValue ->
+                try {
+                    val res = preferences.edit().putBoolean(EXPERIMENTAL_LATEST_PREF, newValue as Boolean).commit()
+                    Toast.makeText(screen.context, RESTART_TACHIYOMI, Toast.LENGTH_LONG).show()
+                    res
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    false
+                }
+            }
+        }
+
         screen.addPreference(baseUrlPref)
+        if (name == "ManaToki") {
+            screen.addPreference(latestExperimentPref)
+        }
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -248,16 +300,50 @@ open class NewToki(override val name: String, private val defaultBaseUrl: String
             }
         }
 
+        val latestExperimentPref = CheckBoxPreference(screen.context).apply {
+            key = EXPERIMENTAL_LATEST_PREF_TITLE
+            title = EXPERIMENTAL_LATEST_PREF_TITLE
+            summary = EXPERIMENTAL_LATEST_PREF_SUMMARY
+
+            setOnPreferenceChangeListener { _, newValue ->
+                try {
+                    val res = preferences.edit().putBoolean(EXPERIMENTAL_LATEST_PREF, newValue as Boolean).commit()
+                    Toast.makeText(screen.context, RESTART_TACHIYOMI, Toast.LENGTH_LONG).show()
+                    res
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    false
+                }
+            }
+        }
+
         screen.addPreference(baseUrlPref)
+        if (name == "ManaToki") {
+            screen.addPreference(latestExperimentPref)
+        }
+    }
+
+    protected fun getUrlPath(orig: String): String {
+        return try {
+            URI(orig).path
+        } catch (e: URISyntaxException) {
+            orig
+        }
     }
 
     private fun getPrefBaseUrl(): String = preferences.getString(BASE_URL_PREF, defaultBaseUrl)!!
+    protected fun getExperimentLatest(): Boolean = preferences.getBoolean(EXPERIMENTAL_LATEST_PREF, false)
 
     companion object {
         private const val BASE_URL_PREF_TITLE = "Override BaseUrl"
         private const val BASE_URL_PREF = "overrideBaseUrl_v${BuildConfig.VERSION_NAME}"
         private const val BASE_URL_PREF_SUMMARY = "For temporary uses. Update extension will erase this setting."
         private const val RESTART_TACHIYOMI = "Restart Tachiyomi to apply new setting."
+
+        // Setting: Experimental Latest Fetcher
+        private const val EXPERIMENTAL_LATEST_PREF_TITLE = "Enable Latest (Experimental)"
+        private const val EXPERIMENTAL_LATEST_PREF = "fetchLatestExperiment"
+        private const val EXPERIMENTAL_LATEST_PREF_SUMMARY = "Fetch Latest Manga using Latest Chapters. May has duplicates, Also requires LOTS OF requests (70 per page)"
 
         const val PREFIX_ID_SEARCH = "id:"
     }
