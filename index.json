@@ -1397,10 +1397,10 @@
   {
     "name": "Tachiyomi: NewToki / ManaToki(ManaMoa)",
     "pkg": "eu.kanade.tachiyomi.extension.ko.newtoki",
-    "apk": "tachiyomi-ko.newtoki-v1.2.16.apk",
+    "apk": "tachiyomi-ko.newtoki-v1.2.17.apk",
     "lang": "ko",
-    "code": 16,
-    "version": "1.2.16",
+    "code": 17,
+    "version": "1.2.17",
     "nsfw": 0
   },
   {
