@@ -900,6 +900,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Schlock Mercenary",
+    "pkg": "eu.kanade.tachiyomi.extension.en.schlockmercenary",
+    "apk": "tachiyomi-en.schlockmercenary-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Silent Manga Audition",
     "pkg": "eu.kanade.tachiyomi.extension.en.silentmangaaudition",
     "apk": "tachiyomi-en.silentmangaaudition-v1.2.1.apk",
