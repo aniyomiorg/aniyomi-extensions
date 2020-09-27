@@ -83,10 +83,10 @@
   {
     "name": "Tachiyomi: FoolSlide (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.foolslide",
-    "apk": "tachiyomi-all.foolslide-v1.2.53.apk",
+    "apk": "tachiyomi-all.foolslide-v1.2.54.apk",
     "lang": "all",
-    "code": 53,
-    "version": "1.2.53",
+    "code": 54,
+    "version": "1.2.54",
     "nsfw": 1
   },
   {
@@ -128,10 +128,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.133.apk",
+    "apk": "tachiyomi-all.madara-v1.2.134.apk",
     "lang": "all",
-    "code": 133,
-    "version": "1.2.133",
+    "code": 134,
+    "version": "1.2.134",
     "nsfw": 1
   },
   {
@@ -290,10 +290,10 @@
   {
     "name": "Tachiyomi: WP Mangstream (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
-    "apk": "tachiyomi-all.wpmangastream-v1.2.23.apk",
+    "apk": "tachiyomi-all.wpmangastream-v1.2.24.apk",
     "lang": "all",
-    "code": 23,
-    "version": "1.2.23",
+    "code": 24,
+    "version": "1.2.24",
     "nsfw": 0
   },
   {
