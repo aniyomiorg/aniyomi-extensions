@@ -288,7 +288,7 @@
     "nsfw": 0
   },
   {
-    "name": "Tachiyomi: WP Mangstream (multiple sources)",
+    "name": "Tachiyomi: WP MangaStream (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
     "apk": "tachiyomi-all.wpmangastream-v1.2.24.apk",
     "lang": "all",
@@ -1505,10 +1505,10 @@
   {
     "name": "Tachiyomi: mangásPROJECT",
     "pkg": "eu.kanade.tachiyomi.extension.pt.mangasproject",
-    "apk": "tachiyomi-pt.mangasproject-v1.2.13.apk",
+    "apk": "tachiyomi-pt.mangasproject-v1.2.14.apk",
     "lang": "pt",
-    "code": 13,
-    "version": "1.2.13",
+    "code": 14,
+    "version": "1.2.14",
     "nsfw": 0
   },
   {
