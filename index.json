@@ -128,10 +128,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.134.apk",
+    "apk": "tachiyomi-all.madara-v1.2.135.apk",
     "lang": "all",
-    "code": 134,
-    "version": "1.2.134",
+    "code": 135,
+    "version": "1.2.135",
     "nsfw": 1
   },
   {
@@ -1577,10 +1577,10 @@
   {
     "name": "Tachiyomi: YES Mangás",
     "pkg": "eu.kanade.tachiyomi.extension.pt.yesmangas",
-    "apk": "tachiyomi-pt.yesmangas-v1.2.4.apk",
+    "apk": "tachiyomi-pt.yesmangas-v1.2.5.apk",
     "lang": "pt",
-    "code": 4,
-    "version": "1.2.4",
+    "code": 5,
+    "version": "1.2.5",
     "nsfw": 0
   },
   {
