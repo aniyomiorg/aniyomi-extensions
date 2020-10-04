@@ -167,7 +167,8 @@ class MadaraFactory : SourceFactory {
         AlianzaMarcial(),
         OlaoeManga(),
         FdmScan(),
-        ArgosScan()
+        ArgosScan(),
+        Kombatch()
         // Removed by request of site owner
         // EarlyManga(),
         // MangaGecesi(),
@@ -1291,3 +1292,5 @@ class JJutsuScans : Madara("JJutsuScans", "https://jjutsuscans.com", "en")
 class S2Manga : Madara("S2Manga", "https://s2manga.com", "en")
 
 class MangaLandArabic : Madara("Manga Land Arabic", "https://mangalandarabic.com", "ar")
+
+class Kombatch : Madara("Kombatch", "https://kombatch.com", "id")
