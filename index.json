@@ -110,10 +110,10 @@
   {
     "name": "Tachiyomi: Komga",
     "pkg": "eu.kanade.tachiyomi.extension.all.komga",
-    "apk": "tachiyomi-all.komga-v1.2.16.apk",
+    "apk": "tachiyomi-all.komga-v1.2.17.apk",
     "lang": "all",
-    "code": 16,
-    "version": "1.2.16",
+    "code": 17,
+    "version": "1.2.17",
     "nsfw": 0
   },
   {
@@ -1118,10 +1118,10 @@
   {
     "name": "Tachiyomi: Japscan",
     "pkg": "eu.kanade.tachiyomi.extension.fr.japscan",
-    "apk": "tachiyomi-fr.japscan-v1.2.23.apk",
+    "apk": "tachiyomi-fr.japscan-v1.2.24.apk",
     "lang": "fr",
-    "code": 23,
-    "version": "1.2.23",
+    "code": 24,
+    "version": "1.2.24",
     "nsfw": 0
   },
   {
@@ -1971,12 +1971,12 @@
     "nsfw": 0
   },
   {
-    "name": "Tachiyomi: OhManhua (OneManHua)",
+    "name": "Tachiyomi: CoCoManhua (OhManhua)",
     "pkg": "eu.kanade.tachiyomi.extension.zh.onemanhua",
-    "apk": "tachiyomi-zh.onemanhua-v1.2.5.apk",
+    "apk": "tachiyomi-zh.onemanhua-v1.2.6.apk",
     "lang": "zh",
-    "code": 5,
-    "version": "1.2.5",
+    "code": 6,
+    "version": "1.2.6",
     "nsfw": 0
   },
   {
