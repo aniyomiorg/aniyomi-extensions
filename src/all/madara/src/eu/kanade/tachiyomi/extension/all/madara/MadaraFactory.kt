@@ -31,6 +31,7 @@ class MadaraFactory : SourceFactory {
         AdonisFansub(),
         AkuManga(),
         AllPornComic(),
+        AniMangaEs(),
         AoCTranslations(),
         ArangScans(),
         ArazNovel(),
@@ -74,7 +75,6 @@ class MadaraFactory : SourceFactory {
         KlikManga(),
         KomikGo(),
         LilyManga(),
-        LuxyScans(),
         Manga347(),
         Manga3asq(),
         Manga68(),
@@ -87,6 +87,7 @@ class MadaraFactory : SourceFactory {
         MangaKomi(),
         MangaLord(),
         MangaLandArabic(),
+        MangaNine(),
         MangaPhoenix(),
         MangaRawr(),
         MangaRead(),
@@ -94,6 +95,8 @@ class MadaraFactory : SourceFactory {
         MangaRockTeam(),
         MangaRocky(),
         MangaScantrad(),
+        MangaSpark(),
+        MangaStarz(),
         MangaStream(),
         MangaSY(),
         MangaTX(),
@@ -119,10 +122,13 @@ class MadaraFactory : SourceFactory {
         ManyToon(),
         ManyToonClub(),
         ManyToonMe(),
+        MarkScans(),
         MartialScans(),
         Milftoon(),
         MiracleScans(),
         MixedManga(),
+        MysticalMerries(),
+        NazarickScans(),
         NeoxScanlator(),
         NightComic(),
         NijiTranslations(),
@@ -259,8 +265,6 @@ class AoCTranslations : Madara("Agent of Change Translations", "https://aoc.moe"
 }
 
 class KomikGo : Madara("KomikGo", "https://komikgo.com", "id")
-
-class LuxyScans : Madara("Luxy Scans", "https://luxyscans.com", "en")
 
 class TsubakiNoScan : Madara(
     "Tsubaki No Scan",
@@ -1307,3 +1311,63 @@ class Kombatch : Madara("Kombatch", "https://kombatch.com", "id")
 class ProjetoScanlator : Madara("Projeto Scanlator", "https://projetoscanlator.com", "pt-BR", SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")))
 
 class HikariScan : Madara("Hikari Scan", "https://hikariscan.com.br", "pt-BR", SimpleDateFormat("dd 'de' MMMM 'de' yyyy", Locale("pt", "BR")))
+
+class NazarickScans : Madara("Nazarick Scans", "https://nazarickscans.com", "en") {
+    override fun popularMangaRequest(page: Int) = GET("$baseUrl/manga/page/$page/?m_orderby=trending", headers)
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/manga/page/$page/?m_orderby=trending", headers)
+    override fun popularMangaNextPageSelector(): String? = null
+    override fun latestUpdatesNextPageSelector(): String? = null
+}
+
+class MangaSpark : Madara("MangaSpark", "https://mangaspark.com", "ar") {
+    override fun popularMangaFromElement(element: Element): SManga {
+        val manga = SManga.create()
+
+        with(element) {
+            select(popularMangaUrlSelector).first()?.let {
+                manga.setUrlWithoutDomain(it.attr("abs:href"))
+                manga.title = it.ownText()
+            }
+
+            select("img").first()?.let {
+                manga.thumbnail_url = imageFromElement(it)?.replace("mangaspark", "mangalek")
+            }
+        }
+
+        return manga
+    }
+}
+
+class MangaStarz : Madara("Manga Starz", "https://mangastarz.com", "ar") {
+    override fun popularMangaFromElement(element: Element): SManga {
+        val manga = SManga.create()
+
+        with(element) {
+            select(popularMangaUrlSelector).first()?.let {
+                manga.setUrlWithoutDomain(it.attr("abs:href"))
+                manga.title = it.ownText()
+            }
+
+            select("img").first()?.let {
+                manga.thumbnail_url = imageFromElement(it)?.replace("mangastarz", "mangalek")
+            }
+        }
+
+        return manga
+    }
+}
+
+class MysticalMerries : Madara("Mystical Merries", "https://mysticalmerries.com", "en") {
+    override fun popularMangaRequest(page: Int) = GET("$baseUrl/genre/manhwa/page/$page/?m_orderby=trending", headers)
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/genre/manhwa/page/$page/?m_orderby=latest", headers)
+}
+
+class AniMangaEs : Madara("AniMangaEs", "http://animangaes.com", "en") {
+    override val pageListParseSelector = "div.text-left noscript"
+    override val chapterUrlSuffix = ""
+    override fun chapterListParse(response: Response): List<SChapter> = super.chapterListParse(response).reversed()
+}
+
+class MangaNine : Madara("Manga Nine", "https://manganine.com", "en")
+
+class MarkScans : Madara("Mark Scans", "https://markscans.online", "pt-BR")
