@@ -119,10 +119,10 @@
   {
     "name": "Tachiyomi: LANraragi",
     "pkg": "eu.kanade.tachiyomi.extension.all.lanraragi",
-    "apk": "tachiyomi-all.lanraragi-v1.2.1.apk",
+    "apk": "tachiyomi-all.lanraragi-v1.2.2.apk",
     "lang": "all",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
