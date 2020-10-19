@@ -63,6 +63,7 @@ class MadaraFactory : SourceFactory {
         GoldenManga(),
         GuncelManga(),
         HeroManhua(),
+        HerozScanlation(),
         Hiperdex(),
         HunterFansub(),
         IchirinNoHanaYuri(),
@@ -80,6 +81,7 @@ class MadaraFactory : SourceFactory {
         Manga3asq(),
         Manga68(),
         MangaAction(),
+        MangaArabOnline(),
         MangaArabTeam(),
         MangaBob(),
         MangaClash(),
@@ -188,6 +190,8 @@ class MadaraFactory : SourceFactory {
         // AhStudios(),
     )
 }
+
+class HerozScanlation : Madara("Heroz Scanlation", "https://herozscans.com", "en")
 
 class CatOnHeadTranslations : Madara("CatOnHeadTranslations", "https://catonhead.com", "en")
 
@@ -679,6 +683,8 @@ class HunterFansub : Madara("Hunter Fansub", "https://hunterfansub.com", "es") {
     override fun popularMangaNextPageSelector() = "div.nav-previous"
     override val popularMangaUrlSelector = "div.post-title a:last-child"
 }
+
+class MangaArabOnline : Madara("Manga Arab Online مانجا عرب اون لاين", "https://mangaarabonline.com", "ar", SimpleDateFormat("MMM d, yyyy", Locale.forLanguageTag("ar")))
 
 class MangaArabTeam : Madara("مانجا عرب تيم Manga Arab Team", "https://mangaarabteam.com", "ar") {
     override fun imageRequest(page: Page): Request {
@@ -1312,7 +1318,7 @@ class S2Manga : Madara("S2Manga", "https://s2manga.com", "en")
 
 class MangaLandArabic : Madara("Manga Land Arabic", "https://mangalandarabic.com", "ar")
 
-class Kombatch : Madara("Kombatch", "https://kombatch.com", "id")
+class Kombatch : Madara("Kombatch", "https://kombatch.com", "id", SimpleDateFormat("d MMMM yyyy", Locale.forLanguageTag("id")))
 
 class ProjetoScanlator : Madara("Projeto Scanlator", "https://projetoscanlator.com", "pt-BR", SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR")))
 
