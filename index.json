@@ -1602,6 +1602,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: AllHentai",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.allhentai",
+    "apk": "tachiyomi-ru.allhentai-v1.2.1.apk",
+    "lang": "ru",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 1
+  },
+  {
     "name": "Tachiyomi: Anibe",
     "pkg": "eu.kanade.tachiyomi.extension.ru.anibe",
     "apk": "tachiyomi-ru.anibe-v1.2.1.apk",
