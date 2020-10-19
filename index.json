@@ -128,10 +128,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.142.apk",
+    "apk": "tachiyomi-all.madara-v1.2.144.apk",
     "lang": "all",
-    "code": 142,
-    "version": "1.2.142",
+    "code": 144,
+    "version": "1.2.144",
     "nsfw": 1
   },
   {
@@ -290,10 +290,10 @@
   {
     "name": "Tachiyomi: WP MangaStream (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
-    "apk": "tachiyomi-all.wpmangastream-v1.2.27.apk",
+    "apk": "tachiyomi-all.wpmangastream-v1.2.28.apk",
     "lang": "all",
-    "code": 27,
-    "version": "1.2.27",
+    "code": 28,
+    "version": "1.2.28",
     "nsfw": 0
   },
   {
