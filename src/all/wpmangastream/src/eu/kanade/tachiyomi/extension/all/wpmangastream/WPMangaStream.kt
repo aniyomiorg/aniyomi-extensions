@@ -251,7 +251,6 @@ abstract class WPMangaStream(
 
         val imageList = JSONArray(imageListRegex.find(docString)!!.destructured.toList()[0])
 
-
         for (i in 0 until imageList.length()) {
             pages.add(Page(i, "", imageList.getString(i)))
         }

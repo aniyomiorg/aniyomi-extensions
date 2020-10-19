@@ -37,7 +37,6 @@ class MangaKawaii : ParsedHttpSource() {
     override fun latestUpdatesNextPageSelector(): String? = null
     override fun searchMangaNextPageSelector() = "no selector"
 
-
     override fun popularMangaRequest(page: Int) = GET("$baseUrl/liste-manga/filterMangaList?page=$page&sortBy=views&asc=false", headersBuilder().add("X-Requested-With", "XMLHttpRequest").build())
 
     override fun latestUpdatesRequest(page: Int) = GET(baseUrl, headers)
@@ -112,5 +111,4 @@ class MangaKawaii : ParsedHttpSource() {
     }
     override fun pageListParse(document: Document): List<Page> = throw Exception("Not used")
     override fun imageUrlParse(document: Document): String = throw Exception("Not used")
-
 }

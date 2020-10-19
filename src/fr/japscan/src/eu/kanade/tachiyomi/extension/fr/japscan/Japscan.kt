@@ -35,6 +35,16 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.FormBody
+import okhttp3.MediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.ResponseBody
+import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.text.ParseException
@@ -52,17 +62,6 @@ import kotlin.collections.map
 import kotlin.collections.mapIndexed
 import kotlin.collections.mutableListOf
 import kotlin.collections.toTypedArray
-import okhttp3.FormBody
-import okhttp3.MediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.ResponseBody
-import org.apache.commons.lang3.StringUtils
-import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
 
 class Japscan : ConfigurableSource, ParsedHttpSource() {
 

@@ -10,9 +10,6 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
-import java.io.IOException
-import java.nio.charset.Charset
-import java.util.Calendar
 import okhttp3.CacheControl
 import okhttp3.Call
 import okhttp3.Callback
@@ -25,6 +22,9 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
+import java.io.IOException
+import java.nio.charset.Charset
+import java.util.Calendar
 
 class MangaDoom : HttpSource() {
 
@@ -43,9 +43,12 @@ class MangaDoom : HttpSource() {
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
 
-        return MangasPage(document.select(popularMangaSelector).map {
-            mangaFromMangaListElement(it)
-        }, paginationHasNext(document))
+        return MangasPage(
+            document.select(popularMangaSelector).map {
+                mangaFromMangaListElement(it)
+            },
+            paginationHasNext(document)
+        )
     }
 
     // latest
@@ -71,8 +74,10 @@ class MangaDoom : HttpSource() {
 
         val mangaUpdates = document.select("div.manga_updates > dl > div.manga-cover > a")
 
-        return MangasPage(mangaUpdates.map { mangaFromMangaTitleElement(it) },
-            paginationHasNext(document))
+        return MangasPage(
+            mangaUpdates.map { mangaFromMangaTitleElement(it) },
+            paginationHasNext(document)
+        )
     }
 
     /**
@@ -110,8 +115,10 @@ class MangaDoom : HttpSource() {
             this.artist = dlElement.select("dt:containsOwn(Artist:) + dd > a")
                 .first()?.ownText().takeIf { it != "-" }
 
-            this.status = when (dlElement.select("dt:containsOwn(Status:) + dd")
-                .first().ownText()) {
+            this.status = when (
+                dlElement.select("dt:containsOwn(Status:) + dd")
+                    .first().ownText()
+            ) {
                 "Ongoing" -> SManga.ONGOING
                 "Completed" -> SManga.COMPLETED
                 else -> SManga.UNKNOWN
@@ -348,8 +355,11 @@ class MangaDoom : HttpSource() {
             }
         }
 
-        return POST(baseUrl + underlyingSearchMangaPath,
-            searchHeaders, requestBodyBuilder.build())
+        return POST(
+            baseUrl + underlyingSearchMangaPath,
+            searchHeaders,
+            requestBodyBuilder.build()
+        )
     }
 
     private val searchResultSelector = "div.row"
@@ -357,9 +367,12 @@ class MangaDoom : HttpSource() {
     override fun searchMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
 
-        return MangasPage(document.select(searchResultSelector).map {
-            mangaFromMangaListElement(it)
-        }, false)
+        return MangasPage(
+            document.select(searchResultSelector).map {
+                mangaFromMangaListElement(it)
+            },
+            false
+        )
     }
 
     // filters
@@ -373,13 +386,17 @@ class MangaDoom : HttpSource() {
         genreManager.getGenreGroupFilterOrPlaceholder()
     )
 
-    private class TypeFilter : FormBodySelectFilter("Type", "type",
+    private class TypeFilter : FormBodySelectFilter(
+        "Type",
+        "type",
         arrayOf(
             Pair("japanese", "Japanese Manga"),
             Pair("korean", "Korean Manhwa"),
             Pair("chinese", "Chinese Manhua"),
             Pair("all", "All")
-        ), 3)
+        ),
+        3
+    )
 
     private class AuthorTextFilter : Filter.Text("Author"), FormBodyFilter {
         override fun addToFormParameters(formParameters: MutableMap<String, String>) {
@@ -393,12 +410,16 @@ class MangaDoom : HttpSource() {
         }
     }
 
-    private class StatusFilter : FormBodySelectFilter("Status", "status",
+    private class StatusFilter : FormBodySelectFilter(
+        "Status",
+        "status",
         arrayOf(
             Pair("ongoing", "Ongoing"),
             Pair("completed", "Completed"),
             Pair("both", "Both")
-        ), 2)
+        ),
+        2
+    )
 
     /**
      * GenreFilter aren't hard coded into this extension, instead it relies on asynchronous-fetching
@@ -439,8 +460,10 @@ class MangaDoom : HttpSource() {
          * timestamp with the current time
          */
         private fun contentUpToDate(compareTimestamp: Long?): Boolean =
-            (compareTimestamp != null &&
-                (System.currentTimeMillis() - compareTimestamp < 15 * 60 * 1000))
+            (
+                compareTimestamp != null &&
+                    (System.currentTimeMillis() - compareTimestamp < 15 * 60 * 1000)
+                )
 
         /**
          * Used to generate a GenreGroupFilter from cached Pair objects or (if the cached pairs are
@@ -448,9 +471,11 @@ class MangaDoom : HttpSource() {
          */
         private fun callForGenreGroup(): GenreGroupFilter? {
             fun genreContentListToGenreGroup(genreFiltersContent: List<Pair<String, String>>) =
-                GenreGroupFilter(genreFiltersContent.map { singleGenreContent ->
-                    GenreFilter(singleGenreContent.first, singleGenreContent.second)
-                })
+                GenreGroupFilter(
+                    genreFiltersContent.map { singleGenreContent ->
+                        GenreFilter(singleGenreContent.first, singleGenreContent.second)
+                    }
+                )
 
             val genreGroupFromVar = genreFiltersContent?.let { genreList ->
                 genreContentListToGenreGroup(genreList)
@@ -477,30 +502,43 @@ class MangaDoom : HttpSource() {
                     val document = genreResponse.asJsoup()
 
                     return document.select("ul.manga-cat > li").map {
-                        Pair(it.select("span.fa").first().attr("data-id"),
-                            it.ownText())
+                        Pair(
+                            it.select("span.fa").first().attr("data-id"),
+                            it.ownText()
+                        )
                     }
-            }
+                }
 
             val genreResponse = client
-                .newCall(GET(url = baseUrl + advancedSearchPagePath,
-                    cache = CacheControl.FORCE_CACHE)).execute()
+                .newCall(
+                    GET(
+                        url = baseUrl + advancedSearchPagePath,
+                        cache = CacheControl.FORCE_CACHE
+                    )
+                ).execute()
 
             return if (genreResponse.code() == 200 &&
-                contentUpToDate(genreResponse.receivedResponseAtMillis())) {
-                    responseToGenreFilterContentPair(genreResponse)
+                contentUpToDate(genreResponse.receivedResponseAtMillis())
+            ) {
+                responseToGenreFilterContentPair(genreResponse)
             } else {
-                client.newCall(GET(url = baseUrl + advancedSearchPagePath,
-                    cache = CacheControl.FORCE_NETWORK)).enqueue(object : Callback {
-                    override fun onFailure(call: Call, e: IOException) {
-                        throw e
-                    }
+                client.newCall(
+                    GET(
+                        url = baseUrl + advancedSearchPagePath,
+                        cache = CacheControl.FORCE_NETWORK
+                    )
+                ).enqueue(
+                    object : Callback {
+                        override fun onFailure(call: Call, e: IOException) {
+                            throw e
+                        }
 
-                    override fun onResponse(call: Call, response: Response) {
-                        genreFilterContentFrom = response.receivedResponseAtMillis()
-                        genreFiltersContent = responseToGenreFilterContentPair(response)
+                        override fun onResponse(call: Call, response: Response) {
+                            genreFilterContentFrom = response.receivedResponseAtMillis()
+                            genreFiltersContent = responseToGenreFilterContentPair(response)
+                        }
                     }
-                })
+                )
                 null
             }
         }
@@ -515,11 +553,15 @@ class MangaDoom : HttpSource() {
         val vals: Array<Pair<String, String>>,
         defaultValue: Int = 0
     ) :
-        Filter.Select<String>(displayName,
-            vals.map { it.second }.toTypedArray(), defaultValue), FormBodyFilter {
-                override fun addToFormParameters(formParameters: MutableMap<String, String>) {
-                    formParameters[payloadParam] = vals[state].first
-                }
+        Filter.Select<String>(
+            displayName,
+            vals.map { it.second }.toTypedArray(),
+            defaultValue
+        ),
+        FormBodyFilter {
+        override fun addToFormParameters(formParameters: MutableMap<String, String>) {
+            formParameters[payloadParam] = vals[state].first
+        }
     }
 
     /**
@@ -547,5 +589,5 @@ class MangaDoom : HttpSource() {
             this.setUrlWithoutDomain(mangaTitleElement.attr("href"))
             this.thumbnail_url = mangaTitleElement.select("img").first()
                 .attr("src")
-    }
+        }
 }
