@@ -128,10 +128,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.146.apk",
+    "apk": "tachiyomi-all.madara-v1.2.147.apk",
     "lang": "all",
-    "code": 146,
-    "version": "1.2.146",
+    "code": 147,
+    "version": "1.2.147",
     "nsfw": 1
   },
   {
