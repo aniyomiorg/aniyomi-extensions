@@ -128,10 +128,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.145.apk",
+    "apk": "tachiyomi-all.madara-v1.2.146.apk",
     "lang": "all",
-    "code": 145,
-    "version": "1.2.145",
+    "code": 146,
+    "version": "1.2.146",
     "nsfw": 1
   },
   {
@@ -1217,10 +1217,10 @@
   {
     "name": "Tachiyomi: Komiku",
     "pkg": "eu.kanade.tachiyomi.extension.id.komiku",
-    "apk": "tachiyomi-id.komiku-v1.2.2.apk",
+    "apk": "tachiyomi-id.komiku-v1.2.3.apk",
     "lang": "id",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 0
   },
   {
