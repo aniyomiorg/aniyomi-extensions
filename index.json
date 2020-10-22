@@ -1640,10 +1640,10 @@
   {
     "name": "Tachiyomi: Henchan",
     "pkg": "eu.kanade.tachiyomi.extension.ru.henchan",
-    "apk": "tachiyomi-ru.henchan-v1.2.20.apk",
+    "apk": "tachiyomi-ru.henchan-v1.2.21.apk",
     "lang": "ru",
-    "code": 20,
-    "version": "1.2.20",
+    "code": 21,
+    "version": "1.2.21",
     "nsfw": 1
   },
   {
