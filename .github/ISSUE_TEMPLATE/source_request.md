@@ -9,11 +9,11 @@ labels: "Source Request"
 
 I acknowledge that:
 
-- I have verified the extension does not already exist (Please verify in these locations)
-  - The list of existing extensions in the application
-  - The multi-source spreadsheet: https://tachiyomi.org/extensions
-  - Search the github repository for the extension and verify its does not appear in the code base
-- I have searched the existing github issues and this extension does **NOT** have an open request
+- I have checked that the extension does not already exist:
+  - In the list of existing extensions in the application
+  - In the multi-source spreadsheet: https://tachiyomi.org/extensions
+  - By searching the GitHub repository for the extension and verify it does not appear in the code base
+- I have searched the existing GitHub issues and this extension does **NOT** have an open request
 - I will fill out the title and the information in this template
 
 **DELETE THIS SECTION IF YOU HAVE READ AND ACKNOWLEDGED IT**
