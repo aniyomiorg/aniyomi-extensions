@@ -146,10 +146,10 @@
   {
     "name": "Tachiyomi: MangaDex",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangadex",
-    "apk": "tachiyomi-all.mangadex-v1.2.96.apk",
+    "apk": "tachiyomi-all.mangadex-v1.2.97.apk",
     "lang": "all",
-    "code": 96,
-    "version": "1.2.96",
+    "code": 97,
+    "version": "1.2.97",
     "nsfw": 1
   },
   {
@@ -353,10 +353,10 @@
   {
     "name": "Tachiyomi: Team X",
     "pkg": "eu.kanade.tachiyomi.extension.ar.teamx",
-    "apk": "tachiyomi-ar.teamx-v1.2.6.apk",
+    "apk": "tachiyomi-ar.teamx-v1.2.7.apk",
     "lang": "ar",
-    "code": 6,
-    "version": "1.2.6",
+    "code": 7,
+    "version": "1.2.7",
     "nsfw": 0
   },
   {
