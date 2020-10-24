@@ -60,7 +60,7 @@ class TeamX : ParsedHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request {
         if (page == 1) titlesAdded.clear()
 
-        return GET("$baseUrl/فصول-المانجا/" + if (page > 1) "page/$page/" else "", headers)
+        return GET("$baseUrl/احدث-الفصول/" + if (page > 1) "page/$page/" else "", headers)
     }
 
     override fun latestUpdatesParse(response: Response): MangasPage {
