@@ -290,10 +290,10 @@
   {
     "name": "Tachiyomi: WP MangaStream (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
-    "apk": "tachiyomi-all.wpmangastream-v1.2.29.apk",
+    "apk": "tachiyomi-all.wpmangastream-v1.2.30.apk",
     "lang": "all",
-    "code": 29,
-    "version": "1.2.29",
+    "code": 30,
+    "version": "1.2.30",
     "nsfw": 0
   },
   {
@@ -1365,15 +1365,6 @@
     "lang": "ja",
     "code": 4,
     "version": "1.2.4",
-    "nsfw": 0
-  },
-  {
-    "name": "Tachiyomi: Rawkuma",
-    "pkg": "eu.kanade.tachiyomi.extension.ja.rawkuma",
-    "apk": "tachiyomi-ja.rawkuma-v1.2.3.apk",
-    "lang": "ja",
-    "code": 3,
-    "version": "1.2.3",
     "nsfw": 0
   },
   {
