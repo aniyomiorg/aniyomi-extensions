@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import android.support.v7.preference.ListPreference
 import android.support.v7.preference.PreferenceScreen
+import android.util.Log
 import com.github.salomonbrys.kotson.forEach
 import com.github.salomonbrys.kotson.get
 import com.github.salomonbrys.kotson.int
@@ -12,11 +13,13 @@ import com.github.salomonbrys.kotson.long
 import com.github.salomonbrys.kotson.nullString
 import com.github.salomonbrys.kotson.obj
 import com.github.salomonbrys.kotson.string
+import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.ConfigurableSource
@@ -34,6 +37,7 @@ import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -72,6 +76,7 @@ abstract class MangaDex(
     override val client: OkHttpClient = network.client.newBuilder()
         .addNetworkInterceptor(rateLimitInterceptor)
         .addInterceptor(CoverInterceptor())
+        .addInterceptor(MdAtHomeReportInterceptor(network.client, headersBuilder().build()))
         .build()
 
     private fun clientBuilder(): OkHttpClient = clientBuilder(getShowR18())
@@ -584,18 +589,14 @@ abstract class MangaDex(
         val jsonData = response.body()!!.string()
         val json = JsonParser().parse(jsonData).asJsonObject
 
-        val pages = mutableListOf<Page>()
-
         val hash = json.get("hash").string
-        val pageArray = json.getAsJsonArray("page_array")
         val server = json.get("server").string
 
-        pageArray.forEach {
+        return json.getAsJsonArray("page_array").mapIndexed { idx, it ->
             val url = "$hash/${it.asString}"
-            pages.add(Page(pages.size, "$server,${response.request().url()},${Date().time}", url))
+            val mdAtHomeMetadataUrl = "$server,${response.request().url()},${Date().time}"
+            Page(idx, mdAtHomeMetadataUrl, url)
         }
-
-        return pages
     }
 
     override fun imageRequest(page: Page): Request {
@@ -625,6 +626,7 @@ abstract class MangaDex(
                 tokenedServer + page.imageUrl
             }
         }
+
         return GET(url, headers)
     }
 
@@ -994,6 +996,47 @@ class CoverInterceptor : Interceptor {
             } else {
                 response
             }
+        }
+    }
+}
+
+class MdAtHomeReportInterceptor(
+    private val client: OkHttpClient,
+    private val headers: Headers
+) : Interceptor {
+
+    private val gson: Gson by lazy { Gson() }
+    private val mdAtHomeUrlRegex = Regex("""^https://[\w\d]+\.[\w\d]+\.mangadex\.network.*${'$'}""")
+
+    override fun intercept(chain: Interceptor.Chain): Response {
+        val originalRequest = chain.request()
+
+        return chain.proceed(chain.request()).let { response ->
+            val url = originalRequest.url().toString()
+            if (url.contains(mdAtHomeUrlRegex)) {
+                val jsonString = gson.toJson(
+                    mapOf(
+                        "url" to url,
+                        "success" to response.isSuccessful,
+                        "bytes" to response.peekBody(Long.MAX_VALUE).bytes().size
+                    )
+                )
+
+                val postResult = client.newCall(
+                    POST(
+                        "https://api.mangadex.network/report",
+                        headers,
+                        RequestBody.create(null, jsonString)
+                    )
+                )
+                try {
+                    postResult.execute()
+                } catch (e: Exception) {
+                    Log.e("MangaDex", "Error trying to POST report to MD@Home: ${e.message}")
+                }
+            }
+
+            response
         }
     }
 }
