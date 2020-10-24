@@ -53,9 +53,12 @@ class WPMangaStreamFactory : SourceFactory {
         SilenceScan(),
         SheaManga(),
         FlameScans(),
-        GURUKomik()
+        GURUKomik(),
+        Rawkuma()
     )
 }
+
+class Rawkuma : WPMangaStream("Rawkuma", "https://rawkuma.com/", "ja")
 
 class GURUKomik : WPMangaStream("GURU Komik", "https://gurukomik.com", "id", SimpleDateFormat("MMMM dd, yyyy", Locale.forLanguageTag("id")))
 
