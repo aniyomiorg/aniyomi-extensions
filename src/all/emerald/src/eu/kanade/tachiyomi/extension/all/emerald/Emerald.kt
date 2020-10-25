@@ -48,7 +48,7 @@ open class Emerald(
         return manga
     }
 
-    override fun latestUpdatesNextPageSelector() = "div.browse-pager:contains(order) .page-item:not(.disabled) a.page-link:contains(»)"
+    override fun latestUpdatesNextPageSelector() = "div#mainer .pagination .page-item:not(.disabled) a.page-link:contains(»)"
 
     override fun popularMangaRequest(page: Int): Request {
         return GET("$baseUrl/browse?langs=$Mtlang&sort=views_w&page=$page")
@@ -161,7 +161,7 @@ open class Emerald(
     }
 
     override fun mangaDetailsParse(document: Document): SManga {
-        val infoElement = document.select("div#series-page div.container")
+        val infoElement = document.select("div#mainer div.container-fluid")
         val manga = SManga.create()
         val genres = mutableListOf<String>()
         val status = infoElement.select("div.attr-item:contains(status) span").text()
@@ -175,7 +175,7 @@ open class Emerald(
         manga.author = infoElement.select("div.attr-item:contains(author) a:first-child").text()
         manga.artist = infoElement.select("div.attr-item:contains(author) a:last-child").text()
         manga.status = parseStatus(status)
-        manga.genre = genres.joinToString(", ")
+        manga.genre = infoElement.select(".attr-item b:contains(genres) + span ").joinToString { it.text() }
         manga.description = infoElement.select("h5:contains(summary) + pre").text()
         manga.thumbnail_url = document.select("div.attr-cover img")
             .attr("abs:src")
