@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.all.emerald
 
+import com.squareup.duktape.Duktape
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -10,6 +11,7 @@ import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONArray
 import org.json.JSONObject
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -34,7 +36,7 @@ open class Emerald(
         return GET("$baseUrl/browse?langs=$Mtlang&sort=update&page=$page")
     }
 
-    override fun latestUpdatesSelector() = "div#series-list div.col-24"
+    override fun latestUpdatesSelector() = "div#series-list div.col"
 
     override fun latestUpdatesFromElement(element: Element): SManga {
         val manga = SManga.create()
@@ -265,20 +267,46 @@ open class Emerald(
 
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
-        val script = document.select("script").html()
-            .substringAfter("var images = ").substringBefore(";")
-        val imgJson = JSONObject(script)
-        val imgNames = imgJson.names()
 
-        if (imgNames != null) {
-            for (i in 0 until imgNames.length()) {
-                val imgKey = imgNames.getString(i)
-                val imgUrl = imgJson.getString(imgKey)
-                pages.add(Page(i, "", imgUrl))
+        val script = document.select("script").html()
+        if (script.contains("var images =")) {
+            val imgJson = JSONObject(script.substringAfter("var images = ").substringBefore(";"))
+            val imgNames = imgJson.names()
+
+            if (imgNames != null) {
+                for (i in 0 until imgNames.length()) {
+                    val imgKey = imgNames.getString(i)
+                    val imgUrl = imgJson.getString(imgKey)
+                    pages.add(Page(i, "", imgUrl))
+                }
+            }
+        } else if (script.contains("const server =")) {
+            val duktape = Duktape.create()
+            val encryptedServer = script.substringAfter("const server = ").substringBefore(";")
+            val batojs = duktape.evaluate(script.substringAfter("const batojs = ").substringBefore(";")).toString()
+            val decryptScript = cryptoJS + "CryptoJS.AES.decrypt($encryptedServer, \"$batojs\").toString(CryptoJS.enc.Utf8);"
+            val server = duktape.evaluate(decryptScript).toString().replace("\"", "")
+            duktape.close()
+
+            val imgArray = JSONArray(script.substringAfter("const images = ").substringBefore(";"))
+            if (imgArray != null) {
+                for (i in 0 until imgArray.length()) {
+                    val imgUrl = imgArray.get(i)
+                    pages.add(Page(i, "", "https:${server}$imgUrl"))
+                }
             }
         }
 
         return pages
+    }
+
+    private val cryptoJS by lazy {
+        client.newCall(
+            GET(
+                "https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js",
+                headers
+            )
+        ).execute().body()!!.string()
     }
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
