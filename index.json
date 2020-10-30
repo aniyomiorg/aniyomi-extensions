@@ -83,10 +83,10 @@
   {
     "name": "Tachiyomi: FoolSlide (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.foolslide",
-    "apk": "tachiyomi-all.foolslide-v1.2.54.apk",
+    "apk": "tachiyomi-all.foolslide-v1.2.55.apk",
     "lang": "all",
-    "code": 54,
-    "version": "1.2.54",
+    "code": 55,
+    "version": "1.2.55",
     "nsfw": 1
   },
   {
@@ -236,10 +236,10 @@
   {
     "name": "Tachiyomi: Paprika",
     "pkg": "eu.kanade.tachiyomi.extension.all.paprika",
-    "apk": "tachiyomi-all.paprika-v1.2.5.apk",
+    "apk": "tachiyomi-all.paprika-v1.2.6.apk",
     "lang": "all",
-    "code": 5,
-    "version": "1.2.5",
+    "code": 6,
+    "version": "1.2.6",
     "nsfw": 0
   },
   {
@@ -290,10 +290,10 @@
   {
     "name": "Tachiyomi: WP MangaStream (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
-    "apk": "tachiyomi-all.wpmangastream-v1.2.30.apk",
+    "apk": "tachiyomi-all.wpmangastream-v1.2.31.apk",
     "lang": "all",
-    "code": 30,
-    "version": "1.2.30",
+    "code": 31,
+    "version": "1.2.31",
     "nsfw": 0
   },
   {
