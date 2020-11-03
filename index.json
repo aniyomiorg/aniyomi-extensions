@@ -164,10 +164,10 @@
   {
     "name": "Tachiyomi: MANGA Plus by SHUEISHA",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangaplus",
-    "apk": "tachiyomi-all.mangaplus-v1.2.13.apk",
+    "apk": "tachiyomi-all.mangaplus-v1.2.14.apk",
     "lang": "all",
-    "code": 13,
-    "version": "1.2.13",
+    "code": 14,
+    "version": "1.2.14",
     "nsfw": 0
   },
   {
@@ -1919,10 +1919,10 @@
   {
     "name": "Tachiyomi: Jinmantiantang",
     "pkg": "eu.kanade.tachiyomi.extension.zh.jinmantiantang",
-    "apk": "tachiyomi-zh.jinmantiantang-v1.2.3.apk",
+    "apk": "tachiyomi-zh.jinmantiantang-v1.2.4.apk",
     "lang": "zh",
-    "code": 3,
-    "version": "1.2.3",
+    "code": 4,
+    "version": "1.2.4",
     "nsfw": 1
   },
   {
