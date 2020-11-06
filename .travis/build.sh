@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-./gradlew --no-daemon clean assembleRelease
+./gradlew --no-daemon clean assembleRelease -x lintKotlinMain
 
 TOOLS="$(ls -d ${ANDROID_HOME}/build-tools/* | tail -1)"
 

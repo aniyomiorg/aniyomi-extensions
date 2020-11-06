@@ -13,10 +13,6 @@ import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
-import java.io.ByteArrayOutputStream
-import java.io.InputStream
-import java.text.SimpleDateFormat
-import java.util.Locale
 import okhttp3.HttpUrl
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
@@ -26,6 +22,10 @@ import okhttp3.ResponseBody
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Nsfw
 class Jinmantiantang : ParsedHttpSource() {
@@ -44,19 +44,21 @@ class Jinmantiantang : ParsedHttpSource() {
     private var chapterArea = "a[class=col btn btn-primary dropdown-toggle reading]"
 
     // 处理URL请求
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder().addInterceptor(fun(chain): Response {
-        val url = chain.request().url().toString()
-        val response = chain.proceed(chain.request())
-        if (!url.contains("media/photos", ignoreCase = true)) return response // 对非漫画图片连接直接放行
-        if (url.substring(url.indexOf("photos/") + 7, url.lastIndexOf("/")).toInt() < scramble_id) return response // 对在漫画章节ID为220980之前的图片未进行图片分割,直接放行
-        // 章节ID:220980(包含)之后的漫画(2020.10.27之后)图片进行了分割倒序处理
-        val res = response.body()!!.byteStream().use {
-            decodeImage(it)
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder().addInterceptor(
+        fun(chain): Response {
+            val url = chain.request().url().toString()
+            val response = chain.proceed(chain.request())
+            if (!url.contains("media/photos", ignoreCase = true)) return response // 对非漫画图片连接直接放行
+            if (url.substring(url.indexOf("photos/") + 7, url.lastIndexOf("/")).toInt() < scramble_id) return response // 对在漫画章节ID为220980之前的图片未进行图片分割,直接放行
+// 章节ID:220980(包含)之后的漫画(2020.10.27之后)图片进行了分割倒序处理
+            val res = response.body()!!.byteStream().use {
+                decodeImage(it)
+            }
+            val mediaType = MediaType.parse("image/avif,image/webp,image/apng,image/*,*/*")
+            val outputBytes = ResponseBody.create(mediaType, res)
+            return response.newBuilder().body(outputBytes).build()
         }
-        val mediaType = MediaType.parse("image/avif,image/webp,image/apng,image/*,*/*")
-        val outputBytes = ResponseBody.create(mediaType, res)
-        return response.newBuilder().body(outputBytes).build()
-    }).build()
+    ).build()
 
     // 对被分割的图片进行分割,排序处理
     private fun decodeImage(img: InputStream): ByteArray {
