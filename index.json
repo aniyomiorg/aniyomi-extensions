@@ -272,10 +272,10 @@
   {
     "name": "Tachiyomi: Webtoons",
     "pkg": "eu.kanade.tachiyomi.extension.all.webtoons",
-    "apk": "tachiyomi-all.webtoons-v1.2.19.apk",
+    "apk": "tachiyomi-all.webtoons-v1.2.20.apk",
     "lang": "all",
-    "code": 19,
-    "version": "1.2.19",
+    "code": 20,
+    "version": "1.2.20",
     "nsfw": 0
   },
   {
@@ -290,10 +290,10 @@
   {
     "name": "Tachiyomi: WP MangaStream (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
-    "apk": "tachiyomi-all.wpmangastream-v1.2.31.apk",
+    "apk": "tachiyomi-all.wpmangastream-v1.2.32.apk",
     "lang": "all",
-    "code": 31,
-    "version": "1.2.31",
+    "code": 32,
+    "version": "1.2.32",
     "nsfw": 0
   },
   {
@@ -754,6 +754,15 @@
     "code": 4,
     "version": "1.2.4",
     "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: ManhwaManga.net",
+    "pkg": "eu.kanade.tachiyomi.extension.en.manhwamanga",
+    "apk": "tachiyomi-en.manhwamanga-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: ManhwaTime",
