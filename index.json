@@ -56,10 +56,10 @@
   {
     "name": "Tachiyomi: Emerald",
     "pkg": "eu.kanade.tachiyomi.extension.all.emerald",
-    "apk": "tachiyomi-all.emerald-v1.2.4.apk",
+    "apk": "tachiyomi-all.emerald-v1.2.5.apk",
     "lang": "all",
-    "code": 4,
-    "version": "1.2.4",
+    "code": 5,
+    "version": "1.2.5",
     "nsfw": 0
   },
   {
@@ -969,6 +969,15 @@
     "lang": "en",
     "code": 10,
     "version": "1.2.10",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: The Property of Hate",
+    "pkg": "eu.kanade.tachiyomi.extension.en.thepropertyofhate",
+    "apk": "tachiyomi-en.thepropertyofhate-v1.2.2.apk",
+    "lang": "en",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
