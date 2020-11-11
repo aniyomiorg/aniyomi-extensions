@@ -6,15 +6,25 @@ jobs:
   autoclose:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v1
-      - name: Install Node v14
-        uses: actions/setup-node@v1
-        with:
-          node-version: 14
-      - name: Install dependencies
-        run: cd ./.github/actions/issue-closer && npm install
-      - name: Autoclose issue
-        uses: ./.github/actions/issue-closer
+      - name: Autoclose issues
+        uses: arkon/issue-closer-action@v2.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          rules: |
+            [
+              {
+                "type": "title",
+                "regex": ".*<(Source Name|short description)>*",
+                "message": "You did not fill out the description in the title"
+              },
+              {
+                "type": "body",
+                "regex": ".*DELETE THIS SECTION IF YOU HAVE READ AND ACKNOWLEDGED IT.*",
+                "message": "The acknowledgment section was not removed"
+              },
+              {
+                "type": "body",
+                "regex": ".*\\* (Tachiyomi version|Android version|Device|Name|Link|Extension version): \\?.*",
+                "message": "The requested information was not filled out"
+              }
+            ]
