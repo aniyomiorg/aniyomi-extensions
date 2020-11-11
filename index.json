@@ -1496,10 +1496,10 @@
   {
     "name": "Tachiyomi: MangaHost",
     "pkg": "eu.kanade.tachiyomi.extension.pt.mangahost",
-    "apk": "tachiyomi-pt.mangahost-v1.2.14.apk",
+    "apk": "tachiyomi-pt.mangahost-v1.2.15.apk",
     "lang": "pt",
-    "code": 14,
-    "version": "1.2.14",
+    "code": 15,
+    "version": "1.2.15",
     "nsfw": 0
   },
   {
@@ -1514,10 +1514,10 @@
   {
     "name": "Tachiyomi: MangaYabu!",
     "pkg": "eu.kanade.tachiyomi.extension.pt.mangayabu",
-    "apk": "tachiyomi-pt.mangayabu-v1.2.3.apk",
+    "apk": "tachiyomi-pt.mangayabu-v1.2.4.apk",
     "lang": "pt",
-    "code": 3,
-    "version": "1.2.3",
+    "code": 4,
+    "version": "1.2.4",
     "nsfw": 0
   },
   {
