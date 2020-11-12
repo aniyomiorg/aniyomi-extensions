@@ -56,10 +56,10 @@
   {
     "name": "Tachiyomi: Emerald",
     "pkg": "eu.kanade.tachiyomi.extension.all.emerald",
-    "apk": "tachiyomi-all.emerald-v1.2.5.apk",
+    "apk": "tachiyomi-all.emerald-v1.2.6.apk",
     "lang": "all",
-    "code": 5,
-    "version": "1.2.5",
+    "code": 6,
+    "version": "1.2.6",
     "nsfw": 0
   },
   {
@@ -1136,10 +1136,10 @@
   {
     "name": "Tachiyomi: Zahard",
     "pkg": "eu.kanade.tachiyomi.extension.es.zahard",
-    "apk": "tachiyomi-es.zahard-v1.2.2.apk",
+    "apk": "tachiyomi-es.zahard-v1.2.4.apk",
     "lang": "es",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 4,
+    "version": "1.2.4",
     "nsfw": 0
   },
   {
@@ -1586,10 +1586,10 @@
   {
     "name": "Tachiyomi: Union Mangás",
     "pkg": "eu.kanade.tachiyomi.extension.pt.unionmangas",
-    "apk": "tachiyomi-pt.unionmangas-v1.2.16.apk",
+    "apk": "tachiyomi-pt.unionmangas-v1.2.17.apk",
     "lang": "pt",
-    "code": 16,
-    "version": "1.2.16",
+    "code": 17,
+    "version": "1.2.17",
     "nsfw": 0
   },
   {
