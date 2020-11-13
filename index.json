@@ -900,6 +900,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: ReadM",
+    "pkg": "eu.kanade.tachiyomi.extension.en.readm",
+    "apk": "tachiyomi-en.readm-v1.2.3.apk",
+    "lang": "en",
+    "code": 3,
+    "version": "1.2.3",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: ReadMangaToday",
     "pkg": "eu.kanade.tachiyomi.extension.en.readmangatoday",
     "apk": "tachiyomi-en.readmangatoday-v1.2.9.apk",
@@ -916,15 +925,6 @@
     "code": 6,
     "version": "1.2.6",
     "nsfw": 1
-  },
-  {
-    "name": "Tachiyomi: ReadM",
-    "pkg": "eu.kanade.tachiyomi.extension.en.readm",
-    "apk": "tachiyomi-en.readm-v1.2.3.apk",
-    "lang": "en",
-    "code": 3,
-    "version": "1.2.3",
-    "nsfw": 0
   },
   {
     "name": "Tachiyomi: Schlock Mercenary",
@@ -1179,21 +1179,21 @@
     "nsfw": 0
   },
   {
-    "name": "Tachiyomi: Scantrad Union",
-    "pkg": "eu.kanade.tachiyomi.extension.fr.scantradunion",
-    "apk": "tachiyomi-fr.scantradunion-v1.2.1.apk",
-    "lang": "fr",
-    "code": 1,
-    "version": "1.2.1",
-    "nsfw": 0
-  },
-  {
     "name": "Tachiyomi: Scantrad",
     "pkg": "eu.kanade.tachiyomi.extension.fr.scantrad",
     "apk": "tachiyomi-fr.scantrad-v1.2.6.apk",
     "lang": "fr",
     "code": 6,
     "version": "1.2.6",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Scantrad Union",
+    "pkg": "eu.kanade.tachiyomi.extension.fr.scantradunion",
+    "apk": "tachiyomi-fr.scantradunion-v1.2.1.apk",
+    "lang": "fr",
+    "code": 1,
+    "version": "1.2.1",
     "nsfw": 0
   },
   {
