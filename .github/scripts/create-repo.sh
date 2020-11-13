@@ -10,7 +10,7 @@ cp -f apk/* repo/apk
 
 cd repo
 
-APKS=( ../apk/*".apk"* )
+APKS=( ../apk/*".apk" )
 
 for APK in ${APKS[@]}; do
     FILENAME=$(basename ${APK})
