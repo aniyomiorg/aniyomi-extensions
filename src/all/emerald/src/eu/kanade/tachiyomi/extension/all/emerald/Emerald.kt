@@ -7,10 +7,12 @@ import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
+import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
 import org.jsoup.nodes.Document
@@ -152,6 +154,15 @@ open class Emerald(
     override fun searchMangaFromElement(element: Element) = latestUpdatesFromElement(element)
 
     override fun searchMangaNextPageSelector() = latestUpdatesNextPageSelector()
+
+    private val searchMangaTitles = HashSet<String>()
+
+    override fun searchMangaParse(response: Response): MangasPage {
+        val mp = super.searchMangaParse(response)
+        val manga = mp.mangas.distinctBy { it.title.toLowerCase() }.filterNot { searchMangaTitles.contains(it.title.toLowerCase()) }
+        searchMangaTitles.addAll(manga.map { it.title.toLowerCase() })
+        return MangasPage(manga, mp.hasNextPage)
+    }
 
     override fun mangaDetailsRequest(manga: SManga): Request {
         if (manga.url.startsWith("http")) {
