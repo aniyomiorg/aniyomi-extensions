@@ -56,10 +56,10 @@
   {
     "name": "Tachiyomi: Emerald",
     "pkg": "eu.kanade.tachiyomi.extension.all.emerald",
-    "apk": "tachiyomi-all.emerald-v1.2.6.apk",
+    "apk": "tachiyomi-all.emerald-v1.2.7.apk",
     "lang": "all",
-    "code": 6,
-    "version": "1.2.6",
+    "code": 7,
+    "version": "1.2.7",
     "nsfw": 0
   },
   {
