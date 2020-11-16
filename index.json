@@ -182,10 +182,10 @@
   {
     "name": "Tachiyomi: My Manga Reader CMS (Many sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mmrcms",
-    "apk": "tachiyomi-all.mmrcms-v1.2.51.apk",
+    "apk": "tachiyomi-all.mmrcms-v1.2.52.apk",
     "lang": "all",
-    "code": 51,
-    "version": "1.2.51",
+    "code": 52,
+    "version": "1.2.52",
     "nsfw": 1
   },
   {
@@ -1287,6 +1287,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: MangaYu",
+    "pkg": "eu.kanade.tachiyomi.extension.id.mangayu",
+    "apk": "tachiyomi-id.mangayu-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: ManhuaID",
     "pkg": "eu.kanade.tachiyomi.extension.id.manhuaid",
     "apk": "tachiyomi-id.manhuaid-v1.2.2.apk",
@@ -1739,10 +1748,10 @@
   {
     "name": "Tachiyomi: Remanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.remanga",
-    "apk": "tachiyomi-ru.remanga-v1.2.8.apk",
+    "apk": "tachiyomi-ru.remanga-v1.2.9.apk",
     "lang": "ru",
-    "code": 8,
-    "version": "1.2.8",
+    "code": 9,
+    "version": "1.2.9",
     "nsfw": 0
   },
   {
