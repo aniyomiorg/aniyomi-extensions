@@ -1946,10 +1946,10 @@
   {
     "name": "Tachiyomi: Jinmantiantang",
     "pkg": "eu.kanade.tachiyomi.extension.zh.jinmantiantang",
-    "apk": "tachiyomi-zh.jinmantiantang-v1.2.5.apk",
+    "apk": "tachiyomi-zh.jinmantiantang-v1.2.6.apk",
     "lang": "zh",
-    "code": 5,
-    "version": "1.2.5",
+    "code": 6,
+    "version": "1.2.6",
     "nsfw": 1
   },
   {
