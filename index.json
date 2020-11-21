@@ -1575,6 +1575,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Tsuki Mangás",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.tsukimangas",
+    "apk": "tachiyomi-pt.tsukimangas-v1.2.6.apk",
+    "lang": "pt",
+    "code": 6,
+    "version": "1.2.6",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Union Mangás",
     "pkg": "eu.kanade.tachiyomi.extension.pt.unionmangas",
     "apk": "tachiyomi-pt.unionmangas-v1.2.17.apk",
