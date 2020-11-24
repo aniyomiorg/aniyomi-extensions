@@ -1206,15 +1206,6 @@
     "nsfw": 0
   },
   {
-    "name": "Tachiyomi: Kiryuu",
-    "pkg": "eu.kanade.tachiyomi.extension.id.kiryuu",
-    "apk": "tachiyomi-id.kiryuu-v1.2.2.apk",
-    "lang": "id",
-    "code": 2,
-    "version": "1.2.2",
-    "nsfw": 0
-  },
-  {
     "name": "Tachiyomi: Komikcast",
     "pkg": "eu.kanade.tachiyomi.extension.id.komikcast",
     "apk": "tachiyomi-id.komikcast-v1.2.4.apk",
@@ -1262,10 +1253,10 @@
   {
     "name": "Tachiyomi: MangaKita",
     "pkg": "eu.kanade.tachiyomi.extension.id.mangakita",
-    "apk": "tachiyomi-id.mangakita-v1.2.1.apk",
+    "apk": "tachiyomi-id.mangakita-v1.2.2.apk",
     "lang": "id",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -1919,10 +1910,10 @@
   {
     "name": "Tachiyomi: CopyManga",
     "pkg": "eu.kanade.tachiyomi.extension.zh.copymanga",
-    "apk": "tachiyomi-zh.copymanga-v1.2.1.apk",
+    "apk": "tachiyomi-zh.copymanga-v1.2.2.apk",
     "lang": "zh",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
