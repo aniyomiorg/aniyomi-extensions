@@ -272,10 +272,10 @@
   {
     "name": "Tachiyomi: Webtoons",
     "pkg": "eu.kanade.tachiyomi.extension.all.webtoons",
-    "apk": "tachiyomi-all.webtoons-v1.2.21.apk",
+    "apk": "tachiyomi-all.webtoons-v1.2.22.apk",
     "lang": "all",
-    "code": 21,
-    "version": "1.2.21",
+    "code": 22,
+    "version": "1.2.22",
     "nsfw": 0
   },
   {
