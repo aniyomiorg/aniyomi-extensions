@@ -290,10 +290,10 @@
   {
     "name": "Tachiyomi: WP MangaStream (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
-    "apk": "tachiyomi-all.wpmangastream-v1.2.36.apk",
+    "apk": "tachiyomi-all.wpmangastream-v1.2.37.apk",
     "lang": "all",
-    "code": 36,
-    "version": "1.2.36",
+    "code": 37,
+    "version": "1.2.37",
     "nsfw": 0
   },
   {
