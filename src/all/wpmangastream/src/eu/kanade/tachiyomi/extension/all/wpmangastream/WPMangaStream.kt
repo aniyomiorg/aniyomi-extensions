@@ -13,10 +13,12 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import org.json.JSONArray
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -163,21 +165,12 @@ abstract class WPMangaStream(
     override fun mangaDetailsParse(document: Document): SManga {
         return SManga.create().apply {
             document.select("div.bigcontent, div.animefull").firstOrNull()?.let { infoElement ->
-                genre = infoElement.select(".mgen a").joinToString { it.text() }
-                status = parseStatus(infoElement.select(".imptdt:contains(Status) i").firstOrNull()?.ownText())
-                author = infoElement.select(".fmed b:contains(Author)+span").firstOrNull()?.ownText()
+                genre = infoElement.select("span:contains(Genres:) a, .mgen a").joinToString { it.text() }
+                status = parseStatus(infoElement.select("span:contains(Status:), .imptdt:contains(Status) i").firstOrNull()?.ownText())
+                author = infoElement.select("span:contains(Author:), .fmed b:contains(Author)+span").firstOrNull()?.ownText()
                 artist = infoElement.select(".fmed b:contains(Artist)+span").firstOrNull()?.ownText()
-                description = infoElement.select("div.entry-content p").joinToString("\n") { it.text() }
+                description = infoElement.select("div.desc p, div.entry-content p").joinToString("\n") { it.text() }
                 thumbnail_url = infoElement.select("div.thumb img").imgAttr()
-
-                // Some wpmangastream sites still use old wpmangastream manga detail layout
-                if (author == artist && artist == null) {
-                    genre = infoElement.select("span:contains(Genres:) a").joinToString { it.text() }
-                    status = parseStatus(infoElement.select("span:contains(Status:)").firstOrNull()?.ownText())
-                    author = infoElement.select("span:contains(Author:)").firstOrNull()?.ownText()
-                    artist = author
-                    description = infoElement.select("div.desc p").joinToString("\n") { it.text() }
-                }
             }
         }
     }
@@ -190,6 +183,21 @@ abstract class WPMangaStream(
     }
 
     override fun chapterListSelector() = "div.bxcl ul li, div.cl ul li, li:has(div.chbox):has(div.eph-num)"
+
+    override fun chapterListParse(response: Response): List<SChapter> {
+        val document = response.asJsoup()
+        val chapters = document.select(chapterListSelector()).map { chapterFromElement(it) }
+
+        // Add timestamp to latest chapter, taken from "Updated On". so source which not provide chapter timestamp will have atleast one
+        val date = document.select(".fmed:contains(update) time ,span:contains(update) time").attr("datetime")
+        if (date != "") chapters[0].date_upload = parseDate(date)
+
+        return chapters
+    }
+
+    private fun parseDate(date: String): Long {
+        return SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(date)?.time ?: 0L
+    }
 
     override fun chapterFromElement(element: Element): SChapter {
         val urlElement = element.select(".lchx > a, span.leftoff a, div.eph-num > a").first()
