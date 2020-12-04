@@ -42,7 +42,6 @@ class MadaraFactory : SourceFactory {
         Azora(),
         Bakaman(),
         BestManga(),
-        BestManhua(),
         BoysLove(),
         CatOnHeadTranslations(),
         CatTranslator(),
@@ -256,10 +255,6 @@ class Hscans : Madara("Hscans", "https://hscans.com", "en", SimpleDateFormat("MM
 class WebToonily : Madara("WebToonily", "https://webtoonily.com", "en")
 
 class Manga18Fun : Madara("Manga18 Fun", "https://manga18.fun", "en")
-
-class BestManhua : Madara("BestManhua", "https://bestmanhua.com", "en") {
-    override val pageListParseSelector = "li.blocks-gallery-item"
-}
 
 class CutiePie : Madara("Cutie Pie", "https://cutiepie.ga", "tr", SimpleDateFormat("dd MMMM yyyy", Locale.forLanguageTag("tr")))
 
@@ -999,7 +994,7 @@ class MangaLord : Madara("Manga Lord", "https://mangalord.com", "en")
 @Nsfw
 class PornComix : Madara("PornComix", "https://www.porncomixonline.net", "en")
 
-class PMScans : Madara("PMScans", "http://www.pmscans.com", "en")
+class PMScans : Madara("PMScans", "https://www.pmscans.com", "en")
 
 class MangaRead : Madara("Manga Read", "https://mangaread.co", "en", SimpleDateFormat("yyyy-MM-dd", Locale.US))
 
