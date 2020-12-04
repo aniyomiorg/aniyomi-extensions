@@ -74,10 +74,10 @@
   {
     "name": "Tachiyomi: FMReader (multiple aggregators)",
     "pkg": "eu.kanade.tachiyomi.extension.all.fmreader",
-    "apk": "tachiyomi-all.fmreader-v1.2.21.apk",
+    "apk": "tachiyomi-all.fmreader-v1.2.22.apk",
     "lang": "all",
-    "code": 21,
-    "version": "1.2.21",
+    "code": 22,
+    "version": "1.2.22",
     "nsfw": 1
   },
   {
@@ -128,10 +128,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.151.apk",
+    "apk": "tachiyomi-all.madara-v1.2.152.apk",
     "lang": "all",
-    "code": 151,
-    "version": "1.2.151",
+    "code": 152,
+    "version": "1.2.152",
     "nsfw": 1
   },
   {
@@ -290,10 +290,10 @@
   {
     "name": "Tachiyomi: WP MangaStream (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
-    "apk": "tachiyomi-all.wpmangastream-v1.2.37.apk",
+    "apk": "tachiyomi-all.wpmangastream-v1.2.38.apk",
     "lang": "all",
-    "code": 37,
-    "version": "1.2.37",
+    "code": 38,
+    "version": "1.2.38",
     "nsfw": 0
   },
   {
@@ -1190,10 +1190,10 @@
   {
     "name": "Tachiyomi: Bacakomik",
     "pkg": "eu.kanade.tachiyomi.extension.id.bacakomik",
-    "apk": "tachiyomi-id.bacakomik-v1.2.1.apk",
+    "apk": "tachiyomi-id.bacakomik-v1.2.2.apk",
     "lang": "id",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
