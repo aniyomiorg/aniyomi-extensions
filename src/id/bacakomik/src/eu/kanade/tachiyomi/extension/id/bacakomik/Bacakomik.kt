@@ -13,6 +13,9 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 class Bacakomik : ParsedHttpSource() {
     override val name = "Bacakomik"
@@ -20,6 +23,7 @@ class Bacakomik : ParsedHttpSource() {
     override val lang = "id"
     override val supportsLatest = true
     override val client: OkHttpClient = network.cloudflareClient
+    private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMM d, yyyy", Locale.US)
 
     override fun popularMangaRequest(page: Int): Request {
         return GET("$baseUrl/daftar-manga/page/$page/?order=popular", headers)
@@ -91,8 +95,10 @@ class Bacakomik : ParsedHttpSource() {
         val descElement = document.select("div.desc > .entry-content.entry-content-single").first()
         val sepName = infoElement.select(".infox > .spe > span:nth-child(2)").last()
         val manga = SManga.create()
-        manga.author = sepName.ownText()
-        manga.artist = sepName.ownText()
+        //need authorCleaner to take "pengarang:" string to remove it from author
+        val authorCleaner = document.select(".infox .spe b:contains(Pengarang)").text()
+        manga.author = document.select(".infox .spe span:contains(Pengarang)").text().substringAfter(authorCleaner)
+        manga.artist = manga.author
         val genres = mutableListOf<String>()
         infoElement.select(".infox > .genre-info > a").forEach { element ->
             val genre = element.text()
@@ -106,20 +112,58 @@ class Bacakomik : ParsedHttpSource() {
     }
 
     private fun parseStatus(element: String): Int = when {
-        element.toLowerCase().contains("ongoing") -> SManga.ONGOING
-        element.toLowerCase().contains("completed") -> SManga.COMPLETED
+        element.toLowerCase().contains("berjalan") -> SManga.ONGOING
+        element.toLowerCase().contains("tamat") -> SManga.COMPLETED
         else -> SManga.UNKNOWN
     }
 
-    override fun chapterListSelector() = ".lchx"
+    override fun chapterListSelector() = "#chapter_list li"
 
     override fun chapterFromElement(element: Element): SChapter {
-        val urlElement = element.select("a").first()
+        val urlElement = element.select(".lchx a").first()
         val chapter = SChapter.create()
         chapter.setUrlWithoutDomain(urlElement.attr("href"))
         chapter.name = urlElement.text()
-        chapter.date_upload = 0
+        chapter.date_upload = element.select(".dt a").first()?.text()?.let { parseChapterDate(it) } ?: 0
         return chapter
+    }
+
+    fun parseChapterDate(date: String): Long {
+        return if (date.contains("yang lalu")) {
+            val value = date.split(' ')[0].toInt()
+            when {
+                "detik" in date -> Calendar.getInstance().apply {
+                    add(Calendar.SECOND, value * -1)
+                }.timeInMillis
+                "menit" in date -> Calendar.getInstance().apply {
+                    add(Calendar.MINUTE, value * -1)
+                }.timeInMillis
+                "jam" in date -> Calendar.getInstance().apply {
+                    add(Calendar.HOUR_OF_DAY, value * -1)
+                }.timeInMillis
+                "hari" in date -> Calendar.getInstance().apply {
+                    add(Calendar.DATE, value * -1)
+                }.timeInMillis
+                "minggu" in date -> Calendar.getInstance().apply {
+                    add(Calendar.DATE, value * 7 * -1)
+                }.timeInMillis
+                "bulan" in date -> Calendar.getInstance().apply {
+                    add(Calendar.MONTH, value * -1)
+                }.timeInMillis
+                "tahun" in date -> Calendar.getInstance().apply {
+                    add(Calendar.YEAR, value * -1)
+                }.timeInMillis
+                else -> {
+                    0L
+                }
+            }
+        } else {
+            try {
+                dateFormat.parse(date)?.time ?: 0
+            } catch (_: Exception) {
+                0L
+            }
+        }
     }
 
     override fun prepareNewChapter(chapter: SChapter, manga: SManga) {
@@ -136,7 +180,7 @@ class Bacakomik : ParsedHttpSource() {
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
         var i = 0
-        document.select("div#chimg img").forEach { element ->
+        document.select("div#chimg noscript img").forEach { element ->
             val url = element.attr("src")
             i++
             if (url.isNotEmpty()) {
@@ -149,11 +193,19 @@ class Bacakomik : ParsedHttpSource() {
     override fun imageUrlParse(document: Document) = ""
 
     override fun imageRequest(page: Page): Request {
-        val imgHeader = Headers.Builder().apply {
-            add("User-Agent", "Mozilla/5.0 (Linux; U; Android 4.1.1; en-gb; Build/KLP) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Safari/534.30")
-            add("Referer", baseUrl)
-        }.build()
-        return GET(page.imageUrl!!, imgHeader)
+        if (page.imageUrl!!.contains("i2.wp.com")) {
+            val headers = Headers.Builder()
+            headers.apply {
+                add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3")
+            }
+            return GET(page.imageUrl!!, headers.build())
+        } else {
+            val imgHeader = Headers.Builder().apply {
+                add("User-Agent", "Mozilla/5.0 (Linux; U; Android 4.1.1; en-gb; Build/KLP) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Safari/534.30")
+                add("Referer", baseUrl)
+            }.build()
+            return GET(page.imageUrl!!, imgHeader)
+        }
     }
 
     private class AuthorFilter : Filter.Text("Author")
