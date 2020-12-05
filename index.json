@@ -288,6 +288,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: WP MangaReader (multiple sources)",
+    "pkg": "eu.kanade.tachiyomi.extension.all.wpmangareader",
+    "apk": "tachiyomi-all.wpmangareader-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: WP MangaStream (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
     "apk": "tachiyomi-all.wpmangastream-v1.2.38.apk",
@@ -1251,15 +1260,6 @@
     "nsfw": 0
   },
   {
-    "name": "Tachiyomi: MangaKita",
-    "pkg": "eu.kanade.tachiyomi.extension.id.mangakita",
-    "apk": "tachiyomi-id.mangakita-v1.2.2.apk",
-    "lang": "id",
-    "code": 2,
-    "version": "1.2.2",
-    "nsfw": 0
-  },
-  {
     "name": "Tachiyomi: Mangaku",
     "pkg": "eu.kanade.tachiyomi.extension.id.mangaku",
     "apk": "tachiyomi-id.mangaku-v1.2.1.apk",
@@ -1302,15 +1302,6 @@
     "lang": "id",
     "code": 3,
     "version": "1.2.3",
-    "nsfw": 0
-  },
-  {
-    "name": "Tachiyomi: Ngomik",
-    "pkg": "eu.kanade.tachiyomi.extension.id.ngomik",
-    "apk": "tachiyomi-id.ngomik-v1.2.4.apk",
-    "lang": "id",
-    "code": 4,
-    "version": "1.2.4",
     "nsfw": 0
   },
   {
@@ -1437,6 +1428,15 @@
     "lang": "ko",
     "code": 2,
     "version": "1.2.2",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Bruttal",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.bruttal",
+    "apk": "tachiyomi-pt.bruttal-v1.2.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "1.2.1",
     "nsfw": 0
   },
   {
