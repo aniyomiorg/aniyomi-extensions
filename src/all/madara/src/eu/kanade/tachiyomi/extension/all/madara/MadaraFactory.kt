@@ -106,6 +106,7 @@ class MadaraFactory : SourceFactory {
         ManganeloLink(),
         MangaNine(),
         MangaPhoenix(),
+        MangaRave(),
         MangaRawr(),
         MangaRead(),
         MangaReadOrg(),
@@ -116,7 +117,6 @@ class MadaraFactory : SourceFactory {
         MangaSco(),
         MangaSpark(),
         MangaStarz(),
-        MangaStream(),
         MangaSY(),
         MangaTX(),
         MangaTurf(),
@@ -217,6 +217,8 @@ class MadaraFactory : SourceFactory {
         // AhStudios(),
     )
 }
+
+class MangaRave : Madara("MangaRave", "http://www.mangarave.com", "en")
 
 class NekoScan : Madara("NekoScan", "https://nekoscan.com", "en")
 
