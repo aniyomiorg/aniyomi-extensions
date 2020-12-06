@@ -1215,6 +1215,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Comic Fx",
+    "pkg": "eu.kanade.tachiyomi.extension.id.comicfx",
+    "apk": "tachiyomi-id.comicfx-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Komikcast",
     "pkg": "eu.kanade.tachiyomi.extension.id.komikcast",
     "apk": "tachiyomi-id.komikcast-v1.2.4.apk",
