@@ -389,10 +389,10 @@
   {
     "name": "Tachiyomi: Comicastle",
     "pkg": "eu.kanade.tachiyomi.extension.en.comicastle",
-    "apk": "tachiyomi-en.comicastle-v1.2.1.apk",
+    "apk": "tachiyomi-en.comicastle-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -1919,10 +1919,10 @@
   {
     "name": "Tachiyomi: CopyManga",
     "pkg": "eu.kanade.tachiyomi.extension.zh.copymanga",
-    "apk": "tachiyomi-zh.copymanga-v1.2.2.apk",
+    "apk": "tachiyomi-zh.copymanga-v1.2.3.apk",
     "lang": "zh",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 0
   },
   {
