@@ -504,15 +504,6 @@
     "nsfw": 1
   },
   {
-    "name": "Tachiyomi: HentaiNexus",
-    "pkg": "eu.kanade.tachiyomi.extension.en.hentainexus",
-    "apk": "tachiyomi-en.hentainexus-v1.2.6.apk",
-    "lang": "en",
-    "code": 6,
-    "version": "1.2.6",
-    "nsfw": 1
-  },
-  {
     "name": "Tachiyomi: Hiveworks Comics",
     "pkg": "eu.kanade.tachiyomi.extension.en.hiveworks",
     "apk": "tachiyomi-en.hiveworks-v1.2.4.apk",
