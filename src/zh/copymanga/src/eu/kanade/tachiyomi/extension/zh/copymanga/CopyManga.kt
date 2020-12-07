@@ -39,11 +39,11 @@ class CopyManga : HttpSource() {
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         // when perform html search, sort by popular
         var apiUrlString = "$baseUrl/api/kb/web/search/count?format=json&limit=$searchPageSize&offset=${(page - 1) * searchPageSize}&platform=2&q=$query"
-        var htmlUrlString = "$baseUrl/comics?ordering=-popular&offset=${(page - 1) * popularLatestPageSize}&limit=$popularLatestPageSize"
+        var htmlUrlString = "$baseUrl/comics?offset=${(page - 1) * popularLatestPageSize}&limit=$popularLatestPageSize"
         var requestUrlString: String
 
         val params = filters.map {
-            if (it is ThemeFilter) {
+            if (it is MangaFilter) {
                 it.toUriPart()
             } else ""
         }.filter { it != "" }.joinToString("&")
@@ -167,7 +167,7 @@ class CopyManga : HttpSource() {
 
     // Copymanga has different logic in polular and search page, mix two logic in search progress for now
     override fun getFilterList() = FilterList(
-        ThemeFilter(
+        MangaFilter(
             "题材",
             "theme",
             arrayOf(
@@ -228,10 +228,20 @@ class CopyManga : HttpSource() {
                 Pair("重生", "chongsheng"),
                 Pair("仙侠", "xianxia")
             )
-        )
-    )
+        ),
+        MangaFilter(
+            "排序",
+            "ordering",
+            arrayOf(
+                Pair("最热门", "-popular"),
+                Pair("最冷门", "popular"),
+                Pair("最新", "-datetime_updated"),
+                Pair("最早", "datetime_updated"),
+            )
+        ),
+    )   
 
-    private class ThemeFilter(
+    private class MangaFilter(
         displayName: String,
         searchName: String,
         val vals: Array<Pair<String, String>>,
