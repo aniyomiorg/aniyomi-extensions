@@ -135,6 +135,7 @@ class MadaraFactory : SourceFactory {
         ManhuaPlus(),
         ManhuaUS(),
         ManhuasWorld(),
+        ManhuaSY(),
         Manhuasnet(),
         ManhwaRaw(),
         ManhwaTop(),
@@ -217,6 +218,8 @@ class MadaraFactory : SourceFactory {
         // AhStudios(),
     )
 }
+
+class ManhuaSY : Madara("Manhua SY", "https://www.manhuasy.com", "en")
 
 class MangaRave : Madara("MangaRave", "http://www.mangarave.com", "en")
 
@@ -428,27 +431,10 @@ class BoysLove : Madara("BoysLove", "https://boyslove.me", "en")
 
 class ChibiManga : Madara(
     "Chibi Manga",
-    "http://www.cmreader.info",
+    "https://www.cmreader.info",
     "en",
-    dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-) {
-    override fun chapterListParse(response: Response): List<SChapter> {
-        response.asJsoup().let { documet ->
-            documet.select("li.parent.has-child").let { volumes ->
-                return if (volumes.isNullOrEmpty()) {
-                    documet.select(chapterListSelector()).map { chapterFromElement(it) }
-                } else {
-                    val chapters = mutableListOf<SChapter>()
-                    volumes.reversed().forEach { v ->
-                        val vName = v.select("a[href^=javascript]").text()
-                        v.select(chapterListSelector()).map { chapters.add(chapterFromElement(it).apply { name = "$vName - $name" }) }
-                    }
-                    chapters
-                }
-            }
-        }
-    }
-}
+    dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.US)
+)
 
 class ZinManga : Madara("Zin Translator", "https://zinmanga.com", "en") {
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
@@ -775,7 +761,7 @@ class MangaArabTeam : Madara("مانجا عرب تيم Manga Arab Team", "https:
     }
 }
 
-class NightComic : Madara("Night Comic", "https://nightcomic.com", "en") {
+class NightComic : Madara("Night Comic", "https://www.nightcomic.com", "en") {
     override val formHeaders: Headers = headersBuilder()
         .add("Content-Type", "application/x-www-form-urlencoded")
         .add("X-MOD-SBB-CTYPE", "xhr")
@@ -862,8 +848,14 @@ class GoldenManga : Madara("موقع لترجمة المانجا", "https://gold
 
 class Mangalek : Madara("مانجا ليك", "https://mangalek.com", "ar", SimpleDateFormat("MMMM dd, yyyy", Locale("ar")))
 
-class AstralLibrary : Madara("Astral Library", "https://astrallibrary.net", "en", SimpleDateFormat("d MMM", Locale.US)) {
+class AstralLibrary : Madara("Astral Library", "https://www.astrallibrary.net", "en", SimpleDateFormat("d MMM", Locale.US)) {
     override fun chapterListParse(response: Response): List<SChapter> = super.chapterListParse(response).reversed()
+    override fun popularMangaRequest(page: Int): Request {
+        return GET("$baseUrl/manga-tag/manga/?m_orderby=views&page=$page", headers)
+    }
+    override fun latestUpdatesRequest(page: Int): Request {
+        return GET("$baseUrl/manga-tag/manga/?m_orderby=latest&page=$page", headers)
+    }
 }
 
 class KlikManga : Madara("KlikManga", "https://klikmanga.com", "id", SimpleDateFormat("MMMM dd, yyyy", Locale("id")))
