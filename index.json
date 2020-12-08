@@ -128,10 +128,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.153.apk",
+    "apk": "tachiyomi-all.madara-v1.2.154.apk",
     "lang": "all",
-    "code": 153,
-    "version": "1.2.153",
+    "code": 154,
+    "version": "1.2.154",
     "nsfw": 1
   },
   {
@@ -1305,15 +1305,6 @@
     "nsfw": 0
   },
   {
-    "name": "Tachiyomi: OtakuFile",
-    "pkg": "eu.kanade.tachiyomi.extension.id.otakufile",
-    "apk": "tachiyomi-id.otakufile-v1.2.1.apk",
-    "lang": "id",
-    "code": 1,
-    "version": "1.2.1",
-    "nsfw": 0
-  },
-  {
     "name": "Tachiyomi: HentaiFantasy",
     "pkg": "eu.kanade.tachiyomi.extension.it.hentaifantasy",
     "apk": "tachiyomi-it.hentaifantasy-v1.2.3.apk",
@@ -1910,10 +1901,10 @@
   {
     "name": "Tachiyomi: CopyManga",
     "pkg": "eu.kanade.tachiyomi.extension.zh.copymanga",
-    "apk": "tachiyomi-zh.copymanga-v1.2.3.apk",
+    "apk": "tachiyomi-zh.copymanga-v1.2.4.apk",
     "lang": "zh",
-    "code": 3,
-    "version": "1.2.3",
+    "code": 4,
+    "version": "1.2.4",
     "nsfw": 0
   },
   {
