@@ -1224,6 +1224,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: KomikFan",
+    "pkg": "eu.kanade.tachiyomi.extension.id.komikfan",
+    "apk": "tachiyomi-id.komikfan-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Komik Indo",
     "pkg": "eu.kanade.tachiyomi.extension.id.komikindo",
     "apk": "tachiyomi-id.komikindo-v1.2.1.apk",
