@@ -77,7 +77,7 @@ class KomikFan : ParsedHttpSource() {
 
         return manga
     }
-    
+
     override fun searchMangaNextPageSelector(): String? = null
 
     // manga details
