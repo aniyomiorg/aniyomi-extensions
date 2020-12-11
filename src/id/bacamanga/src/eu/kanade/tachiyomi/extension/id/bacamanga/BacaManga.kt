@@ -1,6 +1,6 @@
 package eu.kanade.tachiyomi.extension.id.bacamanga
-
 import android.util.Base64
+import com.google.gson.JsonParser
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -14,12 +14,9 @@ import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.json.JSONObject
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.io.UnsupportedEncodingException
-import java.net.URLDecoder
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -123,17 +120,12 @@ class BacaManga : ParsedHttpSource() {
         val document = response.asJsoup()
         val chapters = document.select(chapterListSelector()).map { chapterFromElement(it) }
         // Add date for latest chapter only
-        document.select("script.yoast-schema-graph").html()
-            .let {
-                val date = JSONObject(it).getJSONArray("@graph")
-                    .getJSONObject(3).getString("dateModified")
-                chapters[0].date_upload = parseDate(date)
-            }
+        chapters[0].date_upload = parseDate(document.select(".lchx+span.dt .dt-small").first().text())
         return chapters
     }
 
     private fun parseDate(date: String): Long {
-        return SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.ENGLISH).parse(date)?.time ?: 0L
+        return SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(date)?.time ?: 0L
     }
 
     override fun chapterListSelector() = ".lchx"
@@ -148,14 +140,15 @@ class BacaManga : ParsedHttpSource() {
 
     override fun pageListParse(document: Document): List<Page> {
         val pages = mutableListOf<Page>()
-        val script = document.select("div#readerarea script").html()
-        val key = script.substringAfter("atob(").substringBefore(");")
-        val coded = script.substringAfter("*/var $key = \"").substringBefore("\";")
-        val decoded = URLDecoder.decode(decodeBase64(coded), "UTF-8")
-        val images = Jsoup.parse(decoded)
-        images.select("img").forEachIndexed { i, element ->
-            val url = element.attr("src")
-            pages.add(Page(i, "", url))
+
+        val script = document.select("div#content script:nth-child(3)").html()
+        val encodedImagesList = script.substringAfter("JSON['parse'](window[").substringAfter("\"").substringBefore("\"")
+        val decodedImagesList = decodeBase64(encodedImagesList.rot13Decode())
+        val json = JsonParser().parse(decodedImagesList).asJsonArray
+        json.forEachIndexed { i, url ->
+            /* REMOVING QUOTES AROUND STRING */
+            val url_clean = url.toString().removeSurrounding("\"")
+            pages.add(Page(i, "", url_clean))
         }
         return pages
     }
@@ -169,6 +162,20 @@ class BacaManga : ParsedHttpSource() {
 
         return String(valueDecoded)
     }
+
+    /**
+     * rot13 decoding
+     * More aboure rot13 https://rosettacode.org/wiki/Rot-13
+     * Kotlin implementation https://rosettacode.org/wiki/Rot-13#Kotlin
+     */
+
+    private fun String.rot13Decode() = map {
+        when {
+            it.isUpperCase() -> { val x = it + 13; if (x > 'Z') x - 26 else x }
+            it.isLowerCase() -> { val x = it + 13; if (x > 'z') x - 26 else x }
+            else -> it
+        }
+    }.toCharArray().joinToString("")
 
     override fun imageUrlParse(document: Document) = ""
 
