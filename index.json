@@ -182,10 +182,10 @@
   {
     "name": "Tachiyomi: My Manga Reader CMS (Many sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mmrcms",
-    "apk": "tachiyomi-all.mmrcms-v1.2.53.apk",
+    "apk": "tachiyomi-all.mmrcms-v1.2.54.apk",
     "lang": "all",
-    "code": 53,
-    "version": "1.2.53",
+    "code": 54,
+    "version": "1.2.54",
     "nsfw": 1
   },
   {
@@ -1208,10 +1208,10 @@
   {
     "name": "Tachiyomi: Baca Manga",
     "pkg": "eu.kanade.tachiyomi.extension.id.bacamanga",
-    "apk": "tachiyomi-id.bacamanga-v1.2.1.apk",
+    "apk": "tachiyomi-id.bacamanga-v1.2.2.apk",
     "lang": "id",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -1253,10 +1253,10 @@
   {
     "name": "Tachiyomi: Komiku",
     "pkg": "eu.kanade.tachiyomi.extension.id.komiku",
-    "apk": "tachiyomi-id.komiku-v1.2.5.apk",
+    "apk": "tachiyomi-id.komiku-v1.2.6.apk",
     "lang": "id",
-    "code": 5,
-    "version": "1.2.5",
+    "code": 6,
+    "version": "1.2.6",
     "nsfw": 0
   },
   {
@@ -1320,6 +1320,15 @@
     "lang": "id",
     "code": 3,
     "version": "1.2.3",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Nyan FM",
+    "pkg": "eu.kanade.tachiyomi.extension.id.nyanfm",
+    "apk": "tachiyomi-id.nyanfm-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1",
     "nsfw": 0
   },
   {
