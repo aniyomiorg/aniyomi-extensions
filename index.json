@@ -1134,15 +1134,6 @@
     "nsfw": 1
   },
   {
-    "name": "Tachiyomi: Zahard",
-    "pkg": "eu.kanade.tachiyomi.extension.es.zahard",
-    "apk": "tachiyomi-es.zahard-v1.2.4.apk",
-    "lang": "es",
-    "code": 4,
-    "version": "1.2.4",
-    "nsfw": 0
-  },
-  {
     "name": "Tachiyomi: Japscan",
     "pkg": "eu.kanade.tachiyomi.extension.fr.japscan",
     "apk": "tachiyomi-fr.japscan-v1.2.24.apk",
@@ -1676,10 +1667,10 @@
   {
     "name": "Tachiyomi: MangaLib",
     "pkg": "eu.kanade.tachiyomi.extension.ru.libmanga",
-    "apk": "tachiyomi-ru.libmanga-v1.2.24.apk",
+    "apk": "tachiyomi-ru.libmanga-v1.2.25.apk",
     "lang": "ru",
-    "code": 24,
-    "version": "1.2.24",
+    "code": 25,
+    "version": "1.2.25",
     "nsfw": 0
   },
   {
