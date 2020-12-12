@@ -920,10 +920,10 @@
   {
     "name": "Tachiyomi: ReadManhwa",
     "pkg": "eu.kanade.tachiyomi.extension.en.readmanhwa",
-    "apk": "tachiyomi-en.readmanhwa-v1.2.6.apk",
+    "apk": "tachiyomi-en.readmanhwa-v1.2.7.apk",
     "lang": "en",
-    "code": 6,
-    "version": "1.2.6",
+    "code": 7,
+    "version": "1.2.7",
     "nsfw": 1
   },
   {
@@ -1955,10 +1955,10 @@
   {
     "name": "Tachiyomi: Jinmantiantang",
     "pkg": "eu.kanade.tachiyomi.extension.zh.jinmantiantang",
-    "apk": "tachiyomi-zh.jinmantiantang-v1.2.8.apk",
+    "apk": "tachiyomi-zh.jinmantiantang-v1.2.9.apk",
     "lang": "zh",
-    "code": 8,
-    "version": "1.2.8",
+    "code": 9,
+    "version": "1.2.9",
     "nsfw": 1
   },
   {
