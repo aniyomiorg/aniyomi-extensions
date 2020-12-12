@@ -128,10 +128,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.157.apk",
+    "apk": "tachiyomi-all.madara-v1.2.158.apk",
     "lang": "all",
-    "code": 157,
-    "version": "1.2.157",
+    "code": 158,
+    "version": "1.2.158",
     "nsfw": 1
   },
   {
@@ -972,6 +972,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: TCB Scans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.tcbscans",
+    "apk": "tachiyomi-en.tcbscans-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: The Property of Hate",
     "pkg": "eu.kanade.tachiyomi.extension.en.thepropertyofhate",
     "apk": "tachiyomi-en.thepropertyofhate-v1.2.3.apk",
@@ -1667,10 +1676,10 @@
   {
     "name": "Tachiyomi: MangaLib",
     "pkg": "eu.kanade.tachiyomi.extension.ru.libmanga",
-    "apk": "tachiyomi-ru.libmanga-v1.2.25.apk",
+    "apk": "tachiyomi-ru.libmanga-v1.2.26.apk",
     "lang": "ru",
-    "code": 25,
-    "version": "1.2.25",
+    "code": 26,
+    "version": "1.2.26",
     "nsfw": 0
   },
   {
