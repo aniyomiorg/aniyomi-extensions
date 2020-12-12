@@ -758,10 +758,10 @@
   {
     "name": "Tachiyomi: ManhwaManga.net",
     "pkg": "eu.kanade.tachiyomi.extension.en.manhwamanga",
-    "apk": "tachiyomi-en.manhwamanga-v1.2.1.apk",
+    "apk": "tachiyomi-en.manhwamanga-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 1
   },
   {
@@ -1964,10 +1964,10 @@
   {
     "name": "Tachiyomi: Jinmantiantang",
     "pkg": "eu.kanade.tachiyomi.extension.zh.jinmantiantang",
-    "apk": "tachiyomi-zh.jinmantiantang-v1.2.7.apk",
+    "apk": "tachiyomi-zh.jinmantiantang-v1.2.8.apk",
     "lang": "zh",
-    "code": 7,
-    "version": "1.2.7",
+    "code": 8,
+    "version": "1.2.8",
     "nsfw": 1
   },
   {
