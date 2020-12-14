@@ -1035,6 +1035,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Webnovel.com",
+    "pkg": "eu.kanade.tachiyomi.extension.en.webnovel",
+    "apk": "tachiyomi-en.webnovel-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Wutopia",
     "pkg": "eu.kanade.tachiyomi.extension.en.wutopia",
     "apk": "tachiyomi-en.wutopia-v1.2.2.apk",
