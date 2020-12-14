@@ -290,19 +290,19 @@
   {
     "name": "Tachiyomi: WP MangaReader (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangareader",
-    "apk": "tachiyomi-all.wpmangareader-v1.2.1.apk",
+    "apk": "tachiyomi-all.wpmangareader-v1.2.2.apk",
     "lang": "all",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
     "name": "Tachiyomi: WP MangaStream (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
-    "apk": "tachiyomi-all.wpmangastream-v1.2.40.apk",
+    "apk": "tachiyomi-all.wpmangastream-v1.2.41.apk",
     "lang": "all",
-    "code": 40,
-    "version": "1.2.40",
+    "code": 41,
+    "version": "1.2.41",
     "nsfw": 0
   },
   {
@@ -1217,10 +1217,10 @@
   {
     "name": "Tachiyomi: Comic Fx",
     "pkg": "eu.kanade.tachiyomi.extension.id.comicfx",
-    "apk": "tachiyomi-id.comicfx-v1.2.1.apk",
+    "apk": "tachiyomi-id.comicfx-v1.2.2.apk",
     "lang": "id",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -1287,15 +1287,6 @@
     "nsfw": 0
   },
   {
-    "name": "Tachiyomi: Mangashiro",
-    "pkg": "eu.kanade.tachiyomi.extension.id.mangashiro",
-    "apk": "tachiyomi-id.mangashiro-v1.2.5.apk",
-    "lang": "id",
-    "code": 5,
-    "version": "1.2.5",
-    "nsfw": 0
-  },
-  {
     "name": "Tachiyomi: MangaYu",
     "pkg": "eu.kanade.tachiyomi.extension.id.mangayu",
     "apk": "tachiyomi-id.mangayu-v1.2.1.apk",
@@ -1307,10 +1298,10 @@
   {
     "name": "Tachiyomi: ManhuaID",
     "pkg": "eu.kanade.tachiyomi.extension.id.manhuaid",
-    "apk": "tachiyomi-id.manhuaid-v1.2.2.apk",
+    "apk": "tachiyomi-id.manhuaid-v1.2.3.apk",
     "lang": "id",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 0
   },
   {
