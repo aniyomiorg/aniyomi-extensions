@@ -96,8 +96,9 @@ abstract class MangaPlus(
         val mangas = titleList!!.map {
             SManga.create().apply {
                 title = it.name
-                thumbnail_url = it.portraitImageUrl
+                // thumbnail_url = it.portraitImageUrl
                 url = "#/titles/${it.titleId}"
+
             }
         }
 
