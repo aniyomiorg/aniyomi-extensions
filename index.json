@@ -992,10 +992,10 @@
   {
     "name": "Tachiyomi: TimelessLeaf",
     "pkg": "eu.kanade.tachiyomi.extension.en.timelessleaf",
-    "apk": "tachiyomi-en.timelessleaf-v1.2.3.apk",
+    "apk": "tachiyomi-en.timelessleaf-v1.2.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "1.2.3",
+    "code": 4,
+    "version": "1.2.4",
     "nsfw": 0
   },
   {
