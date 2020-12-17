@@ -522,6 +522,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: keenspot",
+    "pkg": "eu.kanade.tachiyomi.extension.en.keenspot",
+    "apk": "tachiyomi-en.keenspot-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Kill Six Billion Demons",
     "pkg": "eu.kanade.tachiyomi.extension.en.killsixbilliondemons",
     "apk": "tachiyomi-en.killsixbilliondemons-v1.2.3.apk",
