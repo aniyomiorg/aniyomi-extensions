@@ -116,6 +116,7 @@ class MadaraFactory : SourceFactory {
         MangaScantrad(),
         MangaSco(),
         MangaSpark(),
+        Mangastein()
         MangaStarz(),
         MangaSY(),
         MangaTX(),
@@ -174,6 +175,7 @@ class MadaraFactory : SourceFactory {
         RenaScans(),
         RuyaManga(),
         S2Manga(),
+        Skymanga(),
         SpookyScanlations(),
         StageComics(),
         TheTopComic(),
@@ -987,6 +989,8 @@ class MangaWT : Madara("MangaWT", "https://mangawt.com", "tr")
 
 class DecadenceScans : Madara("Decadence Scans", "https://reader.decadencescans.com", "en")
 
+class MangaStein : Madara("MangaStein", "https://mangastein.com", "tr")
+
 class MangaRockTeam : Madara("Manga Rock Team", "https://mangarockteam.com", "en")
 
 class MixedManga : Madara("Mixed Manga", "https://mixedmanga.com", "en", SimpleDateFormat("d MMM yyyy", Locale.US)) {
@@ -1297,6 +1301,8 @@ class ManhuaPlus : Madara("Manhua Plus", "https://manhuaplus.com", "en") {
 class AkuManga : Madara("AkuManga", "https://akumanga.com", "ar")
 
 class AsgardTeam : Madara("Asgard Team", "https://www.asgard1team.com", "ar")
+
+class Skymanga : Madara("Skymanga", "https://skymanga.co", "en")
 
 @Nsfw
 class ToonilyNet : Madara("Toonily.net", "https://toonily.net", "en")
