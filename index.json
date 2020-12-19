@@ -1379,10 +1379,10 @@
   {
     "name": "Tachiyomi: Mangaworld",
     "pkg": "eu.kanade.tachiyomi.extension.it.mangaworld",
-    "apk": "tachiyomi-it.mangaworld-v1.2.2.apk",
+    "apk": "tachiyomi-it.mangaworld-v1.2.3.apk",
     "lang": "it",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 1
   },
   {
