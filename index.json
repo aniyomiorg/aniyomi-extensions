@@ -299,10 +299,10 @@
   {
     "name": "Tachiyomi: WP MangaStream (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
-    "apk": "tachiyomi-all.wpmangastream-v1.2.42.apk",
+    "apk": "tachiyomi-all.wpmangastream-v1.2.43.apk",
     "lang": "all",
-    "code": 42,
-    "version": "1.2.42",
+    "code": 43,
+    "version": "1.2.43",
     "nsfw": 0
   },
   {
@@ -1622,10 +1622,10 @@
   {
     "name": "Tachiyomi: Tsuki Mangás",
     "pkg": "eu.kanade.tachiyomi.extension.pt.tsukimangas",
-    "apk": "tachiyomi-pt.tsukimangas-v1.2.7.apk",
+    "apk": "tachiyomi-pt.tsukimangas-v1.2.8.apk",
     "lang": "pt",
-    "code": 7,
-    "version": "1.2.7",
+    "code": 8,
+    "version": "1.2.8",
     "nsfw": 0
   },
   {
