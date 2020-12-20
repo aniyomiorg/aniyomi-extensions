@@ -1289,10 +1289,10 @@
   {
     "name": "Tachiyomi: Komiku",
     "pkg": "eu.kanade.tachiyomi.extension.id.komiku",
-    "apk": "tachiyomi-id.komiku-v1.2.6.apk",
+    "apk": "tachiyomi-id.komiku-v1.2.7.apk",
     "lang": "id",
-    "code": 6,
-    "version": "1.2.6",
+    "code": 7,
+    "version": "1.2.7",
     "nsfw": 0
   },
   {
@@ -1334,10 +1334,10 @@
   {
     "name": "Tachiyomi: ManhuaID",
     "pkg": "eu.kanade.tachiyomi.extension.id.manhuaid",
-    "apk": "tachiyomi-id.manhuaid-v1.2.3.apk",
+    "apk": "tachiyomi-id.manhuaid-v1.2.4.apk",
     "lang": "id",
-    "code": 3,
-    "version": "1.2.3",
+    "code": 4,
+    "version": "1.2.4",
     "nsfw": 0
   },
   {
