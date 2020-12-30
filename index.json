@@ -324,6 +324,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: GMANGA",
+    "pkg": "eu.kanade.tachiyomi.extension.ar.gmanga",
+    "apk": "tachiyomi-ar.gmanga-v1.2.1.apk",
+    "lang": "ar",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Manga.ae",
     "pkg": "eu.kanade.tachiyomi.extension.ar.mangaae",
     "apk": "tachiyomi-ar.mangaae-v1.2.7.apk",
