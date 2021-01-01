@@ -1,5 +1,14 @@
 [
   {
+    "name": "Tachiyomi: Bato.to",
+    "pkg": "eu.kanade.tachiyomi.extension.all.batoto",
+    "apk": "tachiyomi-all.batoto-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Ciayo Comics",
     "pkg": "eu.kanade.tachiyomi.extension.all.ciayo",
     "apk": "tachiyomi-all.ciayo-v1.2.1.apk",
@@ -42,15 +51,6 @@
     "lang": "all",
     "code": 1,
     "version": "1.2.1",
-    "nsfw": 0
-  },
-  {
-    "name": "Tachiyomi: Emerald",
-    "pkg": "eu.kanade.tachiyomi.extension.all.emerald",
-    "apk": "tachiyomi-all.emerald-v1.2.7.apk",
-    "lang": "all",
-    "code": 7,
-    "version": "1.2.7",
     "nsfw": 0
   },
   {
