@@ -1,14 +1,5 @@
 [
   {
-    "name": "Tachiyomi: BoomManga, ManManga, TwinsComics",
-    "pkg": "eu.kanade.tachiyomi.extension.all.boommanga",
-    "apk": "tachiyomi-all.boommanga-v1.2.3.apk",
-    "lang": "all",
-    "code": 3,
-    "version": "1.2.3",
-    "nsfw": 0
-  },
-  {
     "name": "Tachiyomi: Ciayo Comics",
     "pkg": "eu.kanade.tachiyomi.extension.all.ciayo",
     "apk": "tachiyomi-all.ciayo-v1.2.1.apk",
@@ -74,10 +65,10 @@
   {
     "name": "Tachiyomi: FMReader (multiple aggregators)",
     "pkg": "eu.kanade.tachiyomi.extension.all.fmreader",
-    "apk": "tachiyomi-all.fmreader-v1.2.22.apk",
+    "apk": "tachiyomi-all.fmreader-v1.2.23.apk",
     "lang": "all",
-    "code": 22,
-    "version": "1.2.22",
+    "code": 23,
+    "version": "1.2.23",
     "nsfw": 1
   },
   {
@@ -722,10 +713,10 @@
   {
     "name": "Tachiyomi: MangaOwl",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangaowl",
-    "apk": "tachiyomi-en.mangaowl-v1.2.8.apk",
+    "apk": "tachiyomi-en.mangaowl-v1.2.9.apk",
     "lang": "en",
-    "code": 8,
-    "version": "1.2.8",
+    "code": 9,
+    "version": "1.2.9",
     "nsfw": 0
   },
   {
