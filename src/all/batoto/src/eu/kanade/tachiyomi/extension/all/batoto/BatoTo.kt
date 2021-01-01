@@ -1,10 +1,9 @@
-package eu.kanade.tachiyomi.extension.all.emerald
+package eu.kanade.tachiyomi.extension.all.batoto
 
 import com.squareup.duktape.Duktape
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
-import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
@@ -12,7 +11,6 @@ import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
 import org.jsoup.nodes.Document
@@ -20,12 +18,13 @@ import org.jsoup.nodes.Element
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
-open class Emerald(
-    override val name: String,
-    override val baseUrl: String,
+open class BatoTo(
     override val lang: String,
-    private val Mtlang: String
+    private val siteLang: String
 ) : ParsedHttpSource() {
+
+    override val name: String = "Bato.to"
+    override val baseUrl: String = "https://bato.to"
 
     override val supportsLatest = true
 
@@ -35,7 +34,7 @@ open class Emerald(
         .build()
 
     override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/browse?langs=$Mtlang&sort=update&page=$page")
+        return GET("$baseUrl/browse?langs=$siteLang&sort=update&page=$page")
     }
 
     override fun latestUpdatesSelector() = "div#series-list div.col"
@@ -53,7 +52,7 @@ open class Emerald(
     override fun latestUpdatesNextPageSelector() = "div#mainer .pagination .page-item:not(.disabled) a.page-link:contains(»)"
 
     override fun popularMangaRequest(page: Int): Request {
-        return GET("$baseUrl/browse?langs=$Mtlang&sort=views_w&page=$page")
+        return GET("$baseUrl/browse?langs=$siteLang&sort=views_w&page=$page")
     }
 
     override fun popularMangaSelector() = latestUpdatesSelector()
@@ -63,90 +62,92 @@ open class Emerald(
     override fun popularMangaNextPageSelector() = latestUpdatesNextPageSelector()
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
-        var author: String? = null
-        val url = HttpUrl.parse("$baseUrl/browse")!!.newBuilder()
-        url.addQueryParameter("page", page.toString())
-        url.addQueryParameter("langs", Mtlang)
-        filters.forEach { filter ->
-            when (filter) {
-                is AuthorFilter -> {
-                    author = filter.state
-                }
-                is StyleFilter -> {
-                    val styleToInclude = mutableListOf<String>()
-                    filter.state.forEach { content ->
-                        if (content.state) {
-                            styleToInclude.add(content.name)
+        return if (query.isNotBlank()) {
+            GET("$baseUrl/search?word=$query&page=$page")
+        } else {
+            var author: String? = null
+            val url = HttpUrl.parse("$baseUrl/browse")!!.newBuilder()
+            url.addQueryParameter("page", page.toString())
+            url.addQueryParameter("langs", siteLang)
+            filters.forEach { filter ->
+                when (filter) {
+                    is AuthorFilter -> {
+                        author = filter.state
+                    }
+                    is StyleFilter -> {
+                        val styleToInclude = mutableListOf<String>()
+                        filter.state.forEach { content ->
+                            if (content.state) {
+                                styleToInclude.add(content.name)
+                            }
+                        }
+                        if (styleToInclude.isNotEmpty()) {
+                            url.addQueryParameter(
+                                "styles",
+                                styleToInclude
+                                    .joinToString(",")
+                            )
                         }
                     }
-                    if (styleToInclude.isNotEmpty()) {
-                        url.addQueryParameter(
-                            "styles",
-                            styleToInclude
-                                .joinToString(",")
-                        )
-                    }
-                }
-                is DemographicFilter -> {
-                    val demographicToInclude = mutableListOf<String>()
-                    filter.state.forEach { content ->
-                        if (content.state) {
-                            demographicToInclude.add(content.name)
+                    is DemographicFilter -> {
+                        val demographicToInclude = mutableListOf<String>()
+                        filter.state.forEach { content ->
+                            if (content.state) {
+                                demographicToInclude.add(content.name)
+                            }
+                        }
+                        if (demographicToInclude.isNotEmpty()) {
+                            url.addQueryParameter(
+                                "demogs",
+                                demographicToInclude
+                                    .joinToString(",")
+                            )
                         }
                     }
-                    if (demographicToInclude.isNotEmpty()) {
-                        url.addQueryParameter(
-                            "demogs",
-                            demographicToInclude
-                                .joinToString(",")
-                        )
-                    }
-                }
-                is StatusFilter -> {
-                    val status = when (filter.state) {
-                        Filter.TriState.STATE_INCLUDE -> "1"
-                        Filter.TriState.STATE_EXCLUDE -> "0"
-                        else -> ""
-                    }
-                    if (status.isNotEmpty()) {
-                        url.addQueryParameter("status", status)
-                    }
-                }
-                is GenreFilter -> {
-                    val genreToInclude = mutableListOf<String>()
-                    filter.state.forEach { content ->
-                        if (content.state) {
-                            genreToInclude.add(content.name)
+                    is StatusFilter -> {
+                        val status = when (filter.state) {
+                            Filter.TriState.STATE_INCLUDE -> "1"
+                            Filter.TriState.STATE_EXCLUDE -> "0"
+                            else -> ""
+                        }
+                        if (status.isNotEmpty()) {
+                            url.addQueryParameter("status", status)
                         }
                     }
-                    if (genreToInclude.isNotEmpty()) {
-                        url.addQueryParameter(
-                            "genres",
-                            genreToInclude
-                                .joinToString(",")
-                        )
+                    is GenreFilter -> {
+                        val genreToInclude = mutableListOf<String>()
+                        filter.state.forEach { content ->
+                            if (content.state) {
+                                genreToInclude.add(content.name)
+                            }
+                        }
+                        if (genreToInclude.isNotEmpty()) {
+                            url.addQueryParameter(
+                                "genres",
+                                genreToInclude
+                                    .joinToString(",")
+                            )
+                        }
                     }
-                }
-                is StarFilter -> {
-                    if (filter.state != 0) {
-                        url.addQueryParameter("stars", filter.toUriPart())
+                    is StarFilter -> {
+                        if (filter.state != 0) {
+                            url.addQueryParameter("stars", filter.toUriPart())
+                        }
                     }
-                }
-                is ChapterFilter -> {
-                    if (filter.state != 0) {
-                        url.addQueryParameter("chapters", filter.toUriPart())
+                    is ChapterFilter -> {
+                        if (filter.state != 0) {
+                            url.addQueryParameter("chapters", filter.toUriPart())
+                        }
                     }
-                }
-                is SortBy -> {
-                    if (filter.state != 0) {
-                        url.addQueryParameter("sort", filter.toUriPart())
+                    is SortBy -> {
+                        if (filter.state != 0) {
+                            url.addQueryParameter("sort", filter.toUriPart())
+                        }
                     }
                 }
             }
+            GET(url.build().toString(), headers)
         }
-        return if (query.isNotBlank() || author!!.isNotBlank()) {
-            GET("$baseUrl/search?q=$query&a=$author")
-        } else GET(url.build().toString(), headers)
     }
 
     override fun searchMangaSelector() = latestUpdatesSelector()
@@ -154,15 +155,6 @@ open class Emerald(
     override fun searchMangaFromElement(element: Element) = latestUpdatesFromElement(element)
 
     override fun searchMangaNextPageSelector() = latestUpdatesNextPageSelector()
-
-    private val searchMangaTitles = HashSet<String>()
-
-    override fun searchMangaParse(response: Response): MangasPage {
-        val mp = super.searchMangaParse(response)
-        val manga = mp.mangas.distinctBy { it.title.toLowerCase() }.filterNot { searchMangaTitles.contains(it.title.toLowerCase()) }
-        searchMangaTitles.addAll(manga.map { it.title.toLowerCase() })
-        return MangasPage(manga, mp.hasNextPage)
-    }
 
     override fun mangaDetailsRequest(manga: SManga): Request {
         if (manga.url.startsWith("http")) {
