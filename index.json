@@ -1856,10 +1856,10 @@
   {
     "name": "Tachiyomi: Manga Ship",
     "pkg": "eu.kanade.tachiyomi.extension.tr.mangaship",
-    "apk": "tachiyomi-tr.mangaship-v1.2.1.apk",
+    "apk": "tachiyomi-tr.mangaship-v1.2.2.apk",
     "lang": "tr",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -2063,10 +2063,10 @@
   {
     "name": "Tachiyomi: CoCoManhua (OhManhua)",
     "pkg": "eu.kanade.tachiyomi.extension.zh.onemanhua",
-    "apk": "tachiyomi-zh.onemanhua-v1.2.6.apk",
+    "apk": "tachiyomi-zh.onemanhua-v1.2.7.apk",
     "lang": "zh",
-    "code": 6,
-    "version": "1.2.6",
+    "code": 7,
+    "version": "1.2.7",
     "nsfw": 0
   },
   {
