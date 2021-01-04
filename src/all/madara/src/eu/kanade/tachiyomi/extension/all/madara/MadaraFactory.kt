@@ -101,12 +101,12 @@ class MadaraFactory : SourceFactory {
         MangaBaz(),
         MangaBob(),
         MangaClash(),
+        MangaCrimson(),
         MangaCultivator(),
         MangaDods(),
         MangaGecesi(),
         MangaHentai(),
         MangaKiss(),
-        MangaKitsu(),
         MangaKomi(),
         MangaLandArabic(),
         Mangalek(),
@@ -244,7 +244,10 @@ class SpookyScanlations : Madara("Spooky Scanlations", "https://spookyscanlation
 
 class RandomTranslations : Madara("Random Translations", "https://randomtranslations.com", "en", SimpleDateFormat("dd/MM/yyyy", Locale.US))
 
-class Atikrost : Madara("Atikrost", "https://atikrost.com", "tr", SimpleDateFormat("MMMM dd, yyyy", Locale("tr")))
+class Atikrost : Madara("Atikrost", "https://atikrost.com", "tr", SimpleDateFormat("MMMM dd, yyyy", Locale("tr"))) {
+    override val chapterUrlSelector = "a:not(:has(img))"
+    override val chapterDatesNewSelector = "img:not(.thumb)"
+}
 
 class ManhuaFast : Madara("ManhuaFast", "https://manhuafast.com", "en") {
     override val pageListParseSelector = "li.blocks-gallery-item"
@@ -270,7 +273,7 @@ class Aloalivn : Madara("Aloalivn", "https://aloalivn.com", "en") {
 
 class MangaSco : Madara("MangaSco", "https://mangasco.com", "en")
 
-class MangaKitsu : Madara("Manga Kitsu", "https://mangakitsu.com", "tr", SimpleDateFormat("dd MMMM yyyy", Locale("tr")))
+class MangaCrimson : Madara("Manga Crimson", "https://mangacrimson.com", "tr", SimpleDateFormat("dd MMMM yyyy", Locale("tr")))
 
 class PrimeManga : Madara("Prime Manga", "https://primemanga.com", "en")
 
@@ -787,7 +790,7 @@ class HunterFansub : Madara("Hunter Fansub", "https://hunterfansub.com", "es") {
 
 class MangaArabOnline : Madara("Manga Arab Online مانجا عرب اون لاين", "https://mangaarabonline.com", "ar", SimpleDateFormat("MMM d, yyyy", Locale.forLanguageTag("ar")))
 
-class MangaArabTeam : Madara("مانجا عرب تيم Manga Arab Team", "https://mangaarabteam.com", "ar") {
+class MangaArabTeam : Madara("مانجا عرب تيم Manga Arab Team", "https://mangaarabteam.com", "ar", SimpleDateFormat("dd MMM، yyyy", Locale.forLanguageTag("ar"))) {
     override fun imageRequest(page: Page): Request {
         return GET(page.imageUrl!!.replace("http:", "https:"))
     }
@@ -884,7 +887,6 @@ class GoldenManga : Madara("موقع لترجمة المانجا", "https://gold
 class Mangalek : Madara("مانجا ليك", "https://mangalek.com", "ar", SimpleDateFormat("MMMM dd, yyyy", Locale("ar")))
 
 class AstralLibrary : Madara("Astral Library", "https://www.astrallibrary.net", "en", SimpleDateFormat("d MMM", Locale.US)) {
-    override fun chapterListParse(response: Response): List<SChapter> = super.chapterListParse(response).reversed()
     override fun popularMangaRequest(page: Int): Request {
         return GET("$baseUrl/manga-tag/manga/?m_orderby=views&page=$page", headers)
     }
