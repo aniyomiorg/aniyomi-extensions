@@ -317,10 +317,10 @@
   {
     "name": "Tachiyomi: GMANGA",
     "pkg": "eu.kanade.tachiyomi.extension.ar.gmanga",
-    "apk": "tachiyomi-ar.gmanga-v1.2.1.apk",
+    "apk": "tachiyomi-ar.gmanga-v1.2.2.apk",
     "lang": "ar",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -1217,10 +1217,10 @@
   {
     "name": "Tachiyomi: Mangakawaii",
     "pkg": "eu.kanade.tachiyomi.extension.fr.mangakawaii",
-    "apk": "tachiyomi-fr.mangakawaii-v1.2.12.apk",
+    "apk": "tachiyomi-fr.mangakawaii-v1.2.13.apk",
     "lang": "fr",
-    "code": 12,
-    "version": "1.2.12",
+    "code": 13,
+    "version": "1.2.13",
     "nsfw": 0
   },
   {
