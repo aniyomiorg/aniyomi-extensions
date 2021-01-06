@@ -119,10 +119,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.164.apk",
+    "apk": "tachiyomi-all.madara-v1.2.165.apk",
     "lang": "all",
-    "code": 164,
-    "version": "1.2.164",
+    "code": 165,
+    "version": "1.2.165",
     "nsfw": 1
   },
   {
@@ -438,6 +438,15 @@
     "lang": "en",
     "code": 12,
     "version": "1.2.12",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: EarlyManga",
+    "pkg": "eu.kanade.tachiyomi.extension.en.earlymanga",
+    "apk": "tachiyomi-en.earlymanga-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
     "nsfw": 0
   },
   {
