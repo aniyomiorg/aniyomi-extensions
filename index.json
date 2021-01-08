@@ -65,10 +65,10 @@
   {
     "name": "Tachiyomi: FMReader (multiple aggregators)",
     "pkg": "eu.kanade.tachiyomi.extension.all.fmreader",
-    "apk": "tachiyomi-all.fmreader-v1.2.24.apk",
+    "apk": "tachiyomi-all.fmreader-v1.2.25.apk",
     "lang": "all",
-    "code": 24,
-    "version": "1.2.24",
+    "code": 25,
+    "version": "1.2.25",
     "nsfw": 1
   },
   {
@@ -272,10 +272,10 @@
   {
     "name": "Tachiyomi: WP-Comics",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpcomics",
-    "apk": "tachiyomi-all.wpcomics-v1.2.16.apk",
+    "apk": "tachiyomi-all.wpcomics-v1.2.17.apk",
     "lang": "all",
-    "code": 16,
-    "version": "1.2.16",
+    "code": 17,
+    "version": "1.2.17",
     "nsfw": 0
   },
   {
