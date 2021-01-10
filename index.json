@@ -119,10 +119,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.166.apk",
+    "apk": "tachiyomi-all.madara-v1.2.167.apk",
     "lang": "all",
-    "code": 166,
-    "version": "1.2.166",
+    "code": 167,
+    "version": "1.2.167",
     "nsfw": 1
   },
   {
@@ -1748,10 +1748,10 @@
   {
     "name": "Tachiyomi: MangaClub",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mangaclub",
-    "apk": "tachiyomi-ru.mangaclub-v1.2.1.apk",
+    "apk": "tachiyomi-ru.mangaclub-v1.2.2.apk",
     "lang": "ru",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -2018,10 +2018,10 @@
   {
     "name": "Tachiyomi: Jinmantiantang",
     "pkg": "eu.kanade.tachiyomi.extension.zh.jinmantiantang",
-    "apk": "tachiyomi-zh.jinmantiantang-v1.2.10.apk",
+    "apk": "tachiyomi-zh.jinmantiantang-v1.2.11.apk",
     "lang": "zh",
-    "code": 10,
-    "version": "1.2.10",
+    "code": 11,
+    "version": "1.2.11",
     "nsfw": 1
   },
   {
