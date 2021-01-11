@@ -299,10 +299,10 @@
   {
     "name": "Tachiyomi: zBulu",
     "pkg": "eu.kanade.tachiyomi.extension.all.zbulu",
-    "apk": "tachiyomi-all.zbulu-v1.2.2.apk",
+    "apk": "tachiyomi-all.zbulu-v1.2.3.apk",
     "lang": "all",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 0
   },
   {
@@ -443,10 +443,10 @@
   {
     "name": "Tachiyomi: EarlyManga",
     "pkg": "eu.kanade.tachiyomi.extension.en.earlymanga",
-    "apk": "tachiyomi-en.earlymanga-v1.2.1.apk",
+    "apk": "tachiyomi-en.earlymanga-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
