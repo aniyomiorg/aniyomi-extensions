@@ -75,7 +75,7 @@ open class BatoTo(
                         val originToInclude = mutableListOf<String>()
                         filter.state.forEach { content ->
                             if (content.state) {
-                                demographicToInclude.add(content.name)
+                                originToInclude.add(content.name)
                             }
                         }
                         if (originToInclude.isNotEmpty()) {
@@ -324,7 +324,7 @@ open class BatoTo(
             Pair("A-Z", "title.az"),
             Pair("Z-A", "title"),
             Pair("Last Updated", "update"),
-            Pair("Oldest Updated", "updated.az")
+            Pair("Oldest Updated", "updated.az"),
             Pair("Newest Added", "create"),
             Pair("Oldest Added", "create.az"),
             Pair("Most Views Totally", "views_a"),
@@ -341,7 +341,7 @@ open class BatoTo(
             Pair("Least Views 60 minutes", "views_h.az")
         )
     )
-    
+
     private class StatusFilter : UriPartFilter(
         "Status",
         arrayOf(
