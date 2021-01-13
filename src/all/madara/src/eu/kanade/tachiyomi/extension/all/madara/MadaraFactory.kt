@@ -204,6 +204,7 @@ class MadaraFactory : SourceFactory {
         TsubakiNoScan(),
         TurkceManga(),
         TwilightScans(),
+        Voidscans(),
         Wakascan(),
         WarQueenScan(),
         WebNovel(),
@@ -1490,4 +1491,8 @@ class MangaTeca : Madara(
         private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
             "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36"
     }
+}
+
+class Voidscans : Madara("Void Scans", "https://voidscans.com", "en") {
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList) = GET("$baseUrl/?s=$query&post_type=wp-manga")
 }
