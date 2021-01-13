@@ -20,10 +20,10 @@
   {
     "name": "Tachiyomi: ComiCake",
     "pkg": "eu.kanade.tachiyomi.extension.all.comicake",
-    "apk": "tachiyomi-all.comicake-v1.2.8.apk",
+    "apk": "tachiyomi-all.comicake-v1.2.9.apk",
     "lang": "all",
-    "code": 8,
-    "version": "1.2.8",
+    "code": 9,
+    "version": "1.2.9",
     "nsfw": 0
   },
   {
@@ -119,10 +119,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.167.apk",
+    "apk": "tachiyomi-all.madara-v1.2.168.apk",
     "lang": "all",
-    "code": 167,
-    "version": "1.2.167",
+    "code": 168,
+    "version": "1.2.168",
     "nsfw": 1
   },
   {
@@ -452,10 +452,10 @@
   {
     "name": "Tachiyomi: Eggporncomics",
     "pkg": "eu.kanade.tachiyomi.extension.en.eggporncomics",
-    "apk": "tachiyomi-en.eggporncomics-v1.2.1.apk",
+    "apk": "tachiyomi-en.eggporncomics-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 1
   },
   {
