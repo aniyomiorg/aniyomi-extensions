@@ -71,47 +71,24 @@ open class BatoTo(
             url.addQueryParameter("langs", siteLang)
             filters.forEach { filter ->
                 when (filter) {
-                    is AuthorFilter -> {
-                        author = filter.state
-                    }
-                    is StyleFilter -> {
-                        val styleToInclude = mutableListOf<String>()
-                        filter.state.forEach { content ->
-                            if (content.state) {
-                                styleToInclude.add(content.name)
-                            }
-                        }
-                        if (styleToInclude.isNotEmpty()) {
-                            url.addQueryParameter(
-                                "styles",
-                                styleToInclude
-                                    .joinToString(",")
-                            )
-                        }
-                    }
-                    is DemographicFilter -> {
-                        val demographicToInclude = mutableListOf<String>()
+                    is OriginFilter -> {
+                        val originToInclude = mutableListOf<String>()
                         filter.state.forEach { content ->
                             if (content.state) {
                                 demographicToInclude.add(content.name)
                             }
                         }
-                        if (demographicToInclude.isNotEmpty()) {
+                        if (originToInclude.isNotEmpty()) {
                             url.addQueryParameter(
-                                "demogs",
-                                demographicToInclude
+                                "origs",
+                                originToInclude
                                     .joinToString(",")
                             )
                         }
                     }
                     is StatusFilter -> {
-                        val status = when (filter.state) {
-                            Filter.TriState.STATE_INCLUDE -> "1"
-                            Filter.TriState.STATE_EXCLUDE -> "0"
-                            else -> ""
-                        }
-                        if (status.isNotEmpty()) {
-                            url.addQueryParameter("status", status)
+                        if (filter.state != 0) {
+                            url.addQueryParameter("release", filter.toUriPart())
                         }
                     }
                     is GenreFilter -> {
@@ -127,11 +104,6 @@ open class BatoTo(
                                 genreToInclude
                                     .joinToString(",")
                             )
-                        }
-                    }
-                    is StarFilter -> {
-                        if (filter.state != 0) {
-                            url.addQueryParameter("stars", filter.toUriPart())
                         }
                     }
                     is ChapterFilter -> {
@@ -325,23 +297,9 @@ open class BatoTo(
 
     override fun imageUrlParse(document: Document): String = throw UnsupportedOperationException("Not used")
 
-    private class AuthorFilter : Filter.Text("Author / Artist")
-    private class StyleFilter(genres: List<Tag>) : Filter.Group<Tag>("Styles", genres)
-    private class DemographicFilter(genres: List<Tag>) : Filter.Group<Tag>("Demographic", genres)
+    private class OriginFilter(genres: List<Tag>) : Filter.Group<Tag>("Origin", genres)
     private class GenreFilter(genres: List<Tag>) : Filter.Group<Tag>("Genres", genres)
-    private class StatusFilter : Filter.TriState("Completed")
 
-    private class StarFilter : UriPartFilter(
-        "Stars",
-        arrayOf(
-            Pair("<select>", ""),
-            Pair("5 Stars", "5"),
-            Pair("4 Stars", "4"),
-            Pair("3 Stars", "3"),
-            Pair("2 Stars", "2"),
-            Pair("1 Stars", "1")
-        )
-    )
 
     private class ChapterFilter : UriPartFilter(
         "Chapters",
@@ -363,89 +321,173 @@ open class BatoTo(
         "Sorts By",
         arrayOf(
             Pair("<select>", ""),
-            Pair("Totally", "views_t"),
-            Pair("365 days", "views_y"),
-            Pair("30 days", "views_m"),
-            Pair("7 days", "views_w"),
-            Pair("24 hours", "views_d"),
-            Pair("60 minutes", "views_h"),
-            Pair("A-Z", "title"),
-            Pair("Update time", "update"),
-            Pair("Add time", "create")
+            Pair("A-Z", "title.az"),
+            Pair("Z-A", "title"),
+            Pair("Last Updated", "update"),
+            Pair("Oldest Updated", "updated.az")
+            Pair("Newest Added", "create"),
+            Pair("Oldest Added", "create.az"),
+            Pair("Most Views Totally", "views_a"),
+            Pair("Most Views 365 days", "views_y"),
+            Pair("Most Views 30 days", "views_m"),
+            Pair("Most Views 7 days", "views_w"),
+            Pair("Most Views 24 hours", "views_d"),
+            Pair("Most Views 60 minutes", "views_h"),
+            Pair("Least Views Totally", "views_a.az"),
+            Pair("Least Views 365 days", "views_y.az"),
+            Pair("Least Views 30 days", "views_m.az"),
+            Pair("Least Views 7 days", "views_w.az"),
+            Pair("Least Views 24 hours", "views_d.az"),
+            Pair("Least Views 60 minutes", "views_h.az")
+        )
+    )
+    
+    private class StatusFilter : UriPartFilter(
+        "Status",
+        arrayOf(
+            Pair("<select>", ""),
+            Pair("Pending", "pending"),
+            Pair("Ongoing", "ongoing"),
+            Pair("Completed", "completed"),
+            Pair("Hiatus", "hiatus"),
+            Pair("Cancelled", "cancelled")
         )
     )
 
     override fun getFilterList() = FilterList(
         Filter.Header("NOTE: Ignored if using text search!"),
-        AuthorFilter(),
         Filter.Separator(),
-        StatusFilter(),
-        StarFilter(),
         ChapterFilter(),
         SortBy(),
-        StyleFilter(getStyleList()),
-        DemographicFilter(getDemographicList()),
+        StatusFilter(),
+        OriginFilter(getOriginList()),
         GenreFilter(getGenreList())
     )
 
-    private fun getStyleList() = listOf(
-        Tag("manga"),
-        Tag("manhwa"),
-        Tag("manhua"),
-        Tag("webtoon")
-    )
-
-    private fun getDemographicList() = listOf(
-        Tag("josei"),
-        Tag("seinen"),
-        Tag("shoujo"),
-        Tag("shoujo ai"),
-        Tag("shounen"),
-        Tag("shounen ai"),
-        Tag("yaoi"),
-        Tag("yuri")
+    private fun getOriginList() = listOf(
+        Tag("my"),
+        Tag("ceb"),
+        Tag("zh"),
+        Tag("zh_hk"),
+        Tag("en"),
+        Tag("en_us"),
+        Tag("fil"),
+        Tag("id"),
+        Tag("it"),
+        Tag("ja"),
+        Tag("ko"),
+        Tag("ms"),
+        Tag("pt_br"),
+        Tag("th"),
+        Tag("vi")
     )
 
     private fun getGenreList() = listOf(
-        Tag("action"),
-        Tag("adventure"),
-        Tag("award winning"),
-        Tag("comedy"),
-        Tag("cooking"),
-        Tag("demons"),
-        Tag("doujinshi"),
-        Tag("drama"),
-        Tag("ecchi"),
-        Tag("fantasy"),
-        Tag("gender bender"),
-        Tag("harem"),
-        Tag("historical"),
-        Tag("horror"),
-        Tag("isekai"),
-        Tag("magic"),
-        Tag("martial arts"),
-        Tag("mature"),
-        Tag("mecha"),
-        Tag("medical"),
-        Tag("military"),
-        Tag("music"),
-        Tag("mystery"),
-        Tag("one shot"),
-        Tag("psychological"),
-        Tag("reverse harem"),
-        Tag("romance"),
-        Tag("school life"),
-        Tag("sci fi"),
-        Tag("shotacon"),
-        Tag("slice of life"),
-        Tag("smut"),
-        Tag("sports"),
-        Tag("super power"),
-        Tag("supernatural"),
-        Tag("tragedy"),
-        Tag("uncategorized"),
-        Tag("vampire"),
-        Tag("youkai")
+        Tag("Artbook"),
+        Tag("Cartoon"),
+        Tag("Comic"),
+        Tag("Doujinshi"),
+        Tag("Imageset"),
+        Tag("Manga"),
+        Tag("Manhua"),
+        Tag("Manhwa"),
+        Tag("Webtoon"),
+        Tag("Western"),
+        Tag("Josei"),
+        Tag("Seinen"),
+        Tag("Shoujo"),
+        Tag("Shoujo_Ai"),
+        Tag("Shounen"),
+        Tag("Shounen_Ai"),
+        Tag("Yaoi"),
+        Tag("Yuri"),
+        Tag("Ecchi"),
+        Tag("Mature"),
+        Tag("Adult"),
+        Tag("Gore"),
+        Tag("Violence"),
+        Tag("Smut"),
+        Tag("Hentai"),
+        Tag("4_Koma"),
+        Tag("Action"),
+        Tag("Adaptation"),
+        Tag("Adventure"),
+        Tag("Aliens"),
+        Tag("Animals"),
+        Tag("Anthology"),
+        Tag("Comedy"),
+        Tag("Cooking"),
+        Tag("Crime"),
+        Tag("Crossdressing"),
+        Tag("Delinquents"),
+        Tag("Dementia"),
+        Tag("Demons"),
+        Tag("Drama"),
+        Tag("Fantasy"),
+        Tag("Fan_Colored"),
+        Tag("Full_Color"),
+        Tag("Game"),
+        Tag("Gender_Bender"),
+        Tag("Genderswap"),
+        Tag("Ghosts"),
+        Tag("Gyaru"),
+        Tag("Harem"),
+        Tag("Halequin"),
+        Tag("Historical"),
+        Tag("Horror"),
+        Tag("Incest"),
+        Tag("Isekai"),
+        Tag("Kids"),
+        Tag("Loli"),
+        Tag("Lolicon"),
+        Tag("Magic"),
+        Tag("Magical_Girls"),
+        Tag("Martial_Arts"),
+        Tag("Mecha"),
+        Tag("Medical"),
+        Tag("Military"),
+        Tag("Monster_Girls"),
+        Tag("Monsters"),
+        Tag("Music"),
+        Tag("Mystery"),
+        Tag("Netorare"),
+        Tag("Ninja"),
+        Tag("Office_Workers"),
+        Tag("Oneshot"),
+        Tag("Parody"),
+        Tag("Philosophical"),
+        Tag("Police"),
+        Tag("Post_Apocalyptic"),
+        Tag("Psychological"),
+        Tag("Reincarnation"),
+        Tag("Reverse_Harem"),
+        Tag("Romance"),
+        Tag("Samurai"),
+        Tag("School_Life"),
+        Tag("Sci_Fi"),
+        Tag("Shota"),
+        Tag("Shotacon"),
+        Tag("Slice_Of_Life"),
+        Tag("SM_BDSM"),
+        Tag("Space"),
+        Tag("Sports"),
+        Tag("Super_Power"),
+        Tag("Superhero"),
+        Tag("Supernatural"),
+        Tag("Survival"),
+        Tag("Thriller"),
+        Tag("Time_Travel"),
+        Tag("Tragedy"),
+        Tag("Vampires"),
+        Tag("Video_Games"),
+        Tag("Virtual_Reality"),
+        Tag("Wuxia"),
+        Tag("Xianxia"),
+        Tag("Xuanhuan"),
+        Tag("Zombies"),
+        Tag("c"),
+        Tag("youkai"),
+        Tag("uncategirized")
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
