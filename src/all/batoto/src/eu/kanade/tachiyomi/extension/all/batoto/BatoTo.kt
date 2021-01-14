@@ -485,9 +485,9 @@ open class BatoTo(
         Tag("Xianxia"),
         Tag("Xuanhuan"),
         Tag("Zombies"),
-        Tag("c"),
+        Tag("award_winning"),
         Tag("youkai"),
-        Tag("uncategirized")
+        Tag("uncategorized")
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
