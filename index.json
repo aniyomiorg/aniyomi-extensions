@@ -236,10 +236,10 @@
   {
     "name": "Tachiyomi: Simply Hentai",
     "pkg": "eu.kanade.tachiyomi.extension.all.simplyhentai",
-    "apk": "tachiyomi-all.simplyhentai-v1.2.1.apk",
+    "apk": "tachiyomi-all.simplyhentai-v1.2.2.apk",
     "lang": "all",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 1
   },
   {
@@ -506,10 +506,10 @@
   {
     "name": "Tachiyomi: Hentai2Read",
     "pkg": "eu.kanade.tachiyomi.extension.en.hentai2read",
-    "apk": "tachiyomi-en.hentai2read-v1.2.10.apk",
+    "apk": "tachiyomi-en.hentai2read-v1.2.11.apk",
     "lang": "en",
-    "code": 10,
-    "version": "1.2.10",
+    "code": 11,
+    "version": "1.2.11",
     "nsfw": 1
   },
   {
@@ -1145,10 +1145,10 @@
   {
     "name": "Tachiyomi: Kumanga",
     "pkg": "eu.kanade.tachiyomi.extension.es.kumanga",
-    "apk": "tachiyomi-es.kumanga-v1.2.5.apk",
+    "apk": "tachiyomi-es.kumanga-v1.2.6.apk",
     "lang": "es",
-    "code": 5,
-    "version": "1.2.5",
+    "code": 6,
+    "version": "1.2.6",
     "nsfw": 0
   },
   {
@@ -1406,10 +1406,10 @@
   {
     "name": "Tachiyomi: Novelle Leggere",
     "pkg": "eu.kanade.tachiyomi.extension.it.novelleleggere",
-    "apk": "tachiyomi-it.novelleleggere-v1.2.2.apk",
+    "apk": "tachiyomi-it.novelleleggere-v1.2.3.apk",
     "lang": "it",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 0
   },
   {
