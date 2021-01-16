@@ -119,10 +119,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.170.apk",
+    "apk": "tachiyomi-all.madara-v1.2.171.apk",
     "lang": "all",
-    "code": 170,
-    "version": "1.2.170",
+    "code": 171,
+    "version": "1.2.171",
     "nsfw": 1
   },
   {
@@ -209,10 +209,10 @@
   {
     "name": "Tachiyomi: NineManga",
     "pkg": "eu.kanade.tachiyomi.extension.all.ninemanga",
-    "apk": "tachiyomi-all.ninemanga-v1.2.12.apk",
+    "apk": "tachiyomi-all.ninemanga-v1.2.13.apk",
     "lang": "all",
-    "code": 12,
-    "version": "1.2.12",
+    "code": 13,
+    "version": "1.2.13",
     "nsfw": 0
   },
   {
@@ -263,10 +263,10 @@
   {
     "name": "Tachiyomi: Webtoons",
     "pkg": "eu.kanade.tachiyomi.extension.all.webtoons",
-    "apk": "tachiyomi-all.webtoons-v1.2.24.apk",
+    "apk": "tachiyomi-all.webtoons-v1.2.25.apk",
     "lang": "all",
-    "code": 24,
-    "version": "1.2.24",
+    "code": 25,
+    "version": "1.2.25",
     "nsfw": 0
   },
   {
