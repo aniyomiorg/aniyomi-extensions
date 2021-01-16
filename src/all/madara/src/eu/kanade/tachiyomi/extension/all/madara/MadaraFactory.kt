@@ -70,6 +70,7 @@ class MadaraFactory : SourceFactory {
         FurioScans(),
         GeceninLordu(),
         GoldenManga(),
+        GrazeScans(),
         GuncelManga(),
         HeroManhua(),
         HerozScanlation(),
@@ -133,6 +134,7 @@ class MadaraFactory : SourceFactory {
         MangaTeca(),
         MangaTurf(),
         MangaTX(),
+        MangaWeebs(),
         MangaWT(),
         MangaYaku(),
         MangaYosh(),
@@ -161,6 +163,7 @@ class MadaraFactory : SourceFactory {
         Milftoon(),
         MiracleScans(),
         MixedManga(),
+        MMScans(),
         MysticalMerries(),
         NazarickScans(),
         NeatManga(),
@@ -205,6 +208,7 @@ class MadaraFactory : SourceFactory {
         TsubakiNoScan(),
         TurkceManga(),
         TwilightScans(),
+        UyuyanBalik(),
         Voidscans(),
         Wakascan(),
         WarQueenScan(),
@@ -219,10 +223,6 @@ class MadaraFactory : SourceFactory {
         YuriVerso(),
         ZinManga(),
         ZManga(),
-        GrazeScans(),
-        UyuyanBalik(),
-        MangaWeebs(),
-        MMScans(),
 
         // removed because scanlator site and they requested
         // AhStudios(),
@@ -452,7 +452,7 @@ class FirstKissManga : Madara(
     "1st Kiss",
     "https://1stkissmanga.com",
     "en",
-    dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.US)
+    SimpleDateFormat("MMM d, yyyy", Locale.US)
 ) {
     override fun headersBuilder(): Headers.Builder = super.headersBuilder().add("Referer", baseUrl)
 }
