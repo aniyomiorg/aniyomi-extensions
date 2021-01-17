@@ -110,19 +110,19 @@
   {
     "name": "Tachiyomi: LANraragi",
     "pkg": "eu.kanade.tachiyomi.extension.all.lanraragi",
-    "apk": "tachiyomi-all.lanraragi-v1.2.2.apk",
+    "apk": "tachiyomi-all.lanraragi-v1.2.3.apk",
     "lang": "all",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 0
   },
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.171.apk",
+    "apk": "tachiyomi-all.madara-v1.2.172.apk",
     "lang": "all",
-    "code": 171,
-    "version": "1.2.171",
+    "code": 172,
+    "version": "1.2.172",
     "nsfw": 1
   },
   {
@@ -290,10 +290,10 @@
   {
     "name": "Tachiyomi: WP MangaStream (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
-    "apk": "tachiyomi-all.wpmangastream-v1.2.45.apk",
+    "apk": "tachiyomi-all.wpmangastream-v1.2.46.apk",
     "lang": "all",
-    "code": 45,
-    "version": "1.2.45",
+    "code": 46,
+    "version": "1.2.46",
     "nsfw": 0
   },
   {
@@ -1307,10 +1307,10 @@
   {
     "name": "Tachiyomi: Komiku",
     "pkg": "eu.kanade.tachiyomi.extension.id.komiku",
-    "apk": "tachiyomi-id.komiku-v1.2.7.apk",
+    "apk": "tachiyomi-id.komiku-v1.2.8.apk",
     "lang": "id",
-    "code": 7,
-    "version": "1.2.7",
+    "code": 8,
+    "version": "1.2.8",
     "nsfw": 0
   },
   {
@@ -1372,6 +1372,15 @@
     "pkg": "eu.kanade.tachiyomi.extension.id.nyanfm",
     "apk": "tachiyomi-id.nyanfm-v1.2.1.apk",
     "lang": "id",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: DigitalTeam",
+    "pkg": "eu.kanade.tachiyomi.extension.it.digitalteam",
+    "apk": "tachiyomi-it.digitalteam-v1.2.1.apk",
+    "lang": "it",
     "code": 1,
     "version": "1.2.1",
     "nsfw": 0
