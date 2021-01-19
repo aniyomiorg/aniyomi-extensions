@@ -199,7 +199,7 @@ class LibManga : ConfigurableSource, HttpSource() {
         val genres = document.select(".media-tags > a").map { it.text() }
 
         manga.title = document.select(".media-name__main").text()
-        manga.thumbnail_url = "${baseUrl}${document.select(".media-sidebar__cover > img").attr("src")}"
+        manga.thumbnail_url = document.select(".media-sidebar__cover > img").attr("src")
         manga.author = body.select("div.media-info-list__title:contains(Автор) + div").text()
         manga.artist = body.select("div.media-info-list__title:contains(Художник) + div").text()
         manga.status = when (
@@ -221,7 +221,8 @@ class LibManga : ConfigurableSource, HttpSource() {
             .asJsoup()
             .toString()
             .substringAfter("window.__DATA__ = ")
-            .substringBefore(";")
+            .substringBefore("window._SITE_COLOR_")
+            .substringBeforeLast(";")
 
         val data = jsonParser.parse(dataStr).obj
         val chaptersList = data["chapters"]["list"].nullArray
