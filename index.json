@@ -90,6 +90,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: HentaiHand",
+    "pkg": "eu.kanade.tachiyomi.extension.all.hentaihand",
+    "apk": "tachiyomi-all.hentaihand-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 1
+  },
+  {
     "name": "Tachiyomi: Hitomi.la",
     "pkg": "eu.kanade.tachiyomi.extension.all.hitomi",
     "apk": "tachiyomi-all.hitomi-v1.2.3.apk",
@@ -119,10 +128,10 @@
   {
     "name": "Tachiyomi: LANraragi",
     "pkg": "eu.kanade.tachiyomi.extension.all.lanraragi",
-    "apk": "tachiyomi-all.lanraragi-v1.2.3.apk",
+    "apk": "tachiyomi-all.lanraragi-v1.2.4.apk",
     "lang": "all",
-    "code": 3,
-    "version": "1.2.3",
+    "code": 4,
+    "version": "1.2.4",
     "nsfw": 0
   },
   {
@@ -281,10 +290,10 @@
   {
     "name": "Tachiyomi: WP-Comics",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpcomics",
-    "apk": "tachiyomi-all.wpcomics-v1.2.19.apk",
+    "apk": "tachiyomi-all.wpcomics-v1.2.20.apk",
     "lang": "all",
-    "code": 19,
-    "version": "1.2.19",
+    "code": 20,
+    "version": "1.2.20",
     "nsfw": 0
   },
   {
@@ -1829,10 +1838,10 @@
   {
     "name": "Tachiyomi: Remanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.remanga",
-    "apk": "tachiyomi-ru.remanga-v1.2.12.apk",
+    "apk": "tachiyomi-ru.remanga-v1.2.13.apk",
     "lang": "ru",
-    "code": 12,
-    "version": "1.2.12",
+    "code": 13,
+    "version": "1.2.13",
     "nsfw": 0
   },
   {
