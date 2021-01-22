@@ -2018,11 +2018,11 @@
   {
     "name": "Tachiyomi: Dmzj",
     "pkg": "eu.kanade.tachiyomi.extension.zh.dmzj",
-    "apk": "tachiyomi-zh.dmzj-v1.2.13.apk",
+    "apk": "tachiyomi-zh.dmzj-v1.2.14.apk",
     "lang": "zh",
-    "code": 13,
-    "version": "1.2.13",
-    "nsfw": 0
+    "code": 14,
+    "version": "1.2.14",
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: Gufeng Manhua",
