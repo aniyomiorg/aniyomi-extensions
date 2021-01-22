@@ -9,15 +9,6 @@
     "nsfw": 1
   },
   {
-    "name": "Tachiyomi: Ciayo Comics",
-    "pkg": "eu.kanade.tachiyomi.extension.all.ciayo",
-    "apk": "tachiyomi-all.ciayo-v1.2.1.apk",
-    "lang": "all",
-    "code": 1,
-    "version": "1.2.1",
-    "nsfw": 0
-  },
-  {
     "name": "Tachiyomi: ComiCake",
     "pkg": "eu.kanade.tachiyomi.extension.all.comicake",
     "apk": "tachiyomi-all.comicake-v1.2.9.apk",
@@ -155,10 +146,10 @@
   {
     "name": "Tachiyomi: MangaDex",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangadex",
-    "apk": "tachiyomi-all.mangadex-v1.2.101.apk",
+    "apk": "tachiyomi-all.mangadex-v1.2.102.apk",
     "lang": "all",
-    "code": 101,
-    "version": "1.2.101",
+    "code": 102,
+    "version": "1.2.102",
     "nsfw": 1
   },
   {
@@ -2135,10 +2126,10 @@
   {
     "name": "Tachiyomi: QiXiManhua",
     "pkg": "eu.kanade.tachiyomi.extension.zh.qiximh",
-    "apk": "tachiyomi-zh.qiximh-v1.2.1.apk",
+    "apk": "tachiyomi-zh.qiximh-v1.2.2.apk",
     "lang": "zh",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
