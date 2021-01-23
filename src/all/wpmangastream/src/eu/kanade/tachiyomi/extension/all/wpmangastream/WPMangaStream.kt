@@ -263,7 +263,7 @@ abstract class WPMangaStream(
             .filterNot { it.attr("src").isNullOrEmpty() }
             .mapIndexed { i, img -> pages.add(Page(i, "", img.attr("abs:src"))) }
 
-        // Some wpmangastream sites like AsuraScans now load pages via javascript
+        // Some wpmangastream sites now load pages via javascript
         if (pages.isNotEmpty()) { return pages }
 
         val docString = document.toString()

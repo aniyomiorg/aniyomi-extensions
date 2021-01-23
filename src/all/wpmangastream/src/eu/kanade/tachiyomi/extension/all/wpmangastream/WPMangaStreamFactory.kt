@@ -49,7 +49,6 @@ class WPMangaStreamFactory : SourceFactory {
         MangaProZ(),
         Boosei(),
         Mangakyo(),
-        AsuraScans(),
         SilenceScan(),
         SheaManga(),
         FlameScans(),
@@ -95,10 +94,6 @@ class SheaManga : WPMangaStream(
     "id",
     dateFormat = SimpleDateFormat("MMMM dd, yyyy", Locale.forLanguageTag("id"))
 )
-
-class AsuraScans : WPMangaStream("AsuraScans", "https://asurascans.com", "en") {
-    override val pageSelector = "div#readerarea img[lazy]"
-}
 
 class SekteKomik : WPMangaStream("Sekte Komik (WP Manga Stream)", "https://sektekomik.com", "id")
 
