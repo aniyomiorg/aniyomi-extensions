@@ -65,10 +65,10 @@
   {
     "name": "Tachiyomi: FoolSlide (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.foolslide",
-    "apk": "tachiyomi-all.foolslide-v1.2.56.apk",
+    "apk": "tachiyomi-all.foolslide-v1.2.57.apk",
     "lang": "all",
-    "code": 56,
-    "version": "1.2.56",
+    "code": 57,
+    "version": "1.2.57",
     "nsfw": 1
   },
   {
@@ -299,10 +299,10 @@
   {
     "name": "Tachiyomi: WP MangaReader (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangareader",
-    "apk": "tachiyomi-all.wpmangareader-v1.2.4.apk",
+    "apk": "tachiyomi-all.wpmangareader-v1.2.5.apk",
     "lang": "all",
-    "code": 4,
-    "version": "1.2.4",
+    "code": 5,
+    "version": "1.2.5",
     "nsfw": 0
   },
   {
@@ -1748,10 +1748,10 @@
   {
     "name": "Tachiyomi: Desu",
     "pkg": "eu.kanade.tachiyomi.extension.ru.desu",
-    "apk": "tachiyomi-ru.desu-v1.2.5.apk",
+    "apk": "tachiyomi-ru.desu-v1.2.6.apk",
     "lang": "ru",
-    "code": 5,
-    "version": "1.2.5",
+    "code": 6,
+    "version": "1.2.6",
     "nsfw": 0
   },
   {
@@ -1847,10 +1847,10 @@
   {
     "name": "Tachiyomi: Remanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.remanga",
-    "apk": "tachiyomi-ru.remanga-v1.2.13.apk",
+    "apk": "tachiyomi-ru.remanga-v1.2.14.apk",
     "lang": "ru",
-    "code": 13,
-    "version": "1.2.13",
+    "code": 14,
+    "version": "1.2.14",
     "nsfw": 0
   },
   {
