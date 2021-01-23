@@ -128,10 +128,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.173.apk",
+    "apk": "tachiyomi-all.madara-v1.2.174.apk",
     "lang": "all",
-    "code": 173,
-    "version": "1.2.173",
+    "code": 174,
+    "version": "1.2.174",
     "nsfw": 1
   },
   {
@@ -1712,10 +1712,10 @@
   {
     "name": "Tachiyomi: AllHentai",
     "pkg": "eu.kanade.tachiyomi.extension.ru.allhentai",
-    "apk": "tachiyomi-ru.allhentai-v1.2.1.apk",
+    "apk": "tachiyomi-ru.allhentai-v1.2.2.apk",
     "lang": "ru",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 1
   },
   {
@@ -1757,10 +1757,10 @@
   {
     "name": "Tachiyomi: MangaLib",
     "pkg": "eu.kanade.tachiyomi.extension.ru.libmanga",
-    "apk": "tachiyomi-ru.libmanga-v1.2.28.apk",
+    "apk": "tachiyomi-ru.libmanga-v1.2.29.apk",
     "lang": "ru",
-    "code": 28,
-    "version": "1.2.28",
+    "code": 29,
+    "version": "1.2.29",
     "nsfw": 0
   },
   {
@@ -1811,10 +1811,10 @@
   {
     "name": "Tachiyomi: Nude-Moon",
     "pkg": "eu.kanade.tachiyomi.extension.ru.nudemoon",
-    "apk": "tachiyomi-ru.nudemoon-v1.2.6.apk",
+    "apk": "tachiyomi-ru.nudemoon-v1.2.7.apk",
     "lang": "ru",
-    "code": 6,
-    "version": "1.2.6",
+    "code": 7,
+    "version": "1.2.7",
     "nsfw": 1
   },
   {
