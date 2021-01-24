@@ -153,7 +153,7 @@ class Luscious(override val lang: String, private val lusLang: String) : HttpSou
 
     // Pages
 
-    private fun buildAlbumPicturesRequestInput(id: String, page: Int): JsonObject {
+    private fun buildAlbumPicturesRequestInput(id: String, page: Int, sortPagesByOption: String): JsonObject {
         return JsonObject().apply {
             addProperty(
                 "input",
@@ -169,14 +169,15 @@ class Luscious(override val lang: String, private val lusLang: String) : HttpSou
                             )
                         }
                     )
+                    addProperty("display", sortPagesByOption)
                     addProperty("page", page)
                 }
             )
         }
     }
 
-    private fun buildAlbumPicturesPageUrl(id: String, page: Int): String {
-        val input = buildAlbumPicturesRequestInput(id, page)
+    private fun buildAlbumPicturesPageUrl(id: String, page: Int, sortPagesByOption: String): String {
+        val input = buildAlbumPicturesRequestInput(id, page, sortPagesByOption)
         return HttpUrl.parse(apiBaseUrl)!!.newBuilder()
             .addQueryParameter("operationName", "AlbumListOwnPictures")
             .addQueryParameter("query", ALBUM_PICTURES_REQUEST_GQL)
@@ -184,7 +185,7 @@ class Luscious(override val lang: String, private val lusLang: String) : HttpSou
             .toString()
     }
 
-    private fun parseAlbumPicturesResponse(response: Response): List<Page> {
+    private fun parseAlbumPicturesResponse(response: Response, sortPagesByOption: String): List<Page> {
 
         val id = response.request().url().queryParameter("variables").toString()
             .let { gson.fromJson<JsonObject>(it)["input"]["filters"].asJsonArray }
@@ -198,16 +199,29 @@ class Luscious(override val lang: String, private val lusLang: String) : HttpSou
             Page(index, imageUrl = it["url_to_original"].asString)
         } + if (data["info"]["total_pages"].asInt > 1) { // get 2nd page onwards
             (ITEMS_PER_PAGE until data["info"]["total_items"].asInt).chunked(ITEMS_PER_PAGE).mapIndexed { page, indices ->
-                indices.map { Page(it, url = buildAlbumPicturesPageUrl(id, page + 2)) }
+                indices.map { Page(it, url = buildAlbumPicturesPageUrl(id, page + 2, sortPagesByOption)) }
             }.flatten()
         } else emptyList()
     }
 
+    private fun getAlbumSortPagesOption(chapter: SChapter): Observable<String> {
+        return client.newCall(GET(chapter.url))
+            .asObservableSuccess()
+            .map {
+                val sortByKey = it.asJsoup().select(".o-input-select:contains(Sorted By) .o-select-value")?.text() ?: ""
+                ALBUM_PICTURES_SORT_OPTIONS.getValue(sortByKey)
+            }
+    }
+
     override fun fetchPageList(chapter: SChapter): Observable<List<Page>> {
         val id = chapter.url.substringAfterLast("_").removeSuffix("/")
-        return client.newCall(GET(buildAlbumPicturesPageUrl(id, 1)))
-            .asObservableSuccess()
-            .map { parseAlbumPicturesResponse(it) }
+
+        return getAlbumSortPagesOption(chapter)
+            .concatMap { sortPagesByOption ->
+                client.newCall(GET(buildAlbumPicturesPageUrl(id, 1, sortPagesByOption)))
+                    .asObservableSuccess()
+                    .map { parseAlbumPicturesResponse(it, sortPagesByOption) }
+            }
     }
 
     override fun pageListParse(response: Response): List<Page> = throw UnsupportedOperationException("Not used")
@@ -509,6 +523,11 @@ class Luscious(override val lang: String, private val lusLang: String) : HttpSou
 
     companion object {
 
+        private val ALBUM_PICTURES_SORT_OPTIONS = hashMapOf(
+            Pair("Sort By Newest", "date_newest"),
+            Pair("Sort By Rating", "rating_all_time")
+        ).withDefault { "position" }
+
         private const val ITEMS_PER_PAGE = 50
 
         private val ORDINAL_SUFFIXES = listOf("st", "nd", "rd", "th")
@@ -528,9 +547,9 @@ class Luscious(override val lang: String, private val lusLang: String) : HttpSou
         const val PORTUGESE_LUS_LANG_VAL = "100"
         const val THAI_LUS_LANG_VAL = "101"
 
-        private const val POPULAR_DEFAULT_SORT_STATE = 18
+        private const val POPULAR_DEFAULT_SORT_STATE = 0
         private const val LATEST_DEFAULT_SORT_STATE = 7
-        private const val SEARCH_DEFAULT_SORT_STATE = 18
+        private const val SEARCH_DEFAULT_SORT_STATE = 0
 
         private const val FILTER_VALUE_IGNORE = "<ignore>"
 

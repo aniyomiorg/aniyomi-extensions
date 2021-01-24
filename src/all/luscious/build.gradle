@@ -5,7 +5,7 @@ ext {
     extName = 'Luscious'
     pkgNameSuffix = 'all.luscious'
     extClass = '.LusciousFactory'
-    extVersionCode = 1
+    extVersionCode = 2
     libVersion = '1.2'
     containsNsfw = true
 }
