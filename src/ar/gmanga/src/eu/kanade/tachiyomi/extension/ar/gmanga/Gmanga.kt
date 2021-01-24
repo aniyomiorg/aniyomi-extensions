@@ -101,8 +101,11 @@ class Gmanga : ConfigurableSource, HttpSource() {
                 SManga.create().apply {
                     url = "/mangas/${it["id"].asString}"
                     title = it["title"].asString
-                    val thumbnail = "medium_${it["cover"].asString.substringBeforeLast(".")}.webp"
-                    thumbnail_url = "https://media.$domain/uploads/manga/cover/${it["id"].asString}/$thumbnail"
+
+                    thumbnail_url = it["cover"].nullString?.let { coverFileName ->
+                        val thumbnail = "medium_${coverFileName.substringBeforeLast(".")}.webp"
+                        "https://media.$domain/uploads/manga/cover/${it["id"].asString}/$thumbnail"
+                    }
                 }
             },
             false
@@ -110,7 +113,7 @@ class Gmanga : ConfigurableSource, HttpSource() {
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/releases", headers)
+        return GET("$baseUrl/mangas/latest", headers)
     }
 
     override fun mangaDetailsParse(response: Response): SManga {
