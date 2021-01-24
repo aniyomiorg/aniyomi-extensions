@@ -128,10 +128,10 @@
   {
     "name": "Tachiyomi: Luscious",
     "pkg": "eu.kanade.tachiyomi.extension.all.luscious",
-    "apk": "tachiyomi-all.luscious-v1.2.1.apk",
+    "apk": "tachiyomi-all.luscious-v1.2.2.apk",
     "lang": "all",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 1
   },
   {
@@ -308,10 +308,10 @@
   {
     "name": "Tachiyomi: WP MangaStream (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
-    "apk": "tachiyomi-all.wpmangastream-v1.2.47.apk",
+    "apk": "tachiyomi-all.wpmangastream-v1.2.48.apk",
     "lang": "all",
-    "code": 47,
-    "version": "1.2.47",
+    "code": 48,
+    "version": "1.2.48",
     "nsfw": 0
   },
   {
@@ -1847,10 +1847,10 @@
   {
     "name": "Tachiyomi: Remanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.remanga",
-    "apk": "tachiyomi-ru.remanga-v1.2.14.apk",
+    "apk": "tachiyomi-ru.remanga-v1.2.15.apk",
     "lang": "ru",
-    "code": 14,
-    "version": "1.2.14",
+    "code": 15,
+    "version": "1.2.15",
     "nsfw": 0
   },
   {
