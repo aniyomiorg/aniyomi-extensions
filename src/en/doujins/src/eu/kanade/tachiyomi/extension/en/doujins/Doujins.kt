@@ -149,7 +149,7 @@ class Doujins : HttpSource() {
 
         val pagination = document.select(".pagination").first()
         return MangasPage(
-            document.select("a.gallery-visited-from-favorites").map {
+            document.select("div:not(.premium-folder) > .thumbnail-doujin a.gallery-visited-from-favorites").map {
                 SManga.create().apply {
                     setUrlWithoutDomain(it.attr("href"))
                     title = it.select("div.title .text").text()
