@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.fr.scantrad
 
+import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -19,6 +20,7 @@ import rx.Observable
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 import kotlin.math.absoluteValue
 import kotlin.random.Random
 
@@ -32,12 +34,19 @@ class Scantrad : ParsedHttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    private val rateLimitInterceptor = RateLimitInterceptor(1)
 
-    protected open val userAgentRandomizer = " ${Random.nextInt().absoluteValue}"
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .addNetworkInterceptor(rateLimitInterceptor)
+        .build()
+
+    protected open val userAgentRandomizer = "${Random.nextInt(9).absoluteValue}"
+    protected open val uAR = userAgentRandomizer
 
     override fun headersBuilder() = Headers.Builder().apply {
-        add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36$userAgentRandomizer (KHTML, like Gecko) Chrome/81.0.4044.122$userAgentRandomizer Safari/537.36$userAgentRandomizer")
+        add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/8$uAR.0.4$uAR$uAR$uAR.1$uAR$uAR Safari/537.36")
     }
 
     // Popular
