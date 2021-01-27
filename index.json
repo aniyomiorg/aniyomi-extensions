@@ -137,10 +137,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.175.apk",
+    "apk": "tachiyomi-all.madara-v1.2.176.apk",
     "lang": "all",
-    "code": 175,
-    "version": "1.2.175",
+    "code": 176,
+    "version": "1.2.176",
     "nsfw": 1
   },
   {
@@ -2018,10 +2018,10 @@
   {
     "name": "Tachiyomi: CopyManga",
     "pkg": "eu.kanade.tachiyomi.extension.zh.copymanga",
-    "apk": "tachiyomi-zh.copymanga-v1.2.4.apk",
+    "apk": "tachiyomi-zh.copymanga-v1.2.5.apk",
     "lang": "zh",
-    "code": 4,
-    "version": "1.2.4",
+    "code": 5,
+    "version": "1.2.5",
     "nsfw": 0
   },
   {
@@ -2090,10 +2090,10 @@
   {
     "name": "Tachiyomi: ManHuaGui",
     "pkg": "eu.kanade.tachiyomi.extension.zh.manhuagui",
-    "apk": "tachiyomi-zh.manhuagui-v1.2.6.apk",
+    "apk": "tachiyomi-zh.manhuagui-v1.2.7.apk",
     "lang": "zh",
-    "code": 6,
-    "version": "1.2.6",
+    "code": 7,
+    "version": "1.2.7",
     "nsfw": 0
   },
   {
