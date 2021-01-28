@@ -36,15 +36,6 @@
     "nsfw": 1
   },
   {
-    "name": "Tachiyomi: EliMangas",
-    "pkg": "eu.kanade.tachiyomi.extension.all.elimangas",
-    "apk": "tachiyomi-all.elimangas-v1.2.1.apk",
-    "lang": "all",
-    "code": 1,
-    "version": "1.2.1",
-    "nsfw": 0
-  },
-  {
     "name": "Tachiyomi: EroMuse (8muses and Erofus)",
     "pkg": "eu.kanade.tachiyomi.extension.all.eromuse",
     "apk": "tachiyomi-all.eromuse-v1.2.3.apk",
