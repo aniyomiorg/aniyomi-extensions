@@ -299,10 +299,10 @@
   {
     "name": "Tachiyomi: WP MangaStream (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
-    "apk": "tachiyomi-all.wpmangastream-v1.2.49.apk",
+    "apk": "tachiyomi-all.wpmangastream-v1.2.50.apk",
     "lang": "all",
-    "code": 49,
-    "version": "1.2.49",
+    "code": 50,
+    "version": "1.2.50",
     "nsfw": 0
   },
   {
@@ -367,6 +367,15 @@
     "code": 2,
     "version": "1.2.2",
     "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Fansubs.cat",
+    "pkg": "eu.kanade.tachiyomi.extension.ca.fansubscat",
+    "apk": "tachiyomi-ca.fansubscat-v1.2.1.apk",
+    "lang": "ca",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: Manga Tube",
@@ -569,11 +578,11 @@
   {
     "name": "Tachiyomi: Latis Books",
     "pkg": "eu.kanade.tachiyomi.extension.en.latisbooks",
-    "apk": "tachiyomi-en.latisbooks-v1.2.1.apk",
+    "apk": "tachiyomi-en.latisbooks-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
-    "nsfw": 0
+    "code": 2,
+    "version": "1.2.2",
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: LemonFont",
@@ -1082,10 +1091,10 @@
   {
     "name": "Tachiyomi: VIZ Shonen Jump",
     "pkg": "eu.kanade.tachiyomi.extension.en.vizshonenjump",
-    "apk": "tachiyomi-en.vizshonenjump-v1.2.5.apk",
+    "apk": "tachiyomi-en.vizshonenjump-v1.2.6.apk",
     "lang": "en",
-    "code": 5,
-    "version": "1.2.5",
+    "code": 6,
+    "version": "1.2.6",
     "nsfw": 0
   },
   {
