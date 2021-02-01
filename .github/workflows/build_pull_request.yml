@@ -21,6 +21,7 @@ jobs:
     if: "!startsWith(github.event.head_commit.message, '[SKIP CI]')"
     runs-on: ubuntu-latest
 
+    steps:
       - name: Checkout PR
         uses: actions/checkout@v2
 
