@@ -65,10 +65,10 @@
   {
     "name": "Tachiyomi: Genkan (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.genkan",
-    "apk": "tachiyomi-all.genkan-v1.2.24.apk",
+    "apk": "tachiyomi-all.genkan-v1.2.25.apk",
     "lang": "all",
-    "code": 24,
-    "version": "1.2.24",
+    "code": 25,
+    "version": "1.2.25",
     "nsfw": 0
   },
   {
@@ -128,10 +128,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.177.apk",
+    "apk": "tachiyomi-all.madara-v1.2.178.apk",
     "lang": "all",
-    "code": 177,
-    "version": "1.2.177",
+    "code": 178,
+    "version": "1.2.178",
     "nsfw": 1
   },
   {
@@ -1226,10 +1226,10 @@
   {
     "name": "Tachiyomi: Japscan",
     "pkg": "eu.kanade.tachiyomi.extension.fr.japscan",
-    "apk": "tachiyomi-fr.japscan-v1.2.24.apk",
+    "apk": "tachiyomi-fr.japscan-v1.2.25.apk",
     "lang": "fr",
-    "code": 24,
-    "version": "1.2.24",
+    "code": 25,
+    "version": "1.2.25",
     "nsfw": 0
   },
   {
