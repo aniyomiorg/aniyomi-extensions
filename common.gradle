@@ -61,6 +61,5 @@ dependencies {
 }
 apply from: "$rootDir/common-dependencies.gradle"
 
-
 preBuild.dependsOn(lintKotlin)
 lintKotlin.dependsOn(formatKotlin)
