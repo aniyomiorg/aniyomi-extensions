@@ -11,6 +11,5 @@ ext {
 apply from: "$rootDir/common.gradle"
 
 dependencies {
-    compileOnly project(':duktape-stub')
     implementation 'com.luhuiguo:chinese-utils:1.0'
 }
