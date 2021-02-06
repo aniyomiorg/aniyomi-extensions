@@ -63,15 +63,6 @@
     "nsfw": 1
   },
   {
-    "name": "Tachiyomi: Genkan (multiple sources)",
-    "pkg": "eu.kanade.tachiyomi.extension.all.genkan",
-    "apk": "tachiyomi-all.genkan-v1.2.25.apk",
-    "lang": "all",
-    "code": 25,
-    "version": "1.2.25",
-    "nsfw": 0
-  },
-  {
     "name": "Tachiyomi: HentaiHand",
     "pkg": "eu.kanade.tachiyomi.extension.all.hentaihand",
     "apk": "tachiyomi-all.hentaihand-v1.2.1.apk",
@@ -114,6 +105,15 @@
     "lang": "all",
     "code": 4,
     "version": "1.2.4",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Leviatan Scans",
+    "pkg": "eu.kanade.tachiyomi.extension.all.leviatanscans",
+    "apk": "tachiyomi-all.leviatanscans-v1.2.2.apk",
+    "lang": "all",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -468,6 +468,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Edelgarde Scans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.edelgardescans",
+    "apk": "tachiyomi-en.edelgardescans-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Eggporncomics",
     "pkg": "eu.kanade.tachiyomi.extension.en.eggporncomics",
     "apk": "tachiyomi-en.eggporncomics-v1.2.2.apk",
@@ -513,6 +522,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Hatigarm Scans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.hatigarmscans",
+    "apk": "tachiyomi-en.hatigarmscans-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: HBrowse",
     "pkg": "eu.kanade.tachiyomi.extension.en.hbrowse",
     "apk": "tachiyomi-en.hbrowse-v1.2.3.apk",
@@ -552,6 +570,15 @@
     "name": "Tachiyomi: HonkaiImpact3",
     "pkg": "eu.kanade.tachiyomi.extension.en.honkaiimpact",
     "apk": "tachiyomi-en.honkaiimpact-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Hunlight Scans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.hunlightscans",
+    "apk": "tachiyomi-en.hunlightscans-v1.2.1.apk",
     "lang": "en",
     "code": 1,
     "version": "1.2.1",
@@ -846,6 +873,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Method Scans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.methodscans",
+    "apk": "tachiyomi-en.methodscans-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Multporn",
     "pkg": "eu.kanade.tachiyomi.extension.en.multporn",
     "apk": "tachiyomi-en.multporn-v1.2.1.apk",
@@ -999,6 +1035,15 @@
     "nsfw": 1
   },
   {
+    "name": "Tachiyomi: Reaper Scans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.reaperscans",
+    "apk": "tachiyomi-en.reaperscans-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Schlock Mercenary",
     "pkg": "eu.kanade.tachiyomi.extension.en.schlockmercenary",
     "apk": "tachiyomi-en.schlockmercenary-v1.2.1.apk",
@@ -1008,9 +1053,27 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: SecretScans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.secretscans",
+    "apk": "tachiyomi-en.secretscans-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Silent Manga Audition",
     "pkg": "eu.kanade.tachiyomi.extension.en.silentmangaaudition",
     "apk": "tachiyomi-en.silentmangaaudition-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Sleeping Knight Scans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.sleepingknightscans",
+    "apk": "tachiyomi-en.sleepingknightscans-v1.2.1.apk",
     "lang": "en",
     "code": 1,
     "version": "1.2.1",
@@ -1047,6 +1110,15 @@
     "name": "Tachiyomi: TCB Scans",
     "pkg": "eu.kanade.tachiyomi.extension.en.tcbscans",
     "apk": "tachiyomi-en.tcbscans-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: The Nonames Scans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.thenonamesscans",
+    "apk": "tachiyomi-en.thenonamesscans-v1.2.1.apk",
     "lang": "en",
     "code": 1,
     "version": "1.2.1",
@@ -1131,6 +1203,15 @@
     "lang": "en",
     "code": 8,
     "version": "1.2.8",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: ZeroScans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.zeroscans",
+    "apk": "tachiyomi-en.zeroscans-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
     "nsfw": 0
   },
   {
