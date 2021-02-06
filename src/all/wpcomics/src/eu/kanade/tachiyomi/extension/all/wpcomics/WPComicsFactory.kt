@@ -63,7 +63,7 @@ private class ManhuaES : WPComics("Manhua ES", "https://manhuaes.com", "en", Sim
                 val showMoreFake = info.select(".detail-content .content-readmore").text()
                 val showMore = info.select(".detail-content .morelink").text()
                 val rawDesc = info.select("div.detail-content").text()
-                
+
                 if (showMoreFake == null || showMoreFake == "") {
                     description = rawDesc.substringAfter(h3).substringAfter(strong).substringBefore(showMore)
                 } else {

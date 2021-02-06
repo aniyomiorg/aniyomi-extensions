@@ -1,2 +1,1 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="eu.kanade.tachiyomi.lib.themesources" />
+<manifest package="eu.kanade.tachiyomi.lib.themesources" />

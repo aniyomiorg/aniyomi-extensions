@@ -106,12 +106,14 @@ open class NewToki(override val name: String, private val defaultBaseUrl: String
         val fullListButton = document.select(".comic-navbar .toon-nav a").last()
 
         val list: List<SManga> = if (firstChapterButton?.text()?.contains("첫회보기")
-                ?: false) { // Check this page is detail page
+            ?: false
+        ) { // Check this page is detail page
             val details = mangaDetailsParse(document)
             details.url = urlPath
             listOf(details)
         } else if (fullListButton?.text()?.contains("전체목록")
-                ?: false) { // Check this page is chapter page
+            ?: false
+        ) { // Check this page is chapter page
             val url = fullListButton.attr("abs:href")
             val details = mangaDetailsParse(client.newCall(GET(url)).execute())
             details.url = getUrlPath(url)
