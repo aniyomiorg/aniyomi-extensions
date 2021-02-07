@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.multisrc.genkan
 
+import eu.kanade.tachiyomi.multisrc.ThemeSourceData
 import eu.kanade.tachiyomi.multisrc.ThemeSourceGenerator
-import eu.kanade.tachiyomi.multisrc.ThemeSourceGenerator.Companion.ThemeSourceData
 
 class GenkanOriginalGenerator : ThemeSourceGenerator {
 
@@ -13,7 +13,7 @@ class GenkanOriginalGenerator : ThemeSourceGenerator {
 
     override val sources = listOf(
         ThemeSourceData.SingleLang("Reaper Scans", "https://reaperscans.com", "en"),
-        ThemeSourceData.SingleLang("Hatigarm Scans", "https://hatigarmscanz.net", "en"),
+        ThemeSourceData.SingleLang("Hatigarm Scans", "https://hatigarmscanz.net", "en", versionId = 2),
         ThemeSourceData.SingleLang("SecretScans", "https://secretscans.co", "en"),
     )
 

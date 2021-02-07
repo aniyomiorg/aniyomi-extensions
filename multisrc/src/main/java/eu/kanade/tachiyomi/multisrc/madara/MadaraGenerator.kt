@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.multisrc.madara
 
+import eu.kanade.tachiyomi.multisrc.ThemeSourceData.SingleLang
 import eu.kanade.tachiyomi.multisrc.ThemeSourceGenerator
-import eu.kanade.tachiyomi.multisrc.ThemeSourceGenerator.Companion.ThemeSourceData.SingleLang
 
 class MadaraGenerator : ThemeSourceGenerator {
 

@@ -23,7 +23,6 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 // Based off of Mangakakalot 1.2.8
-
 abstract class MangaBox(
     override val name: String,
     override val baseUrl: String,
