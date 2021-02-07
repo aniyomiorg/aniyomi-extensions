@@ -5,7 +5,6 @@ import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Response
 
-
 class Mangakakalots : MangaBox("Mangakakalots (unoriginal)", "https://mangakakalots.com", "en") {
     override fun searchMangaSelector(): String = "${super.searchMangaSelector()}, div.list-truyen-item-wrap"
     override fun searchMangaParse(response: Response): MangasPage {

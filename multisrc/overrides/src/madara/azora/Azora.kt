@@ -1,11 +1,10 @@
-package eu.kanade.tachiyomi.extension.fr.atmsubs
+package eu.kanade.tachiyomi.extension.ar.azora
 
 import eu.kanade.tachiyomi.multisrc.madara.Madara
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.SChapter
 import okhttp3.Request
 import org.jsoup.nodes.Element
-
 
 class Azora : Madara("Azora", "https://www.azoramanga.com", "ar") {
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/page/$page/?m_orderby=views", headers)
