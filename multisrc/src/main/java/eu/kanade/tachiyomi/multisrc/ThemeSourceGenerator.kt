@@ -106,8 +106,8 @@ interface ThemeSourceGenerator {
             val themeSrcPath = "$userDir/multisrc/src/main/java/${themeSuffix(themePkg, "/")}"
             val themeSrcFile = File(themeSrcPath)
             val themeDestPath = "$projectRootPath/src/${themeSuffix(themePkg, "/")}"
-            val themeDestFile = File(themeDestPath)
 
+            val themeDestFile = File(themeDestPath)
             themeDestFile.mkdirs()
 
             themeSrcFile.list()!!
@@ -147,7 +147,7 @@ interface ThemeSourceGenerator {
                         """.trimIndent()
                     }
                     is ThemeSourceData.MultiLang -> {
-                        val sourceClasses = source.lang.mapIndexed { index, lang ->
+                        val sourceClasses = source.langs.mapIndexed { index, lang ->
                             val indexedClassName = "$themeClass${index}"
                             indexedClassName to """$indexedClassName : $themeClass("${source.name}", "${source.baseUrl}", "$lang") {
                                 override val versionId = ${source.versionId}
@@ -168,7 +168,7 @@ interface ThemeSourceGenerator {
             }
 
             File("$classPath/${source.className}.kt").writeText("""
-                // THIS FILE IS AUTO-GENERATED; DO NOT EDIT???
+                // THIS FILE IS AUTO-GENERATED; DO NOT EDIT
                 package eu.kanade.tachiyomi.extension.${pkgNameSuffix(source, ".")}
 
                 import eu.kanade.tachiyomi.multisrc.$themePkg.$themeClass
@@ -181,7 +181,7 @@ interface ThemeSourceGenerator {
         }
 
         private fun cleanDirectory(dir: File) {
-            for (file in dir.listFiles()!!) {
+            dir.listFiles()?.forEach { file ->
                 if (file.isDirectory) cleanDirectory(file)
                 file.delete()
             }
@@ -212,20 +212,20 @@ sealed class ThemeSourceData {
         override val baseUrl: String,
         val lang: String,
         override val isNsfw: Boolean = false,
+        override val versionId: Int = 1,
         override val className: String = name.replace(" ", ""),
         override val pkgName: String = className.toLowerCase(Locale.ENGLISH),
-        override val versionId: Int = 1,
         override val overrideVersionCode: Int = 0,
     ) : ThemeSourceData()
 
     data class MultiLang(
         override val name: String,
         override val baseUrl: String,
-        val lang: List<String>,
+        val langs: List<String>,
         override val isNsfw: Boolean = false,
+        override val versionId: Int = 1,
         override val className: String = name.replace(" ", "") + "Factory",
         override val pkgName: String = className.substringBefore("Factory").toLowerCase(Locale.ENGLISH),
-        override val versionId: Int = 1,
         override val overrideVersionCode: Int = 0,
     ) : ThemeSourceData()
 }
