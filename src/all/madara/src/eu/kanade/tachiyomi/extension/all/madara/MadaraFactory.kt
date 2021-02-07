@@ -415,7 +415,6 @@ class ManwahentaiMe : Madara("Manwahentai.me", "https://manhwahentai.me", "en")
 
 class Manga3asq : Madara("مانجا العاشق", "https://3asq.org", "ar")
 
-
 class Milftoon : Madara("Milftoon", "https://milftoon.xxx", "en") {
     override fun popularMangaRequest(page: Int): Request = GET("$baseUrl/page/$page/?m_orderby=views", headers)
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/page/$page/?m_orderby=latest", headers)
@@ -724,7 +723,6 @@ class MangaScantrad : Madara("Manga-Scantrad", "https://manga-scantrad.net", "fr
 class ManhuaPlus : Madara("Manhua Plus", "https://manhuaplus.com", "en") {
     override val pageListParseSelector = "li.blocks-gallery-item"
 }
-
 
 @Nsfw
 class ToonilyNet : Madara("Toonily.net", "https://toonily.net", "en")

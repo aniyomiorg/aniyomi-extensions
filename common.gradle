@@ -58,9 +58,5 @@ repositories {
 
 apply from: "$rootDir/common-dependencies.gradle"
 
-lintKotlinMain {
-    exclude 'generated-src/**/*.kt'
-}
-
 preBuild.dependsOn(lintKotlin)
 lintKotlin.dependsOn(formatKotlin)

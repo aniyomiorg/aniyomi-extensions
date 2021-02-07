@@ -167,7 +167,7 @@ interface ThemeSourceGenerator {
                 }
             }
 
-            File("$classPath/${source.className}.kt").writeText("""
+            File("$classPath/${source.className}.kt").writeText("""/* ktlint-disable */
                 // THIS FILE IS AUTO-GENERATED; DO NOT EDIT
                 package eu.kanade.tachiyomi.extension.${pkgNameSuffix(source, ".")}
 
