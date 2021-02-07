@@ -140,26 +140,17 @@ interface ThemeSourceGenerator {
             fun factoryClassText(): String {
                 return when (source) {
                     is ThemeSourceData.SingleLang -> {
-                        """
-                        class ${source.className} : $themeClass("${source.name}", "${source.baseUrl}", "${source.lang}") {
-                            override val versionId = ${source.versionId}
-                        }
-                        """.trimIndent()
+                        """class ${source.className} : $themeClass("${source.name}", "${source.baseUrl}", "${source.lang}")"""
                     }
                     is ThemeSourceData.MultiLang -> {
-                        val sourceClasses = source.langs.mapIndexed { index, lang ->
-                            val indexedClassName = "$themeClass${index}"
-                            indexedClassName to """$indexedClassName : $themeClass("${source.name}", "${source.baseUrl}", "$lang") {
-                                override val versionId = ${source.versionId}
-                            }""".trimIndent()
+                        val sourceClasses = source.langs.map { lang ->
+                            """$themeClass("${source.name}", "${source.baseUrl}", "$lang")"""
                         }
 
                         """
                         class ${source.className} : SourceFactory {
-                            ${sourceClasses.joinToString("\n") { it.second }}
-
                             override fun createSources() = listOf(
-                                ${sourceClasses.joinToString(",\n") { "${it.first}()" }}
+                                ${sourceClasses.joinToString(",\n")}
                             )
                         }
                         """.trimIndent()
@@ -167,7 +158,8 @@ interface ThemeSourceGenerator {
                 }
             }
 
-            File("$classPath/${source.className}.kt").writeText("""/* ktlint-disable */
+            File("$classPath/${source.className}.kt").writeText("""
+                /* ktlint-disable */
                 // THIS FILE IS AUTO-GENERATED; DO NOT EDIT
                 package eu.kanade.tachiyomi.extension.${pkgNameSuffix(source, ".")}
 
@@ -195,7 +187,6 @@ sealed class ThemeSourceData {
     abstract val isNsfw: Boolean
     abstract val className: String
     abstract val pkgName: String
-    abstract val versionId: Int
 
     /**
      * overrideVersionCode defaults to 0, if a source changes their source override code or
@@ -212,7 +203,6 @@ sealed class ThemeSourceData {
         override val baseUrl: String,
         val lang: String,
         override val isNsfw: Boolean = false,
-        override val versionId: Int = 1,
         override val className: String = name.replace(" ", ""),
         override val pkgName: String = className.toLowerCase(Locale.ENGLISH),
         override val overrideVersionCode: Int = 0,
@@ -223,7 +213,6 @@ sealed class ThemeSourceData {
         override val baseUrl: String,
         val langs: List<String>,
         override val isNsfw: Boolean = false,
-        override val versionId: Int = 1,
         override val className: String = name.replace(" ", "") + "Factory",
         override val pkgName: String = className.substringBefore("Factory").toLowerCase(Locale.ENGLISH),
         override val overrideVersionCode: Int = 0,
