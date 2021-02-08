@@ -479,10 +479,10 @@
   {
     "name": "Tachiyomi: BestManhua",
     "pkg": "eu.kanade.tachiyomi.extension.en.bestmanhua",
-    "apk": "tachiyomi-en.bestmanhua-v1.2.1.apk",
+    "apk": "tachiyomi-en.bestmanhua-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -668,10 +668,10 @@
   {
     "name": "Tachiyomi: 1st Kiss",
     "pkg": "eu.kanade.tachiyomi.extension.en.firstkissmanga",
-    "apk": "tachiyomi-en.firstkissmanga-v1.2.1.apk",
+    "apk": "tachiyomi-en.firstkissmanga-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
