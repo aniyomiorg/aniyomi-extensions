@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.all.eromuse
+package eu.kanade.tachiyomi.multisrc.eromuse
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
