@@ -281,10 +281,10 @@
   {
     "name": "Tachiyomi: WP MangaStream (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.wpmangastream",
-    "apk": "tachiyomi-all.wpmangastream-v1.2.50.apk",
+    "apk": "tachiyomi-all.wpmangastream-v1.2.51.apk",
     "lang": "all",
-    "code": 50,
-    "version": "1.2.50",
+    "code": 51,
+    "version": "1.2.51",
     "nsfw": 0
   },
   {
@@ -1415,10 +1415,10 @@
   {
     "name": "Tachiyomi: Tsumino",
     "pkg": "eu.kanade.tachiyomi.extension.en.tsumino",
-    "apk": "tachiyomi-en.tsumino-v1.2.3.apk",
+    "apk": "tachiyomi-en.tsumino-v1.2.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "1.2.3",
+    "code": 4,
+    "version": "1.2.4",
     "nsfw": 1
   },
   {
