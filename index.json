@@ -110,10 +110,10 @@
   {
     "name": "Tachiyomi: Madara (multiple sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.madara",
-    "apk": "tachiyomi-all.madara-v1.2.179.apk",
+    "apk": "tachiyomi-all.madara-v1.2.180.apk",
     "lang": "all",
-    "code": 179,
-    "version": "1.2.179",
+    "code": 180,
+    "version": "1.2.180",
     "nsfw": 1
   },
   {
@@ -345,6 +345,15 @@
     "name": "Tachiyomi: موقع لترجمة المانجا",
     "pkg": "eu.kanade.tachiyomi.extension.ar.goldenmanga",
     "apk": "tachiyomi-ar.goldenmanga-v1.2.1.apk",
+    "lang": "ar",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: KingzManga",
+    "pkg": "eu.kanade.tachiyomi.extension.ar.kingzmanga",
+    "apk": "tachiyomi-ar.kingzmanga-v1.2.1.apk",
     "lang": "ar",
     "code": 1,
     "version": "1.2.1",
@@ -702,6 +711,24 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Gourmet Scans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.gourmetscans",
+    "apk": "tachiyomi-en.gourmetscans-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Graze Scans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.grazescans",
+    "apk": "tachiyomi-en.grazescans-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Gunnerkrigg Court",
     "pkg": "eu.kanade.tachiyomi.extension.en.gunnerkriggcourt",
     "apk": "tachiyomi-en.gunnerkriggcourt-v1.2.2.apk",
@@ -801,9 +828,54 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Hscans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.hscans",
+    "apk": "tachiyomi-en.hscans-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Hunlight Scans",
     "pkg": "eu.kanade.tachiyomi.extension.en.hunlightscans",
     "apk": "tachiyomi-en.hunlightscans-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Immortal Updates",
+    "pkg": "eu.kanade.tachiyomi.extension.en.immortalupdates",
+    "apk": "tachiyomi-en.immortalupdates-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: IsekaiScan.com",
+    "pkg": "eu.kanade.tachiyomi.extension.en.isekaiscancom",
+    "apk": "tachiyomi-en.isekaiscancom-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Its Your Right Manhua",
+    "pkg": "eu.kanade.tachiyomi.extension.en.itsyourrightmanhua",
+    "apk": "tachiyomi-en.itsyourrightmanhua-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: JJutsuScans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.jjutsuscans",
+    "apk": "tachiyomi-en.jjutsuscans-v1.2.1.apk",
     "lang": "en",
     "code": 1,
     "version": "1.2.1",
@@ -825,6 +897,24 @@
     "lang": "en",
     "code": 3,
     "version": "1.2.3",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: KisekiManga",
+    "pkg": "eu.kanade.tachiyomi.extension.en.kisekimanga",
+    "apk": "tachiyomi-en.kisekimanga-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Kissmanga.in",
+    "pkg": "eu.kanade.tachiyomi.extension.en.kissmangain",
+    "apk": "tachiyomi-en.kissmangain-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
     "nsfw": 0
   },
   {
@@ -1113,6 +1203,15 @@
     "lang": "en",
     "code": 4,
     "version": "1.2.4",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Mangazuki.online",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangazukionline",
+    "apk": "tachiyomi-en.mangazukionline-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
     "nsfw": 0
   },
   {
@@ -1557,6 +1656,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Hunter Fansub",
+    "pkg": "eu.kanade.tachiyomi.extension.es.hunterfansub",
+    "apk": "tachiyomi-es.hunterfansub-v1.2.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Ikuhentai",
     "pkg": "eu.kanade.tachiyomi.extension.es.ikuhentai",
     "apk": "tachiyomi-es.ikuhentai-v1.2.1.apk",
@@ -1731,6 +1839,24 @@
     "name": "Tachiyomi: DoujinYosh",
     "pkg": "eu.kanade.tachiyomi.extension.id.doujinyosh",
     "apk": "tachiyomi-id.doujinyosh-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: KlikManga",
+    "pkg": "eu.kanade.tachiyomi.extension.id.klikmanga",
+    "apk": "tachiyomi-id.klikmanga-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Kombatch",
+    "pkg": "eu.kanade.tachiyomi.extension.id.kombatch",
+    "apk": "tachiyomi-id.kombatch-v1.2.1.apk",
     "lang": "id",
     "code": 1,
     "version": "1.2.1",
@@ -2079,6 +2205,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Ichirin No Hana Yuri",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.ichirinnohanayuri",
+    "apk": "tachiyomi-pt.ichirinnohanayuri-v1.2.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: MangaHost",
     "pkg": "eu.kanade.tachiyomi.extension.pt.mangahost",
     "apk": "tachiyomi-pt.mangahost-v1.2.16.apk",
@@ -2257,6 +2392,15 @@
     "code": 21,
     "version": "1.2.21",
     "nsfw": 1
+  },
+  {
+    "name": "Tachiyomi: Just For Fun",
+    "pkg": "eu.kanade.tachiyomi.extension.ru.justforfun",
+    "apk": "tachiyomi-ru.justforfun-v1.2.1.apk",
+    "lang": "ru",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
   },
   {
     "name": "Tachiyomi: MangaLib",
