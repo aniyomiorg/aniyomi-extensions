@@ -2828,10 +2828,10 @@
   {
     "name": "Tachiyomi: Manhuadui",
     "pkg": "eu.kanade.tachiyomi.extension.zh.manhuadui",
-    "apk": "tachiyomi-zh.manhuadui-v1.2.13.apk",
+    "apk": "tachiyomi-zh.manhuadui-v1.2.14.apk",
     "lang": "zh",
-    "code": 13,
-    "version": "1.2.13",
+    "code": 14,
+    "version": "1.2.14",
     "nsfw": 0
   },
   {
