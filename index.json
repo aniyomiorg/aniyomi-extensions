@@ -3501,15 +3501,6 @@
     "nsfw": 1
   },
   {
-    "name": "Tachiyomi: Anibe",
-    "pkg": "eu.kanade.tachiyomi.extension.ru.anibe",
-    "apk": "tachiyomi-ru.anibe-v1.2.1.apk",
-    "lang": "ru",
-    "code": 1,
-    "version": "1.2.1",
-    "nsfw": 0
-  },
-  {
     "name": "Tachiyomi: BestManga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.bestmanga",
     "apk": "tachiyomi-ru.bestmanga-v1.2.1.apk",
@@ -3616,15 +3607,6 @@
     "code": 7,
     "version": "1.2.7",
     "nsfw": 1
-  },
-  {
-    "name": "Tachiyomi: Onlinecomics",
-    "pkg": "eu.kanade.tachiyomi.extension.ru.onlinecomics",
-    "apk": "tachiyomi-ru.onlinecomics-v1.2.1.apk",
-    "lang": "ru",
-    "code": 1,
-    "version": "1.2.1",
-    "nsfw": 0
   },
   {
     "name": "Tachiyomi: Readmanga",
