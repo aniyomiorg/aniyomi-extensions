@@ -2378,10 +2378,10 @@
   {
     "name": "Tachiyomi: Void Scans",
     "pkg": "eu.kanade.tachiyomi.extension.en.voidscans",
-    "apk": "tachiyomi-en.voidscans-v1.2.1.apk",
+    "apk": "tachiyomi-en.voidscans-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -2693,10 +2693,10 @@
   {
     "name": "Tachiyomi: Mangakawaii",
     "pkg": "eu.kanade.tachiyomi.extension.fr.mangakawaii",
-    "apk": "tachiyomi-fr.mangakawaii-v1.2.18.apk",
+    "apk": "tachiyomi-fr.mangakawaii-v1.2.19.apk",
     "lang": "fr",
-    "code": 18,
-    "version": "1.2.18",
+    "code": 19,
+    "version": "1.2.19",
     "nsfw": 0
   },
   {
