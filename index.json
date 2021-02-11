@@ -117,15 +117,6 @@
     "nsfw": 1
   },
   {
-    "name": "Tachiyomi: MangAdventure",
-    "pkg": "eu.kanade.tachiyomi.extension.all.mangadventure",
-    "apk": "tachiyomi-all.mangadventure-v1.2.8.apk",
-    "lang": "all",
-    "code": 8,
-    "version": "1.2.8",
-    "nsfw": 0
-  },
-  {
     "name": "Tachiyomi: MANGA Plus by SHUEISHA",
     "pkg": "eu.kanade.tachiyomi.extension.all.mangaplus",
     "apk": "tachiyomi-all.mangaplus-v1.2.15.apk",
@@ -564,6 +555,15 @@
     "lang": "en",
     "code": 2,
     "version": "1.2.2",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Arc-Relight",
+    "pkg": "eu.kanade.tachiyomi.extension.en.arcrelight",
+    "apk": "tachiyomi-en.arcrelight-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
     "nsfw": 0
   },
   {
@@ -2027,10 +2027,10 @@
   {
     "name": "Tachiyomi: Rain Of Snow",
     "pkg": "eu.kanade.tachiyomi.extension.en.rainofsnow",
-    "apk": "tachiyomi-en.rainofsnow-v1.2.1.apk",
+    "apk": "tachiyomi-en.rainofsnow-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -2288,10 +2288,10 @@
   {
     "name": "Tachiyomi: Toonily",
     "pkg": "eu.kanade.tachiyomi.extension.en.toonily",
-    "apk": "tachiyomi-en.toonily-v1.2.1.apk",
+    "apk": "tachiyomi-en.toonily-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 1
   },
   {
@@ -3332,10 +3332,10 @@
   {
     "name": "Tachiyomi: MangaYabu!",
     "pkg": "eu.kanade.tachiyomi.extension.pt.mangayabu",
-    "apk": "tachiyomi-pt.mangayabu-v1.2.4.apk",
+    "apk": "tachiyomi-pt.mangayabu-v1.2.5.apk",
     "lang": "pt",
-    "code": 4,
-    "version": "1.2.4",
+    "code": 5,
+    "version": "1.2.5",
     "nsfw": 0
   },
   {
