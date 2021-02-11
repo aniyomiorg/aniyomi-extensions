@@ -2025,6 +2025,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Rain Of Snow",
+    "pkg": "eu.kanade.tachiyomi.extension.en.rainofsnow",
+    "apk": "tachiyomi-en.rainofsnow-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Random Translations",
     "pkg": "eu.kanade.tachiyomi.extension.en.randomtranslations",
     "apk": "tachiyomi-en.randomtranslations-v1.2.1.apk",
@@ -2385,12 +2394,21 @@
     "nsfw": 0
   },
   {
-    "name": "Tachiyomi: WebNovel",
+    "name": "Tachiyomi: Webnovel.com",
     "pkg": "eu.kanade.tachiyomi.extension.en.webnovel",
-    "apk": "tachiyomi-en.webnovel-v1.2.1.apk",
+    "apk": "tachiyomi-en.webnovel-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: WebNovel",
+    "pkg": "eu.kanade.tachiyomi.extension.en.webnovellive",
+    "apk": "tachiyomi-en.webnovellive-v1.2.2.apk",
+    "lang": "en",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -3737,10 +3755,10 @@
   {
     "name": "Tachiyomi: Clover Manga",
     "pkg": "eu.kanade.tachiyomi.extension.tr.clovermanga",
-    "apk": "tachiyomi-tr.clovermanga-v1.2.1.apk",
+    "apk": "tachiyomi-tr.clovermanga-v1.2.2.apk",
     "lang": "tr",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -3935,10 +3953,10 @@
   {
     "name": "Tachiyomi: HentaiVN",
     "pkg": "eu.kanade.tachiyomi.extension.vi.hentaivn",
-    "apk": "tachiyomi-vi.hentaivn-v1.2.5.apk",
+    "apk": "tachiyomi-vi.hentaivn-v1.2.6.apk",
     "lang": "vi",
-    "code": 5,
-    "version": "1.2.5",
+    "code": 6,
+    "version": "1.2.6",
     "nsfw": 1
   },
   {
