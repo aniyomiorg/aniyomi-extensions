@@ -49,7 +49,7 @@ interface ThemeSourceGenerator {
             return listOf("eu", "kanade", "tachiyomi", "multisrc", themePkg).joinToString(separator)
         }
 
-        private fun writeGradle(gradle: File, source: ThemeSourceData, baseVersionCode: Int) {
+        private fun writeGradle(gradle: File, source: ThemeSourceData, themePkg: String, baseVersionCode: Int) {
             gradle.writeText("""
                 // THIS FILE IS AUTO-GENERATED; DO NOT EDIT
                 apply plugin: 'com.android.application'
@@ -59,6 +59,7 @@ interface ThemeSourceGenerator {
                     extName = '${source.name}'
                     pkgNameSuffix = '${pkgNameSuffix(source, ".")}'
                     extClass = '.${source.className}'
+                    extFactory = '$themePkg'
                     extVersionCode = ${baseVersionCode + source.overrideVersionCode + multisrcLibraryVersion}
                     libVersion = '1.2'
                     ${if (source.isNsfw) "containsNsfw = true\n" else ""}
@@ -98,7 +99,7 @@ interface ThemeSourceGenerator {
                 // remove everything from past runs
                 cleanDirectory(projectRootFile)
 
-                writeGradle(projectGradleFile, source, baseVersionCode)
+                writeGradle(projectGradleFile, source, themePkg, baseVersionCode)
                 writeAndroidManifest(projectAndroidManifestFile, manifestOverridesPath)
 
                 writeSourceClasses(projectSrcPath, srcOverridesPath, source, themePkg, themeClass)
