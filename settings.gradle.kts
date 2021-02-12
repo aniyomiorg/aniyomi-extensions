@@ -16,7 +16,7 @@ project(":multisrc").projectDir = File("multisrc")
 // Loads all extensions
 File(rootDir, "src").eachDir { dir ->
     dir.eachDir { subdir ->
-        val name = ":${dir.name}-${subdir.name}"
+        val name = ":individual:${dir.name}:${subdir.name}"
         include(name)
         project(name).projectDir = File("src/${dir.name}/${subdir.name}")
     }
@@ -24,13 +24,16 @@ File(rootDir, "src").eachDir { dir ->
 // Loads generated extensions from multisrc
 File(rootDir, "generated-src").eachDir { dir ->
     dir.eachDir { subdir ->
-        val name = ":${dir.name}-${subdir.name}"
+        val name = ":theme:${dir.name}:${subdir.name}"
         include(name)
         project(name).projectDir = File("generated-src/${dir.name}/${subdir.name}")
     }
 }
 
-// Use this to load a single extension during development
+/**
+ * If you're developing locally and only want to work with a single module,
+ * comment out the parts above and uncomment below.
+ */
 // val lang = "all"
 // val name = "mmrcms"
 // include(":${lang}-${name}")

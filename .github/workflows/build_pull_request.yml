@@ -7,7 +7,6 @@ jobs:
   check_wrapper:
     name: Validate Gradle Wrapper
     runs-on: ubuntu-latest
-
     steps:
       - name: Clone repo
         uses: actions/checkout@v2
@@ -20,7 +19,6 @@ jobs:
     needs: check_wrapper
     if: "!startsWith(github.event.head_commit.message, '[SKIP CI]')"
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout PR
         uses: actions/checkout@v2
