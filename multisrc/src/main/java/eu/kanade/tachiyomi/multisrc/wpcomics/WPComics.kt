@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.all.wpcomics
+package eu.kanade.tachiyomi.multisrc.wpcomics
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
