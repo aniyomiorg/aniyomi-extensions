@@ -1793,10 +1793,10 @@
   {
     "name": "Tachiyomi: ManhwaSmut",
     "pkg": "eu.kanade.tachiyomi.extension.en.manhwasmut",
-    "apk": "tachiyomi-en.manhwasmut-v1.2.1.apk",
+    "apk": "tachiyomi-en.manhwasmut-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -3737,10 +3737,10 @@
   {
     "name": "Tachiyomi: MangaLib",
     "pkg": "eu.kanade.tachiyomi.extension.ru.libmanga",
-    "apk": "tachiyomi-ru.libmanga-v1.2.32.apk",
+    "apk": "tachiyomi-ru.libmanga-v1.2.33.apk",
     "lang": "ru",
-    "code": 32,
-    "version": "1.2.32",
+    "code": 33,
+    "version": "1.2.33",
     "nsfw": 0
   },
   {
