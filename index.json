@@ -1064,10 +1064,10 @@
   {
     "name": "Tachiyomi: LHTranslation",
     "pkg": "eu.kanade.tachiyomi.extension.en.lhtranslation",
-    "apk": "tachiyomi-en.lhtranslation-v1.2.1.apk",
+    "apk": "tachiyomi-en.lhtranslation-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -1109,10 +1109,10 @@
   {
     "name": "Tachiyomi: Manga347",
     "pkg": "eu.kanade.tachiyomi.extension.en.manga347",
-    "apk": "tachiyomi-en.manga347-v1.2.1.apk",
+    "apk": "tachiyomi-en.manga347-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -2061,6 +2061,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Painful Nightz Scan",
+    "pkg": "eu.kanade.tachiyomi.extension.en.painfulnightzscan",
+    "apk": "tachiyomi-en.painfulnightzscan-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Patch Friday",
     "pkg": "eu.kanade.tachiyomi.extension.en.patchfriday",
     "apk": "tachiyomi-en.patchfriday-v1.2.1.apk",
@@ -2135,10 +2144,10 @@
   {
     "name": "Tachiyomi: Rain Of Snow",
     "pkg": "eu.kanade.tachiyomi.extension.en.rainofsnow",
-    "apk": "tachiyomi-en.rainofsnow-v1.2.2.apk",
+    "apk": "tachiyomi-en.rainofsnow-v1.2.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 0
   },
   {
