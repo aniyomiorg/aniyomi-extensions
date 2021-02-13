@@ -1836,12 +1836,12 @@
     "nsfw": 1
   },
   {
-    "name": "Tachiyomi: Manwha Club",
+    "name": "Tachiyomi: Manhwa.club",
     "pkg": "eu.kanade.tachiyomi.extension.en.manwhaclub",
-    "apk": "tachiyomi-en.manwhaclub-v1.2.1.apk",
+    "apk": "tachiyomi-en.manwhaclub-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -3737,10 +3737,10 @@
   {
     "name": "Tachiyomi: MangaLib",
     "pkg": "eu.kanade.tachiyomi.extension.ru.libmanga",
-    "apk": "tachiyomi-ru.libmanga-v1.2.30.apk",
+    "apk": "tachiyomi-ru.libmanga-v1.2.31.apk",
     "lang": "ru",
-    "code": 30,
-    "version": "1.2.30",
+    "code": 31,
+    "version": "1.2.31",
     "nsfw": 0
   },
   {
