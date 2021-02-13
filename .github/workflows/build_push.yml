@@ -46,6 +46,8 @@ jobs:
 
       - name: Generate sources from the multi-source library
         uses: eskatos/gradle-command-action@v1
+        env:
+          CI_PUSH: "true"
         with:
           build-root-directory: master
           wrapper-directory: master
@@ -56,6 +58,8 @@ jobs:
 
       - name: Build extensions
         uses: eskatos/gradle-command-action@v1
+        env:
+          CI_PUSH: "true"
         with:
           build-root-directory: master
           wrapper-directory: master

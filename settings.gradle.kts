@@ -10,7 +10,7 @@ project(":duktape-stub").projectDir = File("lib/duktape-stub")
 include(":lib-dataimage")
 project(":lib-dataimage").projectDir = File("lib/dataimage")
 
-if (System.getenv("CI") == null) {
+if (System.getenv("CI") == null || System.getenv("CI_CI_PUSHPUSH") == "true") {
     // Local development
 
     include(":multisrc")
