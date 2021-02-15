@@ -1892,10 +1892,10 @@
   {
     "name": "Tachiyomi: Milftoon",
     "pkg": "eu.kanade.tachiyomi.extension.en.milftoon",
-    "apk": "tachiyomi-en.milftoon-v1.2.1.apk",
+    "apk": "tachiyomi-en.milftoon-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 1
   },
   {
@@ -2414,10 +2414,10 @@
   {
     "name": "Tachiyomi: Toonily",
     "pkg": "eu.kanade.tachiyomi.extension.en.toonily",
-    "apk": "tachiyomi-en.toonily-v1.2.2.apk",
+    "apk": "tachiyomi-en.toonily-v1.2.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 1
   },
   {
@@ -3260,10 +3260,10 @@
   {
     "name": "Tachiyomi: Raw Mangas",
     "pkg": "eu.kanade.tachiyomi.extension.ja.rawmangas",
-    "apk": "tachiyomi-ja.rawmangas-v1.2.1.apk",
+    "apk": "tachiyomi-ja.rawmangas-v1.2.2.apk",
     "lang": "ja",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 1
   },
   {
@@ -3638,10 +3638,10 @@
   {
     "name": "Tachiyomi: Yaoi Toshokan",
     "pkg": "eu.kanade.tachiyomi.extension.pt.yaoitoshokan",
-    "apk": "tachiyomi-pt.yaoitoshokan-v1.2.1.apk",
+    "apk": "tachiyomi-pt.yaoitoshokan-v1.2.2.apk",
     "lang": "pt",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 1
   },
   {
@@ -4070,10 +4070,10 @@
   {
     "name": "Tachiyomi: Siyahmelek",
     "pkg": "eu.kanade.tachiyomi.extension.tr.siyahmelek",
-    "apk": "tachiyomi-tr.siyahmelek-v1.2.1.apk",
+    "apk": "tachiyomi-tr.siyahmelek-v1.2.2.apk",
     "lang": "tr",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 1
   },
   {
