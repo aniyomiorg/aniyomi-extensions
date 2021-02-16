@@ -758,10 +758,10 @@
   {
     "name": "Tachiyomi: EarlyManga",
     "pkg": "eu.kanade.tachiyomi.extension.en.earlymanga",
-    "apk": "tachiyomi-en.earlymanga-v1.2.7.apk",
+    "apk": "tachiyomi-en.earlymanga-v1.2.8.apk",
     "lang": "en",
-    "code": 7,
-    "version": "1.2.7",
+    "code": 8,
+    "version": "1.2.8",
     "nsfw": 0
   },
   {
@@ -3759,6 +3759,15 @@
     "lang": "ja",
     "code": 1,
     "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Manga Raw.org",
+    "pkg": "eu.kanade.tachiyomi.extension.ja.mangaraworg",
+    "apk": "tachiyomi-ja.mangaraworg-v1.2.2.apk",
+    "lang": "ja",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
