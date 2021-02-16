@@ -2160,6 +2160,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Nitro Scans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.nitroscans",
+    "apk": "tachiyomi-en.nitroscans-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Non-Stop Scans",
     "pkg": "eu.kanade.tachiyomi.extension.en.nonstopscans",
     "apk": "tachiyomi-en.nonstopscans-v1.2.1.apk",
