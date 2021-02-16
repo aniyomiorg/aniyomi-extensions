@@ -758,10 +758,10 @@
   {
     "name": "Tachiyomi: EarlyManga",
     "pkg": "eu.kanade.tachiyomi.extension.en.earlymanga",
-    "apk": "tachiyomi-en.earlymanga-v1.2.6.apk",
+    "apk": "tachiyomi-en.earlymanga-v1.2.7.apk",
     "lang": "en",
-    "code": 6,
-    "version": "1.2.6",
+    "code": 7,
+    "version": "1.2.7",
     "nsfw": 0
   },
   {
@@ -2808,6 +2808,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: xCaliBR Scans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.xcalibrscans",
+    "apk": "tachiyomi-en.xcalibrscans-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: xkcd",
     "pkg": "eu.kanade.tachiyomi.extension.en.xkcd",
     "apk": "tachiyomi-en.xkcd-v1.2.8.apk",
@@ -3116,10 +3125,10 @@
   {
     "name": "Tachiyomi: Scantrad",
     "pkg": "eu.kanade.tachiyomi.extension.fr.scantrad",
-    "apk": "tachiyomi-fr.scantrad-v1.2.12.apk",
+    "apk": "tachiyomi-fr.scantrad-v1.2.13.apk",
     "lang": "fr",
-    "code": 12,
-    "version": "1.2.12",
+    "code": 13,
+    "version": "1.2.13",
     "nsfw": 0
   },
   {
