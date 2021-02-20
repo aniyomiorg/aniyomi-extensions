@@ -551,10 +551,10 @@
   {
     "name": "Tachiyomi: Aloalivn",
     "pkg": "eu.kanade.tachiyomi.extension.en.aloalivn",
-    "apk": "tachiyomi-en.aloalivn-v1.2.1.apk",
+    "apk": "tachiyomi-en.aloalivn-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -1064,10 +1064,10 @@
   {
     "name": "Tachiyomi: IsekaiScan.com",
     "pkg": "eu.kanade.tachiyomi.extension.en.isekaiscancom",
-    "apk": "tachiyomi-en.isekaiscancom-v1.2.1.apk",
+    "apk": "tachiyomi-en.isekaiscancom-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -1973,10 +1973,10 @@
   {
     "name": "Tachiyomi: Manhwa.club",
     "pkg": "eu.kanade.tachiyomi.extension.en.manwhaclub",
-    "apk": "tachiyomi-en.manwhaclub-v1.2.2.apk",
+    "apk": "tachiyomi-en.manwhaclub-v1.2.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 0
   },
   {
