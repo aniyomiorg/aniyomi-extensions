@@ -4025,19 +4025,19 @@
   {
     "name": "Tachiyomi: MangaHost",
     "pkg": "eu.kanade.tachiyomi.extension.pt.mangahost",
-    "apk": "tachiyomi-pt.mangahost-v1.2.16.apk",
+    "apk": "tachiyomi-pt.mangahost-v1.2.17.apk",
     "lang": "pt",
-    "code": 16,
-    "version": "1.2.16",
+    "code": 17,
+    "version": "1.2.17",
     "nsfw": 0
   },
   {
     "name": "Tachiyomi: mangásPROJECT",
     "pkg": "eu.kanade.tachiyomi.extension.pt.mangasproject",
-    "apk": "tachiyomi-pt.mangasproject-v1.2.17.apk",
+    "apk": "tachiyomi-pt.mangasproject-v1.2.18.apk",
     "lang": "pt",
-    "code": 17,
-    "version": "1.2.17",
+    "code": 18,
+    "version": "1.2.18",
     "nsfw": 1
   },
   {
@@ -4187,10 +4187,10 @@
   {
     "name": "Tachiyomi: Tsuki Mangás",
     "pkg": "eu.kanade.tachiyomi.extension.pt.tsukimangas",
-    "apk": "tachiyomi-pt.tsukimangas-v1.2.10.apk",
+    "apk": "tachiyomi-pt.tsukimangas-v1.2.11.apk",
     "lang": "pt",
-    "code": 10,
-    "version": "1.2.10",
+    "code": 11,
+    "version": "1.2.11",
     "nsfw": 0
   },
   {
