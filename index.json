@@ -1235,10 +1235,10 @@
   {
     "name": "Tachiyomi: Manga347",
     "pkg": "eu.kanade.tachiyomi.extension.en.manga347",
-    "apk": "tachiyomi-en.manga347-v1.2.2.apk",
+    "apk": "tachiyomi-en.manga347-v1.2.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 0
   },
   {
@@ -1451,10 +1451,10 @@
   {
     "name": "Tachiyomi: MangaJar",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangajar",
-    "apk": "tachiyomi-en.mangajar-v1.2.2.apk",
+    "apk": "tachiyomi-en.mangajar-v1.2.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 0
   },
   {
@@ -3881,10 +3881,10 @@
   {
     "name": "Tachiyomi: NewToki / ManaToki",
     "pkg": "eu.kanade.tachiyomi.extension.ko.newtoki",
-    "apk": "tachiyomi-ko.newtoki-v1.2.20.apk",
+    "apk": "tachiyomi-ko.newtoki-v1.2.21.apk",
     "lang": "ko",
-    "code": 20,
-    "version": "1.2.20",
+    "code": 21,
+    "version": "1.2.21",
     "nsfw": 0
   },
   {
@@ -4385,10 +4385,10 @@
   {
     "name": "Tachiyomi: Remanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.remanga",
-    "apk": "tachiyomi-ru.remanga-v1.2.18.apk",
+    "apk": "tachiyomi-ru.remanga-v1.2.19.apk",
     "lang": "ru",
-    "code": 18,
-    "version": "1.2.18",
+    "code": 19,
+    "version": "1.2.19",
     "nsfw": 0
   },
   {
@@ -4584,15 +4584,6 @@
     "name": "Tachiyomi: MangaBaz",
     "pkg": "eu.kanade.tachiyomi.extension.tr.mangabaz",
     "apk": "tachiyomi-tr.mangabaz-v1.2.1.apk",
-    "lang": "tr",
-    "code": 1,
-    "version": "1.2.1",
-    "nsfw": 0
-  },
-  {
-    "name": "Tachiyomi: Manga Crimson",
-    "pkg": "eu.kanade.tachiyomi.extension.tr.mangacrimson",
-    "apk": "tachiyomi-tr.mangacrimson-v1.2.1.apk",
     "lang": "tr",
     "code": 1,
     "version": "1.2.1",
