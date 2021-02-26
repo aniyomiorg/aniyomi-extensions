@@ -155,10 +155,10 @@
   {
     "name": "Tachiyomi: My Manga Reader CMS (Many sources)",
     "pkg": "eu.kanade.tachiyomi.extension.all.mmrcms",
-    "apk": "tachiyomi-all.mmrcms-v1.2.54.apk",
+    "apk": "tachiyomi-all.mmrcms-v1.2.55.apk",
     "lang": "all",
-    "code": 54,
-    "version": "1.2.54",
+    "code": 55,
+    "version": "1.2.55",
     "nsfw": 1
   },
   {
@@ -4638,6 +4638,15 @@
     "name": "Tachiyomi: MangaWT",
     "pkg": "eu.kanade.tachiyomi.extension.tr.mangawt",
     "apk": "tachiyomi-tr.mangawt-v1.2.1.apk",
+    "lang": "tr",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: NoxSubs",
+    "pkg": "eu.kanade.tachiyomi.extension.tr.noxsubs",
+    "apk": "tachiyomi-tr.noxsubs-v1.2.1.apk",
     "lang": "tr",
     "code": 1,
     "version": "1.2.1",
