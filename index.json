@@ -1071,6 +1071,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: IsekaiScanManga (unoriginal)",
+    "pkg": "eu.kanade.tachiyomi.extension.en.isekaiscanmanga",
+    "apk": "tachiyomi-en.isekaiscanmanga-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Iskultrip Scans",
     "pkg": "eu.kanade.tachiyomi.extension.en.iskultripscans",
     "apk": "tachiyomi-en.iskultripscans-v1.2.1.apk",
@@ -1370,10 +1379,10 @@
   {
     "name": "Tachiyomi: MangaFast",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangafast",
-    "apk": "tachiyomi-en.mangafast-v1.2.4.apk",
+    "apk": "tachiyomi-en.mangafast-v1.2.5.apk",
     "lang": "en",
-    "code": 4,
-    "version": "1.2.4",
+    "code": 5,
+    "version": "1.2.5",
     "nsfw": 0
   },
   {
@@ -1785,6 +1794,15 @@
     "name": "Tachiyomi: MangaTX",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangatx",
     "apk": "tachiyomi-en.mangatx-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: MangaUS",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangaus",
+    "apk": "tachiyomi-en.mangaus-v1.2.1.apk",
     "lang": "en",
     "code": 1,
     "version": "1.2.1",
@@ -3591,6 +3609,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: SISI GELAP",
+    "pkg": "eu.kanade.tachiyomi.extension.id.sisigelap",
+    "apk": "tachiyomi-id.sisigelap-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: West Manga",
     "pkg": "eu.kanade.tachiyomi.extension.id.westmanga",
     "apk": "tachiyomi-id.westmanga-v1.2.1.apk",
@@ -3602,10 +3629,10 @@
   {
     "name": "Tachiyomi: World Romance Translation",
     "pkg": "eu.kanade.tachiyomi.extension.id.worldromancetranslation",
-    "apk": "tachiyomi-id.worldromancetranslation-v1.2.1.apk",
+    "apk": "tachiyomi-id.worldromancetranslation-v1.2.2.apk",
     "lang": "id",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -4191,6 +4218,15 @@
     "lang": "pt",
     "code": 11,
     "version": "1.2.11",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Tsundoku Traducoes",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.tsundokutraducoes",
+    "apk": "tachiyomi-pt.tsundokutraducoes-v1.2.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "1.2.1",
     "nsfw": 0
   },
   {
