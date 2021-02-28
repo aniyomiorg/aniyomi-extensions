@@ -7,7 +7,7 @@ import java.util.Locale
 
 /**
  * This is meant to be used in place of a factory extension, specifically for what would be a multi-source extension.
- * A multi-lang (but not multi-source) extension should still be made as a factory extensiion.
+ * A multi-lang (but not multi-source) extension should still be made as a factory extension.
  * Use a generator for initial setup of a theme source or when all of the inheritors need a version bump.
  * Source list (val sources) should be kept up to date.
  */

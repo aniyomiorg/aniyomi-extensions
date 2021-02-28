@@ -11,7 +11,7 @@ include(":lib-dataimage")
 project(":lib-dataimage").projectDir = File("lib/dataimage")
 
 if (System.getenv("CI") == null || System.getenv("CI_PUSH") == "true") {
-    // Local development
+    // Local development or full build for push
 
     include(":multisrc")
     project(":multisrc").projectDir = File("multisrc")
