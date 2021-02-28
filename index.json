@@ -4493,10 +4493,10 @@
   {
     "name": "Tachiyomi: Nekopost",
     "pkg": "eu.kanade.tachiyomi.extension.th.nekopost",
-    "apk": "tachiyomi-th.nekopost-v1.2.3.apk",
+    "apk": "tachiyomi-th.nekopost-v1.2.4.apk",
     "lang": "th",
-    "code": 3,
-    "version": "1.2.3",
+    "code": 4,
+    "version": "1.2.4",
     "nsfw": 0
   },
   {
