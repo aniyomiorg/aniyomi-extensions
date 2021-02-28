@@ -659,10 +659,10 @@
   {
     "name": "Tachiyomi: ComicExtra",
     "pkg": "eu.kanade.tachiyomi.extension.en.comicextra",
-    "apk": "tachiyomi-en.comicextra-v1.2.6.apk",
+    "apk": "tachiyomi-en.comicextra-v1.2.7.apk",
     "lang": "en",
-    "code": 6,
-    "version": "1.2.6",
+    "code": 7,
+    "version": "1.2.7",
     "nsfw": 0
   },
   {
@@ -740,10 +740,10 @@
   {
     "name": "Tachiyomi: Dream Manga",
     "pkg": "eu.kanade.tachiyomi.extension.en.dreammanga",
-    "apk": "tachiyomi-en.dreammanga-v1.2.1.apk",
+    "apk": "tachiyomi-en.dreammanga-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -3134,10 +3134,10 @@
   {
     "name": "Tachiyomi: Mangakawaii",
     "pkg": "eu.kanade.tachiyomi.extension.fr.mangakawaii",
-    "apk": "tachiyomi-fr.mangakawaii-v1.2.21.apk",
+    "apk": "tachiyomi-fr.mangakawaii-v1.2.22.apk",
     "lang": "fr",
-    "code": 21,
-    "version": "1.2.21",
+    "code": 22,
+    "version": "1.2.22",
     "nsfw": 0
   },
   {
@@ -3404,10 +3404,10 @@
   {
     "name": "Tachiyomi: Komiku",
     "pkg": "eu.kanade.tachiyomi.extension.id.komiku",
-    "apk": "tachiyomi-id.komiku-v1.2.8.apk",
+    "apk": "tachiyomi-id.komiku-v1.2.9.apk",
     "lang": "id",
-    "code": 8,
-    "version": "1.2.8",
+    "code": 9,
+    "version": "1.2.9",
     "nsfw": 0
   },
   {
