@@ -2781,6 +2781,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: WebtoonUK",
+    "pkg": "eu.kanade.tachiyomi.extension.en.webtoonuk",
+    "apk": "tachiyomi-en.webtoonuk-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: WebtoonXYZ",
     "pkg": "eu.kanade.tachiyomi.extension.en.webtoonxyz",
     "apk": "tachiyomi-en.webtoonxyz-v1.2.1.apk",
@@ -3420,6 +3429,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Manga Drop Out",
+    "pkg": "eu.kanade.tachiyomi.extension.id.mangadropout",
+    "apk": "tachiyomi-id.mangadropout-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 1
+  },
+  {
     "name": "Tachiyomi: Manga Indo",
     "pkg": "eu.kanade.tachiyomi.extension.id.mangaindo",
     "apk": "tachiyomi-id.mangaindo-v1.2.1.apk",
@@ -3510,6 +3528,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Mangceh",
+    "pkg": "eu.kanade.tachiyomi.extension.id.mangceh",
+    "apk": "tachiyomi-id.mangceh-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 1
+  },
+  {
     "name": "Tachiyomi: ManhuaID",
     "pkg": "eu.kanade.tachiyomi.extension.id.manhuaid",
     "apk": "tachiyomi-id.manhuaid-v1.2.4.apk",
@@ -3580,6 +3607,15 @@
     "code": 2,
     "version": "1.2.2",
     "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Sekaikomik",
+    "pkg": "eu.kanade.tachiyomi.extension.id.sekaikomik",
+    "apk": "tachiyomi-id.sekaikomik-v1.2.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: Sekte Doujin",
@@ -3915,6 +3951,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: RawDEX",
+    "pkg": "eu.kanade.tachiyomi.extension.ko.rawdex",
+    "apk": "tachiyomi-ko.rawdex-v1.2.1.apk",
+    "lang": "ko",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 1
+  },
+  {
     "name": "Tachiyomi: Toonkor",
     "pkg": "eu.kanade.tachiyomi.extension.ko.toonkor",
     "apk": "tachiyomi-ko.toonkor-v1.2.3.apk",
@@ -4007,10 +4052,10 @@
   {
     "name": "Tachiyomi: Hikari Scan",
     "pkg": "eu.kanade.tachiyomi.extension.pt.hikariscan",
-    "apk": "tachiyomi-pt.hikariscan-v1.2.1.apk",
+    "apk": "tachiyomi-pt.hikariscan-v1.2.2.apk",
     "lang": "pt",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -4164,6 +4209,15 @@
     "lang": "pt",
     "code": 4,
     "version": "1.2.4",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Shinzoo",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.shinzoo",
+    "apk": "tachiyomi-pt.shinzoo-v1.2.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "1.2.1",
     "nsfw": 0
   },
   {
@@ -4521,6 +4575,15 @@
     "name": "Tachiyomi: Atikrost",
     "pkg": "eu.kanade.tachiyomi.extension.tr.atikrost",
     "apk": "tachiyomi-tr.atikrost-v1.2.1.apk",
+    "lang": "tr",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: AYATOON",
+    "pkg": "eu.kanade.tachiyomi.extension.tr.ayatoon",
+    "apk": "tachiyomi-tr.ayatoon-v1.2.1.apk",
     "lang": "tr",
     "code": 1,
     "version": "1.2.1",
