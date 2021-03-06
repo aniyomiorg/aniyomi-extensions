@@ -144,6 +144,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Mango",
+    "pkg": "eu.kanade.tachiyomi.extension.all.mango",
+    "apk": "tachiyomi-all.mango-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Manhwa18.net",
     "pkg": "eu.kanade.tachiyomi.extension.all.manhwa18net",
     "apk": "tachiyomi-all.manhwa18net-v1.2.1.apk",
