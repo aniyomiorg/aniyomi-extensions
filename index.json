@@ -920,10 +920,10 @@
   {
     "name": "Tachiyomi: Guya",
     "pkg": "eu.kanade.tachiyomi.extension.en.guya",
-    "apk": "tachiyomi-en.guya-v1.2.13.apk",
+    "apk": "tachiyomi-en.guya-v1.2.14.apk",
     "lang": "en",
-    "code": 13,
-    "version": "1.2.13",
+    "code": 14,
+    "version": "1.2.14",
     "nsfw": 0
   },
   {
@@ -2221,6 +2221,15 @@
     "code": 1,
     "version": "1.2.1",
     "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: NyaHentai",
+    "pkg": "eu.kanade.tachiyomi.extension.en.nyahentai",
+    "apk": "tachiyomi-en.nyahentai-v1.0.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.0.1",
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: Oglaf",
