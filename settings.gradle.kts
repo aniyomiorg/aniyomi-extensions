@@ -19,7 +19,7 @@ if (System.getenv("CI") == null || System.getenv("CI_PUSH") == "true") {
     // Loads all extensions
     File(rootDir, "src").eachDir { dir ->
         dir.eachDir { subdir ->
-            val name = ":individual:${dir.name}:${subdir.name}"
+            val name = ":extensions:individual:${dir.name}:${subdir.name}"
             include(name)
             project(name).projectDir = File("src/${dir.name}/${subdir.name}")
         }
@@ -27,7 +27,7 @@ if (System.getenv("CI") == null || System.getenv("CI_PUSH") == "true") {
     // Loads generated extensions from multisrc
     File(rootDir, "generated-src").eachDir { dir ->
         dir.eachDir { subdir ->
-            val name = ":theme:${dir.name}:${subdir.name}"
+            val name = ":extensions:multisrc:${dir.name}:${subdir.name}"
             include(name)
             project(name).projectDir = File("generated-src/${dir.name}/${subdir.name}")
         }
@@ -55,7 +55,7 @@ if (System.getenv("CI") == null || System.getenv("CI_PUSH") == "true") {
         File(rootDir, "generated-src").eachDir { dir ->
             if (dir.name == lang) {
                 dir.eachDir { subdir ->
-                    val name = ":theme:${dir.name}:${subdir.name}"
+                    val name = ":extensions:multisrc:${dir.name}:${subdir.name}"
                     include(name)
                     project(name).projectDir = File("generated-src/${dir.name}/${subdir.name}")
                 }
@@ -66,7 +66,7 @@ if (System.getenv("CI") == null || System.getenv("CI_PUSH") == "true") {
         File(rootDir, "src").eachDir { dir ->
             if (dir.name == lang) {
                 dir.eachDir { subdir ->
-                    val name = ":individual:${dir.name}:${subdir.name}"
+                    val name = ":extensions:individual:${dir.name}:${subdir.name}"
                     include(name)
                     project(name).projectDir = File("src/${dir.name}/${subdir.name}")
                 }
