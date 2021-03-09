@@ -56,10 +56,10 @@
   {
     "name": "Tachiyomi: IMHentai",
     "pkg": "eu.kanade.tachiyomi.extension.all.imhentai",
-    "apk": "tachiyomi-all.imhentai-v1.2.1.apk",
+    "apk": "tachiyomi-all.imhentai-v1.2.2.apk",
     "lang": "all",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 1
   },
   {
@@ -1280,10 +1280,10 @@
   {
     "name": "Tachiyomi: Mangabat",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangabat",
-    "apk": "tachiyomi-en.mangabat-v1.2.1.apk",
+    "apk": "tachiyomi-en.mangabat-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -1460,10 +1460,10 @@
   {
     "name": "Tachiyomi: Mangairo",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangairo",
-    "apk": "tachiyomi-en.mangairo-v1.2.1.apk",
+    "apk": "tachiyomi-en.mangairo-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -3080,10 +3080,10 @@
   {
     "name": "Tachiyomi: TuMangaOnline",
     "pkg": "eu.kanade.tachiyomi.extension.es.tumangaonline",
-    "apk": "tachiyomi-es.tumangaonline-v1.2.30.apk",
+    "apk": "tachiyomi-es.tumangaonline-v1.2.31.apk",
     "lang": "es",
-    "code": 30,
-    "version": "1.2.30",
+    "code": 31,
+    "version": "1.2.31",
     "nsfw": 0
   },
   {
@@ -4196,10 +4196,10 @@
   {
     "name": "Tachiyomi: Neox Scanlator",
     "pkg": "eu.kanade.tachiyomi.extension.pt.neoxscanlator",
-    "apk": "tachiyomi-pt.neoxscanlator-v1.2.1.apk",
+    "apk": "tachiyomi-pt.neoxscanlator-v1.2.2.apk",
     "lang": "pt",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -4655,10 +4655,10 @@
   {
     "name": "Tachiyomi: Gecenin Lordu",
     "pkg": "eu.kanade.tachiyomi.extension.tr.geceninlordu",
-    "apk": "tachiyomi-tr.geceninlordu-v1.2.1.apk",
+    "apk": "tachiyomi-tr.geceninlordu-v1.2.3.apk",
     "lang": "tr",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 0
   },
   {
@@ -5087,10 +5087,10 @@
   {
     "name": "Tachiyomi: ManHuaGui",
     "pkg": "eu.kanade.tachiyomi.extension.zh.manhuagui",
-    "apk": "tachiyomi-zh.manhuagui-v1.2.7.apk",
+    "apk": "tachiyomi-zh.manhuagui-v1.2.8.apk",
     "lang": "zh",
-    "code": 7,
-    "version": "1.2.7",
+    "code": 8,
+    "version": "1.2.8",
     "nsfw": 0
   },
   {
