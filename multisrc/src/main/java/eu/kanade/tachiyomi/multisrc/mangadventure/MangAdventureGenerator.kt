@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.multisrc.mangadventure
 
-import eu.kanade.tachiyomi.multisrc.ThemeSourceData.SingleLang
-import eu.kanade.tachiyomi.multisrc.ThemeSourceGenerator
+import generator.ThemeSourceData.SingleLang
+import generator.ThemeSourceGenerator
 
 /** [MangAdventure] source generator. */
 class MangAdventureGenerator : ThemeSourceGenerator {

@@ -51,7 +51,7 @@ jobs:
         with:
           build-root-directory: master
           wrapper-directory: master
-          arguments: :multisrc:multisrcGenerators
+          arguments: :multisrc:generateExtensions
           wrapper-cache-enabled: true
           dependencies-cache-enabled: true
           configuration-cache-enabled: true

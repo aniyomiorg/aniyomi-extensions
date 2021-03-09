@@ -1,8 +1,8 @@
 package eu.kanade.tachiyomi.multisrc.wpcomics
 
-import eu.kanade.tachiyomi.multisrc.ThemeSourceData.SingleLang
-import eu.kanade.tachiyomi.multisrc.ThemeSourceData.MultiLang
-import eu.kanade.tachiyomi.multisrc.ThemeSourceGenerator
+import generator.ThemeSourceData.MultiLang
+import generator.ThemeSourceData.SingleLang
+import generator.ThemeSourceGenerator
 
 class WPComicsGenerator : ThemeSourceGenerator {
 

@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.multisrc.wpmangareader
 
-import eu.kanade.tachiyomi.multisrc.ThemeSourceData.SingleLang
-import eu.kanade.tachiyomi.multisrc.ThemeSourceGenerator
+import generator.ThemeSourceData.SingleLang
+import generator.ThemeSourceGenerator
 
 class WPMangaReaderGenerator : ThemeSourceGenerator {
 
@@ -19,7 +19,6 @@ class WPMangaReaderGenerator : ThemeSourceGenerator {
             SingleLang("Sekaikomik", "https://www.sekaikomik.com", "id", true),
             SingleLang("TurkToon", "https://turktoon.com", "tr"),
             SingleLang("Gecenin Lordu", "https://geceninlordu.com/", "tr", overrideVersionCode = 1),
-
         )
 
     companion object {

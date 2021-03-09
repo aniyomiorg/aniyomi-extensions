@@ -1,10 +1,7 @@
 package eu.kanade.tachiyomi.multisrc.paprika
 
-import eu.kanade.tachiyomi.multisrc.ThemeSourceData.SingleLang
-import eu.kanade.tachiyomi.multisrc.ThemeSourceGenerator
-import eu.kanade.tachiyomi.source.Source
-import eu.kanade.tachiyomi.source.SourceFactory
-
+import generator.ThemeSourceData.SingleLang
+import generator.ThemeSourceGenerator
 
 class PaprikaGenerator : ThemeSourceGenerator {
 

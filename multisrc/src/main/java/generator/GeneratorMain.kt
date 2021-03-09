@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.multisrc
+package generator
 
 import java.io.File
 

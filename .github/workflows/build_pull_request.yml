@@ -41,7 +41,7 @@ jobs:
         env:
           CI_MULTISRC: "true"
         with:
-          arguments: :multisrc:multisrcGenerators
+          arguments: :multisrc:generateExtensions
           wrapper-cache-enabled: true
           dependencies-cache-enabled: true
           configuration-cache-enabled: true

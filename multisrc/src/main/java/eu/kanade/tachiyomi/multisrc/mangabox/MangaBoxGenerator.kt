@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.multisrc.mangabox
 
-import eu.kanade.tachiyomi.multisrc.ThemeSourceData.SingleLang
-import eu.kanade.tachiyomi.multisrc.ThemeSourceGenerator
+import generator.ThemeSourceData.SingleLang
+import generator.ThemeSourceGenerator
 
 class MangaBoxGenerator : ThemeSourceGenerator {
 
