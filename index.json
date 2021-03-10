@@ -1280,10 +1280,10 @@
   {
     "name": "Tachiyomi: Mangabat",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangabat",
-    "apk": "tachiyomi-en.mangabat-v1.2.2.apk",
+    "apk": "tachiyomi-en.mangabat-v1.2.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 0
   },
   {
@@ -1460,10 +1460,10 @@
   {
     "name": "Tachiyomi: Mangairo",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangairo",
-    "apk": "tachiyomi-en.mangairo-v1.2.2.apk",
+    "apk": "tachiyomi-en.mangairo-v1.2.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 0
   },
   {
