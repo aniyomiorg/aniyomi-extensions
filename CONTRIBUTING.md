@@ -235,6 +235,104 @@ Extensions can define URL intent filters by defining it inside a custom `Android
 For an example, refer to [the NHentai module's `AndroidManifest.xml` file](https://github.com/tachiyomiorg/tachiyomi-extensions/blob/master/src/all/nhentai/AndroidManifest.xml) and [its corresponding `NHUrlActivity` handler](https://github.com/tachiyomiorg/tachiyomi-extensions/blob/master/src/all/nhentai/src/eu/kanade/tachiyomi/extension/all/nhentai/NHUrlActivity.kt).
 
 
+## Multi-source themes
+The `multisrc` module houses source code for generating extensions for cases where multiple source sites use the same site generator tool(usually a CMS) for bootsraping their website and this makes them similar enough to prompt code reuse through inheritance/composition; which from now on we will use the general **theme** term to refer to.
+
+This module contains the *default implementation* for each theme and definitions for each source that builds upon that default implementation and also it's overrides upon that default implementation, all of this becomes a set of source code which then is used to generate individual extensions from.
+
+### The directory structure
+```console
+$ tree multisrc
+multisrc
+├── build.gradle.kts
+├── overrides
+│   └── <themepkg>
+│       ├── default
+│       │   ├── additional.gradle.kts
+│       │   └── res
+│       │       ├── mipmap-hdpi
+│       │       │   └── ic_launcher.png
+│       │       ├── mipmap-mdpi
+│       │       │   └── ic_launcher.png
+│       │       ├── mipmap-xhdpi
+│       │       │   └── ic_launcher.png
+│       │       ├── mipmap-xxhdpi
+│       │       │   └── ic_launcher.png
+│       │       ├── mipmap-xxxhdpi
+│       │       │   └── ic_launcher.png
+│       │       └── web_hi_res_512.png
+│       └── <sourcepkg>
+│           ├── additional.gradle.kts
+│           ├── AndroidManifest.xml
+│           ├── res
+│           │   ├── mipmap-hdpi
+│           │   │   └── ic_launcher.png
+│           │   ├── mipmap-mdpi
+│           │   │   └── ic_launcher.png
+│           │   ├── mipmap-xhdpi
+│           │   │   └── ic_launcher.png
+│           │   ├── mipmap-xxhdpi
+│           │   │   └── ic_launcher.png
+│           │   ├── mipmap-xxxhdpi
+│           │   │   └── ic_launcher.png
+│           │   └── web_hi_res_512.png
+│           └── src
+│               └── <SourceName>.kt
+└── src
+    └── main
+        ├── AndroidManifest.xml
+        └── java
+            ├── eu
+            │   └── kanade
+            │       └── tachiyomi
+            │           └── multisrc
+            │               └── <themepkg>
+            │                   ├── <ThemeName>Generator.kt
+            │                   └── <ThemeName>.kt
+            └── generator
+                ├── GeneratorMain.kt
+                └── ThemeSourceGenerator.kt
+```
+
+- `multisrc/src/main/java/eu/kanade/tachiyomi/multisrc/<themepkg>/<Theme>.kt` defines the the theme's default implementation.
+- `multisrc/src/main/java/eu/kanade/tachiyomi/multisrc/<theme>/<Theme>Generator.kt` defines the the theme's generator class, this is similar to a `SourceFactory` class.
+- `multisrc/overrides/<themepkg>/defualt/res` is the theme's default icons, if a source doesn't have overrides for `res`, then defualt icons will be used.
+- `multisrc/overrides/<themepkg>/defualt/additional.gradle.kts` defines additional gradle code, this will be copied at the end of all generated sources from this theme.
+- `multisrc/overrides/<themepkg>/<sourcepkg>` contains overrides for a source that is defined inside the `<Theme>Generator.kt` class.
+- `multisrc/overrides/<themepkg>/<sourcepkg>/src` contains source overrides.
+- `multisrc/overrides/<themepkg>/<sourcepkg>/res` contains override for icons.
+- `multisrc/overrides/<themepkg>/<sourcepkg>/additional.gradle.kts` defines additional gradle code, this will be copied at the end of the generated gradle file below the theme's `additional.gradle.kts`.
+- `multisrc/overrides/<themepkg>/<sourcepkg>/AndroidManifest.xml` is copied as an override to the default `AndroidManifest.xml` generation if it exists.
+
+### Scaffolding sources
+You can use this python script to generate scaffolds for source overrides. Put it inside `multisrc/overrides/<themepkg>/` as `scaffold.py`.
+```python
+import os, sys
+from pathlib import Path
+
+theme = Path(os.getcwd()).parts[-1]
+
+print(f"Detected theme: {theme}")
+
+if len(sys.argv) < 3:
+    print("Must be called with a class name and lang, for Example 'python scaffold.py LeviatanScans en'")
+    exit(-1)
+
+source = sys.argv[1]
+package = source.lower()
+lang = sys.argv[2]
+
+print(f"working on {source} with lang {lang}")
+
+os.makedirs(f"{package}/src")
+
+with open(f"{package}/src/{source}.kt", "w") as f:
+    f.write(f"package eu.kanade.tachiyomi.extension.{lang}.{package}\n\n")
+``` 
+
+### Additional Notes
+- Generated sources extension version code is calculated as `baseVersionCode + overrideVersionCode + multisrcLibraryVersion`, each time a source changes in a way that should the version increase, `overrideVersionCode` should be increased by one, when a theme's default implementation changes, `baseVersionCode` should be increased.
+
 ## Running
 
 To aid in local development, you can use the following run configuration to launch an extension:
