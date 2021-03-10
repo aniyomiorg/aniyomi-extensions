@@ -963,15 +963,6 @@
     "nsfw": 1
   },
   {
-    "name": "Tachiyomi: Hentai Cafe",
-    "pkg": "eu.kanade.tachiyomi.extension.en.hentaicafe",
-    "apk": "tachiyomi-en.hentaicafe-v1.2.1.apk",
-    "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
-    "nsfw": 1
-  },
-  {
     "name": "Tachiyomi: HentaiFox",
     "pkg": "eu.kanade.tachiyomi.extension.en.hentaifox",
     "apk": "tachiyomi-en.hentaifox-v1.2.2.apk",
