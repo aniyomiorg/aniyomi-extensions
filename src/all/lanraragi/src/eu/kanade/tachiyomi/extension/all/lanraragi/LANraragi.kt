@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.extension.all.lanraragi.model.ArchiveSearchResult
 import eu.kanade.tachiyomi.extension.all.lanraragi.model.Category
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.source.ConfigurableSource
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -28,6 +29,7 @@ import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import rx.Observable
 import rx.Single
 import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
@@ -53,19 +55,36 @@ open class LANraragi : ConfigurableSource, HttpSource() {
 
     private val gson: Gson = Gson()
 
-    override fun mangaDetailsParse(response: Response): SManga {
-        val id = getId(response)
+    private var randomArchiveID: String = ""
 
-        return SManga.create().apply {
-            thumbnail_url = getThumbnailUri(id)
-        }
+    override fun fetchMangaDetails(manga: SManga): Observable<SManga> {
+        val id = if (manga.url == "/random") randomArchiveID else getReaderId(manga.url)
+        val uri = getApiUriBuilder("/api/archives/$id/metadata").build()
+
+        if (manga.url == "/random") randomArchiveID = getRandomID(getRandomIDResponse())
+
+        return client.newCall(GET(uri.toString(), headers))
+            .asObservable().doOnNext {
+                if (!it.isSuccessful && it.code() == 404) error("Log in with WebView then try again.")
+            }
+            .map { mangaDetailsParse(it).apply { initialized = true } }
+    }
+
+    override fun mangaDetailsRequest(manga: SManga): Request {
+        // Catch-all that includes /random's ID via thumbnail
+        val id = getThumbnailId(manga.thumbnail_url!!)
+
+        return GET("$baseUrl/reader?id=$id", headers)
+    }
+
+    override fun mangaDetailsParse(response: Response): SManga {
+        val archive = gson.fromJson<Archive>(response.body()!!.string())
+
+        return archiveToSManga(archive)
     }
 
     override fun chapterListRequest(manga: SManga): Request {
-        // Upgrade the LRR reader URL to the API metadata endpoint
-        // without breaking WebView (i.e. for management).
-
-        val id = manga.url.split('=').last()
+        val id = if (manga.url == "/random") randomArchiveID else getReaderId(manga.url)
         val uri = getApiUriBuilder("/api/archives/$id/metadata").build()
 
         return GET(uri.toString(), headers)
@@ -74,6 +93,16 @@ open class LANraragi : ConfigurableSource, HttpSource() {
     override fun chapterListParse(response: Response): List<SChapter> {
         val archive = gson.fromJson<Archive>(response.body()!!.string())
         val uri = getApiUriBuilder("/api/archives/${archive.arcid}/extract")
+
+        // Replicate old behavior and unset "isnew" for the archive.
+        if (archive.isnew == "true") {
+            val clearNew = Request.Builder()
+                .url("$baseUrl/api/archives/${archive.arcid}/isnew")
+                .delete()
+                .build()
+
+            client.newCall(clearNew).execute()
+        }
 
         return listOf(
             SChapter.create().apply {
@@ -117,6 +146,8 @@ open class LANraragi : ConfigurableSource, HttpSource() {
         val filters = mutableListOf<Filter<*>>()
         val prefNewOnly = preferences.getBoolean("latestNewOnly", false)
 
+        filters.add(LatestView())
+
         if (prefNewOnly) filters.add(NewArchivesOnly(true))
 
         if (latestNamespacePref.isNotBlank()) {
@@ -142,6 +173,7 @@ open class LANraragi : ConfigurableSource, HttpSource() {
 
         filters.forEach { filter ->
             when (filter) {
+                is LatestView -> if (filter.state) uri.appendQueryParameter("latest", "latest")
                 is StartingPage -> {
                     startPageOffset = filter.state.toIntOrNull() ?: 1
 
@@ -170,25 +202,50 @@ open class LANraragi : ConfigurableSource, HttpSource() {
     override fun searchMangaParse(response: Response): MangasPage {
         val jsonResult = gson.fromJson<ArchiveSearchResult>(response.body()!!.string())
         val currentStart = getStart(response)
+        val archives = arrayListOf<SManga>()
 
         lastResultCount = jsonResult.data.size
         maxResultCount = if (lastResultCount >= maxResultCount) lastResultCount else maxResultCount
         lastRecordsFiltered = jsonResult.recordsFiltered
         totalRecords = jsonResult.recordsTotal
 
-        return MangasPage(
-            jsonResult.data.map {
+        if (canShowRandom(response)) {
+            archives.add(
                 SManga.create().apply {
-                    url = "/reader?id=${it.arcid}"
-                    title = it.title
-                    thumbnail_url = getThumbnailUri(it.arcid)
-                    genre = it.tags
-                    artist = getArtist(it.tags)
-                    author = artist
+                    url = "/random"
+                    title = "Random"
+                    description = "Refresh for a random archive."
+                    // Get the server's "noThumb" thumbnail by default
+                    thumbnail_url = getThumbnailUri("tachiyomi")
                 }
-            },
-            currentStart + jsonResult.data.size < jsonResult.recordsFiltered
-        )
+            )
+        }
+
+        jsonResult.data.map {
+            archives.add(archiveToSManga(it))
+        }
+
+        return MangasPage(archives, currentStart + jsonResult.data.size < jsonResult.recordsFiltered)
+    }
+
+    private fun canShowRandom(response: Response): Boolean {
+        // Server has archives, no meaningful filtering, not paginating, and not Latest
+        return (
+            totalRecords > 0 &&
+                lastRecordsFiltered == totalRecords &&
+                getStart(response) == 0 &&
+                response.request().url().queryParameter("latest") == null
+            )
+    }
+
+    private fun archiveToSManga(archive: Archive) = SManga.create().apply {
+        url = "/reader?id=${archive.arcid}"
+        title = archive.title
+        description = archive.title
+        thumbnail_url = getThumbnailUri(archive.arcid)
+        genre = archive.tags
+        artist = getArtist(archive.tags)
+        author = artist
     }
 
     override fun headersBuilder() = Headers.Builder().apply {
@@ -198,6 +255,7 @@ open class LANraragi : ConfigurableSource, HttpSource() {
         }
     }
 
+    private class LatestView() : Filter.CheckBox("", true)
     private class DescendingOrder(overrideState: Boolean = false) : Filter.CheckBox("Descending Order", overrideState)
     private class NewArchivesOnly(overrideState: Boolean = false) : Filter.CheckBox("New Archives Only", overrideState)
     private class UntaggedArchivesOnly : Filter.CheckBox("Untagged Archives Only", false)
@@ -379,6 +437,18 @@ open class LANraragi : ConfigurableSource, HttpSource() {
     }
 
     // Helper
+    private fun getRandomID(response: Response): String {
+        return response.let {
+            it.headers("Location").first()
+        }.split("=").last()
+    }
+
+    private fun getRandomIDResponse(): Response {
+        // Separate function for init and Library
+        // /random 301's to the ID so the request is over as quickly as it starts
+        return clientNoFollow.newCall(GET("$baseUrl/random", headers)).execute()
+    }
+
     protected open class UriPartFilter(displayName: String, val vals: Array<Pair<String?, String>>) :
         Filter.Select<String>(displayName, vals.map { it.second }.toTypedArray()) {
         fun toUriPart() = vals[state].first
@@ -430,6 +500,14 @@ open class LANraragi : ConfigurableSource, HttpSource() {
         return getTopResponse(response).request().url().queryParameter("start")!!.toInt()
     }
 
+    private fun getReaderId(url: String): String {
+        return Regex("""\/reader\?id=(\w{40})""").find(url)?.groupValues?.get(1) ?: ""
+    }
+
+    private fun getThumbnailId(url: String): String {
+        return Regex("""\/(\w{40})\/thumbnail""").find(url)?.groupValues?.get(1) ?: ""
+    }
+
     private fun getNSTag(tags: String?, tag: String): List<String>? {
         tags?.split(',')?.forEach {
             if (it.contains(':')) {
@@ -460,8 +538,19 @@ open class LANraragi : ConfigurableSource, HttpSource() {
 
     // Headers (currently auth) are done in headersBuilder
     override val client: OkHttpClient = network.client.newBuilder().build()
+    // Specifically for /random to grab IDs without triggering a server-side extract
+    private val clientNoFollow: OkHttpClient = client.newBuilder().followRedirects(false).build()
 
     init {
+        // Save users a Random refresh in the extension and from Library
+        Single.fromCallable { getRandomIDResponse() }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { randomArchiveID = getRandomID(it) },
+                {}
+            )
+
         Single.fromCallable {
             client.newCall(GET("$baseUrl/api/categories", headers)).execute()
         }
