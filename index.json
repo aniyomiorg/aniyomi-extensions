@@ -1224,6 +1224,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: LynxScans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.lynxscans",
+    "apk": "tachiyomi-en.lynxscans-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Madokami",
     "pkg": "eu.kanade.tachiyomi.extension.en.madokami",
     "apk": "tachiyomi-en.madokami-v1.2.4.apk",
@@ -2469,15 +2478,6 @@
     "name": "Tachiyomi: Schlock Mercenary",
     "pkg": "eu.kanade.tachiyomi.extension.en.schlockmercenary",
     "apk": "tachiyomi-en.schlockmercenary-v1.2.1.apk",
-    "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
-    "nsfw": 0
-  },
-  {
-    "name": "Tachiyomi: SecretScans",
-    "pkg": "eu.kanade.tachiyomi.extension.en.secretscans",
-    "apk": "tachiyomi-en.secretscans-v1.2.1.apk",
     "lang": "en",
     "code": 1,
     "version": "1.2.1",
