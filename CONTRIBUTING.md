@@ -304,6 +304,19 @@ multisrc
 - `multisrc/overrides/<themepkg>/<sourcepkg>/additional.gradle.kts` defines additional gradle code, this will be copied at the end of the generated gradle file below the theme's `additional.gradle.kts`.
 - `multisrc/overrides/<themepkg>/<sourcepkg>/AndroidManifest.xml` is copied as an override to the default `AndroidManifest.xml` generation if it exists.
 
+### Development workflow
+There are three steps in running and testing a theme source:
+
+1. Generate the sources
+    - **Method 1:** run `./gradlew multisrc:generateExtensions` from a terminal window to generate all sources.
+    - **Method 2:** Directly run `Generator.GeneratorMain.main` by pressing the play button in front of the method shown inside Android Studio to generate all sources.
+    - **Method 3:** Directly run `<themepkg>.<ThemeName>Generator.main` by pressing the play button in front of the method shown inside Android Studio to generate sources from the said theme.
+2. Sync gradle to import the new generated sources inside `generated-src`
+    - **Method 1:** Android Studio might prompt to sync the gradle. Click on `Sync Now`.
+    - **Method 1:** Manually re-sync by opening `File` -> `Sync Project with Gradle Files` or by pressing `Alt+f` then `g`.
+3. Build and test the generated Extention like normal `src` sources.
+    - It's recommended to make changes here to skip step 1 and 2, and when you are done, and copying the changes back to `multisrc`. 
+
 ### Scaffolding sources
 You can use this python script to generate scaffolds for source overrides. Put it inside `multisrc/overrides/<themepkg>/` as `scaffold.py`.
 ```python
@@ -325,13 +338,19 @@ lang = sys.argv[2]
 print(f"working on {source} with lang {lang}")
 
 os.makedirs(f"{package}/src")
+os.makedirs(f"{package}/res")
 
 with open(f"{package}/src/{source}.kt", "w") as f:
     f.write(f"package eu.kanade.tachiyomi.extension.{lang}.{package}\n\n")
-``` 
+```
 
 ### Additional Notes
-- Generated sources extension version code is calculated as `baseVersionCode + overrideVersionCode + multisrcLibraryVersion`, each time a source changes in a way that should the version increase, `overrideVersionCode` should be increased by one, when a theme's default implementation changes, `baseVersionCode` should be increased.
+- Generated sources extension version code is calculated as `baseVersionCode + overrideVersionCode + multisrcLibraryVersion`.
+    - Currently `multisrcLibraryVersion` is `0`
+    - When a new source is added, it doesn't need to set `overrideVersionCode` as it's default is `0`.
+    - For each time a source changes in a way that should the version increase, `overrideVersionCode` should be increased by one.
+    - When a theme's default implementation changes, `baseVersionCode` should be increased, the initial value should be `1`.
+    - For example, for a new theme with a new source, extention version code will be `0 + 0 + 1 = 1`.
 
 ## Running
 
