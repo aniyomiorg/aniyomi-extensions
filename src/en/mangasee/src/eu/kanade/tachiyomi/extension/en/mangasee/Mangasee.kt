@@ -263,7 +263,7 @@ class Mangasee : HttpSource() {
 
         val pageTotal = curChapter["Page"].string.toInt()
 
-        val host = "https://" + script.substringAfter("vm.CurPathName = \"").substringBefore("\"")
+        val host = "https://" + script.substringAfter("vm.CurrPathName = \"").substringBefore("\"")
         val titleURI = script.substringAfter("vm.IndexName = \"").substringBefore("\"")
         val seasonURI = curChapter["Directory"].string
             .let { if (it.isEmpty()) "" else "$it/" }
