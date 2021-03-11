@@ -1280,10 +1280,10 @@
   {
     "name": "Tachiyomi: Mangabat",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangabat",
-    "apk": "tachiyomi-en.mangabat-v1.2.3.apk",
+    "apk": "tachiyomi-en.mangabat-v1.2.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "1.2.3",
+    "code": 4,
+    "version": "1.2.4",
     "nsfw": 0
   },
   {
@@ -1523,10 +1523,10 @@
   {
     "name": "Tachiyomi: MangaLife",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangalife",
-    "apk": "tachiyomi-en.mangalife-v1.2.12.apk",
+    "apk": "tachiyomi-en.mangalife-v1.2.13.apk",
     "lang": "en",
-    "code": 12,
-    "version": "1.2.12",
+    "code": 13,
+    "version": "1.2.13",
     "nsfw": 0
   },
   {
@@ -1739,10 +1739,10 @@
   {
     "name": "Tachiyomi: Mangasee",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangasee",
-    "apk": "tachiyomi-en.mangasee-v1.2.16.apk",
+    "apk": "tachiyomi-en.mangasee-v1.2.17.apk",
     "lang": "en",
-    "code": 16,
-    "version": "1.2.16",
+    "code": 17,
+    "version": "1.2.17",
     "nsfw": 0
   },
   {
