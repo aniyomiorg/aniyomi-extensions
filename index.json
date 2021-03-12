@@ -1559,10 +1559,10 @@
   {
     "name": "Tachiyomi: Manga Mutiny",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangamutiny",
-    "apk": "tachiyomi-en.mangamutiny-v1.2.5.apk",
+    "apk": "tachiyomi-en.mangamutiny-v1.2.6.apk",
     "lang": "en",
-    "code": 5,
-    "version": "1.2.5",
+    "code": 6,
+    "version": "1.2.6",
     "nsfw": 1
   },
   {
@@ -3414,15 +3414,6 @@
     "name": "Tachiyomi: Komik Station",
     "pkg": "eu.kanade.tachiyomi.extension.id.komikstation",
     "apk": "tachiyomi-id.komikstation-v1.2.2.apk",
-    "lang": "id",
-    "code": 2,
-    "version": "1.2.2",
-    "nsfw": 0
-  },
-  {
-    "name": "Tachiyomi: KomikTap",
-    "pkg": "eu.kanade.tachiyomi.extension.id.komiktap",
-    "apk": "tachiyomi-id.komiktap-v1.2.2.apk",
     "lang": "id",
     "code": 2,
     "version": "1.2.2",
