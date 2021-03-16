@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.all.vinnieVeritas
 
+import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -53,7 +54,7 @@ CCC es el nombre de la segunda ciudad mas grande que hay, no son siglas ni la ab
         return super.chapterListParse(response).reversed()
     }
 
-    override fun chapterListSelector() = "optgroup:nth-child(${if (lang == "en"){3}else {2}}) option"
+    override fun chapterListSelector() = "option.webcomic${if (lang == "en"){1}else {2}}-link"
 
     override fun chapterFromElement(element: Element): SChapter {
         val chapter = SChapter.create()
@@ -62,10 +63,12 @@ CCC es el nombre de la segunda ciudad mas grande que hay, no son siglas ni la ab
         return chapter
     }
 
+    override fun pageListRequest(chapter: SChapter): Request {
+        return GET(chapter.url, headers)
+    }
+
     override fun pageListParse(document: Document): List<Page> {
-        return listOf(
-            Page(0, "", document.select(".webcomic-image img").attr("src"))
-        )
+        return document.select(".webcomic-image img").mapIndexed { i, image -> Page(i, "", image.attr("src")) }
     }
 
     companion object {
