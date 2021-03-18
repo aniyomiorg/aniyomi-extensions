@@ -414,6 +414,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: MangaLionz",
+    "pkg": "eu.kanade.tachiyomi.extension.ar.mangalionz",
+    "apk": "tachiyomi-ar.mangalionz-v1.2.1.apk",
+    "lang": "ar",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: MangaP",
     "pkg": "eu.kanade.tachiyomi.extension.ar.mangap",
     "apk": "tachiyomi-ar.mangap-v1.2.2.apk",
