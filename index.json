@@ -83,10 +83,10 @@
   {
     "name": "Tachiyomi: Leviatan Scans",
     "pkg": "eu.kanade.tachiyomi.extension.all.leviatanscans",
-    "apk": "tachiyomi-all.leviatanscans-v1.2.2.apk",
+    "apk": "tachiyomi-all.leviatanscans-v1.2.1.apk",
     "lang": "all",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 1,
+    "version": "1.2.1",
     "nsfw": 0
   },
   {
