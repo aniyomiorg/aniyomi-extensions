@@ -1512,6 +1512,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Mangakik",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangakik",
+    "apk": "tachiyomi-en.mangakik-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Manga Kiss",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangakiss",
     "apk": "tachiyomi-en.mangakiss-v1.2.1.apk",
@@ -2034,12 +2043,12 @@
     "nsfw": 0
   },
   {
-    "name": "Tachiyomi: Martial Scans",
+    "name": "Tachiyomi: MartialScans",
     "pkg": "eu.kanade.tachiyomi.extension.en.martialscans",
-    "apk": "tachiyomi-en.martialscans-v1.2.1.apk",
+    "apk": "tachiyomi-en.martialscans-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -2817,6 +2826,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: WeComics",
+    "pkg": "eu.kanade.tachiyomi.extension.en.wecomics",
+    "apk": "tachiyomi-en.wecomics-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: WeScans",
     "pkg": "eu.kanade.tachiyomi.extension.en.wescans",
     "apk": "tachiyomi-en.wescans-v1.2.1.apk",
@@ -3060,6 +3078,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: SamuraiScan",
+    "pkg": "eu.kanade.tachiyomi.extension.es.samuraiscan",
+    "apk": "tachiyomi-es.samuraiscan-v1.2.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Spooky Scanlations",
     "pkg": "eu.kanade.tachiyomi.extension.es.spookyscanlations",
     "apk": "tachiyomi-es.spookyscanlations-v1.2.1.apk",
@@ -3161,10 +3188,10 @@
   {
     "name": "Tachiyomi: Mangakawaii",
     "pkg": "eu.kanade.tachiyomi.extension.fr.mangakawaii",
-    "apk": "tachiyomi-fr.mangakawaii-v1.2.22.apk",
+    "apk": "tachiyomi-fr.mangakawaii-v1.2.23.apk",
     "lang": "fr",
-    "code": 22,
-    "version": "1.2.22",
+    "code": 23,
+    "version": "1.2.23",
     "nsfw": 0
   },
   {
@@ -4557,6 +4584,15 @@
     "name": "Tachiyomi: Manga-Online.co",
     "pkg": "eu.kanade.tachiyomi.extension.th.mangaonlineco",
     "apk": "tachiyomi-th.mangaonlineco-v1.2.1.apk",
+    "lang": "th",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Mangauptocats",
+    "pkg": "eu.kanade.tachiyomi.extension.th.mangauptocats",
+    "apk": "tachiyomi-th.mangauptocats-v1.2.1.apk",
     "lang": "th",
     "code": 1,
     "version": "1.2.1",
