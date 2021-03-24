@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.en.mangalife
+package eu.kanade.tachiyomi.multisrc.nepnep
 
 import com.github.salomonbrys.kotson.fromJson
 import com.github.salomonbrys.kotson.get
@@ -7,7 +7,6 @@ import com.github.salomonbrys.kotson.string
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
@@ -19,36 +18,23 @@ import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
 import java.text.SimpleDateFormat
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 /**
  * Source responds to requests with their full database as a JsonArray, then sorts/filters it client-side
  * We'll take the database on first requests, then do what we want with it
  */
-class MangaLife : HttpSource() {
-
-    override val name = "MangaLife"
-
-    override val baseUrl = "https://manga4life.com"
-
-    override val lang = "en"
+abstract class NepNep(
+    override val name: String,
+    override val baseUrl: String,
+    override val lang: String
+) : HttpSource() {
 
     override val supportsLatest = true
-
-    private val rateLimitInterceptor = RateLimitInterceptor(1, 2)
-
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addNetworkInterceptor(rateLimitInterceptor)
-        .connectTimeout(1, TimeUnit.MINUTES)
-        .readTimeout(1, TimeUnit.MINUTES)
-        .writeTimeout(1, TimeUnit.MINUTES)
-        .build()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Referer", baseUrl)
@@ -144,8 +130,12 @@ class MangaLife : HttpSource() {
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = popularMangaRequest(1)
 
     private fun searchMangaParse(response: Response, query: String, filters: FilterList): MangasPage {
+        val trimmedQuery = query.trim()
         directory = gson.fromJson<JsonArray>(directoryFromResponse(response))
-            .filter { it["s"].string.contains(query, ignoreCase = true) }
+            .filter {
+                it["s"].string.contains(trimmedQuery, ignoreCase = true) or
+                    it["al"].asJsonArray.any { altName -> altName.string.contains(trimmedQuery, ignoreCase = true) }
+            }
 
         val genres = mutableListOf<String>()
         val genresNo = mutableListOf<String>()
@@ -197,7 +187,7 @@ class MangaLife : HttpSource() {
                 title = info.select("h1").text()
                 author = info.select("li.list-group-item:has(span:contains(Author)) a").first()?.text()
                 genre = info.select("li.list-group-item:has(span:contains(Genre)) a").joinToString { it.text() }
-                status = info.select("li.list-group-item:has(span:contains(Status)) a:contains(publish)").text().toStatus()
+                status = info.select("li.list-group-item:has(span:contains(Status)) a:contains(scan)").text().toStatus()
                 description = info.select("div.Content").text()
                 thumbnail_url = info.select("img").attr("abs:src")
             }
@@ -218,7 +208,8 @@ class MangaLife : HttpSource() {
         var index = ""
         val t = e.substring(0, 1).toInt()
         if (1 != t) { index = "-index-$t" }
-        val n = e.substring(1, e.length - 1)
+        val dgt = if (e.toInt() < 100100) { 4 } else if (e.toInt() < 101000) { 3 } else if (e.toInt() < 110000) { 2 } else { 1 }
+        val n = e.substring(dgt, e.length - 1)
         var suffix = ""
         val path = e.substring(e.length - 1).toInt()
         if (0 != path) { suffix = ".$path" }
@@ -268,8 +259,9 @@ class MangaLife : HttpSource() {
             script
                 .substringAfter("vm.CurPathName = \"", "")
                 .substringBefore("\"")
-                .also { if (it.isEmpty())
-                    throw Exception("$name is overloaded and blocking Tachiyomi right now. Wait for unblock.")
+                .also {
+                    if (it.isEmpty())
+                        throw Exception("$name is overloaded and blocking Tachiyomi right now. Wait for unblock.")
                 }
         val titleURI = script.substringAfter("vm.IndexName = \"").substringBefore("\"")
         val seasonURI = curChapter["Directory"].string
