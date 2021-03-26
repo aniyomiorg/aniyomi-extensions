@@ -3213,6 +3213,15 @@
     "nsfw": 1
   },
   {
+    "name": "Tachiyomi: Scan-Manga",
+    "pkg": "eu.kanade.tachiyomi.extension.fr.scanmanga",
+    "apk": "tachiyomi-fr.scanmanga-v1.2.1.apk",
+    "lang": "fr",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 1
+  },
+  {
     "name": "Tachiyomi: Scantrad",
     "pkg": "eu.kanade.tachiyomi.extension.fr.scantrad",
     "apk": "tachiyomi-fr.scantrad-v1.2.16.apk",
