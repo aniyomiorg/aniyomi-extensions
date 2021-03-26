@@ -2610,6 +2610,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: The Apollo Team",
+    "pkg": "eu.kanade.tachiyomi.extension.en.theapolloteam",
+    "apk": "tachiyomi-en.theapolloteam-v1.2.2.apk",
+    "lang": "en",
+    "code": 2,
+    "version": "1.2.2",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: The Cat Scans",
     "pkg": "eu.kanade.tachiyomi.extension.en.thecatscans",
     "apk": "tachiyomi-en.thecatscans-v1.2.1.apk",
