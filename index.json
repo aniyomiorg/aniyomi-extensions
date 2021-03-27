@@ -9,6 +9,15 @@
     "nsfw": 1
   },
   {
+    "name": "Tachiyomi: Cubari",
+    "pkg": "eu.kanade.tachiyomi.extension.all.cubari",
+    "apk": "tachiyomi-all.cubari-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Dragon Ball Multiverse",
     "pkg": "eu.kanade.tachiyomi.extension.all.dragonball_multiverse",
     "apk": "tachiyomi-all.dragonball_multiverse-v1.2.2.apk",
@@ -3197,10 +3206,10 @@
   {
     "name": "Tachiyomi: Mangakawaii",
     "pkg": "eu.kanade.tachiyomi.extension.fr.mangakawaii",
-    "apk": "tachiyomi-fr.mangakawaii-v1.2.24.apk",
+    "apk": "tachiyomi-fr.mangakawaii-v1.2.25.apk",
     "lang": "fr",
-    "code": 24,
-    "version": "1.2.24",
+    "code": 25,
+    "version": "1.2.25",
     "nsfw": 0
   },
   {
