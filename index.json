@@ -11,10 +11,10 @@
   {
     "name": "Tachiyomi: Cubari",
     "pkg": "eu.kanade.tachiyomi.extension.all.cubari",
-    "apk": "tachiyomi-all.cubari-v1.2.1.apk",
+    "apk": "tachiyomi-all.cubari-v1.2.2.apk",
     "lang": "all",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -938,10 +938,10 @@
   {
     "name": "Tachiyomi: Guya",
     "pkg": "eu.kanade.tachiyomi.extension.en.guya",
-    "apk": "tachiyomi-en.guya-v1.2.17.apk",
+    "apk": "tachiyomi-en.guya-v1.2.18.apk",
     "lang": "en",
-    "code": 17,
-    "version": "1.2.17",
+    "code": 18,
+    "version": "1.2.18",
     "nsfw": 0
   },
   {
@@ -3071,19 +3071,19 @@
   {
     "name": "Tachiyomi: LectorManga",
     "pkg": "eu.kanade.tachiyomi.extension.es.lectormanga",
-    "apk": "tachiyomi-es.lectormanga-v1.2.15.apk",
+    "apk": "tachiyomi-es.lectormanga-v1.2.16.apk",
     "lang": "es",
-    "code": 15,
-    "version": "1.2.15",
+    "code": 16,
+    "version": "1.2.16",
     "nsfw": 0
   },
   {
     "name": "Tachiyomi: MangaMx",
     "pkg": "eu.kanade.tachiyomi.extension.es.mangamx",
-    "apk": "tachiyomi-es.mangamx-v1.2.9.apk",
+    "apk": "tachiyomi-es.mangamx-v1.2.10.apk",
     "lang": "es",
-    "code": 9,
-    "version": "1.2.9",
+    "code": 10,
+    "version": "1.2.10",
     "nsfw": 0
   },
   {
@@ -3134,10 +3134,10 @@
   {
     "name": "Tachiyomi: TuMangaOnline",
     "pkg": "eu.kanade.tachiyomi.extension.es.tumangaonline",
-    "apk": "tachiyomi-es.tumangaonline-v1.2.32.apk",
+    "apk": "tachiyomi-es.tumangaonline-v1.2.33.apk",
     "lang": "es",
-    "code": 32,
-    "version": "1.2.32",
+    "code": 33,
+    "version": "1.2.33",
     "nsfw": 0
   },
   {
