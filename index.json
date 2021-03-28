@@ -794,10 +794,10 @@
   {
     "name": "Tachiyomi: EarlyManga",
     "pkg": "eu.kanade.tachiyomi.extension.en.earlymanga",
-    "apk": "tachiyomi-en.earlymanga-v1.2.14.apk",
+    "apk": "tachiyomi-en.earlymanga-v1.2.15.apk",
     "lang": "en",
-    "code": 14,
-    "version": "1.2.14",
+    "code": 15,
+    "version": "1.2.15",
     "nsfw": 0
   },
   {
@@ -1254,6 +1254,15 @@
     "name": "Tachiyomi: Manga18 Fun",
     "pkg": "eu.kanade.tachiyomi.extension.en.manga18fun",
     "apk": "tachiyomi-en.manga18fun-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Manga18 Fx",
+    "pkg": "eu.kanade.tachiyomi.extension.en.manga18fx",
+    "apk": "tachiyomi-en.manga18fx-v1.2.1.apk",
     "lang": "en",
     "code": 1,
     "version": "1.2.1",
@@ -2900,10 +2909,10 @@
   {
     "name": "Tachiyomi: xCaliBR Scans",
     "pkg": "eu.kanade.tachiyomi.extension.en.xcalibrscans",
-    "apk": "tachiyomi-en.xcalibrscans-v1.2.2.apk",
+    "apk": "tachiyomi-en.xcalibrscans-v1.2.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 0
   },
   {
@@ -3062,19 +3071,19 @@
   {
     "name": "Tachiyomi: LectorManga",
     "pkg": "eu.kanade.tachiyomi.extension.es.lectormanga",
-    "apk": "tachiyomi-es.lectormanga-v1.2.14.apk",
+    "apk": "tachiyomi-es.lectormanga-v1.2.15.apk",
     "lang": "es",
-    "code": 14,
-    "version": "1.2.14",
+    "code": 15,
+    "version": "1.2.15",
     "nsfw": 0
   },
   {
     "name": "Tachiyomi: MangaMx",
     "pkg": "eu.kanade.tachiyomi.extension.es.mangamx",
-    "apk": "tachiyomi-es.mangamx-v1.2.8.apk",
+    "apk": "tachiyomi-es.mangamx-v1.2.9.apk",
     "lang": "es",
-    "code": 8,
-    "version": "1.2.8",
+    "code": 9,
+    "version": "1.2.9",
     "nsfw": 0
   },
   {
@@ -3116,19 +3125,19 @@
   {
     "name": "Tachiyomi: TMOHentai",
     "pkg": "eu.kanade.tachiyomi.extension.es.tmohentai",
-    "apk": "tachiyomi-es.tmohentai-v1.2.4.apk",
+    "apk": "tachiyomi-es.tmohentai-v1.2.5.apk",
     "lang": "es",
-    "code": 4,
-    "version": "1.2.4",
+    "code": 5,
+    "version": "1.2.5",
     "nsfw": 1
   },
   {
     "name": "Tachiyomi: TuMangaOnline",
     "pkg": "eu.kanade.tachiyomi.extension.es.tumangaonline",
-    "apk": "tachiyomi-es.tumangaonline-v1.2.31.apk",
+    "apk": "tachiyomi-es.tumangaonline-v1.2.32.apk",
     "lang": "es",
-    "code": 31,
-    "version": "1.2.31",
+    "code": 32,
+    "version": "1.2.32",
     "nsfw": 0
   },
   {
@@ -3175,6 +3184,15 @@
     "code": 1,
     "version": "1.2.1",
     "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Japanread",
+    "pkg": "eu.kanade.tachiyomi.extension.fr.japanread",
+    "apk": "tachiyomi-fr.japanread-v1.2.1.apk",
+    "lang": "fr",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: Japscan",
@@ -3233,10 +3251,10 @@
   {
     "name": "Tachiyomi: Scan-Manga",
     "pkg": "eu.kanade.tachiyomi.extension.fr.scanmanga",
-    "apk": "tachiyomi-fr.scanmanga-v1.2.1.apk",
+    "apk": "tachiyomi-fr.scanmanga-v1.2.2.apk",
     "lang": "fr",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 1
   },
   {
