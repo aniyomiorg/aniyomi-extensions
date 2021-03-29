@@ -1415,10 +1415,10 @@
   {
     "name": "Tachiyomi: MangaFast",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangafast",
-    "apk": "tachiyomi-en.mangafast-v1.2.6.apk",
+    "apk": "tachiyomi-en.mangafast-v1.2.7.apk",
     "lang": "en",
-    "code": 6,
-    "version": "1.2.6",
+    "code": 7,
+    "version": "1.2.7",
     "nsfw": 0
   },
   {
@@ -1595,10 +1595,10 @@
   {
     "name": "Tachiyomi: Manga Mutiny",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangamutiny",
-    "apk": "tachiyomi-en.mangamutiny-v1.2.6.apk",
+    "apk": "tachiyomi-en.mangamutiny-v1.2.7.apk",
     "lang": "en",
-    "code": 6,
-    "version": "1.2.6",
+    "code": 7,
+    "version": "1.2.7",
     "nsfw": 1
   },
   {
