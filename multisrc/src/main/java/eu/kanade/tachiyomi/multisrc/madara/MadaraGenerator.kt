@@ -10,7 +10,7 @@ class MadaraGenerator : ThemeSourceGenerator {
 
     override val themeClass = "Madara"
 
-    override val baseVersionCode: Int = 1
+    override val baseVersionCode: Int = 2
 
     override val sources = listOf(
             SingleLang("Adonis Fansub", "https://manga.adonisfansub.com", "tr"),
@@ -240,6 +240,7 @@ class MadaraGenerator : ThemeSourceGenerator {
             SingleLang("Sleeping Knight Scans", "https://skscans.com", "en", overrideVersionCode = 2),
             MultiLang("Leviatan Scans", "https://leviatanscans.com", listOf("en", "es"),
                 className = "LeviatanScansFactory", overrideVersionCode = 3),
+            SingleLang("Manga1st", "https://manga1st.com", "en"),
     )
 
     companion object {
