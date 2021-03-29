@@ -47,10 +47,10 @@
   {
     "name": "Tachiyomi: HentaiHand",
     "pkg": "eu.kanade.tachiyomi.extension.all.hentaihand",
-    "apk": "tachiyomi-all.hentaihand-v1.2.1.apk",
+    "apk": "tachiyomi-all.hentaihand-v1.2.2.apk",
     "lang": "all",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 1
   },
   {
@@ -74,10 +74,10 @@
   {
     "name": "Tachiyomi: Komga",
     "pkg": "eu.kanade.tachiyomi.extension.all.komga",
-    "apk": "tachiyomi-all.komga-v1.2.22.apk",
+    "apk": "tachiyomi-all.komga-v1.2.23.apk",
     "lang": "all",
-    "code": 22,
-    "version": "1.2.22",
+    "code": 23,
+    "version": "1.2.23",
     "nsfw": 0
   },
   {
@@ -3251,10 +3251,10 @@
   {
     "name": "Tachiyomi: Scan-Manga",
     "pkg": "eu.kanade.tachiyomi.extension.fr.scanmanga",
-    "apk": "tachiyomi-fr.scanmanga-v1.2.2.apk",
+    "apk": "tachiyomi-fr.scanmanga-v1.2.3.apk",
     "lang": "fr",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 1
   },
   {
