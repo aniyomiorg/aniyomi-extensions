@@ -918,6 +918,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: GalaxyDegenScans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.galaxydegenscans",
+    "apk": "tachiyomi-en.galaxydegenscans-v1.2.2.apk",
+    "lang": "en",
+    "code": 2,
+    "version": "1.2.2",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Graze Scans",
     "pkg": "eu.kanade.tachiyomi.extension.en.grazescans",
     "apk": "tachiyomi-en.grazescans-v1.2.2.apk",
@@ -1065,6 +1074,15 @@
     "name": "Tachiyomi: Hunlight Scans",
     "pkg": "eu.kanade.tachiyomi.extension.en.hunlightscans",
     "apk": "tachiyomi-en.hunlightscans-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Hyakuro",
+    "pkg": "eu.kanade.tachiyomi.extension.en.hyakuro",
+    "apk": "tachiyomi-en.hyakuro-v1.2.1.apk",
     "lang": "en",
     "code": 1,
     "version": "1.2.1",
@@ -1815,6 +1833,15 @@
     "lang": "en",
     "code": 1,
     "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Manga Too",
+    "pkg": "eu.kanade.tachiyomi.extension.en.mangatoo",
+    "apk": "tachiyomi-en.mangatoo-v1.2.2.apk",
+    "lang": "en",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -2598,6 +2625,24 @@
     "lang": "en",
     "code": 3,
     "version": "1.2.3",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Sleepy Translations",
+    "pkg": "eu.kanade.tachiyomi.extension.en.sleepytranslations",
+    "apk": "tachiyomi-en.sleepytranslations-v1.2.2.apk",
+    "lang": "en",
+    "code": 2,
+    "version": "1.2.2",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: SocialWeebs",
+    "pkg": "eu.kanade.tachiyomi.extension.en.socialweebs",
+    "apk": "tachiyomi-en.socialweebs-v1.2.2.apk",
+    "lang": "en",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
