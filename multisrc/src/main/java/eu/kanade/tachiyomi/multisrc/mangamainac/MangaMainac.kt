@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.en.tcbscans
+package eu.kanade.tachiyomi.multisrc.mangamainac
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -14,11 +14,15 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.util.Calendar
 
-class TCBScans : ParsedHttpSource() {
 
-    override val name = "TCB Scans"
-    override val baseUrl = "https://onepiecechapters.com"
-    override val lang = "en"
+// Based On TCBScans sources
+// MangaManiac is a network of sites built by Animemaniac.co.
+
+abstract class MangaMainac(
+    override val name: String,
+    override val baseUrl: String,
+    override val lang: String,
+) : ParsedHttpSource() {
     override val supportsLatest = false
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -32,7 +36,7 @@ class TCBScans : ParsedHttpSource() {
     override fun popularMangaFromElement(element: Element): SManga {
         val manga = SManga.create()
         manga.thumbnail_url = element.select(".mangainfo_body > img").attr("src")
-        manga.url = element.select("#primary-menu .menu-item:first-child").attr("href")
+        manga.url = "" //element.select("#primary-menu .menu-item:first-child").attr("href")
         manga.title = element.select(".intro_content h2").text()
         return manga
     }
@@ -41,29 +45,29 @@ class TCBScans : ParsedHttpSource() {
 
     // latest
     override fun latestUpdatesRequest(page: Int): Request = throw UnsupportedOperationException()
-
     override fun latestUpdatesSelector(): String = throw UnsupportedOperationException()
-
     override fun latestUpdatesFromElement(element: Element): SManga = throw UnsupportedOperationException()
-
     override fun latestUpdatesNextPageSelector(): String? = throw UnsupportedOperationException()
 
     // search
-    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = popularMangaRequest(page)
-
-    override fun searchMangaSelector(): String = popularMangaSelector()
-
-    override fun searchMangaFromElement(element: Element): SManga = popularMangaFromElement(element)
-
-    override fun searchMangaNextPageSelector(): String? = null
+    override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request = throw UnsupportedOperationException()
+    override fun searchMangaSelector(): String = throw UnsupportedOperationException()
+    override fun searchMangaFromElement(element: Element): SManga = throw UnsupportedOperationException()
+    override fun searchMangaNextPageSelector(): String? = throw UnsupportedOperationException()
 
     // manga details
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
+        val info = document.select(".intro_content").text()
         thumbnail_url = document.select(".mangainfo_body > img").attr("src")
         title = document.select(".intro_content h2").text()
+        author = if ("Author" in info) substringextract(info, "Author(s):", "Released") else null
+        artist = author
+        genre = if ("Genre" in info) substringextract(info, "Genre(s):", "Status") else null
         status = parseStatus(document.select(".intro_content").text())
-        description = document.select(".intro_content").joinToString("\n") { it.text() }
+        description = if ("Description" in info) info.substringAfter("Description:").trim() else null
     }
+
+    private fun substringextract(text: String, start: String, end: String): String = text.substringAfter(start).substringBefore(end).trim()
 
     private fun parseStatus(element: String): Int = when {
         element.toLowerCase().contains("ongoing (pub") -> SManga.ONGOING
