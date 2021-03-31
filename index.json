@@ -3359,10 +3359,10 @@
   {
     "name": "Tachiyomi: Japanread",
     "pkg": "eu.kanade.tachiyomi.extension.fr.japanread",
-    "apk": "tachiyomi-fr.japanread-v1.2.1.apk",
+    "apk": "tachiyomi-fr.japanread-v1.2.2.apk",
     "lang": "fr",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 1
   },
   {
@@ -3395,10 +3395,10 @@
   {
     "name": "Tachiyomi: Mangakawaii",
     "pkg": "eu.kanade.tachiyomi.extension.fr.mangakawaii",
-    "apk": "tachiyomi-fr.mangakawaii-v1.2.25.apk",
+    "apk": "tachiyomi-fr.mangakawaii-v1.2.26.apk",
     "lang": "fr",
-    "code": 25,
-    "version": "1.2.25",
+    "code": 26,
+    "version": "1.2.26",
     "nsfw": 0
   },
   {
