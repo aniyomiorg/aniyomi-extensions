@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.all.luscious
+package eu.kanade.tachiyomi.multisrc.luscious
 
 import com.github.salomonbrys.kotson.addProperty
 import com.github.salomonbrys.kotson.fromJson
@@ -28,17 +28,35 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class Luscious(override val lang: String, private val lusLang: String) : HttpSource() {
-
-    override val baseUrl: String = "https://www.luscious.net"
-    override val name: String = "Luscious"
+abstract class Luscious(
+    override val name: String,
+    override val baseUrl: String,
+    override val lang: String ) : HttpSource() {
+  
+  //Based on Luscios single source extension form https://github.com/tachiyomiorg/tachiyomi-extensions/commit/aacf56d0c0ddb173372aac69d798ae998f178377 
+  //with modifiaction to make it support multisrc
+  
     override val supportsLatest: Boolean = true
-
-    private val apiBaseUrl: String = "https://api.luscious.net/graphql/nobatch/"
-
+    private val apiBaseUrl: String = "$baseUrl/graphql/nobatch/"
     private val gson = Gson()
-
     override val client: OkHttpClient = network.cloudflareClient
+    private val lusLang: String = lusLang(lang)
+    private fun lusLang(lang: String): String {
+        return when (lang) {
+            "en" -> "1"
+            "ja" -> "2"
+            "es" -> "3"
+            "it" -> "4"
+            "de" -> "5"
+            "fr" -> "6"
+            "zh" -> "8"
+            "ko" -> "9"
+            "pt" -> "100"
+            "th" -> "101"
+            else -> "99"
+        }
+    }
+
 
     // Common
 
@@ -273,7 +291,7 @@ class Luscious(override val lang: String, private val lusLang: String) : HttpSou
         val document = response.asJsoup()
         return SManga.create().apply {
 
-            artist = document.select(".o-tag--category:contains(Artist:) .o-tag")?.joinToString() { it.text() }
+            artist = document.select(".o-tag--category:contains(Artist:) .o-tag")?.joinToString { it.text() }
             author = artist
 
             genre = parseMangaGenre(document)
@@ -387,7 +405,7 @@ class Luscious(override val lang: String, private val lusLang: String) : HttpSou
         SelectFilterOption("Date - Upcoming", "date_upcoming"),
         SelectFilterOption("Date - Trending", "date_trending"),
         SelectFilterOption("Date - Featured", "date_featured"),
-        SelectFilterOption("Date - Last Viewed", "date_last_interaction"),
+        SelectFilterOption("Date - Last Viewed", "date_last_interaction")
     )
 
     fun getAlbumTypeFilters() = listOf(
