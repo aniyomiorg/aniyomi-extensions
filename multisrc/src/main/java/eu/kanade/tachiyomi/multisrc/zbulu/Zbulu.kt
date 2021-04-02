@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.all.zbulu
+package eu.kanade.tachiyomi.multisrc.zbulu
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter
@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 abstract class Zbulu(
     override val name: String,
     override val baseUrl: String,
-    override val lang: String = "en"
+    override val lang: String
 ) : ParsedHttpSource() {
 
     override val supportsLatest = true
