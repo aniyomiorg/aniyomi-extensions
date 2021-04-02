@@ -1,6 +1,8 @@
-package eu.kanade.tachiyomi.extension.en.hniscantraden
+package eu.kanade.tachiyomi.extension.all.hniscantrad
 
 import eu.kanade.tachiyomi.multisrc.foolslide.FoolSlide
+import eu.kanade.tachiyomi.source.Source
+import eu.kanade.tachiyomi.source.SourceFactory
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
@@ -10,6 +12,13 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Element
 
+class HNIScantradFactory : SourceFactory {
+    override fun createSources(): List<Source> = listOf(
+        HNIScantradFR(),
+        HNIScantradEN(),
+    )
+}
+class HNIScantradFR : FoolSlide("HNI-Scantrad", "https://hni-scantrad.com", "fr", "/lel")
 class HNIScantradEN : FoolSlide("HNI-Scantrad", "https://hni-scantrad.com", "en", "/eng/lel") {
     override val supportsLatest = false
     override fun popularMangaRequest(page: Int) = GET(baseUrl + urlModifier, headers)
