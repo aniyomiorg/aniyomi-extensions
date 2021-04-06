@@ -540,6 +540,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Sani-Go",
+    "pkg": "eu.kanade.tachiyomi.extension.ar.sanigo",
+    "apk": "tachiyomi-ar.sanigo-v1.2.2.apk",
+    "lang": "ar",
+    "code": 2,
+    "version": "1.2.2",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Shqqaa Manga",
     "pkg": "eu.kanade.tachiyomi.extension.ar.shqqaa",
     "apk": "tachiyomi-ar.shqqaa-v1.2.2.apk",
@@ -753,6 +762,15 @@
     "lang": "en",
     "code": 3,
     "version": "1.2.3",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Comic Star",
+    "pkg": "eu.kanade.tachiyomi.extension.en.comicstar",
+    "apk": "tachiyomi-en.comicstar-v1.2.2.apk",
+    "lang": "en",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
@@ -1757,10 +1775,10 @@
   {
     "name": "Tachiyomi: MangaRave",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangarave",
-    "apk": "tachiyomi-en.mangarave-v1.2.2.apk",
+    "apk": "tachiyomi-en.mangarave-v1.2.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 0
   },
   {
@@ -2810,10 +2828,10 @@
   {
     "name": "Tachiyomi: Reset Scans",
     "pkg": "eu.kanade.tachiyomi.extension.en.resetscans",
-    "apk": "tachiyomi-en.resetscans-v1.2.3.apk",
+    "apk": "tachiyomi-en.resetscans-v1.2.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "1.2.3",
+    "code": 4,
+    "version": "1.2.4",
     "nsfw": 0
   },
   {
@@ -2855,10 +2873,10 @@
   {
     "name": "Tachiyomi: ShoujoHearts",
     "pkg": "eu.kanade.tachiyomi.extension.en.shoujohearts",
-    "apk": "tachiyomi-en.shoujohearts-v1.2.2.apk",
+    "apk": "tachiyomi-en.shoujohearts-v1.2.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 0
   },
   {
@@ -3264,6 +3282,15 @@
     "lang": "en",
     "code": 1,
     "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: XuN Scans",
+    "pkg": "eu.kanade.tachiyomi.extension.en.xunscans",
+    "apk": "tachiyomi-en.xunscans-v1.2.2.apk",
+    "lang": "en",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
