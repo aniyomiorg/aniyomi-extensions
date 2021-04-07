@@ -1035,15 +1035,6 @@
     "nsfw": 1
   },
   {
-    "name": "Tachiyomi: Helvetica Scans",
-    "pkg": "eu.kanade.tachiyomi.extension.en.helveticascans",
-    "apk": "tachiyomi-en.helveticascans-v1.2.1.apk",
-    "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
-    "nsfw": 0
-  },
-  {
     "name": "Tachiyomi: Hentai2Read",
     "pkg": "eu.kanade.tachiyomi.extension.en.hentai2read",
     "apk": "tachiyomi-en.hentai2read-v1.2.12.apk",
@@ -2376,15 +2367,6 @@
     "nsfw": 0
   },
   {
-    "name": "Tachiyomi: NTS Void Scans",
-    "pkg": "eu.kanade.tachiyomi.extension.en.ntsvoidscans",
-    "apk": "tachiyomi-en.ntsvoidscans-v1.2.2.apk",
-    "lang": "en",
-    "code": 2,
-    "version": "1.2.2",
-    "nsfw": 0
-  },
-  {
     "name": "Tachiyomi: Nux Scans",
     "pkg": "eu.kanade.tachiyomi.extension.en.nuxscans",
     "apk": "tachiyomi-en.nuxscans-v1.2.1.apk",
@@ -2891,10 +2873,10 @@
   {
     "name": "Tachiyomi: Silent Manga Audition",
     "pkg": "eu.kanade.tachiyomi.extension.en.silentmangaaudition",
-    "apk": "tachiyomi-en.silentmangaaudition-v1.2.1.apk",
+    "apk": "tachiyomi-en.silentmangaaudition-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
