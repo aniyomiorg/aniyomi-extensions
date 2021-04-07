@@ -288,12 +288,21 @@
     "nsfw": 0
   },
   {
-    "name": "Tachiyomi: Webtoons",
+    "name": "Tachiyomi: Webtoons.com",
     "pkg": "eu.kanade.tachiyomi.extension.all.webtoons",
-    "apk": "tachiyomi-all.webtoons-v1.2.26.apk",
+    "apk": "tachiyomi-all.webtoons-v1.2.27.apk",
     "lang": "all",
-    "code": 26,
-    "version": "1.2.26",
+    "code": 27,
+    "version": "1.2.27",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Webtoons.com Translations",
+    "pkg": "eu.kanade.tachiyomi.extension.all.webtoonstranslate",
+    "apk": "tachiyomi-all.webtoonstranslate-v1.2.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "1.2.1",
     "nsfw": 0
   },
   {
@@ -3438,6 +3447,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: LeerMangasXYZ",
+    "pkg": "eu.kanade.tachiyomi.extension.es.leermangasxyz",
+    "apk": "tachiyomi-es.leermangasxyz-v1.2.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: MangaMx",
     "pkg": "eu.kanade.tachiyomi.extension.es.mangamx",
     "apk": "tachiyomi-es.mangamx-v1.2.10.apk",
@@ -5168,10 +5186,10 @@
   {
     "name": "Tachiyomi: Manga Diyari",
     "pkg": "eu.kanade.tachiyomi.extension.tr.mangadiyari",
-    "apk": "tachiyomi-tr.mangadiyari-v1.2.2.apk",
+    "apk": "tachiyomi-tr.mangadiyari-v1.2.3.apk",
     "lang": "tr",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 0
   },
   {
@@ -5460,6 +5478,15 @@
     "lang": "zh",
     "code": 16,
     "version": "1.2.16",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Dongman Manhua",
+    "pkg": "eu.kanade.tachiyomi.extension.zh.dongmanmanhua",
+    "apk": "tachiyomi-zh.dongmanmanhua-v1.2.1.apk",
+    "lang": "zh",
+    "code": 1,
+    "version": "1.2.1",
     "nsfw": 0
   },
   {
