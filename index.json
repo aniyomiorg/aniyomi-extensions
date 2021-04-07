@@ -3602,10 +3602,10 @@
   {
     "name": "Tachiyomi: Mangakawaii",
     "pkg": "eu.kanade.tachiyomi.extension.fr.mangakawaii",
-    "apk": "tachiyomi-fr.mangakawaii-v1.2.26.apk",
+    "apk": "tachiyomi-fr.mangakawaii-v1.2.27.apk",
     "lang": "fr",
-    "code": 26,
-    "version": "1.2.26",
+    "code": 27,
+    "version": "1.2.27",
     "nsfw": 0
   },
   {
@@ -4572,6 +4572,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Leitor.net",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.leitornet",
+    "apk": "tachiyomi-pt.leitornet-v1.2.2.apk",
+    "lang": "pt",
+    "code": 2,
+    "version": "1.2.2",
+    "nsfw": 1
+  },
+  {
     "name": "Tachiyomi: Mangá Host",
     "pkg": "eu.kanade.tachiyomi.extension.pt.mangahost",
     "apk": "tachiyomi-pt.mangahost-v1.2.19.apk",
@@ -4581,12 +4590,12 @@
     "nsfw": 0
   },
   {
-    "name": "Tachiyomi: mangásPROJECT",
-    "pkg": "eu.kanade.tachiyomi.extension.pt.mangasproject",
-    "apk": "tachiyomi-pt.mangasproject-v1.2.18.apk",
+    "name": "Tachiyomi: Mangá Livre",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.mangalivre",
+    "apk": "tachiyomi-pt.mangalivre-v1.2.2.apk",
     "lang": "pt",
-    "code": 18,
-    "version": "1.2.18",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 1
   },
   {
@@ -4732,6 +4741,15 @@
     "code": 1,
     "version": "1.2.1",
     "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Toonei",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.toonei",
+    "apk": "tachiyomi-pt.toonei-v1.2.2.apk",
+    "lang": "pt",
+    "code": 2,
+    "version": "1.2.2",
+    "nsfw": 1
   },
   {
     "name": "Tachiyomi: Tsuki Mangás",
