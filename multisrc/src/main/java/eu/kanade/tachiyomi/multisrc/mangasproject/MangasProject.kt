@@ -1,11 +1,10 @@
-package eu.kanade.tachiyomi.extension.pt.mangasproject
+package eu.kanade.tachiyomi.multisrc.mangasproject
 
 import com.github.salomonbrys.kotson.array
 import com.github.salomonbrys.kotson.obj
 import com.github.salomonbrys.kotson.string
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import eu.kanade.tachiyomi.lib.ratelimit.RateLimitInterceptor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -31,16 +30,16 @@ import java.util.concurrent.TimeUnit
 
 abstract class MangasProject(
     override val name: String,
-    override val baseUrl: String
+    override val baseUrl: String,
+    override val lang: String
 ) : HttpSource() {
 
-    override val lang = "pt-BR"
 
     override val supportsLatest = true
 
     // Sometimes the site is slow.
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
-        .addInterceptor(RateLimitInterceptor(5, 1, TimeUnit.SECONDS))
+        //.addInterceptor(RateLimitInterceptor(5, 1, TimeUnit.SECONDS))
         .connectTimeout(1, TimeUnit.MINUTES)
         .readTimeout(1, TimeUnit.MINUTES)
         .writeTimeout(1, TimeUnit.MINUTES)
@@ -279,7 +278,7 @@ abstract class MangasProject(
             .mapIndexed { i, obj -> Page(i, chapterUrl, obj.string) }
     }
 
-    protected open fun getChapterUrl(response: Response): String {
+    open fun getChapterUrl(response: Response): String {
         return response.request().url().toString()
     }
 
