@@ -1,6 +1,7 @@
-package eu.kanade.tachiyomi.extension.all.webtoons
+package eu.kanade.tachiyomi.extension.zh.dongmanmanhua
 
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.multisrc.webtoons.Webtoons
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
@@ -13,10 +14,7 @@ import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class DongmanManhua : WebtoonsDefault("zh", "", dateFormat = SimpleDateFormat("yyyy-M-d", Locale.ENGLISH)) {
-    override val baseUrl = "https://www.dongmanmanhua.cn"
-
-    override val name = "Dongman Manhua"
+class DongmanManhua : Webtoons("Dongman Manhua", "https://www.dongmanmanhua.cn", "zh", "", dateFormat = SimpleDateFormat("yyyy-M-d", Locale.ENGLISH)) {
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
         .removeAll("Referer")

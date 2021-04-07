@@ -1,12 +1,10 @@
-package eu.kanade.tachiyomi.extension.all.webtoons
+package eu.kanade.tachiyomi.multisrc.webtoons
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.Filter.Header
 import eu.kanade.tachiyomi.source.model.Filter.Select
 import eu.kanade.tachiyomi.source.model.Filter.Separator
 import eu.kanade.tachiyomi.source.model.FilterList
-import eu.kanade.tachiyomi.source.model.MangasPage
-import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Cookie
@@ -16,19 +14,25 @@ import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.json.JSONObject
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.text.SimpleDateFormat
+import eu.kanade.tachiyomi.source.model.Page
+import eu.kanade.tachiyomi.source.model.SChapter
+import eu.kanade.tachiyomi.source.model.SManga
+import eu.kanade.tachiyomi.source.model.MangasPage
+import java.util.Locale
 import java.util.Calendar
 
-abstract class Webtoons(
+open class Webtoons(
+    override val name: String,
+    override val baseUrl: String,
     override val lang: String,
     open val langCode: String = lang,
-    open val localeForCookie: String = lang
+    open val localeForCookie: String = lang,
+    private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMM d, yyyy", Locale.ENGLISH)
 ) : ParsedHttpSource() {
-
-    override val name = "Webtoons.com"
-
-    override val baseUrl = "https://www.webtoons.com"
 
     override val supportsLatest = true
 
@@ -178,6 +182,8 @@ abstract class Webtoons(
         )
     }
 
+    override fun chapterListSelector() = "ul#_episodeList li[id*=episode]"
+
     private class SearchType(vals: Array<Pair<String, String>>) : UriPartFilter("Official or Challenge", vals)
 
     private fun getOfficialList() = arrayOf(
@@ -189,5 +195,49 @@ abstract class Webtoons(
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :
         Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
+    }
+
+    override fun chapterFromElement(element: Element): SChapter {
+        val urlElement = element.select("a")
+
+        val chapter = SChapter.create()
+        chapter.setUrlWithoutDomain(urlElement.attr("href"))
+        chapter.name = element.select("a > div.row > div.info > p.sub_title > span.ellipsis").text()
+        val select = element.select("a > div.row > div.num")
+        if (select.isNotEmpty()) {
+            chapter.name += " Ch. " + select.text().substringAfter("#")
+        }
+        if (element.select(".ico_bgm").isNotEmpty()) {
+            chapter.name += " ♫"
+        }
+        chapter.date_upload = element.select("a > div.row > div.info > p.date").text()?.let { chapterParseDate(it) } ?: 0
+        return chapter
+    }
+
+    open fun chapterParseDate(date: String): Long {
+        return dateFormat.parse(date)?.time ?: 0
+    }
+    override fun chapterListRequest(manga: SManga) = GET("https://m.webtoons.com" + manga.url, mobileHeaders)
+
+    override fun pageListParse(document: Document): List<Page> {
+        val pages = document.select("div#_imageList > img").mapIndexed { i, element -> Page(i, "", element.attr("data-url")) }
+
+        if (pages.isNotEmpty()) { return pages }
+
+        val docString = document.toString()
+
+        val docUrlRegex = Regex("documentURL:.*?'(.*?)'")
+        val motiontoonPathRegex = Regex("jpg:.*?'(.*?)\\{")
+
+        val docUrl = docUrlRegex.find(docString)!!.destructured.toList()[0]
+        val motiontoonPath = motiontoonPathRegex.find(docString)!!.destructured.toList()[0]
+
+        val motiontoonJson = JSONObject(client.newCall(GET(docUrl, headers)).execute().body()!!.string()).getJSONObject("assets").getJSONObject("image")
+
+        val keys = motiontoonJson.keys().asSequence().toList().filter { it.contains("layer") }
+
+        return keys.mapIndexed { i, key ->
+            Page(i, "", motiontoonPath + motiontoonJson.getString(key))
+        }
     }
 }

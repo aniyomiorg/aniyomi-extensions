@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.all.webtoons
+package eu.kanade.tachiyomi.multisrc.webtoons
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -17,7 +17,12 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import java.util.ArrayList
 
-open class WebtoonsTranslate(override val lang: String, private val translateLangCode: String, languageNameExtra: String = "") : Webtoons(lang) {
+open class WebtoonsTranslate (
+    override val name: String,
+    override val baseUrl: String,
+    override val lang: String,
+    private val translateLangCode: String
+    ) : Webtoons(name, baseUrl, lang) {
     // popularMangaRequest already returns manga sorted by latest update
     override val supportsLatest = false
 
@@ -29,7 +34,6 @@ open class WebtoonsTranslate(override val lang: String, private val translateLan
 
     private val pageSize = 24
 
-    override val name = "Webtoons.com Translations$languageNameExtra"
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
         .removeAll("Referer")
