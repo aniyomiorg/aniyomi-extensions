@@ -4556,10 +4556,10 @@
   {
     "name": "Tachiyomi: Leitor.net",
     "pkg": "eu.kanade.tachiyomi.extension.pt.leitornet",
-    "apk": "tachiyomi-pt.leitornet-v1.2.2.apk",
+    "apk": "tachiyomi-pt.leitornet-v1.2.3.apk",
     "lang": "pt",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 1
   },
   {
@@ -4574,10 +4574,10 @@
   {
     "name": "Tachiyomi: Mangá Livre",
     "pkg": "eu.kanade.tachiyomi.extension.pt.mangalivre",
-    "apk": "tachiyomi-pt.mangalivre-v1.2.2.apk",
+    "apk": "tachiyomi-pt.mangalivre-v1.2.3.apk",
     "lang": "pt",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 1
   },
   {
@@ -4727,10 +4727,10 @@
   {
     "name": "Tachiyomi: Toonei",
     "pkg": "eu.kanade.tachiyomi.extension.pt.toonei",
-    "apk": "tachiyomi-pt.toonei-v1.2.2.apk",
+    "apk": "tachiyomi-pt.toonei-v1.2.3.apk",
     "lang": "pt",
-    "code": 2,
-    "version": "1.2.2",
+    "code": 3,
+    "version": "1.2.3",
     "nsfw": 1
   },
   {
