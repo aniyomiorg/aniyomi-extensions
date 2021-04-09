@@ -702,6 +702,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: CatManga",
+    "pkg": "eu.kanade.tachiyomi.extension.en.catmanga",
+    "apk": "tachiyomi-en.catmanga-v1.2.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "1.2.1",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: CatOnHeadTranslations",
     "pkg": "eu.kanade.tachiyomi.extension.en.catonheadtranslations",
     "apk": "tachiyomi-en.catonheadtranslations-v1.2.2.apk",
@@ -4925,10 +4934,10 @@
   {
     "name": "Tachiyomi: Mintmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.mintmanga",
-    "apk": "tachiyomi-ru.mintmanga-v1.2.25.apk",
+    "apk": "tachiyomi-ru.mintmanga-v1.2.26.apk",
     "lang": "ru",
-    "code": 25,
-    "version": "1.2.25",
+    "code": 26,
+    "version": "1.2.26",
     "nsfw": 0
   },
   {
@@ -4943,10 +4952,10 @@
   {
     "name": "Tachiyomi: Readmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.readmanga",
-    "apk": "tachiyomi-ru.readmanga-v1.2.23.apk",
+    "apk": "tachiyomi-ru.readmanga-v1.2.24.apk",
     "lang": "ru",
-    "code": 23,
-    "version": "1.2.23",
+    "code": 24,
+    "version": "1.2.24",
     "nsfw": 0
   },
   {
