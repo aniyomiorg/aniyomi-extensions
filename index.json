@@ -4880,10 +4880,10 @@
   {
     "name": "Tachiyomi: MangaLib",
     "pkg": "eu.kanade.tachiyomi.extension.ru.libmanga",
-    "apk": "tachiyomi-ru.libmanga-v1.2.35.apk",
+    "apk": "tachiyomi-ru.libmanga-v1.2.36.apk",
     "lang": "ru",
-    "code": 35,
-    "version": "1.2.35",
+    "code": 36,
+    "version": "1.2.36",
     "nsfw": 0
   },
   {
