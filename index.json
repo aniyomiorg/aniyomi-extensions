@@ -704,10 +704,10 @@
   {
     "name": "Tachiyomi: CatManga",
     "pkg": "eu.kanade.tachiyomi.extension.en.catmanga",
-    "apk": "tachiyomi-en.catmanga-v1.2.1.apk",
+    "apk": "tachiyomi-en.catmanga-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 0
   },
   {
