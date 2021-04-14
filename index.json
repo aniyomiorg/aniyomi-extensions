@@ -4952,10 +4952,10 @@
   {
     "name": "Tachiyomi: Readmanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.readmanga",
-    "apk": "tachiyomi-ru.readmanga-v1.2.24.apk",
+    "apk": "tachiyomi-ru.readmanga-v1.2.25.apk",
     "lang": "ru",
-    "code": 24,
-    "version": "1.2.24",
+    "code": 25,
+    "version": "1.2.25",
     "nsfw": 0
   },
   {
