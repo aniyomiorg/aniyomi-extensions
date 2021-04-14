@@ -2027,10 +2027,10 @@
   {
     "name": "Tachiyomi: Manhua Plus",
     "pkg": "eu.kanade.tachiyomi.extension.en.manhuaplus",
-    "apk": "tachiyomi-en.manhuaplus-v1.2.5.apk",
+    "apk": "tachiyomi-en.manhuaplus-v1.2.6.apk",
     "lang": "en",
-    "code": 5,
-    "version": "1.2.5",
+    "code": 6,
+    "version": "1.2.6",
     "nsfw": 0
   },
   {
@@ -4574,10 +4574,10 @@
   {
     "name": "Tachiyomi: Mangá Host",
     "pkg": "eu.kanade.tachiyomi.extension.pt.mangahost",
-    "apk": "tachiyomi-pt.mangahost-v1.2.21.apk",
+    "apk": "tachiyomi-pt.mangahost-v1.2.22.apk",
     "lang": "pt",
-    "code": 21,
-    "version": "1.2.21",
+    "code": 22,
+    "version": "1.2.22",
     "nsfw": 0
   },
   {
