@@ -3557,10 +3557,10 @@
   {
     "name": "Tachiyomi: Japscan",
     "pkg": "eu.kanade.tachiyomi.extension.fr.japscan",
-    "apk": "tachiyomi-fr.japscan-v1.2.25.apk",
+    "apk": "tachiyomi-fr.japscan-v1.2.26.apk",
     "lang": "fr",
-    "code": 25,
-    "version": "1.2.25",
+    "code": 26,
+    "version": "1.2.26",
     "nsfw": 0
   },
   {
@@ -4187,10 +4187,10 @@
   {
     "name": "Tachiyomi: Mangaworld",
     "pkg": "eu.kanade.tachiyomi.extension.it.mangaworld",
-    "apk": "tachiyomi-it.mangaworld-v1.2.3.apk",
+    "apk": "tachiyomi-it.mangaworld-v1.2.4.apk",
     "lang": "it",
-    "code": 3,
-    "version": "1.2.3",
+    "code": 4,
+    "version": "1.2.4",
     "nsfw": 1
   },
   {
