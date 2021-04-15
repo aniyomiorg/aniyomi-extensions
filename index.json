@@ -3593,10 +3593,10 @@
   {
     "name": "Tachiyomi: Mangakawaii",
     "pkg": "eu.kanade.tachiyomi.extension.fr.mangakawaii",
-    "apk": "tachiyomi-fr.mangakawaii-v1.2.29.apk",
+    "apk": "tachiyomi-fr.mangakawaii-v1.2.30.apk",
     "lang": "fr",
-    "code": 29,
-    "version": "1.2.29",
+    "code": 30,
+    "version": "1.2.30",
     "nsfw": 0
   },
   {
