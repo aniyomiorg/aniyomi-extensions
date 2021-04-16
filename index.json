@@ -2252,10 +2252,10 @@
   {
     "name": "Tachiyomi: Multporn",
     "pkg": "eu.kanade.tachiyomi.extension.en.multporn",
-    "apk": "tachiyomi-en.multporn-v1.2.1.apk",
+    "apk": "tachiyomi-en.multporn-v1.2.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 1
   },
   {
@@ -4070,10 +4070,10 @@
   {
     "name": "Tachiyomi: Sekaikomik",
     "pkg": "eu.kanade.tachiyomi.extension.id.sekaikomik",
-    "apk": "tachiyomi-id.sekaikomik-v1.2.6.apk",
+    "apk": "tachiyomi-id.sekaikomik-v1.2.7.apk",
     "lang": "id",
-    "code": 6,
-    "version": "1.2.6",
+    "code": 7,
+    "version": "1.2.7",
     "nsfw": 1
   },
   {
