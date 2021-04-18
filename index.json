@@ -4961,10 +4961,10 @@
   {
     "name": "Tachiyomi: Remanga",
     "pkg": "eu.kanade.tachiyomi.extension.ru.remanga",
-    "apk": "tachiyomi-ru.remanga-v1.2.19.apk",
+    "apk": "tachiyomi-ru.remanga-v1.2.20.apk",
     "lang": "ru",
-    "code": 19,
-    "version": "1.2.19",
+    "code": 20,
+    "version": "1.2.20",
     "nsfw": 0
   },
   {
