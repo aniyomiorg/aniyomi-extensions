@@ -4671,6 +4671,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Random Scan",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.randomscan",
+    "apk": "tachiyomi-pt.randomscan-v1.2.3.apk",
+    "lang": "pt",
+    "code": 3,
+    "version": "1.2.3",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Saikai Scan",
     "pkg": "eu.kanade.tachiyomi.extension.pt.saikaiscan",
     "apk": "tachiyomi-pt.saikaiscan-v1.2.5.apk",
@@ -4871,10 +4880,10 @@
   {
     "name": "Tachiyomi: MangaLib",
     "pkg": "eu.kanade.tachiyomi.extension.ru.libmanga",
-    "apk": "tachiyomi-ru.libmanga-v1.2.38.apk",
+    "apk": "tachiyomi-ru.libmanga-v1.2.39.apk",
     "lang": "ru",
-    "code": 38,
-    "version": "1.2.38",
+    "code": 39,
+    "version": "1.2.39",
     "nsfw": 0
   },
   {
