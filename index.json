@@ -4763,10 +4763,10 @@
   {
     "name": "Tachiyomi: Union Mangás",
     "pkg": "eu.kanade.tachiyomi.extension.pt.unionmangas",
-    "apk": "tachiyomi-pt.unionmangas-v1.2.20.apk",
+    "apk": "tachiyomi-pt.unionmangas-v1.2.21.apk",
     "lang": "pt",
-    "code": 20,
-    "version": "1.2.20",
+    "code": 21,
+    "version": "1.2.21",
     "nsfw": 0
   },
   {
@@ -4800,15 +4800,6 @@
     "name": "Tachiyomi: Yuri Verso",
     "pkg": "eu.kanade.tachiyomi.extension.pt.yuriverso",
     "apk": "tachiyomi-pt.yuriverso-v1.2.3.apk",
-    "lang": "pt",
-    "code": 3,
-    "version": "1.2.3",
-    "nsfw": 0
-  },
-  {
-    "name": "Tachiyomi: Zinnes",
-    "pkg": "eu.kanade.tachiyomi.extension.pt.zinnes",
-    "apk": "tachiyomi-pt.zinnes-v1.2.3.apk",
     "lang": "pt",
     "code": 3,
     "version": "1.2.3",
