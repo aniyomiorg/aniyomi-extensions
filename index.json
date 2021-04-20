@@ -4529,10 +4529,10 @@
   {
     "name": "Tachiyomi: HQ Dragon",
     "pkg": "eu.kanade.tachiyomi.extension.pt.hqdragon",
-    "apk": "tachiyomi-pt.hqdragon-v1.2.3.apk",
+    "apk": "tachiyomi-pt.hqdragon-v1.2.4.apk",
     "lang": "pt",
-    "code": 3,
-    "version": "1.2.3",
+    "code": 4,
+    "version": "1.2.4",
     "nsfw": 0
   },
   {
