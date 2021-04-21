@@ -2475,6 +2475,15 @@
     "nsfw": 1
   },
   {
+    "name": "Tachiyomi: Pornwha",
+    "pkg": "eu.kanade.tachiyomi.extension.en.pornwha",
+    "apk": "tachiyomi-en.pornwha-v1.2.3.apk",
+    "lang": "en",
+    "code": 3,
+    "version": "1.2.3",
+    "nsfw": 1
+  },
+  {
     "name": "Tachiyomi: Prime Manga",
     "pkg": "eu.kanade.tachiyomi.extension.en.primemanga",
     "apk": "tachiyomi-en.primemanga-v1.2.3.apk",
@@ -3546,6 +3555,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Fukushuu no Yuusha",
+    "pkg": "eu.kanade.tachiyomi.extension.fr.fukushuunoyuusha",
+    "apk": "tachiyomi-fr.fukushuunoyuusha-v1.2.3.apk",
+    "lang": "fr",
+    "code": 3,
+    "version": "1.2.3",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Japanread",
     "pkg": "eu.kanade.tachiyomi.extension.fr.japanread",
     "apk": "tachiyomi-fr.japanread-v1.2.4.apk",
@@ -4563,6 +4581,15 @@
     "nsfw": 1
   },
   {
+    "name": "Tachiyomi: Little Monster Scan",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.littlemonsterscan",
+    "apk": "tachiyomi-pt.littlemonsterscan-v1.2.3.apk",
+    "lang": "pt",
+    "code": 3,
+    "version": "1.2.3",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Mangá Host",
     "pkg": "eu.kanade.tachiyomi.extension.pt.mangahost",
     "apk": "tachiyomi-pt.mangahost-v1.2.23.apk",
@@ -4673,10 +4700,10 @@
   {
     "name": "Tachiyomi: Random Scan",
     "pkg": "eu.kanade.tachiyomi.extension.pt.randomscan",
-    "apk": "tachiyomi-pt.randomscan-v1.2.3.apk",
+    "apk": "tachiyomi-pt.randomscan-v1.2.4.apk",
     "lang": "pt",
-    "code": 3,
-    "version": "1.2.3",
+    "code": 4,
+    "version": "1.2.4",
     "nsfw": 0
   },
   {
@@ -4734,6 +4761,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: Three Queens Scanlator",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.threequeensscanlator",
+    "apk": "tachiyomi-pt.threequeensscanlator-v1.2.3.apk",
+    "lang": "pt",
+    "code": 3,
+    "version": "1.2.3",
+    "nsfw": 0
+  },
+  {
     "name": "Tachiyomi: Toonei",
     "pkg": "eu.kanade.tachiyomi.extension.pt.toonei",
     "apk": "tachiyomi-pt.toonei-v1.2.3.apk",
@@ -4773,6 +4809,24 @@
     "name": "Tachiyomi: War Queen Scan",
     "pkg": "eu.kanade.tachiyomi.extension.pt.warqueenscan",
     "apk": "tachiyomi-pt.warqueenscan-v1.2.3.apk",
+    "lang": "pt",
+    "code": 3,
+    "version": "1.2.3",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Winter Scan",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.winterscan",
+    "apk": "tachiyomi-pt.winterscan-v1.2.3.apk",
+    "lang": "pt",
+    "code": 3,
+    "version": "1.2.3",
+    "nsfw": 0
+  },
+  {
+    "name": "Tachiyomi: Wonderland",
+    "pkg": "eu.kanade.tachiyomi.extension.pt.wonderland",
+    "apk": "tachiyomi-pt.wonderland-v1.2.3.apk",
     "lang": "pt",
     "code": 3,
     "version": "1.2.3",
