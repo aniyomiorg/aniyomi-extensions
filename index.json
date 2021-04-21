@@ -4457,10 +4457,10 @@
   {
     "name": "Tachiyomi: Baixar Hentai",
     "pkg": "eu.kanade.tachiyomi.extension.pt.baixarhentai",
-    "apk": "tachiyomi-pt.baixarhentai-v1.2.1.apk",
+    "apk": "tachiyomi-pt.baixarhentai-v1.2.2.apk",
     "lang": "pt",
-    "code": 1,
-    "version": "1.2.1",
+    "code": 2,
+    "version": "1.2.2",
     "nsfw": 1
   },
   {
