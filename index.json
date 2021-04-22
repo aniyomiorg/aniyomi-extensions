@@ -882,15 +882,6 @@
     "nsfw": 1
   },
   {
-    "name": "Tachiyomi: 18LHPlus",
-    "pkg": "eu.kanade.tachiyomi.extension.en.eighteenlhplus",
-    "apk": "tachiyomi-en.eighteenlhplus-v1.2.2.apk",
-    "lang": "en",
-    "code": 2,
-    "version": "1.2.2",
-    "nsfw": 0
-  },
-  {
     "name": "Tachiyomi: 8Muses",
     "pkg": "eu.kanade.tachiyomi.extension.en.eightmuses",
     "apk": "tachiyomi-en.eightmuses-v1.2.2.apk",
@@ -1532,10 +1523,10 @@
   {
     "name": "Tachiyomi: MangaFast",
     "pkg": "eu.kanade.tachiyomi.extension.en.mangafast",
-    "apk": "tachiyomi-en.mangafast-v1.2.7.apk",
+    "apk": "tachiyomi-en.mangafast-v1.2.8.apk",
     "lang": "en",
-    "code": 7,
-    "version": "1.2.7",
+    "code": 8,
+    "version": "1.2.8",
     "nsfw": 0
   },
   {
@@ -2401,15 +2392,6 @@
     "code": 3,
     "version": "1.2.3",
     "nsfw": 1
-  },
-  {
-    "name": "Tachiyomi: One Time Scans",
-    "pkg": "eu.kanade.tachiyomi.extension.en.onetimescans",
-    "apk": "tachiyomi-en.onetimescans-v1.2.1.apk",
-    "lang": "en",
-    "code": 1,
-    "version": "1.2.1",
-    "nsfw": 0
   },
   {
     "name": "Tachiyomi: OnManga",
@@ -4281,15 +4263,6 @@
     "lang": "it",
     "code": 1,
     "version": "1.2.1",
-    "nsfw": 0
-  },
-  {
-    "name": "Tachiyomi: HanaScan (RawQQ)",
-    "pkg": "eu.kanade.tachiyomi.extension.ja.hanascanrawqq",
-    "apk": "tachiyomi-ja.hanascanrawqq-v1.2.2.apk",
-    "lang": "ja",
-    "code": 2,
-    "version": "1.2.2",
     "nsfw": 0
   },
   {
