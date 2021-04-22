@@ -44,18 +44,6 @@ jobs:
           mkdir -p ~/.gradle
           cp .github/runner-files/ci-gradle.properties ~/.gradle/gradle.properties
 
-      - name: Generate sources from the multi-source library
-        uses: eskatos/gradle-command-action@v1
-        env:
-          CI_PUSH: "true"
-        with:
-          build-root-directory: master
-          wrapper-directory: master
-          arguments: :multisrc:generateExtensions
-          wrapper-cache-enabled: true
-          dependencies-cache-enabled: true
-          configuration-cache-enabled: true
-
       - name: Build extensions
         uses: eskatos/gradle-command-action@v1
         env:
