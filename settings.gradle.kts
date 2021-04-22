@@ -13,8 +13,8 @@ project(":lib-dataimage").projectDir = File("lib/dataimage")
 if (System.getenv("CI") == null || System.getenv("CI_PUSH") == "true") {
     // Local development or full build for push
 
-    include(":multisrc")
-    project(":multisrc").projectDir = File("multisrc")
+    //include(":multisrc")
+    //project(":multisrc").projectDir = File("multisrc")
 
     // Loads all extensions
     File(rootDir, "src").eachDir { dir ->
@@ -25,13 +25,13 @@ if (System.getenv("CI") == null || System.getenv("CI_PUSH") == "true") {
         }
     }
     // Loads generated extensions from multisrc
-    File(rootDir, "generated-src").eachDir { dir ->
-        dir.eachDir { subdir ->
-            val name = ":extensions:multisrc:${dir.name}:${subdir.name}"
-            include(name)
-            project(name).projectDir = File("generated-src/${dir.name}/${subdir.name}")
-        }
-    }
+    //File(rootDir, "generated-src").eachDir { dir ->
+    //    dir.eachDir { subdir ->
+    //        val name = ":extensions:multisrc:${dir.name}:${subdir.name}"
+    //        include(name)
+    //        project(name).projectDir = File("generated-src/${dir.name}/${subdir.name}")
+    //    }
+    //}
 
     /**
      * If you're developing locally and only want to work with a single module,
@@ -47,7 +47,7 @@ if (System.getenv("CI") == null || System.getenv("CI_PUSH") == "true") {
     val isMultisrc = System.getenv("CI_MULTISRC") == "true"
     val lang = System.getenv("CI_MATRIX_LANG")
 
-    if (isMultisrc) {
+    /*if (isMultisrc) {
         include(":multisrc")
         project(":multisrc").projectDir = File("multisrc")
 
@@ -61,7 +61,7 @@ if (System.getenv("CI") == null || System.getenv("CI_PUSH") == "true") {
                 }
             }
         }
-    } else {
+    } else {*/
         // Loads all extensions
         File(rootDir, "src").eachDir { dir ->
             if (dir.name == lang) {
@@ -72,7 +72,7 @@ if (System.getenv("CI") == null || System.getenv("CI_PUSH") == "true") {
                 }
             }
         }
-    }
+    //}
 }
 
 inline fun File.eachDir(block: (File) -> Unit) {
