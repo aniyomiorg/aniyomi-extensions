@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'twodgirlstech'
+    pkgNameSuffix = 'en.twodgirlstech'
+    extClass = '.TwoDGirlsTech'
+    extVersionCode = 9
+    libVersion = '1.3'
+}
+
+apply from: "$rootDir/common.gradle"
