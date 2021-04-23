@@ -18,7 +18,7 @@ class TwoDGirlsTech : ParsedHttpSource() {
 
     override val name = "2dgirlstech"
 
-    override val baseUrl = "https://2dgirls.tech"
+    override val baseUrl = "https://xkcd.com"
 
     override val lang = "en"
 
