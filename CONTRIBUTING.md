@@ -88,7 +88,7 @@ apply from: "$rootDir/common.gradle"
 | Field | Description |
 | ----- | ----------- |
 | `extName` | The name of the extension. |
-| `pkgNameSuffix` | A unique suffix added to `eu.kanade.tachiyomi.extension`. The language and the site name should be enough. Remember your extension code implementation must be placed in this package. |
+| `pkgNameSuffix` | A unique suffix added to `eu.kanade.tachiyomi.animeextension`. The language and the site name should be enough. Remember your extension code implementation must be placed in this package. |
 | `extClass` | Points to the class that implements `Source`. You can use a relative path starting with a dot (the package name is the base path). This is used to find and instantiate the source(s). |
 | `extVersionCode` | The extension version code. This must be a positive integer and incremented with any change to the code. |
 | `libVersion` | The version of the [extensions library](https://github.com/tachiyomiorg/extensions-lib) used. |
@@ -341,7 +341,7 @@ os.makedirs(f"{package}/src")
 os.makedirs(f"{package}/res")
 
 with open(f"{package}/src/{source}.kt", "w") as f:
-    f.write(f"package eu.kanade.tachiyomi.extension.{lang}.{package}\n\n")
+    f.write(f"package eu.kanade.tachiyomi.animeextension.{lang}.{package}\n\n")
 ```
 
 ### Additional Notes

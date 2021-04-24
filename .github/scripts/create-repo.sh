@@ -20,7 +20,7 @@ for APK in ${APKS[@]}; do
     PKGNAME=$(echo $PACKAGE | grep -Po "package: name='\K[^']+")
     VCODE=$(echo $PACKAGE | grep -Po "versionCode='\K[^']+")
     VNAME=$(echo $PACKAGE | grep -Po "versionName='\K[^']+")
-    NSFW=$(echo $BADGING | grep -Po "tachiyomi.extension.nsfw' value='\K[^']+")
+    NSFW=$(echo $BADGING | grep -Po "tachiyomi.animeextension.nsfw' value='\K[^']+")
 
     APPLICATION=$(echo "$BADGING" | grep application:)
     LABEL=$(echo $APPLICATION | grep -Po "label='\K[^']+")

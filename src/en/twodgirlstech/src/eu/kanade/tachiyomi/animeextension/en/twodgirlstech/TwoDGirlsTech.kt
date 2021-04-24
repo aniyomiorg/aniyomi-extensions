@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.extension.en.twodgirlstech
+package eu.kanade.tachiyomi.animeextension.en.twodgirlstech
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.AnimesPage
