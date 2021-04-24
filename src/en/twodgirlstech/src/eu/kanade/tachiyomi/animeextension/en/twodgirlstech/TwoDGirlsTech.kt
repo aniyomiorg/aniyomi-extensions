@@ -6,7 +6,7 @@ import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SAnime
 import eu.kanade.tachiyomi.source.model.SEpisode
-import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import eu.kanade.tachiyomi.source.online.ParsedAnimeHttpSource
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -14,7 +14,7 @@ import rx.Observable
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class TwoDGirlsTech : ParsedHttpSource() {
+class TwoDGirlsTech : ParsedAnimeHttpSource() {
 
     override val name = "2dgirlstech"
 
