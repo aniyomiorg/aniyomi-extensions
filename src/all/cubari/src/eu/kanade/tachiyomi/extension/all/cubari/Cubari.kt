@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.extension.all.cubari
 
+import android.app.Application
 import android.os.Build
 import eu.kanade.tachiyomi.BuildConfig
 import eu.kanade.tachiyomi.network.GET
@@ -16,6 +17,8 @@ import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
 open class Cubari(override val lang: String) : HttpSource() {
 
@@ -247,10 +250,15 @@ open class Cubari(override val lang: String) : HttpSource() {
         val json = JSONObject(payload)
         val groups = json.getJSONObject("groups")
         val chapters = json.getJSONObject("chapters")
+        val seriesSlug = json.getJSONObject("slug")
+
 
         val chapterList = ArrayList<SChapter>()
 
         val iter = chapters.keys()
+        
+        val seriesPrefs = Injekt.get<Application>().getSharedPreferences("source_${id}_time_found:$seriesSlug", 0)
+        val seriesPrefsEditor = seriesPrefs.edit()
 
         while (iter.hasNext()) {
             val chapterNum = iter.next()
@@ -263,11 +271,32 @@ open class Cubari(override val lang: String) : HttpSource() {
                 val chapter = SChapter.create()
 
                 chapter.scanlator = groups.getString(groupNum)
+                
+                //Api for gist (and some others maybe) doesn't give a "release_date" so we will use the Manga update time. 
+                //So when new chapter comes the manga will go on top if sortinf is set to "Last Updated"
+                //Code by ivaniskandar (Implemented on CatManga extension.)
+                
                 if (chapterObj.has("release_date")) {
                     chapter.date_upload =
                         chapterObj.getJSONObject("release_date").getLong(groupNum) * 1000
+                } else {
+                    val currentTimeMillis = System.currentTimeMillis()
+                    if (!seriesPrefs.contains(chapterNum)) {
+                        seriesPrefsEditor.putLong(chapterNum, currentTimeMillis)
+                    }
+                    chapter.date_upload = seriesPrefs.getLong(chapterNum, currentTimeMillis)
                 }
-                chapter.name = chapterNum + " - " + chapterObj.getString("title")
+                chapter.name = if (chapterObj.has("volume")) {
+                    
+                    "Vol. " + chapterObj.getString("volume") + " Ch. " + chapterNum + " - " + chapterObj.getString("title")
+                    //Output "Vol. 1 Ch. 1 - Chapter Name"
+                    
+                } else {
+                
+                    "Ch. " + chapterNum + " - " + chapterObj.getString("title")
+                    //Output "Ch. 1 - Chapter Name"
+                    
+                }
                 chapter.chapter_number = chapterNum.toFloat()
                 chapter.url =
                     if (chapterGroups.optJSONArray(groupNum) != null) {
@@ -279,6 +308,7 @@ open class Cubari(override val lang: String) : HttpSource() {
             }
         }
 
+        seriesPrefsEditor.apply()
         return chapterList.reversed()
     }
 
