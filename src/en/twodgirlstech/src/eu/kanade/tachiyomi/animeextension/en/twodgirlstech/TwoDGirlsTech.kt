@@ -18,8 +18,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 import java.io.IOException
-import java.text.SimpleDateFormat
-import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -27,7 +25,7 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
 
     override val name = "2dgirlstech"
 
-    override val baseUrl = "https://2dgirls.tech/"
+    override val baseUrl = "https://2dgirls.tech"
 
     override val lang = "en"
 
@@ -39,7 +37,7 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
 
     suspend fun get(page: Int): AnimesPage {
         var hasNextPage = true
-        val request = GET(baseUrl + "api/popular/" + page)
+        val request = GET(baseUrl + "/api/popular/" + page)
         val arrayListDetails: ArrayList<SAnime> = ArrayList()
         return suspendCoroutine<AnimesPage> { continuation ->
             client.newCall(request).enqueue(object : Callback {
@@ -56,10 +54,9 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
                     for (i in 0 until(size - 1)) {
                         val anime = SAnime.create()
                         val jsonObjectDetail: JSONObject = jsonArrayInfo.getJSONObject(i)
-                        anime.url = "https://2dgirls.tech/api/details/" + jsonObjectDetail.getString("id")
                         anime.title = jsonObjectDetail.getString("title")
                         anime.thumbnail_url = jsonObjectDetail.getString("image")
-                        anime.setUrlWithoutDomain("api/details/" + jsonObjectDetail.getString("id"))
+                        anime.setUrlWithoutDomain("/api/detailshtml/" + jsonObjectDetail.getString("id"))
                         anime.artist = "Randall Munroe"
                         anime.author = "Randall Munroe"
                         anime.status = SAnime.ONGOING
@@ -75,21 +72,46 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
 
     override fun fetchSearchAnime(page: Int, query: String, filters: FilterList): Observable<AnimesPage> = Observable.just(AnimesPage(emptyList(), false))
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> = fetchPopularAnime(1)
-        .map { it.animes.first().apply { initialized = true } }
+    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
+        return Observable.just(anime)
+    }
 
-    override fun episodeListSelector() = "div#middleContainer.box a"
+    override fun episodeListSelector() = "div[id^=episode-]"
 
     override fun episodeFromElement(element: Element): SEpisode {
+        val id = element.id().split(":").last()
+        val episodeNumber = element.id().split("episode-").last().split(":").first()
         val episode = SEpisode.create()
-        episode.url = element.attr("href")
-        val number = episode.url.removeSurrounding("/")
-        episode.episode_number = number.toFloat()
-        episode.name = number + " - " + element.text()
-        episode.date_upload = element.attr("title").let {
-            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(it)?.time ?: 0L
+        episode.episode_number = episodeNumber.toFloat()
+        episode.name = "Episode $episodeNumber"
+        return runBlocking { getEpisode(episode, id, episodeNumber) }
+    }
+
+    suspend fun getEpisode(episode: SEpisode, id: String, episodeNumber: String): SEpisode {
+        val request = Request.Builder()
+            .url("$baseUrl/api/watching/$id/$episodeNumber")
+            .build()
+        return suspendCoroutine { continuation ->
+            client.newCall(request).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    throw e
+                }
+                override fun onResponse(call: Call, response: Response) {
+                    val strResponse = response.body()!!.string()
+                    // creating json object
+                    val json = JSONObject(strResponse)
+                    // creating json array
+                    val jsonArrayInfo: JSONArray = json.getJSONArray("links")
+                    val size: Int = jsonArrayInfo.length()
+                    for (i in 0 until(size - 1)) {
+                        val jsonObjectDetail: JSONObject = jsonArrayInfo.getJSONObject(i)
+                        if (jsonObjectDetail.getString("src").startsWith("https://storage.googleapis"))
+                            episode.url = jsonObjectDetail.getString("src")
+                    }
+                    continuation.resume(episode)
+                }
+            })
         }
-        return episode
     }
 
     override fun pageListParse(document: Document): List<Page> {
