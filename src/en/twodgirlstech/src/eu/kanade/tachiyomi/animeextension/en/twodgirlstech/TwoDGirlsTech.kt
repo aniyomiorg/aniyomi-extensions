@@ -7,34 +7,70 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SAnime
 import eu.kanade.tachiyomi.source.model.SEpisode
 import eu.kanade.tachiyomi.source.online.ParsedAnimeHttpSource
+import kotlinx.coroutines.runBlocking
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.Request
+import okhttp3.Response
+import org.json.JSONArray
+import org.json.JSONObject
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Locale
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 class TwoDGirlsTech : ParsedAnimeHttpSource() {
 
     override val name = "2dgirlstech"
 
-    override val baseUrl = "https://xkcd.com"
+    override val baseUrl = "https://2dgirls.tech/"
 
     override val lang = "en"
 
     override val supportsLatest = false
 
     override fun fetchPopularAnime(page: Int): Observable<AnimesPage> {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain("/archive")
-        anime.title = "xkcd"
-        anime.artist = "Randall Munroe"
-        anime.author = "Randall Munroe"
-        anime.status = SAnime.ONGOING
-        anime.description = "A webcomic of romance, sarcasm, math and language"
-        anime.thumbnail_url = thumbnailUrl
+        return Observable.just(runBlocking { get(page) })
+    }
 
-        return Observable.just(AnimesPage(arrayListOf(anime), false))
+    suspend fun get(page: Int): AnimesPage {
+        var hasNextPage = true
+        val request = GET(baseUrl + "api/popular/" + page)
+        val arrayListDetails: ArrayList<SAnime> = ArrayList()
+        return suspendCoroutine<AnimesPage> { continuation ->
+            client.newCall(request).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    throw e
+                }
+                override fun onResponse(call: Call, response: Response) {
+                    val strResponse = response.body()!!.string()
+                    // creating json object
+                    val json = JSONObject(strResponse)
+                    // creating json array
+                    val jsonArrayInfo: JSONArray = json.getJSONArray("results")
+                    val size: Int = jsonArrayInfo.length()
+                    for (i in 0 until(size - 1)) {
+                        val anime = SAnime.create()
+                        val jsonObjectDetail: JSONObject = jsonArrayInfo.getJSONObject(i)
+                        anime.url = "https://2dgirls.tech/api/details/" + jsonObjectDetail.getString("id")
+                        anime.title = jsonObjectDetail.getString("title")
+                        anime.thumbnail_url = jsonObjectDetail.getString("image")
+                        anime.setUrlWithoutDomain("api/details/" + jsonObjectDetail.getString("id"))
+                        anime.artist = "Randall Munroe"
+                        anime.author = "Randall Munroe"
+                        anime.status = SAnime.ONGOING
+                        anime.description = "A webcomic of romance, sarcasm, math and language"
+                        arrayListDetails.add(anime)
+                    }
+                    hasNextPage = (arrayListDetails.isNotEmpty())
+                    continuation.resume(AnimesPage(arrayListDetails, hasNextPage))
+                }
+            })
+        }
     }
 
     override fun fetchSearchAnime(page: Int, query: String, filters: FilterList): Observable<AnimesPage> = Observable.just(AnimesPage(emptyList(), false))
