@@ -1,13 +1,11 @@
-package eu.kanade.tachiyomi.extension.all.mmrcms
+package eu.kanade.tachiyomi.multisrc.mmrcms
 
 import android.annotation.SuppressLint
 import android.net.Uri
-import android.util.Base64
 import com.github.salomonbrys.kotson.array
 import com.github.salomonbrys.kotson.get
 import com.github.salomonbrys.kotson.string
 import com.google.gson.JsonParser
-import eu.kanade.tachiyomi.annotations.Nsfw
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
@@ -23,34 +21,92 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Element
 import rx.Observable
-import java.net.URLDecoder
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import com.github.salomonbrys.kotson.array
+import com.github.salomonbrys.kotson.bool
+import com.github.salomonbrys.kotson.string
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import android.util.Base64
+import java.net.URLDecoder
 
-open class MyMangaReaderCMSSource(
-    final override val lang: String,
-    final override val name: String,
-    final override val baseUrl: String,
-    final override val supportsLatest: Boolean,
-    private val itemUrl: String,
-    private val categoryMappings: List<Pair<String, String>>,
-    private val tagMappings: List<Pair<String, String>>?
+abstract class MMRCMS (
+    override val name: String,
+    override val baseUrl: String,
+    override val lang: String,
+    private val sourceInfo: String = "",
 ) : HttpSource() {
-    private val jsonParser = JsonParser()
+    open val jsonData = if(sourceInfo == "") {
+        SourceData.giveMetaData(baseUrl)
+    } else{
+        sourceInfo
+    }
+    /**
+     * Parse a List of JSON sources into a list of `MyMangaReaderCMSSource`s
+     *
+     * Example JSON :
+     * ```
+     *     {
+     *         "language": "en",
+     *         "name": "Example manga reader",
+     *         "base_url": "https://example.com",
+     *         "supports_latest": true,
+     *         "item_url": "https://example.com/manga/",
+     *         "categories": [
+     *             {"id": "stuff", "name": "Stuff"},
+     *             {"id": "test", "name": "Test"}
+     *         ],
+     *         "tags": [
+     *             {"id": "action", "name": "Action"},
+     *             {"id": "adventure", "name": "Adventure"}
+     *         ]
+     *     }
+     *
+     *
+     * Sources that do not supports tags may use `null` instead of a list of json objects
+     *
+     * @param sourceString The List of JSON strings 1 entry = one source
+     * @return The list of parsed sources
+     *
+     * isNSFW, language, name and base_url are no longer needed as that is handled by multisrc
+     * supports_latest, item_url, categories and tags are still needed
+     *
+     *
+     */
+    open val jsonObject = JsonParser.parseString(jsonData) as JsonObject
+    override val supportsLatest = jsonObject["supports_latest"].bool
+    open val itemUrl = jsonObject["item_url"].string
+    open val categoryMappings = mapToPairs(jsonObject["categories"].array)
+    open var tagMappings =  if (jsonObject["tags"].isJsonArray) {
+        mapToPairs(jsonObject["tags"].asJsonArray)
+    } else {
+        emptyList<Pair<String, String>>()
+    }
+
+    /**
+     * Map an array of JSON objects to pairs. Each JSON object must have
+     * the following properties:
+     *
+     * id: first item in pair
+     * name: second item in pair
+     *
+     * @param array The array to process
+     * @return The new list of pairs
+     */
+    open fun mapToPairs(array: JsonArray): List<Pair<String, String>> = array.map {
+        it as JsonObject
+
+        it["id"].string to it["name"].string
+    }
+
+
+
     private val itemUrlPath = Uri.parse(itemUrl).pathSegments.firstOrNull()
     private val parsedBaseUrl = Uri.parse(baseUrl)
 
-    /**
-     * Hardcode IDs for sources for which we altered name or lang
-     */
-    override val id: Long = when (name) {
-        "Comic Space" -> 1847392744200215680
-        "Mangás Yuri" -> 6456162511058446409
-        "AnimaRegia" -> 4378659695320121364
-        else -> super.id
-    }
 
     override val client: OkHttpClient = network.cloudflareClient.newBuilder()
         .connectTimeout(1, TimeUnit.MINUTES)
@@ -59,10 +115,7 @@ open class MyMangaReaderCMSSource(
         .build()
 
     override fun popularMangaRequest(page: Int): Request {
-        return when (name) {
-            "Utsukushii" -> GET("$baseUrl/manga-list", headers)
-            else -> GET("$baseUrl/filterList?page=$page&sortBy=views&asc=false", headers)
-        }
+        return GET("$baseUrl/filterList?page=$page&sortBy=views&asc=false", headers)
     }
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
@@ -111,7 +164,7 @@ open class MyMangaReaderCMSSource(
     override fun searchMangaParse(response: Response): MangasPage {
         return if (listOf("query", "q").any { it in response.request.url.queryParameterNames }) {
             // If a search query was specified, use search instead!
-            val jsonArray = jsonParser.parse(response.body!!.string()).let {
+            val jsonArray = JsonParser.parseString(response.body!!.string()).let {
                 if (name == "Mangas.pw") it.array else it["suggestions"].array
             }
             MangasPage(
@@ -214,7 +267,7 @@ open class MyMangaReaderCMSSource(
     }
 
     // Guess thumbnails on broken websites
-    private fun coverGuess(url: String?, mangaUrl: String): String? {
+    fun coverGuess(url: String?, mangaUrl: String): String? {
         return if (url?.endsWith("no-image.png") == true) {
             "$baseUrl/uploads/manga/${mangaUrl.substringAfterLast('/')}/cover/cover_250x350.jpg"
         } else {
@@ -222,7 +275,7 @@ open class MyMangaReaderCMSSource(
         }
     }
 
-    private fun getUrlWithoutBaseUrl(newUrl: String): String {
+    fun getUrlWithoutBaseUrl(newUrl: String): String {
         val parsedNewUrl = Uri.parse(newUrl)
         val newPathSegments = parsedNewUrl.pathSegments.toMutableList()
 
@@ -382,6 +435,7 @@ open class MyMangaReaderCMSSource(
             Page(i, "", url)
         }
 
+
     override fun imageUrlParse(response: Response) = throw UnsupportedOperationException("Unused method called!")
 
     private fun getInitialFilterList() = listOf<Filter<*>>(
@@ -415,7 +469,7 @@ open class MyMangaReaderCMSSource(
     override fun getFilterList(): FilterList {
         return when {
             name == "Mangas.pw" -> FilterList()
-            tagMappings != null -> {
+            tagMappings != emptyList<Pair<String, String>>()-> {
                 FilterList(
                     getInitialFilterList() + UriSelectFilter(
                         "Tag",
@@ -489,22 +543,3 @@ open class MyMangaReaderCMSSource(
         private val DATE_FORMAT = SimpleDateFormat("d MMM. yyyy", Locale.US)
     }
 }
-
-@Nsfw
-class MyMangaReaderCMSSourceNsfw(
-    lang: String,
-    name: String,
-    baseUrl: String,
-    supportsLatest: Boolean,
-    itemUrl: String,
-    categoryMappings: List<Pair<String, String>>,
-    tagMappings: List<Pair<String, String>>?
-) : MyMangaReaderCMSSource(
-    lang,
-    name,
-    baseUrl,
-    supportsLatest,
-    itemUrl,
-    categoryMappings,
-    tagMappings
-)
