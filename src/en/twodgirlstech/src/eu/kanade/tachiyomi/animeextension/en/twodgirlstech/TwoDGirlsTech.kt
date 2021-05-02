@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.twodgirlstech
 
+import android.util.Log
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.AnimesPage
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -37,7 +38,7 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
 
     suspend fun get(page: Int): AnimesPage {
         var hasNextPage = true
-        val request = GET(baseUrl + "/api/popular/" + page)
+        val request = GET("$baseUrl/api/popular/$page")
         val arrayListDetails: ArrayList<SAnime> = ArrayList()
         return suspendCoroutine<AnimesPage> { continuation ->
             client.newCall(request).enqueue(object : Callback {
@@ -51,16 +52,13 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
                     // creating json array
                     val jsonArrayInfo: JSONArray = json.getJSONArray("results")
                     val size: Int = jsonArrayInfo.length()
-                    for (i in 0 until(size - 1)) {
+                    for (i in 0 until size) {
                         val anime = SAnime.create()
                         val jsonObjectDetail: JSONObject = jsonArrayInfo.getJSONObject(i)
                         anime.title = jsonObjectDetail.getString("title")
                         anime.thumbnail_url = jsonObjectDetail.getString("image")
+                        runBlocking { setDetails(anime, jsonObjectDetail.getString("id")) }
                         anime.setUrlWithoutDomain("/api/detailshtml/" + jsonObjectDetail.getString("id"))
-                        anime.artist = "Randall Munroe"
-                        anime.author = "Randall Munroe"
-                        anime.status = SAnime.ONGOING
-                        anime.description = "A webcomic of romance, sarcasm, math and language"
                         arrayListDetails.add(anime)
                     }
                     hasNextPage = (arrayListDetails.isNotEmpty())
@@ -70,28 +68,41 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
         }
     }
 
-    override fun fetchSearchAnime(page: Int, query: String, filters: FilterList): Observable<AnimesPage> = Observable.just(AnimesPage(emptyList(), false))
-
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        return Observable.just(anime)
+    fun setDetails(anime: SAnime, id: String) {
+        val request = GET("$baseUrl/api/details/$id")
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                throw e
+            }
+            override fun onResponse(call: Call, response: Response) {
+                val strResponse = response.body()!!.string()
+                // creating json object
+                val json = JSONObject(strResponse)
+                // creating json array
+                val jsonArrayInfo: JSONArray = json.getJSONArray("results")
+                val size: Int = jsonArrayInfo.length()
+                for (i in 0..size - 1) {
+                    val jsonObjectDetail: JSONObject = jsonArrayInfo.getJSONObject(i)
+                    anime.genre = jsonObjectDetail.getString("genres")
+                    when (jsonObjectDetail.getString("status").replace("\\s".toRegex(), "")) {
+                        "Ongoing" -> anime.status = SAnime.ONGOING
+                        "Completed" -> anime.status = SAnime.COMPLETED
+                    }
+                    anime.description = jsonObjectDetail.getString("summary")
+                }
+            }
+        })
     }
 
-    override fun episodeListSelector() = "div[id^=episode-]"
-
-    override fun episodeFromElement(element: Element): SEpisode {
-        val id = element.id().split(":").last()
-        val episodeNumber = element.id().split("episode-").last().split(":").first()
-        val episode = SEpisode.create()
-        episode.episode_number = episodeNumber.toFloat()
-        episode.name = "Episode $episodeNumber"
-        return runBlocking { getEpisode(episode, id, episodeNumber) }
+    override fun fetchSearchAnime(page: Int, query: String, filters: FilterList): Observable<AnimesPage> {
+        return Observable.just(runBlocking { getSearch(page, query) })
     }
 
-    suspend fun getEpisode(episode: SEpisode, id: String, episodeNumber: String): SEpisode {
-        val request = Request.Builder()
-            .url("$baseUrl/api/watching/$id/$episodeNumber")
-            .build()
-        return suspendCoroutine { continuation ->
+    suspend fun getSearch(page: Int, query: String): AnimesPage {
+        var hasNextPage = true
+        val request = GET("$baseUrl/api/search/$query/$page")
+        val arrayListDetails: ArrayList<SAnime> = ArrayList()
+        return suspendCoroutine<AnimesPage> { continuation ->
             client.newCall(request).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
                     throw e
@@ -101,17 +112,55 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
                     // creating json object
                     val json = JSONObject(strResponse)
                     // creating json array
-                    val jsonArrayInfo: JSONArray = json.getJSONArray("links")
+                    val jsonArrayInfo: JSONArray = json.getJSONArray("results")
                     val size: Int = jsonArrayInfo.length()
-                    for (i in 0 until(size - 1)) {
+                    for (i in 0..size - 1) {
+                        val anime = SAnime.create()
                         val jsonObjectDetail: JSONObject = jsonArrayInfo.getJSONObject(i)
-                        if (jsonObjectDetail.getString("src").startsWith("https://storage.googleapis"))
-                            episode.url = jsonObjectDetail.getString("src")
+                        anime.title = jsonObjectDetail.getString("title")
+                        anime.thumbnail_url = jsonObjectDetail.getString("image")
+                        runBlocking { setDetails(anime, jsonObjectDetail.getString("id")) }
+                        anime.setUrlWithoutDomain("/api/detailshtml/" + jsonObjectDetail.getString("id"))
+                        arrayListDetails.add(anime)
                     }
-                    continuation.resume(episode)
+                    hasNextPage = (arrayListDetails.isNotEmpty())
+                    continuation.resume(AnimesPage(arrayListDetails, hasNextPage))
                 }
             })
         }
+    }
+    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
+        return Observable.just(anime)
+    }
+
+    override fun episodeListSelector() = "div[id^=episode-]"
+
+    override fun episodeFromElement(element: Element): SEpisode {
+        Log.i("episodefromelement", element.toString())
+        val id = element.id().split(":").last()
+        val episodeNumber = element.id().split("episode-").last().split(":").first()
+        val episode = SEpisode.create()
+        episode.episode_number = episodeNumber.toFloat()
+        episode.name = "Episode $episodeNumber"
+        episode.url = "/api/watchinghtml/$id/$episodeNumber"
+        return episode
+    }
+
+    override fun episodeLinkSelector() = "body"
+
+    override fun linkFromElement(element: Element): String {
+        Log.i("linkfromelement", element.toString())
+        var url = ""
+        val json = JSONObject(element.text())
+        val jsonArrayInfo: JSONArray = json.getJSONArray("links")
+        val size: Int = jsonArrayInfo.length()
+        for (i in 0..size - 1) {
+            val jsonObjectDetail: JSONObject = jsonArrayInfo.getJSONObject(i)
+            if (jsonObjectDetail.getString("src").startsWith("https://storage.googleapis"))
+                url = jsonObjectDetail.getString("src")
+            Log.i("bruhh", url)
+        }
+        return url
     }
 
     override fun pageListParse(document: Document): List<Page> {
@@ -198,7 +247,6 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
     override fun latestUpdatesSelector(): String = throw Exception("Not used")
 
     companion object {
-        const val thumbnailUrl = "https://fakeimg.pl/550x780/ffffff/6E7B91/?text=xkcd&font=museo"
         const val baseAltTextUrl = "https://fakeimg.pl/1500x2126/ffffff/000000/?text="
         const val baseAltTextPostUrl = "&font_size=42&font=museo"
     }
