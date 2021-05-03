@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.en.twodgirlstech
 
-import android.util.Log
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.AnimesPage
 import eu.kanade.tachiyomi.source.model.FilterList
@@ -24,7 +23,7 @@ import kotlin.coroutines.suspendCoroutine
 
 class TwoDGirlsTech : ParsedAnimeHttpSource() {
 
-    override val name = "2dgirlstech"
+    override val name = "2dgirls.tech"
 
     override val baseUrl = "https://2dgirls.tech"
 
@@ -57,7 +56,6 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
                         val jsonObjectDetail: JSONObject = jsonArrayInfo.getJSONObject(i)
                         anime.title = jsonObjectDetail.getString("title")
                         anime.thumbnail_url = jsonObjectDetail.getString("image")
-                        runBlocking { setDetails(anime, jsonObjectDetail.getString("id")) }
                         anime.setUrlWithoutDomain("/api/detailshtml/" + jsonObjectDetail.getString("id"))
                         arrayListDetails.add(anime)
                     }
@@ -68,30 +66,34 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
         }
     }
 
-    fun setDetails(anime: SAnime, id: String) {
-        val request = GET("$baseUrl/api/details/$id")
-        client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                throw e
-            }
-            override fun onResponse(call: Call, response: Response) {
-                val strResponse = response.body()!!.string()
-                // creating json object
-                val json = JSONObject(strResponse)
-                // creating json array
-                val jsonArrayInfo: JSONArray = json.getJSONArray("results")
-                val size: Int = jsonArrayInfo.length()
-                for (i in 0..size - 1) {
-                    val jsonObjectDetail: JSONObject = jsonArrayInfo.getJSONObject(i)
-                    anime.genre = jsonObjectDetail.getString("genres")
-                    when (jsonObjectDetail.getString("status").replace("\\s".toRegex(), "")) {
-                        "Ongoing" -> anime.status = SAnime.ONGOING
-                        "Completed" -> anime.status = SAnime.COMPLETED
-                    }
-                    anime.description = jsonObjectDetail.getString("summary")
+    suspend fun setDetails(anime: SAnime): SAnime {
+        val request = GET("$baseUrl/api/details/${anime.url.split("/api/detailshtml/").last()}")
+        return suspendCoroutine<SAnime> { continuation ->
+            client.newCall(request).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    throw e
                 }
-            }
-        })
+
+                override fun onResponse(call: Call, response: Response) {
+                    val strResponse = response.body()!!.string()
+                    // creating json object
+                    val json = JSONObject(strResponse)
+                    // creating json array
+                    val jsonArrayInfo: JSONArray = json.getJSONArray("results")
+                    val size: Int = jsonArrayInfo.length()
+                    for (i in 0..size - 1) {
+                        val jsonObjectDetail: JSONObject = jsonArrayInfo.getJSONObject(i)
+                        anime.genre = jsonObjectDetail.getString("genres")
+                        when (jsonObjectDetail.getString("status").replace("\\s".toRegex(), "")) {
+                            "Ongoing" -> anime.status = SAnime.ONGOING
+                            "Completed" -> anime.status = SAnime.COMPLETED
+                        }
+                        anime.description = jsonObjectDetail.getString("summary")
+                    }
+                    continuation.resume(anime)
+                }
+            })
+        }
     }
 
     override fun fetchSearchAnime(page: Int, query: String, filters: FilterList): Observable<AnimesPage> {
@@ -119,7 +121,6 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
                         val jsonObjectDetail: JSONObject = jsonArrayInfo.getJSONObject(i)
                         anime.title = jsonObjectDetail.getString("title")
                         anime.thumbnail_url = jsonObjectDetail.getString("image")
-                        runBlocking { setDetails(anime, jsonObjectDetail.getString("id")) }
                         anime.setUrlWithoutDomain("/api/detailshtml/" + jsonObjectDetail.getString("id"))
                         arrayListDetails.add(anime)
                     }
@@ -130,13 +131,12 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
         }
     }
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        return Observable.just(anime)
+        return Observable.just(runBlocking { setDetails(anime) })
     }
 
     override fun episodeListSelector() = "div[id^=episode-]"
 
     override fun episodeFromElement(element: Element): SEpisode {
-        Log.i("episodefromelement", element.toString())
         val id = element.id().split(":").last()
         val episodeNumber = element.id().split("episode-").last().split(":").first()
         val episode = SEpisode.create()
@@ -149,7 +149,6 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
     override fun episodeLinkSelector() = "body"
 
     override fun linkFromElement(element: Element): String {
-        Log.i("linkfromelement", element.toString())
         var url = ""
         val json = JSONObject(element.text())
         val jsonArrayInfo: JSONArray = json.getJSONArray("links")
@@ -158,7 +157,6 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
             val jsonObjectDetail: JSONObject = jsonArrayInfo.getJSONObject(i)
             if (jsonObjectDetail.getString("src").startsWith("https://storage.googleapis"))
                 url = jsonObjectDetail.getString("src")
-            Log.i("bruhh", url)
         }
         return url
     }
