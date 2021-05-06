@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.animeextension.en.twodgirlstech
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.AnimesPage
 import eu.kanade.tachiyomi.source.model.FilterList
-import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SAnime
 import eu.kanade.tachiyomi.source.model.SEpisode
 import eu.kanade.tachiyomi.source.online.ParsedAnimeHttpSource
@@ -160,63 +159,6 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
         }
         return url
     }
-
-    override fun pageListParse(document: Document): List<Page> {
-        val titleWords: Sequence<String>
-        val altTextWords: Sequence<String>
-        val interactiveText = listOf(
-            "To experience the", "interactive version of this comic,",
-            "open it in WebView/browser."
-        )
-            .joinToString(separator = "%0A")
-            .replace(" ", "%20")
-
-        // transforming filename from info.0.json isn't guaranteed to work, stick to html
-        // if an HD image is available it'll be the srcset attribute
-        // if img tag is empty then it is an interactive comic viewable only in browser
-        val image = document.select("div#comic img").let {
-            when {
-                it == null || it.isEmpty() -> baseAltTextUrl + interactiveText + baseAltTextPostUrl
-                it.hasAttr("srcset") -> it.attr("abs:srcset").substringBefore(" ")
-                else -> it.attr("abs:src")
-            }
-        }
-
-        // create a text image for the alt text
-        document.select("div#comic img").let {
-            titleWords = it.attr("alt").splitToSequence(" ")
-            altTextWords = it.attr("title").splitToSequence(" ")
-        }
-
-        val builder = StringBuilder()
-        var count = 0
-
-        for (i in titleWords) {
-            if (count != 0 && count.rem(7) == 0) {
-                builder.append("%0A")
-            }
-            builder.append(i).append("+")
-            count++
-        }
-        builder.append("%0A%0A")
-
-        var charCount = 0
-
-        for (i in altTextWords) {
-            if (charCount > 25) {
-                builder.append("%0A")
-                charCount = 0
-            }
-            builder.append(i).append("+")
-            charCount += i.length + 1
-        }
-
-        return listOf(Page(0, "", image), Page(1, "", baseAltTextUrl + builder.toString() + baseAltTextPostUrl))
-    }
-
-    override fun imageUrlRequest(page: Page) = GET(page.url)
-
-    override fun imageUrlParse(document: Document) = throw Exception("Not used")
 
     override fun popularAnimeSelector(): String = throw Exception("Not used")
 

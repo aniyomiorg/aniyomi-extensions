@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.en.fouranime
 
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
-import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SAnime
 import eu.kanade.tachiyomi.source.model.SEpisode
 import eu.kanade.tachiyomi.source.online.ParsedAnimeHttpSource
@@ -28,7 +27,7 @@ class FourAnime : ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("#headerA_5").first().attr("href"))
         anime.thumbnail_url = element.select("#headerIMG_6").first().attr("src")
-        anime.title = "Episode " + element.select("#headerIMG_6").first().attr("title")
+        anime.title = element.select("#headerIMG_6").first().attr("title")
         return anime
     }
 
@@ -40,7 +39,7 @@ class FourAnime : ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("href"))
         episode.episode_number = element.text().toFloat()
-        episode.name = element.text()
+        episode.name = "Episode " + element.text()
         return episode
     }
 
@@ -50,12 +49,6 @@ class FourAnime : ParsedAnimeHttpSource() {
         return element.attr("src")
     }
 
-    override fun pageListParse(document: Document): List<Page> = throw Exception("Not used")
-
-    override fun imageUrlRequest(page: Page) = throw Exception("Not used")
-
-    override fun imageUrlParse(document: Document) = throw Exception("Not used")
-
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("a").attr("href"))
@@ -64,7 +57,7 @@ class FourAnime : ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun searchAnimeNextPageSelector(): String? = "a.nextpostslink"
+    override fun searchAnimeNextPageSelector(): String = "a.nextpostslink"
 
     override fun searchAnimeSelector(): String = "#headerDIV_95"
 
@@ -73,16 +66,16 @@ class FourAnime : ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.select("p.single-anime-desktop").text()
-        anime.genre = document.select("div.tag").text().replace(" ", ", ")
-        anime.description = document.select("div#description-mob p").not("p.description-mobile").text()
+        anime.genre = document.select("div.tag a").joinToString(", ") { it.text() }
+        anime.description = document.select("div#description-mob div#fullcontent p").text()
         return anime
     }
 
-    override fun latestUpdatesNextPageSelector(): String? = "a.nextpostslink"
+    override fun latestUpdatesNextPageSelector(): String = "a.nextpostslink"
 
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("#headerA_5").first().attr("href").split("-episode-").first())
+        anime.setUrlWithoutDomain("https://4anime.to/anime" + element.select("#headerA_5").first().attr("href").removePrefix("https://4anime.to").split("-episode-").first())
         anime.thumbnail_url = element.select("#headerIMG_6").first().attr("src")
         anime.title = element.select("#headerA_5").first().attr("alt")
         return anime
