@@ -1,6 +1,6 @@
 [
   {
-    "name": "Tachiyomi: fouranime",
+    "name": "Tachiyomi: 4anime.to",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.fouranime",
     "apk": "tachiyomi-en.fouranime-v1.3.1.apk",
     "lang": "en",
@@ -9,7 +9,7 @@
     "nsfw": 0
   },
   {
-    "name": "Tachiyomi: twodgirlstech",
+    "name": "Tachiyomi: twodgirls.tech",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.twodgirlstech",
     "apk": "tachiyomi-en.twodgirlstech-v1.3.1.apk",
     "lang": "en",
