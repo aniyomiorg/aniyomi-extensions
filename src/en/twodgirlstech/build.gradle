@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    extName = 'twodgirls.tech'
+    extName = '2dgirls.tech'
     pkgNameSuffix = 'en.twodgirlstech'
     extClass = '.TwoDGirlsTech'
     extVersionCode = 1
