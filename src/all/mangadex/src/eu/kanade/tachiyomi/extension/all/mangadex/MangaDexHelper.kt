@@ -18,6 +18,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.parser.Parser
 import java.util.Date
+import java.util.Locale
 
 class MangaDexHelper() {
 
@@ -29,15 +30,15 @@ class MangaDexHelper() {
     fun getUUIDFromUrl(url: String) = url.substringAfterLast("/")
 
     /**
-     * get the manga feed url
+     * get chapters for manga (aka manga/$id/feed endpoint)
      */
     fun getChapterEndpoint(mangaId: String, offset: Int, langCode: String) =
         "${MDConstants.apiMangaUrl}/$mangaId/feed?limit=500&offset=$offset&locales[]=$langCode"
 
     /**
-     * Check if the manga id is a valid uuid
+     * Check if the manga url is a valid uuid
      */
-    fun containsUuid(id: String) = id.contains(MDConstants.uuidRegex)
+    fun containsUuid(url: String) = url.contains(MDConstants.uuidRegex)
 
     /**
      * Get the manga offset pages are 1 based, so subtract 1
@@ -130,7 +131,7 @@ class MangaDexHelper() {
         return SManga.create().apply {
             url = "/manga/$dexId"
             title = cleanString(attr["title"]["en"].string)
-            thumbnail_url = ""
+            thumbnail_url = MDConstants.tempCover
         }
     }
 
@@ -145,9 +146,9 @@ class MangaDexHelper() {
 
             // things that will go with the genre tags but aren't actually genre
             val nonGenres = listOf(
-                attr["contentRating"].nullString,
-                attr["originalLanguage"]?.nullString,
-                attr["publicationDemographic"]?.nullString
+                (attr["publicationDemographic"]?.nullString ?: "").capitalize(Locale.US),
+                ("Content rating: " + (attr["contentRating"].nullString ?: "").capitalize(Locale.US)),
+                Locale(attr["originalLanguage"].nullString ?: "").displayLanguage
             )
 
             // get authors ignore if they error, artists are labelled as authors currently
@@ -172,8 +173,8 @@ class MangaDexHelper() {
             val genreList = (
                 attr["tags"].array
                     .map { it["id"].string }
-                    .map { dexTag ->
-                        tags.firstOrNull { it.name.equals(dexTag, true) }
+                    .map { dexId ->
+                        tags.firstOrNull { it.id == dexId }
                     }.map { it?.name } +
                     nonGenres
                 )
@@ -185,7 +186,7 @@ class MangaDexHelper() {
                 description = cleanString(attr["description"]["en"].string)
                 author = authors.joinToString(", ")
                 status = getPublicationStatus(attr["publicationDemographic"].nullString)
-                thumbnail_url = ""
+                thumbnail_url = MDConstants.tempCover
                 genre = genreList.joinToString(", ")
             }
         } catch (e: Exception) {
