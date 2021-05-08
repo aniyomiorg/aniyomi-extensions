@@ -3,8 +3,8 @@ package eu.kanade.tachiyomi.extension.all.mangadex
 import android.app.Application
 import android.content.SharedPreferences
 import android.util.Log
-import androidx.preference.CheckBoxPreference
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import com.github.salomonbrys.kotson.array
 import com.github.salomonbrys.kotson.get
 import com.github.salomonbrys.kotson.int
@@ -31,7 +31,8 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.Date
 
-abstract class MangaDex(override val lang: String, val dexLang: String) : ConfigurableSource,
+abstract class MangaDex(override val lang: String, val dexLang: String) :
+    ConfigurableSource,
     HttpSource() {
     override val name = "MangaDex"
     override val baseUrl = "https://www.mangadex.org"
@@ -291,13 +292,11 @@ abstract class MangaDex(override val lang: String, val dexLang: String) : Config
 
     override fun imageUrlParse(response: Response): String = ""
 
-    // mangadex is mvp no settings yet
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-
-        val dataSaverPref = CheckBoxPreference(screen.context).apply {
+        val dataSaverPref = SwitchPreferenceCompat(screen.context).apply {
             key = MDConstants.getDataSaverPreferenceKey(dexLang)
-            title = MDConstants.dataSaverPrefTitle
-            summary = MDConstants.dataSaverPrefSummary
+            title = "Data saver"
+            summary = "Enables smaller, more compressed images"
             setDefaultValue(false)
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -308,10 +307,11 @@ abstract class MangaDex(override val lang: String, val dexLang: String) : Config
             }
         }
 
-        val standardHTTPSPref = CheckBoxPreference(screen.context).apply {
+        val standardHttpsPortPref = SwitchPreferenceCompat(screen.context).apply {
             key = MDConstants.getStandardHttpsPreferenceKey(dexLang)
-            title = MDConstants.standardHttpsPortTitle
-            summary = MDConstants.standardHttpsPortSummary
+            title = "Use HTTPS port 443 only"
+            summary =
+                "Enable to only request image servers that use port 443. This allows users with stricter firewall restrictions to access MangaDex images"
             setDefaultValue(false)
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -322,10 +322,10 @@ abstract class MangaDex(override val lang: String, val dexLang: String) : Config
             }
         }
 
-        val contentRatingSafePref = CheckBoxPreference(screen.context).apply {
+        val contentRatingSafePref = SwitchPreferenceCompat(screen.context).apply {
             key = MDConstants.getContentRatingSafePrefKey(dexLang)
             title = MDConstants.showByDefaultPrefTitle
-            summary = MDConstants.contentRatingSafePrefSummary
+            summary = "Content Rating: Safe"
             setDefaultValue(true)
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -336,10 +336,10 @@ abstract class MangaDex(override val lang: String, val dexLang: String) : Config
             }
         }
 
-        val contentRatingSuggestivePref = CheckBoxPreference(screen.context).apply {
+        val contentRatingSuggestivePref = SwitchPreferenceCompat(screen.context).apply {
             key = MDConstants.getContentRatingSuggestivePrefKey(dexLang)
             title = MDConstants.showByDefaultPrefTitle
-            summary = MDConstants.contentRatingSuggestivePrefSummary
+            summary = "Content Rating: Suggestive"
             setDefaultValue(true)
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -350,10 +350,10 @@ abstract class MangaDex(override val lang: String, val dexLang: String) : Config
             }
         }
 
-        val contentRatingEroticaPref = CheckBoxPreference(screen.context).apply {
+        val contentRatingEroticaPref = SwitchPreferenceCompat(screen.context).apply {
             key = MDConstants.getContentRatingEroticaPrefKey(dexLang)
             title = MDConstants.showByDefaultPrefTitle
-            summary = MDConstants.contentRatingEroticaPrefSummary
+            summary = "Content Rating: Erotica"
             setDefaultValue(false)
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -364,10 +364,10 @@ abstract class MangaDex(override val lang: String, val dexLang: String) : Config
             }
         }
 
-        val contentRatingPornographicPref = CheckBoxPreference(screen.context).apply {
+        val contentRatingPornographicPref = SwitchPreferenceCompat(screen.context).apply {
             key = MDConstants.getContentRatingPornographicPrefKey(dexLang)
             title = MDConstants.showByDefaultPrefTitle
-            summary = MDConstants.contentRatingPornographicPrefSummary
+            summary = "Content Rating: Pornographic"
             setDefaultValue(false)
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -381,7 +381,7 @@ abstract class MangaDex(override val lang: String, val dexLang: String) : Config
         }
 
         screen.addPreference(dataSaverPref)
-        screen.addPreference(standardHTTPSPref)
+        screen.addPreference(standardHttpsPortPref)
         screen.addPreference(contentRatingSafePref)
         screen.addPreference(contentRatingSuggestivePref)
         screen.addPreference(contentRatingEroticaPref)
