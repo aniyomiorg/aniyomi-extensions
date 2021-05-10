@@ -67,7 +67,7 @@ class FourAnime : ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.title = document.select("p.single-anime-desktop").text()
         anime.genre = document.select("div.tag a").joinToString(", ") { it.text() }
-        anime.description = document.select("div#description-mob div#fullcontent p").text()
+        anime.description = document.select("div#description-mob p[class!=description-mobile]").text()
         return anime
     }
 
