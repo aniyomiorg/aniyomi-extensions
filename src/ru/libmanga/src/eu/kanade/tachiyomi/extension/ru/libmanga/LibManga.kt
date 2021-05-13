@@ -39,6 +39,7 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 class LibManga : ConfigurableSource, HttpSource() {
 
@@ -52,11 +53,15 @@ class LibManga : ConfigurableSource, HttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .build()
 
-    // The mirror is used because the main site "mangalib.me" in application returns error 403
-    override val baseUrl: String = "https://mangalib.org"
-    private val baseOrigUrl: String = "https://mangalib.me"
+    private val baseOrig: String = "https://mangalib.me"
+    private val baseMirr: String = "https://mangalib.org"
+    private var domain: String? = preferences.getString(DOMAIN_PREF, baseOrig)
+    override val baseUrl: String = domain.toString()
 
     override fun headersBuilder() = Headers.Builder().apply {
         add("User-Agent", "Mozilla/5.0 (Windows NT 6.3; WOW64)")
@@ -173,7 +178,7 @@ class LibManga : ConfigurableSource, HttpSource() {
 
         val genres = document.select(".media-tags > a").map { it.text() }
         manga.title = document.select(".media-name__alt").text()
-        manga.thumbnail_url = baseUrl + document.select(".media-sidebar__cover > img").attr("src").substringAfter(baseOrigUrl)
+        manga.thumbnail_url = baseUrl + document.select(".media-sidebar__cover > img").attr("src").substringAfter(baseOrig)
         manga.author = body.select("div.media-info-list__title:contains(Автор) + div").text()
         manga.artist = body.select("div.media-info-list__title:contains(Художник) + div").text()
         manga.status = when (
@@ -743,10 +748,12 @@ class LibManga : ConfigurableSource, HttpSource() {
 
         private const val SORTING_PREF = "MangaLibSorting"
         private const val SORTING_PREF_Title = "Способ выбора переводчиков"
+
+        private const val DOMAIN_PREF = "MangaLibDomain"
+        private const val DOMAIN_PREF_Title = "Выбор домена"
     }
 
     private var server: String? = preferences.getString(SERVER_PREF, null)
-
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val serverPref = ListPreference(screen.context).apply {
             key = SERVER_PREF
@@ -754,7 +761,7 @@ class LibManga : ConfigurableSource, HttpSource() {
             entries = arrayOf("Основной", "Второй (тестовый)", "Третий (эконом трафика)", "Авто")
             entryValues = arrayOf("secondary", "fourth", "compress", "auto")
             summary = "%s"
-
+            setDefaultValue("auto")
             setOnPreferenceChangeListener { _, newValue ->
                 server = newValue.toString()
                 true
@@ -770,14 +777,27 @@ class LibManga : ConfigurableSource, HttpSource() {
             )
             entryValues = arrayOf("ms_mixing", "ms_combining", "ms_largest", "ms_active")
             summary = "%s"
-
+            setDefaultValue("ms_mixing")
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
                 preferences.edit().putString(SORTING_PREF, selected).commit()
             }
         }
+        val domainPref = ListPreference(screen.context).apply {
+            key = DOMAIN_PREF
+            title = DOMAIN_PREF_Title
+            entries = arrayOf("mangalib.me(Основной)", "mangalib.org(Зеркало)")
+            entryValues = arrayOf(baseOrig, baseMirr)
+            summary = "Для смены домена необходимо перезапустить приложение с полной остановкой"
+            setDefaultValue(baseOrig)
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                preferences.edit().putString(DOMAIN_PREF, selected).commit()
+            }
+        }
 
-        screen.addPreference(sortingPref)
+        screen.addPreference(domainPref)
         screen.addPreference(serverPref)
+        screen.addPreference(sortingPref)
     }
 }
