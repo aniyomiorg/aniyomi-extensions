@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.multisrc.wpmangareader
 
 import android.util.Log
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.Filter
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
@@ -18,6 +19,8 @@ import okhttp3.Response
 import org.json.JSONArray
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
+import rx.Single
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -41,7 +44,6 @@ abstract class WPMangaReader(
     override fun popularMangaSelector() = throw UnsupportedOperationException("Not used")
     override fun popularMangaNextPageSelector() = throw UnsupportedOperationException("Not used")
 
-
     // latest
     override fun latestUpdatesRequest(page: Int) = searchMangaRequest(page, "", FilterList(OrderByFilter(3)))
     override fun latestUpdatesParse(response: Response) = searchMangaParse(response)
@@ -52,6 +54,59 @@ abstract class WPMangaReader(
 
     // search
     override fun searchMangaSelector() = ".utao .uta .imgu, .listupd .bs .bsx, .listo .bs .bsx"
+
+
+    /**
+     * Given some string which represents an http url, returns a identifier (id) for a manga
+     * which can be used to fetch its details at "$baseUrl$mangaUrlDirectory/$id"
+     *
+     * @param s: String - url
+     *
+     * @returns An identifier for a manga, or null if none could be found
+     */
+    protected open fun mangaIdFromUrl(s: String): Single<String?> {
+        var baseMangaUrl = "$baseUrl$mangaUrlDirectory".toHttpUrlOrNull()!!
+        return s.toHttpUrlOrNull()?.let { url ->
+            fun pathLengthIs(url: HttpUrl, n: Int, strict: Boolean = false) = url.pathSegments.size == n && url.pathSegments[n - 1].isNotEmpty() || (!strict && url.pathSegments.size == n + 1 && url.pathSegments[n].isEmpty())
+            val isMangaUrl = listOf(
+                baseMangaUrl.host == url.host,
+                pathLengthIs(url, 2),
+                url.pathSegments[0] == baseMangaUrl.pathSegments[0]).all { it }
+            val potentiallyChapterUrl = pathLengthIs(url, 1)
+            if (isMangaUrl)
+                Single.just(url.pathSegments[1])
+            else if (potentiallyChapterUrl)
+                client.newCall(GET(s, headers)).asObservableSuccess().map {
+                    val links = it.asJsoup().select("a[itemprop=item]")
+                    if (links.size == 3) //  near the top of page: home > manga > current chapter
+                        links[1].attr("href").toHttpUrlOrNull()?.pathSegments?.get(1)
+                    else
+                        null
+                }.toSingle()
+            else
+                Single.just(null)
+        } ?: Single.just(null)
+    }
+
+    override fun fetchSearchManga(page: Int, query: String, filters: FilterList): Observable<MangasPage> {
+        if (!query.startsWith(URL_SEARCH_PREFIX))
+            return super.fetchSearchManga(page, query, filters)
+
+        return mangaIdFromUrl(query.substringAfter(URL_SEARCH_PREFIX))
+            .toObservable()
+            .concatMap { id ->
+                if (id == null)
+                    Observable.just(MangasPage(emptyList(), false))
+                else
+                    fetchMangaDetails(SManga.create().apply { this.url = "$mangaUrlDirectory/$id" })
+                        .map {
+                            it.url = "$mangaUrlDirectory/$id"// isn't set in returned manga
+                            MangasPage(listOf(it), false)
+                        }
+            }
+
+    }
+
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request {
         val url = "$baseUrl".toHttpUrlOrNull()!!.newBuilder()
@@ -85,7 +140,8 @@ abstract class WPMangaReader(
         title = element.select("a").attr("title")
         setUrlWithoutDomain(element.select("a").attr("href"))
     }
-    override fun searchMangaNextPageSelector() =  "div.pagination .next, div.hpage .r"
+
+    override fun searchMangaNextPageSelector() = "div.pagination .next, div.hpage .r"
 
     // manga details
     override fun mangaDetailsParse(document: Document) = SManga.create().apply {
@@ -101,6 +157,7 @@ abstract class WPMangaReader(
                 .text()
         )
 
+        title = document.selectFirst("h1.entry-title").text()
         thumbnail_url = document.select(".infomanga > div[itemprop=image] img, .thumb img").attr("abs:src")
         description = document.select(".desc, .entry-content[itemprop=description]").joinToString("\n") { it.text() }
 
@@ -278,4 +335,8 @@ abstract class WPMangaReader(
         LabeledValue("Added", "latest"),
         LabeledValue("Popular", "popular")
     )
+
+    companion object {
+        const val URL_SEARCH_PREFIX = "url:"
+    }
 }
