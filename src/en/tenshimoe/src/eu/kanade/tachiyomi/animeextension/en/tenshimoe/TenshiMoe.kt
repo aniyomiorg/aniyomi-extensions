@@ -32,7 +32,7 @@ class TenshiMoe : ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        anime.title = element.select("div span").not("div span.badge").text()
+        anime.title = element.select("div span").not(".badge").text()
         return anime
     }
 
