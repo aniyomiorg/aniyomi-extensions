@@ -8,6 +8,7 @@ import eu.kanade.tachiyomi.source.online.ParsedAnimeHttpSource
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.lang.Float.parseFloat
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 
@@ -23,11 +24,7 @@ class TenshiMoe : ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "ul.anime-loop.loop li a"
 
-    override fun popularAnimeRequest(page: Int): Request = Request.Builder()
-        .url("$baseUrl/anime?s=vdy-d&page=$page")
-        .headers(headers)
-        .addHeader("cookie", "loop-view=list")
-        .build()
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/anime?s=vdy-d&page=$page")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -43,32 +40,17 @@ class TenshiMoe : ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("href"))
-        episode.episode_number = element.select("div.episode-number").text().removePrefix("Episode ").toFloat()
-        episode.name = "Episode ${formatEpisode(episode.episode_number, false)} " + element.select("div.episode-label").text() + element.select("div.episode-title").text()
+        val episodeNumberString = element.select("div.episode-number").text().removePrefix("Episode ")
+        var numeric = true
+        try {
+            val num = parseFloat(episodeNumberString)
+        } catch (e: NumberFormatException) {
+            numeric = false
+        }
+        episode.episode_number = if (numeric) episodeNumberString.toFloat() else element.parent().className().removePrefix("episode").toFloat()
+        episode.name = element.select("div.episode-number").text() + ": " + element.select("div.episode-label").text() + element.select("div.episode-title").text()
         return episode
     }
-
-    private val formatSymbols: DecimalFormatSymbols = DecimalFormatSymbols.getInstance().apply {
-        decimalSeparator = ','
-    }
-
-    private val twoDecimalDigitsFormat = DecimalFormat("#.##").apply {
-        decimalFormatSymbols = formatSymbols
-    }
-
-    private val twoTrailingZerosFormat = DecimalFormat("#.00").apply {
-        decimalFormatSymbols = formatSymbols
-    }
-
-    private fun formatEpisode(number: Float, withDecimalZeros: Boolean): String = if (withDecimalZeros) {
-        twoTrailingZerosFormat
-    } else {
-        if (number.toInt().toFloat() == number) {
-            twoDecimalDigitsFormat
-        } else {
-            twoTrailingZerosFormat
-        }
-    }.format(number)
 
     override fun episodeLinkSelector() = "source"
 
