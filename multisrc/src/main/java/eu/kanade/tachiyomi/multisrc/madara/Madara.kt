@@ -170,6 +170,9 @@ abstract class Madara(
                         url.addQueryParameter("m_orderby", filter.toUriPart())
                     }
                 }
+                is AdultContentFilter -> {
+                    url.addQueryParameter("adult", filter.toUriPart())
+                }
                 is GenreConditionFilter -> {
                     url.addQueryParameter("op", filter.toUriPart())
                 }
@@ -189,6 +192,7 @@ abstract class Madara(
     private class ArtistFilter : Filter.Text("Artist")
     private class YearFilter : Filter.Text("Year of Released")
     private class StatusFilter(status: List<Tag>) : Filter.Group<Tag>("Status", status)
+    
     private class OrderByFilter : UriPartFilter(
         "Order By",
         arrayOf(
@@ -201,6 +205,7 @@ abstract class Madara(
             Pair("New", "new-manga")
         )
     )
+    
     private class GenreConditionFilter : UriPartFilter(
         "Genre condition",
         arrayOf(
@@ -208,6 +213,16 @@ abstract class Madara(
             Pair("and", "1")
         )
     )
+    
+    private class AdultContentFilter : UriPartFilter(
+        "Adult Content",
+        arrayOf(
+            Pair("All", ""),
+            Pair("None", "0"),
+            Pair("Only", "1")
+        )
+    )
+    
     private class GenreList(genres: List<Genre>) : Filter.Group<Genre>("Genres", genres)
     class Genre(name: String, val id: String = name) : Filter.CheckBox(name)
 
@@ -279,6 +294,7 @@ abstract class Madara(
         YearFilter(),
         StatusFilter(getStatusList()),
         OrderByFilter(),
+        AdultContentFilter(),
         Filter.Separator(),
         Filter.Header("Genres may not work for all sources"),
         GenreConditionFilter(),
