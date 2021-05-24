@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.tenshimoe
 
+import android.annotation.SuppressLint
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.SAnime
@@ -9,8 +10,9 @@ import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.lang.Float.parseFloat
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
+import java.text.SimpleDateFormat
+import java.util.Date
+import kotlin.collections.ArrayList
 
 class TenshiMoe : ParsedAnimeHttpSource() {
 
@@ -49,7 +51,29 @@ class TenshiMoe : ParsedAnimeHttpSource() {
         }
         episode.episode_number = if (numeric) episodeNumberString.toFloat() else element.parent().className().removePrefix("episode").toFloat()
         episode.name = element.select("div.episode-number").text() + ": " + element.select("div.episode-label").text() + element.select("div.episode-title").text()
+        val date: String = element.select("div.date").text()
+        val parsedDate = parseDate(date)
+        episode.date_upload = parsedDate!!.time
         return episode
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    private fun parseDate(date: String): Date {
+        val knownPatterns: MutableList<SimpleDateFormat> = ArrayList()
+        knownPatterns.add(SimpleDateFormat("dd'th of 'MMM, yyyy"))
+        knownPatterns.add(SimpleDateFormat("dd'nd of 'MMM, yyyy"))
+        knownPatterns.add(SimpleDateFormat("dd'st of 'MMM, yyyy"))
+        knownPatterns.add(SimpleDateFormat("dd'rd of 'MMM, yyyy"))
+
+        for (pattern in knownPatterns) {
+            try {
+                // Take a try
+                return Date(pattern.parse(date)!!.time)
+            } catch (e: Throwable) {
+                // Loop on
+            }
+        }
+        throw Throwable("No known Date format found: $date")
     }
 
     override fun episodeLinkSelector() = "source"
