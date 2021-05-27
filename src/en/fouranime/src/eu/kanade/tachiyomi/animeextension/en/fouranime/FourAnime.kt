@@ -1,10 +1,10 @@
 package eu.kanade.tachiyomi.animeextension.en.fouranime
 
+import eu.kanade.tachiyomi.animesource.model.FilterList
+import eu.kanade.tachiyomi.animesource.model.SAnime
+import eu.kanade.tachiyomi.animesource.model.SEpisode
+import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.source.model.FilterList
-import eu.kanade.tachiyomi.source.model.SAnime
-import eu.kanade.tachiyomi.source.model.SEpisode
-import eu.kanade.tachiyomi.source.online.ParsedAnimeHttpSource
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
