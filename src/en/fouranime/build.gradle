@@ -5,8 +5,8 @@ ext {
     extName = '4anime.to'
     pkgNameSuffix = 'en.fouranime'
     extClass = '.FourAnime'
-    extVersionCode = 4
-    libVersion = '1.3'
+    extVersionCode = 5
+    libVersion = '10'
 }
 dependencies {
     ext.coroutinesVersion = "1.4.3"

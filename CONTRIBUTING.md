@@ -192,7 +192,7 @@ a.k.a. the Latest source entry point in the app (invoked by tapping on the "Late
 
 - When the user searches inside the app, `fetchSearchManga` will be called and the rest of the flow is similar to what happens with `fetchPopularManga`.
     - If search functionality is not available, return `Observable.just(MangasPage(emptyList(), false))`
-- `getFilterList` will be called to get all filters and filter types. **TODO: explain more about `Filter`**
+- `getAnimeFilterList` will be called to get all filters and filter types. **TODO: explain more about `AnimeFilter`**
 
 #### Manga Details
 

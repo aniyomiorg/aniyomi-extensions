@@ -5,8 +5,8 @@ ext {
     extName = '2dgirls.tech'
     pkgNameSuffix = 'en.twodgirlstech'
     extClass = '.TwoDGirlsTech'
-    extVersionCode = 6
-    libVersion = '1.3'
+    extVersionCode = 7
+    libVersion = '10'
 }
 dependencies {
     ext.coroutinesVersion = "1.4.3"

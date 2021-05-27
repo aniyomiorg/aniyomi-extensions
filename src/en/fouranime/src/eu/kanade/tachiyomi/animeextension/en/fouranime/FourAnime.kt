@@ -1,6 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.fouranime
 
-import eu.kanade.tachiyomi.animesource.model.FilterList
+import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
@@ -61,7 +61,7 @@ class FourAnime : ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = "#headerDIV_95"
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: FilterList): Request = GET("$baseUrl/?s=$query")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/?s=$query")
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()

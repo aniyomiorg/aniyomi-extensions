@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.en.twodgirlstech
 
+import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
-import eu.kanade.tachiyomi.animesource.model.FilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
@@ -95,7 +95,7 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
         }
     }
 
-    override fun fetchSearchAnime(page: Int, query: String, filters: FilterList): Observable<AnimesPage> {
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         return Observable.just(runBlocking { getSearch(page, query) })
     }
 
@@ -170,7 +170,7 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
 
     override fun popularAnimeRequest(page: Int): Request = throw Exception("Not used")
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: FilterList): Request = throw Exception("Not used")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
 
     override fun popularAnimeNextPageSelector(): String? = throw Exception("Not used")
 

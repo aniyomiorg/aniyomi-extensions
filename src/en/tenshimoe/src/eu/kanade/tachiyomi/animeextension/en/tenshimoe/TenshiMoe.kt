@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.en.tenshimoe
 
 import android.annotation.SuppressLint
-import eu.kanade.tachiyomi.animesource.model.FilterList
+import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
@@ -93,7 +93,7 @@ class TenshiMoe : ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = "ul.anime-loop.loop li a"
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: FilterList): Request = GET("$baseUrl/anime?q=$query")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/anime?q=$query")
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
