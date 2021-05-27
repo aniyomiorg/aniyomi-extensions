@@ -7,10 +7,10 @@ dependencies {
     compileOnly "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 
     compileOnly 'com.github.inorichi.injekt:injekt-core:65b0440'
-    compileOnly 'com.squareup.okhttp3:okhttp:3.10.0'
-    compileOnly 'io.reactivex:rxjava:1.3.6'
-    compileOnly 'org.jsoup:jsoup:1.10.2'
-    compileOnly 'com.google.code.gson:gson:2.8.2'
+    compileOnly 'com.squareup.okhttp3:okhttp:4.9.1'
+    compileOnly 'io.reactivex:rxjava:1.3.8'
+    compileOnly 'org.jsoup:jsoup:1.13.1'
+    compileOnly 'com.google.code.gson:gson:2.8.6'
     compileOnly 'com.github.salomonbrys.kotson:kotson:2.5.0'
 
     implementation project(":annotations")
