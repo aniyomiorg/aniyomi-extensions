@@ -11,19 +11,19 @@
   {
     "name": "Tachiyomi: tenshi.moe",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.tenshimoe",
-    "apk": "tachiyomi-en.tenshimoe-v1.3.4.apk",
+    "apk": "tachiyomi-en.tenshimoe-v1.3.5.apk",
     "lang": "en",
-    "code": 4,
-    "version": "1.3.4",
+    "code": 5,
+    "version": "1.3.5",
     "nsfw": 0
   },
   {
     "name": "Tachiyomi: 2dgirls.tech",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.twodgirlstech",
-    "apk": "tachiyomi-en.twodgirlstech-v1.3.3.apk",
+    "apk": "tachiyomi-en.twodgirlstech-v1.3.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "1.3.3",
+    "code": 4,
+    "version": "1.3.4",
     "nsfw": 0
   }
 ]
