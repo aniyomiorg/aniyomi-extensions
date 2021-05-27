@@ -44,7 +44,7 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
                     throw e
                 }
                 override fun onResponse(call: Call, response: Response) {
-                    val strResponse = response.body()!!.string()
+                    val strResponse = response.body!!.string()
                     // creating json object
                     val json = JSONObject(strResponse)
                     // creating json array
@@ -74,7 +74,7 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
                 }
 
                 override fun onResponse(call: Call, response: Response) {
-                    val strResponse = response.body()!!.string()
+                    val strResponse = response.body!!.string()
                     // creating json object
                     val json = JSONObject(strResponse)
                     // creating json array
@@ -109,7 +109,7 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
                     throw e
                 }
                 override fun onResponse(call: Call, response: Response) {
-                    val strResponse = response.body()!!.string()
+                    val strResponse = response.body!!.string()
                     // creating json object
                     val json = JSONObject(strResponse)
                     // creating json array
