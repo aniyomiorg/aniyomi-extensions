@@ -53,7 +53,7 @@ class TenshiMoe : ParsedAnimeHttpSource() {
         episode.name = element.select("div.episode-number").text() + ": " + element.select("div.episode-label").text() + element.select("div.episode-title").text()
         val date: String = element.select("div.date").text()
         val parsedDate = parseDate(date)
-        episode.date_upload = parsedDate!!.time
+        if (parsedDate.time != -1L) episode.date_upload = parsedDate.time
         return episode
     }
 
@@ -73,7 +73,7 @@ class TenshiMoe : ParsedAnimeHttpSource() {
                 // Loop on
             }
         }
-        throw Throwable("No known Date format found: $date")
+        return Date(-1L)
     }
 
     override fun episodeLinkSelector() = "source"
