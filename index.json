@@ -11,10 +11,10 @@
   {
     "name": "Tachiyomi: hanime.tv",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.hanime",
-    "apk": "tachiyomi-en.hanime-v10.1.apk",
+    "apk": "tachiyomi-en.hanime-v10.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "10.1",
+    "code": 2,
+    "version": "10.2",
     "nsfw": 1
   },
   {
