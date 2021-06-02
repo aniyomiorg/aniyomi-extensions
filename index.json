@@ -9,6 +9,15 @@
     "nsfw": 0
   },
   {
+    "name": "Tachiyomi: hanime.tv",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.hanime",
+    "apk": "tachiyomi-en.hanime-v10.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "10.1",
+    "nsfw": 1
+  },
+  {
     "name": "Tachiyomi: tenshi.moe",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.tenshimoe",
     "apk": "tachiyomi-en.tenshimoe-v10.8.apk",
