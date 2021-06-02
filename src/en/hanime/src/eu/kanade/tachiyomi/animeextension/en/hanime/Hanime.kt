@@ -73,7 +73,7 @@ class Hanime : AnimeHttpSource() {
             anime.thumbnail_url = item.asJsonObject.get("cover_url").asString
             anime.setUrlWithoutDomain("https://hanime.tv/videos/hentai/" + item.asJsonObject.get("slug").asString)
             anime.author = item.asJsonObject.get("brand").asString
-            anime.description = item.asJsonObject.get("description").asString
+            anime.description = item.asJsonObject.get("description").asString.replace("<p>", "").replace("</p>", "")
             anime.status = SAnime.COMPLETED
             anime.initialized = true
             animeList.add(anime)
