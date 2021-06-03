@@ -75,6 +75,9 @@ class Hanime : AnimeHttpSource() {
             anime.author = item.asJsonObject.get("brand").asString
             anime.description = item.asJsonObject.get("description").asString.replace("<p>", "").replace("</p>", "")
             anime.status = SAnime.COMPLETED
+            val tags = item.asJsonObject.get("tags").asJsonArray
+            anime.genre = tags.joinToString(", ") { it.asString }
+            Log.w("tags", anime.genre!!)
             anime.initialized = true
             animeList.add(anime)
         }
@@ -107,6 +110,9 @@ class Hanime : AnimeHttpSource() {
         anime.author = item.asJsonObject.get("brand").asString
         anime.description = item.asJsonObject.get("description").asString.replace("<p>", "").replace("</p>", "")
         anime.status = SAnime.COMPLETED
+        val tags = item.asJsonObject.get("tags").asJsonArray
+        anime.genre = tags.joinToString(", ") { it.asString }
+        Log.w("tags", anime.genre!!)
         anime.initialized = true
         return anime
     }
