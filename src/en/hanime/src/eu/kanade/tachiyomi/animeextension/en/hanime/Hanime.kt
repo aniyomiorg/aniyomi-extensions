@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.en.hanime
 
-import android.util.Log
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
@@ -27,7 +26,7 @@ class Hanime : AnimeHttpSource() {
 
     override val lang = "en"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     private fun searchRequestBody(query: String, page: Int, filters: AnimeFilterList): RequestBody {
         var filterString = ""
@@ -77,7 +76,6 @@ class Hanime : AnimeHttpSource() {
             anime.status = SAnime.COMPLETED
             val tags = item.asJsonObject.get("tags").asJsonArray
             anime.genre = tags.joinToString(", ") { it.asString }
-            Log.w("tags", anime.genre!!)
             anime.initialized = true
             animeList.add(anime)
         }
@@ -112,7 +110,6 @@ class Hanime : AnimeHttpSource() {
         anime.status = SAnime.COMPLETED
         val tags = item.asJsonObject.get("tags").asJsonArray
         anime.genre = tags.joinToString(", ") { it.asString }
-        Log.w("tags", anime.genre!!)
         anime.initialized = true
         return anime
     }
@@ -123,7 +120,6 @@ class Hanime : AnimeHttpSource() {
         val jObject: JsonObject = jElement.asJsonObject
         val server = jObject.get("videos_manifest").asJsonObject.get("servers").asJsonArray[0].asJsonObject
         val stream = server.get("streams").asJsonArray[1].asJsonObject
-        Log.w("link", stream.get("url").asString)
         return stream.get("url").asString
     }
 
@@ -144,7 +140,23 @@ class Hanime : AnimeHttpSource() {
         return listOf(episode)
     }
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("no")
+    private fun latestSearchRequestBody(page: Int): RequestBody {
+        return """
+            {"search_text": "",
+            "tags": [],
+            "tags_mode":"AND",
+            "brands": [],
+            "blacklist": [],
+            "order_by": "published_at_unix",
+            "ordering": "desc",
+            "page": ${page - 1}}
+        """.trimIndent().toRequestBody("application/json".toMediaType())
+    }
 
-    override fun latestUpdatesParse(response: Response): AnimesPage = throw Exception("no")
+    override fun latestUpdatesRequest(page: Int): Request = POST("https://search.htv-services.com/", popularRequestHeaders, latestSearchRequestBody(page))
+
+    override fun latestUpdatesParse(response: Response): AnimesPage {
+        val responseString = response.body!!.string()
+        return parseSearchJson(responseString)
+    }
 }
