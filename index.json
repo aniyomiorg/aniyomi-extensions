@@ -2,10 +2,10 @@
   {
     "name": "Tachiyomi: 4anime.to",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.fouranime",
-    "apk": "tachiyomi-en.fouranime-v10.5.apk",
+    "apk": "tachiyomi-en.fouranime-v10.6.apk",
     "lang": "en",
-    "code": 5,
-    "version": "10.5",
+    "code": 6,
+    "version": "10.6",
     "nsfw": 0
   },
   {
