@@ -68,7 +68,17 @@ class FourAnime : ParsedAnimeHttpSource() {
         anime.title = document.select("p.single-anime-desktop").text()
         anime.genre = document.select("div.tag a").joinToString(", ") { it.text() }
         anime.description = document.select("div#description-mob p[class!=description-mobile]").text()
+        anime.author = document.select("div.detail a[data-reactid=\".0.1.0.0.2.0.0.1.1.1.1\"]").text()
+        anime.status = parseStatus(document.select("div.detail a[data-reactid=\".0.1.0.0.2.0.0.1.1.3.1\"]").text())
         return anime
+    }
+
+    private fun parseStatus(statusString: String): Int {
+        return when (statusString) {
+            "Currently Airing" -> SAnime.ONGOING
+            "Completed" -> SAnime.COMPLETED
+            else -> SAnime.UNKNOWN
+        }
     }
 
     override fun latestUpdatesNextPageSelector(): String = "a.nextpostslink"
