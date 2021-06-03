@@ -101,7 +101,17 @@ class TenshiMoe : ParsedAnimeHttpSource() {
         anime.title = document.select("h1.mb-3").text()
         anime.genre = document.select("li.genre span.value").joinToString(", ") { it.text() }
         anime.description = document.select("div.card-body").text()
+        anime.author = document.select("li.production span.value").joinToString(", ") { it.text() }
+        anime.status = parseStatus(document.select("li.status span.value").text())
         return anime
+    }
+
+    private fun parseStatus(statusString: String): Int {
+        return when (statusString) {
+            "Ongoing" -> SAnime.ONGOING
+            "Completed" -> SAnime.COMPLETED
+            else -> SAnime.UNKNOWN
+        }
     }
 
     override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
