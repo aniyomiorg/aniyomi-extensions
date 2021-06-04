@@ -123,7 +123,7 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
                         anime.setUrlWithoutDomain("/api/detailshtml/" + jsonObjectDetail.getString("id"))
                         arrayListDetails.add(anime)
                     }
-                    hasNextPage = (arrayListDetails.isNotEmpty())
+                    hasNextPage = json.getBoolean("nextpage")
                     continuation.resume(AnimesPage(arrayListDetails, hasNextPage))
                 }
             })
