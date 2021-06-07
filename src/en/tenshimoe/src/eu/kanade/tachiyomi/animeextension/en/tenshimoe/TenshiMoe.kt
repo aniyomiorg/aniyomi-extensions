@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.en.tenshimoe
 
 import android.annotation.SuppressLint
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.Link
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
@@ -76,10 +77,19 @@ class TenshiMoe : ParsedAnimeHttpSource() {
         return Date(-1L)
     }
 
-    override fun episodeLinkSelector() = "source"
+    override fun episodeLinkSelector() = "video#player"
 
-    override fun linkFromElement(element: Element): String {
-        return element.attr("src")
+    override fun episodeListRequest(anime: SAnime): Request {
+        return GET(anime.url)
+    }
+
+    override fun linksFromElement(element: Element): List<Link> {
+        val linkList = mutableListOf<Link>()
+        val linkElements = element.select("source")
+        for (link in linkElements) {
+            linkList.add(Link(link.attr("src"), link.attr("title")))
+        }
+        return linkList
     }
 
     override fun searchAnimeFromElement(element: Element): SAnime {

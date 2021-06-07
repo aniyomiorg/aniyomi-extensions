@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.en.twodgirlstech
 
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
+import eu.kanade.tachiyomi.animesource.model.Link
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
@@ -147,17 +148,16 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
 
     override fun episodeLinkSelector() = "body"
 
-    override fun linkFromElement(element: Element): String {
-        var url = ""
+    override fun linksFromElement(element: Element): List<Link> {
         val json = JSONObject(element.text())
         val jsonArrayInfo: JSONArray = json.getJSONArray("links")
         val size: Int = jsonArrayInfo.length()
+        val urls = mutableListOf<Link>()
         for (i in 0..size - 1) {
             val jsonObjectDetail: JSONObject = jsonArrayInfo.getJSONObject(i)
-            if (jsonObjectDetail.getString("src").startsWith("https://storage.googleapis"))
-                url = jsonObjectDetail.getString("src")
+            urls.add(Link(jsonObjectDetail.getString("src"), jsonObjectDetail.getString("size")))
         }
-        return url
+        return urls
     }
 
     override fun popularAnimeSelector(): String = throw Exception("Not used")

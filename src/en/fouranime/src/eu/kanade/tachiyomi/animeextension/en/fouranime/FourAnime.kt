@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.en.fouranime
 
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.Link
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
@@ -45,8 +46,8 @@ class FourAnime : ParsedAnimeHttpSource() {
 
     override fun episodeLinkSelector() = "source"
 
-    override fun linkFromElement(element: Element): String {
-        return element.attr("src")
+    override fun linksFromElement(element: Element): List<Link> {
+        return mutableListOf(Link(element.attr("src"), "1080p"))
     }
 
     override fun searchAnimeFromElement(element: Element): SAnime {
