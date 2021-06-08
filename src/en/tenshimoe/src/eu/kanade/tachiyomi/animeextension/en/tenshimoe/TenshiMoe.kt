@@ -46,7 +46,7 @@ class TenshiMoe : ParsedAnimeHttpSource() {
         val episodeNumberString = element.select("div.episode-number").text().removePrefix("Episode ")
         var numeric = true
         try {
-            val num = parseFloat(episodeNumberString)
+            parseFloat(episodeNumberString)
         } catch (e: NumberFormatException) {
             numeric = false
         }
@@ -78,10 +78,6 @@ class TenshiMoe : ParsedAnimeHttpSource() {
     }
 
     override fun episodeLinkSelector() = "video#player"
-
-    override fun episodeListRequest(anime: SAnime): Request {
-        return GET(anime.url)
-    }
 
     override fun linksFromElement(element: Element): List<Link> {
         val linkList = mutableListOf<Link>()
