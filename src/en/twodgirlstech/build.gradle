@@ -5,7 +5,7 @@ ext {
     extName = '2dgirls.tech'
     pkgNameSuffix = 'en.twodgirlstech'
     extClass = '.TwoDGirlsTech'
-    extVersionCode = 8
+    extVersionCode = 9
     libVersion = '11'
 }
 dependencies {
