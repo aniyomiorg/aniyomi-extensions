@@ -20,10 +20,10 @@
   {
     "name": "Tachiyomi: tenshi.moe",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.tenshimoe",
-    "apk": "tachiyomi-en.tenshimoe-v11.10.apk",
+    "apk": "tachiyomi-en.tenshimoe-v11.11.apk",
     "lang": "en",
-    "code": 10,
-    "version": "11.10",
+    "code": 11,
+    "version": "11.11",
     "nsfw": 0
   },
   {
