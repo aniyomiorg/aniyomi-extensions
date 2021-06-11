@@ -30,9 +30,9 @@ android {
         applicationIdSuffix pkgNameSuffix
         versionCode extVersionCode
         versionName "$libVersion.$extVersionCode"
-        setProperty("archivesBaseName", "tachiyomi-$pkgNameSuffix-v$versionName")
+        setProperty("archivesBaseName", "aniyomi-$pkgNameSuffix-v$versionName")
         manifestPlaceholders = [
-                appName : "Tachiyomi: $extName",
+                appName : "Aniyomi: $extName",
                 extClass: extClass,
                 extFactory: project.ext.properties.getOrDefault("extFactory", ""),
                 nsfw: project.ext.properties.getOrDefault("containsNsfw", false) ? 1 : 0,
