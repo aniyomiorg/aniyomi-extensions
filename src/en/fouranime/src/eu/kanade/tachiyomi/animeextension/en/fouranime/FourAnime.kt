@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.network.GET
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 
 class FourAnime : ParsedAnimeHttpSource() {
 
@@ -36,11 +37,16 @@ class FourAnime : ParsedAnimeHttpSource() {
 
     override fun episodeListSelector() = "ul.episodes.active.range li a"
 
+    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+        return super.fetchEpisodeList(anime).flatMap { Observable.just(it.reversed()) }
+    }
+
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("href"))
         episode.episode_number = element.text().toFloat()
         episode.name = "Episode " + element.text()
+        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 

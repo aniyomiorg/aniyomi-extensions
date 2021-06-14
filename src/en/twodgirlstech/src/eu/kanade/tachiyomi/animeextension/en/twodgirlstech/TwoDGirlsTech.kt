@@ -7,7 +7,9 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Request
@@ -18,6 +20,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 import java.io.IOException
+import java.net.URLEncoder
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -101,8 +104,9 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
     }
 
     suspend fun getSearch(page: Int, query: String): AnimesPage {
-        var hasNextPage = true
-        val request = GET("$baseUrl/api/search/$query/$page")
+        var hasNextPage: Boolean
+        val queryEncoded = withContext(Dispatchers.IO) { URLEncoder.encode(query, "utf-8") }
+        val request = GET("$baseUrl/api/search/$queryEncoded/$page")
         val arrayListDetails: ArrayList<SAnime> = ArrayList()
         return suspendCoroutine<AnimesPage> { continuation ->
             client.newCall(request).enqueue(object : Callback {
@@ -136,6 +140,10 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
 
     override fun episodeListSelector() = "div[id^=episode-]"
 
+    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+        return super.fetchEpisodeList(anime).flatMap { Observable.just(it.reversed()) }
+    }
+
     override fun episodeFromElement(element: Element): SEpisode {
         val id = element.id().split(":").last()
         val episodeNumber = element.id().split("episode-").last().split(":").first()
@@ -143,6 +151,7 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
         episode.episode_number = episodeNumber.toFloat()
         episode.name = "Episode $episodeNumber"
         episode.url = "/api/watchinghtml/$id/$episodeNumber"
+        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 

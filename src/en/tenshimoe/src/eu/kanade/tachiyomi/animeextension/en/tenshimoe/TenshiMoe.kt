@@ -23,7 +23,7 @@ class TenshiMoe : ParsedAnimeHttpSource() {
 
     override val lang = "en"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     override fun popularAnimeSelector(): String = "ul.anime-loop.loop li a"
 
@@ -31,7 +31,7 @@ class TenshiMoe : ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.attr("href"))
+        anime.setUrlWithoutDomain(element.attr("href") + "?s=srt-d")
         anime.title = element.select("div span").not(".badge").text()
         return anime
     }
@@ -90,8 +90,8 @@ class TenshiMoe : ParsedAnimeHttpSource() {
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.attr("href"))
-        anime.title = element.select("div span").not("div span.badge").text()
+        anime.setUrlWithoutDomain(element.attr("href") + "?s=srt-d")
+        anime.title = element.select("div span.thumb-title, div span.text-primary").text()
         return anime
     }
 
@@ -104,7 +104,7 @@ class TenshiMoe : ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.thumbnail_url = document.select("img.cover-image.img-thumbnail").first().attr("src")
-        anime.title = document.select("h1.mb-3").text()
+        anime.title = document.select("li.breadcrumb-item.active").text()
         anime.genre = document.select("li.genre span.value").joinToString(", ") { it.text() }
         anime.description = document.select("div.card-body").text()
         anime.author = document.select("li.production span.value").joinToString(", ") { it.text() }
@@ -120,11 +120,16 @@ class TenshiMoe : ParsedAnimeHttpSource() {
         }
     }
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector(): String = "ul.pagination li.page-item a[rel=next]"
 
-    override fun latestUpdatesFromElement(element: Element) = throw Exception("Not used")
+    override fun latestUpdatesFromElement(element: Element): SAnime {
+        val anime = SAnime.create()
+        anime.setUrlWithoutDomain(element.attr("href") + "?s=srt-d")
+        anime.title = element.select("div span").not(".badge").text()
+        return anime
+    }
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/anime?s=rel-d&page=$page")
 
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesSelector(): String = "ul.anime-loop.loop li a"
 }
