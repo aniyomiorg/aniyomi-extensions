@@ -49,9 +49,11 @@ class Hanime : AnimeHttpSource() {
             "page": ${page - 1}}
         """.trimIndent().toRequestBody("application/json".toMediaType())
     }
-    private val popularRequestHeaders = Headers.headersOf("authority", "search.htv-services.com", "accept", "application/json, text/plain, */*", "content-type", "application/json;charset=UTF-8")
+    private val popularRequestHeaders =
+        Headers.headersOf("authority", "search.htv-services.com", "accept", "application/json, text/plain, */*", "content-type", "application/json;charset=UTF-8")
 
-    override fun popularAnimeRequest(page: Int): Request = POST("https://search.htv-services.com/", popularRequestHeaders, searchRequestBody("", page, AnimeFilterList()))
+    override fun popularAnimeRequest(page: Int): Request =
+        POST("https://search.htv-services.com/", popularRequestHeaders, searchRequestBody("", page, AnimeFilterList()))
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val responseString = response.body!!.string()
