@@ -25,7 +25,7 @@ for APK in ${APKS[@]}; do
     APPLICATION=$(echo "$BADGING" | grep application:)
     LABEL=$(echo $APPLICATION | grep -Po "label='\K[^']+")
 
-    LANG=$(echo $APK | grep -Po "tachiyomi-\K[^\.]+")
+    LANG=$(echo $APK | grep -Po "aniyomi-\K[^\.]+")
 
     ICON=$(echo "$BADGING" | grep -Po "application-icon-320.*'\K[^']+")
     unzip -p $APK $ICON > icon/${FILENAME%.*}.png
