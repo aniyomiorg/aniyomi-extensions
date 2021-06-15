@@ -5,7 +5,7 @@ ext {
     extName = 'tenshi.moe'
     pkgNameSuffix = 'en.tenshimoe'
     extClass = '.TenshiMoe'
-    extVersionCode = 13
+    extVersionCode = 14
     libVersion = '11'
 }
 dependencies {

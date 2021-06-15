@@ -135,6 +135,10 @@ class TwoDGirlsTech : ParsedAnimeHttpSource() {
         }
     }
 
+    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
+        return Observable.just(runBlocking { setDetails(anime) })
+    }
+
     override fun episodeListSelector() = "div[id^=episode-]"
 
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
