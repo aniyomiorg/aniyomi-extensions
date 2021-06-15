@@ -2,10 +2,10 @@
   {
     "name": "Aniyomi: 4anime.to",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.fouranime",
-    "apk": "aniyomi-en.fouranime-v11.8.apk",
+    "apk": "aniyomi-en.fouranime-v11.9.apk",
     "lang": "en",
-    "code": 8,
-    "version": "11.8",
+    "code": 9,
+    "version": "11.9",
     "nsfw": 0
   },
   {
@@ -20,19 +20,19 @@
   {
     "name": "Aniyomi: tenshi.moe",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.tenshimoe",
-    "apk": "aniyomi-en.tenshimoe-v11.12.apk",
+    "apk": "aniyomi-en.tenshimoe-v11.13.apk",
     "lang": "en",
-    "code": 12,
-    "version": "11.12",
+    "code": 13,
+    "version": "11.13",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: 2dgirls.tech",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.twodgirlstech",
-    "apk": "aniyomi-en.twodgirlstech-v11.10.apk",
+    "apk": "aniyomi-en.twodgirlstech-v11.11.apk",
     "lang": "en",
-    "code": 10,
-    "version": "11.10",
+    "code": 11,
+    "version": "11.11",
     "nsfw": 0
   }
 ]
