@@ -37,10 +37,6 @@ class FourAnime : ParsedAnimeHttpSource() {
 
     override fun episodeListSelector() = "ul.episodes.active.range li a"
 
-    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
-        return super.fetchEpisodeList(anime).flatMap { Observable.just(it.reversed()) }
-    }
-
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("href"))

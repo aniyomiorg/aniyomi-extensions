@@ -31,7 +31,7 @@ class TenshiMoe : ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.attr("href") + "?s=srt-d")
+        anime.setUrlWithoutDomain(element.attr("href"))
         anime.title = element.select("div span").not(".badge").text()
         return anime
     }
@@ -90,7 +90,7 @@ class TenshiMoe : ParsedAnimeHttpSource() {
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.attr("href") + "?s=srt-d")
+        anime.setUrlWithoutDomain(element.attr("href"))
         anime.title = element.select("div span.thumb-title, div span.text-primary").text()
         return anime
     }
@@ -124,7 +124,7 @@ class TenshiMoe : ParsedAnimeHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.attr("href") + "?s=srt-d")
+        anime.setUrlWithoutDomain(element.attr("href"))
         anime.title = element.select("div span").not(".badge").text()
         return anime
     }
