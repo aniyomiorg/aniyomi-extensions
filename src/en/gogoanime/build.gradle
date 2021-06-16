@@ -2,10 +2,10 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    extName = '2dgirls.tech'
-    pkgNameSuffix = 'en.twodgirlstech'
-    extClass = '.TwoDGirlsTech'
-    extVersionCode = 12
+    extName = 'Gogoanime'
+    pkgNameSuffix = 'en.gogoanime'
+    extClass = '.GogoAnime'
+    extVersionCode = 1
     libVersion = '11'
 }
 dependencies {
