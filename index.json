@@ -9,6 +9,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: Gogoanime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.gogoanime",
+    "apk": "aniyomi-en.gogoanime-v11.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "11.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: hanime.tv",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.hanime",
     "apk": "aniyomi-en.hanime-v11.6.apk",
@@ -24,15 +33,6 @@
     "lang": "en",
     "code": 14,
     "version": "11.14",
-    "nsfw": 0
-  },
-  {
-    "name": "Aniyomi: 2dgirls.tech",
-    "pkg": "eu.kanade.tachiyomi.animeextension.en.twodgirlstech",
-    "apk": "aniyomi-en.twodgirlstech-v11.12.apk",
-    "lang": "en",
-    "code": 12,
-    "version": "11.12",
     "nsfw": 0
   }
 ]
