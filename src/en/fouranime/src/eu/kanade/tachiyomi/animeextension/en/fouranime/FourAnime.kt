@@ -44,12 +44,20 @@ class FourAnime : ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("href"))
-        episode.episode_number = element.text().toFloat()
+        episode.episode_number = episodeNumberFromText(element.text())
         episode.name = "Episode " + element.text()
         episode.date_upload = System.currentTimeMillis()
         return episode
     }
 
+    private fun episodeNumberFromText(text: String): Float {
+        return try {
+            text.toFloat()
+        } catch (e: NumberFormatException) {
+            val firstLetterAsNumber = (text.replace("[\\d]".toRegex(), "").first().toFloat() - 64F) / 100F
+            text.replace("[^\\d]".toRegex(), "").toFloat() + firstLetterAsNumber
+        }
+    }
     override fun episodeLinkSelector() = "source"
 
     override fun linksFromElement(element: Element): List<Link> {

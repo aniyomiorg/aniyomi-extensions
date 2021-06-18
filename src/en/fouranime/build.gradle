@@ -5,7 +5,7 @@ ext {
     extName = '4anime.to'
     pkgNameSuffix = 'en.fouranime'
     extClass = '.FourAnime'
-    extVersionCode = 10
+    extVersionCode = 11
     libVersion = '11'
 }
 dependencies {
