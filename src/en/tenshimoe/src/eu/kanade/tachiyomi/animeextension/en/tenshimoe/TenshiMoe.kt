@@ -1,15 +1,23 @@
 package eu.kanade.tachiyomi.animeextension.en.tenshimoe
 
 import android.annotation.SuppressLint
+import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.Link
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.await
+import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.runBlocking
+import okhttp3.Headers
 import okhttp3.Request
+import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 import java.lang.Float.parseFloat
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -75,6 +83,24 @@ class TenshiMoe : ParsedAnimeHttpSource() {
             }
         }
         return Date(-1L)
+    }
+
+    override fun fetchEpisodeLink(episode: SEpisode): Observable<List<Link>> {
+        return client.newCall(GET(baseUrl + episode.url))
+            .asObservableSuccess()
+            .map { response ->
+                Log.w("tenshi", "linkReq")
+                runBlocking { linkRequest(response) }
+            }
+    }
+
+    private suspend fun linkRequest(response: Response): List<Link> {
+        val elements = response.asJsoup()
+        val link = elements.select("iframe").attr("src")
+        val dlResponse = client.newCall(GET(link, Headers.headersOf("referer", response.request.url.toString())))
+            .await()
+        val document = dlResponse.asJsoup()
+        return linksFromElement(document.select(episodeLinkSelector()).first())
     }
 
     override fun episodeLinkSelector() = "video#player"
