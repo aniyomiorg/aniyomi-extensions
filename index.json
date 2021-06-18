@@ -2,10 +2,10 @@
   {
     "name": "Aniyomi: 4anime.to",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.fouranime",
-    "apk": "aniyomi-en.fouranime-v11.10.apk",
+    "apk": "aniyomi-en.fouranime-v11.11.apk",
     "lang": "en",
-    "code": 10,
-    "version": "11.10",
+    "code": 11,
+    "version": "11.11",
     "nsfw": 0
   },
   {
