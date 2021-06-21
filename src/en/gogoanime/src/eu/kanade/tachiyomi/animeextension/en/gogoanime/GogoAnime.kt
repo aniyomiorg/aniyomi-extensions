@@ -1,12 +1,11 @@
 package eu.kanade.tachiyomi.animeextension.en.gogoanime
 
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
-import eu.kanade.tachiyomi.animesource.model.Link
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
+import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.runBlocking
@@ -14,7 +13,7 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
+import java.lang.Exception
 
 class GogoAnime : ParsedAnimeHttpSource() {
 
@@ -57,23 +56,6 @@ class GogoAnime : ParsedAnimeHttpSource() {
         return document.select("a").map { episodeFromElement(it) }
     }
 
-    override fun fetchEpisodeLink(episode: SEpisode): Observable<List<Link>> {
-        return client.newCall(GET(baseUrl + episode.url))
-            .asObservableSuccess()
-            .map { response ->
-                runBlocking { linkRequest(response) }
-            }
-    }
-
-    private suspend fun linkRequest(response: Response): List<Link> {
-        val elements = response.asJsoup()
-        val link = elements.select("li.dowloads a").attr("href")
-        val dlResponse = client.newCall(GET(link))
-            .await()
-        val document = dlResponse.asJsoup()
-        return linksFromElement(document.select(episodeLinkSelector()).first())
-    }
-
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(baseUrl + element.attr("href").substringAfter(" "))
@@ -84,16 +66,11 @@ class GogoAnime : ParsedAnimeHttpSource() {
         return episode
     }
 
-    override fun episodeLinkSelector() = "div.mirror_link:has(a[download])"
+    override fun videoListSelector() = "div.mirror_link a[download]"
 
-    override fun linksFromElement(element: Element): List<Link> {
-        val links = mutableListOf<Link>()
-        val linkElements = element.select("a[download]")
-        for (e in linkElements) {
-            val quality = e.text().substringAfter("Download (").replace("P - mp4)", "p")
-            links.add(Link(e.attr("href"), quality))
-        }
-        return links
+    override fun videoFromElement(element: Element): Video {
+        val quality = element.text().substringAfter("Download (").replace("P - mp4)", "p")
+        return Video(element.attr("href"), quality, element.attr("href"), null)
     }
 
     override fun searchAnimeFromElement(element: Element): SAnime {
@@ -141,4 +118,8 @@ class GogoAnime : ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request = GET("https://ajax.gogo-load.com/ajax/page-recent-release-ongoing.html?page=$page&type=1")
 
     override fun latestUpdatesSelector(): String = "div.added_series_body.popular li a:has(div)"
+
+    override fun videoUrlFromElement(element: Element) = throw Exception("not used")
+
+    override fun videoUrlSelector() = throw Exception("not used")
 }

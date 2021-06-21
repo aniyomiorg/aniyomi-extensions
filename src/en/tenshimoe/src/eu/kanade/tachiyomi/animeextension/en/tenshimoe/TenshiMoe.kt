@@ -3,21 +3,20 @@ package eu.kanade.tachiyomi.animeextension.en.tenshimoe
 import android.annotation.SuppressLint
 import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
-import eu.kanade.tachiyomi.animesource.model.Link
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
+import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
-import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.runBlocking
 import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import java.lang.Exception
 import java.lang.Float.parseFloat
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -85,34 +84,46 @@ class TenshiMoe : ParsedAnimeHttpSource() {
         return Date(-1L)
     }
 
-    override fun fetchEpisodeLink(episode: SEpisode): Observable<List<Link>> {
-        return client.newCall(GET(baseUrl + episode.url))
+    override fun videoListParse(response: Response): List<Video> {
+        val document = response.asJsoup()
+        val iframe = document.selectFirst("iframe")
+        val referer = response.request.url.encodedPath
+        return document.select(videoListSelector()).map { videoFromElement(it, iframe, referer) }
+    }
+
+    override fun videoListSelector() = "span.resolution a"
+
+    private fun videoFromElement(element: Element, iframe: Element, referer: String): Video {
+        Log.i("lol", iframe.attr("src") + "&referer=$referer")
+        return Video(iframe.attr("src") + "&referer=$referer", element.text(), null, null)
+    }
+
+    override fun videoFromElement(element: Element) = throw Exception("not used")
+
+    override fun videoUrlRequest(video: Video): Request {
+        Log.i("lol", baseUrl + video.url.substringAfter("&referer="))
+        return GET(video.url, Headers.headersOf("referer", baseUrl + video.url.substringAfter("&referer=")))
+    }
+
+    override fun fetchVideoUrl(video: Video): Observable<String> {
+        return client.newCall(videoUrlRequest(video))
             .asObservableSuccess()
-            .map { response ->
-                Log.w("tenshi", "linkReq")
-                runBlocking { linkRequest(response) }
+            .map {
+                Log.i("lol", it.code.toString())
+                videoUrlParse(it, video.quality)
             }
     }
 
-    private suspend fun linkRequest(response: Response): List<Link> {
-        val elements = response.asJsoup()
-        val link = elements.select("iframe").attr("src")
-        val dlResponse = client.newCall(GET(link, Headers.headersOf("referer", response.request.url.toString())))
-            .await()
-        val document = dlResponse.asJsoup()
-        return linksFromElement(document.select(episodeLinkSelector()).first())
+    private fun videoUrlParse(response: Response, quality: String): String {
+        val document = response.asJsoup()
+        return videoUrlFromElement(document.selectFirst(videoUrlSelector(quality)))
     }
 
-    override fun episodeLinkSelector() = "video#player"
+    override fun videoUrlFromElement(element: Element): String = element.attr("src")
 
-    override fun linksFromElement(element: Element): List<Link> {
-        val linkList = mutableListOf<Link>()
-        val linkElements = element.select("source")
-        for (link in linkElements) {
-            linkList.add(Link(link.attr("src"), link.attr("title")))
-        }
-        return linkList
-    }
+    private fun videoUrlSelector(quality: String) = "source[title=$quality]"
+
+    override fun videoUrlSelector() = throw Exception("not used")
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()

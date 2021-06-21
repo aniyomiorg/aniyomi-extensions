@@ -6,7 +6,7 @@ ext {
     pkgNameSuffix = 'en.gogoanime'
     extClass = '.GogoAnime'
     extVersionCode = 2
-    libVersion = '11'
+    libVersion = '12'
 }
 dependencies {
     ext.coroutinesVersion = "1.4.3"

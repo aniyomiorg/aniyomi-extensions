@@ -6,9 +6,9 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
-import eu.kanade.tachiyomi.animesource.model.Link
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
+import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -117,16 +117,16 @@ class Hanime : AnimeHttpSource() {
         return anime
     }
 
-    override fun episodeLinkParse(response: Response): List<Link> {
+    override fun videoListParse(response: Response): List<Video> {
         val responseString = response.body!!.string()
         val jElement: JsonElement = JsonParser.parseString(responseString)
         val jObject: JsonObject = jElement.asJsonObject
         val server = jObject.get("videos_manifest").asJsonObject.get("servers").asJsonArray[0].asJsonObject
         val streams = server.get("streams").asJsonArray
-        val linkList = mutableListOf<Link>()
+        val linkList = mutableListOf<Video>()
         for (stream in streams) {
             if (stream.asJsonObject.get("kind").asString != "premium_alert") {
-                linkList.add(Link(stream.asJsonObject.get("url").asString, stream.asJsonObject.get("height").asString + "p"))
+                linkList.add(Video(stream.asJsonObject.get("url").asString, stream.asJsonObject.get("height").asString + "p", stream.asJsonObject.get("url").asString, null))
             }
         }
         return linkList

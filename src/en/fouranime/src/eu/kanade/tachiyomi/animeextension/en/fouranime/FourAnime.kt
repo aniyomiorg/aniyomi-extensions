@@ -1,9 +1,9 @@
 package eu.kanade.tachiyomi.animeextension.en.fouranime
 
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
-import eu.kanade.tachiyomi.animesource.model.Link
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
+import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.Request
@@ -58,11 +58,20 @@ class FourAnime : ParsedAnimeHttpSource() {
             text.replace("[^\\d]".toRegex(), "").toFloat() + firstLetterAsNumber
         }
     }
-    override fun episodeLinkSelector() = "source"
 
-    override fun linksFromElement(element: Element): List<Link> {
-        return mutableListOf(Link(element.attr("src"), "1080p"))
+    override fun videoListSelector() = "source"
+
+    override fun videoFromElement(element: Element): Video {
+        return Video(element.attr("src"), "1080p", null, null)
     }
+
+    override fun fetchVideoUrl(video: Video): Observable<String> {
+        return Observable.just(video.url)
+    }
+
+    override fun videoUrlSelector() = throw Exception("not used")
+
+    override fun videoUrlFromElement(element: Element) = throw Exception("not used")
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
