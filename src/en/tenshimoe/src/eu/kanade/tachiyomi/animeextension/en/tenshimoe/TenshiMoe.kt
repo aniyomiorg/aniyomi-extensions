@@ -33,6 +33,8 @@ class TenshiMoe : ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
 
+    override val client: OkHttpClient = network.cloudflareClient
+
     override fun popularAnimeSelector(): String = "ul.anime-loop.loop li a"
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/anime?s=vdy-d&page=$page")
