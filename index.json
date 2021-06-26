@@ -29,10 +29,10 @@
   {
     "name": "Aniyomi: tenshi.moe",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.tenshimoe",
-    "apk": "aniyomi-en.tenshimoe-v11.15.apk",
+    "apk": "aniyomi-en.tenshimoe-v11.16.apk",
     "lang": "en",
-    "code": 15,
-    "version": "11.15",
+    "code": 16,
+    "version": "11.16",
     "nsfw": 0
   }
 ]
