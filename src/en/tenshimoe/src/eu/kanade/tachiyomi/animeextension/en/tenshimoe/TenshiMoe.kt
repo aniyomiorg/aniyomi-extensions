@@ -100,8 +100,7 @@ class TenshiMoe : ParsedAnimeHttpSource() {
     private suspend fun linkRequest(response: Response): List<Link> {
         val elements = response.asJsoup()
         val link = elements.select("iframe").attr("src")
-        val dlResponse = client.newCall(GET(link, Headers.headersOf("referer", response.request.url.toString())))
-            .await()
+        val dlResponse = client.newCall(GET(link, Headers.headersOf("referer", response.request.url.toString()))).await()
         val document = dlResponse.asJsoup()
         return linksFromElement(document.select(episodeLinkSelector()).first())
     }
