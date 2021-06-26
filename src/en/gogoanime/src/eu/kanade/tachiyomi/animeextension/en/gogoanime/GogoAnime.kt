@@ -67,7 +67,7 @@ class GogoAnime : ParsedAnimeHttpSource() {
 
     private suspend fun linkRequest(response: Response): List<Link> {
         val elements = response.asJsoup()
-        val link = elements.select("li.dowloads a").attr("href")
+        val link = elements.select("li.dowloads a").attr("href").replace("streamani.net", "gogo-stream.com")
         val dlResponse = client.newCall(GET(link))
             .await()
         val document = dlResponse.asJsoup()
