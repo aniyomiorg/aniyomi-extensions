@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.runBlocking
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -24,6 +25,8 @@ class GogoAnime : ParsedAnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
+
+    override val client: OkHttpClient = network.cloudflareClient
 
     override fun popularAnimeSelector(): String = "div.img a"
 
@@ -49,7 +52,7 @@ class GogoAnime : ParsedAnimeHttpSource() {
     }
 
     private suspend fun episodesRequest(totalEpisodes: String, id: String): List<SEpisode> {
-        val request = GET("https://ajax.gogo-load.com/ajax/load-list-episode?ep_start=0&ep_end=$totalEpisodes&id=$id")
+        val request = GET("https://ajax.gogo-load.com/ajax/load-list-episode?ep_start=0&ep_end=$totalEpisodes&id=$id", headers)
         val epResponse = client.newCall(request)
             .await()
         val document = epResponse.asJsoup()
@@ -66,12 +69,26 @@ class GogoAnime : ParsedAnimeHttpSource() {
         return episode
     }
 
+    override fun videoListParse(response: Response): List<Video> {
+        val document = response.asJsoup()
+        val videoListUrl = document.selectFirst("li.dowloads a").attr("href").replace("streamani.net", "gogo-stream.com")
+        val videoListResponse = runBlocking {
+            client.newCall(GET(videoListUrl, headers),)
+                .await().asJsoup()
+        }
+        return videoListResponse.select(videoListSelector()).map { videoFromElement(it) }
+    }
+
     override fun videoListSelector() = "div.mirror_link a[download]"
 
     override fun videoFromElement(element: Element): Video {
         val quality = element.text().substringAfter("Download (").replace("P - mp4)", "p")
         return Video(element.attr("href"), quality, element.attr("href"), null)
     }
+
+    override fun videoUrlFromElement(element: Element): String = throw Exception("not used")
+
+    override fun videoUrlSelector() = throw Exception("not used")
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -85,7 +102,8 @@ class GogoAnime : ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = "div.img a"
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/search.html?keyword=$query&page=$page")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request =
+        GET("$baseUrl/search.html?keyword=$query&page=$page", headers)
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
@@ -115,11 +133,8 @@ class GogoAnime : ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("https://ajax.gogo-load.com/ajax/page-recent-release-ongoing.html?page=$page&type=1")
+    override fun latestUpdatesRequest(page: Int): Request =
+        GET("https://ajax.gogo-load.com/ajax/page-recent-release-ongoing.html?page=$page&type=1", headers)
 
     override fun latestUpdatesSelector(): String = "div.added_series_body.popular li a:has(div)"
-
-    override fun videoUrlFromElement(element: Element) = throw Exception("not used")
-
-    override fun videoUrlSelector() = throw Exception("not used")
 }

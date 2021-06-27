@@ -8,14 +8,15 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers
+import kotlinx.coroutines.runBlocking
+import okhttp3.Headers.Companion.toHeaders
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import java.lang.Exception
 import java.lang.Float.parseFloat
 import java.text.SimpleDateFormat
@@ -31,6 +32,8 @@ class TenshiMoe : ParsedAnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
+
+    override val client: OkHttpClient = network.cloudflareClient
 
     override fun popularAnimeSelector(): String = "ul.anime-loop.loop li a"
 
@@ -86,42 +89,25 @@ class TenshiMoe : ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val iframe = document.selectFirst("iframe")
+        val iframe = document.selectFirst("iframe").attr("src")
         val referer = response.request.url.encodedPath
-        return document.select(videoListSelector()).map { videoFromElement(it, iframe, referer) }
+        val newHeaderList = mutableMapOf(Pair("referer", baseUrl + referer))
+        headers.forEach { newHeaderList[it.first] = it.second }
+        val iframeResponse = runBlocking {
+            client.newCall(GET(iframe, newHeaderList.toHeaders()))
+                .await().asJsoup()
+        }
+        return iframeResponse.select(videoListSelector()).map { videoFromElement(it) }
     }
 
-    override fun videoListSelector() = "span.resolution a"
+    override fun videoListSelector() = "source"
 
-    private fun videoFromElement(element: Element, iframe: Element, referer: String): Video {
-        Log.i("lol", iframe.attr("src") + "&referer=$referer")
-        return Video(iframe.attr("src") + "&referer=$referer", element.text(), null, null)
+    override fun videoFromElement(element: Element): Video {
+        Log.i("lol", element.attr("src"))
+        return Video(element.attr("src"), element.attr("title"), element.attr("title"), null)
     }
 
-    override fun videoFromElement(element: Element) = throw Exception("not used")
-
-    override fun videoUrlRequest(video: Video): Request {
-        Log.i("lol", baseUrl + video.url.substringAfter("&referer="))
-        return GET(video.url, Headers.headersOf("referer", baseUrl + video.url.substringAfter("&referer=")))
-    }
-
-    override fun fetchVideoUrl(video: Video): Observable<String> {
-        return client.newCall(videoUrlRequest(video))
-            .asObservableSuccess()
-            .map {
-                Log.i("lol", it.code.toString())
-                videoUrlParse(it, video.quality)
-            }
-    }
-
-    private fun videoUrlParse(response: Response, quality: String): String {
-        val document = response.asJsoup()
-        return videoUrlFromElement(document.selectFirst(videoUrlSelector(quality)))
-    }
-
-    override fun videoUrlFromElement(element: Element): String = element.attr("src")
-
-    private fun videoUrlSelector(quality: String) = "source[title=$quality]"
+    override fun videoUrlFromElement(element: Element): String = throw Exception("not used")
 
     override fun videoUrlSelector() = throw Exception("not used")
 
