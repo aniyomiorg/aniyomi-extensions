@@ -23,7 +23,7 @@ class GogoAnime : ParsedAnimeHttpSource() {
 
     override val name = "Gogoanime"
 
-    override val baseUrl = "https://www1.gogoanime.ai"
+    override val baseUrl = "https://gogoanime.pe"
 
     override val lang = "en"
 
@@ -71,7 +71,7 @@ class GogoAnime : ParsedAnimeHttpSource() {
     private suspend fun linkRequest(response: Response): List<Link> {
         val elements = response.asJsoup()
         val link = elements.select("a[data-video*=streamani.net/load.php]").attr("data-video")
-        val dlResponse = client.newCall(GET("https:$link", Headers.headersOf("referer", "https://www1.gogoanime.ai")))
+        val dlResponse = client.newCall(GET("https:$link", Headers.headersOf("referer", baseUrl)))
             .await()
         val document = dlResponse.asJsoup()
         return linksFromElement(document.select(episodeLinkSelector()).first())
@@ -107,10 +107,33 @@ class GogoAnime : ParsedAnimeHttpSource() {
             }
             val quality = jsonObject["label"].asString
             Log.i("links:", "$link - $quality")
-            links.add(Link(link, quality))
+            if (links.isEmpty() || !links.last().url.contains(link.substringAfterLast("/"))) {
+                if (link.contains("m3u8")) {
+                    val individualLinks = runBlocking { getIndividualLinks(link) }
+                    individualLinks.forEach { links.add(it) }
+                } else {
+                    links.add(Link(link, quality))
+                }
+            }
             hit = content.indexOf("playerInstance.setup(", hit + 1)
         }
         return links
+    }
+
+    private suspend fun getIndividualLinks(link: String): List<Link> {
+        val response = client.newCall(GET(link)).await().body!!.string()
+        Log.i("links", response)
+        val links = response.split("\n").filter { !it.startsWith("#") && it.isNotEmpty() }.toMutableList()
+        val qualities = response.split("\n").filter { it.startsWith("#EXT-X-STREAM-INF") }.toMutableList()
+        Log.i("links", links.lastIndex.toString() + qualities.lastIndex.toString())
+        val linkList = mutableListOf<Link>()
+        if (qualities.lastIndex != links.lastIndex) return emptyList()
+        for (i in 0..qualities.lastIndex) {
+            links[i] = link.substringBeforeLast("/") + "/" + links[i]
+            qualities[i] = qualities[i].substringAfter("NAME=").replace("\"", "")
+            linkList.add(Link(links[i], qualities[i]))
+        }
+        return linkList.reversed()
     }
 
     override fun searchAnimeFromElement(element: Element): SAnime {
