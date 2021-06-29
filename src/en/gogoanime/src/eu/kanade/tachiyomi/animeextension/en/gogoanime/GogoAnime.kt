@@ -1,5 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.en.gogoanime
 
+import android.util.Log
+import com.google.gson.JsonParser
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.Link
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -10,6 +12,7 @@ import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.runBlocking
+import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -67,8 +70,8 @@ class GogoAnime : ParsedAnimeHttpSource() {
 
     private suspend fun linkRequest(response: Response): List<Link> {
         val elements = response.asJsoup()
-        val link = elements.select("li.dowloads a").attr("href")
-        val dlResponse = client.newCall(GET(link))
+        val link = elements.select("a[data-video*=streamani.net/load.php]").attr("data-video")
+        val dlResponse = client.newCall(GET("https:$link", Headers.headersOf("referer", "https://www1.gogoanime.ai")))
             .await()
         val document = dlResponse.asJsoup()
         return linksFromElement(document.select(episodeLinkSelector()).first())
@@ -84,14 +87,28 @@ class GogoAnime : ParsedAnimeHttpSource() {
         return episode
     }
 
-    override fun episodeLinkSelector() = "div.mirror_link:has(a[download])"
+    override fun episodeLinkSelector() = "div.videocontent script"
 
     override fun linksFromElement(element: Element): List<Link> {
         val links = mutableListOf<Link>()
-        val linkElements = element.select("a[download]")
-        for (e in linkElements) {
-            val quality = e.text().substringAfter("Download (").replace("P - mp4)", "p")
-            links.add(Link(e.attr("href"), quality))
+        val content = element.data()
+        Log.i("links", content)
+        var hit = content.indexOf("playerInstance.setup(")
+        while (hit >= 0) {
+            val objectString =
+                element.data().substring(hit).substringAfter("playerInstance.setup(").substringBefore(");")
+            val jsonObject =
+                JsonParser.parseString(objectString).asJsonObject["sources"].asJsonArray[0].asJsonObject
+            var link = jsonObject["file"].asString
+            if (link.contains("m3u8")) {
+                val toFind = link.substringAfter("/videos/hls/").substringBefore("/")
+                val toRemove = link.substringAfter("/videos/hls/").substringBeforeLast(toFind)
+                link = link.replace("/videos/hls/$toRemove", "/videos/hls/")
+            }
+            val quality = jsonObject["label"].asString
+            Log.i("links:", "$link - $quality")
+            links.add(Link(link, quality))
+            hit = content.indexOf("playerInstance.setup(", hit + 1)
         }
         return links
     }
