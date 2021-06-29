@@ -1,7 +1,7 @@
 // used both in common.gradle and themesources library
 dependencies {
     // Lib 1.3, but using specific commit so we don't need to bump up the version
-    compileOnly "com.github.jmir1:extensions-lib:6467320"
+    compileOnly "com.github.jmir1:extensions-lib:632a3e4"
 
     // These are provided by the app itself
     compileOnly "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"

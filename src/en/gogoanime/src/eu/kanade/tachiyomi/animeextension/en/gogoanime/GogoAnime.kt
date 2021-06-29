@@ -1,23 +1,22 @@
 package eu.kanade.tachiyomi.animeextension.en.gogoanime
 
-import android.util.Log
 import com.google.gson.JsonParser
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
-import eu.kanade.tachiyomi.animesource.model.Link
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
+import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.runBlocking
-import okhttp3.Headers
+import okhttp3.Headers.Companion.toHeaders
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
+import java.lang.Exception
 
 class GogoAnime : ParsedAnimeHttpSource() {
 
@@ -28,6 +27,8 @@ class GogoAnime : ParsedAnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
+
+    override val client: OkHttpClient = network.cloudflareClient
 
     override fun popularAnimeSelector(): String = "div.img a"
 
@@ -53,28 +54,11 @@ class GogoAnime : ParsedAnimeHttpSource() {
     }
 
     private suspend fun episodesRequest(totalEpisodes: String, id: String): List<SEpisode> {
-        val request = GET("https://ajax.gogo-load.com/ajax/load-list-episode?ep_start=0&ep_end=$totalEpisodes&id=$id")
+        val request = GET("https://ajax.gogo-load.com/ajax/load-list-episode?ep_start=0&ep_end=$totalEpisodes&id=$id", headers)
         val epResponse = client.newCall(request)
             .await()
         val document = epResponse.asJsoup()
         return document.select("a").map { episodeFromElement(it) }
-    }
-
-    override fun fetchEpisodeLink(episode: SEpisode): Observable<List<Link>> {
-        return client.newCall(GET(baseUrl + episode.url))
-            .asObservableSuccess()
-            .map { response ->
-                runBlocking { linkRequest(response) }
-            }
-    }
-
-    private suspend fun linkRequest(response: Response): List<Link> {
-        val elements = response.asJsoup()
-        val link = elements.select("a[data-video*=streamani.net/load.php]").attr("data-video")
-        val dlResponse = client.newCall(GET("https:$link", Headers.headersOf("referer", baseUrl)))
-            .await()
-        val document = dlResponse.asJsoup()
-        return linksFromElement(document.select(episodeLinkSelector()).first())
     }
 
     override fun episodeFromElement(element: Element): SEpisode {
@@ -87,12 +71,26 @@ class GogoAnime : ParsedAnimeHttpSource() {
         return episode
     }
 
-    override fun episodeLinkSelector() = "div.videocontent script"
+    override fun videoListParse(response: Response): List<Video> {
+        val document = response.asJsoup()
+        var videoListUrl = document.selectFirst("a[data-video*=streamani.net/load.php]").attr("data-video")
+        if (!videoListUrl.startsWith("https:")) videoListUrl = "https:$videoListUrl"
+        val newHeaderList = mutableMapOf(Pair("referer", baseUrl))
+        headers.forEach { newHeaderList[it.first] = it.second }
+        val videoListResponse = runBlocking {
+            client.newCall(GET(videoListUrl, newHeaderList.toHeaders()))
+                .await().asJsoup()
+        }
+        return videoListFromElement(videoListResponse.selectFirst(videoListSelector()))
+    }
 
-    override fun linksFromElement(element: Element): List<Link> {
-        val links = mutableListOf<Link>()
+    override fun videoListSelector() = "div.videocontent script"
+
+    override fun videoFromElement(element: Element) = throw Exception("not used")
+
+    private fun videoListFromElement(element: Element): List<Video> {
+        val videos = mutableListOf<Video>()
         val content = element.data()
-        Log.i("links", content)
         var hit = content.indexOf("playerInstance.setup(")
         while (hit >= 0) {
             val objectString =
@@ -106,35 +104,36 @@ class GogoAnime : ParsedAnimeHttpSource() {
                 link = link.replace("/videos/hls/$toRemove", "/videos/hls/")
             }
             val quality = jsonObject["label"].asString
-            Log.i("links:", "$link - $quality")
-            if (links.isEmpty() || !links.last().url.contains(link.substringAfterLast("/"))) {
+            if (videos.isEmpty() || !videos.last().url.contains(link.substringAfterLast("/"))) {
                 if (link.contains("m3u8")) {
                     val individualLinks = runBlocking { getIndividualLinks(link) }
-                    individualLinks.forEach { links.add(it) }
+                    individualLinks.forEach { videos.add(it) }
                 } else {
-                    links.add(Link(link, quality))
+                    videos.add(Video(link, quality, link, null))
                 }
             }
             hit = content.indexOf("playerInstance.setup(", hit + 1)
         }
-        return links
+        return videos
     }
 
-    private suspend fun getIndividualLinks(link: String): List<Link> {
+    private suspend fun getIndividualLinks(link: String): List<Video> {
         val response = client.newCall(GET(link)).await().body!!.string()
-        Log.i("links", response)
         val links = response.split("\n").filter { !it.startsWith("#") && it.isNotEmpty() }.toMutableList()
         val qualities = response.split("\n").filter { it.startsWith("#EXT-X-STREAM-INF") }.toMutableList()
-        Log.i("links", links.lastIndex.toString() + qualities.lastIndex.toString())
-        val linkList = mutableListOf<Link>()
+        val linkList = mutableListOf<Video>()
         if (qualities.lastIndex != links.lastIndex) return emptyList()
         for (i in 0..qualities.lastIndex) {
             links[i] = link.substringBeforeLast("/") + "/" + links[i]
             qualities[i] = qualities[i].substringAfter("NAME=").replace("\"", "")
-            linkList.add(Link(links[i], qualities[i]))
+            linkList.add(Video(links[i], qualities[i], links[i], null))
         }
         return linkList.reversed()
     }
+
+    override fun videoUrlFromElement(element: Element): String = throw Exception("not used")
+
+    override fun videoUrlSelector() = throw Exception("not used")
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -148,7 +147,8 @@ class GogoAnime : ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = "div.img a"
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/search.html?keyword=$query&page=$page")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request =
+        GET("$baseUrl/search.html?keyword=$query&page=$page", headers)
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
@@ -178,7 +178,8 @@ class GogoAnime : ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("https://ajax.gogo-load.com/ajax/page-recent-release-ongoing.html?page=$page&type=1")
+    override fun latestUpdatesRequest(page: Int): Request =
+        GET("https://ajax.gogo-load.com/ajax/page-recent-release-ongoing.html?page=$page&type=1", headers)
 
     override fun latestUpdatesSelector(): String = "div.added_series_body.popular li a:has(div)"
 }
