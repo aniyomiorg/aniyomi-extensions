@@ -13,6 +13,7 @@ import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.runBlocking
 import okhttp3.Headers
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -32,6 +33,8 @@ class TenshiMoe : ParsedAnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
+
+    override val client: OkHttpClient = network.cloudflareClient
 
     override fun popularAnimeSelector(): String = "ul.anime-loop.loop li a"
 
@@ -97,8 +100,7 @@ class TenshiMoe : ParsedAnimeHttpSource() {
     private suspend fun linkRequest(response: Response): List<Link> {
         val elements = response.asJsoup()
         val link = elements.select("iframe").attr("src")
-        val dlResponse = client.newCall(GET(link, Headers.headersOf("referer", response.request.url.toString())))
-            .await()
+        val dlResponse = client.newCall(GET(link, Headers.headersOf("referer", response.request.url.toString()))).await()
         val document = dlResponse.asJsoup()
         return linksFromElement(document.select(episodeLinkSelector()).first())
     }
