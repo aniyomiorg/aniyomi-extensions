@@ -46,7 +46,7 @@ class TenshiMoe : ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun popularAnimeNextPageSelector(): String? = "ul.pagination li.page-item a[rel=next]"
+    override fun popularAnimeNextPageSelector(): String = "ul.pagination li.page-item a[rel=next]"
 
     override fun episodeListSelector() = "ul.episode-loop li a"
 
@@ -104,7 +104,7 @@ class TenshiMoe : ParsedAnimeHttpSource() {
 
     override fun videoFromElement(element: Element): Video {
         Log.i("lol", element.attr("src"))
-        return Video(element.attr("src"), element.attr("title"), element.attr("title"), null)
+        return Video(element.attr("src"), element.attr("title"), element.attr("src"), null)
     }
 
     override fun videoUrlFromElement(element: Element): String = throw Exception("not used")
