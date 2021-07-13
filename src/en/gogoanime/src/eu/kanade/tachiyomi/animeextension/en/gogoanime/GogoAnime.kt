@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.gogoanime
 
+import android.util.Log
 import com.google.gson.JsonParser
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -126,6 +127,7 @@ class GogoAnime : ParsedAnimeHttpSource() {
         for (i in 0..qualities.lastIndex) {
             links[i] = link.substringBeforeLast("/") + "/" + links[i]
             qualities[i] = qualities[i].substringAfter("NAME=").replace("\"", "")
+            Log.i("lol", links[i])
             linkList.add(Video(links[i], qualities[i], links[i], null))
         }
         return linkList.reversed()
