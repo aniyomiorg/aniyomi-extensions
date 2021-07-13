@@ -131,9 +131,7 @@ class GogoAnime : ParsedAnimeHttpSource() {
         return linkList.reversed()
     }
 
-    override fun videoUrlFromElement(element: Element): String = throw Exception("not used")
-
-    override fun videoUrlSelector() = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
