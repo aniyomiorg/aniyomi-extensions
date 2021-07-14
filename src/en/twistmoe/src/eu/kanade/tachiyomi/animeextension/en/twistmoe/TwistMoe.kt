@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.twistmoe
 
+import android.util.Log
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
@@ -54,6 +55,8 @@ class TwistMoe : AnimeHttpSource() {
                 1 -> SAnime.ONGOING
                 else -> SAnime.UNKNOWN
             }
+            anime.thumbnail_url = "https://homepages.cae.wisc.edu/~ece533/images/cat.png"
+            anime.initialized = true
             animeList.add(anime)
         }
         return AnimesPage(animeList, false)
@@ -89,12 +92,20 @@ class TwistMoe : AnimeHttpSource() {
         return anime
     }
 
+    override fun videoListRequest(episode: SEpisode): Request {
+        return super.videoListRequest(episode)
+    }
+
     override fun videoListParse(response: Response): List<Video> {
         val responseString = response.body!!.string()
         val jElement: JsonElement = JsonParser.parseString(responseString)
         val jObject: JsonObject = jElement.asJsonObject
         val server = jObject.get("videos_manifest").asJsonObject.get("servers").asJsonArray[0].asJsonObject
         val streams = server.get("streams").asJsonArray
+        val aes = AESDecrypt()
+        val ivAndKey = aes.getIvAndKey("U2FsdGVkX19njUQXx448lKxE4wUQA8tH45sgjCYckbrdS15QHY3fW5ChD6UpcoackxmWn8/5Tk88yAAwSukKwKpfvI6rQ1ERxFcAspfBCj8U/IQYoE3gZy+Esgumt/Fz")
+        val toDecode = aes.getToDecode("U2FsdGVkX19njUQXx448lKxE4wUQA8tH45sgjCYckbrdS15QHY3fW5ChD6UpcoackxmWn8/5Tk88yAAwSukKwKpfvI6rQ1ERxFcAspfBCj8U/IQYoE3gZy+Esgumt/Fz")
+        Log.i("lol", aes.aesDecrypt(toDecode, ivAndKey.sliceArray(0..31), ivAndKey.sliceArray(32..47)))
         val linkList = mutableListOf<Video>()
         for (stream in streams) {
             if (stream.asJsonObject.get("kind").asString != "premium_alert") {
@@ -105,6 +116,12 @@ class TwistMoe : AnimeHttpSource() {
     }
 
     override fun episodeListRequest(anime: SAnime): Request {
+        val aes = AESDecrypt()
+        val ivAndKey = aes.getIvAndKey("U2FsdGVkX19njUQXx448lKxE4wUQA8tH45sgjCYckbrdS15QHY3fW5ChD6UpcoackxmWn8/5Tk88yAAwSukKwKpfvI6rQ1ERxFcAspfBCj8U/IQYoE3gZy+Esgumt/Fz")
+        val toDecode = aes.getToDecode("U2FsdGVkX19njUQXx448lKxE4wUQA8tH45sgjCYckbrdS15QHY3fW5ChD6UpcoackxmWn8/5Tk88yAAwSukKwKpfvI6rQ1ERxFcAspfBCj8U/IQYoE3gZy+Esgumt/Fz")
+        Log.i("lol_key", ivAndKey.sliceArray(0..31).decodeToString())
+        Log.i("lol_iv", ivAndKey.sliceArray(32..47).decodeToString())
+        Log.i("lol_final", aes.aesDecrypt(toDecode, ivAndKey.sliceArray(0..31), ivAndKey.sliceArray(32..47)))
         val slug = anime.url.substringAfter("/a/")
         return GET("https://api.twist.moe/api/anime/$slug/sources", popularRequestHeaders)
     }
