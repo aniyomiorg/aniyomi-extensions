@@ -1,6 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.twistmoe
 
-import android.util.Log
+import android.annotation.SuppressLint
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
@@ -12,15 +12,15 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.await
+import kotlinx.coroutines.runBlocking
 import okhttp3.Headers
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
-import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.lang.Exception
-import java.util.Date
+import java.text.SimpleDateFormat
+import java.util.Locale
+import kotlin.collections.ArrayList
 
 class TwistMoe : AnimeHttpSource() {
 
@@ -32,20 +32,31 @@ class TwistMoe : AnimeHttpSource() {
 
     override val supportsLatest = false
 
-    private val popularRequestHeaders =
+    override fun headersBuilder() = Headers.Builder().apply {
+        add("User-Agent", "Aniyomi")
+        add("Referer", "https://twist.moe/")
+    }
+
+    private val requestHeaders =
         Headers.headersOf("x-access-token", "0df14814b9e590a1f26d3071a4ed7974", "referer", baseUrl)
 
     override fun popularAnimeRequest(page: Int): Request =
-        GET("https://api.twist.moe/api/anime", popularRequestHeaders)
+        GET("https://api.twist.moe/api/anime#$page", requestHeaders)
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val responseString = response.body!!.string()
-        return parseSearchJson(responseString)
+        val jElement: JsonElement = JsonParser.parseString(responseString)
+        val array: JsonArray = jElement.asJsonArray
+        val list = mutableListOf<JsonElement>()
+        array.toCollection(list)
+        val page = response.request.url.fragment!!.toInt() - 1
+        val start = page * 10
+        val end = if (list.lastIndex > start + 9) start + 9 else list.lastIndex
+        val range = start..end
+        return AnimesPage(parseSearchJson(list.slice(range)), end != list.lastIndex)
     }
 
-    private fun parseSearchJson(jsonLine: String?): AnimesPage {
-        val jElement: JsonElement = JsonParser.parseString(jsonLine)
-        val array: JsonArray = jElement.asJsonArray
+    private fun parseSearchJson(array: List<JsonElement>): List<SAnime> {
         val animeList = mutableListOf<SAnime>()
         for (item in array) {
             val anime = SAnime.create()
@@ -56,23 +67,43 @@ class TwistMoe : AnimeHttpSource() {
                 1 -> SAnime.ONGOING
                 else -> SAnime.UNKNOWN
             }
-            anime.thumbnail_url = "https://homepages.cae.wisc.edu/~ece533/images/cat.png"
             animeList.add(anime)
         }
-        return AnimesPage(animeList, false)
+        return animeList
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request =
-        GET("https://api.twist.moe/api/anime", popularRequestHeaders)
+        GET("https://api.twist.moe/api/anime#query=$query;page=$page", requestHeaders)
 
     override fun searchAnimeParse(response: Response): AnimesPage {
         val responseString = response.body!!.string()
-        return parseSearchJson(responseString)
+        val jElement: JsonElement = JsonParser.parseString(responseString)
+        val array: JsonArray = jElement.asJsonArray
+        val list = mutableListOf<JsonElement>()
+        array.toCollection(list)
+        val query = response.request.url.fragment!!
+            .substringAfter("query=")
+            .substringBeforeLast(";page=")
+            .toLowerCase(Locale.ROOT)
+        val toRemove = mutableListOf<JsonElement>()
+        for (entry in list) {
+            val title = entry.asJsonObject.get("title").asString.toLowerCase(Locale.ROOT)
+            val altTitle = try {
+                entry.asJsonObject.get("alt_title").asString.toLowerCase(Locale.ROOT)
+            } catch (e: Exception) { "" }
+            if (!(title.contains(query) || altTitle.contains(query))) toRemove.add(entry)
+        }
+        list.removeAll(toRemove)
+        val page = response.request.url.fragment!!.substringAfterLast(";page=").toInt() - 1
+        val start = page * 10
+        val end = if (list.lastIndex > start + 9) start + 9 else list.lastIndex
+        val range = start..end
+        return AnimesPage(parseSearchJson(list.slice(range)), end != list.lastIndex)
     }
 
     override fun animeDetailsRequest(anime: SAnime): Request {
         val slug = anime.url.substringAfter("/a/")
-        return GET("https://api.twist.moe/api/anime/$slug", popularRequestHeaders)
+        return GET("https://api.twist.moe/api/anime/$slug", requestHeaders)
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
@@ -88,77 +119,89 @@ class TwistMoe : AnimeHttpSource() {
             1 -> SAnime.ONGOING
             else -> SAnime.UNKNOWN
         }
+        try {
+            val malID = jObject.get("mal_id").asNumber.toString()
+            if (malID.isNotEmpty()) {
+                val coverResponse = runBlocking {
+                    client.newCall(GET("https://api.jikan.moe/v3/anime/$malID"))
+                        .await()
+                }
+
+                val imageUrl = JsonParser.parseString(coverResponse.body!!.string()).asJsonObject.get("image_url").asString
+                if (!imageUrl.isNullOrEmpty()) anime.thumbnail_url = imageUrl
+            }
+        } catch (e: Exception) {}
         return anime
     }
 
     override fun videoListRequest(episode: SEpisode): Request {
-        return super.videoListRequest(episode)
+        return GET(episode.url, requestHeaders)
     }
 
     override fun videoListParse(response: Response): List<Video> {
         val responseString = response.body!!.string()
-        val jElement: JsonElement = JsonParser.parseString(responseString)
-        val jObject: JsonObject = jElement.asJsonObject
-        val server = jObject.get("videos_manifest").asJsonObject.get("servers").asJsonArray[0].asJsonObject
-        val streams = server.get("streams").asJsonArray
+        val array = JsonParser.parseString(responseString).asJsonArray
+        val list = mutableListOf<JsonElement>()
+        array.toCollection(list)
+        val episodeNumber = response.request.url.fragment!!.toFloat()
+        val videoList = mutableListOf<Video>()
         val aes = AESDecrypt()
-        val ivAndKey = aes.getIvAndKey("U2FsdGVkX19njUQXx448lKxE4wUQA8tH45sgjCYckbrdS15QHY3fW5ChD6UpcoackxmWn8/5Tk88yAAwSukKwKpfvI6rQ1ERxFcAspfBCj8U/IQYoE3gZy+Esgumt/Fz")
-        val toDecode = aes.getToDecode("U2FsdGVkX19njUQXx448lKxE4wUQA8tH45sgjCYckbrdS15QHY3fW5ChD6UpcoackxmWn8/5Tk88yAAwSukKwKpfvI6rQ1ERxFcAspfBCj8U/IQYoE3gZy+Esgumt/Fz")
-        Log.i("lol", aes.aesDecrypt(toDecode, ivAndKey.sliceArray(0..31), ivAndKey.sliceArray(32..47)))
-        val linkList = mutableListOf<Video>()
-        for (stream in streams) {
-            if (stream.asJsonObject.get("kind").asString != "premium_alert") {
-                linkList.add(Video(stream.asJsonObject.get("url").asString, stream.asJsonObject.get("height").asString + "p", stream.asJsonObject.get("url").asString, null))
+        for (entry in list) {
+            if (entry.asJsonObject.get("number").asNumber.toFloat() == episodeNumber) {
+                val source = entry.asJsonObject.get("source").asString
+                val ivAndKey = aes.getIvAndKey(source)
+                val toDecode = aes.getToDecode(source)
+                val url = "https://cdn.twist.moe" +
+                    aes.unpad(aes.aesDecrypt(toDecode, ivAndKey.sliceArray(0..31), ivAndKey.sliceArray(32..47)))
+                videoList.add(Video(url, "1080p", url, null))
             }
         }
-        return linkList
+        return videoList
     }
 
     override fun episodeListRequest(anime: SAnime): Request {
         // aes.unpad(aes.aesDecrypt(toDecode, ivAndKey.sliceArray(0..31), ivAndKey.sliceArray(32..47)))
         val slug = anime.url.substringAfter("/a/")
-        return GET("https://api.twist.moe/api/anime/$slug/sources", popularRequestHeaders)
+        return GET("https://api.twist.moe/api/anime/$slug/sources", requestHeaders)
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val responseString = response.body!!.string()
-        Log.i("lol_response", responseString)
         val array = JsonParser.parseString(responseString).asJsonArray
+        val list = mutableListOf<JsonElement>()
+        array.toCollection(list)
         val episodeList = mutableListOf<SEpisode>()
-        for (entry in array) {
+        for (entry in list) {
             try {
-                Log.i("lol", entry.toString())
                 val episode = SEpisode.create()
-                episode.date_upload = Date.parse(entry.asJsonObject.get("updated_at").asString)
+                episode.date_upload = parseDate(entry.asJsonObject.get("updated_at").asString)
                 episode.name = "Episode " + entry.asJsonObject.get("number").asNumber.toString()
-                episode.episode_number = entry.asJsonObject.get("number").asFloat
+                episode.episode_number = entry.asJsonObject.get("number").asNumber.toFloat()
                 episode.url = response.request.url.toString() + "#${episode.episode_number}"
                 episodeList.add(episode)
             } catch (e: Exception) {
-                Log.i("lol_e", e.message!!)
             }
         }
-        Log.i("lol", episodeList.lastIndex.toString())
-        return episodeList
+        return episodeList.reversed()
     }
 
-    private fun latestSearchRequestBody(page: Int): RequestBody {
-        return """
-            {"search_text": "",
-            "tags": [],
-            "tags_mode":"AND",
-            "brands": [],
-            "blacklist": [],
-            "order_by": "published_at_unix",
-            "ordering": "desc",
-            "page": ${page - 1}}
-        """.trimIndent().toRequestBody("application/json".toMediaType())
+    @SuppressLint("SimpleDateFormat")
+    private fun parseDate(date: String): Long {
+        val knownPatterns: MutableList<SimpleDateFormat> = ArrayList()
+        knownPatterns.add(SimpleDateFormat("yyyy-MM-dd hh:mm:ss"))
+
+        for (pattern in knownPatterns) {
+            try {
+                // Take a try
+                return pattern.parse(date)!!.time
+            } catch (e: Throwable) {
+                // Loop on
+            }
+        }
+        return System.currentTimeMillis()
     }
 
-    override fun latestUpdatesRequest(page: Int): Request = POST("https://search.htv-services.com/", popularRequestHeaders, latestSearchRequestBody(page))
+    override fun latestUpdatesRequest(page: Int): Request = throw Exception("not used")
 
-    override fun latestUpdatesParse(response: Response): AnimesPage {
-        val responseString = response.body!!.string()
-        return parseSearchJson(responseString)
-    }
+    override fun latestUpdatesParse(response: Response): AnimesPage = throw Exception("not used")
 }
