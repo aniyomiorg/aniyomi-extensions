@@ -59,7 +59,7 @@ class Hanime : AnimeHttpSource() {
         val responseString = response.body!!.string()
         return parseSearchJson(responseString)
     }
-    fun parseSearchJson(jsonLine: String?): AnimesPage {
+    private fun parseSearchJson(jsonLine: String?): AnimesPage {
         val jElement: JsonElement = JsonParser.parseString(jsonLine)
         val jObject: JsonObject = jElement.asJsonObject
         val nbPages = jObject.get("nbPages").asInt

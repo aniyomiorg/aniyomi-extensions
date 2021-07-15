@@ -19,6 +19,7 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import java.lang.Exception
 import java.util.Date
 
 class TwistMoe : AnimeHttpSource() {
@@ -32,7 +33,7 @@ class TwistMoe : AnimeHttpSource() {
     override val supportsLatest = false
 
     private val popularRequestHeaders =
-        Headers.headersOf("x-access-token", "0df14814b9e590a1f26d3071a4ed7974")
+        Headers.headersOf("x-access-token", "0df14814b9e590a1f26d3071a4ed7974", "referer", baseUrl)
 
     override fun popularAnimeRequest(page: Int): Request =
         GET("https://api.twist.moe/api/anime", popularRequestHeaders)
@@ -56,7 +57,6 @@ class TwistMoe : AnimeHttpSource() {
                 else -> SAnime.UNKNOWN
             }
             anime.thumbnail_url = "https://homepages.cae.wisc.edu/~ece533/images/cat.png"
-            anime.initialized = true
             animeList.add(anime)
         }
         return AnimesPage(animeList, false)
@@ -88,7 +88,6 @@ class TwistMoe : AnimeHttpSource() {
             1 -> SAnime.ONGOING
             else -> SAnime.UNKNOWN
         }
-        anime.initialized = true
         return anime
     }
 
@@ -116,29 +115,30 @@ class TwistMoe : AnimeHttpSource() {
     }
 
     override fun episodeListRequest(anime: SAnime): Request {
-        val aes = AESDecrypt()
-        val ivAndKey = aes.getIvAndKey("U2FsdGVkX19njUQXx448lKxE4wUQA8tH45sgjCYckbrdS15QHY3fW5ChD6UpcoackxmWn8/5Tk88yAAwSukKwKpfvI6rQ1ERxFcAspfBCj8U/IQYoE3gZy+Esgumt/Fz")
-        val toDecode = aes.getToDecode("U2FsdGVkX19njUQXx448lKxE4wUQA8tH45sgjCYckbrdS15QHY3fW5ChD6UpcoackxmWn8/5Tk88yAAwSukKwKpfvI6rQ1ERxFcAspfBCj8U/IQYoE3gZy+Esgumt/Fz")
-        Log.i("lol_key", ivAndKey.sliceArray(0..31).decodeToString())
-        Log.i("lol_iv", ivAndKey.sliceArray(32..47).decodeToString())
-        Log.i("lol_final", aes.aesDecrypt(toDecode, ivAndKey.sliceArray(0..31), ivAndKey.sliceArray(32..47)))
+        // aes.unpad(aes.aesDecrypt(toDecode, ivAndKey.sliceArray(0..31), ivAndKey.sliceArray(32..47)))
         val slug = anime.url.substringAfter("/a/")
         return GET("https://api.twist.moe/api/anime/$slug/sources", popularRequestHeaders)
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val responseString = response.body!!.string()
-        val jElement: JsonElement = JsonParser.parseString(responseString)
-        val array: JsonArray = jElement.asJsonArray
+        Log.i("lol_response", responseString)
+        val array = JsonParser.parseString(responseString).asJsonArray
         val episodeList = mutableListOf<SEpisode>()
         for (entry in array) {
-            val episode = SEpisode.create()
-            episode.date_upload = Date.parse(entry.asJsonObject.get("updated_at").asString)
-            episode.name = "Episode " + entry.asJsonObject.get("number").asString
-            episode.url = entry.asJsonObject.get("source").asString
-            episode.episode_number = entry.asJsonObject.get("number").asFloat
-            episodeList.add(episode)
+            try {
+                Log.i("lol", entry.toString())
+                val episode = SEpisode.create()
+                episode.date_upload = Date.parse(entry.asJsonObject.get("updated_at").asString)
+                episode.name = "Episode " + entry.asJsonObject.get("number").asNumber.toString()
+                episode.episode_number = entry.asJsonObject.get("number").asFloat
+                episode.url = response.request.url.toString() + "#${episode.episode_number}"
+                episodeList.add(episode)
+            } catch (e: Exception) {
+                Log.i("lol_e", e.message!!)
+            }
         }
+        Log.i("lol", episodeList.lastIndex.toString())
         return episodeList
     }
 
