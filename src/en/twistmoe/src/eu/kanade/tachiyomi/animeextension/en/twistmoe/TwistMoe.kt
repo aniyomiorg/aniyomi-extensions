@@ -12,10 +12,13 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.await
 import kotlinx.coroutines.runBlocking
 import okhttp3.Headers
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.lang.Exception
 import java.text.SimpleDateFormat
@@ -119,19 +122,55 @@ class TwistMoe : AnimeHttpSource() {
             1 -> SAnime.ONGOING
             else -> SAnime.UNKNOWN
         }
+        getCover(jObject, anime)
+        return anime
+    }
+
+    private fun getCover(jObject: JsonObject, anime: SAnime) {
         try {
-            val malID = jObject.get("mal_id").asNumber.toString()
+            val malID = try {
+                jObject.get("mal_id").asNumber.toString()
+            } catch (e: Exception) {
+                ""
+            }
             if (malID.isNotEmpty()) {
                 val coverResponse = runBlocking {
-                    client.newCall(GET("https://api.jikan.moe/v3/anime/$malID"))
+                    val headers = Headers.Builder().apply {
+                        add("Content-Type", "application/json")
+                        add("Accept", "application/json")
+                    }.build()
+                    val bodyString = "{\"query\":\"query(\$id: Int){Media(type:ANIME,idMal:\$id){coverImage{large}}}\",\"variables\":{\"id\":$malID}}"
+                    val body = bodyString.toRequestBody("application/json".toMediaType())
+                    client.newCall(POST("https://graphql.anilist.co", headers, body))
                         .await()
                 }
-
-                val imageUrl = JsonParser.parseString(coverResponse.body!!.string()).asJsonObject.get("image_url").asString
-                if (!imageUrl.isNullOrEmpty()) anime.thumbnail_url = imageUrl
+                val imageUrl = JsonParser.parseString(coverResponse.body!!.string())
+                    .asJsonObject.get("data")
+                    .asJsonObject.get("Media")
+                    .asJsonObject.get("coverImage")
+                    .asJsonObject.get("large").asString
+                if (imageUrl.isNotEmpty()) anime.thumbnail_url = imageUrl
+            } else {
+                val query = anime.title
+                val coverResponse = runBlocking {
+                    val headers = Headers.Builder().apply {
+                        add("Content-Type", "application/json")
+                        add("Accept", "application/json")
+                    }.build()
+                    val bodyString = "{\"query\":\"query(\$query: String){Media(type:ANIME,search:\$query){coverImage{large}}}\",\"variables\":{\"query\":\"$query\"}}"
+                    val body = bodyString.toRequestBody("application/json".toMediaType())
+                    client.newCall(POST("https://graphql.anilist.co", headers, body))
+                        .await()
+                }
+                val imageUrl = JsonParser.parseString(coverResponse.body!!.string())
+                    .asJsonObject.get("data")
+                    .asJsonObject.get("Media")
+                    .asJsonObject.get("coverImage")
+                    .asJsonObject.get("large").asString
+                if (imageUrl.isNotEmpty()) anime.thumbnail_url = imageUrl
             }
-        } catch (e: Exception) {}
-        return anime
+        } catch (e: Exception) {
+        }
     }
 
     override fun videoListRequest(episode: SEpisode): Request {
