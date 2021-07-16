@@ -190,7 +190,7 @@ class TwistMoe : AnimeHttpSource() {
                 val source = entry.asJsonObject.get("source").asString
                 val ivAndKey = aes.getIvAndKey(source)
                 val toDecode = aes.getToDecode(source)
-                val url = "https://cdn.twist.moe" +
+                val url = "https://air-cdn.twist.moe" +
                     aes.unpad(aes.aesDecrypt(toDecode, ivAndKey.sliceArray(0..31), ivAndKey.sliceArray(32..47)))
                 videoList.add(Video(url, "1080p", url, null))
             }
