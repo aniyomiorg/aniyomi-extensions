@@ -74,7 +74,7 @@ class GogoAnime : ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        var videoListUrl = document.selectFirst("a[data-video*=streamani.net/load.php]").attr("data-video")
+        var videoListUrl = document.selectFirst("a[data-video*=streamani.net/embedplus]").attr("data-video")
         if (!videoListUrl.startsWith("https:")) videoListUrl = "https:$videoListUrl"
         val newHeaderList = mutableMapOf(Pair("referer", baseUrl))
         headers.forEach { newHeaderList[it.first] = it.second }
@@ -82,7 +82,12 @@ class GogoAnime : ParsedAnimeHttpSource() {
             client.newCall(GET(videoListUrl, newHeaderList.toHeaders()))
                 .await().asJsoup()
         }
-        return videoListFromElement(videoListResponse.selectFirst(videoListSelector()))
+        val videoListResponseNoHeaders = runBlocking {
+            client.newCall(GET(videoListUrl))
+                .await().asJsoup()
+        }
+        return videoListFromElement(videoListResponseNoHeaders.selectFirst(videoListSelector())) +
+            videoListFromElement(videoListResponse.selectFirst(videoListSelector()))
     }
 
     override fun videoListSelector() = "div.videocontent script"
@@ -99,10 +104,13 @@ class GogoAnime : ParsedAnimeHttpSource() {
             val jsonObject =
                 JsonParser.parseString(objectString).asJsonObject["sources"].asJsonArray[0].asJsonObject
             var link = jsonObject["file"].asString
-            if (link.contains("m3u8")) {
+            if (link.contains("videos/videos")) {
                 val toFind = link.substringAfter("/videos/hls/").substringBefore("/")
                 val toRemove = link.substringAfter("/videos/hls/").substringBeforeLast(toFind)
                 link = link.replace("/videos/hls/$toRemove", "/videos/hls/")
+            } else if (link.contains("m3u8")) {
+                hit = content.indexOf("playerInstance.setup(", hit + 1)
+                continue
             }
             val quality = jsonObject["label"].asString
             if (videos.isEmpty() || !videos.last().url.contains(link.substringAfterLast("/"))) {
