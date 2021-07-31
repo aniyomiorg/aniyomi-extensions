@@ -29,10 +29,10 @@
   {
     "name": "Aniyomi: twist.moe",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.twistmoe",
-    "apk": "aniyomi-en.twistmoe-v12.4.apk",
+    "apk": "aniyomi-en.twistmoe-v12.5.apk",
     "lang": "en",
-    "code": 4,
-    "version": "12.4",
+    "code": 5,
+    "version": "12.5",
     "nsfw": 0
   }
 ]
