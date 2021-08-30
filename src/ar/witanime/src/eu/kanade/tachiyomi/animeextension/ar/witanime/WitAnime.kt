@@ -43,13 +43,18 @@ class WitAnime : ParsedAnimeHttpSource() {
 
     override fun popularAnimeNextPageSelector(): String = "ul.pagination a.next"
 
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        return super.episodeListParse(response).reversed()
+    }
+
     override fun episodeListSelector() = "div.ehover6 > div.episodes-card-title > h3"
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.select("a").attr("href"))
         episode.name = element.select("a").text()
-
+        val episodeNumberString = element.select("a").text().removePrefix("الحلقة ")
+        episode.episode_number = episodeNumberString.toFloat()
         return episode
     }
 
@@ -70,7 +75,7 @@ class WitAnime : ParsedAnimeHttpSource() {
 
     override fun videoFromElement(element: Element): Video {
         element.attr("src")
-        return Video(element.attr("src"), element.attr("src"), element.attr("src"), null)
+        return Video(element.attr("src"), "Unknown quality", element.attr("src"), null)
     }
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
