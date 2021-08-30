@@ -9,6 +9,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: XS Anime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.ar.xsanime",
+    "apk": "aniyomi-ar.xsanime-v12.1.apk",
+    "lang": "ar",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: Gogoanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.gogoanime",
     "apk": "aniyomi-en.gogoanime-v12.8.apk",
