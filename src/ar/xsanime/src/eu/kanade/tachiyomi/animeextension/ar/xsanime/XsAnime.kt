@@ -49,6 +49,7 @@ class XsAnime : ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("abs:href"))
         episode.name = element.select("a > em").text()
+        episode.episode_number = element.select("a > em").text().toFloat()
 
         return episode
     }
