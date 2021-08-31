@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.ar.xsanime
 
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -10,6 +11,7 @@ import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.runBlocking
 import okhttp3.Headers.Companion.toHeaders
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -29,6 +31,7 @@ class XsAnime : ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
+    // Popular Anime
     override fun popularAnimeSelector(): String = "ul.boxes--holder div.itemtype_anime a"
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/anime_list/page/$page")
@@ -43,16 +46,19 @@ class XsAnime : ParsedAnimeHttpSource() {
 
     override fun popularAnimeNextPageSelector(): String = "ul.page-numbers li a.next"
 
+    // Episodes
     override fun episodeListSelector() = "div.EpisodesList > a"
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("abs:href"))
         episode.name = element.select("a > em").text()
-        episode.episode_number = element.select("a > em").text().toFloat()
+        //episode.episode_number = element.select("a > em").text().toFloat()
 
         return episode
     }
+
+    // Video Links
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
@@ -76,6 +82,8 @@ class XsAnime : ParsedAnimeHttpSource() {
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
+    // Search
+
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
@@ -88,7 +96,24 @@ class XsAnime : ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = "ul.boxes--holder div.itemtype_anime a"
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/?s=$query&page=$page")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        return if (query.isNotBlank()) {
+            GET("$baseUrl/?s=$query&type=anime&page=$page", headers)
+        } else {
+            val url = "$baseUrl/anime_list/page/$page/?".toHttpUrlOrNull()!!.newBuilder()
+            filters.forEach { filter ->
+                when (filter) {
+                    // is SeasonFilter -> url.addQueryParameter("season", filter.toUriPart())
+                    is GenreFilter -> url.addQueryParameter("genre", filter.toUriPart())
+                    is StatusFilter -> url.addQueryParameter("status", filter.toUriPart())
+                    // is LetterFilter -> url.addQueryParameter("letter", filter.toUriPart())
+                }
+            }
+            GET(url.build().toString(), headers)
+        }
+    }
+
+    // Anime Details
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
@@ -104,6 +129,58 @@ class XsAnime : ParsedAnimeHttpSource() {
         }
         return anime
     }
+
+    // Filters
+
+    override fun getFilterList() = AnimeFilterList(
+        AnimeFilter.Header("NOTE: Ignored if using text search!"),
+        AnimeFilter.Separator(),
+        GenreFilter(getGenreFilters()),
+        StatusFilter(getStatusFilters()),
+        // SeasonFilter(getStatusFilters()),
+        // LetterFilter(getLetterFilter()),
+    )
+
+    private class StatusFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("حالة الأنمي", vals)
+    private class GenreFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("تصنيفات الانمى", vals)
+    // private class SeasonFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("موسم الانمى", vals)
+    // private class LetterFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("الحرف", vals)
+
+    private fun getStatusFilters(): Array<Pair<String?, String>> = arrayOf(
+        Pair("", "<اختر>"),
+        Pair("مستمر", "مستمر"),
+        Pair("منتهي", "منتهي")
+    )
+
+    private fun getGenreFilters(): Array<Pair<String?, String>> = arrayOf(
+        Pair("", "<اختر>"),
+        Pair("أكشن", "أكشن"),
+        Pair("تاريخي", "تاريخي"),
+        Pair("حريم", "حريم"),
+        Pair("خارق للطبيعة", "خارق للطبيعة"),
+        Pair("خيال", "خيال"),
+        Pair("دراما", "دراما"),
+        Pair("رومانسي", "رومانسي"),
+        Pair("رياضي", "رياضي"),
+        Pair("سينين", "سينين"),
+        Pair("شونين", "شونين"),
+        Pair("شياطين", "شياطين"),
+        Pair("غموض", "غموض"),
+        Pair("قوى خارقة", "قوى خارقة"),
+        Pair("كوميدي", "كوميدي"),
+        Pair("لعبة", "لعبة"),
+        Pair("مدرسي", "مدرسي"),
+        Pair("مغامرات", "مغامرات"),
+        Pair("موسيقي", "موسيقي"),
+        Pair("نفسي", "نفسي")
+    )
+
+    open class UriPartFilter(displayName: String, private val vals: Array<Pair<String?, String>>) :
+        AnimeFilter.Select<String>(displayName, vals.map { it.second }.toTypedArray()) {
+        fun toUriPart() = vals[state].first
+    }
+
+    // Latest
 
     override fun latestUpdatesNextPageSelector(): String? = throw Exception("Not used")
 
