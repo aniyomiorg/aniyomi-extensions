@@ -2,19 +2,19 @@
   {
     "name": "Aniyomi: WIT ANIME",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.witanime",
-    "apk": "aniyomi-ar.witanime-v12.5.apk",
+    "apk": "aniyomi-ar.witanime-v12.6.apk",
     "lang": "ar",
-    "code": 5,
-    "version": "12.5",
+    "code": 6,
+    "version": "12.6",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: XS Anime",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.xsanime",
-    "apk": "aniyomi-ar.xsanime-v12.1.apk",
+    "apk": "aniyomi-ar.xsanime-v12.2.apk",
     "lang": "ar",
-    "code": 1,
-    "version": "12.1",
+    "code": 2,
+    "version": "12.2",
     "nsfw": 0
   },
   {
