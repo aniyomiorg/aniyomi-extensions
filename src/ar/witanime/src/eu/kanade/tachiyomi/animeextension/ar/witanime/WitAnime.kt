@@ -53,7 +53,7 @@ class WitAnime : ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.select("a").attr("href"))
         episode.name = element.select("a").text()
-        val episodeNumberString = element.select("a").text().removePrefix("الحلقة ")
+        val episodeNumberString = element.select("a").text().removePrefix("الحلقة ").removePrefix("الخاصة ").removePrefix("الأونا ").removePrefix("الفلم ").removePrefix("الأوفا ")
         episode.episode_number = episodeNumberString.toFloat()
         return episode
     }
