@@ -1,0 +1,17 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'MY CIMA'
+    pkgNameSuffix = 'ar.mycima'
+    extClass = '.MyCima'
+    extVersionCode = 2
+    libVersion = '12'
+}
+dependencies {
+    ext.coroutinesVersion = "1.4.3"
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion")
+}
+
+apply from: "$rootDir/common.gradle"
