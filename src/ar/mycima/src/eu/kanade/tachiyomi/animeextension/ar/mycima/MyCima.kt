@@ -30,6 +30,9 @@ class MyCima : ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
+    // Decreases calls, helps with Cloudflare
+    private fun String.addTrailingSlash() = if (!this.endsWith("/")) "$this/" else this
+
     override fun popularAnimeSelector(): String = "div.Grid--MycimaPosts div.GridItem div.Thumb--GridItem"
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/seriestv/top/?page_number=$page")
@@ -45,12 +48,30 @@ class MyCima : ParsedAnimeHttpSource() {
 
     override fun popularAnimeNextPageSelector(): String = "ul.page-numbers li a.next"
 
-    override fun episodeListSelector() = "div.Episodes--Seasons--Episodes a"
+    private fun seasonsNextPageSelector() = "div.List--Seasons--Episodes > a.activable"
+
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val episodes = mutableListOf<SEpisode>()
+        fun addEpisodes(document: Document) {
+            document.select(episodeListSelector()).map { episodes.add(episodeFromElement(it)) }
+            document.select("${seasonsNextPageSelector()}:nth-child(n+2)").firstOrNull()
+                ?.let { addEpisodes(client.newCall(GET(it.attr("href").addTrailingSlash(), headers)).execute().asJsoup()) }
+        }
+        addEpisodes(response.asJsoup())
+        return episodes
+    }
+
+    private fun seasonNameSelector() = "div.List--Seasons--Episodes > a.selected"
+
+    override fun episodeListSelector() = "div.Seasons--Episodes div.Episodes--Seasons--Episodes a, div.List--Seasons--Episodes > a.selected"
 
     override fun episodeFromElement(element: Element): SEpisode {
+        // val SeasonName = " ${element.select(" ${seasonNameSelector()}").text()}" // " ${element.select(".List--Seasons--Episodes a.selected").text()}"
         val episode = SEpisode.create()
-        episode.setUrlWithoutDomain(element.attr("abs:href"))
-        episode.name = element.select("episodetitle").text()
+        //val SeasonsName = "${element.select("${seasonNameSelector()}").text()}"
+        episode.setUrlWithoutDomain(element.attr("abs:href").addTrailingSlash())
+        episode.name = "${element.text()} ${element.select("")}" // "${element.select("episodetitle").text()} $SeasonsName" // ${element.select("a:contains(موسم)").hasText()}"
+        // ${element.select("${seasonNameSelector()} > a.selected").text()}"
         return episode
     }
 
