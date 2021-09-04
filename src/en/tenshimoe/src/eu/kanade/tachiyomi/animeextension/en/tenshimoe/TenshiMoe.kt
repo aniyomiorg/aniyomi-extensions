@@ -50,6 +50,20 @@ class TenshiMoe : ParsedAnimeHttpSource() {
 
     override fun episodeListSelector() = "ul.episode-loop li a"
 
+    private fun episodeNextPageSelector() = popularAnimeNextPageSelector()
+
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val episodes = mutableListOf<SEpisode>()
+        fun addEpisodes(document: Document) {
+            document.select(episodeListSelector()).map { episodes.add(episodeFromElement(it)) }
+            document.select("${episodeNextPageSelector()}").firstOrNull()
+                ?.let { addEpisodes(client.newCall(GET(it.attr("href"), headers)).execute().asJsoup()) }
+        }
+
+        addEpisodes(response.asJsoup())
+        return episodes
+    }
+
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("href"))
