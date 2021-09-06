@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.en.tenshimoe
+package eu.kanade.tachiyomi.animeextension.en.hahomoe
 
 import android.annotation.SuppressLint
 import android.util.Log
@@ -21,11 +21,11 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import kotlin.collections.ArrayList
 
-class TenshiMoe : ParsedAnimeHttpSource() {
+class HahoMoe : ParsedAnimeHttpSource() {
 
-    override val name = "tenshi.moe"
+    override val name = "haho.moe"
 
-    override val baseUrl = "https://tenshi.moe"
+    override val baseUrl = "https://haho.moe"
 
     override val lang = "en"
 
@@ -139,6 +139,7 @@ class TenshiMoe : ParsedAnimeHttpSource() {
         anime.genre = document.select("li.genre span.value").joinToString(", ") { it.text() }
         anime.description = document.select("div.card-body").text()
         anime.author = document.select("li.production span.value").joinToString(", ") { it.text() }
+        anime.artist = document.select("li.group span.value").text()
         anime.status = parseStatus(document.select("li.status span.value").text())
         return anime
     }
