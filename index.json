@@ -36,6 +36,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: haho.moe",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.hahomoe",
+    "apk": "aniyomi-en.hahomoe-v12.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 1
+  },
+  {
     "name": "Aniyomi: hanime.tv",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.hanime",
     "apk": "aniyomi-en.hanime-v12.7.apk",
@@ -47,10 +56,10 @@
   {
     "name": "Aniyomi: tenshi.moe",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.tenshimoe",
-    "apk": "aniyomi-en.tenshimoe-v12.19.apk",
+    "apk": "aniyomi-en.tenshimoe-v12.20.apk",
     "lang": "en",
-    "code": 19,
-    "version": "12.19",
+    "code": 20,
+    "version": "12.20",
     "nsfw": 0
   },
   {
