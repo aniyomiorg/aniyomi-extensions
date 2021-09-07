@@ -5,13 +5,8 @@ ext {
     extName = 'XS Anime'
     pkgNameSuffix = 'ar.xsanime'
     extClass = '.XsAnime'
-    extVersionCode = 2
+    extVersionCode = 3
     libVersion = '12'
-}
-dependencies {
-    ext.coroutinesVersion = "1.4.3"
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion")
 }
 
 apply from: "$rootDir/common.gradle"

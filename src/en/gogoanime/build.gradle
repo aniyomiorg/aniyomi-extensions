@@ -5,13 +5,8 @@ ext {
     extName = 'Gogoanime'
     pkgNameSuffix = 'en.gogoanime'
     extClass = '.GogoAnime'
-    extVersionCode = 10
+    extVersionCode = 11
     libVersion = '12'
-}
-dependencies {
-    ext.coroutinesVersion = "1.4.3"
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion")
 }
 
 apply from: "$rootDir/common.gradle"

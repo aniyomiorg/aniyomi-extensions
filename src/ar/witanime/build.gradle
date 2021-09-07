@@ -5,13 +5,8 @@ ext {
     extName = 'WIT ANIME'
     pkgNameSuffix = 'ar.witanime'
     extClass = '.WitAnime'
-    extVersionCode = 6
+    extVersionCode = 7
     libVersion = '12'
-}
-dependencies {
-    ext.coroutinesVersion = "1.4.3"
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion")
 }
 
 apply from: "$rootDir/common.gradle"

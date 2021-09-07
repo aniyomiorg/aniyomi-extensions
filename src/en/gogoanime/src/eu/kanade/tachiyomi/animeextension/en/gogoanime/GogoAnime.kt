@@ -6,9 +6,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.runBlocking
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -55,13 +53,12 @@ class GogoAnime : ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val totalEpisodes = document.select(episodeListSelector()).last().attr("ep_end")
         val id = document.select("input#movie_id").attr("value")
-        return runBlocking { episodesRequest(totalEpisodes, id) }
+        return episodesRequest(totalEpisodes, id)
     }
 
-    private suspend fun episodesRequest(totalEpisodes: String, id: String): List<SEpisode> {
+    private fun episodesRequest(totalEpisodes: String, id: String): List<SEpisode> {
         val request = GET("https://ajax.gogo-load.com/ajax/load-list-episode?ep_start=0&ep_end=$totalEpisodes&id=$id", headers)
-        val epResponse = client.newCall(request)
-            .await()
+        val epResponse = client.newCall(request).execute()
         val document = epResponse.asJsoup()
         return document.select("a").map { episodeFromElement(it) }
     }

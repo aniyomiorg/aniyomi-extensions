@@ -7,9 +7,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.runBlocking
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -66,10 +64,8 @@ class XsAnime : ParsedAnimeHttpSource() {
         val referer = response.request.url.encodedPath
         val newHeaderList = mutableMapOf(Pair("referer", baseUrl + referer))
         headers.forEach { newHeaderList[it.first] = it.second }
-        val iframeResponse = runBlocking {
-            client.newCall(GET(iframe, newHeaderList.toHeaders()))
-                .await().asJsoup()
-        }
+        val iframeResponse = client.newCall(GET(iframe, newHeaderList.toHeaders()))
+            .execute().asJsoup()
         return iframeResponse.select(videoListSelector()).map { videoFromElement(it) }
     }
 

@@ -13,8 +13,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.await
-import kotlinx.coroutines.runBlocking
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
@@ -134,16 +132,13 @@ class TwistMoe : AnimeHttpSource() {
                 ""
             }
             if (malID.isNotEmpty()) {
-                val coverResponse = runBlocking {
-                    val headers = Headers.Builder().apply {
-                        add("Content-Type", "application/json")
-                        add("Accept", "application/json")
-                    }.build()
-                    val bodyString = "{\"query\":\"query(\$id: Int){Media(type:ANIME,idMal:\$id){coverImage{large}}}\",\"variables\":{\"id\":$malID}}"
-                    val body = bodyString.toRequestBody("application/json".toMediaType())
-                    client.newCall(POST("https://graphql.anilist.co", headers, body))
-                        .await()
-                }
+                val headers = Headers.Builder().apply {
+                    add("Content-Type", "application/json")
+                    add("Accept", "application/json")
+                }.build()
+                val bodyString = "{\"query\":\"query(\$id: Int){Media(type:ANIME,idMal:\$id){coverImage{large}}}\",\"variables\":{\"id\":$malID}}"
+                val body = bodyString.toRequestBody("application/json".toMediaType())
+                val coverResponse = client.newCall(POST("https://graphql.anilist.co", headers, body)).execute()
                 val imageUrl = JsonParser.parseString(coverResponse.body!!.string())
                     .asJsonObject.get("data")
                     .asJsonObject.get("Media")
@@ -152,16 +147,13 @@ class TwistMoe : AnimeHttpSource() {
                 if (imageUrl.isNotEmpty()) anime.thumbnail_url = imageUrl
             } else {
                 val query = anime.title
-                val coverResponse = runBlocking {
-                    val headers = Headers.Builder().apply {
-                        add("Content-Type", "application/json")
-                        add("Accept", "application/json")
-                    }.build()
-                    val bodyString = "{\"query\":\"query(\$query: String){Media(type:ANIME,search:\$query){coverImage{large}}}\",\"variables\":{\"query\":\"$query\"}}"
-                    val body = bodyString.toRequestBody("application/json".toMediaType())
-                    client.newCall(POST("https://graphql.anilist.co", headers, body))
-                        .await()
-                }
+                val headers = Headers.Builder().apply {
+                    add("Content-Type", "application/json")
+                    add("Accept", "application/json")
+                }.build()
+                val bodyString = "{\"query\":\"query(\$query: String){Media(type:ANIME,search:\$query){coverImage{large}}}\",\"variables\":{\"query\":\"$query\"}}"
+                val body = bodyString.toRequestBody("application/json".toMediaType())
+                val coverResponse = client.newCall(POST("https://graphql.anilist.co", headers, body)).execute()
                 val imageUrl = JsonParser.parseString(coverResponse.body!!.string())
                     .asJsonObject.get("data")
                     .asJsonObject.get("Media")
