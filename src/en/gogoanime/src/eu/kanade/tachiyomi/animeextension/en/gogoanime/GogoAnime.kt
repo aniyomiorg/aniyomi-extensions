@@ -1,7 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.en.gogoanime
 
-import android.util.Log
-import com.google.gson.JsonParser
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -11,12 +9,13 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.runBlocking
-import okhttp3.Headers.Companion.toHeaders
+import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.jsoup.select.Elements
 import java.lang.Exception
 
 class GogoAnime : ParsedAnimeHttpSource() {
@@ -30,6 +29,11 @@ class GogoAnime : ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
+
+    override fun headersBuilder() = Headers.Builder().apply {
+        add("User-Agent", "Aniyomi")
+        add("Referer", "https://streamani.io/")
+    }
 
     override fun popularAnimeSelector(): String = "div.img a"
 
@@ -72,76 +76,48 @@ class GogoAnime : ParsedAnimeHttpSource() {
         return episode
     }
 
+    override fun videoListRequest(episode: SEpisode): Request {
+        val document = client.newCall(GET(baseUrl + episode.url)).execute().asJsoup()
+        val link = document.selectFirst("li.dowloads a").attr("href")
+        return GET(link)
+    }
+
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        var videoListUrl = document.selectFirst("a[data-video*=streamani.io/embedplus]").attr("data-video")
-        if (!videoListUrl.startsWith("https:")) videoListUrl = "https:$videoListUrl"
-        val newHeaderList = mutableMapOf(Pair("referer", baseUrl))
-        headers.forEach { newHeaderList[it.first] = it.second }
-        val videoListResponse = runBlocking {
-            client.newCall(GET(videoListUrl, newHeaderList.toHeaders()))
-                .await().asJsoup()
-        }
-        val videoListResponseNoHeaders = runBlocking {
-            client.newCall(GET(videoListUrl))
-                .await().asJsoup()
-        }
-        return videoListFromElement(videoListResponseNoHeaders.selectFirst(videoListSelector())) +
-            videoListFromElement(videoListResponse.selectFirst(videoListSelector()))
+        return document.select(videoListSelector()).ordered().map { videoFromElement(it) }
     }
 
-    override fun videoListSelector() = "div.videocontent script"
-
-    override fun videoFromElement(element: Element) = throw Exception("not used")
-
-    private fun videoListFromElement(element: Element): List<Video> {
-        val videos = mutableListOf<Video>()
-        val content = element.data()
-        var hit = content.indexOf("playerInstance.setup(")
-        while (hit >= 0) {
-            val objectString =
-                element.data().substring(hit).substringAfter("playerInstance.setup(").substringBefore(");")
-            val jsonObject =
-                JsonParser.parseString(objectString).asJsonObject["sources"].asJsonArray[0].asJsonObject
-            var link = jsonObject["file"].asString
-            if (link.contains("videos/videos")) {
-                val toFind = link.substringAfter("/videos/hls/").substringBefore("/")
-                val toRemove = link.substringAfter("/videos/hls/").substringBeforeLast(toFind)
-                link = link.replace("/videos/hls/$toRemove", "/videos/hls/")
-            } else if (link.contains("m3u8")) {
-                hit = content.indexOf("playerInstance.setup(", hit + 1)
-                continue
+    private fun Elements.ordered(): Elements {
+        val newElements = Elements()
+        var googleElements = 0
+        for (element in this) {
+            newElements.add(googleElements, element)
+            if (element.attr("href").startsWith("https://storage.googleapis.com")) {
+                googleElements++
             }
-            val quality = jsonObject["label"].asString
-            if (videos.isEmpty() || !videos.last().url.contains(link.substringAfterLast("/"))) {
-                if (link.contains("m3u8")) {
-                    val individualLinks = runBlocking { getIndividualLinks(link) }
-                    individualLinks.forEach { videos.add(it) }
-                } else {
-                    videos.add(Video(link, quality, link, null))
-                }
-            }
-            hit = content.indexOf("playerInstance.setup(", hit + 1)
         }
-        return videos
+        return newElements
     }
 
-    private suspend fun getIndividualLinks(link: String): List<Video> {
-        val response = client.newCall(GET(link)).await().body!!.string()
-        val links = response.split("\n").filter { !it.startsWith("#") && it.isNotEmpty() }.toMutableList()
-        val qualities = response.split("\n").filter { it.startsWith("#EXT-X-STREAM-INF") }.toMutableList()
-        val linkList = mutableListOf<Video>()
-        if (qualities.lastIndex != links.lastIndex) return emptyList()
-        for (i in 0..qualities.lastIndex) {
-            links[i] = link.substringBeforeLast("/") + "/" + links[i]
-            qualities[i] = qualities[i].substringAfter("NAME=").replace("\"", "")
-            Log.i("lol", links[i])
-            linkList.add(Video(links[i], qualities[i], links[i], null))
+    override fun videoListSelector() = "div.mirror_link a[download]"
+
+    override fun videoFromElement(element: Element): Video {
+        val quality = element.text().substringAfter("Download (").replace("P - mp4)", "p")
+        val url = element.attr("href")
+        return if (url.startsWith("https://storage.googleapis.com")) {
+            Video(url, quality, url, null)
+        } else {
+            Video(url, quality, videoUrlParse(url), null)
         }
-        return linkList.reversed()
     }
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
+
+    private fun videoUrlParse(url: String): String {
+        val noRedirectClient = client.newBuilder().followRedirects(false).build()
+        val videoUrl = noRedirectClient.newCall(GET(url)).execute().header("location")
+        return videoUrl ?: url
+    }
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
