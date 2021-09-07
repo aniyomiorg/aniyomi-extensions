@@ -74,7 +74,7 @@ class GogoAnime : ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        var videoListUrl = document.selectFirst("a[data-video*=streamani.net/embedplus]").attr("data-video")
+        var videoListUrl = document.selectFirst("a[data-video*=streamani.io/embedplus]").attr("data-video")
         if (!videoListUrl.startsWith("https:")) videoListUrl = "https:$videoListUrl"
         val newHeaderList = mutableMapOf(Pair("referer", baseUrl))
         headers.forEach { newHeaderList[it.first] = it.second }
