@@ -8,9 +8,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.await
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.runBlocking
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -41,8 +39,11 @@ class MyCima : ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("a").attr("href"))
         anime.title = element.select("a").attr("title")
-        anime.thumbnail_url = element.select("a > span.BG--GridItem").attr("data-lazy-style")
-            .substringAfter("background-image:url(").substringBefore(");")
+        anime.thumbnail_url =
+            element.select("a > span.BG--GridItem")
+                .attr("data-lazy-style")
+                .substringAfter("background-image:url(")
+                .substringBefore(");")
         return anime
     }
 
@@ -87,10 +88,8 @@ class MyCima : ParsedAnimeHttpSource() {
         val referer = response.request.url.encodedPath
         val newHeaderList = mutableMapOf(Pair("referer", baseUrl + referer))
         headers.forEach { newHeaderList[it.first] = it.second }
-        val iframeResponse = runBlocking {
-            client.newCall(GET(iframe, newHeaderList.toHeaders()))
-                .await().asJsoup()
-        }
+        val iframeResponse = client.newCall(GET(iframe, newHeaderList.toHeaders()))
+            .execute().asJsoup()
         return iframeResponse.select(videoListSelector()).map { videoFromElement(it) }
     }
 
@@ -103,6 +102,8 @@ class MyCima : ParsedAnimeHttpSource() {
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
+    // search
+
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("a").attr("href"))
@@ -110,8 +111,6 @@ class MyCima : ParsedAnimeHttpSource() {
         anime.thumbnail_url = element.select("a > span.BG--GridItem").attr("data-lazy-style").substringAfter("background-image:url(").substringBefore(");")
         return anime
     }
-
-    // search
 
     override fun searchAnimeNextPageSelector(): String = "ul.page-numbers li a.next"
 
@@ -164,7 +163,6 @@ class MyCima : ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/cima1/$page")
 
     override fun latestUpdatesSelector(): String = "div.Grid--MycimaPosts div.GridItem div.Thumb--GridItem"
-
 
     // Filters
 
