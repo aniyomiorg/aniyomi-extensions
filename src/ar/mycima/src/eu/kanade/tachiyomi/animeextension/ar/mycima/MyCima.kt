@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.ar.mycima
 
 import android.util.Log
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -30,8 +31,7 @@ class MyCima : ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    // Decreases calls, helps with Cloudflare
-    private fun String.addTrailingSlash() = if (!this.endsWith("/")) "$this/" else this
+    // Popular Anime
 
     override fun popularAnimeSelector(): String = "div.Grid--MycimaPosts div.GridItem div.Thumb--GridItem"
 
@@ -48,32 +48,38 @@ class MyCima : ParsedAnimeHttpSource() {
 
     override fun popularAnimeNextPageSelector(): String = "ul.page-numbers li a.next"
 
-    private fun seasonsNextPageSelector() = "div.List--Seasons--Episodes > a.activable"
+    // Episodes
+
+    private fun sepisodeListSelector() = "div.Episodes--Seasons--Episodes a"
+
+    private fun seasonsNextPageSelector(seasonNumber: Int) = "div.List--Seasons--Episodes > a:nth-child($seasonNumber)"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val episodes = mutableListOf<SEpisode>()
+
+        var seasonNumber = 1
         fun addEpisodes(document: Document) {
-            document.select(episodeListSelector()).map { episodes.add(episodeFromElement(it)) }
-            document.select("${seasonsNextPageSelector()}:nth-child(n+2)").firstOrNull()
-                ?.let { addEpisodes(client.newCall(GET(it.attr("href").addTrailingSlash(), headers)).execute().asJsoup()) }
+            document.select(sepisodeListSelector()).map { episodes.add(episodeFromElement(it)) }
+            document.select("${seasonsNextPageSelector(seasonNumber)}").firstOrNull()?.let {
+                seasonNumber++
+                addEpisodes(client.newCall(GET(it.attr("abs:href"), headers)).execute().asJsoup())
+            }
         }
+
         addEpisodes(response.asJsoup())
         return episodes
     }
 
-    private fun seasonNameSelector() = "div.List--Seasons--Episodes > a.selected"
-
     override fun episodeListSelector() = "div.Seasons--Episodes div.Episodes--Seasons--Episodes a, div.List--Seasons--Episodes > a.selected"
 
     override fun episodeFromElement(element: Element): SEpisode {
-        // val SeasonName = " ${element.select(" ${seasonNameSelector()}").text()}" // " ${element.select(".List--Seasons--Episodes a.selected").text()}"
         val episode = SEpisode.create()
-        //val SeasonsName = "${element.select("${seasonNameSelector()}").text()}"
         episode.setUrlWithoutDomain(element.attr("abs:href").addTrailingSlash())
-        episode.name = "${element.text()} ${element.select("")}" // "${element.select("episodetitle").text()} $SeasonsName" // ${element.select("a:contains(موسم)").hasText()}"
-        // ${element.select("${seasonNameSelector()} > a.selected").text()}"
+        episode.name = "${element.text()}" // "${element.select("episodetitle").text()} $SeasonsName" // ${element.select("a:contains(موسم)").hasText()}"
         return episode
     }
+
+    // Video urls
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
@@ -88,7 +94,7 @@ class MyCima : ParsedAnimeHttpSource() {
         return iframeResponse.select(videoListSelector()).map { videoFromElement(it) }
     }
 
-    override fun videoListSelector() = "div.Download--Mycima--Single > ul:nth-child(2) > li > a, source"
+    override fun videoListSelector() = "source"
 
     override fun videoFromElement(element: Element): Video {
         Log.i("lol", element.attr("href, src"))
@@ -105,11 +111,34 @@ class MyCima : ParsedAnimeHttpSource() {
         return anime
     }
 
+    // search
+
     override fun searchAnimeNextPageSelector(): String = "ul.page-numbers li a.next"
 
     override fun searchAnimeSelector(): String = "div.Grid--MycimaPosts div.GridItem div.Thumb--GridItem"
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/search/$query/page/$page/")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val url = if (query.isBlank()) {
+            ("$baseUrl/search/+/list/anime")
+        } else {
+            (if (filters.isEmpty()) getFilterList() else filters).forEach() { filter ->
+                when (filter) {
+                    is CategoryList -> {
+                        if (filter.state > 0) {
+                            val CatQ = getCategoryList()[filter.state].name
+                            val catUrl =
+                                ("$baseUrl/search/$query/list/$CatQ/?page_number=$page")
+                            return GET(catUrl.toString(), headers)
+                        }
+                    }
+                }
+            }
+            throw Exception("Filters Not")
+        }
+        return GET(url, headers)
+    }
+
+    // Details
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
@@ -119,6 +148,8 @@ class MyCima : ParsedAnimeHttpSource() {
         anime.author = document.select("li:contains(شركات الإنتاج) > p > a").joinToString(", ") { it.text() }
         return anime
     }
+
+    // Latest
 
     override fun latestUpdatesNextPageSelector(): String = "ul.page-numbers li a.next"
 
@@ -133,4 +164,24 @@ class MyCima : ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/cima1/$page")
 
     override fun latestUpdatesSelector(): String = "div.Grid--MycimaPosts div.GridItem div.Thumb--GridItem"
+
+
+    // Filters
+
+    override fun getFilterList() = AnimeFilterList(
+        CategoryList(categoriesName),
+    )
+
+    private class CategoryList(categories: Array<String>) : AnimeFilter.Select<String>("الأقسام", categories)
+    private data class CatUnit(val name: String)
+    private val categoriesName = getCategoryList().map {
+        it.name
+    }.toTypedArray()
+
+    private fun getCategoryList() = listOf(
+        CatUnit("اختر"),
+        CatUnit("anime"),
+        CatUnit("series"),
+        CatUnit("tv")
+    )
 }
