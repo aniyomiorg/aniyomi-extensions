@@ -179,7 +179,7 @@ class MyCima : ParsedAnimeHttpSource() {
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("a").attr("href"))
-        anime.title = element.attr("title")
+        anime.title = element.select("a > strong.hasyear").text()
         anime.thumbnail_url = element.select("a > span").attr("data-lazy-style").substringAfter("background-image:url(").substringBefore(");")
         return anime
     }
