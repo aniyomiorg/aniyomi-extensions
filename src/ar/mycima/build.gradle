@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'MY CIMA'
+    pkgNameSuffix = 'ar.mycima'
+    extClass = '.MyCima'
+    extVersionCode = 1
+    libVersion = '12'
+}
+
+apply from: "$rootDir/common.gradle"
