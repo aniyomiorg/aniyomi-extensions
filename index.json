@@ -9,6 +9,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: MY CIMA MOVIES",
+    "pkg": "eu.kanade.tachiyomi.animeextension.ar.mycimamovie",
+    "apk": "aniyomi-ar.mycimamovie-v12.1.apk",
+    "lang": "ar",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: WIT ANIME",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.witanime",
     "apk": "aniyomi-ar.witanime-v12.7.apk",
@@ -24,6 +33,15 @@
     "lang": "ar",
     "code": 3,
     "version": "12.3",
+    "nsfw": 0
+  },
+  {
+    "name": "Aniyomi: XS Movie",
+    "pkg": "eu.kanade.tachiyomi.animeextension.ar.xsmovie",
+    "apk": "aniyomi-ar.xsmovie-v12.1.apk",
+    "lang": "ar",
+    "code": 1,
+    "version": "12.1",
     "nsfw": 0
   },
   {
