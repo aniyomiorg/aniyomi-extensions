@@ -24,7 +24,7 @@ class AnimeBlkom : ParsedAnimeHttpSource() {
 
     override val lang = "ar"
 
-    override val supportsLatest = true
+    override val supportsLatest = false
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -33,13 +33,13 @@ class AnimeBlkom : ParsedAnimeHttpSource() {
             .add("Referer", "https://cdn2.vid4up.xyz")
     }
 
-    override fun popularAnimeSelector(): String = "div.contents div.content div.content-inner div.poster a" // "ul.anime-loop.loop li a"
+    override fun popularAnimeSelector(): String = "div.contents div.content div.content-inner div.poster a"
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/anime-list?page=$page")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = baseUrl + element.select("img").first().attr("data-original")
+        anime.thumbnail_url = baseUrl + element.select("img").attr("data-original")
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.title = element.select("img").attr("alt").removePrefix(" poster")
         return anime
@@ -52,8 +52,6 @@ class AnimeBlkom : ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("href"))
-        // val episodeNumberString = element.select("span:nth-child(3)")
-        episode.episode_number = element.select("span:nth-child(3)").text().toFloat()
         episode.name = element.select("span:nth-child(3)").text() + " :" + element.select("span:nth-child(1)").text()
 
         return episode
@@ -81,6 +79,7 @@ class AnimeBlkom : ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
+        anime.thumbnail_url = baseUrl + element.select("img").first().attr("data-original")
         anime.title = element.select("img").attr("alt").removePrefix(" poster")
         return anime
     }
@@ -93,34 +92,29 @@ class AnimeBlkom : ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = baseUrl + document.select("div.poster img").first().attr("data-original")
+        anime.thumbnail_url = baseUrl + document.select("div.poster img").attr("data-original")
         anime.title = document.select("div.name span h1").text()
         anime.genre = document.select("p.genres a").joinToString(", ") { it.text() }
-        anime.description = document.select("div.story p").text()
+        anime.description = document.select("div.story p, div.story").text()
         anime.author = document.select("div:contains(الاستديو) span > a").text()
-        anime.artist = document.select("div:contains(المخرج) span:nth-child(2)").text()
-        anime.status = parseStatus(document.select("div:contains(حالة الأنمي) span:nth-child(2)").text())
-        return anime
-    }
-
-    private fun parseStatus(statusString: String): Int {
-        return when (statusString) {
-            "مستمر" -> SAnime.ONGOING
-            "مكتمل" -> SAnime.COMPLETED
-            else -> SAnime.UNKNOWN
+        document.select("span.info")?.text()?.also { statusText ->
+            when {
+                statusText.contains("مستمر", true) -> anime.status = SAnime.ONGOING
+                statusText.contains("مكتمل", true) -> anime.status = SAnime.COMPLETED
+                else -> anime.status = SAnime.UNKNOWN
+            }
         }
-    }
-
-    override fun latestUpdatesNextPageSelector(): String = "ul.pagination li.page-item a[rel=next]"
-
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.attr("href") + "?s=srt-d")
-        anime.title = element.select("div span").not(".badge").text()
+        anime.artist = document.select("div:contains(المخرج) > span.info").text()
         return anime
     }
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/anime?s=rel-d&page=$page")
+    // Latest
 
-    override fun latestUpdatesSelector(): String = "ul.anime-loop.loop li a"
+    override fun latestUpdatesNextPageSelector(): String? = throw Exception("Not used")
+
+    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
+
+    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+
+    override fun latestUpdatesSelector(): String = throw Exception("Not used")
 }
