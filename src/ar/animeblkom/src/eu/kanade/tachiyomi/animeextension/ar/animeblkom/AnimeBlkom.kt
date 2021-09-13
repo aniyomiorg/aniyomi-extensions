@@ -8,7 +8,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers.Companion.toHeaders
+import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -27,6 +27,11 @@ class AnimeBlkom : ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
+
+    override fun headersBuilder(): Headers.Builder {
+        return super.headersBuilder()
+            .add("Referer", "https://cdn2.vid4up.xyz")
+    }
 
     override fun popularAnimeSelector(): String = "div.contents div.content div.content-inner div.poster a" // "ul.anime-loop.loop li a"
 
@@ -58,9 +63,8 @@ class AnimeBlkom : ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val iframe = document.selectFirst("iframe").attr("src")
         val referer = response.request.url.encodedPath
-        val newHeaderList = mutableMapOf(Pair("referer", baseUrl + referer))
-        headers.forEach { newHeaderList[it.first] = it.second }
-        val iframeResponse = client.newCall(GET(iframe, newHeaderList.toHeaders()))
+        val newHeaders = Headers.headersOf("referer", baseUrl + referer)
+        val iframeResponse = client.newCall(GET(iframe, newHeaders))
             .execute().asJsoup()
         return iframeResponse.select(videoListSelector()).map { videoFromElement(it) }
     }
