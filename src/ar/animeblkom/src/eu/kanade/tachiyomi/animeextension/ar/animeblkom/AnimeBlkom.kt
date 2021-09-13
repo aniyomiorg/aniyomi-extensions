@@ -30,8 +30,10 @@ class AnimeBlkom : ParsedAnimeHttpSource() {
 
     override fun headersBuilder(): Headers.Builder {
         return super.headersBuilder()
-            .add("Referer", "https://cdn2.vid4up.xyz")
+            .add("Referer", "https://animeblkom.net")
     }
+
+    // Popular
 
     override fun popularAnimeSelector(): String = "div.contents div.content div.content-inner div.poster a"
 
@@ -47,6 +49,8 @@ class AnimeBlkom : ParsedAnimeHttpSource() {
 
     override fun popularAnimeNextPageSelector(): String = "ul.pagination li.page-item a[rel=next]"
 
+    // episodes
+
     override fun episodeListSelector() = "ul.episodes-links li a"
 
     override fun episodeFromElement(element: Element): SEpisode {
@@ -56,6 +60,8 @@ class AnimeBlkom : ParsedAnimeHttpSource() {
 
         return episode
     }
+
+    // Video links
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
@@ -76,6 +82,8 @@ class AnimeBlkom : ParsedAnimeHttpSource() {
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
+    // Search
+
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
@@ -89,6 +97,8 @@ class AnimeBlkom : ParsedAnimeHttpSource() {
     override fun searchAnimeSelector(): String = "div.contents div.content div.content-inner div.poster a"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/search?query=$query&page=$page")
+
+    // Anime Details
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
