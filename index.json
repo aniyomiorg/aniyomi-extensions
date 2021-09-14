@@ -1,5 +1,14 @@
 [
   {
+    "name": "Aniyomi: أنمي بالكوم",
+    "pkg": "eu.kanade.tachiyomi.animeextension.ar.animeblkom",
+    "apk": "aniyomi-ar.animeblkom-v12.1.apk",
+    "lang": "ar",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: MY CIMA",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.mycima",
     "apk": "aniyomi-ar.mycima-v12.1.apk",
