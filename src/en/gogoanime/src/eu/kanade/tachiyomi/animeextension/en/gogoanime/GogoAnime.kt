@@ -112,7 +112,9 @@ class GogoAnime : ParsedAnimeHttpSource() {
 
     private fun videoUrlParse(url: String): String {
         val noRedirectClient = client.newBuilder().followRedirects(false).build()
-        val videoUrl = noRedirectClient.newCall(GET(url)).execute().header("location")
+        val response = noRedirectClient.newCall(GET(url)).execute()
+        val videoUrl = response.header("location")
+        response.close()
         return videoUrl ?: url
     }
 

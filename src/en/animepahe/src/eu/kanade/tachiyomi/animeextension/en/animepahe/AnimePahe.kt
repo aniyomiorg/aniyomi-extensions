@@ -315,7 +315,9 @@ class AnimePahe : AnimeHttpSource() {
             if (tries > 19) {
                 throw Exception("Failed to extract the stream uri from kwik.")
             }
-            return content?.header("location").toString()
+            val location =  content?.header("location").toString()
+            content?.close()
+            return location
         }
 
         private fun decrypt(fullString: String, key: String, v1: Int, v2: Int): String {
