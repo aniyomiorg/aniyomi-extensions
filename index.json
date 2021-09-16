@@ -54,6 +54,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: Aniflix",
+    "pkg": "eu.kanade.tachiyomi.animeextension.de.aniflix",
+    "apk": "aniyomi-de.aniflix-v12.1.apk",
+    "lang": "de",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: AnimePahe",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.animepahe",
     "apk": "aniyomi-en.animepahe-v12.4.apk",
