@@ -74,7 +74,9 @@ class MyCima : ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("abs:href"))
+        episode.episode_number = element.text().removePrefix("موسم ").removePrefix("الحلقة ").replace("مدبلج", "").replace(" -", "").toFloat()
         episode.name = element.text()
+        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 
