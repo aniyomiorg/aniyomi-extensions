@@ -56,7 +56,9 @@ class AnimeBlkom : ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("href"))
+        episode.episode_number = element.select("span:nth-child(3)").text().replace(" - ", "").toFloat()
         episode.name = element.select("span:nth-child(3)").text() + " :" + element.select("span:nth-child(1)").text()
+        episode.date_upload = System.currentTimeMillis()
 
         return episode
     }
