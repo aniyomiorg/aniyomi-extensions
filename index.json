@@ -2,19 +2,19 @@
   {
     "name": "Aniyomi: أنمي بالكوم",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.animeblkom",
-    "apk": "aniyomi-ar.animeblkom-v12.1.apk",
+    "apk": "aniyomi-ar.animeblkom-v12.2.apk",
     "lang": "ar",
-    "code": 1,
-    "version": "12.1",
+    "code": 2,
+    "version": "12.2",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: MY CIMA",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.mycima",
-    "apk": "aniyomi-ar.mycima-v12.2.apk",
+    "apk": "aniyomi-ar.mycima-v12.3.apk",
     "lang": "ar",
-    "code": 2,
-    "version": "12.2",
+    "code": 3,
+    "version": "12.3",
     "nsfw": 0
   },
   {
@@ -29,19 +29,19 @@
   {
     "name": "Aniyomi: WIT ANIME",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.witanime",
-    "apk": "aniyomi-ar.witanime-v12.7.apk",
+    "apk": "aniyomi-ar.witanime-v12.8.apk",
     "lang": "ar",
-    "code": 7,
-    "version": "12.7",
+    "code": 8,
+    "version": "12.8",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: XS Anime",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.xsanime",
-    "apk": "aniyomi-ar.xsanime-v12.3.apk",
+    "apk": "aniyomi-ar.xsanime-v12.4.apk",
     "lang": "ar",
-    "code": 3,
-    "version": "12.3",
+    "code": 4,
+    "version": "12.4",
     "nsfw": 0
   },
   {
