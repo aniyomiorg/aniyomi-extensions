@@ -21,7 +21,7 @@ class MyCima : ParsedAnimeHttpSource() {
 
     override val name = "MY Cima"
 
-    override val baseUrl = "https://mycima.actor:2083"
+    override val baseUrl = "https://mycima.win:2083"
 
     override val lang = "ar"
 
@@ -41,8 +41,8 @@ class MyCima : ParsedAnimeHttpSource() {
         anime.title = element.select("a").attr("title")
         anime.thumbnail_url =
             element.select("a > span.BG--GridItem")
-                .attr("data-lazy-style")
-                .substringAfter("background-image:url(")
+                .attr("style")
+                .substringAfter("-image:url(")
                 .substringBefore(");")
         return anime
     }
@@ -124,7 +124,7 @@ class MyCima : ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("a").attr("href"))
         anime.title = element.select("a > strong.hasyear").text()
-        anime.thumbnail_url = element.select("a > span.BG--GridItem").attr("data-lazy-style").substringAfter("background-image:url(").substringBefore(");")
+        anime.thumbnail_url = element.select("a > span.BG--GridItem").attr("style").substringAfter("-image:url(").substringBefore(");")
         return anime
     }
 
@@ -180,7 +180,7 @@ class MyCima : ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("a").attr("href"))
         anime.title = element.select("a > strong.hasyear").text()
-        anime.thumbnail_url = element.select("a > span").attr("data-lazy-style").substringAfter("background-image:url(").substringBefore(");")
+        anime.thumbnail_url = element.select("a > span").attr("style").substringAfter("-image:url(").substringBefore(");")
         return anime
     }
 
