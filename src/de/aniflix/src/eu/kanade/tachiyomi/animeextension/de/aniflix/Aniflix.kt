@@ -1,9 +1,14 @@
 package eu.kanade.tachiyomi.animeextension.de.aniflix
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.AnimeDetailsDto
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.AnimeDto
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.Episode
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.Release
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -20,8 +25,10 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
-class Aniflix : AnimeHttpSource() {
+class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "Aniflix"
 
@@ -33,10 +40,14 @@ class Aniflix : AnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    override fun headersBuilder() = Headers.Builder().apply {
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    private val doodHeaders = Headers.Builder().apply {
         add("User-Agent", "Aniyomi")
         add("Referer", "https://dood.la/")
-    }
+    }.build()
 
     private val json = Json {
         isLenient = true
@@ -156,10 +167,41 @@ class Aniflix : AnimeHttpSource() {
         for (stream in streams) {
             val quality = "${stream.hoster!!.name}, ${stream.lang!!}"
             if (stream.link!!.contains("https://dood.la/e/")) {
-                videoList.add(Video(stream.link, quality, null, null))
+                videoList.add(Video(stream.link, quality, null, null, doodHeaders))
             }
         }
         return videoList
+    }
+
+    override fun List<Video>.sort(): List<Video> {
+        val hoster = preferences.getString("preferred_hoster", null)
+        val subPreference = preferences.getString("preferred_sub", "SUB")!!
+        val hosterList = mutableListOf<Video>()
+        val otherList = mutableListOf<Video>()
+        if (hoster != null) {
+            for (video in this) {
+                if (video.url.contains(hoster)) {
+                    hosterList.add(video)
+                } else {
+                    otherList.add(video)
+                }
+            }
+        } else otherList += this
+        val newList = mutableListOf<Video>()
+        var preferred = 0
+        for (video in hosterList) {
+            if (video.quality.contains(subPreference)) {
+                newList.add(preferred, video)
+                preferred++
+            } else newList.add(video)
+        }
+        for (video in otherList) {
+            if (video.quality.contains(subPreference)) {
+                newList.add(preferred, video)
+                preferred++
+            } else newList.add(video)
+        }
+        return newList
     }
 
     override fun videoUrlParse(response: Response): String {
@@ -187,5 +229,40 @@ class Aniflix : AnimeHttpSource() {
         return (1..length)
             .map { allowedChars.random() }
             .joinToString("")
+    }
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val hosterPref = ListPreference(screen.context).apply {
+            key = "preferred_hoster"
+            title = "Standard-Hoster"
+            entries = arrayOf("Doodstream")
+            entryValues = arrayOf("https://dood.la/e/")
+            setDefaultValue("https://dood.la/e/")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        val subPref = ListPreference(screen.context).apply {
+            key = "preferred_sub"
+            title = "Standardmäßig Sub oder Dub?"
+            entries = arrayOf("Sub", "Dub")
+            entryValues = arrayOf("SUB", "DUB")
+            setDefaultValue("SUB")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(subPref)
+        screen.addPreference(hosterPref)
     }
 }

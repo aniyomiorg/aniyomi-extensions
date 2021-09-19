@@ -1,5 +1,10 @@
 package eu.kanade.tachiyomi.animeextension.en.gogoanime
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -14,9 +19,11 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.lang.Exception
 
-class GogoAnime : ParsedAnimeHttpSource() {
+class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Gogoanime"
 
@@ -28,10 +35,14 @@ class GogoAnime : ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    override fun headersBuilder() = Headers.Builder().apply {
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    private val videoHeaders = Headers.Builder().apply {
         add("User-Agent", "Aniyomi")
         add("Referer", "https://streamani.io/")
-    }
+    }.build()
 
     override fun popularAnimeSelector(): String = "div.img a"
 
@@ -102,9 +113,15 @@ class GogoAnime : ParsedAnimeHttpSource() {
         val quality = element.text().substringAfter("Download (").replace("P - mp4)", "p")
         val url = element.attr("href")
         return if (url.startsWith("https://storage.googleapis.com")) {
-            Video(url, quality, url, null)
+            val parsedQuality = "Google server: " + when (quality) {
+                "FullHDp" -> "1080p"
+                "HDp" -> "720p"
+                "SDp" -> "360p"
+                else -> quality
+            }
+            Video(url, parsedQuality, url, null)
         } else {
-            Video(url, quality, videoUrlParse(url), null)
+            Video(url, quality, videoUrlParse(url), null, videoHeaders)
         }
     }
 
@@ -116,6 +133,24 @@ class GogoAnime : ParsedAnimeHttpSource() {
         val videoUrl = response.header("location")
         response.close()
         return videoUrl ?: url
+    }
+
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString("preferred_quality", null)
+        if (quality != null) {
+            val newList = mutableListOf<Video>()
+            var preferred = 0
+            for (video in this) {
+                if (video.quality.contains(quality)) {
+                    newList.add(preferred, video)
+                    preferred++
+                } else {
+                    newList.add(video)
+                }
+            }
+            return newList
+        }
+        return this
     }
 
     override fun searchAnimeFromElement(element: Element): SAnime {
@@ -165,4 +200,23 @@ class GogoAnime : ParsedAnimeHttpSource() {
         GET("https://ajax.gogo-load.com/ajax/page-recent-release-ongoing.html?page=$page&type=1", headers)
 
     override fun latestUpdatesSelector(): String = "div.added_series_body.popular li a:has(div)"
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val videoQualityPref = ListPreference(screen.context).apply {
+            key = "preferred_quality"
+            title = "Preferred quality"
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
+            setDefaultValue("1080")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(videoQualityPref)
+    }
 }
