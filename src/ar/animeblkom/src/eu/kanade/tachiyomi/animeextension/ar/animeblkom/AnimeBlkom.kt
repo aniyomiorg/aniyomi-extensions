@@ -1,6 +1,11 @@
 package eu.kanade.tachiyomi.animeextension.ar.animeblkom
 
 import android.util.Log
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -14,9 +19,11 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.lang.Exception
 
-class AnimeBlkom : ParsedAnimeHttpSource() {
+class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "أنمي بالكوم"
 
@@ -27,6 +34,10 @@ class AnimeBlkom : ParsedAnimeHttpSource() {
     override val supportsLatest = false
 
     override val client: OkHttpClient = network.cloudflareClient
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     override fun headersBuilder(): Headers.Builder {
         return super.headersBuilder()
@@ -82,6 +93,24 @@ class AnimeBlkom : ParsedAnimeHttpSource() {
         return Video(element.attr("src").replace("watch", "download"), element.attr("res") + "p", element.attr("src").replace("watch", "download"), null)
     }
 
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString("preferred_quality", null)
+        if (quality != null) {
+            val newList = mutableListOf<Video>()
+            var preferred = 0
+            for (video in this) {
+                if (video.quality.contains(quality)) {
+                    newList.add(preferred, video)
+                    preferred++
+                } else {
+                    newList.add(video)
+                }
+            }
+            return newList
+        }
+        return this
+    }
+
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     // Search
@@ -129,4 +158,25 @@ class AnimeBlkom : ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
 
     override fun latestUpdatesSelector(): String = throw Exception("Not used")
+
+    // preferred quality settings
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val videoQualityPref = ListPreference(screen.context).apply {
+            key = "preferred_quality"
+            title = "Preferred quality"
+            entries = arrayOf("1080p", "720p", "480p", "360p", "240p")
+            entryValues = arrayOf("1080", "720", "480", "360", "240")
+            setDefaultValue("1080")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(videoQualityPref)
+    }
 }
