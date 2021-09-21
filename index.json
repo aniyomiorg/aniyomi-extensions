@@ -65,10 +65,10 @@
   {
     "name": "Aniyomi: AnimePahe",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.animepahe",
-    "apk": "aniyomi-en.animepahe-v12.5.apk",
+    "apk": "aniyomi-en.animepahe-v12.6.apk",
     "lang": "en",
-    "code": 5,
-    "version": "12.5",
+    "code": 6,
+    "version": "12.6",
     "nsfw": 0
   },
   {
@@ -101,10 +101,10 @@
   {
     "name": "Aniyomi: tenshi.moe",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.tenshimoe",
-    "apk": "aniyomi-en.tenshimoe-v12.22.apk",
+    "apk": "aniyomi-en.tenshimoe-v12.23.apk",
     "lang": "en",
-    "code": 22,
-    "version": "12.22",
+    "code": 23,
+    "version": "12.23",
     "nsfw": 0
   },
   {
