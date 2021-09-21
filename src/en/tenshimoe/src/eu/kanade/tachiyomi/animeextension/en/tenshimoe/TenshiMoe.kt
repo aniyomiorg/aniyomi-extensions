@@ -1,6 +1,11 @@
 package eu.kanade.tachiyomi.animeextension.en.tenshimoe
 
 import android.annotation.SuppressLint
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -14,13 +19,15 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.lang.Exception
 import java.lang.Float.parseFloat
 import java.text.SimpleDateFormat
 import java.util.Date
 import kotlin.collections.ArrayList
 
-class TenshiMoe : ParsedAnimeHttpSource() {
+class TenshiMoe : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "tenshi.moe"
 
@@ -31,6 +38,10 @@ class TenshiMoe : ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     override fun popularAnimeSelector(): String = "ul.anime-loop.loop li a"
 
@@ -123,6 +134,24 @@ class TenshiMoe : ParsedAnimeHttpSource() {
         return videoList
     }
 
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString("preferred_quality", null)
+        if (quality != null) {
+            val newList = mutableListOf<Video>()
+            var preferred = 0
+            for (video in this) {
+                if (video.quality.contains(quality)) {
+                    newList.add(preferred, video)
+                    preferred++
+                } else {
+                    newList.add(video)
+                }
+            }
+            return newList
+        }
+        return this
+    }
+
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
@@ -171,4 +200,23 @@ class TenshiMoe : ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/anime?s=rel-d&page=$page")
 
     override fun latestUpdatesSelector(): String = "ul.anime-loop.loop li a"
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val videoQualityPref = ListPreference(screen.context).apply {
+            key = "preferred_quality"
+            title = "Preferred quality"
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
+            setDefaultValue("1080")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(videoQualityPref)
+    }
 }
