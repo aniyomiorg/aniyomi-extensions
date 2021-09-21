@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.tenshimoe
 
 import android.annotation.SuppressLint
-import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -9,7 +8,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers.Companion.toHeaders
+import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -102,20 +101,29 @@ class TenshiMoe : ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val iframe = document.selectFirst("iframe").attr("src")
-        val referer = response.request.url.encodedPath
-        val newHeaderList = mutableMapOf(Pair("referer", baseUrl + referer))
-        headers.forEach { newHeaderList[it.first] = it.second }
-        val iframeResponse = client.newCall(GET(iframe, newHeaderList.toHeaders()))
+        val referer = response.request.url.toString()
+        val refererHeaders = Headers.headersOf("referer", referer)
+        val iframeResponse = client.newCall(GET(iframe, refererHeaders))
             .execute().asJsoup()
-        return iframeResponse.select(videoListSelector()).map { videoFromElement(it) }
+        return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
     }
 
-    override fun videoListSelector() = "source"
+    override fun videoListSelector() = "script:containsData(source)"
 
-    override fun videoFromElement(element: Element): Video {
-        Log.i("lol", element.attr("src"))
-        return Video(element.attr("src"), element.attr("title"), element.attr("src"), null)
+    private fun videosFromElement(element: Element): List<Video> {
+        val data = element.data().substringAfter("sources: [").substringBefore("],")
+        val sources = data.split("src: '").drop(1)
+        val videoList = mutableListOf<Video>()
+        for (source in sources) {
+            val src = source.substringBefore("'")
+            val size = source.substringAfter("size: ").substringBefore(",")
+            val video = Video(src, size + "p", src, null)
+            videoList.add(video)
+        }
+        return videoList
     }
+
+    override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
