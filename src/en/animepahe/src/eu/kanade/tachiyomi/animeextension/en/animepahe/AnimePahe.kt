@@ -1,8 +1,13 @@
 package eu.kanade.tachiyomi.animeextension.en.animepahe
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -17,16 +22,22 @@ import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlin.math.pow
 
-class AnimePahe : AnimeHttpSource() {
+class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     override val name = "AnimePahe"
 
-    override val baseUrl = "https://animepahe.com"
+    override val baseUrl = preferences.getString("preferred_domain", "https://animepahe.com")!!
 
     override val lang = "en"
 
@@ -196,6 +207,24 @@ class AnimePahe : AnimeHttpSource() {
     private fun getVideo(adflyUrl: String, quality: String): Video {
         val videoUrl = KwikExtractor().getStreamUrlFromKwik(adflyUrl)
         return Video(videoUrl, "${quality}p", videoUrl, null)
+    }
+
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString("preferred_quality", null)
+        if (quality != null) {
+            val newList = mutableListOf<Video>()
+            var preferred = 0
+            for (video in this) {
+                if (video.quality.contains(quality)) {
+                    newList.add(preferred, video)
+                    preferred++
+                } else {
+                    newList.add(video)
+                }
+            }
+            return newList
+        }
+        return this
     }
 
     inner class KwikExtractor {
@@ -371,5 +400,40 @@ class AnimePahe : AnimeHttpSource() {
                 false -> "0"
             }
         }
+    }
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val videoQualityPref = ListPreference(screen.context).apply {
+            key = "preferred_quality"
+            title = "Preferred quality"
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
+            setDefaultValue("1080")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        val domainPref = ListPreference(screen.context).apply {
+            key = "preferred_domain"
+            title = "Preferred domain"
+            entries = arrayOf("animepahe.com", "animepahe.ru", "animepahe.org")
+            entryValues = arrayOf("https://animepahe.com", "https://animepahe.ru", "https://animepahe.org")
+            setDefaultValue("https://animepahe.com")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(videoQualityPref)
+        screen.addPreference(domainPref)
     }
 }
