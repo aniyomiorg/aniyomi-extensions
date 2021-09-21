@@ -238,6 +238,8 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         CatUnit("tv")
     )
 
+    // preferred quality settings
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
