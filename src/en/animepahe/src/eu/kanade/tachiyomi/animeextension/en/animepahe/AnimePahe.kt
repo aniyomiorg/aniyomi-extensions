@@ -420,7 +420,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         }
         val domainPref = ListPreference(screen.context).apply {
             key = "preferred_domain"
-            title = "Preferred domain"
+            title = "Preferred domain (requires app restart)"
             entries = arrayOf("animepahe.com", "animepahe.ru", "animepahe.org")
             entryValues = arrayOf("https://animepahe.com", "https://animepahe.ru", "https://animepahe.org")
             setDefaultValue("https://animepahe.com")
