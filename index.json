@@ -101,10 +101,10 @@
   {
     "name": "Aniyomi: tenshi.moe",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.tenshimoe",
-    "apk": "aniyomi-en.tenshimoe-v12.21.apk",
+    "apk": "aniyomi-en.tenshimoe-v12.22.apk",
     "lang": "en",
-    "code": 21,
-    "version": "12.21",
+    "code": 22,
+    "version": "12.22",
     "nsfw": 0
   },
   {
