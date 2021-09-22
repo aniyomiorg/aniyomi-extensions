@@ -2,28 +2,28 @@
   {
     "name": "Aniyomi: أنمي بالكوم",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.animeblkom",
-    "apk": "aniyomi-ar.animeblkom-v12.3.apk",
-    "lang": "ar",
-    "code": 3,
-    "version": "12.3",
-    "nsfw": 0
-  },
-  {
-    "name": "Aniyomi: MY CIMA",
-    "pkg": "eu.kanade.tachiyomi.animeextension.ar.mycima",
-    "apk": "aniyomi-ar.mycima-v12.4.apk",
+    "apk": "aniyomi-ar.animeblkom-v12.4.apk",
     "lang": "ar",
     "code": 4,
     "version": "12.4",
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: MY CIMA",
+    "pkg": "eu.kanade.tachiyomi.animeextension.ar.mycima",
+    "apk": "aniyomi-ar.mycima-v12.5.apk",
+    "lang": "ar",
+    "code": 5,
+    "version": "12.5",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: MY CIMA MOVIES",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.mycimamovie",
-    "apk": "aniyomi-ar.mycimamovie-v12.3.apk",
+    "apk": "aniyomi-ar.mycimamovie-v12.4.apk",
     "lang": "ar",
-    "code": 3,
-    "version": "12.3",
+    "code": 4,
+    "version": "12.4",
     "nsfw": 0
   },
   {
@@ -74,10 +74,10 @@
   {
     "name": "Aniyomi: Gogoanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.gogoanime",
-    "apk": "aniyomi-en.gogoanime-v12.13.apk",
+    "apk": "aniyomi-en.gogoanime-v12.14.apk",
     "lang": "en",
-    "code": 13,
-    "version": "12.13",
+    "code": 14,
+    "version": "12.14",
     "nsfw": 0
   },
   {
