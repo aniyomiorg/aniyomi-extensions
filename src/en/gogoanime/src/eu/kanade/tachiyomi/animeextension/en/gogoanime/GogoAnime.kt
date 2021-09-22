@@ -253,7 +253,6 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Fantasy", "fantasy"),
             Pair("Game", "game"),
             Pair("Harem", "harem"),
-            Pair("Hentai", "hentai"),
             Pair("Historical", "historical"),
             Pair("Horror", "horror"),
             Pair("Josei", "josei"),
