@@ -282,7 +282,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Super Power", "super-power"),
             Pair("Supernatural", "supernatural"),
             Pair("Thriller", "thriller"),
-            Pair("Vampire", "webtoon"),
+            Pair("Vampire", "vampire"),
             Pair("Yaoi", "yaoi"),
             Pair("Yuri", "yuri")
         )
