@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import com.google.gson.JsonElement
+import com.google.gson.JsonNull
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -17,6 +18,9 @@ import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.OkHttpClient
@@ -37,7 +41,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "AnimePahe"
 
-    override val baseUrl = preferences.getString("preferred_domain", "https://animepahe.com")!!
+    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://animepahe.com")!! }
 
     override val lang = "en"
 
@@ -65,15 +69,33 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
+    override fun animeDetailsRequest(anime: SAnime): Request {
+        val responseString = runBlocking {
+            withContext(Dispatchers.IO) {
+                client.newCall(GET("$baseUrl/api?m=search&q=${anime.title}"))
+                    .execute().body!!.string()
+            }
+        }
+        val animeId = anime.url.substringAfterLast("?anime_id=")
+        val session = responseString.substringAfter("\"id\":$animeId")
+            .substringAfter("\"session\":\"").substringBefore("\"")
+        return GET("$baseUrl/anime/$session?anime_id=$animeId")
+    }
+
     override fun animeDetailsParse(response: Response): SAnime {
         val jsoup = response.asJsoup()
         val anime = SAnime.create()
+        anime.setUrlWithoutDomain(response.request.url.toString())
         anime.title = jsoup.selectFirst("div.title-wrapper h1").text()
-        anime.author = jsoup.selectFirst("div.col-sm-4.anime-info p:contains(Studio:)").text().replace("Studio: ", "")
+        anime.author = jsoup.select("div.col-sm-4.anime-info p:contains(Studio:)")
+            .firstOrNull()?.text()?.replace("Studio: ", "")
         anime.status = parseStatus(jsoup.selectFirst("div.col-sm-4.anime-info p:contains(Status:) a").text())
         anime.thumbnail_url = jsoup.selectFirst("div.anime-poster a").attr("href")
         anime.genre = jsoup.select("div.anime-genre ul li").joinToString { it.text() }
-        anime.description = jsoup.select("div.anime-summary").text()
+        val synonyms = jsoup.select("div.col-sm-4.anime-info p:contains(Synonyms:)")
+            .firstOrNull()?.text()
+        anime.description = jsoup.select("div.anime-summary").text() +
+            if (synonyms.isNullOrEmpty()) "" else "\n\n$synonyms"
         return anime
     }
 
@@ -195,36 +217,46 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         val array = JsonParser.parseString(response.body!!.string())
             .asJsonObject.get("data").asJsonArray
         val videos = mutableListOf<Video>()
-        for (item in array.reversed()) {
+        for (item in array) {
             val quality = item.asJsonObject.keySet().first()
             val adflyLink = item.asJsonObject.get(quality)
                 .asJsonObject.get("kwik_adfly").asString
-            videos.add(getVideo(adflyLink, quality))
+            val audio = item.asJsonObject.get(quality).asJsonObject.get("audio")
+            val qualityString = if (audio is JsonNull) "${quality}p" else "${quality}p (" + audio.asString + " audio)"
+            videos.add(getVideo(adflyLink, qualityString))
         }
         return videos
     }
 
     private fun getVideo(adflyUrl: String, quality: String): Video {
         val videoUrl = KwikExtractor().getStreamUrlFromKwik(adflyUrl)
-        return Video(videoUrl, "${quality}p", videoUrl, null)
+        return Video(videoUrl, quality, videoUrl, null)
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", null)
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
+        val subPreference = preferences.getString("preferred_sub", "jpn")!!
+        val quality = preferences.getString("preferred_quality", "1080")!!
+        val qualityList = mutableListOf<Video>()
+        val newList = mutableListOf<Video>()
+        var preferred = 0
+        for (video in this.reversed()) {
+            if (video.quality.contains(quality)) {
+                qualityList.add(preferred, video)
+                preferred++
+            } else {
+                qualityList.add(video)
             }
-            return newList
         }
-        return this
+        preferred = 0
+        for (video in qualityList) {
+            if (video.quality.contains(subPreference)) {
+                newList.add(preferred, video)
+                preferred++
+            } else {
+                newList.add(video)
+            }
+        }
+        return newList
     }
 
     inner class KwikExtractor {
@@ -406,8 +438,8 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
+            entries = arrayOf("1080p", "720p", "360p")
+            entryValues = arrayOf("1080", "720", "360")
             setDefaultValue("1080")
             summary = "%s"
 
@@ -433,7 +465,23 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val subPref = ListPreference(screen.context).apply {
+            key = "preferred_sub"
+            title = "Prefer subs or dubs?"
+            entries = arrayOf("sub", "dub")
+            entryValues = arrayOf("jpn", "eng")
+            setDefaultValue("jpn")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
         screen.addPreference(videoQualityPref)
         screen.addPreference(domainPref)
+        screen.addPreference(subPref)
     }
 }
