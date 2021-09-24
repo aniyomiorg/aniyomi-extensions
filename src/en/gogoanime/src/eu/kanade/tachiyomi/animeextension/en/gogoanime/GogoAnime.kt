@@ -183,6 +183,17 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.genre = document.select("p.type:eq(5) a").joinToString("") { it.text() }
         anime.description = document.select("p.type:eq(4)").first().ownText()
         anime.status = parseStatus(document.select("p.type:eq(7) a").text())
+
+    // add alternative name to anime description
+        val altName = "Other name(s): "
+        document.select("p.type:eq(8)").firstOrNull()?.ownText()?.let {
+            if (it.isBlank().not()) {
+                anime.description = when {
+                anime.description.isNullOrBlank() -> altName + it
+                    else -> anime.description + "\n\n$altName" + it
+                }
+            }
+        }
         return anime
     }
 
