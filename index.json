@@ -124,5 +124,14 @@
     "code": 1,
     "version": "12.1",
     "nsfw": 0
+  },
+  {
+    "name": "Aniyomi: DreamSub",
+    "pkg": "eu.kanade.tachiyomi.animeextension.it.dreamsub",
+    "apk": "aniyomi-it.dreamsub-v12.1.apk",
+    "lang": "it",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
   }
 ]
