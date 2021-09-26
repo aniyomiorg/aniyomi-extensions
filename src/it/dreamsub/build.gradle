@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'DreamSub'
+    pkgNameSuffix = 'it.dreamsub'
+    extClass = '.DreamSub'
+    extVersionCode = 1
+    libVersion = '12'
+}
+
+apply from: "$rootDir/common.gradle"
