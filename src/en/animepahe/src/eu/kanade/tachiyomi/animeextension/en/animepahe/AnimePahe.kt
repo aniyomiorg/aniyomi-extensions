@@ -85,7 +85,8 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun animeDetailsParse(response: Response): SAnime {
         val jsoup = response.asJsoup()
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(response.request.url.toString())
+        val animeId = response.request.url.toString().substringAfterLast("?anime_id=")
+        anime.setUrlWithoutDomain("$baseUrl/anime/?anime_id=$animeId")
         anime.title = jsoup.selectFirst("div.title-wrapper h1").text()
         anime.author = jsoup.select("div.col-sm-4.anime-info p:contains(Studio:)")
             .firstOrNull()?.text()?.replace("Studio: ", "")
@@ -121,8 +122,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             val anime = SAnime.create()
             anime.title = item.asJsonObject.get("title").asString
             val animeId = item.asJsonObject.get("id").asInt
-            val session = item.asJsonObject.get("session").asString
-            anime.setUrlWithoutDomain("$baseUrl/anime/$session?anime_id=$animeId")
+            anime.setUrlWithoutDomain("$baseUrl/anime/?anime_id=$animeId")
             animeList.add(anime)
         }
         return AnimesPage(animeList, false)
@@ -147,8 +147,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             val anime = SAnime.create()
             anime.title = item.asJsonObject.get("anime_title").asString
             val animeId = item.asJsonObject.get("anime_id").asInt
-            val session = item.asJsonObject.get("anime_session").asString
-            anime.setUrlWithoutDomain("$baseUrl/anime/$session?anime_id=$animeId")
+            anime.setUrlWithoutDomain("$baseUrl/anime/?anime_id=$animeId")
             anime.artist = item.asJsonObject.get("fansub").asString
             animeList.add(anime)
         }
