@@ -113,16 +113,10 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element): Video {
         val quality = element.text().substringAfter("Download (").replace("P - mp4)", "p")
         val url = element.attr("href")
-        return if (url.startsWith("https://storage.googleapis.com")) {
-            val parsedQuality = "Google server: " + when (quality) {
-                "FullHDp" -> "1080p"
-                "HDp" -> "720p"
-                "SDp" -> "360p"
-                else -> quality
-            }
-            Video(url, parsedQuality, url, null)
-        } else {
+        return if (url.contains("https://gogo-cdn.com")) {
             Video(url, quality, videoUrlParse(url), null, videoHeaders)
+        } else {
+            Video(url, quality, url, null)
         }
     }
 
@@ -184,12 +178,12 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.description = document.select("p.type:eq(4)").first().ownText()
         anime.status = parseStatus(document.select("p.type:eq(7) a").text())
 
-    // add alternative name to anime description
+        // add alternative name to anime description
         val altName = "Other name(s): "
         document.select("p.type:eq(8)").firstOrNull()?.ownText()?.let {
             if (it.isBlank().not()) {
                 anime.description = when {
-                anime.description.isNullOrBlank() -> altName + it
+                    anime.description.isNullOrBlank() -> altName + it
                     else -> anime.description + "\n\n$altName" + it
                 }
             }
