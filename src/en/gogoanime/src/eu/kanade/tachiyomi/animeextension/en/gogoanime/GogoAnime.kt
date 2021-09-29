@@ -116,7 +116,13 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return if (url.contains("https://gogo-cdn.com")) {
             Video(url, quality, videoUrlParse(url), null, videoHeaders)
         } else {
-            Video(url, quality, url, null)
+            val parsedQuality = "Google server: " + when (quality) {
+                "FullHDp" -> "1080p"
+                "HDp" -> "720p"
+                "SDp" -> "360p"
+                else -> quality
+            }
+            Video(url, parsedQuality, url, null)
         }
     }
 
