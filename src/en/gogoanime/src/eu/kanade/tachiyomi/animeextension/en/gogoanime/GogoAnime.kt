@@ -108,14 +108,15 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return newElements
     }
 
-    override fun videoListSelector() = "div.mirror_link a[download]"
+    override fun videoListSelector() = "div.mirror_link a[download], div.mirror_link a[href*=https://dood.la]"
 
     override fun videoFromElement(element: Element): Video {
         val quality = element.text().substringAfter("Download (").replace("P - mp4)", "p")
         val url = element.attr("href")
-        return if (url.contains("https://gogo-cdn.com")) {
-            Video(url, quality, videoUrlParse(url), null, videoHeaders)
-        } else {
+        return if (url.contains("https://dood.la")) {
+            val newQuality = "Doodstream mirror"
+            Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
+        } else if (url.contains("google")) {
             val parsedQuality = "Google server: " + when (quality) {
                 "FullHDp" -> "1080p"
                 "HDp" -> "720p"
@@ -123,6 +124,14 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 else -> quality
             }
             Video(url, parsedQuality, url, null)
+        } else {
+            val parsedQuality = when (quality) {
+                "FullHDp" -> "1080p"
+                "HDp" -> "720p"
+                "SDp" -> "360p"
+                else -> quality
+            }
+            Video(url, parsedQuality, videoUrlParse(url), null, videoHeaders)
         }
     }
 
@@ -134,6 +143,29 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoUrl = response.header("location")
         response.close()
         return videoUrl ?: url
+    }
+
+    private fun doodUrlParse(url: String): String {
+        val response = client.newCall(GET(url.replace("/d/", "/e/"))).execute()
+        val content = response.body!!.string()
+        val md5 = content.substringAfter("'/pass_md5/").substringBefore("',")
+        val token = md5.substringAfterLast("/")
+        val randomString = getRandomString()
+        val expiry = System.currentTimeMillis()
+        val videoUrlStart = client.newCall(
+            GET(
+                "https://dood.la/pass_md5/$md5",
+                Headers.headersOf("referer", url)
+            )
+        ).execute().body!!.string()
+        return "$videoUrlStart$randomString?token=$token&expiry=$expiry"
+    }
+
+    private fun getRandomString(length: Int = 10): String {
+        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
+        return (1..length)
+            .map { allowedChars.random() }
+            .joinToString("")
     }
 
     override fun List<Video>.sort(): List<Video> {

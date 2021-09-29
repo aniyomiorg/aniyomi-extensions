@@ -1,8 +1,8 @@
 package eu.kanade.tachiyomi.animeextension.ar.animeblkom
 
-import android.util.Log
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
