@@ -54,6 +54,8 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
         ignoreUnknownKeys = true
     }
 
+    private val refererHeader = Headers.headersOf("Referer", baseUrl)
+
     override fun animeDetailsParse(response: Response): SAnime {
         val anime = json.decodeFromString(AnimeDetailsDto.serializer(), response.body!!.string())
         val newAnime = SAnime.create().apply {
@@ -73,7 +75,7 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
         return newAnime
     }
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/api/show/new/${page - 1}")
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/api/show/new/${page - 1}", refererHeader)
 
     override fun popularAnimeParse(response: Response) = parseAnimePage(response)
 
@@ -104,7 +106,7 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/api/show/airing/${page - 1}")
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/api/show/airing/${page - 1}", refererHeader)
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
         val releases = json.decodeFromString(ListSerializer(Release.serializer()), response.body!!.string()).toMutableList()
@@ -134,7 +136,8 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = POST(
-        "$baseUrl/api/show/search",
+        url = "$baseUrl/api/show/search",
+        headers = refererHeader,
         body = "{\"search\":\"$query\"}".toRequestBody("application/json".toMediaType())
     )
 
