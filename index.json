@@ -56,10 +56,10 @@
   {
     "name": "Aniyomi: Aniflix",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.aniflix",
-    "apk": "aniyomi-de.aniflix-v12.2.apk",
+    "apk": "aniyomi-de.aniflix-v12.3.apk",
     "lang": "de",
-    "code": 2,
-    "version": "12.2",
+    "code": 3,
+    "version": "12.3",
     "nsfw": 0
   },
   {
