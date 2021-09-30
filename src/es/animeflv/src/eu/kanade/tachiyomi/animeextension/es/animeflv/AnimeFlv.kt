@@ -1,6 +1,12 @@
 package eu.kanade.tachiyomi.animeextension.es.animeflv
 
+import android.app.Application
+import android.content.SharedPreferences
+import android.util.Log
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import com.google.gson.JsonParser
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -13,9 +19,11 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.lang.Exception
 
-class AnimeFlv : ParsedAnimeHttpSource() {
+class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AnimeFLV"
 
@@ -26,6 +34,10 @@ class AnimeFlv : ParsedAnimeHttpSource() {
     override val supportsLatest = false
 
     override val client: OkHttpClient = network.cloudflareClient
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     override fun popularAnimeSelector(): String = "div.Container ul.ListAnimes li article"
 
@@ -88,8 +100,10 @@ class AnimeFlv : ParsedAnimeHttpSource() {
                     for (server in sub.asJsonArray) {
                         val url = server.asJsonObject.get("code").asString.replace("\\/", "/")
                         val quality = server.asJsonObject.get("title").asString
-                        val video = Video(url, quality, null, null)
-                        if (quality == "GoCDN") videoList.add(video)
+                        if (quality == "Okru") {
+                            val videos = getOkruVideos(url)
+                            videoList += videos
+                        }
                     }
                 }
             }
@@ -99,21 +113,43 @@ class AnimeFlv : ParsedAnimeHttpSource() {
 
     override fun videoListSelector() = throw Exception("not used")
 
+    override fun videoUrlParse(document: Document) = throw Exception("not used")
+
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
-    override fun videoUrlRequest(video: Video): Request {
-        if (video.url.contains("https://streamium.xyz/gocdn.html")) {
-            val newUrl = video.url.replace("gocdn.html#", "gocdn.php?v=")
-            return GET(newUrl)
+    private fun getOkruVideos(url: String): List<Video> {
+        val document = client.newCall(GET(url)).execute().asJsoup()
+        Log.i("bruuh", document.select("div[data-options]").attr("data-options"))
+        val videoList = mutableListOf<Video>()
+        val videosString = document.select("div[data-options]").attr("data-options")
+            .substringAfter("\\\"videos\\\":[{\\\"name\\\":\\\"")
+            .substringBefore("]")
+        videosString.split("{\\\"name\\\":\\\"").reversed().forEach {
+            val videoUrl = it.substringAfter("url\\\":\\\"")
+                .substringBefore("\\\"")
+                .replace("\\\\u0026", "&")
+            val quality = it.substringBefore("\\\"")
+            videoList.add(Video(videoUrl, quality, videoUrl, null))
         }
-        return super.videoUrlRequest(video)
+        return videoList
     }
 
-    override fun videoUrlParse(document: Document): String {
-        return document.text()
-            .substringAfter("{\"file\":\"")
-            .substringBeforeLast("\"}")
-            .replace("\\/", "/")
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString("preferred_quality", "hd")
+        if (quality != null) {
+            val newList = mutableListOf<Video>()
+            var preferred = 0
+            for (video in this) {
+                if (video.quality == quality) {
+                    newList.add(preferred, video)
+                    preferred++
+                } else {
+                    newList.add(video)
+                }
+            }
+            return newList
+        }
+        return this
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/browse?q=$query&page=$page")
@@ -151,4 +187,23 @@ class AnimeFlv : ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int) = throw Exception("not used")
 
     override fun latestUpdatesSelector() = throw Exception("not used")
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val videoQualityPref = ListPreference(screen.context).apply {
+            key = "preferred_quality"
+            title = "Preferred quality"
+            entries = arrayOf("hd", "sd", "low", "lowest", "mobile")
+            entryValues = arrayOf("hd", "sd", "low", "lowest", "mobile")
+            setDefaultValue("hd")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(videoQualityPref)
+    }
 }
