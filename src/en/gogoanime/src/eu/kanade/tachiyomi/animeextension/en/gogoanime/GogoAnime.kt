@@ -113,25 +113,29 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element): Video {
         val quality = element.text().substringAfter("Download (").replace("P - mp4)", "p")
         val url = element.attr("href")
-        return if (url.contains("https://dood.la")) {
-            val newQuality = "Doodstream mirror"
-            Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
-        } else if (url.contains("google")) {
-            val parsedQuality = "Google server: " + when (quality) {
-                "FullHDp" -> "1080p"
-                "HDp" -> "720p"
-                "SDp" -> "360p"
-                else -> quality
+        return when {
+            url.contains("https://dood.la") -> {
+                val newQuality = "Doodstream mirror"
+                Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
             }
-            Video(url, parsedQuality, url, null)
-        } else {
-            val parsedQuality = when (quality) {
-                "FullHDp" -> "1080p"
-                "HDp" -> "720p"
-                "SDp" -> "360p"
-                else -> quality
+            url.contains("google") -> {
+                val parsedQuality = "Google server: " + when (quality) {
+                    "FullHDp" -> "1080p"
+                    "HDp" -> "720p"
+                    "SDp" -> "360p"
+                    else -> quality
+                }
+                Video(url, parsedQuality, url, null)
             }
-            Video(url, parsedQuality, videoUrlParse(url), null, videoHeaders)
+            else -> {
+                val parsedQuality = when (quality) {
+                    "FullHDp" -> "1080p"
+                    "HDp" -> "720p"
+                    "SDp" -> "360p"
+                    else -> quality
+                }
+                Video(url, parsedQuality, videoUrlParse(url), null, videoHeaders)
+            }
         }
     }
 
