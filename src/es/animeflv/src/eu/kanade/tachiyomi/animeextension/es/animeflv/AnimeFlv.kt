@@ -129,7 +129,9 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .substringBefore("\\\"")
                 .replace("\\\\u0026", "&")
             val quality = it.substringBefore("\\\"")
-            videoList.add(Video(videoUrl, quality, videoUrl, null))
+            if (videoUrl.startsWith("https://")) {
+                videoList.add(Video(videoUrl, quality, videoUrl, null))
+            }
         }
         return videoList
     }
