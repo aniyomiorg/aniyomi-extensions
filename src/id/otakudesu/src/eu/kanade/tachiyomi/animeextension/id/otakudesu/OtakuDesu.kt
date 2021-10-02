@@ -1,5 +1,10 @@
 package eu.kanade.tachiyomi.animeextension.id.otakudesu
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -9,12 +14,16 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.jsoup.select.Elements
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.lang.Exception
 import java.text.SimpleDateFormat
 
-class OtakuDesu : ParsedAnimeHttpSource() {
+class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "OtakuDesu"
 
@@ -25,6 +34,10 @@ class OtakuDesu : ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
@@ -62,14 +75,10 @@ class OtakuDesu : ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.select("span > a").attr("href"))
-        episode.episode_number = getNumberFromEpsString(element.select("span > a").text()).toFloat()
         episode.name = element.select("span > a").text()
         episode.date_upload = reconstructDate(element.select("span.zeebr").text())
 
         return episode
-    }
-    private fun getNumberFromEpsString(epsStr: String): String {
-        return epsStr.filter { it.isDigit() }
     }
 
     private fun reconstructDate(Str: String): Long {
@@ -127,27 +136,82 @@ class OtakuDesu : ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = "#venkonten > div > div.venser > div > div > ul > li"
 
-    override fun videoFromElement(element: Element): Video {
-        val iframe = client.newCall(GET(element.attr("src"))).execute()
-        val res = iframe.asJsoup()
-        val source = res.select("#mediaplayer > source")
-
-        return if (!source.isNullOrEmpty()) {
-            val url = source.attr("src")
-            Video(url, "360p", url, null)
-        } else {
-            val htmlbody = res.body().html()
-            val pattern1 = htmlbody.substringAfter("\"file\":").substringBefore("\",\"").replace("\"", "")
-            val pattern2 = htmlbody.substringAfter("'file':").substringBefore("','").replace("'", "")
-            when {
-                htmlbody.contains("\"file\":") -> Video(pattern1, "360p", pattern1, null)
-                htmlbody.contains("'file':") -> Video(pattern2, "360p", pattern2, null)
-                else -> throw Exception("couldn't find stream link,you can download it manually from the web")
-            }
-        }
+    override fun videoListParse(response: Response): List<Video> {
+        val document = response.asJsoup()
+        return document.select(videoListSelector()).ordered().map { videoFromElement(it) }
     }
 
-    override fun videoListSelector(): String = "#pembed > div > iframe"
+    private fun Elements.ordered(): Elements {
+        val newElements = Elements()
+        var zipEle = 0
+        for (element in this) {
+            newElements.add(zipEle, element)
+            zipEle++
+        }
+        return newElements
+    }
+
+    override fun videoListSelector() = "div.download > ul > li > a:nth-child(2)"
+
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString("preferred_quality", null)
+        if (quality != null) {
+            val newList = mutableListOf<Video>()
+            var preferred = 0
+            for (video in this) {
+                if (video.quality.contains(quality)) {
+                    newList.add(preferred, video)
+                    preferred++
+                } else {
+                    newList.add(video)
+                }
+            }
+            return newList
+        }
+        return this
+    }
+
+    override fun videoFromElement(element: Element): Video {
+        val res = client.newCall(GET(element.attr("href"))).execute().asJsoup()
+        val scr = res.select("script:containsData(dlbutton)").html()
+        var url = element.attr("href").substringBefore("/v/")
+        val firstString = scr.substringAfter(" = \"").substringBefore("\" + ")
+        val num1 = scr.substringAfter("+ (").substringBefore(" % ").toInt()
+        val num2 = scr.substringAfter(" % ").substringBefore(" + ").toInt()
+        val num4 = scr.substringAfter(" % ").substringBefore(") + ").substringAfter(" % ").toInt()
+        val lastString = scr.substringAfter(") + \"").substringBefore("\";")
+        val num = (num1 % num2) + (num1 % num4)
+        url += firstString + num.toString() + lastString
+        val quality = with(url) {
+            when {
+                contains("1080p") -> "1080p"
+                contains("720p") -> "720p"
+                contains("480p") -> "480p"
+                contains("360p") -> "360p"
+                else -> "Default"
+            }
+        }
+        return Video(url, quality, url, null)
+    }
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val videoQualityPref = ListPreference(screen.context).apply {
+            key = "preferred_quality"
+            title = "Preferred quality"
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
+            setDefaultValue("1080")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(videoQualityPref)
+    }
 }
