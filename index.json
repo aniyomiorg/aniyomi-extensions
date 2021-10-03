@@ -117,6 +117,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: zoro.to (experimental)",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.zoro",
+    "apk": "aniyomi-en.zoro-v12.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: AnimeFLV",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.animeflv",
     "apk": "aniyomi-es.animeflv-v12.3.apk",
