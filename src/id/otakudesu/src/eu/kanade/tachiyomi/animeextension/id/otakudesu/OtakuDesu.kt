@@ -2,10 +2,13 @@ package eu.kanade.tachiyomi.animeextension.id.otakudesu
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
@@ -22,6 +25,7 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
 import java.text.SimpleDateFormat
+import java.util.Locale
 
 class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -74,17 +78,26 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
+        val epsNum = getNumberFromEpsString(element.select("span > a").text())
         episode.setUrlWithoutDomain(element.select("span > a").attr("href"))
+        episode.episode_number = when {
+            (epsNum.isNotEmpty()) -> epsNum.toFloat()
+            else -> "1".toFloat()
+        }
         episode.name = element.select("span > a").text()
         episode.date_upload = reconstructDate(element.select("span.zeebr").text())
 
         return episode
     }
 
+    private fun getNumberFromEpsString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }
+    }
+
     private fun reconstructDate(Str: String): Long {
         val newStr = Str.replace("Januari", "Jan").replace("Februari", "Feb").replace("Maret", "Mar").replace("April", "Apr").replace("Mei", "May").replace("Juni", "Jun").replace("Juli", "Jul").replace("Agustus", "Aug").replace("September", "Sep").replace("Oktober", "Oct").replace("November", "Nov").replace("Desember", "Dec")
 
-        val pattern = SimpleDateFormat("d MMM yyyy")
+        val pattern = SimpleDateFormat("d MMM yyyy", Locale.US)
         return pattern.parse(newStr.replace(",", " "))!!.time
     }
 
@@ -118,23 +131,69 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "div.detpost"
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
+    override fun searchAnimeFromElement(element: Element): SAnime = throw Exception("not used")
+
+    private fun searchAnimeFromElement(element: Element, ui: String): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("h2 > a").first().attr("href"))
-        anime.thumbnail_url = element.select("img").first().attr("src")
-        anime.title = element.select("h2 > a").text()
+        anime.setUrlWithoutDomain(
+            when (ui) {
+                "search" -> element.select("h2 > a").first().attr("href")
+                "genres" -> element.select(".col-anime-title > a").attr("href")
+                else -> element.select("div.thumb > a").first().attr("href")
+            }
+        )
+
+        anime.thumbnail_url = when (ui) {
+            "search" -> element.select("img").first().attr("src")
+            "genres" -> element.select(".col-anime-cover > img").attr("src")
+            else -> element.select("div.thumb > a > div.thumbz > img").first().attr("src")
+        }
+        anime.title = when (ui) {
+            "search" -> element.select("h2 > a").text()
+            "genres" -> element.select(".col-anime-title > a").text()
+            else -> element.select("div.thumb > a > div.thumbz > h2").text()
+        }
         return anime
     }
 
     override fun searchAnimeNextPageSelector(): String = "a.next.page-numbers"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-//        val filterList = if (filters.isEmpty()) getFilterList() else filters /* eta for v2 /*
-//        val genreFilter = filterList.find { it is GenreFilter } as GenreFilter /* eta for v2 /*
-        return GET("$baseUrl/?s=$query&post_type=anime")
+        val filterList = if (filters.isEmpty()) getFilterList() else filters
+        val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
+
+        Log.d("ui", genreFilter.toUriPart())
+        return when {
+            query.isNotBlank() -> GET("$baseUrl/?s=$query&post_type=anime")
+            genreFilter.state != 0 -> GET("$baseUrl/genres/${genreFilter.toUriPart()}/page/$page")
+            else -> GET("$baseUrl/complete-anime/page/$page")
+        }
     }
 
     override fun searchAnimeSelector(): String = "#venkonten > div > div.venser > div > div > ul > li"
+
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        val document = response.asJsoup()
+
+        val ui = when {
+            document.select(".col-anime").isNullOrEmpty() -> "search"
+            document.select("#venkonten > div > div.venser > div > div > ul > li").isNullOrEmpty() -> "genres"
+            else -> "unknown"
+        }
+
+        Log.d("ui", ui)
+        val animes = when (ui) {
+            "genres" -> document.select(".col-anime").map { element -> searchAnimeFromElement(element, ui) }
+            "search" -> document.select("#venkonten > div > div.venser > div > div > ul > li").map { element -> searchAnimeFromElement(element, ui) }
+            else -> document.select("div.detpost").map { element -> popularAnimeFromElement(element) }
+        }
+
+        val hasNextPage = searchAnimeNextPageSelector().let { selector ->
+            document.select(selector).first()
+        } != null
+
+        return AnimesPage(animes, hasNextPage)
+    }
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
@@ -213,5 +272,59 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         screen.addPreference(videoQualityPref)
+    }
+
+    // filter
+    override fun getFilterList(): AnimeFilterList = AnimeFilterList(
+        AnimeFilter.Header("Text search ignores filters"),
+        GenreFilter()
+    )
+
+    private class GenreFilter : UriPartFilter(
+        "Genres",
+        arrayOf(
+            Pair("<select>", ""),
+            Pair("Action", "action"),
+            Pair("Adventure", "adventure"),
+            Pair("Comedy", "comedy"),
+            Pair("Demons", "demons"),
+            Pair("Drama", "drama"),
+            Pair("Ecchi", "ecchi"),
+            Pair("Fantasy", "fantasy"),
+            Pair("Game", "game"),
+            Pair("Harem", "harem"),
+            Pair("Historical", "historical"),
+            Pair("Horror", "horror"),
+            Pair("Josei", "josei"),
+            Pair("Magic", "magic"),
+            Pair("Martial Arts", "martial-arts"),
+            Pair("Mecha", "mecha"),
+            Pair("Military", "military"),
+            Pair("Music", "music"),
+            Pair("Mystery", "mystery"),
+            Pair("Psychological", "psychological"),
+            Pair("Parody", "parody"),
+            Pair("Police", "police"),
+            Pair("Romance", "romance"),
+            Pair("Samurai", "samurai"),
+            Pair("School", "school"),
+            Pair("Sci-Fi", "sci-fi"),
+            Pair("Seinen", "seinen"),
+            Pair("Shoujo", "shoujo"),
+            Pair("Shoujo Ai", "shoujo-ai"),
+            Pair("Shounen", "shounen"),
+            Pair("Slice of Life", "slice-of-life"),
+            Pair("Sports", "sports"),
+            Pair("Space", "space"),
+            Pair("Super Power", "super-power"),
+            Pair("Supernatural", "supernatural"),
+            Pair("Thriller", "thriller"),
+            Pair("Vampire", "vampire"),
+        )
+    )
+
+    private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
+        AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
+        fun toUriPart() = vals[state].second
     }
 }
