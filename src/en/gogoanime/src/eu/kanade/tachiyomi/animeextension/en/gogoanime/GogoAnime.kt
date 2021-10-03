@@ -94,6 +94,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         return document.select(videoListSelector()).ordered().map { videoFromElement(it) }
+            .filter { it.videoUrl != null }
     }
 
     private fun Elements.ordered(): Elements {
@@ -149,9 +150,10 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoUrl ?: url
     }
 
-    private fun doodUrlParse(url: String): String {
+    private fun doodUrlParse(url: String): String? {
         val response = client.newCall(GET(url.replace("/d/", "/e/"))).execute()
         val content = response.body!!.string()
+        if (!content.contains("'/pass_md5/")) return null
         val md5 = content.substringAfter("'/pass_md5/").substringBefore("',")
         val token = md5.substringAfterLast("/")
         val randomString = getRandomString()
