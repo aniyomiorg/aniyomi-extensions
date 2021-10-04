@@ -40,11 +40,6 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val videoHeaders = Headers.Builder().apply {
-        add("User-Agent", "Aniyomi")
-        add("Referer", "https://streamani.io/")
-    }.build()
-
     override fun popularAnimeSelector(): String = "div.img a"
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/popular.html?page=$page")
@@ -114,6 +109,8 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element): Video {
         val quality = element.text().substringAfter("Download (").replace("P - mp4)", "p")
         val url = element.attr("href")
+        val location = element.ownerDocument().location()
+        val videoHeaders = Headers.headersOf("Referer", location)
         return when {
             url.contains("https://dood.la") -> {
                 val newQuality = "Doodstream mirror"
@@ -135,16 +132,17 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     "SDp" -> "360p"
                     else -> quality
                 }
-                Video(url, parsedQuality, videoUrlParse(url), null, videoHeaders)
+                Video(url, parsedQuality, videoUrlParse(url, location), null, videoHeaders)
             }
         }
     }
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
-    private fun videoUrlParse(url: String): String {
+    private fun videoUrlParse(url: String, referer: String): String {
+        val refererHeader = Headers.headersOf("Referer", referer)
         val noRedirectClient = client.newBuilder().followRedirects(false).build()
-        val response = noRedirectClient.newCall(GET(url)).execute()
+        val response = noRedirectClient.newCall(GET(url, refererHeader)).execute()
         val videoUrl = response.header("location")
         response.close()
         return videoUrl ?: url
