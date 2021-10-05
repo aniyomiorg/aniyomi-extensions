@@ -53,16 +53,14 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.artist = zing.select("p:nth-child(10) > span").text()
         anime.author = zing.select("p:nth-child(4) > span").text()
 
-// others
-
-// Jap title
+        // Others
+        // Jap title
         anime.description = document.select("p:nth-child(2) > span").text()
-// Score
+        // Score
         anime.description = anime.description + "\n" + document.select("p:nth-child(3) > span").text()
-// Total Episode
+        // Total Episode
         anime.description = anime.description + "\n" + document.select("p:nth-child(7) > span").text()
-
-// Genre
+        // Synopsis
         anime.description = anime.description + "\n\n\nSynopsis: \n" + document.select("div.sinopc > p").joinToString("\n\n") { it.text() }
 
         return anime
