@@ -245,7 +245,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 contains("720p") -> "720p"
                 contains("480p") -> "480p"
                 contains("360p") -> "360p"
-                else -> "Unknown resolution"
+                else -> "Default"
             }
         }
         return Video(url, quality, url, null)
