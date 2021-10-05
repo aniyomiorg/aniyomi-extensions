@@ -135,12 +135,21 @@
     "nsfw": 0
   },
   {
-    "name": "Aniyomi: OtakuDesu",
-    "pkg": "eu.kanade.tachiyomi.animeextension.id.otakudesu",
-    "apk": "aniyomi-id.otakudesu-v12.3.apk",
+    "name": "Aniyomi: Oploverz",
+    "pkg": "eu.kanade.tachiyomi.animeextension.id.oploverz",
+    "apk": "aniyomi-id.oploverz-v12.3.apk",
     "lang": "id",
     "code": 3,
     "version": "12.3",
+    "nsfw": 0
+  },
+  {
+    "name": "Aniyomi: OtakuDesu",
+    "pkg": "eu.kanade.tachiyomi.animeextension.id.otakudesu",
+    "apk": "aniyomi-id.otakudesu-v12.4.apk",
+    "lang": "id",
+    "code": 4,
+    "version": "12.4",
     "nsfw": 0
   },
   {
