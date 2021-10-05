@@ -20,6 +20,8 @@ import uy.kohesive.injekt.api.get
 import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.Locale
+import okhttp3.Response
+import org.jsoup.select.Elements
 
 class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val baseUrl: String = "https://oploverz.biz"
@@ -146,6 +148,39 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector(): String = "div.mctnx > div > div > a:nth-child(3)"
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
+
+    private fun Elements.ordered(): Elements {
+        val newElements = Elements()
+        var zipEle = 0
+        for (element in this) {
+            newElements.add(zipEle, element)
+            zipEle++
+        }
+        return newElements
+    }
+
+    override fun videoListParse(response: Response): List<Video> {
+        val document = response.asJsoup()
+        return document.select(videoListSelector()).ordered().map { videoFromElement(it) }
+    }
+
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString("preferred_quality", null)
+        if (quality != null) {
+            val newList = mutableListOf<Video>()
+            var preferred = 0
+            for (video in this) {
+                if (video.quality.contains(quality)) {
+                    newList.add(preferred, video)
+                    preferred++
+                } else {
+                    newList.add(video)
+                }
+            }
+            return newList
+        }
+        return this
+    }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
