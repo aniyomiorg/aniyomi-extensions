@@ -193,21 +193,6 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return AnimesPage(animes, hasNextPage)
     }
 
-    override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        return document.select(videoListSelector()).ordered().map { videoFromElement(it) }
-    }
-
-    private fun Elements.ordered(): Elements {
-        val newElements = Elements()
-        var zipEle = 0
-        for (element in this) {
-            newElements.add(zipEle, element)
-            zipEle++
-        }
-        return newElements
-    }
-
     override fun videoListSelector() = "div.download > ul > li > a:nth-child(2)"
 
     override fun List<Video>.sort(): List<Video> {

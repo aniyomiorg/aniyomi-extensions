@@ -149,11 +149,6 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
-    override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        return document.select(videoListSelector()).ordered().map { videoFromElement(it) }
-    }
-
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", null)
         if (quality != null) {
