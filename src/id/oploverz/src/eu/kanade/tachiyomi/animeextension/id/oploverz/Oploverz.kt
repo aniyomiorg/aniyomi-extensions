@@ -13,15 +13,16 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Request
+import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
+import java.lang.RuntimeException
+import java.lang.StringBuilder
 import java.text.SimpleDateFormat
 import java.util.Locale
-import okhttp3.Response
-import org.jsoup.select.Elements
 
 class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val baseUrl: String = "https://oploverz.biz"
@@ -71,7 +72,7 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         episode.setUrlWithoutDomain(element.select("a").attr("href"))
         episode.episode_number = when {
             (epsNum.isNotEmpty()) -> epsNum.toFloat()
-            else -> "1".toFloat()
+            else -> 1F
         }
         episode.name = element.select(".epl-title").text()
         episode.date_upload = reconstructDate(element.select(".epl-date").text())
@@ -121,6 +122,27 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeSelector(): String = "div.listupd > article"
+
+    override fun videoListParse(response: Response): List<Video> {
+        val document = response.asJsoup()
+        val iframe = document.select("iframe[src^=https://www.blogger.com/video.g?token=]").firstOrNull()
+        return if (iframe == null) super.videoListParse(response)
+        else try {
+            val iframeResponse = client.newCall(GET(iframe.attr("src"))).execute()
+            val streams = iframeResponse.body!!.string().substringAfter("\"streams\":[").substringBefore("]")
+            val videoList = mutableListOf<Video>()
+            streams.split("},").reversed().forEach {
+                val url = unescape(it.substringAfter("{\"play_url\":\"").substringBefore("\""))
+                val quality = when (it.substringAfter("\"format_id\":").substringBefore("}")) {
+                    "18" -> "360p"
+                    "22" -> "720p"
+                    else -> "Unknown Resolution"
+                }
+                videoList.add(Video(url, quality, url, null))
+            }
+            videoList
+        } catch (e: Exception) { super.videoListParse(response) }
+    }
 
     override fun videoFromElement(element: Element): Video {
         val res = client.newCall(GET(element.attr("href"))).execute().asJsoup()
@@ -184,5 +206,46 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         screen.addPreference(videoQualityPref)
+    }
+
+    private fun unescape(input: String): String {
+        val builder = StringBuilder()
+        var i = 0
+        while (i < input.length) {
+            val delimiter = input[i]
+            i++ // consume letter or backslash
+            if (delimiter == '\\' && i < input.length) {
+
+                // consume first after backslash
+                val ch = input[i]
+                i++
+                if (ch == '\\' || ch == '/' || ch == '"' || ch == '\'') {
+                    builder.append(ch)
+                } else if (ch == 'n') builder.append('\n') else if (ch == 'r') builder.append('\r') else if (ch == 't') builder.append(
+                    '\t'
+                ) else if (ch == 'b') builder.append('\b') else if (ch == 'f') builder.append('\u000C') else if (ch == 'u') {
+                    val hex = StringBuilder()
+
+                    // expect 4 digits
+                    if (i + 4 > input.length) {
+                        throw RuntimeException("Not enough unicode digits! ")
+                    }
+                    for (x in input.substring(i, i + 4).toCharArray()) {
+                        if (!Character.isLetterOrDigit(x)) {
+                            throw RuntimeException("Bad character in unicode escape.")
+                        }
+                        hex.append(Character.toLowerCase(x))
+                    }
+                    i += 4 // consume those four digits.
+                    val code = hex.toString().toInt(16)
+                    builder.append(code.toChar())
+                } else {
+                    throw RuntimeException("Illegal escape sequence: \\$ch")
+                }
+            } else { // it's not a backslash, or it's the last character.
+                builder.append(delimiter)
+            }
+        }
+        return builder.toString()
     }
 }
