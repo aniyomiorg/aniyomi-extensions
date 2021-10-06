@@ -125,26 +125,36 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val iframe = document.select("iframe[src^=https://www.blogger.com/video.g?token=]").firstOrNull()
-        return if (iframe == null) super.videoListParse(response)
-        else try {
-            val iframeResponse = client.newCall(GET(iframe.attr("src"))).execute()
-            val streams = iframeResponse.body!!.string().substringAfter("\"streams\":[").substringBefore("]")
-            val videoList = mutableListOf<Video>()
-            streams.split("},").reversed().forEach {
-                val url = unescape(it.substringAfter("{\"play_url\":\"").substringBefore("\""))
-                val quality = when (it.substringAfter("\"format_id\":").substringBefore("}")) {
-                    "18" -> "360p"
-                    "22" -> "720p"
-                    else -> "Unknown Resolution"
-                }
-                videoList.add(Video(url, quality, url, null))
-            }
-            videoList
-        } catch (e: Exception) { super.videoListParse(response) }
+        val patternZippy = "div.mctnx > div > div > a:nth-child(3)"
+        val patternGoogle = "iframe[src^=https://www.blogger.com/video.g?token=]"
+        val iframe = document.select(patternGoogle).firstOrNull()
+
+        val zippy = document.select(patternZippy).map { zippyFromElement(it) }
+        val google = if (iframe == null) { mutableListOf() } else try {
+            googleLinkFromElement(iframe)
+        } catch (e: Exception) { mutableListOf() }
+
+        return google + zippy
     }
 
-    override fun videoFromElement(element: Element): Video {
+    override fun videoFromElement(element: Element): Video = throw Exception("not used")
+
+    private fun googleLinkFromElement(iframe: Element): List<Video> {
+        val iframeResponse = client.newCall(GET(iframe.attr("src"))).execute()
+        val streams = iframeResponse.body!!.string().substringAfter("\"streams\":[").substringBefore("]")
+        val videoList = mutableListOf<Video>()
+        streams.split("},").reversed().forEach {
+            val url = unescape(it.substringAfter("{\"play_url\":\"").substringBefore("\""))
+            val quality = when (it.substringAfter("\"format_id\":").substringBefore("}")) {
+                "18" -> "Google - 360p"
+                "22" -> "Google - 720p"
+                else -> "Unknown Resolution"
+            }
+            videoList.add(Video(url, quality, url, null))
+        }
+        return videoList
+    }
+    private fun zippyFromElement(element: Element): Video {
         val res = client.newCall(GET(element.attr("href"))).execute().asJsoup()
         val scr = res.select("script:containsData(dlbutton)").html()
         var url = element.attr("href").substringBefore("/v/")
@@ -157,27 +167,33 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         url += firstString + num.toString() + lastString
         val quality = with(url) {
             when {
-                contains("1080p") -> "1080p"
-                contains("720p") -> "720p"
-                contains("480p") -> "480p"
-                contains("360p") -> "360p"
-                else -> "Unknown Resolution"
+                contains("1080p") -> "ZippyShare - 1080p"
+                contains("720p") -> "ZippyShare - 720p"
+                contains("480p") -> "ZippyShare - 480p"
+                contains("360p") -> "ZippyShare - 360p"
+                else -> "ZippyShare - Unknown Resolution"
             }
         }
         return Video(url, quality, url, null)
     }
-
-    override fun videoListSelector(): String = "div.mctnx > div > div > a:nth-child(3)"
+    override fun videoListSelector(): String = throw Exception("not used")
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", null)
-        if (quality != null) {
+        val services = preferences.getString("preferred_services", null)
+        if (quality != null && services != null) {
             val newList = mutableListOf<Video>()
             var preferred = 0
             for (video in this) {
-                if (video.quality.contains(quality)) {
+                if (video.quality.contains(quality) && video.quality.contains(services)) {
+                    newList.add(preferred, video)
+                    preferred++
+                } else if (video.quality.contains(quality)) {
+                    newList.add(preferred, video)
+                    preferred++
+                } else if (video.quality.contains(services)) {
                     newList.add(preferred, video)
                     preferred++
                 } else {
@@ -205,7 +221,23 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val streamServicePref = ListPreference(screen.context).apply {
+            key = "preferred_services"
+            title = "Preferred Stream Services"
+            entries = arrayOf("ZippyShare", "Google")
+            entryValues = arrayOf("ZippyShare", "Google")
+            setDefaultValue("ZippyShare")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
         screen.addPreference(videoQualityPref)
+        screen.addPreference(streamServicePref)
     }
 
     private fun unescape(input: String): String {
