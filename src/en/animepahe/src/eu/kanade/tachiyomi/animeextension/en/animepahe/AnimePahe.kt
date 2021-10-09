@@ -16,12 +16,10 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -31,7 +29,6 @@ import uy.kohesive.injekt.api.get
 import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.Locale
-import kotlin.math.pow
 
 class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
 
