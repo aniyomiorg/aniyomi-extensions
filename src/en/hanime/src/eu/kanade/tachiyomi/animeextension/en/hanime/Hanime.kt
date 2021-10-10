@@ -32,7 +32,7 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "hanime.tv"
 
-    override val baseUrl = ""
+    override val baseUrl = "https://hanime.tv"
 
     override val lang = "en"
 
