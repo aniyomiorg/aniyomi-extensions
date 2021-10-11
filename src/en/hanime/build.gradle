@@ -5,7 +5,7 @@ ext {
     extName = 'hanime.tv'
     pkgNameSuffix = 'en.hanime'
     extClass = '.Hanime'
-    extVersionCode = 11
+    extVersionCode = 12
     libVersion = '12'
     containsNsfw = true
 }

@@ -125,6 +125,10 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
         return anime
     }
 
+    override fun videoListRequest(episode: SEpisode): Request {
+        return GET(episode.url)
+    }
+
     override fun videoListParse(response: Response): List<Video> {
         val responseString = response.body!!.string()
         val jElement: JsonElement = JsonParser.parseString(responseString)
