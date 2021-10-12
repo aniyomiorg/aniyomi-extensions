@@ -25,7 +25,6 @@ SOFTWARE.
  *
  */
 
-
 package eu.kanade.tachiyomi.animeextension.en.animepahe
 
 import eu.kanade.tachiyomi.network.GET

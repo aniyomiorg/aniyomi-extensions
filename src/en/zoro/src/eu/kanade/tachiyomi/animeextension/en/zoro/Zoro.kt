@@ -99,17 +99,17 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         serversHtml.select("div.server-item").forEach {
             val id = it.attr("data-id")
-            val quality = it.attr("data-type")
-            val video = getVideoFromServer(
+            val subDub = it.attr("data-type")
+            val videos = getVideosFromServer(
                 client.newCall(GET("$baseUrl/ajax/v2/episode/sources?id=$id", episodeReferer)).execute(),
-                quality
+                subDub
             )
-            if (video != null) videoList.add(video)
+            if (videos != null) videoList.addAll(videos)
         }
         return videoList
     }
 
-    private fun getVideoFromServer(response: Response, quality: String): Video? {
+    private fun getVideosFromServer(response: Response, subDub: String): List<Video>? {
         val body = response.body!!.string()
         val url = body.substringAfter("\"link\":\"").substringBefore("\"").toHttpUrl()
         val id = url.pathSegments.last()
@@ -121,8 +121,17 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val lol = recaptchaClient.newCall(GET("$url&autoPlay=1", referer)).execute().body!!.string()
         Log.i("bruh", lol)
         if (!lol.contains("{\"sources\":[{\"file\":\"")) return null
-        val videoUrl = lol.substringAfter("{\"sources\":[{\"file\":\"").substringBefore("\"")
-        return Video(videoUrl, quality, videoUrl, null)
+        val masterUrl = lol.substringAfter("{\"sources\":[{\"file\":\"").substringBefore("\"")
+        Log.i("bruhvideourl", masterUrl)
+        val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
+        val videoList = mutableListOf<Video>()
+        masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
+            val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p - $subDub"
+            val videoUrl = masterUrl.substringBeforeLast("/") + "/" + it.substringAfter("\n").substringBefore("\n")
+            Log.i("bruhvid", videoUrl)
+            videoList.add(Video(videoUrl, quality, videoUrl, null))
+        }
+        return videoList
     }
 
     override fun videoListSelector() = throw Exception("not used")
