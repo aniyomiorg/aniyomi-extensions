@@ -119,10 +119,10 @@
   {
     "name": "Aniyomi: zoro.to (experimental)",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.zoro",
-    "apk": "aniyomi-en.zoro-v12.1.apk",
+    "apk": "aniyomi-en.zoro-v12.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "12.1",
+    "code": 2,
+    "version": "12.2",
     "nsfw": 0
   },
   {
