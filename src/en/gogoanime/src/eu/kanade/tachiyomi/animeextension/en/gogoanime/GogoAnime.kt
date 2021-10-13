@@ -96,8 +96,12 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val newElements = Elements()
         var googleElements = 0
         for (element in this) {
+            if (element.attr("href").contains("https://dood.la")) {
+                newElements.add(element)
+                continue
+            }
             newElements.add(googleElements, element)
-            if (element.attr("href").startsWith("https://storage.googleapis.com")) {
+            if (element.attr("href").contains("google")) {
                 googleElements++
             }
         }
