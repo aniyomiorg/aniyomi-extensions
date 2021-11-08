@@ -10,3 +10,7 @@ repo/
 apk/
 gen
 generated-src/
+.vscode/
+.project
+.settings
+.classpath
