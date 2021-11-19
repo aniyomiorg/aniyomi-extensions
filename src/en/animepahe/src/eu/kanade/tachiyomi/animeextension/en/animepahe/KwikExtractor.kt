@@ -27,6 +27,7 @@ SOFTWARE.
 
 package eu.kanade.tachiyomi.animeextension.en.animepahe
 
+import android.util.Log
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import okhttp3.FormBody
@@ -111,6 +112,19 @@ class KwikExtractor(private val client: OkHttpClient) {
             allItems.removeAt(0)
         }
         return newList
+    }
+
+    fun getHlsStreamUrl(kwikUrl: String, referer: String): String {
+        val eContent = client.newCall(GET(kwikUrl, Headers.headersOf("referer", referer)))
+            .execute().body!!.string()
+        val substring = eContent.substringAfterLast("m3u8|uwu|").substringBefore("'")
+        val urlParts = substring.split("|").reversed()
+        assert(urlParts.lastIndex == 8)
+        val url = urlParts[0] + "://" + urlParts[1] + "-" + urlParts[2] + "." + urlParts[3] + "." +
+            urlParts[4] + "." + urlParts[5] + "/" + urlParts[6] + "/" + urlParts[7] + "/" +
+            urlParts[8] + "/uwu.m3u8"
+        Log.i("bruh", url)
+        return url
     }
 
     fun getStreamUrlFromKwik(adflyUri: String): String {

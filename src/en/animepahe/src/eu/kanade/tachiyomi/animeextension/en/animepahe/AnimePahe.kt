@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import com.google.gson.JsonElement
 import com.google.gson.JsonNull
 import com.google.gson.JsonObject
@@ -217,16 +218,26 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             val quality = item.asJsonObject.keySet().first()
             val adflyLink = item.asJsonObject.get(quality)
                 .asJsonObject.get("kwik_adfly").asString
+            val kwikLink = item.asJsonObject.get(quality)
+                .asJsonObject.get("kwik").asString
             val audio = item.asJsonObject.get(quality).asJsonObject.get("audio")
             val qualityString = if (audio is JsonNull) "${quality}p" else "${quality}p (" + audio.asString + " audio)"
-            videos.add(getVideo(adflyLink, qualityString))
+            videos.add(getVideo(adflyLink, kwikLink, qualityString))
         }
         return videos
     }
 
-    private fun getVideo(adflyUrl: String, quality: String): Video {
-        val videoUrl = KwikExtractor(client).getStreamUrlFromKwik(adflyUrl)
-        return Video(videoUrl, quality, videoUrl, null)
+    private fun getVideo(adflyUrl: String, kwikUrl: String, quality: String): Video {
+        return if (preferences.getBoolean("preferred_link_type", false)) {
+            val videoUrl = KwikExtractor(client).getHlsStreamUrl(kwikUrl, referer = baseUrl)
+            Video(
+                videoUrl, quality, videoUrl, null,
+                Headers.headersOf("referer", "https://kwik.cx")
+            )
+        } else {
+            val videoUrl = KwikExtractor(client).getStreamUrlFromKwik(adflyUrl)
+            Video(videoUrl, quality, videoUrl, null)
+        }
     }
 
     override fun List<Video>.sort(): List<Video> {
@@ -301,8 +312,21 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val linkPref = SwitchPreferenceCompat(screen.context).apply {
+            key = "preferred_link_type"
+            title = "Use HLS links"
+            summary = """Enable this if you are having Cloudflare issues.
+                |Note that this will break the ability to seek inside of the video unless the episode is downloaded in advance.""".trimMargin()
+            setDefaultValue(false)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val new = newValue as Boolean
+                preferences.edit().putBoolean(key, new).commit()
+            }
+        }
         screen.addPreference(videoQualityPref)
         screen.addPreference(domainPref)
         screen.addPreference(subPref)
+        screen.addPreference(linkPref)
     }
 }
