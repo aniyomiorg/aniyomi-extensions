@@ -5,7 +5,7 @@ ext {
     extName = 'MY CIMA'
     pkgNameSuffix = 'ar.mycima'
     extClass = '.MyCima'
-    extVersionCode = 5
+    extVersionCode = 6
     libVersion = '12'
 }
 
