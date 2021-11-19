@@ -32,7 +32,7 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "Aniflix"
 
-    override val baseUrl = "https://www2.aniflix.tv"
+    override val baseUrl = "https://aniflix.cc"
 
     override val lang = "de"
 
