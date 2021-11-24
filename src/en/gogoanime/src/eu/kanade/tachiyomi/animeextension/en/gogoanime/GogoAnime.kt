@@ -28,7 +28,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Gogoanime"
 
-    override val baseUrl = "https://gogoanime.pe"
+    override val baseUrl = "https://gogoanime.cm"
 
     override val lang = "en"
 
