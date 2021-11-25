@@ -18,6 +18,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
@@ -100,29 +101,19 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
         return parseSearchJson(responseString)
     }
 
-    override fun animeDetailsRequest(anime: SAnime): Request {
-        return POST("https://search.htv-services.com/", popularRequestHeaders, searchRequestBody(anime.title, 1, AnimeFilterList()))
-    }
-
     override fun animeDetailsParse(response: Response): SAnime {
-        val responseString = response.body!!.string()
-        val jElement: JsonElement = JsonParser.parseString(responseString)
-        val jObject: JsonObject = jElement.asJsonObject
-        val arrayString = jObject.get("hits").asString
-        val array = JsonParser.parseString(arrayString)
-        val jObjectb: JsonArray = array.asJsonArray
-        val item = jObjectb[0]
-        val anime = SAnime.create()
-        anime.title = item.asJsonObject.get("name").asString
-        anime.thumbnail_url = item.asJsonObject.get("cover_url").asString
-        anime.setUrlWithoutDomain("https://hanime.tv/videos/hentai/" + item.asJsonObject.get("slug").asString)
-        anime.author = item.asJsonObject.get("brand").asString
-        anime.description = item.asJsonObject.get("description").asString.replace("<p>", "").replace("</p>", "")
-        anime.status = SAnime.COMPLETED
-        val tags = item.asJsonObject.get("tags").asJsonArray
-        anime.genre = tags.joinToString(", ") { it.asString }
-        anime.initialized = true
-        return anime
+        val document = response.asJsoup()
+        return SAnime.create().apply {
+            title = document.select("h1.tv-title").text()
+            thumbnail_url = document.select("img.hvpi-cover").attr("src")
+            setUrlWithoutDomain(document.location())
+            author = document.select("a.hvpimbc-text").text()
+            description = document.select("div.hvpist-description p")
+                .joinToString("\n\n") { it.text() }
+            status = SAnime.COMPLETED
+            genre = document.select("div.hvpis-text div.btn__content").joinToString { it.text() }
+            initialized = true
+        }
     }
 
     override fun videoListRequest(episode: SEpisode): Request {
@@ -164,7 +155,7 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun episodeListRequest(anime: SAnime): Request {
         val slug = anime.url.substringAfterLast("/")
-        return GET("https://hw.hanime.tv/api/v8/video?id=$slug")
+        return GET("$baseUrl/api/v8/video?id=$slug")
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
