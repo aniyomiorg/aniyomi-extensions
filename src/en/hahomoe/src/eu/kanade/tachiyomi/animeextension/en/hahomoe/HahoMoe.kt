@@ -135,13 +135,11 @@ class HahoMoe : ParsedAnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val (includedTags, blackListedTags, orderBy, ordering) = getSearchParameters(filters)
 
-        val incTags = includedTags.joinToString(prefix = " genre:", separator = " genre:")
-        val excTags = blackListedTags.joinToString(prefix = " -genre:", separator = " -genre:")
-        return when {
-            (blackListedTags.isNotEmpty()) -> GET("$baseUrl/anime?q=title:$query$incTags$excTags&page=$page&s=$orderBy$ordering")
-            (includedTags.isNotEmpty()) -> GET("$baseUrl/anime?q=title:$query$incTags&page=$page&s=$orderBy$ordering")
-            else -> { GET("$baseUrl/anime?q=title:$query&page=$page&s=$orderBy$ordering") }
-        }
+        val incTags = includedTags.ifEmpty { null }
+            ?.joinToString(prefix = "+genre:", separator = "+genre:") ?: ""
+        val excTags = blackListedTags.ifEmpty { null }
+            ?.joinToString(prefix = "+-genre:", separator = "+-genre:") ?: ""
+        return GET("$baseUrl/anime?q=title:$query$incTags$excTags&page=$page&s=$orderBy$ordering")
     }
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
