@@ -139,7 +139,8 @@ class HahoMoe : ParsedAnimeHttpSource() {
         val excTags = blackListedTags.joinToString(separator = "+-genre:")
         return when {
             (excTags.isNotEmpty()) -> GET("$baseUrl/anime?q=title:$query+genre:$incTags+-genre:$excTags&page=$page&s=$orderBy$ordering")
-            else -> { GET("$baseUrl/anime?q=title:$query+genre:$incTags&page=$page&s=$orderBy$ordering") }
+            (incTags.isNotEmpty()) -> GET("$baseUrl/anime?q=title:$query+genre:$incTags&page=$page&s=$orderBy$ordering")
+            else -> { GET("$baseUrl/anime?q=title:$query&page=$page&s=$orderBy$ordering") }
         }
     }
     override fun animeDetailsParse(document: Document): SAnime {
