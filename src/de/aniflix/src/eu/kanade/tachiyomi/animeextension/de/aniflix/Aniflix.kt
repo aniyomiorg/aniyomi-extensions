@@ -44,9 +44,9 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val doodHeaders = Headers.Builder().apply {
+    private fun doodHeaders(tld: String) = Headers.Builder().apply {
         add("User-Agent", "Aniyomi")
-        add("Referer", "https://dood.la/")
+        add("Referer", "https://dood.$tld/")
     }.build()
 
     private val json = Json {
@@ -169,8 +169,9 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         for (stream in streams) {
             val quality = "${stream.hoster!!.name}, ${stream.lang!!}"
-            if (stream.link!!.contains("https://dood.la/e/")) {
-                videoList.add(Video(stream.link, quality, null, null, doodHeaders))
+            if (stream.link!!.contains("https://dood")) {
+                val tld = stream.link.substringAfter("https://dood.").substringBefore("/")
+                videoList.add(Video(stream.link, quality, null, null, doodHeaders(tld)))
             }
         }
         return videoList
@@ -209,16 +210,17 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun videoUrlParse(response: Response): String {
         val url = response.request.url.toString()
-        response.priorResponse
-        if (url.contains("https://dood.la/e/")) {
+        if (url.contains("https://dood")) {
+            val doodTld = url.substringAfter("https://dood.").substringBefore("/")
             val content = response.body!!.string()
+            if (!content.contains("'/pass_md5/")) throw Exception("Error with doodstream mirror")
             val md5 = content.substringAfter("'/pass_md5/").substringBefore("',")
             val token = md5.substringAfterLast("/")
             val randomString = getRandomString()
             val expiry = System.currentTimeMillis()
             val videoUrlStart = client.newCall(
                 GET(
-                    "https://dood.la/pass_md5/$md5",
+                    "https://dood.$doodTld/pass_md5/$md5",
                     Headers.headersOf("referer", url)
                 )
             ).execute().body!!.string()
@@ -239,8 +241,8 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
             key = "preferred_hoster"
             title = "Standard-Hoster"
             entries = arrayOf("Doodstream")
-            entryValues = arrayOf("https://dood.la/e/")
-            setDefaultValue("https://dood.la/e/")
+            entryValues = arrayOf("https://dood")
+            setDefaultValue("https://dood")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->

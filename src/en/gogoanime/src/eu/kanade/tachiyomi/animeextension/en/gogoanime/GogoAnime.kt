@@ -96,7 +96,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val newElements = Elements()
         var googleElements = 0
         for (element in this) {
-            if (element.attr("href").contains("https://dood.la")) {
+            if (element.attr("href").contains("https://dood")) {
                 newElements.add(element)
                 continue
             }
@@ -108,7 +108,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return newElements
     }
 
-    override fun videoListSelector() = "div.mirror_link a[download], div.mirror_link a[href*=https://dood.la]"
+    override fun videoListSelector() = "div.mirror_link a[download], div.mirror_link a[href*=https://dood]"
 
     override fun videoFromElement(element: Element): Video {
         val quality = element.text().substringAfter("Download (").replace("P - mp4)", "p")
@@ -116,7 +116,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val location = element.ownerDocument().location()
         val videoHeaders = Headers.headersOf("Referer", location)
         return when {
-            url.contains("https://dood.la") -> {
+            url.contains("https://dood") -> {
                 val newQuality = "Doodstream mirror"
                 Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
             }
@@ -158,11 +158,12 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (!content.contains("'/pass_md5/")) return null
         val md5 = content.substringAfter("'/pass_md5/").substringBefore("',")
         val token = md5.substringAfterLast("/")
+        val doodTld = url.substringAfter("https://dood.").substringBefore("/")
         val randomString = getRandomString()
         val expiry = System.currentTimeMillis()
         val videoUrlStart = client.newCall(
             GET(
-                "https://dood.la/pass_md5/$md5",
+                "https://dood.$doodTld/pass_md5/$md5",
                 Headers.headersOf("referer", url)
             )
         ).execute().body!!.string()
