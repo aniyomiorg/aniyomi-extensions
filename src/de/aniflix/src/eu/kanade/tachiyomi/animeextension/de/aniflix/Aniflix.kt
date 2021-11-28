@@ -3,11 +3,14 @@ package eu.kanade.tachiyomi.animeextension.de.aniflix
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
+import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.AnimeDetailsDto
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.AnimeDto
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.Episode
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.Release
+import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.DoodExtractor
+import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -43,11 +46,6 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
-
-    private fun doodHeaders(tld: String) = Headers.Builder().apply {
-        add("User-Agent", "Aniyomi")
-        add("Referer", "https://dood.$tld/")
-    }.build()
 
     private val json = Json {
         isLenient = true
@@ -168,10 +166,20 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
         if (streams.isNullOrEmpty()) return emptyList()
         val videoList = mutableListOf<Video>()
         for (stream in streams) {
-            val quality = "${stream.hoster!!.name}, ${stream.lang!!}"
-            if (stream.link!!.contains("https://dood")) {
-                val tld = stream.link.substringAfter("https://dood.").substringBefore("/")
-                videoList.add(Video(stream.link, quality, null, null, doodHeaders(tld)))
+            val quality = "${stream.hoster?.name}, ${stream.lang}"
+            val link = stream.link ?: return emptyList()
+            val hosterSelection = preferences.getStringSet("hoster_selection", null)
+            when {
+                link.contains("https://dood") && hosterSelection?.contains("dood") == true -> {
+                    val video = DoodExtractor(client).videoFromUrl(link, quality)
+                    videoList.add(video)
+                }
+                link.contains("https://streamtape") && hosterSelection?.contains("stape") == true -> {
+                    val video = StreamTapeExtractor(client).videoFromUrl(link, quality)
+                    if (video != null) {
+                        videoList.add(video)
+                    }
+                }
             }
         }
         return videoList
@@ -208,41 +216,16 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
         return newList
     }
 
-    override fun videoUrlParse(response: Response): String {
-        val url = response.request.url.toString()
-        if (url.contains("https://dood")) {
-            val doodTld = url.substringAfter("https://dood.").substringBefore("/")
-            val content = response.body!!.string()
-            if (!content.contains("'/pass_md5/")) throw Exception("Error with doodstream mirror")
-            val md5 = content.substringAfter("'/pass_md5/").substringBefore("',")
-            val token = md5.substringAfterLast("/")
-            val randomString = getRandomString()
-            val expiry = System.currentTimeMillis()
-            val videoUrlStart = client.newCall(
-                GET(
-                    "https://dood.$doodTld/pass_md5/$md5",
-                    Headers.headersOf("referer", url)
-                )
-            ).execute().body!!.string()
-            return "$videoUrlStart$randomString?token=$token&expiry=$expiry"
-        }
-        return response.request.url.toString()
-    }
+    override fun videoUrlParse(response: Response) = throw Exception("not used")
 
-    private fun getRandomString(length: Int = 10): String {
-        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
-        return (1..length)
-            .map { allowedChars.random() }
-            .joinToString("")
-    }
-
+    @Suppress("UNCHECKED_CAST")
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val hosterPref = ListPreference(screen.context).apply {
             key = "preferred_hoster"
             title = "Standard-Hoster"
-            entries = arrayOf("Doodstream")
-            entryValues = arrayOf("https://dood")
-            setDefaultValue("https://dood")
+            entries = arrayOf("Streamtape", "Doodstream")
+            entryValues = arrayOf("https://streamtape.com", "https://dood")
+            setDefaultValue("https://streamtape.com")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -267,7 +250,19 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val subSelection = MultiSelectListPreference(screen.context).apply {
+            key = "hoster_selection"
+            title = "Hoster auswählen"
+            entries = arrayOf("Streamtape", "Doodstream")
+            entryValues = arrayOf("stape", "dood")
+            setDefaultValue(setOf("stape", "dood"))
+
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }
         screen.addPreference(subPref)
         screen.addPreference(hosterPref)
+        screen.addPreference(subSelection)
     }
 }
