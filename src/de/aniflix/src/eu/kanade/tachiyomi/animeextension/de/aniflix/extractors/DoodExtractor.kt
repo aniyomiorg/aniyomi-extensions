@@ -5,12 +5,12 @@ import eu.kanade.tachiyomi.network.GET
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 
-class DoodExtractor(val client: OkHttpClient) {
-    fun videoFromUrl(url: String, quality: String): Video {
+class DoodExtractor(private val client: OkHttpClient) {
+    fun videoFromUrl(url: String, quality: String): Video? {
         val response = client.newCall(GET(url)).execute()
         val doodTld = url.substringAfter("https://dood.").substringBefore("/")
         val content = response.body!!.string()
-        if (!content.contains("'/pass_md5/")) throw Exception("Error with doodstream mirror")
+        if (!content.contains("'/pass_md5/")) return null
         val md5 = content.substringAfter("'/pass_md5/").substringBefore("',")
         val token = md5.substringAfterLast("/")
         val randomString = getRandomString()

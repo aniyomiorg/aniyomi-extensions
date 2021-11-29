@@ -5,9 +5,8 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
 
-class StreamTapeExtractor(val client: OkHttpClient) {
+class StreamTapeExtractor(private val client: OkHttpClient) {
     fun videoFromUrl(url: String, quality: String): Video? {
-        val id = url.substringAfterLast("/")
         val document = client.newCall(GET(url)).execute().asJsoup()
         val script = document.select("script:containsData(document.getElementById('robotlink'))")
             .firstOrNull()?.data()?.substringAfter("document.getElementById('robotlink').innerHTML = '")

@@ -171,8 +171,10 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
             val hosterSelection = preferences.getStringSet("hoster_selection", null)
             when {
                 link.contains("https://dood") && hosterSelection?.contains("dood") == true -> {
-                    val video = DoodExtractor(client).videoFromUrl(link, quality)
-                    videoList.add(video)
+                    val video = try { DoodExtractor(client).videoFromUrl(link, quality) } catch (e: Exception) { null }
+                    if (video != null) {
+                        videoList.add(video)
+                    }
                 }
                 link.contains("https://streamtape") && hosterSelection?.contains("stape") == true -> {
                     val video = StreamTapeExtractor(client).videoFromUrl(link, quality)
