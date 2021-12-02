@@ -1,5 +1,11 @@
 package eu.kanade.tachiyomi.animeextension.ar.faselhd
 
+import android.app.Application
+import android.content.SharedPreferences
+import android.util.Log
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -15,9 +21,11 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.lang.Exception
 
-class FASELHD : ParsedAnimeHttpSource() {
+class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "فاصل اعلاني"
 
@@ -28,6 +36,10 @@ class FASELHD : ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     // Popular Anime
 
@@ -66,7 +78,6 @@ class FASELHD : ParsedAnimeHttpSource() {
         return episodes
     }
 
-
     override fun episodeListSelector() = "div.epAll a"
 
     override fun episodeFromElement(element: Element): SEpisode {
@@ -96,12 +107,38 @@ class FASELHD : ParsedAnimeHttpSource() {
         val sources = data.split("link = ").drop(1)
         val videoList = mutableListOf<Video>()
         for (source in sources) {
-            val src = source.substringAfter("\"").substringBeforeLast("\";").replace("\\/", "/").replace("\"", "")
-            val size = "Auto"
-            val video = Video(src, size, src, null)
-            videoList.add(video)
+            val masterUrl = source.substringAfter("\"").substringBeforeLast("\";").replace("\\/", "/").replace("\"", "")
+            val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
+            val videoList = mutableListOf<Video>()
+            masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
+                val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
+                Log.i("bruhqual", quality)
+                val videoUrl = masterUrl.substringBeforeLast("/") + "/" + it.substringAfter("\n").substringBefore("\n")
+                Log.i("bruhvid", videoUrl)
+                videoList.add(Video(videoUrl, quality, videoUrl, null))
+                // val video = Video(videoUrl, quality, videoUrl, null)
+            }
+            return videoList
         }
         return videoList
+    }
+
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString("preferred_quality", null)
+        if (quality != null) {
+            val newList = mutableListOf<Video>()
+            var preferred = 0
+            for (video in this) {
+                if (video.quality.contains(quality)) {
+                    newList.add(preferred, video)
+                    preferred++
+                } else {
+                    newList.add(video)
+                }
+            }
+            return newList
+        }
+        return this
     }
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
@@ -199,5 +236,26 @@ class FASELHD : ParsedAnimeHttpSource() {
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :
         AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
+    }
+
+    // preferred quality settings
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val videoQualityPref = ListPreference(screen.context).apply {
+            key = "preferred_quality"
+            title = "Preferred quality"
+            entries = arrayOf("1080p", "720p", "480p", "360p", "240p")
+            entryValues = arrayOf("1080", "720", "480", "360", "240")
+            setDefaultValue("1080")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(videoQualityPref)
     }
 }
