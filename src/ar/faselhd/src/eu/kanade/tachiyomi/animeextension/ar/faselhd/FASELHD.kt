@@ -183,7 +183,14 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.title = document.select("div.title.h1").text()
         anime.genre = document.select("span:contains(تصنيف) > a, span:contains(مستوى) > a").joinToString(", ") { it.text() }
-        anime.thumbnail_url = document.select("div.posterImg img.poster").attr("src")
+        // anime.thumbnail_url = document.select("div.posterImg img.poster").attr("src")
+
+        val cover = document.select("div.posterImg img.poster").attr("src")
+        anime.thumbnail_url = if (cover.isNullOrEmpty()) {
+            document.select("div.col-xl-2 > div.seasonDiv:nth-child(1) > img").attr("data-src")
+        } else {
+            cover
+        }
         anime.description = document.select("div.singleDesc p").text()
         anime.status = parseStatus(document.select("span:contains(حالة)").text().replace("حالة ", "").replace("المسلسل : ", ""))
         return anime
