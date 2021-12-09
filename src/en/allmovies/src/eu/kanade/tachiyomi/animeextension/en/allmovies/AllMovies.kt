@@ -60,24 +60,6 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Episodes
 
-    /*private fun seasonsNextPageSelector(seasonNumber: Int) = "main section.SeasonBx.AACrdn:nth-child($seasonNumber)" // div.TpRwCont "div.List--Seasons--Episodes > a:nth-child($seasonNumber)"
-
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        val episodes = mutableListOf<SEpisode>()
-
-        var seasonNumber = 1
-        fun addEpisodes(document: Document) {
-            document.select(episodeListSelector()).map { episodes.add(episodeFromElement(it)) }
-            document.select(seasonsNextPageSelector(seasonNumber)).firstOrNull()?.let {
-                seasonNumber++
-                addEpisodes(client.newCall(GET(it.select("div.Top div.Title a").attr("href"), headers)).execute().asJsoup())
-            }
-        }
-
-        addEpisodes(response.asJsoup())
-        return episodes
-    }*/
-
     override fun episodeListSelector() = "link[rel=canonical]"
 
     override fun episodeFromElement(element: Element): SEpisode {
@@ -85,8 +67,6 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         episode.setUrlWithoutDomain("allmoviesforyou.net" + element.attr("href"))
         Log.i("episodddd", episode.url)
         episode.name = element.ownerDocument().select("div.TPMvCn h1.Title").text()
-        // element.select("td span.Num").text() + " : " + element.select("td.MvTbTtl > a").text()
-        // episode.episode_number = element.select("td > span.Num").text().toFloat()
         return episode
     }
 
@@ -96,9 +76,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         Log.i("iframe1", document.select("iframe[data-src^=\"https://allmovies\"]").attr("data-src"))
         val iframe1 = client.newCall(GET(document.select("iframe[data-src^=\"https://allmovies\"]").attr("data-src"))).execute().asJsoup()
-        Log.i("iframe", document.select("iframe").attr("data-src"))
         val iframe = iframe1.select("iframe").attr("data-src") // [data-src^="https://stream"]
-
         val referer = response.request.url.toString()
         val refererHeaders = Headers.headersOf("referer", referer)
         val iframeResponse = client.newCall(GET(iframe, refererHeaders))
