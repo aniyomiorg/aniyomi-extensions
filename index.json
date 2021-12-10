@@ -1,5 +1,14 @@
 [
   {
+    "name": "Aniyomi: Anime4up",
+    "pkg": "eu.kanade.tachiyomi.animeextension.ar.anime4up",
+    "apk": "aniyomi-ar.anime4up-v12.19.apk",
+    "lang": "ar",
+    "code": 19,
+    "version": "12.19",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: أنمي بالكوم",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.animeblkom",
     "apk": "aniyomi-ar.animeblkom-v12.4.apk",
