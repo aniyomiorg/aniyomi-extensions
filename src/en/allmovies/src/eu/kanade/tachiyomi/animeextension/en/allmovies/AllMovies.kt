@@ -190,7 +190,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         GenreFilter(getGenreList())
     )
 
-    private class GenreFilter(vals: Array<Pair<String, String>>) : UriPartFilter("تصنيف المسلسلات", vals)
+    private class GenreFilter(vals: Array<Pair<String, String>>) : UriPartFilter("Movies Genres", vals)
 
     private fun getGenreList() = arrayOf(
         Pair("Action & Adventure", "action-adventure"),
