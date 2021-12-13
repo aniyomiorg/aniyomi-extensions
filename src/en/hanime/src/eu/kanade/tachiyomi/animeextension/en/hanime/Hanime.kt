@@ -4,10 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import com.google.gson.JsonArray
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -19,6 +15,15 @@ import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
@@ -27,6 +32,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.util.Locale
 
 class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
@@ -38,6 +44,8 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
+
+    private val json: Json by injectLazy()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -69,25 +77,24 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
         return parseSearchJson(responseString)
     }
     private fun parseSearchJson(jsonLine: String?): AnimesPage {
-        val jElement: JsonElement = JsonParser.parseString(jsonLine)
-        val jObject: JsonObject = jElement.asJsonObject
-        val nbPages = jObject.get("nbPages").asInt
-        val page = jObject.get("page").asInt
+        val jsonData = jsonLine ?: return AnimesPage(emptyList(), false)
+        val jObject = json.decodeFromString<JsonObject>(jsonData)
+        val nbPages = jObject["nbPages"]!!.jsonPrimitive.int
+        val page = jObject["page"]!!.jsonPrimitive.int
         val hasNextPage = page < nbPages - 1
-        val arrayString = jObject.get("hits").asString
-        val array = JsonParser.parseString(arrayString)
-        val jObjectb: JsonArray = array.asJsonArray
+        val arrayString = jObject["hits"]!!.jsonPrimitive.content
+        val array = json.decodeFromString<JsonArray>(arrayString)
         val animeList = mutableListOf<SAnime>()
-        for (item in jObjectb) {
+        for (item in array) {
             val anime = SAnime.create()
-            anime.title = item.asJsonObject.get("name").asString
-            anime.thumbnail_url = item.asJsonObject.get("cover_url").asString
-            anime.setUrlWithoutDomain("https://hanime.tv/videos/hentai/" + item.asJsonObject.get("slug").asString)
-            anime.author = item.asJsonObject.get("brand").asString
-            anime.description = item.asJsonObject.get("description").asString.replace("<p>", "").replace("</p>", "")
+            anime.title = item.jsonObject["name"]!!.jsonPrimitive.content
+            anime.thumbnail_url = item.jsonObject["cover_url"]!!.jsonPrimitive.content
+            anime.setUrlWithoutDomain("https://hanime.tv/videos/hentai/" + item.jsonObject["slug"]!!.jsonPrimitive.content)
+            anime.author = item.jsonObject["brand"]!!.jsonPrimitive.content
+            anime.description = item.jsonObject["description"]!!.jsonPrimitive.content.replace("<p>", "").replace("</p>", "")
             anime.status = SAnime.COMPLETED
-            val tags = item.asJsonObject.get("tags").asJsonArray
-            anime.genre = tags.joinToString(", ") { it.asString }
+            val tags = item.jsonObject["tags"]!!.jsonArray
+            anime.genre = tags.joinToString(", ") { it.jsonPrimitive.content }
             anime.initialized = true
             animeList.add(anime)
         }
@@ -122,14 +129,21 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val responseString = response.body!!.string()
-        val jElement: JsonElement = JsonParser.parseString(responseString)
-        val jObject: JsonObject = jElement.asJsonObject
-        val server = jObject.get("videos_manifest").asJsonObject.get("servers").asJsonArray[0].asJsonObject
-        val streams = server.get("streams").asJsonArray
+        val jObject = json.decodeFromString<JsonObject>(responseString)
+        val server = jObject["videos_manifest"]!!.jsonObject["servers"]!!.jsonArray[0].jsonObject
+        val streams = server["streams"]!!.jsonArray
         val linkList = mutableListOf<Video>()
         for (stream in streams) {
-            if (stream.asJsonObject.get("kind").asString != "premium_alert") {
-                linkList.add(Video(stream.asJsonObject.get("url").asString, stream.asJsonObject.get("height").asString + "p", stream.asJsonObject.get("url").asString, null))
+            val streamObject = stream.jsonObject
+            if (streamObject["kind"]!!.jsonPrimitive.content != "premium_alert") {
+                linkList.add(
+                    Video(
+                        url = streamObject["url"]!!.jsonPrimitive.content,
+                        quality = streamObject["height"]!!.jsonPrimitive.content + "p",
+                        videoUrl = streamObject["url"]!!.jsonPrimitive.content,
+                        uri = null
+                    )
+                )
             }
         }
         return linkList
@@ -160,11 +174,10 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val responseString = response.body!!.string()
-        val jElement: JsonElement = JsonParser.parseString(responseString)
-        val jObject: JsonObject = jElement.asJsonObject
+        val jObject = json.decodeFromString<JsonObject>(responseString)
         val episode = SEpisode.create()
-        episode.date_upload = jObject.asJsonObject.get("hentai_video").asJsonObject.get("released_at_unix").asLong * 1000
-        episode.name = jObject.asJsonObject.get("hentai_video").asJsonObject.get("name").asString
+        episode.date_upload = jObject.jsonObject["hentai_video"]!!.jsonObject["released_at_unix"]!!.jsonPrimitive.long * 1000
+        episode.name = jObject.jsonObject["hentai_video"]!!.jsonObject["name"]!!.jsonPrimitive.content
         episode.url = response.request.url.toString()
         episode.episode_number = 1F
         return listOf(episode)

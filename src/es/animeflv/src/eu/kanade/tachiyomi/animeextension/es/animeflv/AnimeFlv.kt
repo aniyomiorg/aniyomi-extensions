@@ -2,11 +2,10 @@ package eu.kanade.tachiyomi.animeextension.es.animeflv
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import com.github.salomonbrys.kotson.get
-import com.google.gson.JsonParser
+import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.OkruExtractor
+import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -15,6 +14,13 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -22,8 +28,8 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
-import java.net.URL
 
 class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -36,6 +42,8 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val supportsLatest = false
 
     override val client: OkHttpClient = network.cloudflareClient
+
+    private val json: Json by injectLazy()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -96,19 +104,23 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         document.select("script").forEach { script ->
             if (script.data().contains("var videos = {")) {
                 val data = script.data().substringAfter("var videos = ").substringBefore(";")
-                val json = JsonParser.parseString(data).asJsonObject
-                val sub = json.get("SUB")
-                if (!sub.isJsonNull) {
-                    for (server in sub.asJsonArray) {
-                        val url = server.asJsonObject.get("code").asString.replace("\\/", "/")
-                        val quality = server.asJsonObject.get("title").asString
+                val jsonObject = json.decodeFromString<JsonObject>(data)
+                val sub = jsonObject["SUB"]!!
+                if (sub !is JsonNull) {
+                    for (server in sub.jsonArray) {
+                        val url = server.jsonObject["code"]!!.jsonPrimitive.content.replace("\\/", "/")
+                        val quality = server.jsonObject["title"]!!.jsonPrimitive.content
                         if (quality == "Stape") {
-                            val videos = getStapeVideos(url)
-                            videoList += videos
+                            val video = StreamTapeExtractor(client).videoFromUrl(url, quality)
+                            if (video != null) {
+                                videoList.add(video)
+                            }
                         }
                         if (quality == "Okru") {
-                            val videos = getOkruVideos(url)
-                            videoList += videos
+                            val videos = OkruExtractor(client).videosFromUrl(url, quality)
+                            if (videos != null) {
+                                videoList.addAll(videos)
+                            }
                         }
                     }
                 }
@@ -123,64 +135,8 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
-    // this code is trash but work
-    private fun getStapeVideos(url: String): List<Video> {
-        val videoList = mutableListOf<Video>()
-        val url5 = url.replace("https://streamtape.com/e/", "")
-        val url6 = url5.replace("/", "")
-        val document = client.newCall(GET("https://api.streamtape.com/file/dlticket?file=$url6&login=ef23317a52e4442dbdd3&key=mydvdBk717tb08Y")).execute().asJsoup()
-        val test22 = document.body().text()
-        val test23 = JsonParser.parseString(test22).asJsonObject
-        val test24 = test23.get("result").get("ticket").toString().replace("\"", "")
-        val test80 = test24
-        val url80 = "https://api.streamtape.com/file/dl?file=$url6&ticket=$test24&captcha_response={captcha_response}".replace("={captcha_response}", "={captcha_response}")
-        Log.i("stapeee", url80)
-        val document2 = client.newCall(GET(url80)).execute().asJsoup()
-        //I don't know how to make it wait 5 seconds, but this worked for some reason
-        val jsjs = URL(url80).readText()
-        val jsjs1 = URL(url80).readText()
-        val jsjs2 = URL(url80).readText()
-        val jsjs3 = URL(url80).readText()
-        URL(url80).readText()
-        URL(url80).readText()
-        URL(url80).readText()
-        URL(url80).readText()
-        URL(url80).readText()
-        URL(url80).readText()
-        URL(url80).readText()
-        URL(url80).readText()
-        URL(url80).readText()
-        val jsjs4 = URL(url80).readText()
-        val test29 = document2.body().text()
-        Log.i("stapeee", jsjs4)
-        val test30 = JsonParser.parseString(jsjs4).asJsonObject
-        val test31 = test30.get("result").get("url").toString().replace("\"", "")
-        Log.i("stapeee", test31)
-        videoList.add(Video(test31, "Stape", test31, null))
-        return videoList
-    }
-
-    private fun getOkruVideos(url: String): List<Video> {
-        val document = client.newCall(GET(url)).execute().asJsoup()
-        Log.i("bruuh", document.select("div[data-options]").attr("data-options"))
-        val videoList = mutableListOf<Video>()
-        val videosString = document.select("div[data-options]").attr("data-options")
-            .substringAfter("\\\"videos\\\":[{\\\"name\\\":\\\"")
-            .substringBefore("]")
-        videosString.split("{\\\"name\\\":\\\"").reversed().forEach {
-            val videoUrl = it.substringAfter("url\\\":\\\"")
-                .substringBefore("\\\"")
-                .replace("\\\\u0026", "&")
-            val quality = it.substringBefore("\\\"")
-            if (videoUrl.startsWith("https://")) {
-                videoList.add(Video(videoUrl, quality, videoUrl, null))
-            }
-        }
-        return videoList
-    }
-
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "hd")
+        val quality = preferences.getString("preferred_quality", "Stape")
         if (quality != null) {
             val newList = mutableListOf<Video>()
             var preferred = 0
@@ -237,9 +193,9 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("hd", "sd", "low", "lowest", "mobile")
-            entryValues = arrayOf("hd", "sd", "low", "lowest", "mobile")
-            setDefaultValue("hd")
+            entries = arrayOf("Stape", "hd", "sd", "low", "lowest", "mobile")
+            entryValues = arrayOf("Stape", "hd", "sd", "low", "lowest", "mobile")
+            setDefaultValue("Stape")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->

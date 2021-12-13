@@ -5,10 +5,6 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
-import com.google.gson.JsonElement
-import com.google.gson.JsonNull
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -21,12 +17,21 @@ import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -47,6 +52,8 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     private val ddgbypass = DdosGuardBypass("https://animepahe.com/")
 
     override val supportsLatest = false
+
+    private val json: Json by injectLazy()
 
     override fun headersBuilder(): Headers.Builder {
         try {
@@ -111,15 +118,15 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun parseSearchJson(jsonLine: String?): AnimesPage {
-        val jElement: JsonElement = JsonParser.parseString(jsonLine)
-        val jObject: JsonObject = jElement.asJsonObject
-        val data = jObject.get("data") ?: return AnimesPage(emptyList(), false)
-        val array = data.asJsonArray
+        val jsonData = jsonLine ?: return AnimesPage(emptyList(), false)
+        val jObject = json.decodeFromString<JsonObject>(jsonData)
+        val data = jObject["data"] ?: return AnimesPage(emptyList(), false)
+        val array = data.jsonArray
         val animeList = mutableListOf<SAnime>()
         for (item in array) {
             val anime = SAnime.create()
-            anime.title = item.asJsonObject.get("title").asString
-            val animeId = item.asJsonObject.get("id").asInt
+            anime.title = item.jsonObject["title"]!!.jsonPrimitive.content
+            val animeId = item.jsonObject["id"]!!.jsonPrimitive.int
             anime.setUrlWithoutDomain("$baseUrl/anime/?anime_id=$animeId")
             animeList.add(anime)
         }
@@ -134,19 +141,19 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun parsePopularAnimeJson(jsonLine: String?): AnimesPage {
-        val jElement: JsonElement = JsonParser.parseString(jsonLine)
-        val jObject: JsonObject = jElement.asJsonObject
-        val lastPage = jObject.get("last_page").asInt
-        val page = jObject.get("current_page").asInt
+        val jsonData = jsonLine ?: return AnimesPage(emptyList(), false)
+        val jObject = json.decodeFromString<JsonObject>(jsonData)
+        val lastPage = jObject["last_page"]!!.jsonPrimitive.int
+        val page = jObject["current_page"]!!.jsonPrimitive.int
         val hasNextPage = page < lastPage
-        val array = jObject.get("data").asJsonArray
+        val array = jObject["data"]!!.jsonArray
         val animeList = mutableListOf<SAnime>()
         for (item in array) {
             val anime = SAnime.create()
-            anime.title = item.asJsonObject.get("anime_title").asString
-            val animeId = item.asJsonObject.get("anime_id").asInt
+            anime.title = item.jsonObject["anime_title"]!!.jsonPrimitive.content
+            val animeId = item.jsonObject["anime_id"]!!.jsonPrimitive.int
             anime.setUrlWithoutDomain("$baseUrl/anime/?anime_id=$animeId")
-            anime.artist = item.asJsonObject.get("fansub").asString
+            anime.artist = item.jsonObject["fansub"]!!.jsonPrimitive.content
             animeList.add(anime)
         }
         return AnimesPage(animeList, hasNextPage)
@@ -170,19 +177,19 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun parseEpisodePage(jsonLine: String?): MutableList<SEpisode> {
-        val jElement: JsonElement = JsonParser.parseString(jsonLine)
-        val jObject: JsonObject = jElement.asJsonObject
-        val array = jObject.get("data").asJsonArray
+        val jsonData = jsonLine ?: return mutableListOf()
+        val jObject = json.decodeFromString<JsonObject>(jsonData)
+        val array = jObject["data"]!!.jsonArray
         val episodeList = mutableListOf<SEpisode>()
         for (item in array) {
-            val itemO = item.asJsonObject
+            val itemO = item.jsonObject
             val episode = SEpisode.create()
             episode.date_upload = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
-                .parse(itemO.get("created_at").asString)!!.time
-            val animeId = itemO.get("anime_id").asInt
-            val session = itemO.get("session").asString
+                .parse(itemO["created_at"]!!.jsonPrimitive.content)!!.time
+            val animeId = itemO["anime_id"]!!.jsonPrimitive.int
+            val session = itemO["session"]!!.jsonPrimitive.content
             episode.setUrlWithoutDomain("$baseUrl/api?m=links&id=$animeId&session=$session&p=kwik")
-            val epNum = itemO.get("episode").asInt
+            val epNum = itemO["episode"]!!.jsonPrimitive.int
             episode.episode_number = epNum.toFloat()
             episode.name = "Episode $epNum"
             episodeList.add(episode)
@@ -192,10 +199,9 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun recursivePages(response: Response): List<SEpisode> {
         val responseString = response.body!!.string()
-        val jElement: JsonElement = JsonParser.parseString(responseString)
-        val jObject: JsonObject = jElement.asJsonObject
-        val lastPage = jObject.get("last_page").asInt
-        val page = jObject.get("current_page").asInt
+        val jObject = json.decodeFromString<JsonObject>(responseString)
+        val lastPage = jObject["last_page"]!!.jsonPrimitive.int
+        val page = jObject["current_page"]!!.jsonPrimitive.int
         val hasNextPage = page < lastPage
         val returnList = parseEpisodePage(responseString)
         if (hasNextPage) {
@@ -211,17 +217,15 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val array = JsonParser.parseString(response.body!!.string())
-            .asJsonObject.get("data").asJsonArray
+        val array = json.decodeFromString<JsonObject>(response.body!!.string())
+            .jsonObject["data"]!!.jsonArray
         val videos = mutableListOf<Video>()
         for (item in array) {
-            val quality = item.asJsonObject.keySet().first()
-            val adflyLink = item.asJsonObject.get(quality)
-                .asJsonObject.get("kwik_adfly").asString
-            val kwikLink = item.asJsonObject.get(quality)
-                .asJsonObject.get("kwik").asString
-            val audio = item.asJsonObject.get(quality).asJsonObject.get("audio")
-            val qualityString = if (audio is JsonNull) "${quality}p" else "${quality}p (" + audio.asString + " audio)"
+            val quality = item.jsonObject.keys.first()
+            val adflyLink = item.jsonObject[quality]!!.jsonObject["kwik_adfly"]!!.jsonPrimitive.content
+            val kwikLink = item.jsonObject[quality]!!.jsonObject["kwik"]!!.jsonPrimitive.content
+            val audio = item.jsonObject[quality]!!.jsonObject["audio"]!!
+            val qualityString = if (audio is JsonNull) "${quality}p" else "${quality}p (" + audio.jsonPrimitive.content + " audio)"
             videos.add(getVideo(adflyLink, kwikLink, qualityString))
         }
         return videos
