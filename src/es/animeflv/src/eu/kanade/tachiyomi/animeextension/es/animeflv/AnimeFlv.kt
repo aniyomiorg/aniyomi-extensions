@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import com.github.salomonbrys.kotson.get
 import com.google.gson.JsonParser
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -22,6 +23,7 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
+import java.net.URL
 
 class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -100,6 +102,10 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     for (server in sub.asJsonArray) {
                         val url = server.asJsonObject.get("code").asString.replace("\\/", "/")
                         val quality = server.asJsonObject.get("title").asString
+                        if (quality == "Stape") {
+                            val videos = getStapeVideos(url)
+                            videoList += videos
+                        }
                         if (quality == "Okru") {
                             val videos = getOkruVideos(url)
                             videoList += videos
@@ -116,6 +122,43 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
+
+    // this code is trash but work
+    private fun getStapeVideos(url: String): List<Video> {
+        val videoList = mutableListOf<Video>()
+        val url5 = url.replace("https://streamtape.com/e/", "")
+        val url6 = url5.replace("/", "")
+        val document = client.newCall(GET("https://api.streamtape.com/file/dlticket?file=$url6&login=ef23317a52e4442dbdd3&key=mydvdBk717tb08Y")).execute().asJsoup()
+        val test22 = document.body().text()
+        val test23 = JsonParser.parseString(test22).asJsonObject
+        val test24 = test23.get("result").get("ticket").toString().replace("\"", "")
+        val test80 = test24
+        val url80 = "https://api.streamtape.com/file/dl?file=$url6&ticket=$test24&captcha_response={captcha_response}".replace("={captcha_response}", "={captcha_response}")
+        Log.i("stapeee", url80)
+        val document2 = client.newCall(GET(url80)).execute().asJsoup()
+        //I don't know how to make it wait 5 seconds, but this worked for some reason
+        val jsjs = URL(url80).readText()
+        val jsjs1 = URL(url80).readText()
+        val jsjs2 = URL(url80).readText()
+        val jsjs3 = URL(url80).readText()
+        URL(url80).readText()
+        URL(url80).readText()
+        URL(url80).readText()
+        URL(url80).readText()
+        URL(url80).readText()
+        URL(url80).readText()
+        URL(url80).readText()
+        URL(url80).readText()
+        URL(url80).readText()
+        val jsjs4 = URL(url80).readText()
+        val test29 = document2.body().text()
+        Log.i("stapeee", jsjs4)
+        val test30 = JsonParser.parseString(jsjs4).asJsonObject
+        val test31 = test30.get("result").get("url").toString().replace("\"", "")
+        Log.i("stapeee", test31)
+        videoList.add(Video(test31, "Stape", test31, null))
+        return videoList
+    }
 
     private fun getOkruVideos(url: String): List<Video> {
         val document = client.newCall(GET(url)).execute().asJsoup()
