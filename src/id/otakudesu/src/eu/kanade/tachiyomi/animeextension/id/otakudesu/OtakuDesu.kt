@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.id.otakudesu
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -160,7 +159,6 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
         val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
 
-        Log.d("ui", genreFilter.toUriPart())
         return when {
             query.isNotBlank() -> GET("$baseUrl/?s=$query&post_type=anime")
             genreFilter.state != 0 -> GET("$baseUrl/genres/${genreFilter.toUriPart()}/page/$page")
@@ -179,7 +177,6 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> "unknown"
         }
 
-        Log.d("ui", ui)
         val animes = when (ui) {
             "genres" -> document.select(".col-anime").map { element -> searchAnimeFromElement(element, ui) }
             "search" -> document.select("#venkonten > div > div.venser > div > div > ul > li").map { element -> searchAnimeFromElement(element, ui) }

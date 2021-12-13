@@ -117,10 +117,8 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             }
                         }
                         if (quality == "Okru") {
-                            val videos = OkruExtractor(client).videosFromUrl(url, quality)
-                            if (videos != null) {
-                                videoList.addAll(videos)
-                            }
+                            val videos = OkruExtractor(client).videosFromUrl(url)
+                            videoList.addAll(videos)
                         }
                     }
                 }

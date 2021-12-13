@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.en.genoanime
 
-import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -101,12 +100,9 @@ class GenoAnime : ParsedAnimeHttpSource() {
 
     override fun videoFromElement(element: Element): Video {
         val baaseurl = element.select("div#video iframe#iframe-to-load").attr("src")
-        Log.d(name, "BaseUrl: $baaseurl")
         if (baaseurl.contains("https://genoanime.com/doodplayer.php")) {
             val baseurl = videoidgrab(element.select("div#video iframe#iframe-to-load").attr("src"))
-            Log.d(name, "Dood True: $baseurl")
             val a = doodUrlParse(baseurl)
-            Log.d(name, "Dood parsed: $a")
             return Video(
                 baseurl,
                 "Doodstream",
@@ -115,7 +111,6 @@ class GenoAnime : ParsedAnimeHttpSource() {
                 Headers.headersOf("Referer", baseurl)
             )
         } else {
-            Log.d(name, "Dood False: " + element.select("video source").attr("src"))
             return Video(
                 element.select("video source").attr("src"),
                 "Unknown quality",
@@ -146,8 +141,6 @@ class GenoAnime : ParsedAnimeHttpSource() {
             }
 //        if (anime.status == SAnime.ONGOING) {
 //            val(aiiringat, epiisode, animeid) = next_ep_ween(anime.title)
-//            Log.d("$name status.ONGOING", anime.title)
-//            Log.d("$name airingat", aiiringat.toString())
 //            anime.next_ep_wen = airingmsg(epiisode, aiiringat)
 //        }
         return anime
@@ -160,7 +153,6 @@ class GenoAnime : ParsedAnimeHttpSource() {
         val md5 = content.substringAfter("/download/").substringBefore("\"")
         var abc = doodreq(url, md5)
         while (abc.contains("""<b class="err">Security error</b>""")) {
-            Log.d(name, "Dood bs. Trying again.")
             abc = doodreq(url, md5)
         }
         return abc
@@ -176,11 +168,8 @@ class GenoAnime : ParsedAnimeHttpSource() {
     }
 
     private fun videoidgrab(url: String): String {
-        Log.d(name, "given url: $url")
         val uwrl = """https://goload.one/streaming.php?id=${url.substringAfter("&vidid=")}"""
-        Log.d(name, "golandUrl: $uwrl")
         val content = client.newCall(GET(uwrl)).execute().body!!.string().substringAfter("dood").substringBefore("\"")
-        Log.d(name, "doodUrl: https://dood$content")
         return "https://dood$content"
     }
 }

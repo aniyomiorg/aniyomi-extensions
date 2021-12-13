@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.ar.xsmovie
 
-import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -70,7 +69,6 @@ class XsMovie : ParsedAnimeHttpSource() {
     override fun videoListSelector() = "source"
 
     override fun videoFromElement(element: Element): Video {
-        Log.i("lol", element.attr("src"))
         return Video(element.attr("src"), "Default", element.attr("src"), null)
     }
 

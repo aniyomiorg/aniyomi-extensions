@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.hahomoe
 
 import android.annotation.SuppressLint
-import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -115,7 +114,6 @@ class HahoMoe : ParsedAnimeHttpSource() {
     override fun videoListSelector() = "source"
 
     override fun videoFromElement(element: Element): Video {
-        Log.i("lol", element.attr("src"))
         return Video(element.attr("src"), element.attr("title"), element.attr("src"), null)
     }
 

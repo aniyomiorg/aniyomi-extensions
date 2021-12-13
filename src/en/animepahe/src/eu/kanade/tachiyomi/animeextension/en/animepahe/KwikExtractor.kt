@@ -27,7 +27,6 @@ SOFTWARE.
 
 package eu.kanade.tachiyomi.animeextension.en.animepahe
 
-import android.util.Log
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import okhttp3.FormBody
@@ -123,7 +122,6 @@ class KwikExtractor(private val client: OkHttpClient) {
         val url = urlParts[0] + "://" + urlParts[1] + "-" + urlParts[2] + "." + urlParts[3] + "." +
             urlParts[4] + "." + urlParts[5] + "/" + urlParts[6] + "/" + urlParts[7] + "/" +
             urlParts[8] + "/uwu.m3u8"
-        Log.i("bruh", url)
         return url
     }
 

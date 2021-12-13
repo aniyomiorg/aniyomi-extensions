@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.ar.animeblkom
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -89,7 +88,6 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector() = "source"
 
     override fun videoFromElement(element: Element): Video {
-        Log.i("lol", element.attr("src"))
         return Video(element.attr("src").replace("watch", "download"), element.attr("res") + "p", element.attr("src").replace("watch", "download"), null)
     }
 

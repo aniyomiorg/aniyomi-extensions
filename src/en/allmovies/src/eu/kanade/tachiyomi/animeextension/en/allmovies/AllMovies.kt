@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.en.allmovies
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -65,7 +64,6 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain("allmoviesforyou.net" + element.attr("href"))
-        Log.i("episodddd", episode.url)
         episode.name = element.ownerDocument().select("div.TPMvCn h1.Title").text()
         return episode
     }
@@ -74,7 +72,6 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        Log.i("iframe1", document.select("iframe[data-src^=\"https://allmovies\"]").attr("data-src"))
         val iframe1 = client.newCall(GET(document.select("iframe[data-src^=\"https://allmovies\"]").attr("data-src"))).execute().asJsoup()
         val iframe = iframe1.select("iframe").attr("data-src") // [data-src^="https://stream"]
         val referer = response.request.url.toString()
@@ -96,9 +93,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val videoList = mutableListOf<Video>()
             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
                 val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
-                Log.i("bruhqual", quality)
                 val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                Log.i("bruhvid", videoUrl)
                 videoList.add(Video(videoUrl, quality, videoUrl, null))
             }
             return videoList

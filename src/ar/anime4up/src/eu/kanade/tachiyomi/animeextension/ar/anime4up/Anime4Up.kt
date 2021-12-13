@@ -2,8 +2,6 @@ package eu.kanade.tachiyomi.animeextension.ar.anime4up
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
-// import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -80,10 +78,8 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val iframe = document.selectFirst("iframe").attr("src")
-        Log.i("ifrme", document.selectFirst("iframe").attr("src"))
-        val referer = response.request.url.encodedPath
+        // val referer = response.request.url.encodedPath
         val newHeaders = Headers.headersOf("referer", baseUrl)
-        // Log.i("newhead", newHeaders)
         val iframeResponse = client.newCall(GET(iframe, newHeaders))
             .execute().asJsoup()
         return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
@@ -93,7 +89,6 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun videosFromElement(element: Element): List<Video> {
         val data = element.data().substringAfter("sources: [").substringBefore("],")
-        Log.i("videoss", element.data().substringAfter("sources: [").substringBefore("],"))
         val sources = data.split("file:\"").drop(1)
         val videoList = mutableListOf<Video>()
         for (source in sources) {

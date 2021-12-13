@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.en.zoro
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -66,7 +65,6 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> {
         val data = response.body!!.string().substringAfter("\"html\":\"").substringBefore("<script>")
         val unescapedData = JSONUtil.unescape(data)
-        Log.i("bruuh", unescapedData)
         val episodeList = mutableListOf<SEpisode>()
         val document = Jsoup.parse(unescapedData)
         val aList = document.select("a.ep-item")
@@ -94,7 +92,6 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodeReferer = Headers.headersOf("Referer", response.request.header("referer")!!)
         val data = body.substringAfter("\"html\":\"").substringBefore("<script>")
         val unescapedData = JSONUtil.unescape(data)
-        Log.i("bruh", unescapedData)
         val serversHtml = Jsoup.parse(unescapedData)
         val videoList = mutableListOf<Video>()
         serversHtml.select("div.server-item").forEach {
@@ -119,16 +116,13 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val recaptchaClient = client.newBuilder().addInterceptor(GetSourcesInterceptor(getSources, client)).build()
 
         val lol = recaptchaClient.newCall(GET("$url&autoPlay=1", referer)).execute().body!!.string()
-        Log.i("bruh", lol)
         if (!lol.contains("{\"sources\":[{\"file\":\"")) return null
         val masterUrl = lol.substringAfter("{\"sources\":[{\"file\":\"").substringBefore("\"")
-        Log.i("bruhvideourl", masterUrl)
         val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
         val videoList = mutableListOf<Video>()
         masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
             val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p - $subDub"
             val videoUrl = masterUrl.substringBeforeLast("/") + "/" + it.substringAfter("\n").substringBefore("\n")
-            Log.i("bruhvid", videoUrl)
             videoList.add(Video(videoUrl, quality, videoUrl, null))
         }
         return videoList
