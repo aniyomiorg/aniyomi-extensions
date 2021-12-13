@@ -19,7 +19,7 @@ Before you start, please note that the ability to use following technologies is 
 
 ## Getting help
 
-- Join [the Discord server](https://discord.gg/tachiyomi) for online help and to ask questions while developing your extension.
+- Join [the Discord server](https://discord.gg/F32UjdJZrR) for online help and to ask questions while developing your extension.
 - There are some features and tricks that are not explored in this document. Refer to existing extension code for examples.
 
 ## Writing an extension
@@ -40,22 +40,22 @@ src/<lang>/<mysourcename>/
 ├── AndroidManifest.xml
 ├── build.gradle
 ├── res
-│   ├── mipmap-hdpi
-│   │   └── ic_launcher.png
-│   ├── mipmap-mdpi
-│   │   └── ic_launcher.png
-│   ├── mipmap-xhdpi
-│   │   └── ic_launcher.png
-│   ├── mipmap-xxhdpi
-│   │   └── ic_launcher.png
-│   ├── mipmap-xxxhdpi
-│   │   └── ic_launcher.png
-│   └── web_hi_res_512.png
+│   ├── mipmap-hdpi
+│   │   └── ic_launcher.png
+│   ├── mipmap-mdpi
+│   │   └── ic_launcher.png
+│   ├── mipmap-xhdpi
+│   │   └── ic_launcher.png
+│   ├── mipmap-xxhdpi
+│   │   └── ic_launcher.png
+│   ├── mipmap-xxxhdpi
+│   │   └── ic_launcher.png
+│   └── web_hi_res_512.png
 └── src
     └── eu
         └── kanade
             └── tachiyomi
-                └── extension
+                └── animeextension
                     └── <lang>
                         └── <mysourcename>
                             └── <MySourceName>.kt
@@ -78,8 +78,7 @@ ext {
     pkgNameSuffix = '<lang>.<mysourcename>'
     extClass = '.<MySourceName>'
     extVersionCode = 1
-    libVersion = '1.2'
-    containsNsfw = true
+    isNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"
@@ -89,28 +88,18 @@ apply from: "$rootDir/common.gradle"
 | ----- | ----------- |
 | `extName` | The name of the extension. |
 | `pkgNameSuffix` | A unique suffix added to `eu.kanade.tachiyomi.animeextension`. The language and the site name should be enough. Remember your extension code implementation must be placed in this package. |
-| `extClass` | Points to the class that implements `Source`. You can use a relative path starting with a dot (the package name is the base path). This is used to find and instantiate the source(s). |
+| `extClass` | Points to the class that implements `AnimeSource`. You can use a relative path starting with a dot (the package name is the base path). This is used to find and instantiate the source(s). |
 | `extVersionCode` | The extension version code. This must be a positive integer and incremented with any change to the code. |
-| `libVersion` | The version of the [extensions library](https://github.com/jmir1/extensions-lib) used. |
-| `containsNsfw` | (Optional, defaults to `false`) Flag to indicate that a source contains NSFW content. |
+| `libVersion` | (Optional, defaults to `12`) The version of the [extensions library](https://github.com/jmir1/extensions-lib) used. |
+| `isNsfw` | (Optional, defaults to `false`) Flag to indicate that a source contains NSFW content. |
 
-The extension's version name is generated automatically by concatenating `libVersion` and `extVersionCode`. With the example used above, the version would be `1.2.1`.
+The extension's version name is generated automatically by concatenating `libVersion` and `extVersionCode`. With the example used above, the version would be `12.1`.
 
 ### Core dependencies
 
 #### Extension API
 
-Extensions rely on [extensions-lib](https://github.com/jmir1/extensions-lib), which provides some interfaces and stubs from the [app](https://github.com/jmir1/aniyomi) for compilation purposes. The actual implementations can be found [here](https://github.com/jmir1/aniyomi/tree/dev/app/src/main/java/eu/kanade/tachiyomi/source). Referencing the actual implementation will help with understanding extensions' call flow.
-
-#### Duktape stub
-
-[`duktape-stub`](https://github.com/jmir1/aniyomi-extensions/tree/master/lib/duktape-stub) provides stubs for using Duktape functionality without pulling in the full library. Functionality is bundled into the main Tachiyomi app.
-
-```gradle
-dependencies {
-    compileOnly project(':duktape-stub')
-}
-```
+Extensions rely on [extensions-lib](https://github.com/jmir1/extensions-lib), which provides some interfaces and stubs from the [app](https://github.com/jmir1/aniyomi) for compilation purposes. The actual implementations can be found [here](https://github.com/jmir1/aniyomi/tree/master/app/src/main/java/eu/kanade/tachiyomi/animesource). Referencing the actual implementation will help with understanding extensions' call flow.
 
 #### Rate limiting library
 
@@ -122,43 +111,34 @@ dependencies {
 }
 ```
 
-#### DataImage library
-
-[`lib-dataimage`](https://github.com/jmir1/aniyomi-extensions/tree/master/lib/dataimage) is a library for handling [base 64 encoded image data](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs) using an [OkHttp interceptor](https://square.github.io/okhttp/interceptors/).
-
-```gradle
-dependencies {
-    implementation project(':lib-dataimage')
-}
-```
-
 #### Additional dependencies
 
-You may find yourself needing additional functionality and wanting to add more dependencies to your `build.gradle` file. Since extensions are run within the main Tachiyomi app, you can make use of [its dependencies](https://github.com/jmir1/aniyomi/blob/master/app/build.gradle).
+You may find yourself needing additional functionality and wanting to add more dependencies to your `build.gradle` file. Since extensions are run within the main Tachiyomi app, you can make use of [its dependencies](https://github.com/jmir1/aniyomi/blob/master/app/build.gradle.kts).
 
-For example, an extension that needs Gson could add the following:
+For example, an extension that needs coroutines, it could add the following:
 
 ```gradle
 dependencies {
-    compileOnly 'com.google.code.gson:gson:2.8.2'
+    compileOnly 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2'
+    compileOnly 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2'
 }
 ```
 
-(Note that Gson, and several other dependencies, are already exposed to all extensions via `common.gradle`.)
+(Note that several dependencies are already exposed to all extensions via `common-dependencies.gradle`.)
 
 Notice that we're using `compileOnly` instead of `implementation`, since the app already contains it. You could use `implementation` instead for a new dependency, or you prefer not to rely on whatever the main app has at the expense of app size.
 
-Note that using `compileOnly` restricts you to versions that must be compatible with those used in [Tachiyomi v0.8.5+](https://github.com/jmir1/aniyomi/blob/82141cec6e612885fef4fa70092e29e99d60adbb/app/build.gradle#L104) for proper backwards compatibility.
+Note that using `compileOnly` restricts you to versions that must be compatible with those used in [Tachiyomi v0.10.12+](https://github.com/tachiyomiorg/tachiyomi/blob/v0.10.12/app/build.gradle.kts) for proper backwards compatibility.
 
 ### Extension main class
 
-The class which is refrenced and defined by `extClass` in `build.gradle`. This class should implement either `SourceFactory` or extend one of the `Source` implementations: `HttpSource` or `ParsedHttpSource`.
+The class which is referenced and defined by `extClass` in `build.gradle`. This class should implement either `AnimeSourceFactory` or extend one of the `AnimeSource` implementations: `AnimeHttpSource` or `ParsedAnimeHttpSource`.
 
 | Class | Description |
 | ----- | ----------- |
-|`SourceFactory`| Used to expose multiple `Source`s. Use this in case of a source that supports multiple languages or mirrors of the same website. For similar websites use [theme sources](#multi-source-themes). |
-| `HttpSource`| For online source, where requests are made using HTTP. |
-| `ParsedHttpSource`| Similar to `HttpSource`, but has methods useful for scraping pages. |
+|`AnimeSourceFactory`| Used to expose multiple `AnimeSource`s. Use this in case of a source that supports multiple languages or mirrors of the same website. For similar websites use [theme sources](#multi-source-themes). |
+| `AnimeHttpSource`| For online source, where requests are made using HTTP. |
+| `ParsedAnimeHttpSource`| Similar to `AnimeHttpSource`, but has methods useful for scraping pages. |
 
 #### Main class key variables
 
@@ -167,76 +147,74 @@ The class which is refrenced and defined by `extClass` in `build.gradle`. This c
 | `name` | Name displayed in the "Sources" tab in Tachiyomi. |
 | `baseUrl` | Base URL of the source without any trailing slashes. |
 | `lang` | An ISO 639-1 compliant language code (two letters in lower case). |
-| `id` | Identifier of your source, automatically set in `HttpSource`. It should only be manually overriden if you need to copy an existing autogenerated ID. |
+| `id` | Identifier of your source, automatically set in `AnimeHttpSource`. It should only be manually overriden if you need to copy an existing autogenerated ID. |
 
 
 ### Extension call flow
 
-#### Popular Manga
+#### Popular Anime
 
 a.k.a. the Browse source entry point in the app (invoked by tapping on the source name).
 
-- The app calls `fetchPopularManga` which should return a `MangasPage` containing the first batch of found `SManga` entries.
-    - This method supports pagination. When user scrolls the manga list and more results must be fetched, the app calls it again with increasing `page` values(starting with `page=1`). This continues until `MangasPage.hasNextPage` is passed as `true` and `MangasPage.mangas` is not empty.
-- To show the list properly, the app needs `url`, `title` and `thumbnail_url`. You must set them here. The rest of the fields could be filled later.(refer to Manga Details below)
-    - You should set `thumbnail_url` if is available, if not, `fetchMangaDetails` will be **immediately** called.(this will increase network calls heavily and should be avoided)
+- The app calls `fetchPopularAnime` which should return a `AnimesPage` containing the first batch of found `SAnime` entries.
+    - This method supports pagination. When user scrolls the manga list and more results must be fetched, the app calls it again with increasing `page` values(starting with `page=1`). This continues until `AnimesPage.hasNextPage` is passed as `true` and `AnimesPage.mangas` is not empty.
+- To show the list properly, the app needs `url`, `title` and `thumbnail_url`. You must set them here. The rest of the fields could be filled later.(refer to Anime Details below)
+    - You should set `thumbnail_url` if is available, if not, `fetchAnimeDetails` will be **immediately** called.(this will increase network calls heavily and should be avoided)
 
-#### Latest Manga
+#### Latest Anime
 
 a.k.a. the Latest source entry point in the app (invoked by tapping on the "Latest" button beside the source name).
 
 - Enabled if `supportsLatest` is `true` for a source
-- Similar to popular manga, but should be fetching the latest entries from a source.
+- Similar to popular anime, but should be fetching the latest entries from a source.
 
-#### Manga Search
+#### Anime Search
 
-- When the user searches inside the app, `fetchSearchManga` will be called and the rest of the flow is similar to what happens with `fetchPopularManga`.
-    - If search functionality is not available, return `Observable.just(MangasPage(emptyList(), false))`
-- `getAnimeFilterList` will be called to get all filters and filter types. **TODO: explain more about `AnimeFilter`**
+- When the user searches inside the app, `fetchSearchAnime` will be called and the rest of the flow is similar to what happens with `fetchPopularAnime`.
+    - If search functionality is not available, return `Observable.just(AnimesPage(emptyList(), false))`
+- `getFilterList` will be called to get all filters and filter types. **TODO: explain more about `Filter`**
 
-#### Manga Details
+#### Anime Details
 
-- When user taps on a manga, `fetchMangaDetails` and `fetchChapterList` will be called and the results will be cached.
-    - A `SManga` entry is identified by it's `url`.
-- `fetchMangaDetails` is called to update a manga's details from when it was initialized earlier.
-    - `SManga.initialized` tells the app if it should call `fetchMangaDetails`. If you are overriding `fetchMangaDetails`, make sure to pass it as `true`.
-    - `SManga.genre` is a string containing list of all genres separated with `", "`.
-    - `SManga.status` is an "enum" value. Refer to [the values in the `SManga` companion object](https://github.com/jmir1/extensions-lib/blob/9733fcf8d7708ce1ef24b6c242c47d67ac60b045/library/src/main/java/eu/kanade/tachiyomi/source/model/SManga.kt#L24-L27).
-    - During a backup, only `url` and `title` are stored. To restore the rest of the manga data, the app calls `fetchMangaDetails`, so all fields should be (re)filled in if possible.
-    - If a `SManga` is cached `fetchMangaDetails` will be only called when the user does a manual update(Swipe-to-Refresh).
-- `fetchChapterList` is called to display the chapter list.
+- When user taps on an anime, `fetchAnimeDetails` and `fetchEpisodeList` will be called and the results will be cached.
+    - A `SAnime` entry is identified by its `url`.
+- `fetchAnimeDetails` is called to update an anime's details from when it was initialized earlier.
+    - `SAnime.initialized` tells the app if it should call `fetchAnimeDetails`. If you are overriding `fetchAnimeDetails`, make sure to pass it as `true`.
+    - `SAnime.genre` is a string containing list of all genres separated with `", "`.
+    - `SAnime.status` is an "enum" value. Refer to [the values in the `SAnime` companion object](https://github.com/jmir1/extensions-lib/blob/a61fa402d3dcbb1402ce0cf252259cdc1b489b7e/library/src/main/java/eu/kanade/tachiyomi/animesource/model/SAnime.kt#L24-L27).
+    - During a backup, only `url` and `title` are stored. To restore the rest of the anime data, the app calls `fetchAnimeDetails`, so all fields should be (re)filled in if possible.
+    - If a `SAnime` is cached `fetchAnimeDetails` will be only called when the user does a manual update(Swipe-to-Refresh).
+- `fetchEpisodeList` is called to display the episode list.
     - The list should be sorted descending by the source order.
-    - If `Page.imageUrl`s are available immediately, you should pass them here. Otherwise, you should set `page.url` to a page that contains them and override `imageUrlParse` to fill those `imageUrl`s.
+    - If `Video.videoUrl`s are available immediately, you should pass them here. Otherwise, you should set `video.url` to a page that contains them and override `videoUrlParse` to fill those `videoUrl`s.
 
-#### Chapter
+#### Episode
 
-- After a chapter list for the manga is fetched and the app is going to cache the data, `prepareNewChapter` will be called.
-- `SChapter.date_upload` is the [UNIX Epoch time](https://en.wikipedia.org/wiki/Unix_time) **expressed in miliseconds**.
-    - If you don't pass `SChapter.date_upload`, the user won't get notifications for new chapters. refer to [this issue](https://github.com/jmir1/aniyomi/issues/2089) for more info. `System.currentTimeMillis()` works as a substitute when real data is not available.
+- After an episode list for the anime is fetched and the app is going to cache the data, `prepareNewEpisode` will be called.
+- `SEpisode.date_upload` is the [UNIX Epoch time](https://en.wikipedia.org/wiki/Unix_time) **expressed in miliseconds**.
+    - If you don't pass `SEpisode.date_upload`, the user won't get notifications for new episodes. refer to [this issue](https://github.com/tachiyomiorg/tachiyomi/issues/2089) for more info. `System.currentTimeMillis()` works as a substitute when real data is not available.
 
-#### Chapter Pages
+#### Episode Videos
 
-- When user opens a chapter, `fetchPageList` will be called and it will return a list of `Page`s.
-- While a chapter is open in the reader or is being downloaded, `fetchImageUrl` will be called to get URLs for each page of the manga.
-- Chapter pages numbers start from `0`.
+- When user opens an episode, `fetchVideoList` will be called and it will return a list of `Video`s that are used by the player.
 
 ### Misc notes
 
 - Sometimes you may find no use for some inherited methods. If so just override them and throw exceptions: `throw UnsupportedOperationException("Not used.")`
 - You probably will find `getUrlWithoutDomain` useful when parsing the target source URLs.
-- If possible try to stick to the general workflow from `HttpSource`/`ParsedHttpSource`; breaking them may cause you more headache than necessary.
-- By implementing `ConfigurableSource` you can add settings to your source, which is backed by [`SharedPreferences`](https://developer.android.com/reference/android/content/SharedPreferences).
+- If possible try to stick to the general workflow from `AnimeHttpSource`/`ParsedAnimeHttpSource`; breaking them may cause you more headache than necessary.
+- By implementing `ConfigurableAnimeSource` you can add settings to your source, which is backed by [`SharedPreferences`](https://developer.android.com/reference/android/content/SharedPreferences).
 
 ### Advanced Extension features
 
 #### URL intent filter
 
 Extensions can define URL intent filters by defining it inside a custom `AndroidManifest.xml` file.
-For an example, refer to [the NHentai module's `AndroidManifest.xml` file](https://github.com/jmir1/aniyomi-extensions/blob/master/src/all/nhentai/AndroidManifest.xml) and [its corresponding `NHUrlActivity` handler](https://github.com/jmir1/aniyomi-extensions/blob/master/src/all/nhentai/src/eu/kanade/tachiyomi/extension/all/nhentai/NHUrlActivity.kt).
+For an example, refer to [the NHentai module's `AndroidManifest.xml` file](https://github.com/tachiyomiorg/tachiyomi-extensions/blob/master/src/all/nhentai/AndroidManifest.xml) and [its corresponding `NHUrlActivity` handler](https://github.com/tachiyomiorg/tachiyomi-extensions/blob/master/src/all/nhentai/src/eu/kanade/tachiyomi/extension/all/nhentai/NHUrlActivity.kt).
 
 
 ## Multi-source themes
-The `multisrc` module houses source code for generating extensions for cases where multiple source sites use the same site generator tool(usually a CMS) for bootsraping their website and this makes them similar enough to prompt code reuse through inheritance/composition; which from now on we will use the general **theme** term to refer to.
+The `multisrc` module houses source code for generating extensions for cases where multiple source sites use the same site generator tool(usually a CMS) for bootstraping their website and this makes them similar enough to prompt code reuse through inheritance/composition; which from now on we will use the general **theme** term to refer to.
 
 This module contains the *default implementation* for each theme and definitions for each source that builds upon that default implementation and also it's overrides upon that default implementation, all of this becomes a set of source code which then is used to generate individual extensions from.
 
@@ -246,58 +224,59 @@ $ tree multisrc
 multisrc
 ├── build.gradle.kts
 ├── overrides
-│   └── <themepkg>
-│       ├── default
-│       │   ├── additional.gradle.kts
-│       │   └── res
-│       │       ├── mipmap-hdpi
-│       │       │   └── ic_launcher.png
-│       │       ├── mipmap-mdpi
-│       │       │   └── ic_launcher.png
-│       │       ├── mipmap-xhdpi
-│       │       │   └── ic_launcher.png
-│       │       ├── mipmap-xxhdpi
-│       │       │   └── ic_launcher.png
-│       │       ├── mipmap-xxxhdpi
-│       │       │   └── ic_launcher.png
-│       │       └── web_hi_res_512.png
-│       └── <sourcepkg>
-│           ├── additional.gradle.kts
-│           ├── AndroidManifest.xml
-│           ├── res
-│           │   ├── mipmap-hdpi
-│           │   │   └── ic_launcher.png
-│           │   ├── mipmap-mdpi
-│           │   │   └── ic_launcher.png
-│           │   ├── mipmap-xhdpi
-│           │   │   └── ic_launcher.png
-│           │   ├── mipmap-xxhdpi
-│           │   │   └── ic_launcher.png
-│           │   ├── mipmap-xxxhdpi
-│           │   │   └── ic_launcher.png
-│           │   └── web_hi_res_512.png
-│           └── src
-│               └── <SourceName>.kt
+│   └── <themepkg>
+│       ├── default
+│       │   ├── additional.gradle.kts
+│       │   └── res
+│       │       ├── mipmap-hdpi
+│       │       │   └── ic_launcher.png
+│       │       ├── mipmap-mdpi
+│       │       │   └── ic_launcher.png
+│       │       ├── mipmap-xhdpi
+│       │       │   └── ic_launcher.png
+│       │       ├── mipmap-xxhdpi
+│       │       │   └── ic_launcher.png
+│       │       ├── mipmap-xxxhdpi
+│       │       │   └── ic_launcher.png
+│       │       └── web_hi_res_512.png
+│       └── <sourcepkg>
+│           ├── additional.gradle.kts
+│           ├── AndroidManifest.xml
+│           ├── res
+│           │   ├── mipmap-hdpi
+│           │   │   └── ic_launcher.png
+│           │   ├── mipmap-mdpi
+│           │   │   └── ic_launcher.png
+│           │   ├── mipmap-xhdpi
+│           │   │   └── ic_launcher.png
+│           │   ├── mipmap-xxhdpi
+│           │   │   └── ic_launcher.png
+│           │   ├── mipmap-xxxhdpi
+│           │   │   └── ic_launcher.png
+│           │   └── web_hi_res_512.png
+│           └── src
+│               └── <SourceName>.kt
 └── src
     └── main
         ├── AndroidManifest.xml
         └── java
             ├── eu
-            │   └── kanade
-            │       └── tachiyomi
-            │           └── multisrc
-            │               └── <themepkg>
-            │                   ├── <ThemeName>Generator.kt
-            │                   └── <ThemeName>.kt
+            │   └── kanade
+            │       └── tachiyomi
+            │           └── multisrc
+            │               └── <themepkg>
+            │                   ├── <ThemeName>Generator.kt
+            │                   └── <ThemeName>.kt
             └── generator
                 ├── GeneratorMain.kt
+                ├── IntelijConfigurationGeneratorMain.kt
                 └── ThemeSourceGenerator.kt
 ```
 
 - `multisrc/src/main/java/eu/kanade/tachiyomi/multisrc/<themepkg>/<Theme>.kt` defines the the theme's default implementation.
-- `multisrc/src/main/java/eu/kanade/tachiyomi/multisrc/<theme>/<Theme>Generator.kt` defines the the theme's generator class, this is similar to a `SourceFactory` class.
-- `multisrc/overrides/<themepkg>/defualt/res` is the theme's default icons, if a source doesn't have overrides for `res`, then defualt icons will be used.
-- `multisrc/overrides/<themepkg>/defualt/additional.gradle.kts` defines additional gradle code, this will be copied at the end of all generated sources from this theme.
+- `multisrc/src/main/java/eu/kanade/tachiyomi/multisrc/<theme>/<Theme>Generator.kt` defines the the theme's generator class, this is similar to a `AnimeSourceFactory` class.
+- `multisrc/overrides/<themepkg>/default/res` is the theme's default icons, if a source doesn't have overrides for `res`, then default icons will be used.
+- `multisrc/overrides/<themepkg>/default/additional.gradle.kts` defines additional gradle code, this will be copied at the end of all generated sources from this theme.
 - `multisrc/overrides/<themepkg>/<sourcepkg>` contains overrides for a source that is defined inside the `<Theme>Generator.kt` class.
 - `multisrc/overrides/<themepkg>/<sourcepkg>/src` contains source overrides.
 - `multisrc/overrides/<themepkg>/<sourcepkg>/res` contains override for icons.
@@ -308,16 +287,19 @@ multisrc
 There are three steps in running and testing a theme source:
 
 1. Generate the sources
-    - **Method 1:** run `./gradlew multisrc:generateExtensions` from a terminal window to generate all sources.
-    - **Method 2:** Directly run `Generator.GeneratorMain.main` by pressing the play button in front of the method shown inside Android Studio to generate all sources.
-    - **Method 3:** Directly run `<themepkg>.<ThemeName>Generator.main` by pressing the play button in front of the method shown inside Android Studio to generate sources from the said theme.
+    - **Option 1: Only generate sources from one theme**
+        - **Method 1:** Find and run `<ThemeName>Generator` run configuration form the `Run/Debug Configuration` menu.
+        - **Method 2:** Directly run `<themepkg>.<ThemeName>Generator.main` by pressing the play button in front of the method shown inside Android Studio's Code Editor to generate sources from the said theme.
+    - **Option 2: Generate sources from all themes**
+        - **Method 1:** Run `./gradlew multisrc:generateExtensions` from a terminal window to generate all sources.
+        - **Method 2:** Directly run `Generator.GeneratorMain.main` by pressing the play button in front of the method shown inside Android Studio's Code Editor to generate all sources.
 2. Sync gradle to import the new generated sources inside `generated-src`
     - **Method 1:** Android Studio might prompt to sync the gradle. Click on `Sync Now`.
-    - **Method 1:** Manually re-sync by opening `File` -> `Sync Project with Gradle Files` or by pressing `Alt+f` then `g`.
+    - **Method 2:** Manually re-sync by opening `File` -> `Sync Project with Gradle Files` or by pressing `Alt+f` then `g`.
 3. Build and test the generated Extention like normal `src` sources.
-    - It's recommended to make changes here to skip going through step 1 and 2 multiple times, and when you are done, copying the changes back to `multisrc`. 
+    - It's recommended to make changes here to skip going through step 1 and 2 multiple times, and when you are done, copying the changes back to `multisrc`.
 
-### Scaffolding sources
+### Scaffolding overrides
 You can use this python script to generate scaffolds for source overrides. Put it inside `multisrc/overrides/<themepkg>/` as `scaffold.py`.
 ```python
 import os, sys
@@ -358,17 +340,19 @@ To make local development more convenient, you can use the following run configu
 
 ![](https://i.imgur.com/STy0UFY.png)
 
-If you're running a Preview or debug build of Tachiyomi:
+If you're running a Preview or debug build of Aniyomi:
 
 ```
--W -S -n eu.kanade.tachiyomi.debug/eu.kanade.tachiyomi.ui.main.MainActivity -a eu.kanade.tachiyomi.SHOW_CATALOGUES
+-W -S -n xyz.jmir.tachiyomi.mi.debug/eu.kanade.tachiyomi.ui.main.MainActivity -a eu.kanade.tachiyomi.SHOW_CATALOGUES
 ```
 
-And for a release build of Tachiyomi:
+And for a release build of Aniyomi:
 
 ```
--W -S -n eu.kanade.tachiyomi/eu.kanade.tachiyomi.ui.main.MainActivity -a eu.kanade.tachiyomi.SHOW_CATALOGUES
+-W -S -n xyz.jmir.tachiyomi.mi/eu.kanade.tachiyomi.ui.main.MainActivity -a eu.kanade.tachiyomi.SHOW_CATALOGUES
 ```
+
+If you're deploying to Android 11 or higher, enable the "Always install with package manager" option in the run configurations.
 
 ## Debugging
 
