@@ -173,10 +173,10 @@
   {
     "name": "Aniyomi: Oploverz",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.oploverz",
-    "apk": "aniyomi-id.oploverz-v12.5.apk",
+    "apk": "aniyomi-id.oploverz-v12.7.apk",
     "lang": "id",
-    "code": 5,
-    "version": "12.5",
+    "code": 7,
+    "version": "12.7",
     "nsfw": 0
   },
   {
