@@ -27,7 +27,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
-    override val baseUrl: String = "https://neonime.cc"
+    override val baseUrl: String = "https://neonime.co"
     override val lang: String = "id"
     override val name: String = "NeoNime"
     override val supportsLatest: Boolean = true
