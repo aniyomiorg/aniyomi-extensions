@@ -129,7 +129,9 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val patternGoogle = "iframe[src^=https://www.blogger.com/video.g?token=]"
         val iframe = document.select(patternGoogle).firstOrNull()
 
-        val zippy = document.select(patternZippy).map { zippyFromElement(it) }
+        val zippy = document.select(patternZippy).mapNotNull {
+            runCatching { zippyFromElement(it) }.getOrNull()
+        }
         val google = if (iframe == null) { mutableListOf() } else try {
             googleLinkFromElement(iframe)
         } catch (e: Exception) { mutableListOf() }
@@ -154,6 +156,7 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         return videoList
     }
+
     private fun zippyFromElement(element: Element): Video {
         val res = client.newCall(GET(element.attr("href"))).execute().asJsoup()
         val scr = res.select("script:containsData(dlbutton)").html()
@@ -176,6 +179,7 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         return Video(url, quality, url, null)
     }
+
     override fun videoListSelector(): String = throw Exception("not used")
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
