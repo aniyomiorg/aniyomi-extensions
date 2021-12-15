@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -110,6 +111,10 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     for (server in sub.jsonArray) {
                         val url = server.jsonObject["code"]!!.jsonPrimitive.content.replace("\\/", "/")
                         val quality = server.jsonObject["title"]!!.jsonPrimitive.content
+                        if (quality == "Fembed") {
+                            val videos = FembedExtractor().videosFromUrl(url)
+                            videoList.addAll(videos)
+                        }
                         if (quality == "Stape") {
                             val video = StreamTapeExtractor(client).videoFromUrl(url, quality)
                             if (video != null) {
@@ -191,9 +196,9 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("Stape", "hd", "sd", "low", "lowest", "mobile")
-            entryValues = arrayOf("Stape", "hd", "sd", "low", "lowest", "mobile")
-            setDefaultValue("Stape")
+            entries = arrayOf("Fembed:480p", "Fembed:720p", "Stape", "hd", "sd", "low", "lowest", "mobile")
+            entryValues = arrayOf("Fembed:480p", "Fembed:720p", "Stape", "hd", "sd", "low", "lowest", "mobile")
+            setDefaultValue("Fembed:720p")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
