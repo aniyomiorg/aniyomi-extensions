@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import com.google.gson.JsonParser
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -14,6 +13,11 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -22,6 +26,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 
 class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -39,6 +44,8 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
+
+    private val json: Json by injectLazy()
 
     // Popular Anime
 
@@ -113,10 +120,10 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (script != null) {
             val videosString = script.data().substringAfter("sources: [")
                 .substringBefore("]").substringBeforeLast(",")
-            val videosArray = JsonParser.parseString("[$videosString]").asJsonArray
+            val videosArray = json.decodeFromString<JsonArray>("[$videosString]")
             for (video in videosArray) {
-                val format = video.asJsonObject.get("format").asString
-                val url = video.asJsonObject.get("src").asString
+                val format = video.jsonObject["format"]!!.jsonPrimitive.content
+                val url = video.jsonObject["src"]!!.jsonPrimitive.content
                 if (format != "auto") {
                     videoList.add(Video(url, format, url, null))
                 }
