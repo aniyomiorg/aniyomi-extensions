@@ -3,7 +3,7 @@ apply plugin: 'kotlin-android'
 
 ext {
     extName = 'MY CIMA MOVIES'
-    pkgNameSuffix = 'ar.mycimamovie'
+    pkgNameSuffix = 'ar.mycimamovies'
     extClass = '.MyCimaMovie'
     extVersionCode = 7
     libVersion = '12'
