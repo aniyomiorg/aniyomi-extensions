@@ -13,11 +13,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -26,7 +21,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 
 class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -44,8 +38,6 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
-
-    private val json: Json by injectLazy()
 
     // Popular Anime
 
@@ -87,13 +79,13 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episodes
     }
 
-    override fun episodeListSelector() = "div.Episodes--Seasons--Episodes a, div.List--Seasons--Episodes a.selected"
+    override fun episodeListSelector() = "div.Episodes--Seasons--Episodes a" // , div.List--Seasons--Episodes a.selected"
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("abs:href"))
         episode.episode_number = element.text().removePrefix("موسم ").removePrefix("الحلقة ").replace("مدبلج", "").replace(" -", "").toFloat()
-        episode.name = element.text()
+        episode.name = element.ownerDocument().select("div.List--Seasons--Episodes a.selected").text() + " : " + element.text()
         episode.date_upload = System.currentTimeMillis()
         return episode
     }
@@ -111,26 +103,20 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
     }
 
-    override fun videoListSelector() = "body"
+    override fun videoListSelector() = "script:containsData(source)"
 
     private fun videosFromElement(element: Element): List<Video> {
+        val data = element.data().substringAfter("sources: [").substringBefore("],")
+        val sources = data.split("format: '").drop(1)
         val videoList = mutableListOf<Video>()
-        val script = element.select("script")
-            .firstOrNull { it.data().contains("player.qualityselector({") }
-        if (script != null) {
-            val videosString = script.data().substringAfter("sources: [")
-                .substringBefore("]").substringBeforeLast(",")
-            val videosArray = json.decodeFromString<JsonArray>("[$videosString]")
-            for (video in videosArray) {
-                val format = video.jsonObject["format"]!!.jsonPrimitive.content
-                val url = video.jsonObject["src"]!!.jsonPrimitive.content
-                if (format != "auto") {
-                    videoList.add(Video(url, format, url, null))
-                }
-            }
-            return videoList
+        for (source in sources) {
+            val src = source.substringAfter("src: \"").substringBefore("\"")
+            val quality = source.substringBefore("'") // .substringAfter("format: '")
+            val video = Video(src, quality, src, null)
+            videoList.add(video)
         }
-        val sourceTag = element.select("source").firstOrNull()!!
+        return videoList
+        val sourceTag = element.ownerDocument().select("source").firstOrNull()!!
         return listOf(Video(sourceTag.attr("src"), "Default", sourceTag.attr("src"), null))
     }
 
@@ -222,7 +208,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/cima1/$page")
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/page/$page")
 
     override fun latestUpdatesSelector(): String = "div.Grid--MycimaPosts div.GridItem div.Thumb--GridItem"
 
