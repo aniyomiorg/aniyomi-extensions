@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.ar.mycimamovies
+package eu.kanade.tachiyomi.animeextension.ar.mycimamovie
 
 import android.app.Application
 import android.content.SharedPreferences
