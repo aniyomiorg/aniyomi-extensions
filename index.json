@@ -200,10 +200,10 @@
   {
     "name": "Aniyomi: OtakuDesu",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.otakudesu",
-    "apk": "aniyomi-id.otakudesu-v12.6.apk",
+    "apk": "aniyomi-id.otakudesu-v12.7.apk",
     "lang": "id",
-    "code": 6,
-    "version": "12.6",
+    "code": 7,
+    "version": "12.7",
     "nsfw": 0
   },
   {
