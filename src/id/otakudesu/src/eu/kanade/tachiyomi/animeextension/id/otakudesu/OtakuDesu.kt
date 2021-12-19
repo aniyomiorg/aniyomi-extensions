@@ -30,7 +30,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "OtakuDesu"
 
-    override val baseUrl = "https://otakudesu.vip"
+    override val baseUrl = "https://otakudesu.info"
 
     override val lang = "id"
 
