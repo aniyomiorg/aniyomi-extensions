@@ -161,13 +161,11 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val res = client.newCall(GET(element.attr("href"))).execute().asJsoup()
         val scr = res.select("script:containsData(dlbutton)").html()
         var url = element.attr("href").substringBefore("/v/")
-        val firstString = scr.substringAfter(" = \"").substringBefore("\" + ")
-        val num1 = scr.substringAfter("+ (").substringBefore(" % ").toInt()
-        val num2 = scr.substringAfter(" % ").substringBefore(" + ").toInt()
-        val num4 = scr.substringAfter(" % ").substringBefore(") + ").substringAfter(" % ").toInt()
-        val lastString = scr.substringAfter(") + \"").substringBefore("\";")
-        val num = (num1 % num2) + (num1 % num4)
-        url += firstString + num.toString() + lastString
+        val firstString = scr.substringAfter(" = \"").substringBefore("\"+(")
+        val num = scr.substringAfter("n = ").substringBefore("%2;").toInt()
+        val lastString = scr.substringAfter("3)+\"").substringBefore("\";")
+        val nums = (num % 2) + (num % 3) + num
+        url += firstString + nums.toString() + lastString
         val quality = with(url) {
             when {
                 contains("1080p") -> "ZippyShare - 1080p"
