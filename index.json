@@ -182,19 +182,19 @@
   {
     "name": "Aniyomi: NeoNime",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.neonime",
-    "apk": "aniyomi-id.neonime-v12.2.apk",
+    "apk": "aniyomi-id.neonime-v12.3.apk",
     "lang": "id",
-    "code": 2,
-    "version": "12.2",
+    "code": 3,
+    "version": "12.3",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: Oploverz",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.oploverz",
-    "apk": "aniyomi-id.oploverz-v12.7.apk",
+    "apk": "aniyomi-id.oploverz-v12.8.apk",
     "lang": "id",
-    "code": 7,
-    "version": "12.7",
+    "code": 8,
+    "version": "12.8",
     "nsfw": 0
   },
   {
