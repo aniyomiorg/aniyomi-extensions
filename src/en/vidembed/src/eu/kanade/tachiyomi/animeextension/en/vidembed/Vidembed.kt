@@ -28,7 +28,7 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Vidembed"
 
-    override val baseUrl = "https://vidembed.cm"
+    override val baseUrl = "https://vidembed.io"
 
     override val lang = "en"
 
@@ -58,22 +58,20 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
-        val totalEpisodes = document.select(episodeListSelector()).last().attr("ep_end")
-        val id = document.select("input#movie_id").attr("value")
-        return episodesRequest(totalEpisodes, id)
+        return document.select(".video-info-left .listing.items.lists .video-block").ordered().map { episodeFromElement(it) }
     }
-
-    private fun episodesRequest(totalEpisodes: String, id: String): List<SEpisode> {
-        val request = GET("https://ajax.gogo-load.com/ajax/load-list-episode?ep_start=0&ep_end=$totalEpisodes&id=$id", headers)
-        val epResponse = client.newCall(request).execute()
-        val document = epResponse.asJsoup()
-        return document.select("a").map { episodeFromElement(it) }
-    }
+//
+//    private fun episodesRequest(totalEpisodes: String, id: String): List<SEpisode> {
+//        val request = GET("https://ajax.gogo-load.com/ajax/load-list-episode?ep_start=0&ep_end=$totalEpisodes&id=$id", headers)
+//        val epResponse = client.newCall(request).execute()
+//        val document = epResponse.asJsoup()
+//        return document.select("a").map { episodeFromElement(it) }
+//    }
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(baseUrl + element.attr("href").substringAfter(" "))
-        val ep = element.selectFirst("div.name").ownText().substringAfter(" ")
+        val ep = element.selectFirst("div.name").ownText().substringAfter("Episode ").substringBefore(" ")
         episode.episode_number = ep.toFloat()
         episode.name = "Episode $ep"
         episode.date_upload = System.currentTimeMillis()
@@ -220,21 +218,12 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.title = document.select("div.anime_info_body_bg h1").text()
-        anime.genre = document.select("p.type:eq(5) a").joinToString("") { it.text() }
-        anime.description = document.select("p.type:eq(4)").first().ownText()
-        anime.status = parseStatus(document.select("p.type:eq(7) a").text())
+        anime.title = document.select(".video-details span").text()
+        // Todo: scrape genre and status
+//        anime.genre = document.select("p.type:eq(5) a").joinToString("") { it.text() }
+        anime.description = document.select(".video-details .post-entry .content-more-js").text()
+//        anime.status = parseStatus(document.select("p.type:eq(7) a").text())
 
-        // add alternative name to anime description
-        val altName = "Other name(s): "
-        document.select("p.type:eq(8)").firstOrNull()?.ownText()?.let {
-            if (it.isBlank().not()) {
-                anime.description = when {
-                    anime.description.isNullOrBlank() -> altName + it
-                    else -> anime.description + "\n\n$altName" + it
-                }
-            }
-        }
         return anime
     }
 
@@ -246,7 +235,7 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun latestUpdatesNextPageSelector(): String = "ul.pagination-list li:last-child:not(.selected)"
+    override fun latestUpdatesNextPageSelector(): String = "ul.pagination li:last-child:not(.selected)"
 
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val anime = SAnime.create()

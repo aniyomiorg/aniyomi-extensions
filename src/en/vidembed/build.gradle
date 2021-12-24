@@ -2,9 +2,9 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    extName = 'vidembed'
+    extName = 'Vidembed'
     pkgNameSuffix = 'en.vidembed'
-    extClass = '.vidembed'
+    extClass = '.Vidembed'
     extVersionCode = 1
     libVersion = '12'
 }
