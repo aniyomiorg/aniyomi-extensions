@@ -208,13 +208,13 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.thumbnail_url = element.select("img").first().attr("src")
-        anime.title = element.attr("title")
+        anime.title = element.select(".name").first().text()
         return anime
     }
 
     override fun searchAnimeNextPageSelector(): String = "ul.pagination-list li:last-child:not(.selected)"
 
-    override fun searchAnimeSelector(): String = "div.img a"
+    override fun searchAnimeSelector(): String = ".video-block a"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
@@ -223,7 +223,7 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return when {
             query.isNotBlank() -> GET("$baseUrl/search.html?keyword=$query&page=$page", headers)
             genreFilter.state != 0 -> GET("$baseUrl/genre/${genreFilter.toUriPart()}?page=$page")
-            else -> GET("$baseUrl/popular.html?page=$page")
+            else -> GET("$baseUrl/?page=$page")
         }
     }
 
