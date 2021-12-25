@@ -58,7 +58,8 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
-        return document.select(".video-info-left .listing.items.lists .video-block").ordered().map { episodeFromElement(it) }
+        // return document.select(".video-info-left .listing.items.lists .video-block").map { episodeFromElement(it) }
+        return document.select(episodeListSelector()).map { episodeFromElement(it) }
     }
 //
 //    private fun episodesRequest(totalEpisodes: String, id: String): List<SEpisode> {
@@ -70,10 +71,13 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-        episode.setUrlWithoutDomain(baseUrl + element.attr("href").substringAfter(" "))
-        val ep = element.selectFirst("div.name").ownText().substringAfter("Episode ").substringBefore(" ")
-        episode.episode_number = ep.toFloat()
-        episode.name = "Episode $ep"
+        episode.setUrlWithoutDomain(baseUrl + element.attr("href"))
+        // val ep = element.selectFirst("div.name").ownText().substringAfter("Episode ").substringBefore(" ")
+        val ep = element.selectFirst("div.name").ownText()
+        // episode.episode_number = ep.toFloat()
+        episode.episode_number = 1.toFloat()
+        // episode.name = "Episode $ep"
+        episode.name = "$ep"
         episode.date_upload = System.currentTimeMillis()
         return episode
     }
