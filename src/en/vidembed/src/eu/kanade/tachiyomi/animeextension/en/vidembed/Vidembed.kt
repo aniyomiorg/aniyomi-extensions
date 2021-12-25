@@ -2,6 +2,8 @@ package eu.kanade.tachiyomi.animeextension.en.vidembed
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.net.Uri
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -35,6 +37,8 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
+
+    private val downloadLink = "https://vidembed.io/download?id="
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -77,15 +81,18 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         // episode.episode_number = ep.toFloat()
         episode.episode_number = 1.toFloat()
         // episode.name = "Episode $ep"
-        episode.name = "$ep"
+        episode.name = ep
         episode.date_upload = System.currentTimeMillis()
         return episode
     }
 
     override fun videoListRequest(episode: SEpisode): Request {
         val document = client.newCall(GET(baseUrl + episode.url)).execute().asJsoup()
-        val link = document.selectFirst("li.dowloads a").attr("href")
-        return GET(link)
+//        val link = document.selectFirst("li.dowloads a").attr("href")
+        val link = document.selectFirst(".play-video iframe").attr("src")
+        val id = Uri.parse(link).getQueryParameter("id").toString()
+        Log.d("Debug", id)
+        return GET(downloadLink + id)
     }
 
     override fun videoListParse(response: Response): List<Video> {
