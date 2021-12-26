@@ -77,11 +77,12 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(baseUrl + element.attr("href"))
         // val ep = element.selectFirst("div.name").ownText().substringAfter("Episode ").substringBefore(" ")
-        val ep = element.selectFirst("div.name").ownText()
+        val epName = element.selectFirst("div.name").ownText()
+        val ep = epName.substringAfter("Episode ")
         // episode.episode_number = ep.toFloat()
         episode.episode_number = 1.toFloat()
-        // episode.name = "Episode $ep"
-        episode.name = ep
+        episode.name = if (ep == epName) epName else "Episode $ep"
+//        episode.name = ep
         episode.date_upload = System.currentTimeMillis()
         return episode
     }
