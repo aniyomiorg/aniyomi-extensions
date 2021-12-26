@@ -27,7 +27,7 @@ class MyCimaMovie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "MY Cima Movies"
 
-    override val baseUrl = "https://mycima.ink"
+    override val baseUrl = "https://mycima.world"
 
     override val lang = "ar"
 
