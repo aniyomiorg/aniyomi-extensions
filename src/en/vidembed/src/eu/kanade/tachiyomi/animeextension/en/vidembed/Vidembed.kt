@@ -91,7 +91,7 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 //        val link = document.selectFirst("li.dowloads a").attr("href")
         val link = document.selectFirst(".play-video iframe").attr("src")
         val id = Uri.parse(link).getQueryParameter("id").toString()
-        Log.d("Debug", id)
+        Log.d("Debug", id + " " + link)
         return GET(downloadLink + id)
     }
 
@@ -117,7 +117,8 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return newElements
     }
 
-    override fun videoListSelector() = "div.mirror_link a[download], div.mirror_link a[href*=https://dood]"
+    // override fun videoListSelector() = "div.mirror_link a[download], div.mirror_link a[href*=https://dood]"
+    override fun videoListSelector() = "div.mirror_link div.dowload a"
 
     override fun videoFromElement(element: Element): Video {
         val quality = element.text().substringAfter("Download (").replace("P - mp4)", "p")
@@ -129,7 +130,7 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val newQuality = "Doodstream mirror"
                 Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
             }
-            url.contains("google") -> {
+            url.contains("sbplay2") -> {
                 val parsedQuality = "Google server: " + when (quality) {
                     "FullHDp" -> "1080p"
                     "HDp" -> "720p"
@@ -161,9 +162,20 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoUrl ?: url
     }
 
+    /*
+    private fun sbplayUrlParse(url: String): String? {
+        val id = Uri.parse(url).getQueryParameter("id").toString()
+    }
+
+    private fun xtremeCDNUrlParse(url: String): String? {
+        val response = client.newCall(GET(url)).execute()
+    }
+
+     */
     private fun doodUrlParse(url: String): String? {
         val response = client.newCall(GET(url.replace("/d/", "/e/"))).execute()
         val content = response.body!!.string()
+        Log.d("debug-content", content)
         if (!content.contains("'/pass_md5/")) return null
         val md5 = content.substringAfter("'/pass_md5/").substringBefore("',")
         val token = md5.substringAfterLast("/")
