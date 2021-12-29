@@ -40,7 +40,8 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // Private Fun
     private fun reconstructDate(Str: String): Long {
         val pattern = SimpleDateFormat("dd-MM-yyyy", Locale.US)
-        return pattern.parse(Str)!!.time
+        return runCatching { pattern.parse(Str)?.time }
+            .getOrNull() ?: 0L
     }
     private fun parseStatus(statusString: String): Int {
         return when {
