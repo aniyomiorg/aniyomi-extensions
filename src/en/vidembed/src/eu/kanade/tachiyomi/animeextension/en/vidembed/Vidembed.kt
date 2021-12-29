@@ -118,8 +118,8 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return newElements
     }
 
-    // override fun videoListSelector() = "div.mirror_link a[download], div.mirror_link a[href*=https://dood]"
-    override fun videoListSelector() = "div.mirror_link div.dowload a"
+    override fun videoListSelector() = "div.mirror_link a[download], div.mirror_link a[href*=https://dood],div.mirror_link a[href*=https://sbplay]"
+//    override fun videoListSelector() = "div.mirror_link div.dowload a"
 
     override fun videoFromElement(element: Element): Video {
         val quality = element.text().substringAfter("Download (").replace("P - mp4)", "p")
@@ -131,7 +131,7 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val newQuality = "Doodstream mirror"
                 Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
             }
-            url.contains("sbplay") -> {
+            url.contains("https://sbplay") -> {
                 val parsedQuality = "StreamSB: " + when (quality) {
                     "FullHDp" -> "1080p"
                     "HDp" -> "720p"
