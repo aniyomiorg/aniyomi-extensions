@@ -131,14 +131,14 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val newQuality = "Doodstream mirror"
                 Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
             }
-            url.contains("sbplay2") -> {
-                val parsedQuality = "Google server: " + when (quality) {
+            url.contains("sbplay") -> {
+                val parsedQuality = "StreamSB: " + when (quality) {
                     "FullHDp" -> "1080p"
                     "HDp" -> "720p"
                     "SDp" -> "360p"
                     else -> quality
                 }
-                Video(url, parsedQuality, url, null)
+                Video(url, parsedQuality, sbplayUrlParse(url, location), null)
             }
             else -> {
                 val parsedQuality = when (quality) {
@@ -163,20 +163,39 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoUrl ?: url
     }
 
+    private fun sbplayUrlParse(url: String, referer: String): String? {
+        var refererHeader = Headers.headersOf("Referer", referer)
+        val id = Uri.parse(url).pathSegments[1]
+        val noRedirectClient = client.newBuilder().followRedirects(false).build()
+        val respDownloadLinkSelector = noRedirectClient.newCall(GET(url, refererHeader)).execute()
+        val documentDownloadSelector = respDownloadLinkSelector.asJsoup()
+        Log.d("Sbplay", respDownloadLinkSelector.toString())
+        val hash = documentDownloadSelector.select("div.contentbox table tbody tr td a").first().attr("onclick")
+        Log.d("Sbplay", hash.toString())
+        val h = hash.splitToSequence(",").last().replace("\'", "").replace(")", "")
+        Log.d("Sbplay", h.toString())
+        val downloadLinkHighQuality = "https://sbplay2.com/dl?op=download_orig&id=$id&mode=n&hash=$h"
+        Log.d("Sbplay", downloadLinkHighQuality)
+        respDownloadLinkSelector.close()
+        refererHeader = Headers.headersOf("Referer", downloadLinkHighQuality)
+        val respDownloadLink = noRedirectClient.newCall(GET(downloadLinkHighQuality, refererHeader)).execute()
+        val documentDownloadLink = respDownloadLink.asJsoup()
+        Log.d("Sbplay", respDownloadLink.toString())
+        val downloadLink = documentDownloadLink.selectFirst("div.contentbox span a").attr("href")
+        Log.d("Sbplay", downloadLink)
+        respDownloadLink.close()
+        return downloadLink
+    }
     /*
-    private fun sbplayUrlParse(url: String): String? {
-        val id = Uri.parse(url).getQueryParameter("id").toString()
-    }
-
     private fun xtremeCDNUrlParse(url: String): String? {
-        val response = client.newCall(GET(url)).execute()
+        val response=client.newCall(GET(url)).execute()
+        val content = response.body!!.string()
     }
+    */
 
-     */
     private fun doodUrlParse(url: String): String? {
         val response = client.newCall(GET(url.replace("/d/", "/e/"))).execute()
         val content = response.body!!.string()
-        Log.d("debug-content", content)
         if (!content.contains("'/pass_md5/")) return null
         val md5 = content.substringAfter("'/pass_md5/").substringBefore("',")
         val token = md5.substringAfterLast("/")
