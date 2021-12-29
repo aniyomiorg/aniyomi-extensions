@@ -98,8 +98,43 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        return document.select(videoListSelector()).ordered().map { videoFromElement(it) }
-            .filter { it.videoUrl != null }
+        return videosFromElement(document)
+//        return document.select(videoListSelector()).ordered().map { videoFromElement(it) }
+//            .filter { it.videoUrl != null }
+    }
+
+    private fun videosFromElement(document: Document): List<Video> {
+        val videoList = mutableListOf<Video>()
+        val elements = document.select(videoListSelector())
+        for (element in elements) {
+            val quality = element.text().substringAfter("Download (").replace("P - mp4)", "p")
+            val url = element.attr("href")
+            val location = element.ownerDocument().location()
+            val videoHeaders = Headers.headersOf("Referer", location)
+            when {
+                url.contains("https://dood") -> {
+                    val newQuality = "Doodstream mirror"
+                    val video = Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
+                    videoList.add(video)
+                }
+                url.contains("https://sbplay") -> {
+                    val videos = sbplayUrlParse(url, location)
+                    videoList.addAll(videos)
+                }
+                else -> {
+                    val parsedQuality = when (quality) {
+                        "FullHDp" -> "1080p"
+                        "HDp" -> "720p"
+                        "SDp" -> "360p"
+                        else -> quality
+                    }
+                    val video =
+                        Video(url, parsedQuality, videoUrlParse(url, location), null, videoHeaders)
+                    videoList.add(video)
+                }
+            }
+        }
+        return videoList
     }
 
     private fun Elements.ordered(): Elements {
@@ -121,36 +156,7 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector() = "div.mirror_link a[download], div.mirror_link a[href*=https://dood],div.mirror_link a[href*=https://sbplay]"
 //    override fun videoListSelector() = "div.mirror_link div.dowload a"
 
-    override fun videoFromElement(element: Element): Video {
-        val quality = element.text().substringAfter("Download (").replace("P - mp4)", "p")
-        val url = element.attr("href")
-        val location = element.ownerDocument().location()
-        val videoHeaders = Headers.headersOf("Referer", location)
-        return when {
-            url.contains("https://dood") -> {
-                val newQuality = "Doodstream mirror"
-                Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
-            }
-            url.contains("https://sbplay") -> {
-                val parsedQuality = "StreamSB: " + when (quality) {
-                    "FullHDp" -> "1080p"
-                    "HDp" -> "720p"
-                    "SDp" -> "360p"
-                    else -> quality
-                }
-                Video(url, parsedQuality, sbplayUrlParse(url, location), null)
-            }
-            else -> {
-                val parsedQuality = when (quality) {
-                    "FullHDp" -> "1080p"
-                    "HDp" -> "720p"
-                    "SDp" -> "360p"
-                    else -> quality
-                }
-                Video(url, parsedQuality, videoUrlParse(url, location), null, videoHeaders)
-            }
-        }
-    }
+    override fun videoFromElement(element: Element): Video = throw Exception("not used")
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
@@ -163,28 +169,37 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoUrl ?: url
     }
 
-    private fun sbplayUrlParse(url: String, referer: String): String? {
-        var refererHeader = Headers.headersOf("Referer", referer)
+    private fun sbplayUrlParse(url: String, referer: String): List<Video> {
+        val videoList = mutableListOf<Video>()
+        val refererHeader = Headers.headersOf("Referer", referer)
         val id = Uri.parse(url).pathSegments[1]
         val noRedirectClient = client.newBuilder().followRedirects(false).build()
         val respDownloadLinkSelector = noRedirectClient.newCall(GET(url, refererHeader)).execute()
         val documentDownloadSelector = respDownloadLinkSelector.asJsoup()
-        Log.d("Sbplay", respDownloadLinkSelector.toString())
-        val hash = documentDownloadSelector.select("div.contentbox table tbody tr td a").first().attr("onclick")
-        Log.d("Sbplay", hash.toString())
-        val h = hash.splitToSequence(",").last().replace("\'", "").replace(")", "")
-        Log.d("Sbplay", h.toString())
-        val downloadLinkHighQuality = "https://sbplay2.com/dl?op=download_orig&id=$id&mode=n&hash=$h"
-        Log.d("Sbplay", downloadLinkHighQuality)
-        respDownloadLinkSelector.close()
-        refererHeader = Headers.headersOf("Referer", downloadLinkHighQuality)
-        val respDownloadLink = noRedirectClient.newCall(GET(downloadLinkHighQuality, refererHeader)).execute()
+        val downloadElements = documentDownloadSelector.select("div.contentbox table tbody tr td a")
+        for (downloadElement in downloadElements) {
+            val videoData = downloadElement.attr("onclick")
+            val quality = downloadElement.text()
+            val hash = videoData.splitToSequence(",").last().replace("\'", "").replace(")", "")
+            val mode =
+                videoData.splitToSequence(",").elementAt(1).replace("\'", "").replace(")", "")
+            val downloadLink =
+                "https://sbplay2.com/dl?op=download_orig&id=$id&mode=$mode&hash=$hash"
+            respDownloadLinkSelector.close()
+            val video = sbplayVideoParser(downloadLink, quality)
+            videoList.add(video)
+        }
+        return videoList
+    }
+
+    private fun sbplayVideoParser(url: String, quality: String): Video {
+        val noRedirectClient = client.newBuilder().followRedirects(false).build()
+        val refererHeader = Headers.headersOf("Referer", url)
+        val respDownloadLink = noRedirectClient.newCall(GET(url, refererHeader)).execute()
         val documentDownloadLink = respDownloadLink.asJsoup()
-        Log.d("Sbplay", respDownloadLink.toString())
         val downloadLink = documentDownloadLink.selectFirst("div.contentbox span a").attr("href")
-        Log.d("Sbplay", downloadLink)
         respDownloadLink.close()
-        return downloadLink
+        return Video(url, quality, downloadLink, null, refererHeader)
     }
     /*
     private fun xtremeCDNUrlParse(url: String): String? {
