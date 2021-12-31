@@ -96,8 +96,6 @@ class MyCimaMovie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             videoList.add(video)
         }
         return videoList
-        val sourceTag = element.ownerDocument().select("source").firstOrNull()!!
-        return listOf(Video(sourceTag.attr("src"), "Default", sourceTag.attr("src"), null))
     }
 
     override fun List<Video>.sort(): List<Video> {
