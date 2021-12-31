@@ -225,7 +225,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // Filter
 
     override fun getFilterList() = AnimeFilterList(
-        Filter.Header("الفلترات مش هتشتغل لو بتبحث او وهي فاضيه"),
+        AnimeFilter.Header("الفلترات مش هتشتغل لو بتبحث او وهي فاضيه"),
         GenreList(genresName),
         TypeList(typesName),
         StatusList(statusesName),

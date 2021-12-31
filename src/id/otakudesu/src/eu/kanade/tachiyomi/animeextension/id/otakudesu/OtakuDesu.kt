@@ -19,7 +19,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import org.jsoup.select.Elements
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
@@ -210,7 +209,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this
     }
 
-   override fun videoFromElement(element: Element): Video {
+    override fun videoFromElement(element: Element): Video {
         val res = client.newCall(GET(element.attr("href"))).execute().asJsoup()
         val scr = res.select("script:containsData(dlbutton)").html()
         var url = element.attr("href").substringBefore("/v/")

@@ -173,4 +173,3 @@ class GenoAnime : ParsedAnimeHttpSource() {
         return "https://dood$content"
     }
 }
-
