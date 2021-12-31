@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -13,6 +14,7 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -26,7 +28,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Anime4Up"
 
-    override val baseUrl = "https://anime4up.com"
+    override val baseUrl = "https://w1.anime4up.com"
 
     override val lang = "ar"
 
@@ -136,7 +138,39 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = "div.anime-list-content div.row.display-flex div.col-md-4"
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/?search_param=animes&s=$query")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val url = if (query.isNotBlank()) {
+            "$baseUrl/?search_param=animes&s=$query"
+        } else {
+            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
+                when (filter) {
+                    is GenreList -> {
+                        if (filter.state > 0) {
+                            val GenreN = getGenreList()[filter.state].name
+                            val genreUrl = "$baseUrl/anime-genre/$GenreN".toHttpUrlOrNull()!!.newBuilder()
+                            return GET(genreUrl.toString(), headers)
+                        }
+                    }
+                    is StatusList -> {
+                        if (filter.state > 0) {
+                            val StatusN = getStatusList()[filter.state].query
+                            val statusUrl = "$baseUrl/anime-status/$StatusN".toHttpUrlOrNull()!!.newBuilder()
+                            return GET(statusUrl.toString(), headers)
+                        }
+                    }
+                    is TypeList -> {
+                        if (filter.state > 0) {
+                            val TypeN = getTypeList()[filter.state].query
+                            val typeUrl = "$baseUrl/anime-type/$TypeN".toHttpUrlOrNull()!!.newBuilder()
+                            return GET(typeUrl.toString(), headers)
+                        }
+                    }
+                }
+            }
+            throw Exception("اختر فلتر")
+        }
+        return GET(url, headers)
+    }
 
     // Anime Details
 
@@ -187,4 +221,92 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         screen.addPreference(videoQualityPref)
     }
+
+    // Filter
+
+    override fun getFilterList() = AnimeFilterList(
+        Filter.Header("الفلترات مش هتشتغل لو بتبحث او وهي فاضيه"),
+        GenreList(genresName),
+        TypeList(typesName),
+        StatusList(statusesName),
+    )
+
+    private class GenreList(genres: Array<String>) : AnimeFilter.Select<String>("تصنيف الأنمي", genres)
+    private data class Genre(val name: String, val query: String)
+    private val genresName = getGenreList().map {
+        it.name
+    }.toTypedArray()
+
+    private class TypeList(types: Array<String>) : AnimeFilter.Select<String>("نوع الأنمي", types)
+    private data class Type(val name: String, val query: String)
+    private val typesName = getTypeList().map {
+        it.name
+    }.toTypedArray()
+
+    private class StatusList(statuse: Array<String>) : AnimeFilter.Select<String>("حالة الأنمي", statuse)
+    private data class Status(val name: String, val query: String)
+    private val statusesName = getStatusList().map {
+        it.name
+    }.toTypedArray()
+
+    private fun getGenreList() = listOf(
+        Genre("اختر", ""),
+        Genre("أطفال", "%d8%a3%d8%b7%d9%81%d8%a7%d9%84"),
+        Genre("أكشن", "%d8%a3%d9%83%d8%b4%d9%86/"),
+        Genre("إيتشي", "%d8%a5%d9%8a%d8%aa%d8%b4%d9%8a/"),
+        Genre("اثارة", "%d8%a7%d8%ab%d8%a7%d8%b1%d8%a9/"),
+        Genre("العاب", "%d8%a7%d9%84%d8%b9%d8%a7%d8%a8/"),
+        Genre("بوليسي", "%d8%a8%d9%88%d9%84%d9%8a%d8%b3%d9%8a/"),
+        Genre("تاريخي", "%d8%aa%d8%a7%d8%b1%d9%8a%d8%ae%d9%8a/"),
+        Genre("جنون", "%d8%ac%d9%86%d9%88%d9%86/"),
+        Genre("جوسي", "%d8%ac%d9%88%d8%b3%d9%8a/"),
+        Genre("حربي", "%d8%ad%d8%b1%d8%a8%d9%8a/"),
+        Genre("حريم", "%d8%ad%d8%b1%d9%8a%d9%85/"),
+        Genre("خارق للعادة", "%d8%ae%d8%a7%d8%b1%d9%82-%d9%84%d9%84%d8%b9%d8%a7%d8%af%d8%a9/"),
+        Genre("خيال علمي", "%d8%ae%d9%8a%d8%a7%d9%84-%d8%b9%d9%84%d9%85%d9%8a/"),
+        Genre("دراما", "%d8%af%d8%b1%d8%a7%d9%85%d8%a7/"),
+        Genre("رعب", "%d8%b1%d8%b9%d8%a8/"),
+        Genre("رومانسي", "%d8%b1%d9%88%d9%85%d8%a7%d9%86%d8%b3%d9%8a/"),
+        Genre("رياضي", "%d8%b1%d9%8a%d8%a7%d8%b6%d9%8a/"),
+        Genre("ساموراي", "%d8%b3%d8%a7%d9%85%d9%88%d8%b1%d8%a7%d9%8a/"),
+        Genre("سحر", "%d8%b3%d8%ad%d8%b1/"),
+        Genre("سينين", "%d8%b3%d9%8a%d9%86%d9%8a%d9%86/"),
+        Genre("شريحة من الحياة", "%d8%b4%d8%b1%d9%8a%d8%ad%d8%a9-%d9%85%d9%86-%d8%a7%d9%84%d8%ad%d9%8a%d8%a7%d8%a9/"),
+        Genre("شوجو", "%d8%b4%d9%88%d8%ac%d9%88/"),
+        Genre("شوجو اَي", "%d8%b4%d9%88%d8%ac%d9%88-%d8%a7%d9%8e%d9%8a/"),
+        Genre("شونين", "%d8%b4%d9%88%d9%86%d9%8a%d9%86/"),
+        Genre("شونين اي", "%d8%b4%d9%88%d9%86%d9%8a%d9%86-%d8%a7%d9%8a/"),
+        Genre("شياطين", "%d8%b4%d9%8a%d8%a7%d8%b7%d9%8a%d9%86/"),
+        Genre("غموض", "%d8%ba%d9%85%d9%88%d8%b6/"),
+        Genre("فضائي", "%d9%81%d8%b6%d8%a7%d8%a6%d9%8a/"),
+        Genre("فنتازيا", "%d9%81%d9%86%d8%aa%d8%a7%d8%b2%d9%8a%d8%a7/"),
+        Genre("فنون قتالية", "%d9%81%d9%86%d9%88%d9%86-%d9%82%d8%aa%d8%a7%d9%84%d9%8a%d8%a9/"),
+        Genre("قوى خارقة", "%d9%82%d9%88%d9%89-%d8%ae%d8%a7%d8%b1%d9%82%d8%a9/"),
+        Genre("كوميدي", "%d9%83%d9%88%d9%85%d9%8a%d8%af%d9%8a/"),
+        Genre("محاكاة ساخرة", "%d9%85%d8%ad%d8%a7%d9%83%d8%a7%d8%a9-%d8%b3%d8%a7%d8%ae%d8%b1%d8%a9/"),
+        Genre("مدرسي", "%d9%85%d8%af%d8%b1%d8%b3%d9%8a/"),
+        Genre("مصاصي دماء", "%d9%85%d8%b5%d8%a7%d8%b5%d9%8a-%d8%af%d9%85%d8%a7%d8%a1/"),
+        Genre("مغامرات", "%d9%85%d8%ba%d8%a7%d9%85%d8%b1%d8%a7%d8%aa/"),
+        Genre("موسيقي", "%d9%85%d9%88%d8%b3%d9%8a%d9%82%d9%8a/"),
+        Genre("ميكا", "%d9%85%d9%8a%d9%83%d8%a7/"),
+        Genre("نفسي", "%d9%86%d9%81%d8%b3%d9%8a/")
+    )
+
+    private fun getTypeList() = listOf(
+        Type("أختر", ""),
+        Type("Movie", "movie-3"),
+        Type("ONA", "ona1"),
+        Type("OVA", "ova1"),
+        Type("Special", "special1"),
+        Type("TV", "tv2")
+
+    )
+
+    private fun getStatusList() = listOf(
+        Status("أختر", ""),
+        Status("لم يعرض بعد", "%d9%84%d9%85-%d9%8a%d8%b9%d8%b1%d8%b6-%d8%a8%d8%b9%d8%af"),
+        Status("مكتمل", "complete"),
+        Status("يعرض الان", "%d9%8a%d8%b9%d8%b1%d8%b6-%d8%a7%d9%84%d8%a7%d9%86-1")
+
+    )
 }
