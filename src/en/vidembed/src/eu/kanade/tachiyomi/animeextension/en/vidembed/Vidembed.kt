@@ -264,12 +264,8 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeSelector(): String = ".video-block a"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val filterList = if (filters.isEmpty()) getFilterList() else filters
-        val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
-
         return when {
             query.isNotBlank() -> GET("$baseUrl/search.html?keyword=$query&page=$page", headers)
-            genreFilter.state != 0 -> GET("$baseUrl/genre/${genreFilter.toUriPart()}?page=$page")
             else -> GET("$baseUrl/?page=$page")
         }
     }
@@ -326,69 +322,5 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         screen.addPreference(videoQualityPref)
-    }
-
-    // Filters
-    override fun getFilterList(): AnimeFilterList = AnimeFilterList(
-        AnimeFilter.Header("Text search ignores filters"),
-        GenreFilter()
-    )
-
-    private class GenreFilter : UriPartFilter(
-        "Genres",
-        arrayOf(
-            Pair("<select>", ""),
-            Pair("Action", "action"),
-            Pair("Adventure", "adventure"),
-            Pair("Cars", "cars"),
-            Pair("Comedy", "comedy"),
-            Pair("Crime", "crime"),
-            Pair("Dementia", "dementia"),
-            Pair("Demons", "demons"),
-            Pair("Drama", "drama"),
-            Pair("Dub", "dub"),
-            Pair("Ecchi", "ecchi"),
-            Pair("Family", "family"),
-            Pair("Fantasy", "fantasy"),
-            Pair("Game", "game"),
-            Pair("Harem", "harem"),
-            Pair("Historical", "historical"),
-            Pair("Horror", "horror"),
-            Pair("Josei", "josei"),
-            Pair("Kids", "kids"),
-            Pair("Magic", "magic"),
-            Pair("Martial Arts", "martial-arts"),
-            Pair("Mature", "mature"),
-            Pair("Mecha", "mecha"),
-            Pair("Military", "military"),
-            Pair("Music", "music"),
-            Pair("Mystery", "mystery"),
-            Pair("Parody", "parody"),
-            Pair("Police", "police"),
-            Pair("Psychological", "psychological"),
-            Pair("Romance", "romance"),
-            Pair("Samurai", "samurai"),
-            Pair("School", "school"),
-            Pair("Sci-Fi", "sci-fi"),
-            Pair("Seinen", "seinen"),
-            Pair("Shoujo", "shoujo"),
-            Pair("Shoujo Ai", "shoujo-ai"),
-            Pair("Shounen", "shounen"),
-            Pair("Shounen Ai", "shounen-ai"),
-            Pair("Slice of Life", "slice-of-life"),
-            Pair("Space", "space"),
-            Pair("Sports", "sports"),
-            Pair("Super Power", "super-power"),
-            Pair("Supernatural", "supernatural"),
-            Pair("Thriller", "thriller"),
-            Pair("Vampire", "vampire"),
-            Pair("Yaoi", "yaoi"),
-            Pair("Yuri", "yuri")
-        )
-    )
-
-    private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
-        AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
-        fun toUriPart() = vals[state].second
     }
 }
