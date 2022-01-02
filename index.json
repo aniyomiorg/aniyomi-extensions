@@ -18,6 +18,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: عرب سيد",
+    "pkg": "eu.kanade.tachiyomi.animeextension.ar.arabseed",
+    "apk": "aniyomi-ar.arabseed-v12.1.apk",
+    "lang": "ar",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: فاصل اعلاني",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.faselhd",
     "apk": "aniyomi-ar.faselhd-v12.2.apk",
