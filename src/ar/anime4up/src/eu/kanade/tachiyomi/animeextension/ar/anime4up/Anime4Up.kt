@@ -80,24 +80,29 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val iframe = document.selectFirst("iframe").attr("src")
-        // val referer = response.request.url.encodedPath
-        val newHeaders = Headers.headersOf("referer", baseUrl)
+        val referer = response.request.url.encodedPath
+        val newHeaders = Headers.headersOf("referer", baseUrl + referer)
         val iframeResponse = client.newCall(GET(iframe, newHeaders))
             .execute().asJsoup()
         return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
     }
 
-    override fun videoListSelector() = "script:containsData(source)"
+    override fun videoListSelector() = "script:containsData(m3u8)"
 
     private fun videosFromElement(element: Element): List<Video> {
         val data = element.data().substringAfter("sources: [").substringBefore("],")
-        val sources = data.split("file:\"").drop(1)
+        val sources = data.split("file: \"").drop(1)
         val videoList = mutableListOf<Video>()
         for (source in sources) {
-            val src = source.substringBefore("\"")
-            val quality = source.substringAfter("label:\"").substringBefore("\"")
-            val video = Video(src, quality, src, null)
-            videoList.add(video)
+            val masterUrl = source.substringBefore("\"}")
+            val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
+            val videoList = mutableListOf<Video>()
+            masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
+                val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
+                val videoUrl = it.substringAfter("\n").substringBefore("\n")
+                videoList.add(Video(videoUrl, quality, videoUrl, null))
+            }
+            return videoList
         }
         return videoList
     }
