@@ -22,36 +22,26 @@ class GenoAnime : ParsedAnimeHttpSource() {
     override val supportsLatest = true
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val weserv = "https://images.weserv.nl/?w=400&q=60&url="
-
     // Popular Anime
-    override fun popularAnimeRequest(page: Int): Request =
-        GET("$baseUrl/browse?sort=top_rated&page=$page")
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/browse?sort=top_rated&page=$page")
 
     override fun popularAnimeSelector(): String = "div.trending__product div.col-lg-10 div.row div.col-lg-3.col-6"
-    override fun popularAnimeNextPageSelector(): String =
-        "div.text-center a i.fa.fa-angle-double-right"
+    override fun popularAnimeNextPageSelector(): String = "div.text-center a i.fa.fa-angle-double-right"
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        val tempurl =
-            "$baseUrl/" + element.select("div.product__item a").attr("href").removePrefix("./")
-        anime.setUrlWithoutDomain(tempurl)
+        anime.setUrlWithoutDomain("$baseUrl/${element.select("div.product__item a").attr("href").removePrefix("./")}")
         anime.title = element.select("div.product__item__text h5 a:nth-of-type(2)").first().text()
-        val thumburl =
-            element.select("div.product__item__pic").attr("data-setbg").removePrefix("./")
-        anime.thumbnail_url = "$weserv$baseUrl/$thumburl"
+        anime.thumbnail_url = "$baseUrl/${element.select("div.product__item__pic").attr("data-setbg").removePrefix("./")}"
         return anime
     }
 
     // Latest Anime
-    override fun latestUpdatesRequest(page: Int): Request =
-        GET("$baseUrl/browse?sort=latest&page=$page", headers)
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/browse?sort=latest&page=$page", headers)
 
     override fun latestUpdatesSelector(): String = popularAnimeSelector()
     override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
-    override fun latestUpdatesFromElement(element: Element): SAnime =
-        popularAnimeFromElement(element)
+    override fun latestUpdatesFromElement(element: Element): SAnime = popularAnimeFromElement(element)
 
     // Search Anime
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -66,18 +56,13 @@ class GenoAnime : ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeSelector(): String = "div.col-lg-3"
-    override fun searchAnimeNextPageSelector(): String =
-        "div.text-center.product__pagination a.search-page i.fa.fa-angle-double-left"
+    override fun searchAnimeNextPageSelector(): String = "div.text-center.product__pagination a.search-page i.fa.fa-angle-double-left"
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        val tempurl = "$baseUrl/" + element.select("a").attr("href").removePrefix("./")
-        val thumburl =
-            element.select("div.product__item div.product__item__pic.set-bg").attr("data-setbg")
-                .removePrefix("./")
-        anime.setUrlWithoutDomain(tempurl)
+        anime.setUrlWithoutDomain("$baseUrl/${element.select("a").attr("href").removePrefix("./")}")
         anime.title = element.select("div.product__item__text h5 a:nth-of-type(2)").text()
-        anime.thumbnail_url = "$weserv$baseUrl/$thumburl"
+        anime.thumbnail_url = "$baseUrl/${element.select("div.product__item div.product__item__pic.set-bg").attr("data-setbg").removePrefix("./")}"
         return anime
     }
 
@@ -87,28 +72,26 @@ class GenoAnime : ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("href"))
         episode.name = element.select("a").text()
-        val episodeNumberString = element.text().removePrefix("Ep ")
-        episode.episode_number = episodeNumberString.toFloat()
+        episode.episode_number = element.text().removePrefix("Ep ").toFloat()
         episode.date_upload = System.currentTimeMillis()
         return episode
     }
 
     // Video
     override fun videoUrlParse(document: Document): String = throw Exception("Not used.")
-    override fun videoListSelector() =
-        "section.details.spad div.container div.row:nth-of-type(1) div.col-lg-12:nth-of-type(1)"
+    override fun videoListSelector() = "section.details.spad div.container div.row:nth-of-type(1) div.col-lg-12:nth-of-type(1)"
 
     override fun videoFromElement(element: Element): Video {
-        val baaseurl = element.select("div#video iframe#iframe-to-load").attr("src")
-        if (baaseurl.contains("https://genoanime.com/doodplayer.php")) {
-            val baseurl = videoidgrab(element.select("div#video iframe#iframe-to-load").attr("src"))
-            val a = doodUrlParse(baseurl)
+        val vidsrc = element.select("div#video iframe#iframe-to-load").attr("src")
+        if (vidsrc.contains("https://genoanime.com/doodplayer.php")) {
+            val url = videoidgrab(element.select("div#video iframe#iframe-to-load").attr("src"))
+            val a = doodUrlParse(url)
             return Video(
-                baseurl,
+                url,
                 "Doodstream",
                 a,
                 null,
-                Headers.headersOf("Referer", baseurl)
+                Headers.headersOf("Referer", url)
             )
         } else {
             return Video(
@@ -124,13 +107,11 @@ class GenoAnime : ParsedAnimeHttpSource() {
     // Anime window
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        val thumburl =
-            document.select("div.anime__details__pic").attr("data-setbg").removePrefix("./")
-        anime.thumbnail_url = "$baseUrl/$thumburl"
+        anime.thumbnail_url = "$baseUrl/${document.select("div.anime__details__pic").attr("data-setbg").removePrefix("./")}"
         anime.title = document.select("div.anime__details__title h3").text()
         anime.genre = document.select("div.col-lg-6.col-md-6:nth-of-type(1) ul li:nth-of-type(3)")
             .joinToString(", ") { it.text() }.replace("Genre:", "")
-        anime.description = document.select("div.anime__details__title span").text()
+        anime.description = document.select("div.anime__details__text > p").text()
         document.select("div.col-lg-6.col-md-6:nth-of-type(2) ul li:nth-of-type(2)").text()
             ?.also { statusText ->
                 when {
@@ -139,10 +120,6 @@ class GenoAnime : ParsedAnimeHttpSource() {
                     else -> anime.status = SAnime.UNKNOWN
                 }
             }
-//        if (anime.status == SAnime.ONGOING) {
-//            val(aiiringat, epiisode, animeid) = next_ep_ween(anime.title)
-//            anime.next_ep_wen = airingmsg(epiisode, aiiringat)
-//        }
         return anime
     }
 
@@ -151,6 +128,7 @@ class GenoAnime : ParsedAnimeHttpSource() {
         val response = client.newCall(GET(url.replace("/e/", "/d/"))).execute()
         val content = response.body!!.string()
         val md5 = content.substringAfter("/download/").substringBefore("\"")
+        if (md5.contains("<!doctype html>")) { throw Exception("video not found") }
         var abc = doodreq(url, md5)
         while (abc.contains("""<b class="err">Security error</b>""")) {
             abc = doodreq(url, md5)
