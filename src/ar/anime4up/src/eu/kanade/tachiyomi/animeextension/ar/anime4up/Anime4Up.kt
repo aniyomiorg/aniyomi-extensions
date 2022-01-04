@@ -91,7 +91,6 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun videosFromElement(element: Element): List<Video> {
         val data = element.data().substringAfter("sources: [").substringBefore("],")
-        Log.i("lol", element.data().substringAfter("sources: [").substringBefore("],"))
         val sources = data.split("file: \"").drop(1)
         val videoList = mutableListOf<Video>()
         for (source in sources) {
