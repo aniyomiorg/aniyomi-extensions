@@ -59,13 +59,11 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // episodes
 
-    override fun episodeListSelector() = "div.bg-primary2 div.quality:first-child a.link-show" // :contains(مشاهدة)"
+    override fun episodeListSelector() = "input#reportInputUrl"
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-        episode.setUrlWithoutDomain(element.attr("href").replace("http://go.akwam.im", "https://akwam.rest") + "/" + element.ownerDocument().select("input#page_id").attr("value"))
-        Log.i("lol", element.attr("href"))
-        Log.i("loll", element.attr("href").replace("http://go.akwam.im", "https://akwam.rest") + "/" + element.ownerDocument().select("input#page_id").attr("value"))
+        episode.setUrlWithoutDomain(element.attr("value"))
         episode.name = element.ownerDocument().select("picture > img.img-fluid").attr("alt")
         episode.date_upload = System.currentTimeMillis()
         return episode
@@ -75,7 +73,7 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val iframe = document.select("input#reportInputUrl").attr("value")
+        val iframe = document.select("a.link-show").attr("href").replace("http://go.akwam.im", "https://akwam.rest") + "/" + document.ownerDocument().select("input#page_id").attr("value")
         Log.i("lol", document.select("input#reportInputUrl").attr("value"))
         val referer = response.request.url.toString()
         val refererHeaders = Headers.headersOf("referer", referer)
@@ -87,7 +85,7 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector() = "source"
 
     override fun videoFromElement(element: Element): Video {
-        return Video(element.attr("src"), element.attr("size") + "p", element.attr("src"), null)
+        return Video(element.attr("src").replace("https", "http"), element.attr("size") + "p", element.attr("src").replace("https", "http"), null)
     }
 
     override fun List<Video>.sort(): List<Video> {
