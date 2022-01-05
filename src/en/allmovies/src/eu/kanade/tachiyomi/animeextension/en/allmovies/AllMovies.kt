@@ -48,7 +48,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.attr("href"))
+        anime.url = "/movies/" + element.attr("href")
         anime.title = element.select("h2.Title").text()
         anime.thumbnail_url = "https:" + element.select("div.Image figure img").attr("data-src")
 
@@ -63,7 +63,10 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-        episode.setUrlWithoutDomain("allmoviesforyou.net" + element.attr("href"))
+        // episode.setUrlWithoutDomain("allmoviesforyou.net" + element.attr("href"))
+        episode.setUrlWithoutDomain("/" + element.attr("href"))
+        // val tempurl = "$baseUrl/movies/the-kings-man" // element.attr("href").substringAfter("allmoviesforyou.net")
+        // episode.setUrlWithoutDomain(tempurl)
         episode.name = element.ownerDocument().select("div.TPMvCn h1.Title").text()
         return episode
     }
@@ -73,7 +76,9 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val iframe1 = client.newCall(GET(document.select("iframe[data-src^=\"https://allmovies\"]").attr("data-src"))).execute().asJsoup()
+        // val iframe1 = client.newCall(GET(document.select("iframe[src^=\"https://stream\"]").attr("src"))).execute().asJsoup()
         val iframe = iframe1.select("iframe").attr("data-src") // [data-src^="https://stream"]
+        // val iframe = iframe1.select("iframe").attr("src") // [data-src^="https://stream"]
         val referer = response.request.url.toString()
         val refererHeaders = Headers.headersOf("referer", referer)
         val iframeResponse = client.newCall(GET(iframe, refererHeaders))
@@ -163,7 +168,9 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         document.select("div.Info > span.Qlty").text().let {
             if (it.contains("ON AIR")) anime.status = SAnime.ONGOING else anime.status = SAnime.COMPLETED
         }
-        anime.description = document.select("div.Description p:first-child").text()
+        // anime.description = document.select("div.Description p:first-child").text()
+        anime.description = document.select("div.Description p").text().substringBefore("Director:")
+        anime.author = document.select("p.Director").text()
         return anime
     }
 
