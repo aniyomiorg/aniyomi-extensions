@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.ar.akwam
+package eu.kanade.tachiyomi.animeextension.ar.akwams
 
 import android.app.Application
 import android.content.SharedPreferences
@@ -24,9 +24,9 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
 
-class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+class AkwamS : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "أكوام"
+    override val name = "أكوام مسلسلات"
 
     override val baseUrl = "https://akwam.im"
 
@@ -44,7 +44,7 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "div.entry-box-1 div.entry-image a.box"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/movies?page=$page")
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/series?page=$page")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -58,12 +58,12 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // episodes
 
-    override fun episodeListSelector() = "input#reportInputUrl"
+    override fun episodeListSelector() = "div.bg-primary2 h2 a"
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-        episode.setUrlWithoutDomain(element.attr("value"))
-        episode.name = element.ownerDocument().select("picture > img.img-fluid").attr("alt")
+        episode.setUrlWithoutDomain(element.attr("href"))
+        episode.name = element.text()
         episode.date_upload = System.currentTimeMillis()
         return episode
     }
@@ -122,10 +122,9 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val url = if (query.isNotBlank()) {
-            val url = "$baseUrl/search?q=$query&page=$page".toHttpUrlOrNull()!!.newBuilder()
+            val url = "$baseUrl/search?q=$query&page=$page&section=series".toHttpUrlOrNull()!!.newBuilder()
             filters.forEach { filter ->
                 when (filter) {
-                    is SectionFilter -> url.addQueryParameter("section", filter.toUriPart())
                     is RatingFilter -> url.addQueryParameter("rating", filter.toUriPart())
                     is FormatFilter -> url.addQueryParameter("formats", filter.toUriPart())
                     is QualityFilter -> url.addQueryParameter("quality", filter.toUriPart())
@@ -133,7 +132,7 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             url.toString()
         } else {
-            val url = "$baseUrl/movies?page=$page".toHttpUrlOrNull()!!.newBuilder()
+            val url = "$baseUrl/series?&page=$page".toHttpUrlOrNull()!!.newBuilder()
             filters.forEach { filter ->
                 when (filter) {
                     is SectionSFilter -> url.addQueryParameter("section", filter.toUriPart())
@@ -174,31 +173,24 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun getFilterList() = AnimeFilterList(
         AnimeFilter.Header("this is search Filters"),
         AnimeFilter.Separator(),
-        SectionFilter(getSectionFilter()),
         RatingFilter(getRatingFilter()),
         FormatFilter(getFormatFilter()),
         QualityFilter(getQualityFilter()),
-        AnimeFilter.Header("this is Movies Filters"),
+        AnimeFilter.Separator(),
+        AnimeFilter.Header("this is Series Filters"),
         AnimeFilter.Separator(),
         SectionSFilter(getSectionSFilter()),
         CategorySFilter(getCategorySFilter()),
         RatingSFilter(getRatingSFilter()),
     )
 
-    private class SectionFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("الأقسام", vals)
-    private class RatingFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("التقيم", vals)
+    private class RatingFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("التقييم", vals)
     private class FormatFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("الجودة", vals)
     private class QualityFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("الدقة", vals)
 
     private class SectionSFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("الأقسام", vals)
     private class CategorySFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("التصنيف", vals)
     private class RatingSFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("التقييم", vals)
-
-    private fun getSectionFilter(): Array<Pair<String?, String>> = arrayOf(
-        Pair("0", "القسم"),
-        Pair("movie", "افلام"),
-        Pair("show", "تلفزيون")
-    )
 
     private fun getRatingFilter(): Array<Pair<String?, String>> = arrayOf(
         Pair("0", "التقييم"),

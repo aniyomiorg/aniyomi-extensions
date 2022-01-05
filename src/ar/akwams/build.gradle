@@ -2,10 +2,10 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    extName = 'أكوام'
-    pkgNameSuffix = 'ar.akwam'
-    extClass = '.Akwam'
-    extVersionCode = 2
+    extName = 'اكوام مسلسلات'
+    pkgNameSuffix = 'ar.akwams'
+    extClass = '.AkwamS'
+    extVersionCode = 1
     libVersion = '12'
 }
 
