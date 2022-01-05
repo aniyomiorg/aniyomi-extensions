@@ -1,5 +1,10 @@
 package eu.kanade.tachiyomi.animeextension.ar.xsmovie
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -7,15 +12,17 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers.Companion.toHeaders
+import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.lang.Exception
 
-class XsMovie : ParsedAnimeHttpSource() {
+class XsMovie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "XS Movie"
 
@@ -26,6 +33,10 @@ class XsMovie : ParsedAnimeHttpSource() {
     override val supportsLatest = false
 
     override val client: OkHttpClient = network.cloudflareClient
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     // Popular Anime
     override fun popularAnimeSelector(): String = "ul.boxes--holder div.itemtype_anime a"
@@ -48,7 +59,7 @@ class XsMovie : ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("href"))
-        episode.name = "movie"
+        episode.name = element.text().replace("فيلم ", "").replace("مترجم ", "").replace("اون لاين ", "").replace("بلوراي", "") // "movie"
 
         return episode
     }
@@ -57,11 +68,11 @@ class XsMovie : ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val iframe = document.select("div.player--iframe iframe").attr("src").removePrefix("https://ww.xsanime.com/embedd?url=")
-        val referer = response.request.url.encodedPath
-        val newHeaderList = mutableMapOf(Pair("referer", baseUrl + referer))
-        headers.forEach { newHeaderList[it.first] = it.second }
-        val iframeResponse = client.newCall(GET(iframe, newHeaderList.toHeaders()))
+        val srcVid = preferences.getString("preferred_quality", "الجودة العالية")!!
+        val iframe = document.select("div.downloads ul div.listServ:contains($srcVid) div.serL a[href~=4shared]").attr("href").substringBeforeLast("/").replace("video", "web/embed/file")
+        val referer = response.request.url.toString()
+        val refererHeaders = Headers.headersOf("referer", referer)
+        val iframeResponse = client.newCall(GET(iframe, refererHeaders))
             .execute().asJsoup()
         return iframeResponse.select(videoListSelector()).map { videoFromElement(it) }
     }
@@ -69,7 +80,7 @@ class XsMovie : ParsedAnimeHttpSource() {
     override fun videoListSelector() = "source"
 
     override fun videoFromElement(element: Element): Video {
-        return Video(element.attr("src"), "Default", element.attr("src"), null)
+        return Video(element.attr("src"), "Default: If you want to change the quality go to extension settings", element.attr("src"), null)
     }
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
@@ -118,4 +129,25 @@ class XsMovie : ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
 
     override fun latestUpdatesSelector(): String = throw Exception("Not used")
+
+    // Preferences
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val qualityPref = ListPreference(screen.context).apply {
+            key = "preferred_quality"
+            title = "Preferred Quality"
+            entries = arrayOf("الجودة العالية", "الجودة الخارقة", "الجودة المتوسطة")
+            entryValues = arrayOf("الجودة العالية", "الجودة الخارقة", "الجودة المتوسطة")
+            setDefaultValue("الجودة العالية")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(qualityPref)
+    }
 }
