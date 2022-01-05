@@ -2,7 +2,16 @@
   {
     "name": "Aniyomi: أكوام",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.akwam",
-    "apk": "aniyomi-ar.akwam-v12.1.apk",
+    "apk": "aniyomi-ar.akwam-v12.2.apk",
+    "lang": "ar",
+    "code": 2,
+    "version": "12.2",
+    "nsfw": 0
+  },
+  {
+    "name": "Aniyomi: اكوام مسلسلات",
+    "pkg": "eu.kanade.tachiyomi.animeextension.ar.akwams",
+    "apk": "aniyomi-ar.akwams-v12.1.apk",
     "lang": "ar",
     "code": 1,
     "version": "12.1",
