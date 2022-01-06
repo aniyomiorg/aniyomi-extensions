@@ -78,3 +78,4 @@ if (System.getenv("CI") == null || System.getenv("CI_PUSH") == "true") {
 inline fun File.eachDir(block: (File) -> Unit) {
     listFiles()?.filter { it.isDirectory }?.forEach { block(it) }
 }
+include(":extensions:individual:en:vidembed")
