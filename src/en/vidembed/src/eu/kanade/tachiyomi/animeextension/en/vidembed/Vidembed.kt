@@ -3,11 +3,9 @@ package eu.kanade.tachiyomi.animeextension.en.vidembed
 import android.app.Application
 import android.content.SharedPreferences
 import android.net.Uri
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
-import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -21,7 +19,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import org.jsoup.select.Elements
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
@@ -34,7 +31,7 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "en"
 
-    override val supportsLatest = true
+    override val supportsLatest = false
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -52,7 +49,7 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.thumbnail_url = element.select("img").first().attr("src")
-        anime.title = element.select(".name").first().text()
+        anime.title = element.select(".name").first().text().split("Episode").first()
         return anime
     }
 
@@ -62,45 +59,30 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
-        // return document.select(".video-info-left .listing.items.lists .video-block").map { episodeFromElement(it) }
         return document.select(episodeListSelector()).map { episodeFromElement(it) }
     }
-//
-//    private fun episodesRequest(totalEpisodes: String, id: String): List<SEpisode> {
-//        val request = GET("https://ajax.gogo-load.com/ajax/load-list-episode?ep_start=0&ep_end=$totalEpisodes&id=$id", headers)
-//        val epResponse = client.newCall(request).execute()
-//        val document = epResponse.asJsoup()
-//        return document.select("a").map { episodeFromElement(it) }
-//    }
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(baseUrl + element.attr("href"))
-        // val ep = element.selectFirst("div.name").ownText().substringAfter("Episode ").substringBefore(" ")
         val epName = element.selectFirst("div.name").ownText()
         val ep = epName.substringAfter("Episode ")
-        // episode.episode_number = ep.toFloat()
         episode.episode_number = 1.toFloat()
         episode.name = if (ep == epName) epName else "Episode $ep"
-//        episode.name = ep
         episode.date_upload = System.currentTimeMillis()
         return episode
     }
 
     override fun videoListRequest(episode: SEpisode): Request {
         val document = client.newCall(GET(baseUrl + episode.url)).execute().asJsoup()
-//        val link = document.selectFirst("li.dowloads a").attr("href")
         val link = document.selectFirst(".play-video iframe").attr("src")
         val id = Uri.parse(link).getQueryParameter("id").toString()
-        Log.d("Debug", id + " " + link)
         return GET(downloadLink + id)
     }
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         return videosFromElement(document)
-//        return document.select(videoListSelector()).ordered().map { videoFromElement(it) }
-//            .filter { it.videoUrl != null }
     }
 
     private fun videosFromElement(document: Document): List<Video> {
@@ -137,24 +119,7 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoList
     }
 
-    private fun Elements.ordered(): Elements {
-        val newElements = Elements()
-        var googleElements = 0
-        for (element in this) {
-            if (element.attr("href").contains("https://dood")) {
-                newElements.add(element)
-                continue
-            }
-            newElements.add(googleElements, element)
-            if (element.attr("href").contains("google")) {
-                googleElements++
-            }
-        }
-        return newElements
-    }
-
     override fun videoListSelector() = "div.mirror_link a[download], div.mirror_link a[href*=https://dood],div.mirror_link a[href*=https://sbplay]"
-//    override fun videoListSelector() = "div.mirror_link div.dowload a"
 
     override fun videoFromElement(element: Element): Video = throw Exception("not used")
 
@@ -201,12 +166,6 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         respDownloadLink.close()
         return Video(url, quality, downloadLink, null, refererHeader)
     }
-    /*
-    private fun xtremeCDNUrlParse(url: String): String? {
-        val response=client.newCall(GET(url)).execute()
-        val content = response.body!!.string()
-    }
-    */
 
     private fun doodUrlParse(url: String): String? {
         val response = client.newCall(GET(url.replace("/d/", "/e/"))).execute()
@@ -255,7 +214,7 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.thumbnail_url = element.select("img").first().attr("src")
-        anime.title = element.select(".name").first().text()
+        anime.title = element.select(".name").first().text().split("Episode").first()
         return anime
     }
 
@@ -273,37 +232,18 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.select(".video-details span").text()
-        // Todo: scrape genre and status
-//        anime.genre = document.select("p.type:eq(5) a").joinToString("") { it.text() }
         anime.description = document.select(".video-details .post-entry .content-more-js").text()
-//        anime.status = parseStatus(document.select("p.type:eq(7) a").text())
 
         return anime
     }
 
-    private fun parseStatus(statusString: String): Int {
-        return when (statusString) {
-            "Ongoing" -> SAnime.ONGOING
-            "Completed" -> SAnime.COMPLETED
-            else -> SAnime.UNKNOWN
-        }
-    }
+    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
 
-    override fun latestUpdatesNextPageSelector(): String = "ul.pagination li:last-child:not(.selected)"
+    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
 
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(baseUrl + element.attr("href"))
-        val style = element.select("div.thumbnail-popular").attr("style")
-        anime.thumbnail_url = style.substringAfter("background: url('").substringBefore("');")
-        anime.title = element.attr("title")
-        return anime
-    }
+    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
 
-    override fun latestUpdatesRequest(page: Int): Request =
-        GET("https://ajax.gogo-load.com/ajax/page-recent-release-ongoing.html?page=$page&type=1", headers)
-
-    override fun latestUpdatesSelector(): String = "div.added_series_body.popular li a:has(div)"
+    override fun latestUpdatesSelector(): String = throw Exception("Not used")
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
