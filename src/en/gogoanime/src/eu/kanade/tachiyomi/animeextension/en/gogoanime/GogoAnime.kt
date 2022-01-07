@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.en.gogoanime.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -13,28 +14,37 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import org.jsoup.select.Elements
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 
 class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Gogoanime"
 
-    override val baseUrl = "https://gogoanime.cm"
+    override val baseUrl = "https://www3.gogoanime.cm"
 
     override val lang = "en"
 
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
+
+    private val json: Json by injectLazy()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -80,102 +90,51 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episode
     }
 
-    override fun videoListRequest(episode: SEpisode): Request {
-        val document = client.newCall(GET(baseUrl + episode.url)).execute().asJsoup()
-        val link = document.selectFirst("li.dowloads a").attr("href")
-        return GET(link)
-    }
-
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        return document.select(videoListSelector()).ordered().map { videoFromElement(it) }
-            .filter { it.videoUrl != null }
-    }
+        val responseString = response.body!!.string()
+        val doc = Jsoup.parse(
+            responseString
+                .substringAfter("<!------------------ vidstream.io server type = 1  display --------------->")
+                .substringBefore("<!--")
+        )
+        val iframe = "https:" + doc.select("iframe").attr("src")
+        val baseReferer = Headers.headersOf("Referer", baseUrl)
+        val iframeResponse = client.newCall(GET(iframe, baseReferer)).execute().asJsoup()
 
-    private fun Elements.ordered(): Elements {
-        val newElements = Elements()
-        var googleElements = 0
-        for (element in this) {
-            if (element.attr("href").contains("https://dood")) {
-                newElements.add(element)
-                continue
+        val videoList = mutableListOf<Video>()
+
+        // get mirror videos
+        val mirrors = iframeResponse.select("div#list-server-more ul li.linkserver:not(li.active)")
+        val doodMirror = mirrors.first { it.attr("data-video").startsWith("https://dood.") }.attr("data-video")
+        val doodVideo = DoodExtractor(client).videoFromUrl(doodMirror)
+
+        // get vidstreaming videos
+        try {
+            val interceptorClient = client.newBuilder().addInterceptor(GetSourcesInterceptor()).build()
+            val sources = interceptorClient.newCall(GET(iframe, baseReferer)).execute().body!!.string()
+            val jObject = json.decodeFromString<JsonObject>(sources)
+            val sourcesArray = jObject["source"]!!.jsonArray
+            val videoHeaders = Headers.headersOf("Referer", iframe)
+            for (element in sourcesArray.reversed()) {
+                val videoUrl = element.jsonObject["file"]!!.jsonPrimitive.content
+                val quality = element.jsonObject["label"]!!.jsonPrimitive.content
+                videoList.add(Video(videoUrl, quality, videoUrl, null, videoHeaders))
             }
-            newElements.add(googleElements, element)
-            if (element.attr("href").contains("google")) {
-                googleElements++
-            }
+        } catch (e: Exception) {}
+
+
+        if (doodVideo != null) {
+            videoList.add(doodVideo)
         }
-        return newElements
+        if (videoList.isEmpty()) throw Exception("no links found")
+        return videoList
     }
 
-    override fun videoListSelector() = "div.mirror_link a[download], div.mirror_link a[href*=https://dood]"
+    override fun videoListSelector() = throw Exception("not used")
 
-    override fun videoFromElement(element: Element): Video {
-        val quality = element.text().substringAfter("Download (").replace("P - mp4)", "p")
-        val url = element.attr("href")
-        val location = element.ownerDocument().location()
-        val videoHeaders = Headers.headersOf("Referer", location)
-        return when {
-            url.contains("https://dood") -> {
-                val newQuality = "Doodstream mirror"
-                Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
-            }
-            url.contains("google") -> {
-                val parsedQuality = "Google server: " + when (quality) {
-                    "FullHDp" -> "1080p"
-                    "HDp" -> "720p"
-                    "SDp" -> "360p"
-                    else -> quality
-                }
-                Video(url, parsedQuality, url, null)
-            }
-            else -> {
-                val parsedQuality = when (quality) {
-                    "FullHDp" -> "1080p"
-                    "HDp" -> "720p"
-                    "SDp" -> "360p"
-                    else -> quality
-                }
-                Video(url, parsedQuality, videoUrlParse(url, location), null, videoHeaders)
-            }
-        }
-    }
+    override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
-
-    private fun videoUrlParse(url: String, referer: String): String {
-        val refererHeader = Headers.headersOf("Referer", referer)
-        val noRedirectClient = client.newBuilder().followRedirects(false).build()
-        val response = noRedirectClient.newCall(GET(url, refererHeader)).execute()
-        val videoUrl = response.header("location")
-        response.close()
-        return videoUrl ?: url
-    }
-
-    private fun doodUrlParse(url: String): String? {
-        val response = client.newCall(GET(url.replace("/d/", "/e/"))).execute()
-        val content = response.body!!.string()
-        if (!content.contains("'/pass_md5/")) return null
-        val md5 = content.substringAfter("'/pass_md5/").substringBefore("',")
-        val token = md5.substringAfterLast("/")
-        val doodTld = url.substringAfter("https://dood.").substringBefore("/")
-        val randomString = getRandomString()
-        val expiry = System.currentTimeMillis()
-        val videoUrlStart = client.newCall(
-            GET(
-                "https://dood.$doodTld/pass_md5/$md5",
-                Headers.headersOf("referer", url)
-            )
-        ).execute().body!!.string()
-        return "$videoUrlStart$randomString?token=$token&expiry=$expiry"
-    }
-
-    private fun getRandomString(length: Int = 10): String {
-        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
-        return (1..length)
-            .map { allowedChars.random() }
-            .joinToString("")
-    }
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", null)
