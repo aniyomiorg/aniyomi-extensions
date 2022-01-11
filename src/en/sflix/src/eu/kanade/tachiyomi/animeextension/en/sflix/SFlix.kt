@@ -108,6 +108,10 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val getTokenUrl = client.newCall(GET("https://www.google.com/recaptcha/api2/anchor?ar=1&k=" + recapchaNum + "&" + domain + "&hl=en&v=" + getVVal + "&size=invisible", refererHeaders)).execute().asJsoup()
         Log.i("capch4", "$getTokenUrl")
         Log.i("teee", "https://www.google.com/recaptcha/api2/anchor?ar=1&k=" + recapchaNum + "&" + domain + "&hl=en&v=" + getVVal + "&size=invisible")
+        val location = "$getTokenUrl"
+        val videoHeaders = Headers.headersOf("Referer", location)
+        val reload = client.newCall(GET("https://www.google.com/recaptcha/api2/reload?k=" + recapchaNum, videoHeaders)).execute().asJsoup()
+        Log.i("tess", "$reload")
 
         val tOOOKEN = getTokenUrl.select("input#recaptcha-token").attr("value")
         Log.i("capch5", "$tOOOKEN")
