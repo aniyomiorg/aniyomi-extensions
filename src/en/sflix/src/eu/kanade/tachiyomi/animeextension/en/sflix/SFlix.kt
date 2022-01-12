@@ -42,10 +42,14 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val domain = "co=aHR0cHM6Ly9zdHJlYW1yYXBpZC5ydTo0NDM."
+    private val domain = "&co=aHR0cHM6Ly9zdHJlYW1yYXBpZC5ydTo0NDM."
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+    override fun headersBuilder(): Headers.Builder {
+        return super.headersBuilder()
+            .add("Referer", "https://sflix.to/") // https://s12.gemzawy.com https://moshahda.net
     }
 
     override fun popularAnimeSelector(): String = "div.film_list-wrap div.flw-item div.film-poster"
@@ -75,7 +79,49 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episode
     }
 
+
+
+
     override fun videoListParse(response: Response): List<Video> {
+        val document = response.asJsoup()
+        val referer = response.request.url.encodedPath
+        val newHeaders = Headers.headersOf("referer", referer)
+        Log.i("lol1", document.select("div.detail_page-watch").attr("data-id"))
+        val getApi = client.newCall(GET("https://sflix.to/ajax/movie/episodes/" + document.select("div.detail_page-watch").attr("data-id"))).execute().asJsoup()
+        Log.i("lol0", "$getApi")
+        val getVidID = getApi.select("a").attr("data-id")
+        Log.i("lol2", "$getVidNum")
+        val getVidApi = client.newCall(GET("https://sflix.to/ajax/get_link/" + getVidID)).execute().asJsoup()
+        val getVideoEmbed = getVidApi.text().substringAfter("link\":\"").substringBefore("\"")
+        Log.i("lol3", "$getVideoEmbed")
+        val callVideolink = client.newCall(GET(getVideoEmbed, newHeaders)).execute().asJsoup()
+        Log.i("lol4", "$callVideolink")
+        // get Token vals
+        val getRecaptchaRenderLink = callVideolink.select("script").attr("src")
+        Log.i("lol5", getRecaptchaRenderLink)
+        val callReacapchaRenderLink = client.newCall(GET(getRecaptchaRenderLink)).execute().asJsoup()
+        Log.i("lol6", callReacapchaRenderLink)
+        val getAnchorVVal = callReacapchaRenderLink.text().substringAfter("releases/").substringBefore("/")
+        val getRecaptchaSiteKey = callVideolink.select("script").attr("src").substringAfterLast("=")
+        Log.i("lol7", getRecaptchaSiteKey)
+        val anchorLink = "https://www.google.com/recaptcha/api2/anchor?ar=1&k=" + getRecaptchaSiteKey + domain + "&hl=en&v=" + getAnchorVVal + "&size=invisible&cb=123456789"
+        Log.i("lol8", anchorLink)
+        val callreloadToken = client.newCall(POST("https://www.google.com/recaptcha/api2/reload?k=" + getRecaptchaSiteKey)).execute().asJsoup()
+        Log.i("lol9", callreloadToken)
+        val get1Token = callreloadToken.text().substringAfter("rresp\",\"").substringBefore("\"")
+        Log.i("lol10", get1Token)
+//https://www.google.com/recaptcha/api2/anchor?ar=1&k=6LcmoUQcAAAAANdFmpVMNp8fLPptGk2uVSnY0TyZ&co=aHR0cHM6Ly9zdHJlYW1yYXBpZC5ydTo0NDM.&hl=en&v=-FJgYf1d3dZ_QPcZP7bd85hc&size=invisible&cb=5rvwss2ssshi
+
+//03AGdBq25zOmWF0L4f8Oljug6-scWhYi3oajh_qMtaX7jtuSH_N2dZ01Mgd4ZVK55PuN5JeGejJer7D811vOkE1s5ea3HXf9I0RZdfmDbStCh1HuVxW2sD6wXLN-7UEuiXYB9-dSVxnIBlm9zRIOagiF8fU-uYhTzmfchm7ng8rmqM8ZxjWC1QEtyVHA-NYijc3JDrVZRaf4cK0FvqlgQ92msrJDCz3yE-uM1NfpC-M3tDBQgySIRhMYmvmYiJFiwKPJBywgXlWui07euWV4a_W7t8aOma8wRIH2q32l67vy-qNC9lYNGad76O527OGCoLj_g_Gv4egyc0ct9dMTSMYaus1cSE53NVR_Ilj8XRRJKbOFUBJkbzMBHtdhGzQ2vPwj2MiI4b_0tKaX5yAr5pOxEWIBh7hf61hdpvVa7lk71v3pVRaT6cKTfjtGVIliMaB4SyLZIvHPzy
+        return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
+    }
+
+
+
+
+
+
+    /*override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val referer = response.request.url.toString()
         val refererHeaders = Headers.headersOf("referer", referer)
@@ -126,7 +172,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val iframeResponse = client.newCall(GET(iframe, refererHeaders))
             .execute().asJsoup()
         return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
-    }
+    }*/
 
     override fun videoListSelector() = "script"
 
