@@ -221,7 +221,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 when (filter) {
                     is TypeList -> {
                         if (filter.state > 0) {
-                            val GenreN = getTypeList()[filter.state].name
+                            val GenreN = getTypeList()[filter.state].query
                             val genreUrl = "$baseUrl/category/asian-drama/$GenreN/page/$page/".toHttpUrlOrNull()!!.newBuilder()
                             return GET(genreUrl.toString(), headers)
                         }
