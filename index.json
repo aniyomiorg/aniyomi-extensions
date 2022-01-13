@@ -45,6 +45,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: asia2tv",
+    "pkg": "eu.kanade.tachiyomi.animeextension.ar.asia2tv",
+    "apk": "aniyomi-ar.asia2tv-v12.1.apk",
+    "lang": "ar",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: فاصل اعلاني",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.faselhd",
     "apk": "aniyomi-ar.faselhd-v12.2.apk",
@@ -57,6 +66,15 @@
     "name": "Aniyomi: فاصل اعلاني افلام بس",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.faselhdmovies",
     "apk": "aniyomi-ar.faselhdmovies-v12.1.apk",
+    "lang": "ar",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Aniyomi: موفيز فور يو",
+    "pkg": "eu.kanade.tachiyomi.animeextension.ar.movies4u",
+    "apk": "aniyomi-ar.movies4u-v12.1.apk",
     "lang": "ar",
     "code": 1,
     "version": "12.1",
