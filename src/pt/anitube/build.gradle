@@ -1,0 +1,13 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Anitube.in'
+    pkgNameSuffix = 'pt.anitube'
+    extClass = '.Anitube'
+    extVersionCode = 1
+    libVersion = '12'
+}
+
+
+apply from: "$rootDir/common.gradle"
