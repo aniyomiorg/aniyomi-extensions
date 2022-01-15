@@ -21,6 +21,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.float
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -189,9 +190,10 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             val animeId = itemO["anime_id"]!!.jsonPrimitive.int
             val session = itemO["session"]!!.jsonPrimitive.content
             episode.setUrlWithoutDomain("$baseUrl/api?m=links&id=$animeId&session=$session&p=kwik")
-            val epNum = itemO["episode"]!!.jsonPrimitive.int
-            episode.episode_number = epNum.toFloat()
-            episode.name = "Episode $epNum"
+            val epNum = itemO["episode"]!!.jsonPrimitive.float
+            episode.episode_number = epNum
+            val epNumString = if (epNum % 1F == 0F) epNum.toInt().toString() else epNum.toString()
+            episode.name = "Episode $epNumString"
             episodeList.add(episode)
         }
         return episodeList
