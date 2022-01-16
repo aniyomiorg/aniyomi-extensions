@@ -327,7 +327,7 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
     }
-    
+
     // New functions
     private fun getRealDoc(document: Document): Document {
         val menu = document.selectFirst("div.controles_ep > a[href] > i.spr.listaEP")
