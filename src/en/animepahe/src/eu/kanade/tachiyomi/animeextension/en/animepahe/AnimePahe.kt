@@ -192,7 +192,8 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             episode.setUrlWithoutDomain("$baseUrl/api?m=links&id=$animeId&session=$session&p=kwik")
             val epNum = itemO["episode"]!!.jsonPrimitive.float
             episode.episode_number = epNum
-            episode.name = "Episode $epNum"
+            val epNumString = if (epNum % 1F == 0F) epNum.toInt().toString() else epNum.toString()
+            episode.name = "Episode $epNumString"
             episodeList.add(episode)
         }
         return episodeList

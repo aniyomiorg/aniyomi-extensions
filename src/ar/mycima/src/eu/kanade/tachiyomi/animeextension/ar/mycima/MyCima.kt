@@ -27,7 +27,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "MY Cima"
 
-    override val baseUrl = "https://mycima.ink"
+    override val baseUrl = "https://mycima.world"
 
     override val lang = "ar"
 
@@ -84,7 +84,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("abs:href"))
-        episode.episode_number = element.text().removePrefix("موسم ").removePrefix("الحلقة ").replace("مدبلج", "").replace(" -", "").toFloat()
+        //episode.episode_number = element.text().removePrefix("موسم ").removePrefix("الحلقة ").replace("مدبلج", "").replace(" -", "").toFloat()
         episode.name = element.ownerDocument().select("div.List--Seasons--Episodes a.selected").text() + " : " + element.text()
         episode.date_upload = System.currentTimeMillis()
         return episode
@@ -103,19 +103,25 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
     }
 
-    override fun videoListSelector() = "script:containsData(source)"
+    override fun videoListSelector() = "body"
 
     private fun videosFromElement(element: Element): List<Video> {
-        val data = element.data().substringAfter("sources: [").substringBefore("],")
-        val sources = data.split("format: '").drop(1)
         val videoList = mutableListOf<Video>()
-        for (source in sources) {
-            val src = source.substringAfter("src: \"").substringBefore("\"")
-            val quality = source.substringBefore("'") // .substringAfter("format: '")
-            val video = Video(src, quality, src, null)
-            videoList.add(video)
+        val script = element.select("script")
+            .firstOrNull { it.data().contains("player.qualityselector({") }
+        if (script != null) {
+            val scriptV = element.select("script:containsData(source)")
+            val data = element.data().substringAfter("sources: [").substringBefore("],")
+            val sources = data.split("format: '").drop(1)
+            val videoList = mutableListOf<Video>()
+            for (source in sources) {
+                val src = source.substringAfter("src: \"").substringBefore("\"")
+                val quality = source.substringBefore("'") // .substringAfter("format: '")
+                val video = Video(src, quality, src, null)
+                videoList.add(video)
+            }
+            return videoList
         }
-        return videoList
         val sourceTag = element.ownerDocument().select("source").firstOrNull()!!
         return listOf(Video(sourceTag.attr("src"), "Default", sourceTag.attr("src"), null))
     }

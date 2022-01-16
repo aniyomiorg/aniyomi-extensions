@@ -50,7 +50,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.title = element.select("div.imgdiv-class img").attr("alt")
-        //anime.thumbnail_url = element.select("div.imgdiv-class img").attr("data-src")
+        // anime.thumbnail_url = element.select("div.imgdiv-class img").attr("data-src")
 
         return anime
     }
