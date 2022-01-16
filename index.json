@@ -243,30 +243,39 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: MonosChinos",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.monoschinos",
+    "apk": "aniyomi-es.monoschinos-v12.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: NeoNime",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.neonime",
-    "apk": "aniyomi-id.neonime-v12.4.apk",
+    "apk": "aniyomi-id.neonime-v12.5.apk",
     "lang": "id",
-    "code": 4,
-    "version": "12.4",
+    "code": 5,
+    "version": "12.5",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: Oploverz",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.oploverz",
-    "apk": "aniyomi-id.oploverz-v12.8.apk",
+    "apk": "aniyomi-id.oploverz-v12.9.apk",
     "lang": "id",
-    "code": 8,
-    "version": "12.8",
+    "code": 9,
+    "version": "12.9",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: OtakuDesu",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.otakudesu",
-    "apk": "aniyomi-id.otakudesu-v12.8.apk",
+    "apk": "aniyomi-id.otakudesu-v12.9.apk",
     "lang": "id",
-    "code": 8,
-    "version": "12.8",
+    "code": 9,
+    "version": "12.9",
     "nsfw": 0
   },
   {
