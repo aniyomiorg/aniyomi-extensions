@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.en.gogoanime.extractors.DoodExtractor
+import eu.kanade.tachiyomi.animeextension.en.gogoanime.extractors.GogoCdnExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -14,17 +15,11 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
@@ -32,6 +27,7 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 
+@ExperimentalSerializationApi
 class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Gogoanime"
@@ -91,43 +87,16 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val responseString = response.body!!.string()
-        val doc = Jsoup.parse(
-            responseString
-                .substringAfter("<!------------------ vidstream.io server type = 1  display --------------->")
-                .substringBefore("<!--")
-        )
-        val iframe = "https:" + doc.select("iframe").attr("src")
-        val baseReferer = Headers.headersOf("Referer", baseUrl)
-        val iframeResponse = client.newCall(GET(iframe, baseReferer)).execute().asJsoup()
+        val document = response.asJsoup()
+        val serverUrl = "https:" + document.select("div.anime_muti_link > ul > li.vidcdn > a")
+            .attr("data-video")
 
-        val videoList = mutableListOf<Video>()
-
-        // get mirror videos
-        val mirrors = iframeResponse.select("div#list-server-more ul li.linkserver:not(li.active)")
-        val doodMirror = mirrors.first { it.attr("data-video").startsWith("https://dood.") }.attr("data-video")
-        val doodVideo = DoodExtractor(client).videoFromUrl(doodMirror)
-
-        // get vidstreaming videos
-        try {
-            val interceptorClient = client.newBuilder().addInterceptor(GetSourcesInterceptor()).build()
-            val sources = interceptorClient.newCall(GET(iframe, baseReferer)).execute().body!!.string()
-            val jObject = json.decodeFromString<JsonObject>(sources)
-            val sourcesArray = jObject["source"]!!.jsonArray
-            val videoHeaders = Headers.headersOf("Referer", iframe)
-            for (element in sourcesArray.reversed()) {
-                val videoUrl = element.jsonObject["file"]!!.jsonPrimitive.content
-                val quality = element.jsonObject["label"]!!.jsonPrimitive.content
-                videoList.add(Video(videoUrl, quality, videoUrl, null, videoHeaders))
-            }
-        } catch (e: Exception) {}
-
-
-        if (doodVideo != null) {
-            videoList.add(doodVideo)
+        val gogoVideos = GogoCdnExtractor(client, json).videosFromUrl(serverUrl)
+        return if (gogoVideos.isEmpty()) {
+            DoodExtractor(client).videosFromUrl(serverUrl)
+        } else {
+            gogoVideos
         }
-        if (videoList.isEmpty()) throw Exception("no links found")
-        return videoList
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -137,7 +106,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", null)
+        val quality = preferences.getString("preferred_quality", "1080")
         if (quality != null) {
             val newList = mutableListOf<Video>()
             var preferred = 0
