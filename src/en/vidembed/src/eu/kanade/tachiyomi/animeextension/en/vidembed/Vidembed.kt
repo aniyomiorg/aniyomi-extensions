@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.animeextension.en.vidembed
 import android.app.Application
 import android.content.SharedPreferences
 import android.net.Uri
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -96,8 +97,12 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             when {
                 url.contains("https://dood") -> {
                     val newQuality = "Doodstream mirror"
-                    val video = Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
-                    videoList.add(video)
+                    val video = try {
+                        Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
+                    } catch (e: Exception) {
+                        null
+                    }
+                    if (video != null) videoList.add(video)
                 }
                 url.contains("https://sbplay") -> {
                     val videos = sbplayUrlParse(url, location)
@@ -152,19 +157,24 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 "https://sbplay2.com/dl?op=download_orig&id=$id&mode=$mode&hash=$hash"
             respDownloadLinkSelector.close()
             val video = sbplayVideoParser(downloadLink, quality)
-            videoList.add(video)
+            if (video != null) videoList.add(video)
         }
         return videoList
     }
 
-    private fun sbplayVideoParser(url: String, quality: String): Video {
-        val noRedirectClient = client.newBuilder().followRedirects(false).build()
-        val refererHeader = Headers.headersOf("Referer", url)
-        val respDownloadLink = noRedirectClient.newCall(GET(url, refererHeader)).execute()
-        val documentDownloadLink = respDownloadLink.asJsoup()
-        val downloadLink = documentDownloadLink.selectFirst("div.contentbox span a").attr("href")
-        respDownloadLink.close()
-        return Video(url, quality, downloadLink, null, refererHeader)
+    private fun sbplayVideoParser(url: String, quality: String): Video? {
+        try {
+            val noRedirectClient = client.newBuilder().followRedirects(false).build()
+            val refererHeader = Headers.headersOf("Referer", url)
+            val respDownloadLink = noRedirectClient.newCall(GET(url, refererHeader)).execute()
+            val documentDownloadLink = respDownloadLink.asJsoup()
+            Log.i("bruh", url)
+            val downloadLink = documentDownloadLink.selectFirst("div.contentbox span a").attr("href")
+            respDownloadLink.close()
+            return Video(url, quality, downloadLink, null, refererHeader)
+        } catch (e: Exception) {
+            return null
+        }
     }
 
     private fun doodUrlParse(url: String): String? {
