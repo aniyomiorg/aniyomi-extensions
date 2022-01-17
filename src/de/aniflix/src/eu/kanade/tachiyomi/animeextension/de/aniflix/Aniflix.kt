@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.AnimeDetailsDto
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.AnimeDto
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.Episode
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.Release
+import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.Season
 import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -20,6 +21,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
@@ -28,6 +30,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -53,6 +56,18 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private val refererHeader = Headers.headersOf("Referer", baseUrl)
+
+    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
+        return client.newCall(GET(baseUrl + anime.url))
+            .asObservableSuccess()
+            .map { response ->
+                animeDetailsParse(response).apply { initialized = true }
+            }
+    }
+
+    override fun animeDetailsRequest(anime: SAnime): Request {
+        return GET(baseUrl + anime.url.replace("api/", ""))
+    }
 
     override fun animeDetailsParse(response: Response): SAnime {
         val anime = json.decodeFromString(AnimeDetailsDto.serializer(), response.body!!.string())
@@ -147,12 +162,23 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
         val episodeList = mutableListOf<SEpisode>()
         val animeUrl = anime.url!!
         for (season in anime.seasons) {
-            val lastSeasonLength = episodeList.size
-            for (episodeNumber in 1..season.episodes!!.size) {
+            val episodes = season.episodes!!.toMutableList()
+            var page = 1
+            while (episodes.size < season.length!!) {
+                val seasonPart = json.decodeFromString(
+                    Season.serializer(),
+                    client.newCall(
+                        GET("$baseUrl/api/show/$animeUrl/${season.id!!}/$page")
+                    ).execute().body!!.string()
+                )
+                page++
+                episodes.addAll(seasonPart.episodes!!)
+            }
+            for (episode in episodes) {
                 val newEpisode = SEpisode.create().apply {
-                    setUrlWithoutDomain("$baseUrl/api/episode/show/$animeUrl/season/${season.number!!}/episode/$episodeNumber")
-                    episode_number = lastSeasonLength + episodeNumber.toFloat()
-                    name = "Staffel ${season.number}: Folge $episodeNumber"
+                    setUrlWithoutDomain("$baseUrl/api/episode/show/$animeUrl/season/${season.number!!}/episode/${episode.number}")
+                    episode_number = episode.number!!.toFloat()
+                    name = "Staffel ${season.number}: Folge ${episode.number}"
                     date_upload = System.currentTimeMillis()
                 }
                 episodeList.add(newEpisode)
@@ -168,7 +194,7 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
         for (stream in streams) {
             val quality = "${stream.hoster?.name}, ${stream.lang}"
             val link = stream.link ?: return emptyList()
-            val hosterSelection = preferences.getStringSet("hoster_selection", null)
+            val hosterSelection = preferences.getStringSet("hoster_selection", setOf("dood", "stape"))
             when {
                 link.contains("https://dood") && hosterSelection?.contains("dood") == true -> {
                     val video = try { DoodExtractor(client).videoFromUrl(link, quality) } catch (e: Exception) { null }
