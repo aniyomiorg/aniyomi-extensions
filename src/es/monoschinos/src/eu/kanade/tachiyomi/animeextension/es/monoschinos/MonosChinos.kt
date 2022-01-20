@@ -10,6 +10,7 @@ import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.FembedExtrac
 import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.SolidFilesExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -62,7 +63,7 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodes = mutableListOf<SEpisode>()
 
         val jsoup = response.asJsoup()
-        val animeId = response.request.url.pathSegments.last().replace("-sub-espanol", "")
+        val animeId = response.request.url.pathSegments.last().replace("-sub-espanol", "").replace("-080p", "-1080p")
         Log.i("bruh", "$animeId")
         jsoup.select("div.heroarea2 div.heromain2 div.allanimes div.row.jpage.row-cols-md-6 div.col-item").forEach { it ->
 
@@ -77,7 +78,7 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             episodes.add(episode)
         }
 
-        return episodes
+        return episodes.reversed()
     }
 
     override fun episodeListSelector() = throw Exception("not used")
@@ -87,22 +88,23 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-        document.select("ul.dropcaps li").forEach { it ->
+        document.select("div.heroarea div.row div.col-md-12 ul.dropcaps li").forEach { it ->
             val server = it.select("a").text()
             val urlBase64 = it.select("a").attr("data-player")
             val url1 = Base64.decode(urlBase64, Base64.DEFAULT)
+            Log.i("bruh", "$url1")
             val url = String(url1).replace("https://monoschinos2.com/reproductor?url=", "")
             Log.i("bruh", "$url")
 
-            if (server == "fembed") {
+            if (server == "fembed" || server == "Fembed") {
                 val videos = FembedExtractor().videosFromUrl(url)
                 videoList.addAll(videos)
             }
-            if (server == "ok") {
+            if (server == "ok" || server == "Ok") {
                 val videos = OkruExtractor(client).videosFromUrl(url)
                 videoList.addAll(videos)
             }
-            if (server == "Zeus") {
+            if (server == "zeus" || server == "Zeus") {
                 val videos = SolidFilesExtractor(client).videosFromUrl(url)
                 videoList.addAll(videos)
             }
@@ -134,8 +136,16 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/buscar?q=$query&p=$page")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val filterList = if (filters.isEmpty()) getFilterList() else filters
+        val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
 
+        return when {
+            query.isNotBlank() -> GET("$baseUrl/buscar?q=$query&p=$page", headers)
+            genreFilter.state != 0 -> GET("$baseUrl/animes?categoria=false&genero=${genreFilter.toUriPart()}&fecha=false&letra=false&p=$page")
+            else -> GET("$baseUrl/animes?p=$page ")
+        }
+    }
     override fun searchAnimeFromElement(element: Element): SAnime {
         return popularAnimeFromElement(element)
     }
@@ -149,14 +159,14 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.thumbnail_url = document.selectFirst("div.chapterpic img").attr("src")
         anime.title = document.selectFirst("div.chapterdetails h1").text()
         anime.description = document.select("p.textShort").first().ownText()
-        anime.genre = document.select("ol.breadcrumb li.breadcrumb-item a").text()
+        anime.genre = document.select("ol.breadcrumb li.breadcrumb-item a").joinToString { it.text() }
         anime.status = parseStatus(document.select("div.butns button.btn1").text())
         return anime
     }
 
     private fun parseStatus(statusString: String): Int {
         return when {
-            statusString.contains("En emision") -> SAnime.ONGOING
+            statusString.contains("Estreno") -> SAnime.ONGOING
             statusString.contains("Finalizado") -> SAnime.COMPLETED
             else -> SAnime.UNKNOWN
         }
@@ -169,6 +179,68 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int) = throw Exception("not used")
 
     override fun latestUpdatesSelector() = throw Exception("not used")
+
+    override fun getFilterList(): AnimeFilterList = AnimeFilterList(
+        AnimeFilter.Header("La busqueda por texto ignora el filtro"),
+        GenreFilter()
+    )
+
+    private class GenreFilter : UriPartFilter(
+        "Generos",
+        arrayOf(
+            Pair("<selecionar>", ""),
+            Pair("Latino", "latino"),
+            Pair("Castellano", "castellano"),
+            Pair("Acción", "acción"),
+            Pair("Aventura", "aventura"),
+            Pair("Carreras", "carreras"),
+            Pair("Comedia", "comedia"),
+            Pair("Cyberpunk", "cyberpunk"),
+            Pair("Deportes", "deportes"),
+            Pair("Drama", "drama"),
+            Pair("Ecchi", "ecchi"),
+            Pair("Escolares", "escolares"),
+            Pair("Fantasía", "fantasía"),
+            Pair("Gore", "gore"),
+            Pair("Harem", "harem"),
+            Pair("Horror", "horror"),
+            Pair("Josei", "josei"),
+            Pair("Lucha", "lucha"),
+            Pair("Magia", "magia"),
+            Pair("Josei", "josei"),
+            Pair("Mecha", "mecha"),
+            Pair("Militar", "militar"),
+            Pair("Misterio", "misterio"),
+            Pair("Música", "música"),
+            Pair("Parodias", "parodias"),
+            Pair("Psicológico", "psicológico"),
+            Pair("Recuerdos de la vida", "recuerdos-de-la-vida"),
+            Pair("Seinen", "seinen"),
+            Pair("Shojo", "shojo"),
+            Pair("Shonen", "shonen"),
+            Pair("Sobrenatural", "sobrenatural"),
+            Pair("Vampiros", "vampiros"),
+            Pair("Yaoi", "yaoi"),
+            Pair("Yuri", "yuri"),
+            Pair("Espacial", "espacial"),
+            Pair("Histórico", "histórico"),
+            Pair("Samurai", "samurai"),
+            Pair("Artes Marciales", "artes-marciales"),
+            Pair("Demonios", "demonios"),
+            Pair("Romance", "romance"),
+            Pair("Policía", " policía"),
+            Pair("Historia paralela", "historia-paralela"),
+            Pair("Aenime", "aenime"),
+            Pair("Donghua", "donghua"),
+            Pair("Blu-ray", "blu-ray"),
+            Pair("Monogatari", "monogatari")
+        )
+    )
+
+    private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
+        AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
+        fun toUriPart() = vals[state].second
+    }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
