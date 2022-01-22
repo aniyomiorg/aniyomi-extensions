@@ -67,6 +67,12 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         episode.setUrlWithoutDomain(baseUrl + element.attr("href"))
         val epName = element.selectFirst("div.name").ownText()
         val ep = epName.substringAfter("Episode ")
+        val epNo = try {
+            ep.substringBefore(" ").toFloat()
+        } catch (e: NumberFormatException) {
+            0.toFloat()
+        }
+        episode.episode_number = epNo
         episode.name = if (ep == epName) epName else "Episode $ep"
         episode.date_upload = System.currentTimeMillis()
         return episode
