@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.ar.akwams
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -28,7 +29,7 @@ class AkwamS : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "أكوام مسلسلات"
 
-    override val baseUrl = "https://akwam.im"
+    override val baseUrl = "https://akwam.us"
 
     override val lang = "ar"
 
@@ -62,17 +63,26 @@ class AkwamS : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
+        val epNum = getNumberFromEpsString(element.text())
         episode.setUrlWithoutDomain(element.attr("href"))
         episode.name = element.text()
+        episode.episode_number = when {
+            (epNum.isNotEmpty()) -> epNum.toFloat()
+            else -> 1F
+        }
         episode.date_upload = System.currentTimeMillis()
         return episode
+    }
+
+    private fun getNumberFromEpsString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }
     }
 
     // Video links
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val iframe = document.select("a.link-show").attr("href").replace("http://go.akwam.im", "https://akwam.rest") + "/" + document.ownerDocument().select("input#page_id").attr("value")
+        val iframe = document.select("a.link-show").attr("href").replace("http://re.two.re", "https://akwam.us") + "/" + document.ownerDocument().select("input#page_id").attr("value")
         val referer = response.request.url.toString()
         val refererHeaders = Headers.headersOf("referer", referer)
         val iframeResponse = client.newCall(GET(iframe, refererHeaders))
