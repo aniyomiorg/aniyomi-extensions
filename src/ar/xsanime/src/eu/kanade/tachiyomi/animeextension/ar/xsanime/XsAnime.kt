@@ -60,12 +60,20 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
+        val epNum = getNumberFromEpsString(element.select("a > em").text())
         episode.setUrlWithoutDomain(element.attr("abs:href"))
         episode.name = element.select("a > em").text()
-        // episode.episode_number = element.select("a > em").text().replace(" و", "").replace("الأخيرة", "").toFloat()
+        episode.episode_number = when {
+            (epNum.isNotEmpty()) -> epNum.toFloat()
+            else -> 1F
+        }
         episode.date_upload = System.currentTimeMillis()
 
         return episode
+    }
+
+    private fun getNumberFromEpsString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }
     }
 
     // Video Links
