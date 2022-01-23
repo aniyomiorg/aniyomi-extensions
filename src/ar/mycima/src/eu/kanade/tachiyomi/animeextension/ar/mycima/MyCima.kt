@@ -79,15 +79,23 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episodes
     }
 
-    override fun episodeListSelector() = "div.Episodes--Seasons--Episodes a" // , div.List--Seasons--Episodes a.selected"
+    override fun episodeListSelector() = "div.Episodes--Seasons--Episodes a"
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
+        val epNum = getNumberFromEpsString(element.text())
         episode.setUrlWithoutDomain(element.attr("abs:href"))
-        //episode.episode_number = element.text().removePrefix("موسم ").removePrefix("الحلقة ").replace("مدبلج", "").replace(" -", "").toFloat()
+        episode.episode_number = when {
+            (epNum.isNotEmpty()) -> epNum.toFloat()
+            else -> 1F
+        }
         episode.name = element.ownerDocument().select("div.List--Seasons--Episodes a.selected").text() + " : " + element.text()
         episode.date_upload = System.currentTimeMillis()
         return episode
+    }
+
+    private fun getNumberFromEpsString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }
     }
 
     // Video urls

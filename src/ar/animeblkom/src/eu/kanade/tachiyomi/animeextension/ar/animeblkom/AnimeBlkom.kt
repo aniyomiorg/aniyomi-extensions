@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -13,6 +14,7 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -61,16 +63,42 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // episodes
 
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val document = response.asJsoup()
+        if (document.selectFirst(episodeListSelector()) == null) {
+            return oneEpisodeParse(document)
+        }
+        return document.select(episodeListSelector()).map { episodeFromElement(it) }.reversed()
+    }
+
+    private fun oneEpisodeParse(document: Document): List<SEpisode> {
+        val episode = SEpisode.create()
+        episode.setUrlWithoutDomain(document.location())
+        episode.episode_number = 1F
+        episode.name = document.selectFirst("div.name.col-xs-12 span h1").text()
+        episode.date_upload = System.currentTimeMillis()
+        return listOf(episode)
+    }
+
     override fun episodeListSelector() = "ul.episodes-links li a"
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
+        val epNum = getNumberFromEpsString(element.select("span:nth-child(3)").text())
         episode.setUrlWithoutDomain(element.attr("href"))
-        episode.episode_number = element.select("span:nth-child(3)").text().replace(" - ", "").toFloat()
+        episode.episode_number = when {
+            (epNum.isNotEmpty()) -> epNum.toFloat()
+            else -> 1F
+        }
+        // episode.episode_number = element.select("span:nth-child(3)").text().replace(" - ", "").toFloat()
         episode.name = element.select("span:nth-child(3)").text() + " :" + element.select("span:nth-child(1)").text()
         episode.date_upload = System.currentTimeMillis()
 
         return episode
+    }
+
+    private fun getNumberFromEpsString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }
     }
 
     // Video links
@@ -117,7 +145,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.thumbnail_url = baseUrl + element.select("img").first().attr("data-original")
-        anime.title = element.select("img").attr("alt").removePrefix(" poster")
+        anime.title = element.select("img").attr("alt").replace(" poster", "")
         return anime
     }
 
@@ -125,7 +153,25 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = "div.contents div.content div.content-inner div.poster a"
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/search?query=$query&page=$page")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val url = if (query.isNotBlank()) {
+            "$baseUrl/search?query=$query&page=$page"
+        } else {
+            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
+                when (filter) {
+                    is TypeList -> {
+                        if (filter.state > 0) {
+                            val GenreN = getTypeList()[filter.state].query
+                            val genreUrl = "$baseUrl/$GenreN?page=$page".toHttpUrlOrNull()!!.newBuilder()
+                            return GET(genreUrl.toString(), headers)
+                        }
+                    }
+                }
+            }
+            throw Exception("اختر فلتر")
+        }
+        return GET(url, headers)
+    }
 
     // Anime Details
 
@@ -156,6 +202,28 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
 
     override fun latestUpdatesSelector(): String = throw Exception("Not used")
+
+    // Filter
+
+    override fun getFilterList() = AnimeFilterList(
+        AnimeFilter.Header("الفلترات مش هتشتغل لو بتبحث او وهي فاضيه"),
+        TypeList(typesName),
+    )
+
+    private class TypeList(types: Array<String>) : AnimeFilter.Select<String>("نوع الأنمي", types)
+    private data class Type(val name: String, val query: String)
+    private val typesName = getTypeList().map {
+        it.name
+    }.toTypedArray()
+
+    private fun getTypeList() = listOf(
+        Type("قائمة الأنمي", "anime-list"),
+        Type(" قائمة المسلسلات ", "series-list"),
+        Type(" قائمة الأفلام ", "movie-list"),
+        Type(" قائمة الأوفا ", "ova-list"),
+        Type(" قائمة الأونا ", "ona-list"),
+        Type(" قائمة الحلقات خاصة ", "special-list")
+    )
 
     // preferred quality settings
 

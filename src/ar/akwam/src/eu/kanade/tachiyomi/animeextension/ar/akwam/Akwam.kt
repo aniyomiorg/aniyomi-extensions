@@ -28,7 +28,7 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "أكوام"
 
-    override val baseUrl = "https://akwam.im"
+    override val baseUrl = "https://akwam.us"
 
     override val lang = "ar"
 
@@ -72,7 +72,7 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val iframe = document.select("a.link-show").attr("href").replace("http://go.akwam.im", "https://akwam.rest") + "/" + document.ownerDocument().select("input#page_id").attr("value")
+        val iframe = document.select("a.link-show").attr("href").replace("http://re.two.re", "https://akwam.us") + "/" + document.ownerDocument().select("input#page_id").attr("value")
         val referer = response.request.url.toString()
         val refererHeaders = Headers.headersOf("referer", referer)
         val iframeResponse = client.newCall(GET(iframe, refererHeaders))
