@@ -20,10 +20,10 @@
   {
     "name": "Aniyomi: Anime4up",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.anime4up",
-    "apk": "aniyomi-ar.anime4up-v12.22.apk",
+    "apk": "aniyomi-ar.anime4up-v12.23.apk",
     "lang": "ar",
-    "code": 22,
-    "version": "12.22",
+    "code": 23,
+    "version": "12.23",
     "nsfw": 0
   },
   {
