@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.ar.anime4up
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -67,12 +68,21 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
+        val epNum = getNumberFromEpsString(element.select("div.episodes-card-container div.episodes-card div.ehover6 h3 a").text())
         episode.setUrlWithoutDomain(element.select("div.episodes-card-container div.episodes-card div.ehover6 h3 a").attr("href"))
         // episode.episode_number = element.select("span:nth-child(3)").text().replace(" - ", "").toFloat()
+        episode.episode_number = when {
+            (epNum.isNotEmpty()) -> epNum.toFloat()
+            else -> 1F
+        }
         episode.name = element.select("div.episodes-card-container div.episodes-card div.ehover6 h3 a").text()
         episode.date_upload = System.currentTimeMillis()
 
         return episode
+    }
+
+    private fun getNumberFromEpsString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }
     }
 
     // Video links
@@ -151,7 +161,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 when (filter) {
                     is GenreList -> {
                         if (filter.state > 0) {
-                            val GenreN = getGenreList()[filter.state].name
+                            val GenreN = getGenreList()[filter.state].query
                             val genreUrl = "$baseUrl/anime-genre/$GenreN".toHttpUrlOrNull()!!.newBuilder()
                             return GET(genreUrl.toString(), headers)
                         }
