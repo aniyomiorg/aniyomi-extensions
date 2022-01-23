@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.animeextension.en.vidembed
 import android.app.Application
 import android.content.SharedPreferences
 import android.net.Uri
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -68,7 +67,12 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         episode.setUrlWithoutDomain(baseUrl + element.attr("href"))
         val epName = element.selectFirst("div.name").ownText()
         val ep = epName.substringAfter("Episode ")
-        episode.episode_number = 1.toFloat()
+        val epNo = try {
+            ep.substringBefore(" ").toFloat()
+        } catch (e: NumberFormatException) {
+            0.toFloat()
+        }
+        episode.episode_number = epNo
         episode.name = if (ep == epName) epName else "Episode $ep"
         episode.date_upload = System.currentTimeMillis()
         return episode
@@ -163,17 +167,16 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun sbplayVideoParser(url: String, quality: String): Video? {
-        try {
+        return try {
             val noRedirectClient = client.newBuilder().followRedirects(false).build()
             val refererHeader = Headers.headersOf("Referer", url)
             val respDownloadLink = noRedirectClient.newCall(GET(url, refererHeader)).execute()
             val documentDownloadLink = respDownloadLink.asJsoup()
-            Log.i("bruh", url)
             val downloadLink = documentDownloadLink.selectFirst("div.contentbox span a").attr("href")
             respDownloadLink.close()
-            return Video(url, quality, downloadLink, null, refererHeader)
+            Video(url, quality, downloadLink, null, refererHeader)
         } catch (e: Exception) {
-            return null
+            null
         }
     }
 
