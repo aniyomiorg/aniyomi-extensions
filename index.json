@@ -2,37 +2,37 @@
   {
     "name": "Aniyomi: أكوام",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.akwam",
-    "apk": "aniyomi-ar.akwam-v12.2.apk",
+    "apk": "aniyomi-ar.akwam-v12.3.apk",
+    "lang": "ar",
+    "code": 3,
+    "version": "12.3",
+    "nsfw": 0
+  },
+  {
+    "name": "Aniyomi: اكوام مسلسلات",
+    "pkg": "eu.kanade.tachiyomi.animeextension.ar.akwams",
+    "apk": "aniyomi-ar.akwams-v12.2.apk",
     "lang": "ar",
     "code": 2,
     "version": "12.2",
     "nsfw": 0
   },
   {
-    "name": "Aniyomi: اكوام مسلسلات",
-    "pkg": "eu.kanade.tachiyomi.animeextension.ar.akwams",
-    "apk": "aniyomi-ar.akwams-v12.1.apk",
-    "lang": "ar",
-    "code": 1,
-    "version": "12.1",
-    "nsfw": 0
-  },
-  {
     "name": "Aniyomi: Anime4up",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.anime4up",
-    "apk": "aniyomi-ar.anime4up-v12.21.apk",
+    "apk": "aniyomi-ar.anime4up-v12.22.apk",
     "lang": "ar",
-    "code": 21,
-    "version": "12.21",
+    "code": 22,
+    "version": "12.22",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: أنمي بالكوم",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.animeblkom",
-    "apk": "aniyomi-ar.animeblkom-v12.4.apk",
+    "apk": "aniyomi-ar.animeblkom-v12.5.apk",
     "lang": "ar",
-    "code": 4,
-    "version": "12.4",
+    "code": 5,
+    "version": "12.5",
     "nsfw": 0
   },
   {
@@ -83,10 +83,10 @@
   {
     "name": "Aniyomi: MY CIMA",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.mycima",
-    "apk": "aniyomi-ar.mycima-v12.11.apk",
+    "apk": "aniyomi-ar.mycima-v12.12.apk",
     "lang": "ar",
-    "code": 11,
-    "version": "12.11",
+    "code": 12,
+    "version": "12.12",
     "nsfw": 0
   },
   {
@@ -110,10 +110,10 @@
   {
     "name": "Aniyomi: XS Anime",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.xsanime",
-    "apk": "aniyomi-ar.xsanime-v12.6.apk",
+    "apk": "aniyomi-ar.xsanime-v12.7.apk",
     "lang": "ar",
-    "code": 6,
-    "version": "12.6",
+    "code": 7,
+    "version": "12.7",
     "nsfw": 0
   },
   {
@@ -218,10 +218,10 @@
   {
     "name": "Aniyomi: Vidembed",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.vidembed",
-    "apk": "aniyomi-en.vidembed-v12.2.apk",
+    "apk": "aniyomi-en.vidembed-v12.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "12.2",
+    "code": 3,
+    "version": "12.3",
     "nsfw": 0
   },
   {
