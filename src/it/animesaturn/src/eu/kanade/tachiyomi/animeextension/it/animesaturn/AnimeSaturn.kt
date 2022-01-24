@@ -77,35 +77,76 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episode
     }
 
+    override fun videoListParse(response: Response): List<Video> {
+        val document = response.asJsoup()
+        val standardVideos = videosFromElement(document)
+        val videoList = mutableListOf<Video>()
+        videoList.addAll(standardVideos)
+        return videoList
+    }
+
     override fun videoListRequest(episode: SEpisode): Request {
         val episodePage = client.newCall(GET(baseUrl + episode.url)).execute().asJsoup()
         val watchUrl = episodePage.select("a[href*=/watch]").attr("href")
-        return GET(watchUrl)
+        return GET("$watchUrl&s=alt")
     }
 
-    override fun videoListSelector() = "source"
+    override fun videoListSelector() = throw Exception("not used")
 
-    override fun videoFromElement(element: Element): Video {
-        val referer = element.ownerDocument().location()
-        val url = element.attr("src")
-        return Video(url, "Qualità predefinita", url, null, Headers.headersOf("Referer", referer))
+    override fun videoFromElement(element: Element) = throw Exception("not used")
+
+    private fun videosFromElement(document: Document): List<Video> {
+        val url = if (document.html().contains("jwplayer(")) {
+            document.html().substringAfter("file: \"").substringBefore("\"")
+        } else {
+            document.select("source").attr("src")
+        }
+        val referer = document.location()
+        return if (url.endsWith("playlist.m3u8")) {
+            val playlist = client.newCall(GET(url)).execute().body!!.string()
+            val linkRegex = """(?<=\n)./.+""".toRegex()
+            val qualityRegex = """(?<=RESOLUTION=)\d+x\d+""".toRegex()
+            val qualities = qualityRegex.findAll(playlist).map {
+                it.value.substringAfter('x') + "p"
+            }.toList()
+            val videoLinks = linkRegex.findAll(playlist).map {
+                url.substringBefore("playlist.m3u8") + it.value.substringAfter("./")
+            }.toList()
+            videoLinks.mapIndexed { i, link ->
+                Video(
+                    link,
+                    qualities[i],
+                    link,
+                    null
+                )
+            }
+        } else {
+            listOf(
+                Video(
+                    url,
+                    "Qualità predefinita",
+                    url,
+                    null,
+                    Headers.headersOf("Referer", referer)
+                )
+            )
+        }
     }
 
-    // override fun List<Video>.sort(): List<Video> {
-    //     val quality = preferences.getString("preferred_quality", "1080")!!
-    //     val qualityList = mutableListOf<Video>()
-    //     val newList = mutableListOf<Video>()
-    //     var preferred = 0
-    //     for (video in this) {
-    //         if (video.quality.contains(quality)) {
-    //             qualityList.add(preferred, video)
-    //             preferred++
-    //         } else {
-    //             qualityList.add(video)
-    //         }
-    //     }
-    //     return newList
-    // }
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString("preferred_quality", "1080")!!
+        val qualityList = mutableListOf<Video>()
+        var preferred = 0
+        for (video in this) {
+            if (video.quality.contains(quality)) {
+                qualityList.add(preferred, video)
+                preferred++
+            } else {
+                qualityList.add(video)
+            }
+        }
+        return qualityList
+    }
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
@@ -381,21 +422,21 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        // val videoQualityPref = ListPreference(screen.context).apply {
-        //     key = "preferred_quality"
-        //     title = "Qualità preferita"
-        //     entries = arrayOf("1080p", "720p", "480p", "360p")
-        //     entryValues = arrayOf("1080", "720", "480", "360")
-        //     setDefaultValue("1080")
-        //     summary = "%s"
+        val videoQualityPref = ListPreference(screen.context).apply {
+            key = "preferred_quality"
+            title = "Qualità preferita"
+            entries = arrayOf("1080p", "720p", "480p", "360p", "240p", "144p")
+            entryValues = arrayOf("1080", "720", "480", "360", "240", "144")
+            setDefaultValue("1080")
+            summary = "%s"
 
-        //     setOnPreferenceChangeListener { _, newValue ->
-        //         val selected = newValue as String
-        //         val index = findIndexOfValue(selected)
-        //         val entry = entryValues[index] as String
-        //         preferences.edit().putString(key, entry).commit()
-        //     }
-        // }
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
         val domainPref = ListPreference(screen.context).apply {
             key = "preferred_domain"
             title = "Domain in uso (riavvio dell'app richiesto)"
@@ -411,7 +452,7 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
-        // screen.addPreference(videoQualityPref)
+        screen.addPreference(videoQualityPref)
         screen.addPreference(domainPref)
     }
 }
