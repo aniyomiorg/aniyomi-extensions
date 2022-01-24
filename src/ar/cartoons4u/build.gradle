@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'CARTOONS4U'
+    pkgNameSuffix = 'ar.cartons4u'
+    extClass = '.Cartoons4U'
+    extVersionCode = 1
+    libVersion = '12'
+}
+
+apply from: "$rootDir/common.gradle"
