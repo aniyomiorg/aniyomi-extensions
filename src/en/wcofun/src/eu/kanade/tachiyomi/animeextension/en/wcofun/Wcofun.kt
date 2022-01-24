@@ -2,8 +2,7 @@ package eu.kanade.tachiyomi.animeextension.en.wcofun
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.net.Uri
-import android.util.Log
+import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -14,14 +13,20 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 
 class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -36,7 +41,7 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val downloadLink = "https://vidembed.io/download?id="
+    private val json: Json by injectLazy()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -50,7 +55,6 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("div.recent-release-episodes a").attr("href"))
         anime.thumbnail_url = "https:${element.select("img").first().attr("src")}"
-        Log.d("url", anime.thumbnail_url.toString())
         anime.title = element.select(".recent-release-episodes a").first().text()
         return anime
     }
@@ -80,132 +84,70 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episode
     }
 
-    override fun videoListRequest(episode: SEpisode): Request = throw Exception("Not used")
-
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         return videosFromElement(document)
     }
 
     private fun videosFromElement(document: Document): List<Video> {
+        val scriptData = document.select("script:containsData( = \"\"; var )").first().data()
+
+        val numberRegex = """(?<=\.replace\(/\\D/g,''\)\) - )\d+""".toRegex()
+        val subtractionNumber = numberRegex.find(scriptData)!!.value.toInt()
+
+        val htmlRegex = """(?<=\["|, ").+?(?=")""".toRegex()
+        val html = htmlRegex.findAll(scriptData).map {
+            val decoded = String(Base64.decode(it.value, Base64.DEFAULT))
+            val number = decoded.replace("""\D""".toRegex(), "").toInt()
+            (number - subtractionNumber).toChar()
+        }.joinToString("")
+
+        val iframeLink = Jsoup.parse(html).select("div.pcat-jwplayer iframe")
+            .attr("src")
+        val playerHtml = client.newCall(
+            GET(
+                url = baseUrl + iframeLink,
+                headers = Headers.headersOf("Referer", document.location())
+            )
+        ).execute().body!!.string()
+
+        val getVideoLink = playerHtml.substringAfter("\$.getJSON(\"").substringBefore("\"")
+        val videoJson = json.decodeFromString<JsonObject>(
+            client.newCall(
+                GET(
+                    url = baseUrl + getVideoLink,
+                    headers = Headers.headersOf("x-requested-with", "XMLHttpRequest")
+                )
+            ).execute().body!!.string()
+        )
+
+        val server = videoJson["server"]!!.jsonPrimitive.content
+        val hd = videoJson["hd"]?.jsonPrimitive?.content
+        val sd = videoJson["enc"]?.jsonPrimitive?.content
         val videoList = mutableListOf<Video>()
-//        val videLink = document.select("iframe").attr("src")
-//        videoList.add()
-//        val elements = document.select(videoListSelector())
-//        for (element in elements) {
-//            val quality = element.text().substringAfter("Download (").replace("P - mp4)", "p")
-//            val url = element.attr("href")
-//            val location = element.ownerDocument().location()
-//            val videoHeaders = Headers.headersOf("Referer", location)
-//            when {
-//                url.contains("https://dood") -> {
-//                    val newQuality = "Doodstream mirror"
-//                    val video = try {
-//                        Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
-//                    } catch (e: Exception) {
-//                        null
-//                    }
-//                    if (video != null) videoList.add(video)
-//                }
-//                url.contains("https://sbplay") -> {
-//                    val videos = sbplayUrlParse(url, location)
-//                    videoList.addAll(videos)
-//                }
-//                else -> {
-//                    val parsedQuality = when (quality) {
-//                        "FullHDp" -> "1080p"
-//                        "HDp" -> "720p"
-//                        "SDp" -> "360p"
-//                        else -> quality
-//                    }
-//                    val video =
-//                        Video(url, parsedQuality, videoUrlParse(url, location), null, videoHeaders)
-//                    videoList.add(video)
-//                }
-//            }
-//        }
+        hd?.let {
+            if (it.isNotEmpty()){
+                val videoUrl = "$server/getvid?evid=$it"
+                videoList.add(Video(videoUrl, "HD", videoUrl, null))
+            }
+        }
+        sd?.let {
+            if (it.isNotEmpty()) {
+                val videoUrl = "$server/getvid?evid=$it"
+                videoList.add(Video(videoUrl, "SD", videoUrl, null))
+            }
+        }
         return videoList
     }
 
-    override fun videoListSelector() = "div.mirror_link a[download], div.mirror_link a[href*=https://dood],div.mirror_link a[href*=https://sbplay]"
+    override fun videoListSelector() = throw Exception("not used")
 
     override fun videoFromElement(element: Element): Video = throw Exception("not used")
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
-    private fun videoUrlParse(url: String, referer: String): String {
-        val refererHeader = Headers.headersOf("Referer", referer)
-        val noRedirectClient = client.newBuilder().followRedirects(false).build()
-        val response = noRedirectClient.newCall(GET(url, refererHeader)).execute()
-        val videoUrl = response.header("location")
-        response.close()
-        return videoUrl ?: url
-    }
-
-    private fun sbplayUrlParse(url: String, referer: String): List<Video> {
-        val videoList = mutableListOf<Video>()
-        val refererHeader = Headers.headersOf("Referer", referer)
-        val id = Uri.parse(url).pathSegments[1]
-        val noRedirectClient = client.newBuilder().followRedirects(false).build()
-        val respDownloadLinkSelector = noRedirectClient.newCall(GET(url, refererHeader)).execute()
-        val documentDownloadSelector = respDownloadLinkSelector.asJsoup()
-        val downloadElements = documentDownloadSelector.select("div.contentbox table tbody tr td a")
-        for (downloadElement in downloadElements) {
-            val videoData = downloadElement.attr("onclick")
-            val quality = downloadElement.text()
-            val hash = videoData.splitToSequence(",").last().replace("\'", "").replace(")", "")
-            val mode =
-                videoData.splitToSequence(",").elementAt(1).replace("\'", "").replace(")", "")
-            val downloadLink =
-                "https://sbplay2.com/dl?op=download_orig&id=$id&mode=$mode&hash=$hash"
-            respDownloadLinkSelector.close()
-            val video = sbplayVideoParser(downloadLink, quality)
-            if (video != null) videoList.add(video)
-        }
-        return videoList
-    }
-
-    private fun sbplayVideoParser(url: String, quality: String): Video? {
-        return try {
-            val noRedirectClient = client.newBuilder().followRedirects(false).build()
-            val refererHeader = Headers.headersOf("Referer", url)
-            val respDownloadLink = noRedirectClient.newCall(GET(url, refererHeader)).execute()
-            val documentDownloadLink = respDownloadLink.asJsoup()
-            val downloadLink = documentDownloadLink.selectFirst("div.contentbox span a").attr("href")
-            respDownloadLink.close()
-            Video(url, quality, downloadLink, null, refererHeader)
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    private fun doodUrlParse(url: String): String? {
-        val response = client.newCall(GET(url.replace("/d/", "/e/"))).execute()
-        val content = response.body!!.string()
-        if (!content.contains("'/pass_md5/")) return null
-        val md5 = content.substringAfter("'/pass_md5/").substringBefore("',")
-        val token = md5.substringAfterLast("/")
-        val doodTld = url.substringAfter("https://dood.").substringBefore("/")
-        val randomString = getRandomString()
-        val expiry = System.currentTimeMillis()
-        val videoUrlStart = client.newCall(
-            GET(
-                "https://dood.$doodTld/pass_md5/$md5",
-                Headers.headersOf("referer", url)
-            )
-        ).execute().body!!.string()
-        return "$videoUrlStart$randomString?token=$token&expiry=$expiry"
-    }
-
-    private fun getRandomString(length: Int = 10): String {
-        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
-        return (1..length)
-            .map { allowedChars.random() }
-            .joinToString("")
-    }
-
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", null)
+        val quality = preferences.getString("preferred_quality", "HD")
         if (quality != null) {
             val newList = mutableListOf<Video>()
             var preferred = 0
@@ -261,9 +203,9 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
-            setDefaultValue("1080")
+            entries = arrayOf("HD", "SD")
+            entryValues = arrayOf("HD", "SD")
+            setDefaultValue("HD")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
