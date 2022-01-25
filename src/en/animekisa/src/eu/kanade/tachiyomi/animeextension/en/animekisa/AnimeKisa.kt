@@ -61,7 +61,7 @@ class AnimeKisa : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // episodes
 
-    override fun episodeListSelector() = "div#listEps-1-content li"
+    override fun episodeListSelector() = "div.tab-content div[role=tabpanel] li"
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
