@@ -2,10 +2,10 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    extName = 'WIT ANIME'
-    pkgNameSuffix = 'ar.witanime'
-    extClass = '.WitAnime'
-    extVersionCode = 10
+    extName = 'Anime Saturn'
+    pkgNameSuffix = 'it.animesaturn'
+    extClass = '.AnimeSaturn'
+    extVersionCode = 2
     libVersion = '12'
 }
 
