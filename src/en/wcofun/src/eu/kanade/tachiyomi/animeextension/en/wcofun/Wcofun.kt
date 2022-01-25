@@ -12,11 +12,13 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -72,14 +74,22 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("href"))
         val epName = element.ownText()
+        val season = epName.substringAfter("Season ")
         val ep = epName.substringAfter("Episode ")
+        val seasonNo = try {
+            season.substringBefore(" ").toFloat()
+        } catch (e: NumberFormatException) {
+            0.toFloat()
+        }
         val epNo = try {
             ep.substringBefore(" ").toFloat()
         } catch (e: NumberFormatException) {
             0.toFloat()
         }
-        episode.episode_number = epNo
-        episode.name = if (ep == epName) epName else "Episode $ep"
+        var episodeName = if (ep == epName) epName else "Episode $ep"
+        episodeName = if (season == epName) episodeName else "Season $season"
+        episode.episode_number = epNo + seasonNo
+        episode.name = episodeName
         episode.date_upload = System.currentTimeMillis()
         return episode
     }
@@ -166,20 +176,24 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.attr("href"))
+        anime.setUrlWithoutDomain(element.select("div.recent-release-episodes a").attr("href"))
         anime.thumbnail_url = element.select("img").first().attr("src")
-        anime.title = element.select(".name").first().text().split("Episode").first()
+        anime.title = element.select(".recent-release-episodes a").first().text()
         return anime
     }
 
     override fun searchAnimeNextPageSelector(): String = "ul.pagination-list li:last-child:not(.selected)"
 
-    override fun searchAnimeSelector(): String = ".video-block a"
+    override fun searchAnimeSelector(): String = "ul.items li"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val formBody = FormBody.Builder()
+            .add("catara", query)
+            .add("konuara", "series")
+            .build()
         return when {
-            query.isNotBlank() -> GET("$baseUrl/search.html?keyword=$query&page=$page", headers)
-            else -> GET("$baseUrl/?page=$page")
+            query.isNotBlank() -> POST("$baseUrl/search", headers, body = formBody)
+            else -> GET("$baseUrl/")
         }
     }
 
