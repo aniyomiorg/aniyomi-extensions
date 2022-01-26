@@ -153,15 +153,6 @@
     "nsfw": 0
   },
   {
-    "name": "Aniyomi: AllMovies",
-    "pkg": "eu.kanade.tachiyomi.animeextension.en.allmovies",
-    "apk": "aniyomi-en.allmovies-v12.2.apk",
-    "lang": "en",
-    "code": 2,
-    "version": "12.2",
-    "nsfw": 0
-  },
-  {
     "name": "Aniyomi: AnimeKisa",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.animekisa",
     "apk": "aniyomi-en.animekisa-v12.2.apk",
@@ -177,6 +168,15 @@
     "lang": "en",
     "code": 12,
     "version": "12.12",
+    "nsfw": 0
+  },
+  {
+    "name": "Aniyomi: AsianLoad",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.asianload",
+    "apk": "aniyomi-en.asianload-v12.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "12.1",
     "nsfw": 0
   },
   {
