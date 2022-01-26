@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'AllMoviesForYou(TV Shows)'
+    pkgNameSuffix = 'en.allmoviesforyou'
+    extClass = '.AllMoviesForYou'
+    extVersionCode = 40
+    libVersion = '12'
+}
+
+apply from: "$rootDir/common.gradle"
