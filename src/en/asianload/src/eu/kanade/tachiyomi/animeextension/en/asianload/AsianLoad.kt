@@ -89,7 +89,7 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videosFromElement(document)
     }
 
-    val srcVid = preferences.getString("preferred_server", "https://sbplay2.com")
+    val srcVid = preferences.getString("preferred_server", "https://dood")
 
     override fun videoListSelector() = "ul.list-server-items li[data-video*=$srcVid]"
     // "ul.list-server-items li[data-video*=https://sbplay2.com], ul.list-server-items li[data-video*=https://dood], ul.list-server-items li[data-video*=https://streamtape], ul.list-server-items li[data-video*=https://fembed]"
@@ -104,7 +104,7 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val videoHeaders = Headers.headersOf("Referer", location)
             when {
                 url.contains("https://sbplay") -> {
-                    val videos = sbplayUrlParse(url, location)
+                    val videos = sbplayUrlParse(url.substringBefore("?caption"), location)
                     videoList.addAll(videos)
                 }
                 url.contains("https://dood") -> {
@@ -314,7 +314,7 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title = "Preferred Server  (requires app restart)"
             entries = arrayOf("Fembed", "StreamTape", "DooDStream", "StreamSB")
             entryValues = arrayOf("https://fembed", "https://streamtape", "https://dood", "https://sbplay2.com")
-            setDefaultValue("https://sbplay2.com")
+            setDefaultValue("https://dood")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
