@@ -254,10 +254,10 @@
   {
     "name": "Aniyomi: Wcofun",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.wcofun",
-    "apk": "aniyomi-en.wcofun-v12.2.apk",
+    "apk": "aniyomi-en.wcofun-v12.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "12.2",
+    "code": 3,
+    "version": "12.3",
     "nsfw": 0
   },
   {
