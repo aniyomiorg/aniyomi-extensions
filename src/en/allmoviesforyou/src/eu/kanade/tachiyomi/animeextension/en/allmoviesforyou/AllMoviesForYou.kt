@@ -202,7 +202,7 @@ class AllMoviesForYou : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.title = document.select("div.TPMvCn a h1.Title").text()
+        anime.title = document.select("div.TPMvCn h1.Title").text()
         anime.genre = document.select("p.Genre a").joinToString(", ") { it.text() }
         anime.status = SAnime.COMPLETED
         anime.author = document.select("p.Director span a").joinToString(", ") { it.text() }
