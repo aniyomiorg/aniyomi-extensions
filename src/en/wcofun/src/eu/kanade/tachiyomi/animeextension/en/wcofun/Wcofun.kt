@@ -176,14 +176,14 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("div.recent-release-episodes a, a").attr("href"))
-        anime.title = element.select(".recent-release-episodes a, a").first().text()
+        anime.setUrlWithoutDomain(element.attr("href"))
+        anime.title = element.text()
         return anime
     }
 
     override fun searchAnimeNextPageSelector(): String = "ul.pagination-list li:last-child:not(.selected)"
 
-    override fun searchAnimeSelector(): String = "div#sidebar_right2 li, div.ddmcc li"
+    override fun searchAnimeSelector(): String = "div#sidebar_right2 li div.recent-release-episodes a, div.ddmcc li a"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
