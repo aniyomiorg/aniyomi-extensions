@@ -279,6 +279,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: Jkhentai",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.jkhentai",
+    "apk": "aniyomi-es.jkhentai-v12.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: MonosChinos",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.monoschinos",
     "apk": "aniyomi-es.monoschinos-v12.2.apk",
