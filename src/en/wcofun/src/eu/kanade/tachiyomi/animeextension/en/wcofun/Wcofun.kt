@@ -6,6 +6,7 @@ import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -49,15 +50,14 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun popularAnimeSelector(): String = "div#sidebar_right2 li"
+    override fun popularAnimeSelector(): String = "div.sidebar-titles li a"
 
     override fun popularAnimeRequest(page: Int): Request = GET(baseUrl)
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("div.recent-release-episodes a").attr("href"))
-        anime.thumbnail_url = "https:${element.select("img").first().attr("src")}"
-        anime.title = element.select(".recent-release-episodes a").first().text()
+        anime.setUrlWithoutDomain(element.attr("href"))
+        anime.title = element.text()
         return anime
     }
 
@@ -88,7 +88,7 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         var episodeName = if (ep == epName) epName else "Episode $ep"
         episodeName = if (season == epName) episodeName else "Season $season"
-        episode.episode_number = epNo + seasonNo
+        episode.episode_number = epNo + (seasonNo * 100)
         episode.name = episodeName
         episode.date_upload = System.currentTimeMillis()
         return episode
@@ -136,7 +136,7 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val sd = videoJson["enc"]?.jsonPrimitive?.content
         val videoList = mutableListOf<Video>()
         hd?.let {
-            if (it.isNotEmpty()){
+            if (it.isNotEmpty()) {
                 val videoUrl = "$server/getvid?evid=$it"
                 videoList.add(Video(videoUrl, "HD", videoUrl, null))
             }
@@ -176,23 +176,25 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("div.recent-release-episodes a").attr("href"))
-        anime.thumbnail_url = element.select("img").first().attr("src")
-        anime.title = element.select(".recent-release-episodes a").first().text()
+        anime.setUrlWithoutDomain(element.select("div.recent-release-episodes a, a").attr("href"))
+        anime.title = element.select(".recent-release-episodes a, a").first().text()
         return anime
     }
 
     override fun searchAnimeNextPageSelector(): String = "ul.pagination-list li:last-child:not(.selected)"
 
-    override fun searchAnimeSelector(): String = "ul.items li"
+    override fun searchAnimeSelector(): String = "div#sidebar_right2 li, div.ddmcc li"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val filterList = if (filters.isEmpty()) getFilterList() else filters
+        val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
         val formBody = FormBody.Builder()
             .add("catara", query)
             .add("konuara", "series")
             .build()
         return when {
             query.isNotBlank() -> POST("$baseUrl/search", headers, body = formBody)
+            genreFilter.state != 0 -> GET("$baseUrl/search-by-genre/page/${genreFilter.toUriPart()}")
             else -> GET("$baseUrl/")
         }
     }
@@ -200,8 +202,9 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.select("div.video-title a").first().text()
-        anime.description = document.select("div#sidebar_cat p").first().text()
-
+        anime.description = document.select("div#sidebar_cat p")?.first()?.text()
+        anime.thumbnail_url = "https:${document.select("div#sidebar_cat img").first().attr("src")}"
+        anime.genre = document.select("div#sidebar_cat > a").joinToString { it.text() }
         return anime
     }
 
@@ -230,5 +233,167 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         screen.addPreference(videoQualityPref)
+    }
+
+    // Filters
+    override fun getFilterList(): AnimeFilterList = AnimeFilterList(
+        AnimeFilter.Header("Text search ignores filters"),
+        GenreFilter()
+    )
+
+    private class GenreFilter : UriPartFilter(
+        "Genres",
+        arrayOf(
+            Pair("<select>", ""),
+            Pair("Adventure", "4"),
+            Pair("Comedy", "6"),
+            Pair("Fantasy", "8"),
+            Pair("Science Fiction", "10"),
+            Pair("Mystery", "12"),
+            Pair("Action", "14"),
+            Pair("Drama", "16"),
+            Pair("Surrealist Comedy", "18"),
+            Pair("Horror", "20"),
+            Pair("Romance", "22"),
+            Pair("Animated", "23"),
+            Pair("Thriller", "24"),
+            Pair("Slice Of Life", "25"),
+            Pair("Supernatural", "26"),
+            Pair("Romantic Comedy", "27"),
+            Pair("Harem", "28"),
+            Pair("Sports", "29"),
+            Pair("Psychological", "30"),
+            Pair("Magical Girl", "31"),
+            Pair("Mecha", "35"),
+            Pair("Role-playing", "33"),
+            Pair("Military", "34"),
+            Pair("Science Fantasy", "36"),
+            Pair("Martial Arts", "37"),
+            Pair("High School", "38"),
+            Pair("Parody", "39"),
+            Pair("Virtual Reality", "40"),
+            Pair("Space Opera", "41"),
+            Pair("Post-Apocalyptic", "42"),
+            Pair("Music", "43"),
+            Pair("Dark Fantasy", "44"),
+            Pair("Historical Fantasy", "45"),
+            Pair("Yuri", "46"),
+            Pair("Superpower", "47"),
+            Pair("Magic", "48"),
+            Pair("Alternate History", "49"),
+            Pair("Sci-fi", "50"),
+            Pair("Girls With Guns", "51"),
+            Pair("Tournament", "52"),
+            Pair("School", "53"),
+            Pair("Romantic Drama", "54"),
+            Pair("Crime", "55"),
+            Pair("Historical", "56"),
+            Pair("Dystopian", "57"),
+            Pair("Steampunk", "58"),
+            Pair("Metafiction", "59"),
+            Pair("Police", "60"),
+            Pair("Detective Fiction", "61"),
+            Pair("Occult", "62"),
+            Pair("Tragedy", "63"),
+            Pair("Fighter", "65"),
+            Pair("Animated television series", "66"),
+            Pair("Children's television series", "67"),
+            Pair("Family television series", "68"),
+            Pair("Absurdist humor", "69"),
+            Pair("Dark humor", "70"),
+            Pair("Surreal humor", "71"),
+            Pair("Adult animation", "72"),
+            Pair("Teen Drama", "73"),
+            Pair("Superhero", "74"),
+            Pair("Cyberpunk", "75"),
+            Pair("Suspense", "76"),
+            Pair("Sitcom", "77"),
+            Pair("Satire", "78"),
+            Pair("Anthology series", "79"),
+            Pair("Edutainment", "80"),
+            Pair("Espionage", "81"),
+            Pair("Surrealism", "82"),
+            Pair("Teen Animation", "83"),
+            Pair("Toilet humour", "84"),
+            Pair("Cutaway gag humor", "85"),
+            Pair("Splatter", "86"),
+            Pair("Deadpan", "87"),
+            Pair("Car racing", "88"),
+            Pair("Chanbara", "89"),
+            Pair("Goth", "90"),
+            Pair("Game", "93"),
+            Pair("Magical boy", "94"),
+            Pair("Shounen", "95"),
+            Pair("Kids", "96"),
+            Pair("shoujo", "97"),
+            Pair("Baseball", "98"),
+            Pair("Manga", "99"),
+            Pair("Friendship", "100"),
+            Pair("School Dormitory", "101"),
+            Pair("Ecchi", "102"),
+            Pair("Seinen", "103"),
+            Pair("Coming-of-age story", "104"),
+            Pair("Idol anime", "105"),
+            Pair("Samurai", "106"),
+            Pair("Reverse Harem", "107"),
+            Pair("Urban", "108"),
+            Pair("War", "109"),
+            Pair("Vampire", "110"),
+            Pair("Demons", "111"),
+            Pair("Urban fantasy", "112"),
+            Pair("Mythic fiction", "113"),
+            Pair("Space", "114"),
+            Pair("Shounen Ai", "115"),
+            Pair("Shoujo Ai", "116"),
+            Pair("Slapstick", "117"),
+            Pair("Surreal", "118"),
+            Pair("Chinese Cartoon", "119"),
+            Pair("Short", "120"),
+            Pair("Movie", "121"),
+            Pair("Family", "123"),
+            Pair("Animation", "125"),
+            Pair("Educational", "128"),
+            Pair("Musical", "129"),
+            Pair("Yaoi", "132"),
+            Pair("Documentary", "133"),
+            Pair("Football", "134"),
+            Pair("Learning", "135"),
+            Pair("Pre-School", "136"),
+            Pair("Graphic novel", "137"),
+            Pair("Contemporary fantasy", "140"),
+            Pair("Adult Cartoons", "141"),
+            Pair("Cartoon series", "142"),
+            Pair("Off-color humor", "143"),
+            Pair("History", "147"),
+            Pair("Superhero fiction", "149"),
+            Pair("Sword and sorcery", "155"),
+            Pair("Stop Motion", "157"),
+            Pair("Horror comedy", "159"),
+            Pair("Social satire", "163"),
+            Pair("Black comedy", "166"),
+            Pair("Animated sitcom", "168"),
+            Pair("Game-Show", "170"),
+            Pair("Western", "172"),
+            Pair("Comic science fiction", "176"),
+            Pair("Situation comedy", "178"),
+            Pair("Adapted Literature", "181"),
+            Pair("Harold and the Purple Crayon", "202"),
+            Pair("Spy fiction", "203"),
+            Pair("Children's fiction", "204"),
+            Pair("Sketch comedy", "205"),
+            Pair("Josei", "206"),
+            Pair("Dementia", "208"),
+            Pair("Cars", "209"),
+            Pair("Isekai", "210"),
+            Pair("Comedy-drama", "211"),
+            Pair("Senryuu Girl", "214"),
+            Pair("Musical comedy", "215"),
+            Pair("Comedy horror", "216"),
+        )
+    )
+
+    private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
+        AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
+        fun toUriPart() = vals[state].second
     }
 }
