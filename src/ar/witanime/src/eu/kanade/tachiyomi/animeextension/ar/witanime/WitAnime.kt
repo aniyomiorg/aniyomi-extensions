@@ -93,6 +93,10 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val videos = FembedExtractor().videosFromUrl(url)
                     videoList.addAll(videos)
                 }
+                server.contains("vivyplay") -> {
+                    val videos = FembedExtractor().videosFromUrl(url)
+                    videoList.addAll(videos)
+                }
                 /*server.contains("ok") -> {
                     val videos = OkruExtractor(client).videosFromUrl(url)
                     if (videos == null) {
