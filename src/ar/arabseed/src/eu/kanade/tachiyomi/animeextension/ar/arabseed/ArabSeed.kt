@@ -87,7 +87,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoFromElement(element: Element): Video {
         Log.i("plsWork", element.attr("src"))
-        return Video(element.attr("src"), "Default: If you want to change the quality go to extension settings", element.attr("src"), null)
+        return Video(element.attr("src").replace("https", "http"), "Default: If you want to change the quality go to extension settings", element.attr("src").replace("https", "http"), null)
     }
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
