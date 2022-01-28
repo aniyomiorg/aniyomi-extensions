@@ -71,9 +71,18 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("href"))
         episode.name = "Episode: " + element.attr("href").substringAfter("episode-")
-        episode.episode_number = element.attr("href").substringAfter("episode-").toFloat()
+        val epNum = getNumberFromEpsString(element.attr("href").substringAfter("episode-"))
+        episode.episode_number = when {
+            (epNum.isNotEmpty()) -> epNum.toFloat()
+            else -> 1F
+        }
+        //episode.episode_number = element.attr("href").substringAfter("episode-").toFloat()
         // episode.date_upload = element.select("div.meta span.date").text()
         return episode
+    }
+    
+    private fun getNumberFromEpsString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }
     }
 
     // Video urls
