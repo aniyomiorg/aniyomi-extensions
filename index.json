@@ -38,10 +38,10 @@
   {
     "name": "Aniyomi: عرب سيد",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.arabseed",
-    "apk": "aniyomi-ar.arabseed-v12.1.apk",
+    "apk": "aniyomi-ar.arabseed-v12.2.apk",
     "lang": "ar",
-    "code": 1,
-    "version": "12.1",
+    "code": 2,
+    "version": "12.2",
     "nsfw": 0
   },
   {
@@ -110,10 +110,10 @@
   {
     "name": "Aniyomi: WIT ANIME",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.witanime",
-    "apk": "aniyomi-ar.witanime-v12.10.apk",
+    "apk": "aniyomi-ar.witanime-v12.11.apk",
     "lang": "ar",
-    "code": 10,
-    "version": "12.10",
+    "code": 11,
+    "version": "12.11",
     "nsfw": 0
   },
   {
@@ -182,10 +182,10 @@
   {
     "name": "Aniyomi: AsianLoad",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.asianload",
-    "apk": "aniyomi-en.asianload-v12.1.apk",
+    "apk": "aniyomi-en.asianload-v12.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "12.1",
+    "code": 2,
+    "version": "12.2",
     "nsfw": 0
   },
   {
