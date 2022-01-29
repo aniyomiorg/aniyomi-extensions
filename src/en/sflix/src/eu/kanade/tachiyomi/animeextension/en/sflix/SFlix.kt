@@ -44,7 +44,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val domain = "aHR0cHM6Ly9zdHJlYW1yYXBpZC5ydTo0NDM.."
+    private val domain = "aHR0cHM6Ly9yYWJiaXRzdHJlYW0ubmV0OjQ0Mw.."
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -195,9 +195,6 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Log.i("lol9", "$callreloadToken")
         val get1Token = callreloadToken.text().substringAfter("rresp\",\"").substringBefore("\"")
         Log.i("lol10", get1Token)
-// https://www.google.com/recaptcha/api2/anchor?ar=1&k=6LcmoUQcAAAAANdFmpVMNp8fLPptGk2uVSnY0TyZ&co=aHR0cHM6Ly9zdHJlYW1yYXBpZC5ydTo0NDM.&hl=en&v=-FJgYf1d3dZ_QPcZP7bd85hc&size=invisible&cb=5rvwss2ssshi
-
-// 03AGdBq25zOmWF0L4f8Oljug6-scWhYi3oajh_qMtaX7jtuSH_N2dZ01Mgd4ZVK55PuN5JeGejJer7D811vOkE1s5ea3HXf9I0RZdfmDbStCh1HuVxW2sD6wXLN-7UEuiXYB9-dSVxnIBlm9zRIOagiF8fU-uYhTzmfchm7ng8rmqM8ZxjWC1QEtyVHA-NYijc3JDrVZRaf4cK0FvqlgQ92msrJDCz3yE-uM1NfpC-M3tDBQgySIRhMYmvmYiJFiwKPJBywgXlWui07euWV4a_W7t8aOma8wRIH2q32l67vy-qNC9lYNGad76O527OGCoLj_g_Gv4egyc0ct9dMTSMYaus1cSE53NVR_Ilj8XRRJKbOFUBJkbzMBHtdhGzQ2vPwj2MiI4b_0tKaX5yAr5pOxEWIBh7hf61hdpvVa7lk71v3pVRaT6cKTfjtGVIliMaB4SyLZIvHPzy
         Log.i("m3u8fi", "https://rabbitstream.net/ajax/embed-4/getSources?id=$videoEmbedUrlId&_token=$get1Token&_number=$getRecaptchaRenderNum") // &_number=$getRecaptchaRenderNum")
         val iframeResponse = client.newCall(GET("https://rabbitstream.net/ajax/embed-5/getSources?id=$videoEmbedUrlId&_token=$get1Token&_number=$getRecaptchaRenderNum", newHeaders))
             .execute().asJsoup()
@@ -208,14 +205,18 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun videosFromElement(element: Element): List<Video> {
         val masterUrl = element.text().substringAfter("file\":\"").substringBefore("\",\"type")
-        val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
-        val videoList = mutableListOf<Video>()
-        masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
-            val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p"
-            val videoUrl = it.substringAfter("\n").substringBefore("\n")
-            videoList.add(Video(videoUrl, quality, videoUrl, null))
+        if (masterUrl.contains("playlist.m3u8")) {
+            val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
+            val videoList = mutableListOf<Video>()
+            masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
+                val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p"
+                val videoUrl = it.substringAfter("\n").substringBefore("\n")
+                videoList.add(Video(videoUrl, quality, videoUrl, null))
+            }
+            return videoList
+        } else {
+            return listOf(Video(masterUrl, "Default", masterUrl, null))
         }
-        return videoList
     }
 
     override fun List<Video>.sort(): List<Video> {
