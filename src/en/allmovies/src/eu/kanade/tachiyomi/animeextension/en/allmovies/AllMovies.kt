@@ -27,7 +27,7 @@ import java.lang.Exception
 
 class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "AllMovies"
+    override val name = "AllMoviesForYou"
 
     override val baseUrl = "https://allmoviesforyou.net"
 
@@ -45,7 +45,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "article.TPost > a"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/movies/page/$page")
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/shows/page/$page")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -60,12 +60,58 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Episodes
 
-    override fun episodeListSelector() = "link[rel=canonical]"
+    override fun episodeListSelector() = throw Exception("not used")
 
-    override fun episodeFromElement(element: Element): SEpisode {
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val document = response.asJsoup()
+        val episodeList = mutableListOf<SEpisode>()
+        val seriesLink = document.select("link[rel=canonical]").attr("href")
+        if (seriesLink.contains("/series/")) {
+            val seasonUrl = seriesLink
+            val seasonsHtml = client.newCall(
+                GET(
+                    seasonUrl,
+                    headers = Headers.headersOf("Referer", document.location())
+                )
+            ).execute().asJsoup()
+            val seasonsElements = seasonsHtml.select("section.SeasonBx.AACrdn a")
+            seasonsElements.forEach {
+                val seasonEpList = parseEpisodesFromSeries(it)
+                episodeList.addAll(seasonEpList)
+            }
+        } else {
+            val movieUrl = seriesLink
+            val episode = SEpisode.create()
+            episode.name = document.select("div.TPMvCn h1.Title").text()
+            episode.episode_number = 1F
+            episode.setUrlWithoutDomain(movieUrl)
+            episodeList.add(episode)
+        }
+        return episodeList
+    }
+
+    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
+
+    private fun parseEpisodesFromSeries(element: Element): List<SEpisode> {
+        val seasonId = element.attr("href")
+        val seasonName = element.text()
+        Log.i("seasonname", seasonName)
+        val episodesUrl = seasonId
+        val episodesHtml = client.newCall(
+            GET(
+                episodesUrl,
+            )
+        ).execute().asJsoup()
+        val episodeElements = episodesHtml.select("tr.Viewed")
+        return episodeElements.map { episodeFromElement(it, seasonName) }
+    }
+
+    private fun episodeFromElement(element: Element, seasonName: String): SEpisode {
         val episode = SEpisode.create()
-        episode.setUrlWithoutDomain("allmoviesforyou.net" + element.attr("href"))
-        episode.name = element.ownerDocument().select("div.TPMvCn h1.Title").text()
+        episode.episode_number = element.select("td > span.Num").text().toFloat()
+        val SeasonNum = element.ownerDocument().select("div.Title span").text()
+        episode.name = "Season $SeasonNum" + "x" + element.select("td span.Num").text() + " : " + element.select("td.MvTbTtl > a").text()
+        episode.setUrlWithoutDomain(element.select("td.MvTbPly > a.ClA").attr("abs:href"))
         return episode
     }
 
@@ -182,12 +228,19 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.title = document.select("div.TPMvCn a h1.Title").text()
+        anime.title = document.select("div.TPMvCn h1.Title").text()
         anime.genre = document.select("p.Genre a").joinToString(", ") { it.text() }
-        anime.status = SAnime.COMPLETED
+        Log.i("status", document.select("div.Info").text())
+        anime.status = parseStatus(document.select("div.Info").text()) // span.Qlty
         anime.author = document.select("p.Director span a").joinToString(", ") { it.text() }
         anime.description = document.select("div.TPMvCn div.Description p:first-of-type").text()
         return anime
+    }
+
+    private fun parseStatus(status: String?) = when {
+        status == null -> SAnime.UNKNOWN
+        status.contains("AIR", ignoreCase = true) -> SAnime.ONGOING
+        else -> SAnime.COMPLETED
     }
 
     // Latest
@@ -208,7 +261,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         GenreFilter(getGenreList())
     )
 
-    private class GenreFilter(vals: Array<Pair<String, String>>) : UriPartFilter("Movies Genres", vals)
+    private class GenreFilter(vals: Array<Pair<String, String>>) : UriPartFilter("Genres", vals)
 
     private fun getGenreList() = arrayOf(
         Pair("Action & Adventure", "action-adventure"),
