@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.en.sflix
+package eu.kanade.tachiyomi.animeextension.en.dopebox
 
 import android.app.Application
 import android.content.SharedPreferences
@@ -25,17 +25,17 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
 
-class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "Sflix"
+    override val name = "DopeBox"
 
-    override val baseUrl = "https://sflix.to"
+    override val baseUrl = "https://dopebox.to"
 
     // https://streamrapid.ru/embed
     // streamrapid.ru/-4/viSila1P4blj?z=
 
-    // https://sflix.to/ajax/movie/episodes/76255
-    // https://sflix.to/ajax/get_link/8004253
+    // https://dopebox.to/ajax/movie/episodes/76255
+    // https://dopebox.to/ajax/get_link/8004253
     // https://streamrapid.ru/ajax/embed-5/getSources?id=coTXci0tOHn5&_token=03AGdBq27w4Pg0bLeCc2uP2wBJLY0C7FVup4jefr042H44vVTd_4tO6DfCKOkgzAJazBWMz1jUeIy9stay02C4v9jmQm_tZ1xxTmDBPbLwnjcMoFy0JsMfBRFwU4s02ibSCRh-Wrsc2xyV23MU2v8BBFhGRtiQycZTRM7frIBmhNxozZgswYhDqYqQadsKHa2Tzd5w_RpmEiRFtTy5w3Ex1-2IgfS6ffk5X6h0DuOQVlquuTv72tYjGLwkJgAqMmBOfbaij1r922s6-I72OiEWCeKouTQhpMU_4EvOM3jheXTcwbbSaqdJEh23VTSPQsly8UNGHDzk1vbwL0m7TICzh71gAsDKuDx0I7qMOP7jd8HVqENC70UQpWr1FNczqCM7EpYG8U2EneBNFW2bz-vtr6hLK9SPr7G-bxTbCbQGezsycVZ_EMGg6mAX9DJqlgp9Nm4kAKCo3aqIexo_1PqfAsiHvgmLTInvUw&_number=4
 
     override val lang = "en"
@@ -51,7 +51,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
     override fun headersBuilder(): Headers.Builder {
         return super.headersBuilder()
-            .add("Referer", "https://sflix.to/") // https://s12.gemzawy.com https://moshahda.net
+            .add("Referer", "https://dopebox.to/") // https://s12.gemzawy.com https://moshahda.net
     }
 
     override fun popularAnimeSelector(): String = "div.film_list-wrap div.flw-item div.film-poster"
@@ -79,7 +79,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val id = infoElement.attr("data-id")
         val dataType = infoElement.attr("data-type") // Tv = 2 or movie = 1
         if (dataType == "2") {
-            val seasonUrl = "https://sflix.to/ajax/v2/tv/seasons/$id"
+            val seasonUrl = "https://dopebox.to/ajax/v2/tv/seasons/$id"
             val seasonsHtml = client.newCall(
                 GET(
                     seasonUrl,
@@ -92,7 +92,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 episodeList.addAll(seasonEpList)
             }
         } else {
-            val movieUrl = "https://sflix.to/ajax/movie/episodes/$id"
+            val movieUrl = "https://dopebox.to/ajax/movie/episodes/$id"
             val episode = SEpisode.create()
             episode.name = document.select("h2.heading-name").text()
             episode.episode_number = 1F
@@ -107,7 +107,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun parseEpisodesFromSeries(element: Element): List<SEpisode> {
         val seasonId = element.attr("data-id")
         val seasonName = element.text()
-        val episodesUrl = "https://sflix.to/ajax/v2/season/episodes/$seasonId"
+        val episodesUrl = "https://dopebox.to/ajax/v2/season/episodes/$seasonId"
         val episodesHtml = client.newCall(
             GET(
                 episodesUrl,
@@ -123,7 +123,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val epNum = element.select("div.episode-number").text()
         val epName = element.select("h3.film-name a").text()
         episode.name = "$seasonName $epNum $epName"
-        episode.setUrlWithoutDomain("https://sflix.to/ajax/v2/episode/servers/$episodeId")
+        episode.setUrlWithoutDomain("https://dopebox.to/ajax/v2/episode/servers/$episodeId")
         return episode
     }
 
@@ -144,11 +144,11 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         // get embed id
 
         /*Log.i("lol1", document.select("div.detail_page-watch").attr("data-id"))
-        val getApi = client.newCall(GET("https://sflix.to/ajax/movie/episodes/" + document.select("div.detail_page-watch").attr("data-id"))).execute().asJsoup()
+        val getApi = client.newCall(GET("https://dopebox.to/ajax/movie/episodes/" + document.select("div.detail_page-watch").attr("data-id"))).execute().asJsoup()
         Log.i("lol0", "$getApi")*/
         val getVidID = document.selectFirst("a").attr("data-id")
         Log.i("lol2", "$getVidID")
-        val getVidApi = client.newCall(GET("https://sflix.to/ajax/get_link/" + getVidID)).execute().asJsoup()
+        val getVidApi = client.newCall(GET("https://dopebox.to/ajax/get_link/" + getVidID)).execute().asJsoup()
 
         // streamrapid URL
         val getVideoEmbed = getVidApi.text().substringAfter("link\":\"").substringBefore("\"")

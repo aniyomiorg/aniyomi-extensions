@@ -2,9 +2,9 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    extName = 'Sflix'
-    pkgNameSuffix = 'en.sflix'
-    extClass = '.SFlix'
+    extName = 'DopeBox'
+    pkgNameSuffix = 'en.dopebox'
+    extClass = '.DopeBox'
     extVersionCode = 70
     libVersion = '12'
 }
