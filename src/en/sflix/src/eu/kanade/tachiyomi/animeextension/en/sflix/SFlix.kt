@@ -89,24 +89,28 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val referer = response.request.url.encodedPath
         val newHeaders = Headers.headersOf("referer", referer)
 
+        // get embed id
+
         Log.i("lol1", document.select("div.detail_page-watch").attr("data-id"))
         val getApi = client.newCall(GET("https://sflix.to/ajax/movie/episodes/" + document.select("div.detail_page-watch").attr("data-id"))).execute().asJsoup()
         Log.i("lol0", "$getApi")
-        val getVidID = getApi.select("a").attr("data-id")
+        val getVidID = getApi.selectFirst("a").attr("data-id")
         Log.i("lol2", "$getVidID")
         val getVidApi = client.newCall(GET("https://sflix.to/ajax/get_link/" + getVidID)).execute().asJsoup()
+
         // streamrapid URL
         val getVideoEmbed = getVidApi.text().substringAfter("link\":\"").substringBefore("\"")
         Log.i("lol3", "$getVideoEmbed")
-        val videoEmbedId = getVideoEmbed.substringAfterLast("/").substringBefore("?")
-        Log.i("videoEmbedId", "$videoEmbedId")
+        val videoEmbedUrlId = getVideoEmbed.substringAfterLast("/").substringBefore("?")
+        Log.i("videoEmbedId", "$videoEmbedUrlId")
         val callVideolink = client.newCall(GET(getVideoEmbed, refererHeaders)).execute().asJsoup()
         Log.i("lol4", "$callVideolink")
+        val callVideolink2 = client.newCall(GET(getVideoEmbed, refererHeaders)).execute().body!!.string()
         // get Token vals
         val getRecaptchaRenderLink = callVideolink.select("script[src*=https://www.google.com/recaptcha/api.js?render=]").attr("src")
         Log.i("lol5", getRecaptchaRenderLink)
-        val getRecaptchaRenderNum = callVideolink.select("script.containsData(recaptchaNumber)").data().substringAfter("recaptchaNumber = '").substringBeforeLast("'")
-        Log.i("recapchaNum", "getRecaptchaRenderNum")
+        val getRecaptchaRenderNum = callVideolink2.substringAfter("recaptchaNumber = '").substringBeforeLast("'")
+        Log.i("recapchaNum", "$getRecaptchaRenderNum")
         val callReacapchaRenderLink = client.newCall(GET(getRecaptchaRenderLink)).execute().asJsoup()
         Log.i("lol6", "$callReacapchaRenderLink")
         val getAnchorVVal = callReacapchaRenderLink.text().substringAfter("releases/").substringBefore("/")
@@ -120,9 +124,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Log.i("Retoken", rtoken)
 
         // Log.i("lol8", "$anchorLink")
-        val reloadHeaders = headers.newBuilder()
-            .set("Referer2", "$anchorLink")
-            .build()
+
         val pageData = FormBody.Builder()
             .add("v", "$getAnchorVVal")
             .add("reason", "q")
@@ -134,6 +136,9 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val reloadTokenUrl = "https://www.google.com/recaptcha/api2/reload?k=$getRecaptchaSiteKey"
         Log.i("loll", reloadTokenUrl)
+        val reloadHeaders = headers.newBuilder()
+            .set("Referer2", "https://www.google.com/recaptcha/api2")
+            .build()
         val callreloadToken = client.newCall(POST(reloadTokenUrl, newHeaders, pageData)).execute().asJsoup()
         Log.i("lol9", "$callreloadToken")
         val get1Token = callreloadToken.text().substringAfter("rresp\",\"").substringBefore("\"")
@@ -141,76 +146,22 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 // https://www.google.com/recaptcha/api2/anchor?ar=1&k=6LcmoUQcAAAAANdFmpVMNp8fLPptGk2uVSnY0TyZ&co=aHR0cHM6Ly9zdHJlYW1yYXBpZC5ydTo0NDM.&hl=en&v=-FJgYf1d3dZ_QPcZP7bd85hc&size=invisible&cb=5rvwss2ssshi
 
 // 03AGdBq25zOmWF0L4f8Oljug6-scWhYi3oajh_qMtaX7jtuSH_N2dZ01Mgd4ZVK55PuN5JeGejJer7D811vOkE1s5ea3HXf9I0RZdfmDbStCh1HuVxW2sD6wXLN-7UEuiXYB9-dSVxnIBlm9zRIOagiF8fU-uYhTzmfchm7ng8rmqM8ZxjWC1QEtyVHA-NYijc3JDrVZRaf4cK0FvqlgQ92msrJDCz3yE-uM1NfpC-M3tDBQgySIRhMYmvmYiJFiwKPJBywgXlWui07euWV4a_W7t8aOma8wRIH2q32l67vy-qNC9lYNGad76O527OGCoLj_g_Gv4egyc0ct9dMTSMYaus1cSE53NVR_Ilj8XRRJKbOFUBJkbzMBHtdhGzQ2vPwj2MiI4b_0tKaX5yAr5pOxEWIBh7hf61hdpvVa7lk71v3pVRaT6cKTfjtGVIliMaB4SyLZIvHPzy
-        val iframeResponse = client.newCall(GET("$anchorLink"))
+        Log.i("m3u8fi", "https://rabbitstream.net/ajax/embed-4/getSources?id=$videoEmbedUrlId&_token=$get1Token&_number=$getRecaptchaRenderNum") // &_number=$getRecaptchaRenderNum")
+        val iframeResponse = client.newCall(GET("https://rabbitstream.net/ajax/embed-5/getSources?id=$videoEmbedUrlId&_token=$get1Token&_number=$getRecaptchaRenderNum", newHeaders))
             .execute().asJsoup()
-        return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
+        Log.i("iframere", "$iframeResponse")
+
+        return videosFromElement(iframeResponse)
     }
 
-    /*override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        val referer = response.request.url.toString()
-        val refererHeaders = Headers.headersOf("referer", referer)
-        // Log.i("lol0", "$document")
-        Log.i("lol1", document.select("div.detail_page-watch").attr("data-id"))
-        val getApi = client.newCall(GET("https://sflix.to/ajax/movie/episodes/" + document.select("div.detail_page-watch").attr("data-id"))).execute().asJsoup()
-        Log.i("lol0", "$getApi")
-        // document.select("div.button-shares div.addthis_inline_share_toolbox").attr("data-url").substringAfterLast("-")
-
-        val getVidNum = getApi.select("a").attr("data-id")
-        Log.i("lol2", "$getVidNum")
-        val getVidApi = client.newCall(GET("https://sflix.to/ajax/get_link/" + getVidNum)).execute().asJsoup()
-
-        val getVideoEmbed = getVidApi.text().substringAfter("link\":\"").substringBefore("\"")
-        val videoID = getVideoEmbed.substringAfterLast("/").substringBefore("?")
-        Log.i("lol3", "$getVideoEmbed")
-        val getVidKink = client.newCall(GET(getVideoEmbed, refererHeaders)).execute().asJsoup()
-        Log.i("lol4", "$getVidKink")
-        val getVidKinktext = getVidKink.body().toString()
-        Log.i("tess", getVidKinktext)
-        val recapchaNum = getVidKinktext.substringAfter("recaptchaSiteKey = '").substringBefore("'")
-        Log.i("loll", recapchaNum)
-        // Get the reCAPTCHA _token
-        val capcha1 = getVidKink.select("script").text().substringAfter("recaptchaNumber = '").substringBefore("'")
-        Log.i("capch1", "$capcha1")
-        val capcha2 = client.newCall(GET("https://www.google.com/recaptcha/api.js?render=" + recapchaNum)).execute().asJsoup()
-        Log.i("capch2", "$capcha2")
-        val getVVal = capcha2.text().substringAfter("releases/").substringBefore("/")
-        Log.i("capch3", "$getVVal")
-        val getTokenUrl = client.newCall(GET("https://www.google.com/recaptcha/api2/anchor?ar=1&k=" + recapchaNum + "&" + domain + "&hl=en&v=" + getVVal + "&size=invisible", refererHeaders)).execute().asJsoup()
-        Log.i("capch4", "$getTokenUrl")
-        Log.i("teee", "https://www.google.com/recaptcha/api2/anchor?ar=1&k=" + recapchaNum + "&" + domain + "&hl=en&v=" + getVVal + "&size=invisible")
-        val location = "$getTokenUrl"
-        val videoHeaders = Headers.headersOf("Referer", location)
-        val reload = client.newCall(GET("https://www.google.com/recaptcha/api2/reload?k=" + recapchaNum, videoHeaders)).execute().asJsoup()
-        Log.i("tess", "$reload")
-
-        val tOOOKEN = getTokenUrl.select("input#recaptcha-token").attr("value")
-        Log.i("capch5", "$tOOOKEN")
-
-        val getM3U8api = client.newCall(GET("https://streamrapid.ru/ajax/embed-5/getSources?id=" + videoID + "&_token=" + tOOOKEN + "&_number=" + capcha1)).execute().asJsoup()
-        Log.i("m3u81", "https://streamrapid.ru/ajax/embed-5/getSources?id=" + videoID + "&_token=" + tOOOKEN + "&_number=" + capcha1)
-        Log.i("m3u8", "$getM3U8api")
-        val iframe = document.select("iframe#iframe-embed").attr("src")
-        Log.i("iframe0", document.select("iframe#iframe-embed").attr("src"))
-        // val referer = response.request.url.toString()
-        // val refererHeaders = Headers.headersOf("referer", referer)
-        val iframeResponse = client.newCall(GET(iframe, refererHeaders))
-            .execute().asJsoup()
-        return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
-    }*/
-
-    override fun videoListSelector() = "script"
-
     private fun videosFromElement(element: Element): List<Video> {
-        val data = element.data().substringAfter("{").substringBefore("}")
-        Log.i("paggggge", element.data().substringAfter("{").substringBefore("}"))
-        val sources = data.split("src: '").drop(1)
+        val masterUrl = element.text().substringAfter("file\":\"").substringBefore("\",\"type")
+        val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
         val videoList = mutableListOf<Video>()
-        for (source in sources) {
-            val src = source.substringBefore("'")
-            val size = source.substringAfter("size: ").substringBefore(",")
-            val video = Video(src, size + "p", src, null)
-            videoList.add(video)
+        masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
+            val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p"
+            val videoUrl = it.substringAfter("\n").substringBefore("\n")
+            videoList.add(Video(videoUrl, quality, videoUrl, null))
         }
         return videoList
     }
@@ -232,6 +183,8 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         return this
     }
+
+    override fun videoListSelector() = throw Exception("not used")
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
