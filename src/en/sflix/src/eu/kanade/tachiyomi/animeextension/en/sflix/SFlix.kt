@@ -53,7 +53,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
     override fun headersBuilder(): Headers.Builder {
         return super.headersBuilder()
-            .add("Referer", "https://sflix.to/") // https://s12.gemzawy.com https://moshahda.net
+            .add("Referer", "https://sflix.to/")
     }
 
     override fun popularAnimeSelector(): String = "div.film_list-wrap div.flw-item div.film-poster"
@@ -259,8 +259,6 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = "div.film_list-wrap div.flw-item div.film-poster"
 
-    // override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/search/$query?page=$page".replace(" ", "-"))
-
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val url = if (query.isNotBlank()) {
             "$baseUrl/search/$query?page=$page".replace(" ", "-")
@@ -281,7 +279,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return GET(url, headers)
     }
 
-    // Ditails
+    // Details
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()

@@ -42,7 +42,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "en"
 
-    override val supportsLatest = true
+    override val supportsLatest = false
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -53,7 +53,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
     override fun headersBuilder(): Headers.Builder {
         return super.headersBuilder()
-            .add("Referer", "https://dopebox.to/") // https://s12.gemzawy.com https://moshahda.net
+            .add("Referer", "https://dopebox.to/")
     }
 
     override fun popularAnimeSelector(): String = "div.film_list-wrap div.flw-item div.film-poster"
@@ -219,7 +219,6 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } else {
             return listOf(Video(masterUrl, "Default", masterUrl, null))
         }
-        // return listOf(Video(masterUrl, "Default", masterUrl, null))
     }
 
     override fun List<Video>.sort(): List<Video> {
@@ -279,7 +278,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         return GET(url, headers)
     }
-    
+
     // Details
 
     override fun animeDetailsParse(document: Document): SAnime {
@@ -310,7 +309,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
 
     override fun latestUpdatesSelector(): String = throw Exception("Not used")
-    
+
     // Preferences
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -331,7 +330,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         screen.addPreference(videoQualityPref)
     }
-    
+
     // Filter
 
     override fun getFilterList() = AnimeFilterList(
