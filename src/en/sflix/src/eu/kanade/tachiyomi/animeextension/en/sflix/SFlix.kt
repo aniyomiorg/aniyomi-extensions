@@ -7,6 +7,7 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
@@ -40,7 +41,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "en"
 
-    override val supportsLatest = true
+    override val supportsLatest = false
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -189,9 +190,9 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val reloadTokenUrl = "https://www.google.com/recaptcha/api2/reload?k=$getRecaptchaSiteKey"
         Log.i("loll", reloadTokenUrl)
         val reloadHeaders = headers.newBuilder()
-            .set("Referer2", "https://www.google.com/recaptcha/api2")
+            .set("Referer2", "$anchorLink")
             .build()
-        val callreloadToken = client.newCall(POST(reloadTokenUrl, newHeaders, pageData)).execute().asJsoup()
+        val callreloadToken = client.newCall(POST(reloadTokenUrl, reloadHeaders, pageData)).execute().asJsoup()
         Log.i("lol9", "$callreloadToken")
         val get1Token = callreloadToken.text().substringAfter("rresp\",\"").substringBefore("\"")
         Log.i("lol10", get1Token)
@@ -257,7 +258,28 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = "div.film_list-wrap div.flw-item div.film-poster"
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/search/$query?page=$page".replace(" ", "-"))
+    //override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/search/$query?page=$page".replace(" ", "-"))
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val url = if (query.isNotBlank()) {
+            "$baseUrl/search/$query?page=$page".replace(" ", "-")
+        } else {
+            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
+                when (filter) {
+                    is GenreList -> {
+                        if (filter.state > 0) {
+                            val GenreN = getGenreList()[filter.state].query
+                            val genreUrl = "$baseUrl/genre/$GenreN".toHttpUrlOrNull()!!.newBuilder()
+                            return GET(genreUrl.toString(), headers)
+                        }
+                    }
+                }
+            }
+        }
+        return GET(url, headers)
+    }
+
+    // Ditails
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
@@ -278,18 +300,17 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun latestUpdatesNextPageSelector(): String = "ul.pagination li.page-item a[rel=next]"
+    // Latest
 
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.attr("href") + "?s=srt-d")
-        anime.title = element.select("div span").not(".badge").text()
-        return anime
-    }
+    override fun latestUpdatesNextPageSelector(): String? = throw Exception("Not used")
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/anime?s=rel-d&page=$page")
+    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
 
-    override fun latestUpdatesSelector(): String = "ul.anime-loop.loop li a"
+    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+
+    override fun latestUpdatesSelector(): String = throw Exception("Not used")
+
+    // Preferences
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
@@ -309,4 +330,51 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         screen.addPreference(videoQualityPref)
     }
+
+    // Filter
+
+    override fun getFilterList() = AnimeFilterList(
+        AnimeFilter.Header("الفلترات مش هتشتغل لو بتبحث او وهي فاضيه"),
+        GenreList(genresName),
+        TypeList(typesName),
+        StatusList(statusesName),
+    )
+
+    private class GenreList(genres: Array<String>) : AnimeFilter.Select<String>("تصنيف الأنمي", genres)
+    private data class Genre(val name: String, val query: String)
+    private val genresName = getGenreList().map {
+        it.name
+    }.toTypedArray()
+
+    private fun getGenreList() = listOf(
+        Genre("CHOOSE", "")
+        Genre("Action", "action"),
+        Genre("Action & Adventure", "action-adventure"),
+        Genre("Adventure", "adventure"),
+        Genre("Animation", "animation"),
+        Genre("Biography", "biography"),
+        Genre("Comedy", "comedy"),
+        Genre("Crime", "crime"),
+        Genre("Documentary", "documentary"),
+        Genre("Drama", "drama"),
+        Genre("Family", "family"),
+        Genre("Fantasy", "fantasy"),
+        Genre("History", "history"),
+        Genre("Horror", "horror"),
+        Genre("Kids", "kids"),
+        Genre("Music", "music"),
+        Genre("Mystery", "mystery"),
+        Genre("News", "news"),
+        Genre("Reality", "reality"),
+        Genre("Romance", "romance"),
+        Genre("Sci-Fi & Fantasy", "sci-fi-fantasy"),
+        Genre("Science Fiction", "science-fiction"),
+        Genre("Soap", "soap"),
+        Genre("Talk", "talk"),
+        Genre("Thriller", "thriller"),
+        Genre("TV Movie", "tv-movie"),
+        Genre("War", "war"),
+        Genre("War & Politics", "war-politics"),
+        Genre("Western", "western")
+    )
 }
