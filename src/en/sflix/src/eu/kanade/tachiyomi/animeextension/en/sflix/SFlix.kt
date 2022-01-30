@@ -6,8 +6,8 @@ import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
-import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
+import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
@@ -17,6 +17,7 @@ import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.FormBody
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -258,7 +259,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = "div.film_list-wrap div.flw-item div.film-poster"
 
-    //override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/search/$query?page=$page".replace(" ", "-"))
+    // override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/search/$query?page=$page".replace(" ", "-"))
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val url = if (query.isNotBlank()) {
@@ -275,6 +276,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                 }
             }
+            throw Exception("Choose Filter")
         }
         return GET(url, headers)
     }
@@ -334,20 +336,18 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // Filter
 
     override fun getFilterList() = AnimeFilterList(
-        AnimeFilter.Header("الفلترات مش هتشتغل لو بتبحث او وهي فاضيه"),
+        AnimeFilter.Header("Ignored If Using Text Search"),
         GenreList(genresName),
-        TypeList(typesName),
-        StatusList(statusesName),
     )
 
-    private class GenreList(genres: Array<String>) : AnimeFilter.Select<String>("تصنيف الأنمي", genres)
+    private class GenreList(genres: Array<String>) : AnimeFilter.Select<String>("Genre", genres)
     private data class Genre(val name: String, val query: String)
     private val genresName = getGenreList().map {
         it.name
     }.toTypedArray()
 
     private fun getGenreList() = listOf(
-        Genre("CHOOSE", "")
+        Genre("CHOOSE", ""),
         Genre("Action", "action"),
         Genre("Action & Adventure", "action-adventure"),
         Genre("Adventure", "adventure"),
