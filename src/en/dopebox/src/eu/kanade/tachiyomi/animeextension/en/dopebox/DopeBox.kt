@@ -29,16 +29,9 @@ import java.lang.Exception
 
 class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "DopeBox"
+    override val name = "DopeBox (experimental)"
 
     override val baseUrl = "https://dopebox.to"
-
-    // https://streamrapid.ru/embed
-    // streamrapid.ru/-4/viSila1P4blj?z=
-
-    // https://dopebox.to/ajax/movie/episodes/76255
-    // https://dopebox.to/ajax/get_link/8004253
-    // https://streamrapid.ru/ajax/embed-5/getSources?id=coTXci0tOHn5&_token=03AGdBq27w4Pg0bLeCc2uP2wBJLY0C7FVup4jefr042H44vVTd_4tO6DfCKOkgzAJazBWMz1jUeIy9stay02C4v9jmQm_tZ1xxTmDBPbLwnjcMoFy0JsMfBRFwU4s02ibSCRh-Wrsc2xyV23MU2v8BBFhGRtiQycZTRM7frIBmhNxozZgswYhDqYqQadsKHa2Tzd5w_RpmEiRFtTy5w3Ex1-2IgfS6ffk5X6h0DuOQVlquuTv72tYjGLwkJgAqMmBOfbaij1r922s6-I72OiEWCeKouTQhpMU_4EvOM3jheXTcwbbSaqdJEh23VTSPQsly8UNGHDzk1vbwL0m7TICzh71gAsDKuDx0I7qMOP7jd8HVqENC70UQpWr1FNczqCM7EpYG8U2EneBNFW2bz-vtr6hLK9SPr7G-bxTbCbQGezsycVZ_EMGg6mAX9DJqlgp9Nm4kAKCo3aqIexo_1PqfAsiHvgmLTInvUw&_number=4
 
     override val lang = "en"
 
@@ -144,10 +137,6 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val newHeaders = Headers.headersOf("referer", referer)
 
         // get embed id
-
-        /*Log.i("lol1", document.select("div.detail_page-watch").attr("data-id"))
-        val getApi = client.newCall(GET("https://dopebox.to/ajax/movie/episodes/" + document.select("div.detail_page-watch").attr("data-id"))).execute().asJsoup()
-        Log.i("lol0", "$getApi")*/
         val getVidID = document.selectFirst("a").attr("data-id")
         Log.i("lol2", "$getVidID")
         val getVidApi = client.newCall(GET("https://dopebox.to/ajax/get_link/" + getVidID)).execute().asJsoup()
@@ -177,8 +166,6 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val rtoken = callAnchor.select("input#recaptcha-token").attr("value")
         Log.i("Retoken", rtoken)
 
-        // Log.i("lol8", "$anchorLink")
-
         val pageData = FormBody.Builder()
             .add("v", "$getAnchorVVal")
             .add("reason", "q")
@@ -197,7 +184,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Log.i("lol9", "$callreloadToken")
         val get1Token = callreloadToken.text().substringAfter("rresp\",\"").substringBefore("\"")
         Log.i("lol10", get1Token)
-        Log.i("m3u8fi", "https://rabbitstream.net/ajax/embed-4/getSources?id=$videoEmbedUrlId&_token=$get1Token&_number=$getRecaptchaRenderNum") // &_number=$getRecaptchaRenderNum")
+        Log.i("m3u8fi", "https://rabbitstream.net/ajax/embed-4/getSources?id=$videoEmbedUrlId&_token=$get1Token&_number=$getRecaptchaRenderNum")
         val iframeResponse = client.newCall(GET("https://rabbitstream.net/ajax/embed-5/getSources?id=$videoEmbedUrlId&_token=$get1Token&_number=$getRecaptchaRenderNum", newHeaders))
             .execute().asJsoup()
         Log.i("iframere", "$iframeResponse")
