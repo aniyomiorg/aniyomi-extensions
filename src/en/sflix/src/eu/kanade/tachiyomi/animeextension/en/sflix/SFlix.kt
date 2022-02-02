@@ -194,8 +194,9 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun videosFromElement(element: Element): List<Video> {
+        val test = element.text()
         val masterUrl = element.text().substringAfter("file\":\"").substringBefore("\",\"type")
-        if (masterUrl.contains("playlist.m3u8")) {
+        if (test.contains("playlist.m3u8")) {
             val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
             val videoList = mutableListOf<Video>()
             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
@@ -204,8 +205,10 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 videoList.add(Video(videoUrl, quality, videoUrl, null))
             }
             return videoList
-        } else {
+        } else if (test.contains("index.m3u8")) {
             return listOf(Video(masterUrl, "Default", masterUrl, null))
+        } else {
+            throw Exception("never give up and try again :)")
         }
     }
 
