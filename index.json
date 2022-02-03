@@ -200,10 +200,10 @@
   {
     "name": "Aniyomi: DramaCool",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.dramacool",
-    "apk": "aniyomi-en.dramacool-v12.1.apk",
+    "apk": "aniyomi-en.dramacool-v12.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "12.1",
+    "code": 2,
+    "version": "12.2",
     "nsfw": 0
   },
   {
@@ -285,6 +285,15 @@
     "lang": "en",
     "code": 3,
     "version": "12.3",
+    "nsfw": 0
+  },
+  {
+    "name": "Aniyomi: WCOStream",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.wcostream",
+    "apk": "aniyomi-en.wcostream-v12.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "12.1",
     "nsfw": 0
   },
   {
