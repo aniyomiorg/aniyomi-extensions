@@ -114,18 +114,17 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
                 url.contains("fembed") -> {
                     val apiCall = client.newCall(POST(url.substringBefore("#").replace("/v/", "/api/source/"))).execute().body!!.string()
-                    Log.i("lol", "$apiCall")
+                    Log.i("lol", "TEST$apiCall")
                     val data = apiCall.substringAfter("\"data\":[").substringBefore("],")
                     val sources = data.split("\"file\":\"").drop(1)
                     val videoList = mutableListOf<Video>()
                     for (source in sources) {
                         val src = source.substringAfter("\"file\":\"").substringBefore("\"").replace("\\/", "/")
-                        Log.i("lol", "$src")
+                        Log.i("lol", "Source:$src")
                         val quality = source.substringAfter("\"label\":\"").substringBefore("\"")
                         val video = Video(url, quality, src, null)
                         videoList.add(video)
                     }
-                    return videoList
                 }
             }
         }
@@ -152,7 +151,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 videoData.splitToSequence(",").elementAt(1).replace("\'", "").replace(")", "")
             val downloadLink =
                 "https://sbplay2.com/dl?op=download_orig&id=$id&mode=$mode&hash=$hash"
-            Log.i("lol", downloadLink)
+            Log.i("lol", "aaaa $downloadLink")
             respDownloadLinkSelector.close()
             val video = sbplayVideoParser(downloadLink, quality)
             if (video != null) videoList.add(video)
