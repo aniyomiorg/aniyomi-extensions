@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.animeextension.en.animixplay.extractors
 import android.net.Uri
 import android.util.Base64
 import android.util.Base64.NO_WRAP
+import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -14,6 +15,7 @@ import org.jsoup.nodes.Document
 
 class StreamSbExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(serverUrl: String): List<Video> {
+        val videoList = mutableListOf<Video>()
         val downloadLink = serverUrl.replace("/e/", "/d/")
         val host = Uri.parse(downloadLink).host
         val rUrl = "https://$host/"
@@ -24,25 +26,53 @@ class StreamSbExtractor(private val client: OkHttpClient) {
         val document = client.newCall(
             GET(downloadLink, headers)
         ).execute().asJsoup()
-        val source = document.select("tr a").attr("onClick")
-        val id = source.substringAfter("(").splitToSequence(",").first().replace("\'", "").replace(")", "")
-        val hash = source.splitToSequence(",").last().replace("\'", "").replace(")", "")
-        val mode =
-            source.splitToSequence(",").elementAt(1).replace("\'", "").replace(")", "")
-        val dlUrl =
-            "https://$host/dl?op=download_orig&id=$id&mode=$mode&hash=$hash"
-        val responseDoc = client.newCall(
-            GET(
-                dlUrl,
-                headers
+        val sources = document.select("tr a")
+        sources.forEach {
+            val videoQuality = it.text()
+            val source = it.attr("onclick")
+            val id = source.substringAfter("(").splitToSequence(",").first().replace("\'", "").replace(")", "")
+            val hash = source.splitToSequence(",").last().replace("\'", "").replace(")", "")
+            val mode =
+                source.splitToSequence(",").elementAt(1).replace("\'", "").replace(")", "")
+            val dlUrl =
+                "https://$host/dl?op=download_orig&id=$id&mode=$mode&hash=$hash"
+            val responseDoc = client.newCall(
+                GET(
+                    dlUrl,
+                    headers
+                )
+            ).execute().asJsoup()
+            val domain = Base64.encodeToString("https://$host:443".toByteArray(), NO_WRAP)
+            val token = getToken(responseDoc, rUrl, domain)
+            val postFormBody = getHiddenFormBody(responseDoc, token)
+            val postHeaders = Headers.headersOf(
+                "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
+                "Referer", dlUrl,
+                "Content-Type", "application/x-www-form-urlencoded",
+                "Origin", rUrl,
+                "authority", host!!,
             )
-        ).execute().asJsoup()
-        val domain = Base64.encodeToString("https://$host:443".toByteArray(), NO_WRAP)
-        val token = getToken(responseDoc, rUrl, domain)
-
-        val videoList = mutableListOf<Video>()
-
+            val videoPostRequest = client.newCall(
+                POST(
+                    dlUrl,
+                    postHeaders,
+                    postFormBody
+                )
+            ).execute().asJsoup()
+            val videoLink = videoPostRequest.select("span a").attr("href")
+            videoList.add(Video(videoLink, videoQuality, videoLink, null))
+        }
         return videoList
+    }
+
+    private fun getHiddenFormBody(document: Document, token: String): FormBody {
+        val pageData = FormBody.Builder()
+        val hiddenFormInputs = document.select("Form#F1 input")
+        hiddenFormInputs.forEach {
+            pageData.addEncoded(it.attr("name"), it.attr("value"))
+        }
+        pageData.addEncoded("g-recaptcha-response", token)
+        return pageData.build()
     }
 
     private fun getToken(document: Document, url: String, domain: String): String {
