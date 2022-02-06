@@ -224,7 +224,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         val videos = mutableListOf<Video>()
         for (item in array) {
             val quality = item.jsonObject.keys.first()
-            val adflyLink = item.jsonObject[quality]!!.jsonObject["kwik_adfly"]!!.jsonPrimitive.content
+            val adflyLink = item.jsonObject[quality]!!.jsonObject["kwik_pahewin"]!!.jsonPrimitive.content
             val kwikLink = item.jsonObject[quality]!!.jsonObject["kwik"]!!.jsonPrimitive.content
             val audio = item.jsonObject[quality]!!.jsonObject["audio"]!!
             val qualityString = if (audio is JsonNull) "${quality}p" else "${quality}p (" + audio.jsonPrimitive.content + " audio)"

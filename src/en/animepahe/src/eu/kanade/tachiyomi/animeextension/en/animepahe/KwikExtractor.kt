@@ -43,74 +43,8 @@ class KwikExtractor(private val client: OkHttpClient) {
     private val kwikDUrl = Regex("action=\"([^\"]+)\"")
     private val kwikDToken = Regex("value=\"([^\"]+)\"")
 
-    private fun bypassAdfly(adflyUri: String): String {
-        var responseCode = 302
-        var adflyContent: Response? = null
-        var tries = 0
-        val noRedirectClient = OkHttpClient().newBuilder()
-            .followRedirects(false)
-            .followSslRedirects(false)
-            .build()
-
-        while (responseCode != 200 && tries < 20) {
-            val nextUrl = noRedirectClient.newCall(GET(adflyUri)).execute().header("location")!!
-            adflyContent = noRedirectClient.newCall(GET(nextUrl)).execute()
-            cookies += adflyContent.header("set-cookie") ?: ""
-            responseCode = adflyContent.code
-            ++tries
-        }
-        if (tries > 19) {
-            throw Exception("Failed to bypass adfly.")
-        }
-        return decodeAdfly(ytsm.find(adflyContent?.body!!.string())!!.destructured.component1())
-    }
-
-    private fun decodeAdfly(codedKey: String): String {
-        var r = ""
-        var j = ""
-
-        for ((n, l) in codedKey.withIndex()) {
-            if (n % 2 != 0) {
-                j = l + j
-            } else {
-                r += l
-            }
-        }
-
-        val encodedUri = ((r + j).toCharArray().map { it.toString() }).toMutableList()
-        val numbers = sequence {
-            for ((i, n) in encodedUri.withIndex()) {
-                if (isNumber(n)) {
-                    yield(Pair(i, n.toInt()))
-                }
-            }
-        }
-
-        for ((first, second) in zipGen(numbers)) {
-            val xor = first.second.xor(second.second)
-            if (xor < 10) {
-                encodedUri[first.first] = xor.toString()
-            }
-        }
-        var returnValue = String(encodedUri.joinToString("").toByteArray(), Charsets.UTF_8)
-        returnValue = String(android.util.Base64.decode(returnValue, android.util.Base64.DEFAULT), Charsets.ISO_8859_1)
-        return returnValue.slice(16..returnValue.length - 17)
-    }
-
     private fun isNumber(s: String?): Boolean {
         return s?.toIntOrNull() != null
-    }
-
-    private fun zipGen(gen: Sequence<Pair<Int, Int>>): ArrayList<Pair<Pair<Int, Int>, Pair<Int, Int>>> {
-        val allItems = gen.toList().toMutableList()
-        val newList = ArrayList<Pair<Pair<Int, Int>, Pair<Int, Int>>>()
-
-        while (allItems.size > 1) {
-            newList.add(Pair(allItems[0], allItems[1]))
-            allItems.removeAt(0)
-            allItems.removeAt(0)
-        }
-        return newList
     }
 
     fun getHlsStreamUrl(kwikUrl: String, referer: String): String {
@@ -127,7 +61,7 @@ class KwikExtractor(private val client: OkHttpClient) {
 
     fun getStreamUrlFromKwik(adflyUri: String): String {
         val fContent =
-            client.newCall(GET(bypassAdfly(adflyUri), Headers.headersOf("referer", "https://kwik.cx/"))).execute()
+            client.newCall(GET(adflyUri, Headers.headersOf("referer", "https://kwik.cx/"))).execute()
         cookies += (fContent.header("set-cookie")!!)
         val fContentString = fContent.body!!.string()
 
