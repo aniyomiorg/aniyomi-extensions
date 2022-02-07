@@ -1,5 +1,15 @@
 package eu.kanade.tachiyomi.animeextension.en.genoanime
 
+import android.app.Application
+import android.content.SharedPreferences
+import android.util.Log
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.en.genoanime.extractors.DoodExtractor
+import eu.kanade.tachiyomi.animeextension.en.genoanime.extractors.FembedExtractor
+import eu.kanade.tachiyomi.animeextension.en.genoanime.extractors.StreamSBExtractor
+import eu.kanade.tachiyomi.animeextension.en.genoanime.extractors.StreamTapeExtractor
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -7,20 +17,29 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
+import java.lang.Exception
 
-class GenoAnime : ParsedAnimeHttpSource() {
+class GenoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Genoanime"
     override val baseUrl = "https://www.genoanime.com"
     override val lang = "en"
     override val supportsLatest = true
     override val client: OkHttpClient = network.cloudflareClient
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     // Popular Anime
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/browse?sort=top_rated&page=$page")
@@ -67,7 +86,13 @@ class GenoAnime : ParsedAnimeHttpSource() {
     }
 
     // Episode
+
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        return super.episodeListParse(response).reversed()
+    }
+
     override fun episodeListSelector() = "div.anime__details__episodes div.tab-pane a"
+
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("href"))
@@ -78,30 +103,89 @@ class GenoAnime : ParsedAnimeHttpSource() {
     }
 
     // Video
-    override fun videoUrlParse(document: Document): String = throw Exception("Not used.")
-    override fun videoListSelector() = "section.details.spad div.container div.row:nth-of-type(1) div.col-lg-12:nth-of-type(1)"
+    override fun videoListRequest(episode: SEpisode): Request {
+        val document = client.newCall(GET(baseUrl + episode.url)).execute().asJsoup()
+        val iframe = document.select("iframe").attr("src")
+        return GET(iframe)
+    }
 
-    override fun videoFromElement(element: Element): Video {
-        val vidsrc = element.select("div#video iframe#iframe-to-load").attr("src")
-        if (vidsrc.contains("https://genoanime.com/doodplayer.php")) {
-            val url = videoidgrab(element.select("div#video iframe#iframe-to-load").attr("src"))
-            val a = doodUrlParse(url)
-            return Video(
-                url,
-                "Doodstream",
-                a,
-                null,
-                Headers.headersOf("Referer", url)
-            )
-        } else {
-            return Video(
-                element.select("video source").attr("src"),
-                "Unknown quality",
-                element.select("video source").attr("src"),
-                null,
-                Headers.headersOf("Referer", baseUrl),
-            )
+    override fun videoListParse(response: Response): List<Video> {
+        val document = response.asJsoup()
+        return videosFromElement(document)
+    }
+
+    override fun videoListSelector() = "ul.list-server-items li[data-video*=https://sbplay2.com], ul.list-server-items li[data-video*=https://dood], ul.list-server-items li[data-video*=https://streamtape], ul.list-server-items li[data-video*=https://fembed]"
+
+    private fun videosFromElement(document: Document): List<Video> {
+        val videoList = mutableListOf<Video>()
+        val elements = document.select(videoListSelector())
+        for (element in elements) {
+            val url = element.attr("data-video")
+            Log.i("lol", url)
+            val location = element.ownerDocument().location()
+            val videoHeaders = Headers.headersOf("Referer", location)
+            when {
+                url.contains("sbplay2") -> {
+                    /*val id = url.substringAfter("e/").substringBefore("?")
+                    Log.i("idtest", id)
+                    val bytes = id.toByteArray()
+                    Log.i("idencode", "$bytes")
+                    val bytesToHex = bytesToHex(bytes)
+                    Log.i("bytesToHex", bytesToHex)
+                    val nheaders = headers.newBuilder()
+                        .set("watchsb", "streamsb")
+                        .build()
+                    val master = "https://sbplay2.com/sourcesx38/7361696b6f757c7c${bytesToHex}7c7c7361696b6f757c7c73747265616d7362/7361696b6f757c7c363136653639366436343663363136653639366436343663376337633631366536393664363436633631366536393664363436633763376336313665363936643634366336313665363936643634366337633763373337343732363536313664373336327c7c7361696b6f757c7c73747265616d7362"
+                    Log.i("master", master)
+                    val callMaster = client.newCall(GET(master, nheaders)).execute().asJsoup()
+                    Log.i("testt", "$callMaster")*/
+                    val headers = headers.newBuilder()
+                        .set("watchsb", "streamsb")
+                        .build()
+                    val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
+                    videoList.addAll(videos)
+                }
+                url.contains("dood") -> {
+                    val video = DoodExtractor(client).videoFromUrl(url)
+                    if (video != null) {
+                        videoList.add(video)
+                    }
+                }
+                url.contains("fembed") -> {
+                    val videos = FembedExtractor().videosFromUrl(url)
+                    videoList.addAll(videos)
+                }
+                url.contains("streamtape") -> {
+                    val video = StreamTapeExtractor(client).videoFromUrl(url)
+                    if (video != null) {
+                        videoList.add(video)
+                    }
+                }
+            }
         }
+        return videoList
+    }
+
+    override fun videoFromElement(element: Element) = throw Exception("not used")
+
+    override fun videoUrlParse(document: Document) = throw Exception("not used")
+
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString("preferred_quality", null)
+        if (quality != null) {
+            val newList = mutableListOf<Video>()
+            var preferred = 0
+            for (video in this) {
+                if (video.quality.contains(quality)) {
+                    newList.add(preferred, video)
+                    preferred++
+                } else {
+                    newList.add(video)
+                }
+            }
+            return newList
+        }
+        return this
     }
 
     // Anime window
@@ -123,31 +207,24 @@ class GenoAnime : ParsedAnimeHttpSource() {
         return anime
     }
 
-    // Custom Fun
-    private fun doodUrlParse(url: String): String {
-        val response = client.newCall(GET(url.replace("/e/", "/d/"))).execute()
-        val content = response.body!!.string()
-        val md5 = content.substringAfter("/download/").substringBefore("\"")
-        if (md5.contains("<!doctype html>")) { throw Exception("video not found") }
-        var abc = doodreq(url, md5)
-        while (abc.contains("""<b class="err">Security error</b>""")) {
-            abc = doodreq(url, md5)
+    // Preferences
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val videoQualityPref = ListPreference(screen.context).apply {
+            key = "preferred_quality"
+            title = "Preferred quality"
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
+            setDefaultValue("1080")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
         }
-        return abc
-    }
-
-    private fun doodreq(url: String, md5: String): String {
-        return client.newCall(
-            GET(
-                "https://dood.ws/download/$md5",
-                Headers.headersOf("referer", url)
-            )
-        ).execute().body!!.string().substringAfter("window.open('").substringBefore("\'")
-    }
-
-    private fun videoidgrab(url: String): String {
-        val uwrl = """https://goload.one/streaming.php?id=${url.substringAfter("&vidid=")}"""
-        val content = client.newCall(GET(uwrl)).execute().body!!.string().substringAfter("dood").substringBefore("\"")
-        return "https://dood$content"
+        screen.addPreference(videoQualityPref)
     }
 }
