@@ -2,10 +2,13 @@ package eu.kanade.tachiyomi.animeextension.en.dramacool
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.net.Uri
 import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.DoodExtractor
+import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.FembedExtractor
+import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.StreamSBExtractor
+import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -13,7 +16,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
 import okhttp3.OkHttpClient
@@ -49,7 +51,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "ul.list-episode-item li a"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/most-popular-drama?page=$page")
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/most-popular-drama?page=$page") // page/$page
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -88,6 +90,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun videoListSelector() = "ul.list-server-items li[data-video*=https://sbplay2.com], ul.list-server-items li[data-video*=https://dood], ul.list-server-items li[data-video*=https://streamtape], ul.list-server-items li[data-video*=https://fembed]"
+
     private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
         val elements = document.select(videoListSelector())
@@ -97,32 +100,40 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val location = element.ownerDocument().location()
             val videoHeaders = Headers.headersOf("Referer", location)
             when {
-                url.contains("https://sbplay") -> {
-                    val vidURL = url.substringBefore("?").replace("/e/", "/d/")
-                    val videos = sbplayUrlParse(vidURL, location)
+                url.contains("sbplay2") -> {
+                    /*val id = url.substringAfter("e/").substringBefore("?")
+                    Log.i("idtest", id)
+                    val bytes = id.toByteArray()
+                    Log.i("idencode", "$bytes")
+                    val bytesToHex = bytesToHex(bytes)
+                    Log.i("bytesToHex", bytesToHex)
+                    val nheaders = headers.newBuilder()
+                        .set("watchsb", "streamsb")
+                        .build()
+                    val master = "https://sbplay2.com/sourcesx38/7361696b6f757c7c${bytesToHex}7c7c7361696b6f757c7c73747265616d7362/7361696b6f757c7c363136653639366436343663363136653639366436343663376337633631366536393664363436633631366536393664363436633763376336313665363936643634366336313665363936643634366337633763373337343732363536313664373336327c7c7361696b6f757c7c73747265616d7362"
+                    Log.i("master", master)
+
+                    val callMaster = client.newCall(GET(master, nheaders)).execute().asJsoup()
+                    Log.i("testt", "$callMaster")*/
+                    val headers = headers.newBuilder()
+                        .set("watchsb", "streamsb")
+                        .build()
+                    val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
                     videoList.addAll(videos)
                 }
-                url.contains("https://dood") -> {
-                    val newQuality = "Doodstream mirror"
-                    val video = Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
-                    videoList.add(video)
-                }
-                url.contains("https://streamtape") -> {
-                    val newQuality = "StreamTape mirror"
-                    val video = Video(url, newQuality, streamTapeParse(url), null, videoHeaders)
-                    videoList.add(video)
+                url.contains("dood") -> {
+                    val video = DoodExtractor(client).videoFromUrl(url)
+                    if (video != null) {
+                        videoList.add(video)
+                    }
                 }
                 url.contains("fembed") -> {
-                    val apiCall = client.newCall(POST(url.substringBefore("#").replace("/v/", "/api/source/"))).execute().body!!.string()
-                    Log.i("lol", "TEST$apiCall")
-                    val data = apiCall.substringAfter("\"data\":[").substringBefore("],")
-                    val sources = data.split("\"file\":\"").drop(1)
-                    val videoList = mutableListOf<Video>()
-                    for (source in sources) {
-                        val src = source.substringAfter("\"file\":\"").substringBefore("\"").replace("\\/", "/")
-                        Log.i("lol", "Source:$src")
-                        val quality = source.substringAfter("\"label\":\"").substringBefore("\"")
-                        val video = Video(url, quality, src, null)
+                    val videos = FembedExtractor().videosFromUrl(url)
+                    videoList.addAll(videos)
+                }
+                url.contains("streamtape") -> {
+                    val video = StreamTapeExtractor(client).videoFromUrl(url)
+                    if (video != null) {
                         videoList.add(video)
                     }
                 }
@@ -134,81 +145,6 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
-
-    private fun sbplayUrlParse(vidURL: String, referer: String): List<Video> {
-        val videoList = mutableListOf<Video>()
-        val refererHeader = Headers.headersOf("Referer", referer)
-        val id = Uri.parse(vidURL).pathSegments[1]
-        val noRedirectClient = client.newBuilder().followRedirects(false).build()
-        val respDownloadLinkSelector = noRedirectClient.newCall(GET(vidURL, refererHeader)).execute()
-        val documentDownloadSelector = respDownloadLinkSelector.asJsoup()
-        val downloadElements = documentDownloadSelector.select("div.contentbox table tbody tr td a")
-        for (downloadElement in downloadElements) {
-            val videoData = downloadElement.attr("onclick")
-            val quality = downloadElement.text()
-            val hash = videoData.splitToSequence(",").last().replace("\'", "").replace(")", "")
-            val mode =
-                videoData.splitToSequence(",").elementAt(1).replace("\'", "").replace(")", "")
-            val downloadLink =
-                "https://sbplay2.com/dl?op=download_orig&id=$id&mode=$mode&hash=$hash"
-            Log.i("lol", "aaaa $downloadLink")
-            respDownloadLinkSelector.close()
-            val video = sbplayVideoParser(downloadLink, quality)
-            if (video != null) videoList.add(video)
-        }
-        return videoList
-    }
-
-    private fun sbplayVideoParser(vidURL: String, quality: String): Video? {
-        return try {
-            val noRedirectClient = client.newBuilder().followRedirects(false).build()
-            val refererHeader = Headers.headersOf("Referer", vidURL)
-            val respDownloadLink = noRedirectClient.newCall(GET(vidURL, refererHeader)).execute()
-            val documentDownloadLink = respDownloadLink.asJsoup()
-            Log.i("lol1", "$documentDownloadLink")
-            val downloadLink = documentDownloadLink.selectFirst("div.contentbox span a").attr("href")
-            respDownloadLink.close()
-            Video(vidURL, quality, downloadLink, null, refererHeader)
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    private fun doodUrlParse(url: String): String? {
-        val response = client.newCall(GET(url.replace("/d/", "/e/"))).execute()
-        val content = response.body!!.string()
-        if (!content.contains("'/pass_md5/")) return null
-        val md5 = content.substringAfter("'/pass_md5/").substringBefore("',")
-        val token = md5.substringAfterLast("/")
-        val doodTld = url.substringAfter("https://dood.").substringBefore("/")
-        val randomString = getRandomString()
-        val expiry = System.currentTimeMillis()
-        val videoUrlStart = client.newCall(
-            GET(
-                "https://dood.$doodTld/pass_md5/$md5",
-                Headers.headersOf("referer", url)
-            )
-        ).execute().body!!.string()
-        Log.i("lol", "$videoUrlStart$randomString?token=$token&expiry=$expiry")
-        return "$videoUrlStart$randomString?token=$token&expiry=$expiry"
-    }
-
-    private fun getRandomString(length: Int = 10): String {
-        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
-        return (1..length)
-            .map { allowedChars.random() }
-            .joinToString("")
-    }
-
-    private fun streamTapeParse(url: String): String? {
-        val document = client.newCall(GET(url)).execute().asJsoup()
-        val script = document.select("script:containsData(document.getElementById('robotlink'))")
-            .firstOrNull()?.data()?.substringAfter("document.getElementById('robotlink').innerHTML = '")
-            ?: return null
-        val videoUrl = "https:" + script.substringBefore("'") +
-            script.substringAfter("+ ('xcd").substringBefore("'")
-        return "$videoUrl"
-    }
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", null)
@@ -260,7 +196,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return when (statusString) {
             "Ongoing" -> SAnime.ONGOING
             "Completed" -> SAnime.COMPLETED
-            else -> SAnime.COMPLETED
+            else -> SAnime.UNKNOWN
         }
     }
 
