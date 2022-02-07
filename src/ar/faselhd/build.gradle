@@ -5,7 +5,7 @@ ext {
     extName = 'فاصل اعلاني'
     pkgNameSuffix = 'ar.faselhd'
     extClass = '.FASELHD'
-    extVersionCode = 2
+    extVersionCode = 3
     libVersion = '12'
 }
 

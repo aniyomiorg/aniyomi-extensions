@@ -28,7 +28,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "فاصل اعلاني"
 
-    override val baseUrl = "https://www.faselhd.pro"
+    override val baseUrl = "https://www.faselhd.top"
 
     override val lang = "ar"
 
@@ -74,7 +74,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
 
         addEpisodes(response.asJsoup())
-        return episodes
+        return episodes.reversed()
     }
 
     override fun episodeListSelector() = "div.epAll a"
