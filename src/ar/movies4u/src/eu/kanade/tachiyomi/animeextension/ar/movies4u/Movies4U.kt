@@ -91,7 +91,7 @@ class Movies4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             episode.setUrlWithoutDomain(movieUrl)
             episodeList.add(episode)
         }
-        return episodeList
+        return episodeList.reversed()
     }
 
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
