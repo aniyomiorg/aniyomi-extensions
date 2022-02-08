@@ -38,7 +38,6 @@ import kotlin.math.pow
 class KwikExtractor(private val client: OkHttpClient) {
     private var cookies: String = ""
 
-    private val ytsm = "ysmm = '([^']+)".toRegex()
     private val kwikParamsRegex = Regex("""\("(\w+)",\d+,"(\w+)",(\d+),(\d+),\d+\)""")
     private val kwikDUrl = Regex("action=\"([^\"]+)\"")
     private val kwikDToken = Regex("value=\"([^\"]+)\"")
@@ -53,10 +52,9 @@ class KwikExtractor(private val client: OkHttpClient) {
         val substring = eContent.substringAfterLast("m3u8|uwu|").substringBefore("'")
         val urlParts = substring.split("|").reversed()
         assert(urlParts.lastIndex == 8)
-        val url = urlParts[0] + "://" + urlParts[1] + "-" + urlParts[2] + "." + urlParts[3] + "." +
-            urlParts[4] + "." + urlParts[5] + "/" + urlParts[6] + "/" + urlParts[7] + "/" +
-            urlParts[8] + "/uwu.m3u8"
-        return url
+        return urlParts[0] + "://" + urlParts[1] + "-" + urlParts[2] + "." + urlParts[3] + "." +
+                urlParts[4] + "." + urlParts[5] + "/" + urlParts[6] + "/" + urlParts[7] + "/" +
+                urlParts[8] + "/uwu.m3u8"
     }
 
     fun getStreamUrlFromKwik(adflyUri: String): String {
