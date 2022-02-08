@@ -20,10 +20,10 @@
   {
     "name": "Aniyomi: Anime4up",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.anime4up",
-    "apk": "aniyomi-ar.anime4up-v12.23.apk",
+    "apk": "aniyomi-ar.anime4up-v12.24.apk",
     "lang": "ar",
-    "code": 23,
-    "version": "12.23",
+    "code": 24,
+    "version": "12.24",
     "nsfw": 0
   },
   {
@@ -47,10 +47,10 @@
   {
     "name": "Aniyomi: asia2tv",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.asia2tv",
-    "apk": "aniyomi-ar.asia2tv-v12.1.apk",
+    "apk": "aniyomi-ar.asia2tv-v12.2.apk",
     "lang": "ar",
-    "code": 1,
-    "version": "12.1",
+    "code": 2,
+    "version": "12.2",
     "nsfw": 0
   },
   {
@@ -65,10 +65,10 @@
   {
     "name": "Aniyomi: فاصل اعلاني",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.faselhd",
-    "apk": "aniyomi-ar.faselhd-v12.2.apk",
+    "apk": "aniyomi-ar.faselhd-v12.3.apk",
     "lang": "ar",
-    "code": 2,
-    "version": "12.2",
+    "code": 3,
+    "version": "12.3",
     "nsfw": 0
   },
   {
@@ -83,28 +83,28 @@
   {
     "name": "Aniyomi: موفيز فور يو",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.movies4u",
-    "apk": "aniyomi-ar.movies4u-v12.2.apk",
+    "apk": "aniyomi-ar.movies4u-v12.3.apk",
     "lang": "ar",
-    "code": 2,
-    "version": "12.2",
+    "code": 3,
+    "version": "12.3",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: MY CIMA",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.mycima",
-    "apk": "aniyomi-ar.mycima-v12.12.apk",
+    "apk": "aniyomi-ar.mycima-v12.13.apk",
     "lang": "ar",
-    "code": 12,
-    "version": "12.12",
+    "code": 13,
+    "version": "12.13",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: MY CIMA MOVIES",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.mycimamovie",
-    "apk": "aniyomi-ar.mycimamovie-v12.10.apk",
+    "apk": "aniyomi-ar.mycimamovie-v12.11.apk",
     "lang": "ar",
-    "code": 10,
-    "version": "12.10",
+    "code": 11,
+    "version": "12.11",
     "nsfw": 0
   },
   {
