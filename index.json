@@ -182,10 +182,10 @@
   {
     "name": "Aniyomi: AsianLoad",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.asianload",
-    "apk": "aniyomi-en.asianload-v12.3.apk",
+    "apk": "aniyomi-en.asianload-v12.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "12.3",
+    "code": 4,
+    "version": "12.4",
     "nsfw": 0
   },
   {
@@ -200,10 +200,10 @@
   {
     "name": "Aniyomi: DramaCool",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.dramacool",
-    "apk": "aniyomi-en.dramacool-v12.3.apk",
+    "apk": "aniyomi-en.dramacool-v12.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "12.3",
+    "code": 4,
+    "version": "12.4",
     "nsfw": 0
   },
   {
