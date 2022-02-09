@@ -371,11 +371,11 @@
   {
     "name": "Aniyomi: DreamSub",
     "pkg": "eu.kanade.tachiyomi.animeextension.it.dreamsub",
-    "apk": "aniyomi-it.dreamsub-v12.1.apk",
+    "apk": "aniyomi-it.dreamsub-v12.2.apk",
     "lang": "it",
-    "code": 1,
-    "version": "12.1",
-    "nsfw": 0
+    "code": 2,
+    "version": "12.2",
+    "nsfw": 1
   },
   {
     "name": "Aniyomi: Hentai Saturn",
