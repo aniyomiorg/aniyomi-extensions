@@ -116,6 +116,9 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val callMaster = client.newCall(GET(master, nheaders)).execute().asJsoup()
                     Log.i("testt", "$callMaster")*/
                     val headers = headers.newBuilder()
+                        // .set("Referer", "https://sbplay2.com/")
+                        .set("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
+                        .set("Accept-Language", "en-US,en;q=0.5")
                         .set("watchsb", "streamsb")
                         .build()
                     val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
@@ -216,8 +219,8 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
+            entries = arrayOf("1080p", "720p", "480p", "360p", "Doodstream", "StreamTape")
+            entryValues = arrayOf("1080", "720", "480", "360", "Doodstream", "StreamTape")
             setDefaultValue("1080")
             summary = "%s"
 
