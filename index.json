@@ -110,10 +110,10 @@
   {
     "name": "Aniyomi: WIT ANIME",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.witanime",
-    "apk": "aniyomi-ar.witanime-v12.11.apk",
+    "apk": "aniyomi-ar.witanime-v12.12.apk",
     "lang": "ar",
-    "code": 11,
-    "version": "12.11",
+    "code": 12,
+    "version": "12.12",
     "nsfw": 0
   },
   {
@@ -182,10 +182,10 @@
   {
     "name": "Aniyomi: AsianLoad",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.asianload",
-    "apk": "aniyomi-en.asianload-v12.4.apk",
+    "apk": "aniyomi-en.asianload-v12.5.apk",
     "lang": "en",
-    "code": 4,
-    "version": "12.4",
+    "code": 5,
+    "version": "12.5",
     "nsfw": 0
   },
   {
@@ -200,19 +200,19 @@
   {
     "name": "Aniyomi: DramaCool",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.dramacool",
-    "apk": "aniyomi-en.dramacool-v12.4.apk",
+    "apk": "aniyomi-en.dramacool-v12.5.apk",
     "lang": "en",
-    "code": 4,
-    "version": "12.4",
+    "code": 5,
+    "version": "12.5",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: GenoAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.genoanime",
-    "apk": "aniyomi-en.genoanime-v12.4.apk",
+    "apk": "aniyomi-en.genoanime-v12.5.apk",
     "lang": "en",
-    "code": 4,
-    "version": "12.4",
+    "code": 5,
+    "version": "12.5",
     "nsfw": 0
   },
   {
@@ -308,28 +308,28 @@
   {
     "name": "Aniyomi: AnimeFLV",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.animeflv",
-    "apk": "aniyomi-es.animeflv-v12.7.apk",
+    "apk": "aniyomi-es.animeflv-v12.8.apk",
     "lang": "es",
-    "code": 7,
-    "version": "12.7",
+    "code": 8,
+    "version": "12.8",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: Jkhentai",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.jkhentai",
-    "apk": "aniyomi-es.jkhentai-v12.1.apk",
+    "apk": "aniyomi-es.jkhentai-v12.2.apk",
     "lang": "es",
-    "code": 1,
-    "version": "12.1",
+    "code": 2,
+    "version": "12.2",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: MonosChinos",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.monoschinos",
-    "apk": "aniyomi-es.monoschinos-v12.2.apk",
+    "apk": "aniyomi-es.monoschinos-v12.3.apk",
     "lang": "es",
-    "code": 2,
-    "version": "12.2",
+    "code": 3,
+    "version": "12.3",
     "nsfw": 0
   },
   {
