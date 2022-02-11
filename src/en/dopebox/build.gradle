@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'DopeBox'
+    pkgNameSuffix = 'en.dopebox'
+    extClass = '.DopeBox'
+    extVersionCode = 1
+    libVersion = '12'
+}
+
+apply from: "$rootDir/common.gradle"

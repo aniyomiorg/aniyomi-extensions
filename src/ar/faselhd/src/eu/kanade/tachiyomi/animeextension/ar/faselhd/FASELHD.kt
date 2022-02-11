@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.ar.faselhd
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -28,7 +29,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "فاصل اعلاني"
 
-    override val baseUrl = "https://www.faselhd.pro"
+    override val baseUrl = "https://www.faselhd.top"
 
     override val lang = "ar"
 
@@ -38,6 +39,11 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    override fun headersBuilder(): Headers.Builder {
+        return super.headersBuilder()
+            .add("Referer", "https://www.faselhd.top/")
     }
 
     // Popular Anime
@@ -74,7 +80,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
 
         addEpisodes(response.asJsoup())
-        return episodes
+        return episodes.reversed()
     }
 
     override fun episodeListSelector() = "div.epAll a"
@@ -88,7 +94,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episode
     }
 
-    // Video urls
+    // Video urls //test commit
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
@@ -97,26 +103,21 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val refererHeaders = Headers.headersOf("referer", referer)
         val iframeResponse = client.newCall(GET(iframe, refererHeaders))
             .execute().asJsoup()
-        return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
+        return videosFromElement(iframeResponse.selectFirst(videoListSelector()), refererHeaders)
     }
 
-    override fun videoListSelector() = "script:containsData(quality)"
+    override fun videoListSelector() = "script:containsData(m3u8)"
 
-    private fun videosFromElement(element: Element): List<Video> {
-        val data = element.data().substringAfter("if (quality == \"auto\")").substringBefore(";")
-        val sources = data.split("link = ").drop(1)
+    private fun videosFromElement(element: Element, headers: Headers): List<Video> {
+        val masterUrl = element.data().substringAfter("setup({\"file\":\"").substringBefore("\"").replace("\\/", "/")
+        Log.i("lol", masterUrl)
+        val masterPlaylist = client.newCall(GET(masterUrl, headers)).execute().body!!.string()
+        Log.i("lol", "$masterPlaylist")
         val videoList = mutableListOf<Video>()
-        for (source in sources) {
-            val masterUrl = source.substringAfter("\"").substringBeforeLast("\";").replace("\\/", "/").replace("\"", "")
-            val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
-            val videoList = mutableListOf<Video>()
-            masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
-                val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
-                val videoUrl = masterUrl.substringBeforeLast("/") + "/" + it.substringAfter("\n").substringBefore("\n")
-                videoList.add(Video(videoUrl, quality, videoUrl, null))
-                // val video = Video(videoUrl, quality, videoUrl, null)
-            }
-            return videoList
+        masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
+            val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
+            val videoUrl = it.substringAfter("\n").substringBefore("\n").replace("https", "http")
+            videoList.add(Video(videoUrl, quality, videoUrl, null, headers))
         }
         return videoList
     }

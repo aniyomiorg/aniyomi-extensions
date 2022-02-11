@@ -62,18 +62,60 @@ class Movies4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeNextPageSelector(): String = "ul.paginator li.paginator__item paginator__item--next a"
 
-    // episodes
+    // Episodes
 
-    override fun episodeListSelector() = "link[rel=canonical]"
+    override fun episodeListSelector() = throw Exception("not used")
 
-    override fun episodeFromElement(element: Element): SEpisode {
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val document = response.asJsoup()
+        val episodeList = mutableListOf<SEpisode>()
+        val seriesLink = document.select("link[rel=canonical]").attr("href")
+        if (seriesLink.contains("/series/")) {
+            val seasonUrl = seriesLink
+            val seasonsHtml = client.newCall(
+                GET(
+                    seasonUrl,
+                    headers = Headers.headersOf("Referer", document.location())
+                )
+            ).execute().asJsoup()
+            val seasonsElements = seasonsHtml.select("div.col-6.col-sm-4.col-md-3.col-xl-2 div.card")
+            seasonsElements.forEach {
+                val seasonEpList = parseEpisodesFromSeries(it)
+                episodeList.addAll(seasonEpList)
+            }
+        } else {
+            val movieUrl = seriesLink
+            val episode = SEpisode.create()
+            episode.name = document.select("div.col-12 > h1").text().replace("مشاهدة", "").replace("فيلم", "").replace("مترجم", "")
+            episode.episode_number = 1F
+            episode.setUrlWithoutDomain(movieUrl)
+            episodeList.add(episode)
+        }
+        return episodeList.reversed()
+    }
+
+    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
+
+    private fun parseEpisodesFromSeries(element: Element): List<SEpisode> {
+        val seasonId = element.select("div.card__content h3.card__title a").attr("href")
+        val seasonName = element.select("div.card__content h3.card__title a").text()
+        Log.i("seasonname", seasonName)
+        val episodesUrl = seasonId
+        val episodesHtml = client.newCall(
+            GET(
+                episodesUrl,
+            )
+        ).execute().asJsoup()
+        val episodeElements = episodesHtml.select("div.col-6.col-sm-4.col-md-3.col-xl-2")
+        return episodeElements.map { episodeFromElement(it, seasonName) }
+    }
+
+    private fun episodeFromElement(element: Element, seasonName: String): SEpisode {
         val episode = SEpisode.create()
-        episode.setUrlWithoutDomain(element.attr("href"))
-        Log.i("lol", episode.url)
-        // episode.episode_number = element.select("span:nth-child(3)").text().replace(" - ", "").toFloat()
-        episode.name = element.ownerDocument().select("div.col-12 > h1").text().replace("مشاهدة", "").replace("فيلم", "").replace("مترجم", "")
-        episode.date_upload = System.currentTimeMillis()
-
+        episode.episode_number = element.select("h3.card__title a").attr("abs:href").substringAfter("episode-").toFloat()
+        // val SeasonNum = element.ownerDocument().select("div.Title span").text()
+        episode.name = "$seasonName" + ": " + element.select("h3.card__title a").text()
+        episode.setUrlWithoutDomain(element.select("h3.card__title a").attr("abs:href"))
         return episode
     }
 
@@ -164,7 +206,7 @@ class Movies4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val url = if (query.isNotBlank()) {
-            "$baseUrl/search/auto-complete?_token=${loadToken()}&q=$query"
+            "$baseUrl/search/auto-complete?_token=${loadToken()}&q=$query".replace(" ", "%20")
         } else {
             (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
                 when (filter) {
@@ -172,6 +214,14 @@ class Movies4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         if (filter.state > 0) {
                             val GenreN = getGenreList()[filter.state].query
                             val genreUrl = "$baseUrl/movies?category=$GenreN&quality=&imdb=0.0|10.0&year=1900|2021&page=$page"
+                            Log.i("lol", genreUrl)
+                            return GET(genreUrl, headers)
+                        }
+                    }
+                    is GenreList2 -> {
+                        if (filter.state > 0) {
+                            val GenreN = getGenreList()[filter.state].query
+                            val genreUrl = "$baseUrl/series?category=$GenreN&quality=undefined&imdb=0.0|10.0&year=1900|2021&page=$page"
                             Log.i("lol", genreUrl)
                             return GET(genreUrl, headers)
                         }
@@ -249,16 +299,18 @@ class Movies4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun getFilterList() = AnimeFilterList(
         AnimeFilter.Header("الفلترات مش هتشتغل لو بتبحث او وهي فاضيه"),
         GenreList(genresName),
+        GenreList2(genresName),
     )
 
     private class GenreList(genres: Array<String>) : AnimeFilter.Select<String>("تصنيف الافلام", genres)
+    private class GenreList2(genres: Array<String>) : AnimeFilter.Select<String>("تصنيف المسلسلات", genres)
     private data class Genre(val name: String, val query: String)
     private val genresName = getGenreList().map {
         it.name
     }.toTypedArray()
 
     private fun getGenreList() = listOf(
-        Genre("أختر", ""),
+        Genre("الكل", ""),
         Genre("أثارة", "22"),
         Genre("اكشن", "23"),
         Genre("انيميشن", "24"),

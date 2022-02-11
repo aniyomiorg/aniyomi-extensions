@@ -117,31 +117,51 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Video urls
 
-    override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        Log.i("lol0", document.select("iframe[src^=\"https://allmovies\"]").attr("src"))
-        val iframe1 = client.newCall(GET(document.select("iframe[src^=\"https://allmovies\"]").attr("src"))).execute().asJsoup()
-        val iframe = iframe1.select("iframe").attr("src") // [data-src^="https://stream"]
-        val referer = response.request.url.toString()
-        val refererHeaders = Headers.headersOf("referer", referer)
-        val iframeResponse = client.newCall(GET(iframe, refererHeaders))
-            .execute().asJsoup()
-        return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
+    override fun videoListRequest(episode: SEpisode): Request {
+        val document = client.newCall(GET(baseUrl + episode.url)).execute().asJsoup()
+        val iframe = document.select("iframe[src^=\"https://allmovies\"]").attr("src")
+        Log.i("lol", "$iframe")
+        return GET(iframe)
     }
 
-    override fun videoListSelector() = "script:containsData(m3u8)"
+    override fun videoListParse(response: Response): List<Video> {
+        val document = response.asJsoup()
+        return videosFromElement(document)
+    }
 
-    private fun videosFromElement(element: Element): List<Video> {
-        val data = element.data()
-        val masterUrl = masterExtractor(data)
-        Log.i("lol1", masterUrl)
-        val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
-        Log.i("lol2", masterPlaylist)
+    override fun videoListSelector() = "iframe"
+
+    private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
-        masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
-            val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
-            val videoUrl = it.substringAfter("\n").substringBefore("\n")
-            videoList.add(Video(videoUrl, quality, videoUrl, null))
+        val elements = document.select(videoListSelector())
+        for (element in elements) {
+            val url = element.attr("src")
+            Log.i("lol", url)
+            val location = element.ownerDocument().location()
+            val videoHeaders = Headers.headersOf("Referer", location)
+            when {
+                url.contains("https://dood") -> {
+                    val newQuality = "Doodstream mirror"
+                    val video = Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
+                    videoList.add(video)
+                }
+                url.contains("streamhub") -> {
+                    val response = client.newCall(GET(url, videoHeaders)).execute().asJsoup()
+                    val script = response.selectFirst("script:containsData(m3u8)")
+                    val data = script.data()
+                    val masterUrl = masterExtractor(data)
+                    Log.i("lol1", masterUrl)
+                    val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
+                    Log.i("lol2", masterPlaylist)
+                    val videoList = mutableListOf<Video>()
+                    masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
+                        val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
+                        val videoUrl = it.substringAfter("\n").substringBefore("\n")
+                        videoList.add(Video(videoUrl, quality, videoUrl, null))
+                    }
+                    return videoList
+                }
+            }
         }
         return videoList
     }
@@ -171,6 +191,31 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return sourcesRegex.find(p)!!.value
     }
 
+    private fun doodUrlParse(url: String): String? {
+        val response = client.newCall(GET(url.replace("/d/", "/e/"))).execute()
+        val content = response.body!!.string()
+        if (!content.contains("'/pass_md5/")) return null
+        val md5 = content.substringAfter("'/pass_md5/").substringBefore("',")
+        val token = md5.substringAfterLast("/")
+        val doodTld = url.substringAfter("https://dood.").substringBefore("/")
+        val randomString = getRandomString()
+        val expiry = System.currentTimeMillis()
+        val videoUrlStart = client.newCall(
+            GET(
+                "https://dood.$doodTld/pass_md5/$md5",
+                Headers.headersOf("referer", url)
+            )
+        ).execute().body!!.string()
+        Log.i("lol", "$videoUrlStart$randomString?token=$token&expiry=$expiry")
+        return "$videoUrlStart$randomString?token=$token&expiry=$expiry"
+    }
+
+    private fun getRandomString(length: Int = 10): String {
+        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
+        return (1..length)
+            .map { allowedChars.random() }
+            .joinToString("")
+    }
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", null)
         if (quality != null) {

@@ -65,6 +65,10 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // episodes
 
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        return super.episodeListParse(response).reversed()
+    }
+
     override fun episodeListSelector() = "div.episodes-list-content div#DivEpisodesList div.col-md-3" // "ul.episodes-links li a"
 
     override fun episodeFromElement(element: Element): SEpisode {
@@ -90,29 +94,37 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        // get POST valus
-        val postUrl = document.select("form[method=post]").attr("action")
-        val ur = document.select("input[name=ur]").attr("value")
-        val wl = document.select("input[name=wl]").attr("value")
-        val dl = document.select("input[name=dl]").attr("value")
-        val moshahda = document.select("input[name=moshahda]").attr("value")
-        val submit = document.select("input[name=submit]").attr("value")
-        // POST data
-        val body = FormBody.Builder()
-            .add("ur", "$ur")
-            .add("wl", "$wl")
-            .add("dl", "$dl")
-            .add("moshahda", "$moshahda")
-            .add("submit", "$submit")
-            .build()
-        // Call POST
-        val referer = response.request.url.encodedPath
-        val newHeaders = Headers.headersOf("referer", baseUrl + referer)
-        val ifram1 = client.newCall(POST(postUrl, newHeaders, body)).execute().asJsoup()
-        val iframe = ifram1.select("li.active").attr("data-server")
-        val iframeResponse = client.newCall(GET(iframe, newHeaders))
-            .execute().asJsoup()
-        return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
+        val iframe = document.selectFirst("iframe").attr("src")
+        if (iframe.contains("http")) {
+            val referer = response.request.url.encodedPath
+            val newHeaders = Headers.headersOf("referer", baseUrl + referer)
+            val iframeResponse = client.newCall(GET(iframe, newHeaders))
+                .execute().asJsoup()
+            return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
+        } else {
+            val postUrl = document.select("form[method=post]").attr("action")
+            val ur = document.select("input[name=ur]").attr("value")
+            val wl = document.select("input[name=wl]").attr("value")
+            val dl = document.select("input[name=dl]").attr("value")
+            val moshahda = document.select("input[name=moshahda]").attr("value")
+            val submit = document.select("input[name=submit]").attr("value")
+            // POST data
+            val body = FormBody.Builder()
+                .add("ur", "$ur")
+                .add("wl", "$wl")
+                .add("dl", "$dl")
+                .add("moshahda", "$moshahda")
+                .add("submit", "$submit")
+                .build()
+            // Call POST
+            val referer = response.request.url.encodedPath
+            val newHeaders = Headers.headersOf("referer", baseUrl + referer)
+            val ifram1 = client.newCall(POST(postUrl, newHeaders, body)).execute().asJsoup()
+            val iframe = ifram1.select("li.active").attr("data-server")
+            val iframeResponse = client.newCall(GET(iframe, newHeaders))
+                .execute().asJsoup()
+            return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
+        }
     }
 
     override fun videoListSelector() = "script:containsData(m3u8)"

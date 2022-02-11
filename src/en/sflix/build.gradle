@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Sflix'
+    pkgNameSuffix = 'en.sflix'
+    extClass = '.SFlix'
+    extVersionCode = 1
+    libVersion = '12'
+}
+
+apply from: "$rootDir/common.gradle"

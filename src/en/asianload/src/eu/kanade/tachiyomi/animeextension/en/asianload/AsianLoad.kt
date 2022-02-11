@@ -2,10 +2,13 @@ package eu.kanade.tachiyomi.animeextension.en.asianload
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.net.Uri
 import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.en.asianload.extractors.DoodExtractor
+import eu.kanade.tachiyomi.animeextension.en.asianload.extractors.FembedExtractor
+import eu.kanade.tachiyomi.animeextension.en.asianload.extractors.StreamSBExtractor
+import eu.kanade.tachiyomi.animeextension.en.asianload.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -14,7 +17,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -51,7 +53,7 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "ul.listing.items li a"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/popular?page=$page")
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/popular?page=$page") // page/$page
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -80,7 +82,7 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         // episode.date_upload = element.select("div.meta span.date").text()
         return episode
     }
-    
+
     private fun getNumberFromEpsString(epsStr: String): String {
         return epsStr.filter { it.isDigit() }
     }
@@ -98,10 +100,7 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videosFromElement(document)
     }
 
-    val srcVid = preferences.getString("preferred_server", "https://dood")
-
-    override fun videoListSelector() = "ul.list-server-items li[data-video*=$srcVid]"
-    // "ul.list-server-items li[data-video*=https://sbplay2.com], ul.list-server-items li[data-video*=https://dood], ul.list-server-items li[data-video*=https://streamtape], ul.list-server-items li[data-video*=https://fembed]"
+    override fun videoListSelector() = "ul.list-server-items li[data-video*=https://sbplay2.com], ul.list-server-items li[data-video*=https://dood], ul.list-server-items li[data-video*=https://streamtape], ul.list-server-items li[data-video*=https://fembed]"
 
     private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
@@ -112,34 +111,45 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val location = element.ownerDocument().location()
             val videoHeaders = Headers.headersOf("Referer", location)
             when {
-                url.contains("https://sbplay") -> {
-                    val videos = sbplayUrlParse(url.substringBefore("?caption"), location)
+                url.contains("sbplay2") -> {
+                    /*val id = url.substringAfter("e/").substringBefore("?")
+                    Log.i("idtest", id)
+                    val bytes = id.toByteArray()
+                    Log.i("idencode", "$bytes")
+                    val bytesToHex = bytesToHex(bytes)
+                    Log.i("bytesToHex", bytesToHex)
+                    val nheaders = headers.newBuilder()
+                        .set("watchsb", "streamsb")
+                        .build()
+                    val master = "https://sbplay2.com/sourcesx38/7361696b6f757c7c${bytesToHex}7c7c7361696b6f757c7c73747265616d7362/7361696b6f757c7c363136653639366436343663363136653639366436343663376337633631366536393664363436633631366536393664363436633763376336313665363936643634366336313665363936643634366337633763373337343732363536313664373336327c7c7361696b6f757c7c73747265616d7362"
+                    Log.i("master", master)
+
+                    val callMaster = client.newCall(GET(master, nheaders)).execute().asJsoup()
+                    Log.i("testt", "$callMaster")*/
+                    val headers = headers.newBuilder()
+                        // .set("Referer", "https://sbplay2.com/")
+                        .set("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
+                        .set("Accept-Language", "en-US,en;q=0.5")
+                        .set("watchsb", "streamsb")
+                        .build()
+                    val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
                     videoList.addAll(videos)
                 }
-                url.contains("https://dood") -> {
-                    val newQuality = "Doodstream mirror"
-                    val video = Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
-                    videoList.add(video)
-                }
-                url.contains("https://streamtape") -> {
-                    val newQuality = "StreamTape mirror"
-                    val video = Video(url, newQuality, streamTapeParse(url), null, videoHeaders)
-                    videoList.add(video)
-                }
-                url.contains("fembed") -> {
-                    val apiCall = client.newCall(POST(url.substringBefore("#").replace("/v/", "/api/source/"))).execute().body!!.string()
-                    Log.i("lol", "$apiCall")
-                    val data = apiCall.substringAfter("\"data\":[").substringBefore("],")
-                    val sources = data.split("\"file\":\"").drop(1)
-                    val videoList = mutableListOf<Video>()
-                    for (source in sources) {
-                        val src = source.substringAfter("\"file\":\"").substringBefore("\"").replace("\\/", "/")
-                        Log.i("lol", "$src")
-                        val quality = source.substringAfter("\"label\":\"").substringBefore("\"")
-                        val video = Video(url, quality, src, null)
+                url.contains("dood") -> {
+                    val video = DoodExtractor(client).videoFromUrl(url)
+                    if (video != null) {
                         videoList.add(video)
                     }
-                    return videoList
+                }
+                url.contains("fembed") -> {
+                    val videos = FembedExtractor().videosFromUrl(url)
+                    videoList.addAll(videos)
+                }
+                url.contains("streamtape") -> {
+                    val video = StreamTapeExtractor(client).videoFromUrl(url)
+                    if (video != null) {
+                        videoList.add(video)
+                    }
                 }
             }
         }
@@ -149,79 +159,6 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
-
-    private fun sbplayUrlParse(url: String, referer: String): List<Video> {
-        val videoList = mutableListOf<Video>()
-        val refererHeader = Headers.headersOf("Referer", referer)
-        val id = Uri.parse(url).pathSegments[1]
-        val noRedirectClient = client.newBuilder().followRedirects(false).build()
-        val respDownloadLinkSelector = noRedirectClient.newCall(GET(url, refererHeader)).execute()
-        val documentDownloadSelector = respDownloadLinkSelector.asJsoup()
-        val downloadElements = documentDownloadSelector.select("div.contentbox table tbody tr td a")
-        for (downloadElement in downloadElements) {
-            val videoData = downloadElement.attr("onclick")
-            val quality = downloadElement.text()
-            val hash = videoData.splitToSequence(",").last().replace("\'", "").replace(")", "")
-            val mode =
-                videoData.splitToSequence(",").elementAt(1).replace("\'", "").replace(")", "")
-            val downloadLink =
-                "https://sbplay2.com/dl?op=download_orig&id=$id&mode=$mode&hash=$hash"
-            respDownloadLinkSelector.close()
-            val video = sbplayVideoParser(downloadLink, quality)
-            if (video != null) videoList.add(video)
-        }
-        return videoList
-    }
-
-    private fun sbplayVideoParser(url: String, quality: String): Video? {
-        return try {
-            val noRedirectClient = client.newBuilder().followRedirects(false).build()
-            val refererHeader = Headers.headersOf("Referer", url)
-            val respDownloadLink = noRedirectClient.newCall(GET(url, refererHeader)).execute()
-            val documentDownloadLink = respDownloadLink.asJsoup()
-            val downloadLink = documentDownloadLink.selectFirst("div.contentbox span a").attr("href")
-            respDownloadLink.close()
-            Video(url, quality, downloadLink, null, refererHeader)
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    private fun doodUrlParse(url: String): String? {
-        val response = client.newCall(GET(url.replace("/d/", "/e/"))).execute()
-        val content = response.body!!.string()
-        if (!content.contains("'/pass_md5/")) return null
-        val md5 = content.substringAfter("'/pass_md5/").substringBefore("',")
-        val token = md5.substringAfterLast("/")
-        val doodTld = url.substringAfter("https://dood.").substringBefore("/")
-        val randomString = getRandomString()
-        val expiry = System.currentTimeMillis()
-        val videoUrlStart = client.newCall(
-            GET(
-                "https://dood.$doodTld/pass_md5/$md5",
-                Headers.headersOf("referer", url)
-            )
-        ).execute().body!!.string()
-        Log.i("lol", "$videoUrlStart$randomString?token=$token&expiry=$expiry")
-        return "$videoUrlStart$randomString?token=$token&expiry=$expiry"
-    }
-
-    private fun getRandomString(length: Int = 10): String {
-        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
-        return (1..length)
-            .map { allowedChars.random() }
-            .joinToString("")
-    }
-
-    private fun streamTapeParse(url: String): String? {
-        val document = client.newCall(GET(url)).execute().asJsoup()
-        val script = document.select("script:containsData(document.getElementById('robotlink'))")
-            .firstOrNull()?.data()?.substringAfter("document.getElementById('robotlink').innerHTML = '")
-            ?: return null
-        val videoUrl = "https:" + script.substringBefore("'") +
-            script.substringAfter("+ ('xcd").substringBefore("'")
-        return "$videoUrl"
-    }
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", null)
@@ -318,26 +255,11 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // Preferences
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val serverPref = ListPreference(screen.context).apply {
-            key = "preferred_server"
-            title = "Preferred Server  (requires app restart)"
-            entries = arrayOf("Fembed", "StreamTape", "DooDStream", "StreamSB")
-            entryValues = arrayOf("https://fembed", "https://streamtape", "https://dood", "https://sbplay2.com")
-            setDefaultValue("https://dood")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
+            entries = arrayOf("1080p", "720p", "480p", "360p", "Doodstream", "StreamTape")
+            entryValues = arrayOf("1080", "720", "480", "360", "Doodstream", "StreamTape")
             setDefaultValue("1080")
             summary = "%s"
 
@@ -348,7 +270,6 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
-        screen.addPreference(serverPref)
         screen.addPreference(videoQualityPref)
     }
 }
