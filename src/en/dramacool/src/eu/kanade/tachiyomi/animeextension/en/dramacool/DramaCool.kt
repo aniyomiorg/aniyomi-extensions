@@ -71,9 +71,17 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("abs:href"))
         episode.name = element.select("span.type").text() + " Episode: " + element.select("h3").text().substringAfter("Episode ")
-        episode.episode_number = element.select("h3").text().substringAfter("Episode ").toFloat()
+        val epNum = element.select("h3").text().substringAfter("Episode ")
+        episode.episode_number = when {
+            (epNum.isNotEmpty()) -> epNum.toFloat()
+            else -> 1F
+        }
         // episode.date_upload = element.select("div.meta span.date").text()
         return episode
+    }
+
+    private fun getNumberFromEpsString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }
     }
 
     // Video urls
