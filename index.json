@@ -180,12 +180,21 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: Animixplay",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.animixplay",
+    "apk": "aniyomi-en.animixplay-v12.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: AsianLoad",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.asianload",
-    "apk": "aniyomi-en.asianload-v12.6.apk",
+    "apk": "aniyomi-en.asianload-v12.7.apk",
     "lang": "en",
-    "code": 6,
-    "version": "12.6",
+    "code": 7,
+    "version": "12.7",
     "nsfw": 0
   },
   {
@@ -200,10 +209,10 @@
   {
     "name": "Aniyomi: DramaCool",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.dramacool",
-    "apk": "aniyomi-en.dramacool-v12.6.apk",
+    "apk": "aniyomi-en.dramacool-v12.7.apk",
     "lang": "en",
-    "code": 6,
-    "version": "12.6",
+    "code": 7,
+    "version": "12.7",
     "nsfw": 0
   },
   {
