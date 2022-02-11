@@ -1,122 +1,48 @@
 package eu.kanade.tachiyomi.animeextension.en.animixplay.extractors
 
-import android.net.Uri
-import android.util.Base64
-import android.util.Base64.NO_WRAP
-import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.FormBody
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
 import okhttp3.Headers
 import okhttp3.OkHttpClient
-import org.jsoup.nodes.Document
+import org.jsoup.Jsoup
 
 class StreamSbExtractor(private val client: OkHttpClient) {
-    fun videosFromUrl(serverUrl: String): List<Video> {
-        val videoList = mutableListOf<Video>()
-        val downloadLink = serverUrl.replace("/e/", "/d/")
-        val host = Uri.parse(downloadLink).host
-        val rUrl = "https://$host/"
-        val headers = Headers.headersOf(
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
-            "Referer", rUrl
+
+    private val hexArray = "0123456789ABCDEF".toCharArray()
+
+    private fun bytesToHex(bytes: ByteArray): String {
+        val hexChars = CharArray(bytes.size * 2)
+        for (j in bytes.indices) {
+            val v = bytes[j].toInt() and 0xFF
+
+            hexChars[j * 2] = hexArray[v ushr 4]
+            hexChars[j * 2 + 1] = hexArray[v and 0x0F]
+        }
+        return String(hexChars)
+    }
+
+    fun videosFromUrl(url: String, headers: Headers): List<Video> {
+        val id = url.substringAfter("e/").substringBefore("?")
+        val bytes = id.toByteArray()
+        val bytesToHex = bytesToHex(bytes)
+        val master = "https://sbplay2.com/sources40/566d337678566f743674494a7c7c${bytesToHex}7c7c346b6767586d6934774855537c7c73747265616d7362/6565417268755339773461447c7c346133383438333436313335376136323337373433383634376337633465366534393338373136643732373736343735373237613763376334363733353737303533366236333463353333363534366137633763373337343732363536313664373336327c7c6b586c3163614468645a47617c7c73747265616d7362"
+        //"https://sbplay2.com/sourcesx38/4f395a53447166635a3836787c7c${bytesToHex}7c7c7965344f61436d467845586c7c7c73747265616d7362/6e56314c77564e6a6c6631737c7c333735383537363836633662373635323636376133343637376337633335346334343332353735343333366633343635346336383763376334313561373633343761346133303665363837363537353937633763373337343732363536313664373336327c7c395239444c3961626d634e6a7c7c73747265616d7362"
+        val json = Json.decodeFromString<JsonObject>(
+            Jsoup.connect(master).ignoreContentType(true).header("watchsb", "streamsb").header("accept-language", "en-US,en;q=0.5").header("Referer", url).header("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
+                .execute().body()
         )
-        val document = client.newCall(
-            GET(downloadLink, headers)
-        ).execute().asJsoup()
-        val sources = document.select("tr a")
-        sources.forEach {
-            val videoQuality = it.text()
-            val source = it.attr("onclick")
-            val id = source.substringAfter("(").splitToSequence(",").first().replace("\'", "").replace(")", "")
-            val hash = source.splitToSequence(",").last().replace("\'", "").replace(")", "")
-            val mode =
-                source.splitToSequence(",").elementAt(1).replace("\'", "").replace(")", "")
-            val dlUrl =
-                "https://$host/dl?op=download_orig&id=$id&mode=$mode&hash=$hash"
-            val responseDoc = client.newCall(
-                GET(
-                    dlUrl,
-                    headers
-                )
-            ).execute().asJsoup()
-            val domain = Base64.encodeToString("https://$host:443".toByteArray(), NO_WRAP)
-            val token = getToken(responseDoc, rUrl, domain)
-            val postFormBody = getHiddenFormBody(responseDoc, token)
-            val postHeaders = Headers.headersOf(
-                "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
-                "Referer", dlUrl,
-                "Content-Type", "application/x-www-form-urlencoded",
-                "Origin", rUrl,
-                "authority", host!!,
-            )
-            val videoPostRequest = client.newCall(
-                POST(
-                    dlUrl,
-                    postHeaders,
-                    postFormBody
-                )
-            ).execute().asJsoup()
-            val videoLink = videoPostRequest.select("span a").attr("href")
-            videoList.add(Video(videoLink, videoQuality, videoLink, null))
+        val masterUrl = json["stream_data"]!!.jsonObject["file"].toString().trim('"')
+        val masterPlaylist = client.newCall(GET(masterUrl, headers)).execute().body!!.string()
+        val videoList = mutableListOf<Video>()
+        masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
+            val quality = "StreamSB:" + it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
+            val videoUrl = it.substringAfter("\n").substringBefore("\n")
+            videoList.add(Video(videoUrl, quality, videoUrl, null, headers))
         }
         return videoList
-    }
-
-    private fun getHiddenFormBody(document: Document, token: String): FormBody {
-        val pageData = FormBody.Builder()
-        val hiddenFormInputs = document.select("Form#F1 input")
-        hiddenFormInputs.forEach {
-            pageData.addEncoded(it.attr("name"), it.attr("value"))
-        }
-        pageData.addEncoded("g-recaptcha-response", token)
-        return pageData.build()
-    }
-
-    private fun getToken(document: Document, url: String, domain: String): String {
-        val headers = Headers.headersOf(
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
-            "Referer", url
-        )
-        val rUrl = "https://www.google.com/recaptcha/api.js"
-        val aUrl = "https://www.google.com/recaptcha/api2"
-        val key = document.select("button.g-recaptcha").attr("data-sitekey")
-        val reCaptchaUrl = "$rUrl?render=$key"
-        val resp = client.newCall(
-            GET(
-                reCaptchaUrl,
-                headers
-            )
-        ).execute().asJsoup()
-        val v = resp.text().substringAfter("releases/").substringBefore("/")
-        val anchorLink = "$aUrl/anchor?ar=1&k=$key&co=$domain&hl=en&v=$v&size=invisible&cb=123456789"
-        val callAnchorRes = client.newCall(
-            GET(
-                anchorLink,
-                headers
-            )
-        ).execute().asJsoup()
-
-        val rtoken = callAnchorRes.select("input#recaptcha-token").attr("value")
-
-        val pageData = FormBody.Builder()
-            .add("v", v)
-            .add("reason", "q")
-            .add("k", key)
-            .add("c", rtoken)
-            .add("sa", "")
-            .add("co", domain)
-            .build()
-        val newHeaders = Headers.headersOf(
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0",
-            "Referer", aUrl
-        )
-        val callReloadToken = client.newCall(
-            POST("$aUrl/reload?k=$key", newHeaders, pageData)
-        ).execute().asJsoup()
-
-        return callReloadToken.text().substringAfter("rresp\",\"").substringBefore("\"")
     }
 }
