@@ -6,6 +6,7 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.OkruExtractor
+import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -111,6 +112,16 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     for (server in sub.jsonArray) {
                         val url = server.jsonObject["code"]!!.jsonPrimitive.content.replace("\\/", "/")
                         val quality = server.jsonObject["title"]!!.jsonPrimitive.content
+                        if (quality == "SB") {
+                            val headers = headers.newBuilder()
+                                // .set("Referer", "https://sbplay2.com/")
+                                .set("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
+                                .set("Accept-Language", "en-US,en;q=0.5")
+                                .set("watchsb", "streamsb")
+                                .build()
+                            val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
+                            videoList.addAll(videos)
+                        }
                         if (quality == "Fembed") {
                             val videos = FembedExtractor().videosFromUrl(url)
                             videoList.addAll(videos)
