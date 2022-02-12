@@ -317,10 +317,10 @@
   {
     "name": "Aniyomi: AnimeFLV",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.animeflv",
-    "apk": "aniyomi-es.animeflv-v12.8.apk",
+    "apk": "aniyomi-es.animeflv-v12.9.apk",
     "lang": "es",
-    "code": 8,
-    "version": "12.8",
+    "code": 9,
+    "version": "12.9",
     "nsfw": 0
   },
   {
@@ -380,10 +380,10 @@
   {
     "name": "Aniyomi: ANIMEWORLD.tv",
     "pkg": "eu.kanade.tachiyomi.animeextension.it.animeworld",
-    "apk": "aniyomi-it.animeworld-v12.1.apk",
+    "apk": "aniyomi-it.animeworld-v12.2.apk",
     "lang": "it",
-    "code": 1,
-    "version": "12.1",
+    "code": 2,
+    "version": "12.2",
     "nsfw": 0
   },
   {
