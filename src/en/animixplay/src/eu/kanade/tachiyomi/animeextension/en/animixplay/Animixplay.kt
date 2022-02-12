@@ -105,11 +105,14 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListSelector() = throw Exception("not used")
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = getDocumentFromRequestUrl(response)
-        val animeJson = json.decodeFromString<JsonObject>(document.select("body").text())
-        val malId = animeJson["mal_id"]!!.jsonPrimitive.int
-
-        return episodesRequest(malId, document)
+        return if (response.request.url.toString().contains(".json")) {
+            val document = response.asJsoup()
+            val animeJson = json.decodeFromString<JsonObject>(document.select("body").text())
+            val malId = animeJson["mal_id"]!!.jsonPrimitive.int
+            episodesRequest(malId, document)
+        } else {
+            episodeFromResponse(response)
+        }
     }
 
     private fun episodesRequest(malId: Int, document: Document): List<SEpisode> {
@@ -131,17 +134,21 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             GET(
                 baseUrl + urlEndpoint,
             )
-        ).execute().asJsoup()
-        val episodeListJson = json.decodeFromString<JsonObject>(episodesResponse.select("div#epslistplace").text())
+        ).execute()
+        return episodeFromResponse(episodesResponse)
+    }
+    private fun episodeFromResponse(response: Response): List<SEpisode> {
+        val document = response.asJsoup()
+        val episodeListJson = json.decodeFromString<JsonObject>(document.select("div#epslistplace").text())
+        val url = response.request.url.toString()
         val episodeAvailable = episodeListJson["eptotal"]!!.jsonPrimitive.int
         val episodeList = mutableListOf<SEpisode>()
 
         for (i in 0 until episodeAvailable) {
-            episodeList.add(episodeFromJsonElement(baseUrl + urlEndpoint, i))
+            episodeList.add(episodeFromJsonElement(url, i))
         }
         return episodeList
     }
-
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
 
     private fun episodeFromJsonElement(url: String, number: Int): SEpisode {
@@ -224,23 +231,24 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(response: Response): SAnime {
         Log.d("detail", response.request.url.toString())
-        return animeDetailsParse(getDocumentFromRequestUrl(response))
-    }
-
-    private fun getDocumentFromRequestUrl(response: Response): Document {
-        return if (!response.request.url.toString().contains(".json")) {
-            val scriptData = response.asJsoup().select("script:containsData(var malid )").toString()
-            val malId = scriptData.substringAfter("var malid = '").substringBefore("';")
-            val url = "https://animixplay.to/assets/mal/$malId.json"
-            client.newCall(
-                GET(
-                    url,
-                    headers
-                )
-            ).execute().asJsoup()
+        val document = if (!response.request.url.toString().contains(".json")) {
+            getDocumentFromRequestUrl(response)
         } else {
             response.asJsoup()
         }
+        return animeDetailsParse(document)
+    }
+
+    private fun getDocumentFromRequestUrl(response: Response): Document {
+        val scriptData = response.asJsoup().select("script:containsData(var malid )").toString()
+        val malId = scriptData.substringAfter("var malid = '").substringBefore("';")
+        val url = "https://animixplay.to/assets/mal/$malId.json"
+        return client.newCall(
+            GET(
+                url,
+                headers
+            )
+        ).execute().asJsoup()
     }
 
     override fun animeDetailsParse(document: Document): SAnime {
