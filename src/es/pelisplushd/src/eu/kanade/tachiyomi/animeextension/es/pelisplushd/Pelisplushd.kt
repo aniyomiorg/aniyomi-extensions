@@ -76,11 +76,12 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val epNum = index + 1
                 val episode = SEpisode.create()
                 episode.episode_number = epNum.toFloat()
-                episode.name = "Episodio $epNum"
+                episode.name = element.text()
                 episode.setUrlWithoutDomain(element.attr("href"))
                 episodes.add(episode)
                 Log.i("bruh", "${episodes[index].name}")
             }
+            episodes.removeLast()
         }
         return episodes
     }
