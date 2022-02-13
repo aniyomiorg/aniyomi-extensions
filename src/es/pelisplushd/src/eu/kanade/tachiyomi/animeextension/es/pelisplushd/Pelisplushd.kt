@@ -57,7 +57,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun popularAnimeNextPageSelector(): String = "null"
+    override fun popularAnimeNextPageSelector(): String = "a.page-link"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val episodes = mutableListOf<SEpisode>()
