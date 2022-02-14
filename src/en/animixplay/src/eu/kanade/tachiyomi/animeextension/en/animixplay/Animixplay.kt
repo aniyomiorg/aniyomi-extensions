@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.en.animixplay
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.en.animixplay.extractors.DoodExtractor
@@ -129,7 +128,10 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 )
             ).execute().body!!.string()
         )
-        val urlEndpoint = animeServersJson["data"]!!.jsonArray[0].jsonObject["items"]!!.jsonArray[0].jsonObject["url"]!!.jsonPrimitive.content
+        val subPreference = preferences.getString("preferred_sub", "jpn")!!
+        val animeSubDubUrls = animeServersJson["data"]!!.jsonArray[0].jsonObject["items"]!!.jsonArray
+        val animeUrlJson = if (subPreference == "jpn") animeSubDubUrls[animeSubDubUrls.size - 1] else animeSubDubUrls[0]
+        val urlEndpoint = animeUrlJson.jsonObject["url"]!!.jsonPrimitive.content
         val episodesResponse = client.newCall(
             GET(
                 baseUrl + urlEndpoint,
@@ -230,7 +232,6 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
-        Log.d("detail", response.request.url.toString())
         val document = if (!response.request.url.toString().contains(".json")) {
             getDocumentFromRequestUrl(response)
         } else {
@@ -296,6 +297,22 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val subPref = ListPreference(screen.context).apply {
+            key = "preferred_sub"
+            title = "Prefer subs or dubs?"
+            entries = arrayOf("sub", "dub")
+            entryValues = arrayOf("jpn", "eng")
+            setDefaultValue("jpn")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
         screen.addPreference(videoQualityPref)
+        screen.addPreference(subPref)
     }
 }
