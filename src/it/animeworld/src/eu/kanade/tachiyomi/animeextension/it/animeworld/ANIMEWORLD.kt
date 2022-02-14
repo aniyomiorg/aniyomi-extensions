@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.animeextension.it.animeworld.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.it.animeworld.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.it.animeworld.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -42,21 +43,12 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    // Popular Anime
+    // Popular Anime - Same Format as Search
 
-    override fun popularAnimeSelector(): String = "div.items div.item a.thumb"
-
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/az-list?page=$page")
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.attr("abs:href"))
-        anime.thumbnail_url = element.select("img").attr("src")
-        anime.title = element.select("img").attr("alt")
-        return anime
-    }
-
-    override fun popularAnimeNextPageSelector(): String = "div.paging-wrapper a#go-next-page"
+    override fun popularAnimeSelector(): String = searchAnimeSelector()
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/filter?sort=6&page=$page")
+    override fun popularAnimeFromElement(element: Element): SAnime = searchAnimeFromElement(element)
+    override fun popularAnimeNextPageSelector(): String = searchAnimeNextPageSelector()
 
     // Episodes
 
@@ -168,7 +160,8 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeNextPageSelector(): String = "div.paging-wrapper a#go-next-page"
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/search?keyword=$query&page=$page")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request =
+        GET("$baseUrl/filter?${getSearchParameters(filters)}&keyword=$query&page=$page")
 
     // Details
 
@@ -191,21 +184,280 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    // Latest
+    // Latest - Same format as search
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/updated?page=$page")
+    override fun latestUpdatesSelector(): String = searchAnimeSelector()
+    override fun latestUpdatesNextPageSelector(): String = searchAnimeNextPageSelector()
+    override fun latestUpdatesFromElement(element: Element): SAnime = searchAnimeFromElement(element)
 
-    override fun latestUpdatesSelector(): String = "div.film-list div.item div.inner a.poster"
+    // Filters
 
-    override fun latestUpdatesNextPageSelector(): String = "div.paging-wrapper a#go-next-page"
+    internal class Genre(val id: String, name: String) : AnimeFilter.CheckBox(name)
+    private class GenreList(genres: List<Genre>) : AnimeFilter.Group<Genre>("Generi", genres)
+    private fun getGenres() = listOf(
+        Genre("and", "Mode: AND"),
+        Genre("3", "Arti Marziali"),
+        Genre("5", "Avanguardia"),
+        Genre("2", "Avventura"),
+        Genre("1", "Azione"),
+        Genre("47", "Bambini"),
+        Genre("4", "Commedia"),
+        Genre("6", "Demoni"),
+        Genre("7", "Drammatico"),
+        Genre("8", "Ecchi"),
+        Genre("9", "Fantasy"),
+        Genre("10", "Gioco"),
+        Genre("11", "Harem"),
+        Genre("43", "Hentai"),
+        Genre("13", "Horror"),
+        Genre("14", "Josei"),
+        Genre("16", "Magia"),
+        Genre("18", "Mecha"),
+        Genre("19", "Militari"),
+        Genre("21", "Mistero"),
+        Genre("20", "Musicale"),
+        Genre("22", "Parodia"),
+        Genre("23", "Polizia"),
+        Genre("24", "Psicologico"),
+        Genre("46", "Romantico"),
+        Genre("26", "Samurai"),
+        Genre("28", "Sci-Fi"),
+        Genre("27", "Scolastico"),
+        Genre("29", "Seinen"),
+        Genre("25", "Sentimentale"),
+        Genre("30", "Shoujo"),
+        Genre("31", "Shoujo Ai"),
+        Genre("32", "Shounen"),
+        Genre("33", "Shounen Ai"),
+        Genre("34", "Slice of Life"),
+        Genre("35", "Spazio"),
+        Genre("37", "Soprannaturale"),
+        Genre("36", "Sport"),
+        Genre("12", "Storico"),
+        Genre("38", "Superpoteri"),
+        Genre("39", "Thriller"),
+        Genre("40", "Vampiri"),
+        Genre("48", "Veicoli"),
+        Genre("41", "Yaoi"),
+        Genre("42", "Yuri")
+    )
 
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.attr("abs:href").substringBeforeLast("/"))
-        anime.thumbnail_url = element.select("img").attr("src")
-        anime.title = element.select("img").attr("alt")
-        return anime
+    internal class Season(val id: String, name: String) : AnimeFilter.CheckBox(name)
+    private class SeasonList(seasons: List<Season>) : AnimeFilter.Group<Season>("Stagioni", seasons)
+    private fun getSeasons() = listOf(
+        Season("winter", "Inverno"),
+        Season("spring", "Primavera"),
+        Season("summer", "Estate"),
+        Season("fall", "Autunno"),
+        Season("unknown", "Sconosciuto"),
+    )
+
+    internal class Year(val id: String) : AnimeFilter.CheckBox(id)
+    private class YearList(years: List<Year>) : AnimeFilter.Group<Year>("Anno di Uscita", years)
+    private fun getYears() = listOf(
+        Year("1966"),
+        Year("1967"),
+        Year("1969"),
+        Year("1970"),
+        Year("1973"),
+        Year("1974"),
+        Year("1975"),
+        Year("1977"),
+        Year("1978"),
+        Year("1979"),
+        Year("1980"),
+        Year("1981"),
+        Year("1982"),
+        Year("1983"),
+        Year("1984"),
+        Year("1985"),
+        Year("1986"),
+        Year("1987"),
+        Year("1988"),
+        Year("1989"),
+        Year("1990"),
+        Year("1991"),
+        Year("1992"),
+        Year("1993"),
+        Year("1994"),
+        Year("1995"),
+        Year("1996"),
+        Year("1997"),
+        Year("1998"),
+        Year("1999"),
+        Year("2000"),
+        Year("2001"),
+        Year("2002"),
+        Year("2003"),
+        Year("2004"),
+        Year("2005"),
+        Year("2006"),
+        Year("2007"),
+        Year("2008"),
+        Year("2009"),
+        Year("2010"),
+        Year("2011"),
+        Year("2012"),
+        Year("2013"),
+        Year("2014"),
+        Year("2015"),
+        Year("2016"),
+        Year("2017"),
+        Year("2018"),
+        Year("2019"),
+        Year("2020"),
+        Year("2021"),
+        Year("2022")
+    )
+
+    internal class Type(val id: String, name: String) : AnimeFilter.CheckBox(name)
+    private class TypeList(types: List<Type>) : AnimeFilter.Group<Type>("Tipo", types)
+    private fun getTypes() = listOf(
+        Type("0", "Anime"),
+        Type("4", "Movie"),
+        Type("1", "OVA"),
+        Type("2", "ONA"),
+        Type("3", "Special"),
+        Type("5", "Music")
+    )
+
+    internal class State(val id: String, name: String) : AnimeFilter.CheckBox(name)
+    private class StateList(states: List<State>) : AnimeFilter.Group<State>("Stato", states)
+    private fun getStates() = listOf(
+        State("0", "In corso"),
+        State("1", "Finito"),
+        State("2", "Non rilasciato"),
+        State("3", "Droppato")
+    )
+
+    internal class Studio(val input: String, name: String) : AnimeFilter.Text(name)
+
+    internal class Sub(val id: String, name: String) : AnimeFilter.CheckBox(name)
+    private class SubList(subs: List<Sub>) : AnimeFilter.Group<Sub>("Sottotitoli", subs)
+    private fun getSubs() = listOf(
+        Sub("0", "Subbato"),
+        Sub("1", "Doppiato")
+    )
+
+    internal class Audio(val id: String, name: String) : AnimeFilter.CheckBox(name)
+    private class AudioList(audios: List<Audio>) : AnimeFilter.Group<Audio>("Audio", audios)
+    private fun getAudios() = listOf(
+        Audio("jp", "Giapponese"),
+        Audio("it", "Italiano"),
+        Audio("ch", "Cinese"),
+        Audio("kr", "Coreano"),
+        Audio("en", "Inglese"),
+    )
+
+    private class OrderFilter :
+        AnimeFilter.Select<String>(
+            "Ordine",
+            arrayOf(
+                "Standard",
+                "Ultime Aggiunte",
+                "Lista A-Z",
+                "Lista Z-A",
+                "Più Vecchi",
+                "Più Recenti",
+                "Più Visti"
+            ),
+            0
+        )
+
+    private fun getSearchParameters(filters: AnimeFilterList): String {
+        var totalstring = ""
+
+        filters.forEach { filter ->
+            when (filter) {
+                is GenreList -> { // ---Genre
+                    filter.state.forEach { Genre ->
+                        if (Genre.state) {
+                            totalstring += if (Genre.id == "and") {
+                                "&genre_mode=and"
+                            } else {
+                                "&genre=" + Genre.id
+                            }
+                        }
+                    }
+                }
+                is SeasonList -> { // ---Season
+                    filter.state.forEach { Season ->
+                        if (Season.state) {
+                            totalstring += "&season=" + Season.id
+                        }
+                    }
+                }
+                is YearList -> { // ---Year
+                    filter.state.forEach { Year ->
+                        if (Year.state) {
+                            totalstring += "&year=" + Year.id
+                        }
+                    }
+                }
+                is TypeList -> { // ---Type
+                    filter.state.forEach { Type ->
+                        if (Type.state) {
+                            totalstring += "&type=" + Type.id
+                        }
+                    }
+                }
+                is StateList -> { // ---State
+                    filter.state.forEach { State ->
+                        if (State.state) {
+                            totalstring += "&status=" + State.id
+                        }
+                    }
+                }
+                is Studio -> {
+                    if (filter.state.isNotEmpty()) {
+                        val studios = filter.state.split(",").toTypedArray()
+                        for (x in studios.indices) {
+                            totalstring += "&studio=" + studios[x]
+                        }
+                    }
+                }
+                is SubList -> { // ---Subs
+                    filter.state.forEach { Sub ->
+                        if (Sub.state) {
+                            totalstring += "&dub=" + Sub.id
+                        }
+                    }
+                }
+                is AudioList -> { // ---Audio
+                    filter.state.forEach { Audio ->
+                        if (Audio.state) {
+                            totalstring += "&language=" + Audio.id
+                        }
+                    }
+                }
+                is OrderFilter -> {
+                    if (filter.values[filter.state] == "Standard") totalstring += "&sort=0"
+                    if (filter.values[filter.state] == "Ultime Aggiunte") totalstring += "&sort=1"
+                    if (filter.values[filter.state] == "Lista A-Z") totalstring += "&sort=2"
+                    if (filter.values[filter.state] == "Lista Z-A") totalstring += "&sort=3"
+                    if (filter.values[filter.state] == "Più Vecchi") totalstring += "&sort=4"
+                    if (filter.values[filter.state] == "Più Recenti") totalstring += "&sort=5"
+                    if (filter.values[filter.state] == "Più Visti") totalstring += "&sort=6"
+                }
+                else -> {}
+            }
+        }
+        return totalstring
     }
+
+    override fun getFilterList(): AnimeFilterList = AnimeFilterList(
+        GenreList(getGenres()),
+        SeasonList(getSeasons()),
+        YearList(getYears()),
+        TypeList(getTypes()),
+        StateList(getStates()),
+        AnimeFilter.Header("Usa la virgola per separare i diversi studio"),
+        Studio("", "Studio"),
+        SubList(getSubs()),
+        AudioList(getAudios()),
+        OrderFilter()
+    )
 
     // Preferences
 
