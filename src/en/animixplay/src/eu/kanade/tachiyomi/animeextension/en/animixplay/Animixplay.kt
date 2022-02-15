@@ -19,6 +19,7 @@ import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
@@ -128,10 +129,22 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 )
             ).execute().body!!.string()
         )
-        val subPreference = preferences.getString("preferred_sub", "jpn")!!
+        val subPreference = preferences.getString("preferred_sub", "sub")!!
         val animeSubDubUrls = animeServersJson["data"]!!.jsonArray[0].jsonObject["items"]!!.jsonArray
-        val animeUrlJson = if (subPreference == "jpn") animeSubDubUrls[animeSubDubUrls.size - 1] else animeSubDubUrls[0]
-        val urlEndpoint = animeUrlJson.jsonObject["url"]!!.jsonPrimitive.content
+        val newList = mutableListOf<JsonElement>()
+        var preferred = 0
+        for (jsonObj in animeSubDubUrls) {
+            if (jsonObj.toString().contains("dub")) {
+                newList.add(preferred, jsonObj)
+                preferred++
+            } else {
+                newList.add(jsonObj)
+            }
+        }
+        if (subPreference == "sub") {
+            newList.reverse()
+        }
+        val urlEndpoint = newList[0].jsonObject["url"]!!.jsonPrimitive.content
         val episodesResponse = client.newCall(
             GET(
                 baseUrl + urlEndpoint,
@@ -149,7 +162,7 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         for (i in 0 until episodeAvailable) {
             episodeList.add(episodeFromJsonElement(url, i))
         }
-        return episodeList
+        return episodeList.reversed()
     }
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
 
@@ -301,8 +314,8 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             key = "preferred_sub"
             title = "Prefer subs or dubs?"
             entries = arrayOf("sub", "dub")
-            entryValues = arrayOf("jpn", "eng")
-            setDefaultValue("jpn")
+            entryValues = arrayOf("sub", "dub")
+            setDefaultValue("sub")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
