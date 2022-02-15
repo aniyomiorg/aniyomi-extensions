@@ -191,10 +191,10 @@
   {
     "name": "Aniyomi: Animixplay",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.animixplay",
-    "apk": "aniyomi-en.animixplay-v12.2.apk",
+    "apk": "aniyomi-en.animixplay-v12.4.apk",
     "lang": "en",
-    "code": 2,
-    "version": "12.2",
+    "code": 4,
+    "version": "12.4",
     "nsfw": 0
   },
   {
