@@ -50,7 +50,7 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         .add("Referer", baseUrl)
         .add("Accept-Language", ACCEPT_LANGUAGE)
 
-    // Popular 
+    // Popular
     override fun popularAnimeSelector(): String = "div.lista_de_animes div.ani_loop_item_img > a"
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/anime/page/$page")
 
@@ -351,14 +351,13 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val pagination = document.selectFirst("div.pagination")
         val items = pagination?.select("a.page-numbers")
         if (pagination == null || items!!.size == 0) return false
-        return try {
-            val firstPage: Int = items.first().attr("href").toPageNum()
-            val lastPage: Int = items[items.lastIndex - 1].attr("href").toPageNum()
-            val beforeLastPage: Int = items[items.lastIndex - 2].attr("href").toPageNum()
-            val nextPage: Int = items.last().attr("href").toPageNum()
-
-            !(lastPage == nextPage && firstPage == beforeLastPage)
-        } catch (e: Exception) { false }
+        val currentPage: Int = pagination.selectFirst("a.page-numbers.current")
+            ?.attr("href")
+            ?.toPageNum() ?: 1
+        val lastPage: Int = items[items.lastIndex - 1]
+            .attr("href")
+            .toPageNum()
+        return currentPage != lastPage
     }
 
     private inline fun <reified R> AnimeFilterList.asUriPart(): String {
