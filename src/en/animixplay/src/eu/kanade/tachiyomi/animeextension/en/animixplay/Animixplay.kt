@@ -2,9 +2,9 @@ package eu.kanade.tachiyomi.animeextension.en.animixplay
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.en.animixplay.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.en.animixplay.extractors.GogoCdnExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -129,7 +129,6 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 )
             ).execute().body!!.string()
         )
-        val subPreference = preferences.getString("preferred_sub", "sub")!!
         val animeSubDubUrls = animeServersJson["data"]!!.jsonArray[0].jsonObject["items"]!!.jsonArray
         val newList = mutableListOf<JsonElement>()
         var preferred = 0
@@ -141,9 +140,7 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 newList.add(jsonObj)
             }
         }
-        if (subPreference == "sub") {
-            newList.reverse()
-        }
+        newList.reverse()
         val urlEndpoint = newList[0].jsonObject["url"]!!.jsonPrimitive.content
         val episodesResponse = client.newCall(
             GET(
@@ -180,12 +177,55 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodeListJson = json.decodeFromString<JsonObject>(document.select("div#epslistplace").text())
         val epNo = response.request.url.toString().substringAfter("/ep")
         val serverUrl = "https:" + episodeListJson[epNo]!!.jsonPrimitive.content
-        val gogoVideos = GogoCdnExtractor(client, json).videosFromUrl(serverUrl)
-        return gogoVideos.ifEmpty {
-            DoodExtractor(client).videosFromUrl(serverUrl)
+        val serverPref = preferences.getString("preferred_server", "vrv")
+        return if (serverPref!!.contains("gogo")) {
+            GogoCdnExtractor(client, json).videosFromUrl(serverUrl)
+        } else {
+            vrvExtractor(serverUrl)
         }
     }
 
+    private fun vrvExtractor(url: String): List<Video> {
+        val id = url.split("?id=")[1].split("&")[0]
+        val reqUrl = baseUrl + "/api/live" + encodeBase64(id + "LTXs3GrU8we9O" + encodeBase64(id))
+        val redirectClient = client.newBuilder().followRedirects(true).build()
+        val redirectUrlEncodedString = redirectClient.newCall(
+            GET(
+                reqUrl,
+                headers
+            )
+        ).execute().request.url.fragment!!.substringBefore("#")
+        val masterUrl = decodeBase64(redirectUrlEncodedString)
+        return if (masterUrl.contains("gogocdn")) {
+            parseCdnMasterPlaylist(masterUrl)
+        } else {
+            val masterPlaylist = client.newCall(GET(masterUrl, headers)).execute().body!!.string()
+            val videosList = mutableListOf<Video>()
+            masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
+                val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
+                val videoUrl = it.substringAfter("\n").substringBefore("\n")
+                videosList.add(Video(videoUrl, quality, videoUrl, null, headers))
+            }
+            videosList
+        }
+    }
+    private fun parseCdnMasterPlaylist(url: String): List<Video> {
+        val videosList = mutableListOf<Video>()
+        val masterUrlPrefix = url.substringBefore("/ep")
+        val masterPlaylist = client.newCall(GET(url, headers)).execute().body!!.string()
+        masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
+            val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
+            val videoUrl = "$masterUrlPrefix/${it.substringAfter("\n").substringBefore("\r")}"
+            videosList.add(Video(videoUrl, quality, videoUrl, null, headers))
+        }
+        return videosList
+    }
+    private fun encodeBase64(string: String): String {
+        return Base64.encodeToString(string.toByteArray(), Base64.NO_PADDING)
+    }
+    private fun decodeBase64(string: String): String {
+        return Base64.decode(string, Base64.DEFAULT).decodeToString()
+    }
     override fun videoListSelector() = throw Exception("not used")
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
@@ -310,12 +350,12 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
-        val subPref = ListPreference(screen.context).apply {
-            key = "preferred_sub"
-            title = "Prefer subs or dubs?"
-            entries = arrayOf("sub", "dub")
-            entryValues = arrayOf("sub", "dub")
-            setDefaultValue("sub")
+        val videoServerPref = ListPreference(screen.context).apply {
+            key = "preferred_server"
+            title = "Preferred server"
+            entries = arrayOf("Vrv/Cdn", "Gogo")
+            entryValues = arrayOf("vrv", "gogo")
+            setDefaultValue("vrv")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -326,6 +366,6 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         screen.addPreference(videoQualityPref)
-        screen.addPreference(subPref)
+        screen.addPreference(videoServerPref)
     }
 }
