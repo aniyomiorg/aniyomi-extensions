@@ -191,10 +191,10 @@
   {
     "name": "Aniyomi: Animixplay",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.animixplay",
-    "apk": "aniyomi-en.animixplay-v12.5.apk",
+    "apk": "aniyomi-en.animixplay-v12.6.apk",
     "lang": "en",
-    "code": 5,
-    "version": "12.5",
+    "code": 6,
+    "version": "12.6",
     "nsfw": 0
   },
   {
@@ -425,10 +425,10 @@
   {
     "name": "Aniyomi: Anitube.in",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.anitube",
-    "apk": "aniyomi-pt.anitube-v12.1.apk",
+    "apk": "aniyomi-pt.anitube-v12.2.apk",
     "lang": "pt",
-    "code": 1,
-    "version": "12.1",
+    "code": 2,
+    "version": "12.2",
     "nsfw": 0
   }
 ]
