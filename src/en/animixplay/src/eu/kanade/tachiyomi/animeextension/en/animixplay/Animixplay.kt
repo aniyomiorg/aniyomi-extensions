@@ -166,7 +166,7 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun episodeFromJsonElement(url: String, number: Int): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain("$url/ep$number")
-        episode.episode_number = number.toFloat()
+        episode.episode_number = number.toFloat() + 1F
         episode.name = "Episode ${number + 1}"
         episode.date_upload = System.currentTimeMillis()
         return episode
@@ -215,7 +215,7 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val masterPlaylist = client.newCall(GET(url, headers)).execute().body!!.string()
         masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
             val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
-            val videoUrl = "$masterUrlPrefix/${it.substringAfter("\n").substringBefore("\r")}"
+            val videoUrl = "$masterUrlPrefix/${it.substringAfter("\n").substringBefore("\r").substringBefore("\n")}"
             videosList.add(Video(videoUrl, quality, videoUrl, null, headers))
         }
         return videosList
@@ -313,8 +313,11 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             animeJson["genres"]!!.jsonArray.joinToString { it.jsonObject["name"]!!.jsonPrimitive.content }
         anime.description = animeJson["synopsis"]!!.jsonPrimitive.content
         anime.status = parseStatus(animeJson["status"]!!.jsonPrimitive.content)
-        anime.author =
-            animeJson["studios"]!!.jsonArray[0].jsonObject["name"]!!.jsonPrimitive.content
+        val studiosArray = animeJson["studios"]!!.jsonArray
+        if (studiosArray.isNotEmpty()) {
+            anime.author =
+                studiosArray[0].jsonObject["name"]!!.jsonPrimitive.content
+        }
         return anime
     }
 
