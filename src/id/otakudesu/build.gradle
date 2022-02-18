@@ -6,7 +6,7 @@ ext {
     pkgNameSuffix = 'id.otakudesu'
     extClass = '.OtakuDesu'
     extVersionCode = 9
-    libVersion = '12'
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"
