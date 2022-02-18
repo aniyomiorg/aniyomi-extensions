@@ -209,10 +209,10 @@
   {
     "name": "Aniyomi: DopeBox",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.dopebox",
-    "apk": "aniyomi-en.dopebox-v12.1.apk",
+    "apk": "aniyomi-en.dopebox-v12.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "12.1",
+    "code": 2,
+    "version": "12.2",
     "nsfw": 0
   },
   {
@@ -263,10 +263,10 @@
   {
     "name": "Aniyomi: Sflix",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.sflix",
-    "apk": "aniyomi-en.sflix-v12.1.apk",
+    "apk": "aniyomi-en.sflix-v12.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "12.1",
+    "code": 2,
+    "version": "12.2",
     "nsfw": 0
   },
   {
@@ -380,10 +380,10 @@
   {
     "name": "Aniyomi: OtakuDesu",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.otakudesu",
-    "apk": "aniyomi-id.otakudesu-v12.9.apk",
+    "apk": "aniyomi-id.otakudesu-v13.9.apk",
     "lang": "id",
     "code": 9,
-    "version": "12.9",
+    "version": "13.9",
     "nsfw": 0
   },
   {
