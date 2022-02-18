@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.animeextension.en.dopebox
 import android.app.Application
 import android.content.SharedPreferences
 import android.net.Uri
+import android.util.Base64
 import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
@@ -47,7 +48,6 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun headersBuilder(): Headers.Builder {
         return super.headersBuilder()
             .add("Referer", "https://dopebox.to/")
-            .add("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0")
     }
 
     override fun popularAnimeSelector(): String = "div.film_list-wrap div.flw-item div.film-poster"
@@ -161,8 +161,11 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .data("v", vToken).data("k", key).data("c", recapToken).data("co", domain).data("sa", "").data("reason", "q")
             .post().toString().replace("\n", "").substringAfter("rresp\",\"").substringBefore("\"")
 
-        val jsonLink = "https://rabbitstream.net/ajax/embed-4/getSources?id=$videoEmbedUrlId&_token=$token&_number=$number"
-        val iframeResponse = client.newCall(GET(jsonLink))
+        val jsonLink = "https://rabbitstream.net/ajax/embed-4/getSources?id=$videoEmbedUrlId&_token=$token&_number=$number&sId=test"
+        val reloadHeaderss = headers.newBuilder()
+            .set("X-Requested-With", "XMLHttpRequest")
+            .build()
+        val iframeResponse = client.newCall(GET(jsonLink, reloadHeaderss))
             .execute().asJsoup()
         Log.i("iframere", "$iframeResponse")
 
