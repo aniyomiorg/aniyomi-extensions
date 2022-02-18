@@ -30,7 +30,7 @@ import java.lang.Exception
 
 class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "DopeBox (experimental)"
+    override val name = "DopeBox"
 
     override val baseUrl = "https://dopebox.to"
 
