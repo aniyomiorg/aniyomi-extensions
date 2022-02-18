@@ -2,6 +2,8 @@ package eu.kanade.tachiyomi.animeextension.en.dopebox
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.net.Uri
+import android.util.Base64
 import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
@@ -13,14 +15,13 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
@@ -29,7 +30,7 @@ import java.lang.Exception
 
 class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "DopeBox (experimental)"
+    override val name = "DopeBox"
 
     override val baseUrl = "https://dopebox.to"
 
@@ -39,7 +40,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val domain = "aHR0cHM6Ly9yYWJiaXRzdHJlYW0ubmV0OjQ0Mw.."
+    // private val domain = "aHR0cHM6Ly9yYWJiaXRzdHJlYW0ubmV0OjQ0Mw.."
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -132,9 +133,9 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         // referers
         val referer1 = response.request.url.toString()
-        val refererHeaders = Headers.headersOf("referer", referer1)
+        val refererHeaders = Headers.headersOf("Referer", referer1)
         val referer = response.request.url.encodedPath
-        val newHeaders = Headers.headersOf("referer", referer)
+        val newHeaders = Headers.headersOf("Referer", referer)
 
         // get embed id
         val getVidID = document.selectFirst("a").attr("data-id")
@@ -147,45 +148,24 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoEmbedUrlId = getVideoEmbed.substringAfterLast("/").substringBefore("?")
         Log.i("videoEmbedId", "$videoEmbedUrlId")
         val callVideolink = client.newCall(GET(getVideoEmbed, refererHeaders)).execute().asJsoup()
-        Log.i("lol4", "$callVideolink")
-        val callVideolink2 = client.newCall(GET(getVideoEmbed, refererHeaders)).execute().body!!.string()
-        // get Token vals
-        val getRecaptchaRenderLink = callVideolink.select("script[src*=https://www.google.com/recaptcha/api.js?render=]").attr("src")
-        Log.i("lol5", getRecaptchaRenderLink)
-        val getRecaptchaRenderNum = callVideolink2.substringAfter("recaptchaNumber = '").substringBeforeLast("'")
-        Log.i("recapchaNum", "$getRecaptchaRenderNum")
-        val callReacapchaRenderLink = client.newCall(GET(getRecaptchaRenderLink)).execute().asJsoup()
-        Log.i("lol6", "$callReacapchaRenderLink")
-        val getAnchorVVal = callReacapchaRenderLink.text().substringAfter("releases/").substringBefore("/")
-        val getRecaptchaSiteKey = callVideolink.select("script[src*=https://www.google.com/recaptcha/api.js?render=]").attr("src").substringAfterLast("=")
-        Log.i("lol7", getRecaptchaSiteKey)
-        val anchorLink = "https://www.google.com/recaptcha/api2/anchor?ar=1&k=$getRecaptchaSiteKey&co=$domain&hl=en&v=$getAnchorVVal&size=invisible&cb=123456789"
-        Log.i("anchorLik", "$anchorLink")
-        val callAnchor = client.newCall(GET(anchorLink, newHeaders)).execute().asJsoup()
-        Log.i("lolll", "$callAnchor")
-        val rtoken = callAnchor.select("input#recaptcha-token").attr("value")
-        Log.i("Retoken", rtoken)
+        val uri = Uri.parse(getVideoEmbed)
+        val domain = (Base64.encodeToString((uri.scheme + "://" + uri.host + ":443").encodeToByteArray(), Base64.NO_PADDING) + ".").replace("\n", "")
+        val soup = Jsoup.connect(getVideoEmbed).referrer("https://dopebox.to/").get().toString().replace("\n", "")
 
-        val pageData = FormBody.Builder()
-            .add("v", "$getAnchorVVal")
-            .add("reason", "q")
-            .add("k", "$getRecaptchaSiteKey")
-            .add("c", "$rtoken")
-            .add("sa", "")
-            .add("co", "$domain")
-            .build()
+        val key = soup.substringAfter("var recaptchaSiteKey = '").substringBefore("',")
+        val number = soup.substringAfter("recaptchaNumber = '").substringBefore("';")
 
-        val reloadTokenUrl = "https://www.google.com/recaptcha/api2/reload?k=$getRecaptchaSiteKey"
-        Log.i("loll", reloadTokenUrl)
-        val reloadHeaders = headers.newBuilder()
-            .set("Referer2", "$anchorLink")
+        val vToken = Jsoup.connect("https://www.google.com/recaptcha/api.js?render=$key").referrer("https://rabbitstream.net/").get().toString().replace("\n", "").substringAfter("/releases/").substringBefore("/recaptcha")
+        val recapToken = Jsoup.connect("https://www.google.com/recaptcha/api2/anchor?ar=1&hl=en&size=invisible&cb=kr60249sk&k=$key&co=$domain&v=$vToken").get().selectFirst("#recaptcha-token")?.attr("value")
+        val token = Jsoup.connect("https://www.google.com/recaptcha/api2/reload?k=$key").ignoreContentType(true)
+            .data("v", vToken).data("k", key).data("c", recapToken).data("co", domain).data("sa", "").data("reason", "q")
+            .post().toString().replace("\n", "").substringAfter("rresp\",\"").substringBefore("\"")
+
+        val jsonLink = "https://rabbitstream.net/ajax/embed-4/getSources?id=$videoEmbedUrlId&_token=$token&_number=$number&sId=test"
+        val reloadHeaderss = headers.newBuilder()
+            .set("X-Requested-With", "XMLHttpRequest")
             .build()
-        val callreloadToken = client.newCall(POST(reloadTokenUrl, reloadHeaders, pageData)).execute().asJsoup()
-        Log.i("lol9", "$callreloadToken")
-        val get1Token = callreloadToken.text().substringAfter("rresp\",\"").substringBefore("\"")
-        Log.i("lol10", get1Token)
-        Log.i("m3u8fi", "https://rabbitstream.net/ajax/embed-4/getSources?id=$videoEmbedUrlId&_token=$get1Token&_number=$getRecaptchaRenderNum")
-        val iframeResponse = client.newCall(GET("https://rabbitstream.net/ajax/embed-5/getSources?id=$videoEmbedUrlId&_token=$get1Token&_number=$getRecaptchaRenderNum", newHeaders))
+        val iframeResponse = client.newCall(GET(jsonLink, reloadHeaderss))
             .execute().asJsoup()
         Log.i("iframere", "$iframeResponse")
 
