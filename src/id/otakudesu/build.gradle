@@ -5,8 +5,8 @@ ext {
     extName = 'OtakuDesu'
     pkgNameSuffix = 'id.otakudesu'
     extClass = '.OtakuDesu'
-    extVersionCode = 9
-    libVersion = '13'
+    extVersionCode = 10
+    libVersion = '12'
 }
 
 apply from: "$rootDir/common.gradle"
