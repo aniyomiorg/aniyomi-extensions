@@ -89,7 +89,8 @@ class FASELHDMOVIES : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector() = "script:containsData(m3u8)"
 
     private fun videosFromElement(element: Element, headers: Headers): List<Video> {
-        val masterUrl = element.data().substringAfter("setup({\"file\":\"").substringBefore("\"").replace("\\/", "/")
+        //val masterUrl = element.data().substringAfter("setup({\"file\":\"").substringBefore("\"").replace("\\/", "/")
+        val masterUrl = element.attr("data-url")
         Log.i("lol", masterUrl)
         val masterPlaylist = client.newCall(GET(masterUrl, headers)).execute().body!!.string()
         Log.i("lol", "$masterPlaylist")
