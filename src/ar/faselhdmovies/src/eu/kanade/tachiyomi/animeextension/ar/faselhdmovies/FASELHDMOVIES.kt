@@ -86,7 +86,7 @@ class FASELHDMOVIES : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videosFromElement(iframeResponse.selectFirst(videoListSelector()), refererHeaders)
     }
 
-    override fun videoListSelector() = "script:containsData(m3u8)"
+    override fun videoListSelector() = "button.hd_btn:contains(auto)"
 
     private fun videosFromElement(element: Element, headers: Headers): List<Video> {
         //val masterUrl = element.data().substringAfter("setup({\"file\":\"").substringBefore("\"").replace("\\/", "/")
