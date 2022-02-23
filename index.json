@@ -369,6 +369,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: AnimeWorld (experimental)",
+    "pkg": "eu.kanade.tachiyomi.animeextension.hi.animeWorld",
+    "apk": "aniyomi-hi.animeWorld-v12.1.apk",
+    "lang": "hi",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: NeoNime",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.neonime",
     "apk": "aniyomi-id.neonime-v12.5.apk",
