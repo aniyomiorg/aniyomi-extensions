@@ -32,7 +32,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Gogoanime"
 
-    override val baseUrl = "https://www3.gogoanime.cm"
+    override val baseUrl = "https://gogoanime.fi"
 
     override val lang = "en"
 
@@ -88,14 +88,13 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val serverUrl = "https:" + document.select("div.anime_muti_link > ul > li.vidcdn > a")
+        val serverUrl = "https:" + document.select("div.anime_muti_link > ul > li.anime > a")
             .attr("data-video")
-
+        val doodUrl = document.select("div.anime_muti_link > ul > li.doodstream > a")
+            .attr("data-video")
         val gogoVideos = GogoCdnExtractor(client, json).videosFromUrl(serverUrl)
-        return if (gogoVideos.isEmpty()) {
-            DoodExtractor(client).videosFromUrl(serverUrl)
-        } else {
-            gogoVideos
+        return gogoVideos.ifEmpty {
+            DoodExtractor(client).videosFromUrl(doodUrl)
         }
     }
 
