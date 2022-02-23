@@ -26,8 +26,10 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
             val serverResponse = client.newCall(GET(serverUrl)).execute().asJsoup()
 
             val encrypted = serverResponse.select("script[data-name='crypto']").attr("data-value")
-            val iv = serverResponse.select("script[data-name='ts']").attr("data-value").toByteArray()
-            val id = serverUrl.toHttpUrl().queryParameter("id") ?: throw Exception("error decrypting")
+            val iv =
+                serverResponse.select("script[data-name='ts']").attr("data-value").toByteArray()
+            val id =
+                serverUrl.toHttpUrl().queryParameter("id") ?: throw Exception("error decrypting")
             val secretKey = cryptoHandler(encrypted, iv, iv + iv, false)
 
             val encryptedId =
@@ -46,14 +48,29 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
                     .trim('"').replace(" ", "")
                 val fileURL = it.jsonObject["file"].toString().trim('"')
                 val videoHeaders = Headers.headersOf("Referer", serverUrl)
-                if (label == "auto") autoList.add(Video(fileURL, label, fileURL, null, videoHeaders))
+                if (label == "auto") autoList.add(
+                    Video(
+                        fileURL,
+                        label,
+                        fileURL,
+                        null,
+                        videoHeaders
+                    )
+                )
                 else videoList.add(Video(fileURL, label, fileURL, null, videoHeaders))
             }
             return videoList.reversed() + autoList
-        } catch (e: Exception) { return emptyList() }
+        } catch (e: Exception) {
+            return emptyList()
+        }
     }
 
-    private fun cryptoHandler(string: String, iv: ByteArray, secretKeyString: ByteArray, encrypt: Boolean = true): String {
+    private fun cryptoHandler(
+        string: String,
+        iv: ByteArray,
+        secretKeyString: ByteArray,
+        encrypt: Boolean = true
+    ): String {
         val ivParameterSpec = IvParameterSpec(iv)
         val secretKey = SecretKeySpec(secretKeyString, "AES")
         val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")

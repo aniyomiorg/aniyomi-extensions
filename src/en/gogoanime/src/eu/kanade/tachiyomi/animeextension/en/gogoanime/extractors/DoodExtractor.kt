@@ -1,17 +1,15 @@
 package eu.kanade.tachiyomi.animeextension.en.gogoanime.extractors
 
+import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 
 class DoodExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(serverUrl: String): List<Video> {
-        val url = client.newCall(GET(serverUrl)).execute().asJsoup()
-            .select("li.linkserver[data-video*=dood]").attr("data-video")
-        val response = client.newCall(GET(url)).execute()
-        val doodTld = url.substringAfter("https://dood.").substringBefore("/")
+        val response = client.newCall(GET(serverUrl)).execute()
+        val doodTld = serverUrl.substringAfter("https://dood.").substringBefore("/")
         val content = response.body!!.string()
         if (!content.contains("'/pass_md5/")) return emptyList()
         val md5 = content.substringAfter("'/pass_md5/").substringBefore("',")
@@ -21,12 +19,11 @@ class DoodExtractor(private val client: OkHttpClient) {
         val videoUrlStart = client.newCall(
             GET(
                 "https://dood.$doodTld/pass_md5/$md5",
-                Headers.headersOf("referer", url)
+                Headers.headersOf("referer", serverUrl)
             )
         ).execute().body!!.string()
         val videoUrl = "$videoUrlStart$randomString?token=$token&expiry=$expiry"
-
-        return listOf(Video(url, "Doodstream mirror", videoUrl, null, doodHeaders(doodTld)))
+        return listOf(Video(serverUrl, "Doodstream mirror", videoUrl, null, doodHeaders(doodTld)))
     }
 
     private fun getRandomString(length: Int = 10): String {
