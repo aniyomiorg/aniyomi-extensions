@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.en.gogoanime.extractors
 
-import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.Headers
