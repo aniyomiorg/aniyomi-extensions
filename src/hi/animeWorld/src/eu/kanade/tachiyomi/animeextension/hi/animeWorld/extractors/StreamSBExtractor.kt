@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.en.animeWorld.extractors
+package eu.kanade.tachiyomi.animeextension.hi.animeWorld.extractors
 
 import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.Video

@@ -2,8 +2,8 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    extName = 'AnimeWorld'
-    pkgNameSuffix = 'en.animeWorld'
+    extName = 'AnimeWorld (experimental)'
+    pkgNameSuffix = 'hi.animeWorld'
     extClass = '.AnimeWorld'
     extVersionCode = 1
     libVersion = '12'

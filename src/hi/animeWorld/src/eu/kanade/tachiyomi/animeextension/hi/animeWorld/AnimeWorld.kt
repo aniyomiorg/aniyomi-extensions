@@ -1,11 +1,11 @@
-package eu.kanade.tachiyomi.animeextension.en.animeWorld
+package eu.kanade.tachiyomi.animeextension.hi.animeWorld
 
 import android.app.Application
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.en.animeWorld.extractors.StreamSBExtractor
+import eu.kanade.tachiyomi.animeextension.hi.animeWorld.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -27,11 +27,11 @@ import java.lang.Exception
 
 class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "AnimeWorld"
+    override val name = "AnimeWorld (experimental)"
 
     override val baseUrl = "https://anime-world.in/"
 
-    override val lang = "en"
+    override val lang = "hi"
 
     override val supportsLatest = false
 
