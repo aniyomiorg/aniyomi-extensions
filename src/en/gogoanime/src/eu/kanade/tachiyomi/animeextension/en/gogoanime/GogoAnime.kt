@@ -94,9 +94,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .attr("data-video")
         val gogoVideos = GogoCdnExtractor(client, json).videosFromUrl(serverUrl)
         return gogoVideos.ifEmpty {
-            runCatching {
-                DoodExtractor(client).videosFromUrl(doodUrl)
-            }.getOrDefault(emptyList())
+            DoodExtractor(client).videosFromUrl(doodUrl)
         }
     }
 
