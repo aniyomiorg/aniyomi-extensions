@@ -5,7 +5,7 @@ ext {
     extName = 'فاصل اعلاني افلام بس'
     pkgNameSuffix = 'ar.faselhdmovies'
     extClass = '.FASELHDMOVIES'
-    extVersionCode = 2
+    extVersionCode = 3
     libVersion = '12'
 }
 
