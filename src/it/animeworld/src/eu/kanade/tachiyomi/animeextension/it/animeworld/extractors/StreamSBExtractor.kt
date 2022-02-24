@@ -9,7 +9,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import okhttp3.Headers
 import okhttp3.OkHttpClient
-import org.jsoup.Jsoup
 
 class StreamSBExtractor(private val client: OkHttpClient) {
 
@@ -37,8 +36,8 @@ class StreamSBExtractor(private val client: OkHttpClient) {
             "https://animeworld.biz/sources40/566d337678566f743674494a7c7c${bytesToHex}7c7c346b6767586d6934774855537c7c73747265616d7362/6565417268755339773461447c7c346133383438333436313335376136323337373433383634376337633465366534393338373136643732373736343735373237613763376334363733353737303533366236333463353333363534366137633763373337343732363536313664373336327c7c6b586c3163614468645a47617c7c73747265616d7362"
         Log.i("master", master)
         val json = Json.decodeFromString<JsonObject>(
-            Jsoup.connect(master).ignoreContentType(true).header("watchsb", "streamsb").header("accept-language", "en-US,en;q=0.5").header("Referer", url).header("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0").execute()
-                .body()
+            client.newCall(GET(master, headers))
+                .execute().body!!.string()
         )
         Log.i("json", "$json")
         val masterUrl = json["stream_data"]!!.jsonObject["file"].toString().trim('"')
