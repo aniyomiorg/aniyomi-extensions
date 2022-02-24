@@ -37,7 +37,8 @@ class StreamSBExtractor(private val client: OkHttpClient) {
         val json = Json.decodeFromString<JsonObject>(
             client.newCall(GET(master, headers))
                 .execute().body!!.string()
-        )        Log.i("json", "$json")
+        )
+        Log.i("json", "$json")
         val masterUrl = json["stream_data"]!!.jsonObject["file"].toString().trim('"')
         val masterPlaylist = client.newCall(GET(masterUrl, headers)).execute().body!!.string()
         Log.i("masterplayl", masterPlaylist)
