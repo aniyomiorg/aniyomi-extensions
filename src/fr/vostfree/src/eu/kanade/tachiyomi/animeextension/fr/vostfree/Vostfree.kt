@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.fr.vostfree.extractors.DoodExtractor
+import eu.kanade.tachiyomi.animeextension.fr.vostfree.extractors.MytvExtractor
 import eu.kanade.tachiyomi.animeextension.fr.vostfree.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.fr.vostfree.extractors.VudeoExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -111,7 +112,7 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val video = VudeoExtractor(client).videosFromUrl(url)
                 videoList.addAll(video)
             }
-            if (server == "OK") {
+            if (server == "Ok" || server == "OK") {
                 val playerId = it.attr("id")
                 val url = "https://ok.ru/videoembed/" + document.select("div#player-tabs div.tab-blocks div.tab-content div div#content_$playerId").text()
                 val video = OkruExtractor(client).videosFromUrl(url)
@@ -125,8 +126,13 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     videoList.add(video)
                 }
             }
+            if (server == "Mytv" || server == "Stream") {
+                val playerId = it.attr("id")
+                val url = "https://www.myvi.tv/embed/" + document.select("div#player-tabs div.tab-blocks div.tab-content div div#content_$playerId").text()
+                val video = MytvExtractor(client).videosFromUrl(url)
+                videoList.addAll(video)
+            }
         }
-        Log.i("bruh", "test1")
 
         return videoList
     }
