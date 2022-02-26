@@ -389,10 +389,10 @@
   {
     "name": "Aniyomi: AnimeWorld (experimental)",
     "pkg": "eu.kanade.tachiyomi.animeextension.hi.animeWorld",
-    "apk": "aniyomi-hi.animeWorld-v12.2.apk",
+    "apk": "aniyomi-hi.animeWorld-v12.3.apk",
     "lang": "hi",
-    "code": 2,
-    "version": "12.2",
+    "code": 3,
+    "version": "12.3",
     "nsfw": 0
   },
   {
