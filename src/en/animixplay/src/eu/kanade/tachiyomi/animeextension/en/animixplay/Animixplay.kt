@@ -21,6 +21,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -37,7 +38,6 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
-import java.util.Locale
 
 @ExperimentalSerializationApi
 class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -58,44 +58,39 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    var nextPage = "99999999"
+    var hasNextPage = true
+
     override fun popularAnimeSelector(): String = throw Exception("not used")
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/?tab=popular")
+    override fun popularAnimeRequest(page: Int): Request {
+        val formBody = FormBody.Builder()
+            .add("genre", "any")
+            .add("minstr", nextPage)
+            .add("orderby", "popular")
+            .build()
+        return POST("https://animixplay.to/api/search", headers, body = formBody)
+    }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
-        val scriptData = document.select("script:containsData(var nowtime)").toString()
-        val envSeason = scriptData.substringAfter("var envSeason = '").substringBefore("';")
-        val envYear = scriptData.substringAfter("var envYear = ").substringBefore(";")
-        val animeJson = json.decodeFromString<JsonObject>(
-            client.newCall(
-                GET(
-                    url = "https://animixplay.to/assets/season/$envYear/${
-                    envSeason.toLowerCase(
-                        Locale.ROOT
-                    )
-                    }.json",
-                    headers = Headers.headersOf("Referer", document.location())
-                )
-            ).execute().body!!.string()
-        )
-        val animeList = animeJson["anime"]!!.jsonObject
+        val responseJson = json.decodeFromString<JsonObject>(document.select("body").text())
+        nextPage = responseJson["last"]!!.jsonPrimitive.content
+        hasNextPage = responseJson["more"]!!.jsonPrimitive.boolean
+        val animeList = responseJson["result"]!!.jsonArray
         val animes = animeList.map { element ->
-            popularAnimeFromElement(element.value.jsonObject)
+            popularAnimeFromElement(element.jsonObject)
         }
 
-        return AnimesPage(animes, false)
+        return AnimesPage(animes, true)
     }
 
     override fun popularAnimeFromElement(element: Element) = throw Exception("not used")
 
     private fun popularAnimeFromElement(animeJson: JsonObject): SAnime {
         val anime = SAnime.create()
-        val url = "https://animixplay.to/assets/mal/${
-        animeJson["mal_id"]!!.jsonPrimitive.content
-        }.json"
-        anime.setUrlWithoutDomain(url)
-        anime.thumbnail_url = animeJson["image_url"]!!.jsonPrimitive.content
+        anime.setUrlWithoutDomain(animeJson["url"]!!.jsonPrimitive.content)
+        anime.thumbnail_url = animeJson["picture"]!!.jsonPrimitive.content
         anime.title = animeJson["title"]!!.jsonPrimitive.content
         return anime
     }
