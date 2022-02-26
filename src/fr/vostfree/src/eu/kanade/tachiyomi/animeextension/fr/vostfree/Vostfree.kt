@@ -12,20 +12,26 @@ import eu.kanade.tachiyomi.animeextension.fr.vostfree.extractors.VudeoExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.json.Json
+import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.Connection
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 
 class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -35,6 +41,8 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val baseUrl = "https://vostfree.tv"
 
     override val lang = "fr"
+
+    private val json: Json by injectLazy()
 
     override val supportsLatest = false
 
@@ -52,10 +60,10 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Log.i("bruh", "${element.baseUri()}")
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
-            element.select("div.play a").attr("href")
+            element.select("div.movie-poster div.play a").attr("href")
         )
-        anime.title = element.select("div.info.hidden div.title").text()
-        anime.thumbnail_url = baseUrl + element.select("span.image img").attr("src")
+        anime.title = element.select("div.movie-poster div.info.hidden div.title").text()
+        anime.thumbnail_url = baseUrl + element.select("div.movie-poster span.image img").attr("src")
         return anime
     }
 
@@ -163,30 +171,60 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
-        val typeFilter = filterList.find { it is TypeFilter } as TypeFilter
         val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
+        val typeFilter = filterList.find { it is TypeFilter } as TypeFilter
 
-        return if (typeFilter.state != 0) {
-            GET("https://vostfree.tv/${typeFilter.toUriPart()}/page/$page/")
-        } else {
-            if (query.isNotBlank()) {
-                throw Exception("Recherche non prise en charge")
-            } else {
-                if (genreFilter.state != 0) {
-                    GET("https://vostfree.tv/genre/${genreFilter.toUriPart()}/page/$page/")
-                } else {
-                    GET("https://vostfree.tv/films-vf-vostfr/page/$page/")
-                }
-            }
+        val formData = FormBody.Builder()
+            .addEncoded("do", "search")
+            .addEncoded("subaction", "search")
+            .addEncoded("search_start", "0")
+            .addEncoded("full_search", "0")
+            .addEncoded("result_from", "1")
+            .addEncoded("story", "$query")
+            .build()
+
+        val test = Jsoup.connect("https://vostfree.tv/index.php?do=search").method(Connection.Method.POST).data("do", "search").data("subaction", "search").data("search_start", "0").data("full_search", "0").data("result_from", "1").data("story", "$query").get()
+
+        return when {
+            query.isNotBlank() && test.select("div.search-result").toString() != "" -> POST("https://vostfree.tv/index.php?do=search", headers, formData)
+            genreFilter.state != 0 -> GET("$baseUrl/genre/${genreFilter.toUriPart()}/page/$page/")
+            typeFilter.state != 0 -> GET("https://vostfree.tv/${typeFilter.toUriPart()}/page/$page/")
+            else -> GET("https://vostfree.tv/animes-vostfr/page/$page/")
         }
     }
+
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        val document = response.asJsoup()
+        val animeList = document.select("div.search-result")
+        val animeList2 = document.select("div.movie-poster")
+        val animes = animeList.map {
+            searchAnimeFromElement(it)
+        } + animeList2.map {
+            searchAnimeFromElement(it)
+        }
+        return AnimesPage(animes, false)
+    }
+
     override fun searchAnimeFromElement(element: Element): SAnime {
-        return popularAnimeFromElement(element)
+        return when {
+            element.select("div.search-result").toString() != "" -> searchPopularAnimeFromElement(element)
+            else -> popularAnimeFromElement(element)
+        }
+    }
+
+    private fun searchPopularAnimeFromElement(element: Element): SAnime {
+        val anime = SAnime.create()
+        anime.setUrlWithoutDomain(
+            element.select("div.search-result div.info div.title a").attr("href")
+        )
+        anime.title = element.select("div.search-result div.info div.title a").text()
+        anime.thumbnail_url = baseUrl + element.select("div.search-result span.image img").attr("src")
+        return anime
     }
 
     override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
-    override fun searchAnimeSelector(): String = popularAnimeSelector()
+    override fun searchAnimeSelector(): String = "div#dle-content"
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
