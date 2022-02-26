@@ -45,6 +45,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: Animerco",
+    "pkg": "eu.kanade.tachiyomi.animeextension.ar.animerco",
+    "apk": "aniyomi-ar.animerco-v12.1.apk",
+    "lang": "ar",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: عرب سيد",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.arabseed",
     "apk": "aniyomi-ar.arabseed-v12.2.apk",
@@ -371,10 +380,10 @@
   {
     "name": "Aniyomi: Vostfree",
     "pkg": "eu.kanade.tachiyomi.animeextension.fr.vostfree",
-    "apk": "aniyomi-fr.vostfree-v12.2.apk",
+    "apk": "aniyomi-fr.vostfree-v12.3.apk",
     "lang": "fr",
-    "code": 2,
-    "version": "12.2",
+    "code": 3,
+    "version": "12.3",
     "nsfw": 0
   },
   {
