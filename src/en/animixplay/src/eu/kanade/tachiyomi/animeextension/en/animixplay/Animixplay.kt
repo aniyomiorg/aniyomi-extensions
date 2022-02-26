@@ -82,7 +82,7 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             popularAnimeFromElement(element.jsonObject)
         }
 
-        return AnimesPage(animes, true)
+        return AnimesPage(animes, hasNextPage)
     }
 
     override fun popularAnimeFromElement(element: Element) = throw Exception("not used")
