@@ -202,13 +202,13 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun searchAnimeNextPageSelector(): String = "ul.pagination-list li:last-child:not(.selected)"
+    override fun searchAnimeNextPageSelector(): String = "nav.navigation.pagination div.nav-links a:last-child:not(.current)"
 
     override fun searchAnimeSelector(): String = "div#movies-a li"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         return when {
-            query.isNotBlank() -> GET("$baseUrl/?s=$query", headers)
+            query.isNotBlank() -> GET("$baseUrl/page/$page/?s=$query", headers)
             else -> GET("$baseUrl/")
         }
     }
