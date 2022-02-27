@@ -10,6 +10,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -43,7 +44,17 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
             ).execute().body!!.string()
             val videoList = mutableListOf<Video>()
             val autoList = mutableListOf<Video>()
-            json.decodeFromString<JsonObject>(jsonResponse)["source"]!!.jsonArray.forEach {
+            val array = json.decodeFromString<JsonObject>(jsonResponse)["source"]!!.jsonArray
+            if (array.size == 1 && array[0].jsonObject["type"]!!.jsonPrimitive.content == "hls") {
+                val fileURL = array[0].jsonObject["file"].toString().trim('"')
+                val masterPlaylist = client.newCall(GET(fileURL)).execute().body!!.string()
+                masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
+                    .split("#EXT-X-STREAM-INF:").reversed().forEach {
+                    val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p"
+                    val videoUrl = fileURL.substringBeforeLast("/") + "/" + it.substringAfter("\n").substringBefore("\n")
+                    videoList.add(Video(videoUrl, quality, videoUrl, null))
+                }
+            } else array.forEach {
                 val label = it.jsonObject["label"].toString().toLowerCase(Locale.ROOT)
                     .trim('"').replace(" ", "")
                 val fileURL = it.jsonObject["file"].toString().trim('"')
