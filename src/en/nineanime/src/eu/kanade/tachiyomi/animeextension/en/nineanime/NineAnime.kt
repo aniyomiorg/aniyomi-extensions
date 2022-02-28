@@ -92,7 +92,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = Jsoup.parse(JSONUtil.unescape(responseObject["html"]!!.jsonPrimitive.content))
         val animeId = response.request.url.queryParameter("id")!!
         val vrf = encode(response.request.url.queryParameter("vrf")!!)
-        return document.select(episodeListSelector()).map { episodeFromElement(it, animeId, vrf) }
+        return document.select(episodeListSelector()).map { episodeFromElement(it, animeId, vrf) }.reversed()
     }
 
     override fun episodeListSelector() = "ul.episodes li a"
