@@ -1,6 +1,6 @@
 buildscript {
-    ext.kotlin_version = '1.4.32'
-    ext.coroutines_version = '1.4.3'
+    ext.kotlin_version = '1.6.10'
+    ext.coroutines_version = '1.6.0'
     repositories {
         mavenCentral()
         google()
@@ -10,7 +10,7 @@ buildscript {
         classpath 'com.android.tools.build:gradle:4.2.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlin_version"
-        classpath 'org.jmailen.gradle:kotlinter-gradle:3.3.0'
+        classpath 'org.jmailen.gradle:kotlinter-gradle:3.6.0'
     }
 }
 
