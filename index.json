@@ -270,6 +270,15 @@
     "nsfw": 1
   },
   {
+    "name": "Aniyomi: 9anime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.nineanime",
+    "apk": "aniyomi-en.nineanime-v12.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: Sflix",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.sflix",
     "apk": "aniyomi-en.sflix-v12.2.apk",
@@ -459,12 +468,12 @@
     "nsfw": 1
   },
   {
-    "name": "Aniyomi: Anitube.in",
+    "name": "Aniyomi: Anitube",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.anitube",
-    "apk": "aniyomi-pt.anitube-v12.2.apk",
+    "apk": "aniyomi-pt.anitube-v12.3.apk",
     "lang": "pt",
-    "code": 2,
-    "version": "12.2",
+    "code": 3,
+    "version": "12.3",
     "nsfw": 0
   }
 ]
