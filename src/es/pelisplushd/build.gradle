@@ -5,7 +5,7 @@ ext {
     extName = 'Pelisplushd'
     pkgNameSuffix = 'es.pelisplushd'
     extClass = '.Pelisplushd'
-    extVersionCode = 2
+    extVersionCode = 3
     libVersion = '12'
 }
 
