@@ -30,9 +30,9 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "Anitube.in"
+    override val name = "Anitube"
 
-    override val baseUrl = "https://www.anitube.in"
+    override val baseUrl = "https://www.anitube.vip"
 
     override val lang = "pt-BR"
 
