@@ -344,10 +344,10 @@
   {
     "name": "Aniyomi: AnimeFLV",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.animeflv",
-    "apk": "aniyomi-es.animeflv-v12.11.apk",
+    "apk": "aniyomi-es.animeflv-v12.12.apk",
     "lang": "es",
-    "code": 11,
-    "version": "12.11",
+    "code": 12,
+    "version": "12.12",
     "nsfw": 0
   },
   {
