@@ -20,7 +20,9 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -166,6 +168,8 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val elements = document.select(videoListSelector())
         Log.i("elements", "$elements")
         for (element in elements) {
+            val location = element.ownerDocument().location()
+            val videoHeaders = Headers.headersOf("Referer", location)
             val qualityy = element.text()
             val post = element.attr("data-post")
             Log.i("lol1", post)
@@ -173,22 +177,30 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Log.i("lol1", num)
             val type = element.attr("data-type")
             Log.i("lol1", type)
+            val pageData = FormBody.Builder()
+                .add("action", "doo_player_ajax")
+                .add("nume", "$num")
+                .add("post", "$post")
+                .add("type", "$type")
+                .build()
             val url = "https://animerco.com/wp-json/dooplayer/v1/post/$post?type=$type&source=$num"
+            val ajax1 = "https://animerco.com/wp-admin/admin-ajax.php"
             Log.i("lol1", url)
             // val json = Json.decodeFromString<JsonObject>(Jsoup.connect(url).header("X-Requested-With", "XMLHttpRequest").ignoreContentType(true).execute().body())
             /*val json = Json.decodeFromString<JsonObject>(
                 client.newCall(GET(url))
                     .execute().body!!.string()
             )*/
-            val json = client.newCall(GET(url))
-                .execute().body!!.string()
-            Log.i("lol1", "$json")
-            val embedUrlT = json.substringAfter("embed_url\":\"").substringBefore("\"")
+            // val json =
+            val ajax = client.newCall(POST(ajax1, videoHeaders, pageData)).execute().asJsoup()
+            // client.newCall(GET(url)).execute().body!!.string()
+
+            Log.i("lol1", "$ajax")
+            val embedUrlT = ajax.text().substringAfter("embed_url\":\"").substringBefore("\"")
             val embedUrl = embedUrlT.replace("\\/", "/")
             // json!!.jsonArray[0].jsonObject["embed_url"].toString().trim('"')
             Log.i("lol1", embedUrl)
-            val location = element.ownerDocument().location()
-            val videoHeaders = Headers.headersOf("Referer", location)
+
             when {
                 embedUrl.contains("sbembed.com") || embedUrl.contains("sbembed1.com") || embedUrl.contains("sbplay.org") ||
                     embedUrl.contains("sbvideo.net") || embedUrl.contains("streamsb.net") || embedUrl.contains("sbplay.one") ||
@@ -227,12 +239,12 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     embedUrl.contains("fcdn.stream") || embedUrl.contains("mediashore.org") || embedUrl.contains("suzihaza.com") ||
                     embedUrl.contains("there.to") || embedUrl.contains("femax20.com") || embedUrl.contains("javstream.top") ||
                     embedUrl.contains("viplayer.cc") || embedUrl.contains("sexhd.co") || embedUrl.contains("fembed.net") ||
-                    embedUrl.contains("mrdhan.com") || embedUrl.contains("votrefilms.xyz") || 
-                    embedUrl.contains("embedsito.com") || embedUrl.contains("dutrag.com") ||
-                    embedUrl.contains("youvideos.ru") || embedUrl.contains("streamm4u.club") ||
-                    embedUrl.contains("moviepl.xyz") || embedUrl.contains("asianclub.tv") ||
-                    embedUrl.contains("vidcloud.fun") || embedUrl.contains("fplayer.info") ||
-                    embedUrl.contains("diasfem.com") || embedUrl.contains("javpoll.com")
+                    embedUrl.contains("mrdhan.com") || embedUrl.contains("votrefilms.xyz") || // embedUrl.contains("") ||
+                    embedUrl.contains("embedsito.com") || embedUrl.contains("dutrag.com") || // embedUrl.contains("") ||
+                    embedUrl.contains("youvideos.ru") || embedUrl.contains("streamm4u.club") || // embedUrl.contains("") ||
+                    embedUrl.contains("moviepl.xyz") || embedUrl.contains("asianclub.tv") || // embedUrl.contains("") ||
+                    embedUrl.contains("vidcloud.fun") || embedUrl.contains("fplayer.info") || // embedUrl.contains("") ||
+                    embedUrl.contains("diasfem.com") || embedUrl.contains("javpoll.com") // embedUrl.contains("")
 
                 -> {
                     val fUrl = embedUrl.replace("\\/", "/")
@@ -269,7 +281,15 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     embedUrl.contains("vidbam.org") || embedUrl.contains("myviid.com") || embedUrl.contains("myviid.net") ||
                     embedUrl.contains("myvid.com") || embedUrl.contains("vidshare.com") || embedUrl.contains("vedsharr.com") ||
                     embedUrl.contains("vedshar.com") || embedUrl.contains("vedshare.com") || embedUrl.contains("vadshar.com") || embedUrl.contains("vidshar.org")
-                -> {
+                -> { // , vidbm, vidbom
+                    val videos = VidBomExtractor(client).videosFromUrl(embedUrl)
+                    videoList.addAll(videos)
+                }
+                embedUrl.contains("vidbm") -> { // , vidbm, vidbom
+                    val videos = VidBomExtractor(client).videosFromUrl(embedUrl)
+                    videoList.addAll(videos)
+                }
+                embedUrl.contains("vidbom") -> { // , vidbm, vidbom
                     val videos = VidBomExtractor(client).videosFromUrl(embedUrl)
                     videoList.addAll(videos)
                 }
