@@ -200,10 +200,10 @@
   {
     "name": "Aniyomi: Animixplay",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.animixplay",
-    "apk": "aniyomi-en.animixplay-v12.7.apk",
+    "apk": "aniyomi-en.animixplay-v12.8.apk",
     "lang": "en",
-    "code": 7,
-    "version": "12.7",
+    "code": 8,
+    "version": "12.8",
     "nsfw": 0
   },
   {
@@ -353,10 +353,10 @@
   {
     "name": "Aniyomi: AnimeFLV",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.animeflv",
-    "apk": "aniyomi-es.animeflv-v12.12.apk",
+    "apk": "aniyomi-es.animeflv-v12.13.apk",
     "lang": "es",
-    "code": 12,
-    "version": "12.12",
+    "code": 13,
+    "version": "12.13",
     "nsfw": 0
   },
   {
