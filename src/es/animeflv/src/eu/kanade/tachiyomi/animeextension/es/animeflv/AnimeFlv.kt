@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.es.animeflv
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.FembedExtractor
@@ -108,6 +109,7 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val data = script.data().substringAfter("var videos = ").substringBefore(";")
                 val jsonObject = json.decodeFromString<JsonObject>(data)
                 val sub = jsonObject["SUB"]!!
+                val lat = jsonObject["LAT"]!!
                 if (sub !is JsonNull) {
                     for (server in sub.jsonArray) {
                         val url = server.jsonObject["code"]!!.jsonPrimitive.content.replace("\\/", "/")
@@ -134,6 +136,22 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         }
                         if (quality == "Okru") {
                             val videos = OkruExtractor(client).videosFromUrl(url)
+                            videoList.addAll(videos)
+                        }
+                    }
+                }
+                if (lat !is JsonNull) {
+                    for (server in lat.jsonArray) {
+                        val url = server.jsonObject["code"]!!.jsonPrimitive.content.replace("\\/", "/")
+                        val quality = server.jsonObject["title"]!!.jsonPrimitive.content
+
+                        if (quality == "Fembed") {
+                            val videos = FembedExtractor().videosFromUrl(url, "DUB: ")
+                            videoList.addAll(videos)
+                        }
+
+                        if (quality == "Okru") {
+                            val videos = OkruExtractor(client).videosFromUrl(url, "DUB: ")
                             videoList.addAll(videos)
                         }
                     }

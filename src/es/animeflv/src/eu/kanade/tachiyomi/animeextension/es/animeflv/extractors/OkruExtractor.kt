@@ -6,7 +6,7 @@ import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
 
 class OkruExtractor(private val client: OkHttpClient) {
-    fun videosFromUrl(url: String): List<Video> {
+    fun videosFromUrl(url: String, qualityPrefix: String = ""): List<Video> {
         val document = client.newCall(GET(url)).execute().asJsoup()
         val videoList = mutableListOf<Video>()
         val videosString = document.select("div[data-options]").attr("data-options")
@@ -16,7 +16,7 @@ class OkruExtractor(private val client: OkHttpClient) {
             val videoUrl = it.substringAfter("url\\\":\\\"")
                 .substringBefore("\\\"")
                 .replace("\\\\u0026", "&")
-            val videoQuality = "Okru: " + it.substringBefore("\\\"")
+            val videoQuality = qualityPrefix + "Okru: " + it.substringBefore("\\\"")
             if (videoUrl.startsWith("https://")) {
                 videoList.add(Video(videoUrl, videoQuality, videoUrl, null))
             }
