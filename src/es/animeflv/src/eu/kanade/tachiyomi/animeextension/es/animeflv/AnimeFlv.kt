@@ -109,7 +109,8 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val data = script.data().substringAfter("var videos = ").substringBefore(";")
                 val jsonObject = json.decodeFromString<JsonObject>(data)
                 val sub = jsonObject["SUB"]!!
-                val lat = jsonObject["LAT"]!!
+                val lat = jsonObject["LAT"]
+                Log.i("bruh", " a $lat")
                 if (sub !is JsonNull) {
                     for (server in sub.jsonArray) {
                         val url = server.jsonObject["code"]!!.jsonPrimitive.content.replace("\\/", "/")
@@ -141,18 +142,21 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                 }
                 if (lat !is JsonNull) {
-                    for (server in lat.jsonArray) {
-                        val url = server.jsonObject["code"]!!.jsonPrimitive.content.replace("\\/", "/")
-                        val quality = server.jsonObject["title"]!!.jsonPrimitive.content
 
-                        if (quality == "Fembed") {
-                            val videos = FembedExtractor().videosFromUrl(url, "DUB: ")
-                            videoList.addAll(videos)
-                        }
+                    if (lat != null) {
+                        for (server in lat.jsonArray) {
+                            val url = server.jsonObject["code"]!!.jsonPrimitive.content.replace("\\/", "/")
+                            val quality = server.jsonObject["title"]!!.jsonPrimitive.content
 
-                        if (quality == "Okru") {
-                            val videos = OkruExtractor(client).videosFromUrl(url, "DUB: ")
-                            videoList.addAll(videos)
+                            if (quality == "Fembed") {
+                                val videos = FembedExtractor().videosFromUrl(url, "DUB: ")
+                                videoList.addAll(videos)
+                            }
+
+                            if (quality == "Okru") {
+                                val videos = OkruExtractor(client).videosFromUrl(url, "DUB: ")
+                                videoList.addAll(videos)
+                            }
                         }
                     }
                 }
