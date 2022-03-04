@@ -2,10 +2,10 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    extName = 'MonosChinos'
-    pkgNameSuffix = 'es.monoschinos'
-    extClass = '.MonosChinos'
-    extVersionCode = 4
+    extName = 'Animefenix'
+    pkgNameSuffix = 'es.animefenix'
+    extClass = '.Animefenix'
+    extVersionCode = 1
     libVersion = '12'
 }
 
