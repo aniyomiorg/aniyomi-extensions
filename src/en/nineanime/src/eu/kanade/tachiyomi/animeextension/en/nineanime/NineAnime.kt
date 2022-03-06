@@ -21,6 +21,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -133,14 +134,17 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             client.newCall(GET(embedLink.replace("/embed/", "/info/") + "?skey=$skey", referer))
                 .execute().body!!.string()
         )
-        val masterUrl = sourceObject["media"]!!.jsonObject["sources"]!!.jsonArray
-            .first().jsonObject["file"]!!.jsonPrimitive.content
-        val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
+        val mediaSources = sourceObject["media"]!!.jsonObject["sources"]!!.jsonArray
+        val masterUrls = mediaSources.map { it.jsonObject["file"]!!.jsonPrimitive.content }
+        val masterUrl = masterUrls.find { !it.contains("/simple/") } ?: masterUrls.first()
+        val origin = Headers.headersOf("origin", "https://" + masterUrl.toHttpUrl().topPrivateDomain())
+        val result = client.newCall(GET(masterUrl, origin)).execute()
+        val masterPlaylist = result.body!!.string()
         return masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
             .split("#EXT-X-STREAM-INF:").map {
                 val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p"
                 val videoUrl = masterUrl.substringBeforeLast("/") + "/" + it.substringAfter("\n").substringBefore("\n")
-                Video(videoUrl, quality, videoUrl, null)
+                Video(videoUrl, quality, videoUrl, null, origin)
             }
     }
 

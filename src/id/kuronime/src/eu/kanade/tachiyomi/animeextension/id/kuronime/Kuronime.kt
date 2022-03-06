@@ -19,9 +19,6 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
-import java.lang.RuntimeException
-import java.lang.StringBuilder
-import java.text.SimpleDateFormat
 import java.util.Locale
 
 class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -41,7 +38,7 @@ class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.title = infodetail.select("ul > li:nth-child(1)").text().replace("Judul: ", "")
         anime.genre = infodetail.select("ul > li:nth-child(2)").joinToString(", ") { it.text() }
         anime.status = status
-        anime.artist = infodetail.select("ul > li:nth-child(4)").text().replace("Studio: ","")
+        anime.artist = infodetail.select("ul > li:nth-child(4)").text().replace("Studio: ", "")
         anime.author = "UNKNOWN"
         anime.description = "Synopsis: \n" + document.select("div.main-info > div.con > div.r > div > span > p").text()
         return anime
