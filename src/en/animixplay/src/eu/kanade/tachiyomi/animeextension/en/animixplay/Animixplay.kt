@@ -48,7 +48,7 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "en"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -60,6 +60,9 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     var nextPage = "99999999"
     var hasNextPage = true
+
+    var latestNextDate = "3020-05-06 00:00:00"
+    var latestHasNextPage = true
 
     override fun popularAnimeSelector(): String = throw Exception("not used")
 
@@ -89,7 +92,7 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun popularAnimeFromElement(animeJson: JsonObject): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(animeJson["url"]!!.jsonPrimitive.content)
+        anime.setUrlWithoutDomain(animeJson["url"]!!.jsonPrimitive.content.substringBefore("/ep"))
         anime.thumbnail_url = animeJson["picture"]!!.jsonPrimitive.content
         anime.title = animeJson["title"]!!.jsonPrimitive.content
         return anime
@@ -328,7 +331,27 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("not used")
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("not used")
+    override fun latestUpdatesRequest(page: Int): Request {
+        val formBody = FormBody.Builder()
+            .add("genre", "any")
+            .add("minstr", latestNextDate)
+            .add("orderby", "latest")
+            .build()
+        return POST("$baseUrl/api/search", headers, body = formBody)
+    }
+
+    override fun latestUpdatesParse(response: Response): AnimesPage {
+        val document = response.asJsoup()
+        val responseJson = json.decodeFromString<JsonObject>(document.select("body").text())
+        latestNextDate = responseJson["last"]!!.jsonPrimitive.content
+        latestHasNextPage = responseJson["more"]!!.jsonPrimitive.boolean
+        val animeList = responseJson["result"]!!.jsonArray
+        val animes = animeList.map { element ->
+            popularAnimeFromElement(element.jsonObject)
+        }
+
+        return AnimesPage(animes, latestHasNextPage)
+    }
 
     override fun latestUpdatesSelector(): String = throw Exception("not used")
 
