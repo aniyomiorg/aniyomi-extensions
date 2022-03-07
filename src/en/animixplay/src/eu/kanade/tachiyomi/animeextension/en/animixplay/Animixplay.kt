@@ -191,7 +191,7 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             )
         ).execute().request.url.fragment!!.substringBefore("#")
         val masterUrl = decodeBase64(redirectUrlEncodedString)
-        return if (masterUrl.contains("gogocdn")) {
+        return if (masterUrl.contains("gogo")) {
             parseCdnMasterPlaylist(masterUrl)
         } else {
             val masterPlaylist = client.newCall(GET(masterUrl, headers)).execute().body!!.string()
