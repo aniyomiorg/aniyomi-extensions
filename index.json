@@ -423,6 +423,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: MiniOppai",
+    "pkg": "eu.kanade.tachiyomi.animeextension.id.minioppai",
+    "apk": "aniyomi-id.minioppai-v12.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 1
+  },
+  {
     "name": "Aniyomi: NeoNime",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.neonime",
     "apk": "aniyomi-id.neonime-v12.5.apk",
