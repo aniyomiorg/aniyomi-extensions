@@ -31,7 +31,7 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
 
             val jsonResponse = client.newCall(
                 GET(
-                    "http://gogoplay.io/encrypt-ajax.php?id=$encryptedId",
+                    "https://gogoplay4.com/encrypt-ajax.php?id=$encryptedId",
                     Headers.headersOf("X-Requested-With", "XMLHttpRequest")
                 )
             ).execute().body!!.string()
