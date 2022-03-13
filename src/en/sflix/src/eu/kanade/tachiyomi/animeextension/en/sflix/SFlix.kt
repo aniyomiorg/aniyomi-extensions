@@ -70,7 +70,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
-        val episodeList = mutableListOf<SEpisode>()
+        var episodeList = mutableListOf<SEpisode>()
         val infoElement = document.select("div.detail_page-watch")
         val id = infoElement.attr("data-id")
         val dataType = infoElement.attr("data-type") // Tv = 2 or movie = 1
@@ -86,6 +86,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             seasonsElements.forEach {
                 val seasonEpList = parseEpisodesFromSeries(it)
                 episodeList.addAll(seasonEpList)
+                episodeList = episodeList.reversed().toMutableList()
             }
         } else {
             val movieUrl = "https://sflix.to/ajax/movie/episodes/$id"
