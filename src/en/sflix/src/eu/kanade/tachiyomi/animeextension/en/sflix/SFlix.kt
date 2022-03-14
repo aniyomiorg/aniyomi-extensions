@@ -86,8 +86,8 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             seasonsElements.forEach {
                 val seasonEpList = parseEpisodesFromSeries(it)
                 episodeList.addAll(seasonEpList)
-                episodeList = episodeList.reversed().toMutableList()
             }
+            episodeList = episodeList.reversed().toMutableList()
         } else {
             val movieUrl = "https://sflix.to/ajax/movie/episodes/$id"
             val episode = SEpisode.create()
