@@ -85,9 +85,9 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val seasonsElements = seasonsHtml.select("a.dropdown-item.ss-item")
             seasonsElements.forEach {
                 val seasonEpList = parseEpisodesFromSeries(it)
-                episodeList.addAll(seasonEpList)
-                episodeList = episodeList.reversed().toMutableList()
+                episodeList.addAll(seasonEpList)   
             }
+            episodeList = episodeList.reversed().toMutableList()
         } else {
             val movieUrl = "https://dopebox.to/ajax/movie/episodes/$id"
             val episode = SEpisode.create()
