@@ -70,7 +70,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
-        val episodeList = mutableListOf<SEpisode>()
+        var episodeList = mutableListOf<SEpisode>()
         val infoElement = document.select("div.detail_page-watch")
         val id = infoElement.attr("data-id")
         val dataType = infoElement.attr("data-type") // Tv = 2 or movie = 1
@@ -85,8 +85,9 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val seasonsElements = seasonsHtml.select("a.dropdown-item.ss-item")
             seasonsElements.forEach {
                 val seasonEpList = parseEpisodesFromSeries(it)
-                episodeList.addAll(seasonEpList)
+                episodeList.addAll(seasonEpList)   
             }
+            episodeList = episodeList.reversed().toMutableList()
         } else {
             val movieUrl = "https://dopebox.to/ajax/movie/episodes/$id"
             val episode = SEpisode.create()
