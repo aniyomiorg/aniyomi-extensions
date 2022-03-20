@@ -33,7 +33,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "DramaCool"
 
-    override val baseUrl = "https://dramacool.rs"
+    override val baseUrl = "https://www1.dramacool.fo"
 
     override val lang = "en"
 
