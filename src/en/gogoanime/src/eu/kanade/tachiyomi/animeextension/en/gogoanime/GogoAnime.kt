@@ -32,7 +32,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Gogoanime"
 
-    override val baseUrl = "https://gogoanime.fi"
+    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://gogoanime.fi")!! }
 
     override val lang = "en"
 
@@ -190,6 +190,21 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesSelector(): String = "div.added_series_body.popular li a:has(div)"
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val domainPref = ListPreference(screen.context).apply {
+            key = "preferred_domain"
+            title = "Preferred domain (requires app restart)"
+            entries = arrayOf("gogoanime.fi", "gogoanime.gg")
+            entryValues = arrayOf("https://gogoanime.fi", "https://gogoanime.gg", "https://animepahe.org")
+            setDefaultValue("https://gogoanime.fi")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
@@ -205,6 +220,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
     }
 
