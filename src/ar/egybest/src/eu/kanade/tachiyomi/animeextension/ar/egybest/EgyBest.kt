@@ -30,7 +30,7 @@ class EgyBest : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "ar"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
 
