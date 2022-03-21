@@ -101,7 +101,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun episodeFromElement(element: Element, animeId: String, vrf: String): SEpisode {
         val episode = SEpisode.create()
         val epNum = element.attr("data-base")
-        episode.setUrlWithoutDomain("$baseUrl/ajax/anime/servers?id=$animeId&vrf=$vrf&episode=$epNum")
+        episode.url = "/ajax/anime/servers?id=$animeId&vrf=$vrf&episode=$epNum"
         episode.episode_number = epNum.toFloat()
         episode.name = "Episode $epNum"
         episode.date_upload = System.currentTimeMillis()
