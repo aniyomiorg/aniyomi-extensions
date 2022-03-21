@@ -65,7 +65,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
-        val seriesLink = document.select("link[rel=canonical]").attr("href")
+        val seriesLink = document.select("link[rel=canonical]").attr("abs:href")
         if (seriesLink.contains("/series/")) {
             val seasonUrl = seriesLink
             val seasonsHtml = client.newCall(
@@ -93,7 +93,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
 
     private fun parseEpisodesFromSeries(element: Element): List<SEpisode> {
-        val seasonId = element.attr("href")
+        val seasonId = element.attr("abs:href")
         val seasonName = element.text()
         Log.i("seasonname", seasonName)
         val episodesUrl = seasonId
@@ -119,8 +119,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListRequest(episode: SEpisode): Request {
         val document = client.newCall(GET(baseUrl + episode.url)).execute().asJsoup()
-        val iframe = document.select("iframe[src^=\"https://allmovies\"]").attr("src")
-        Log.i("lol", "$iframe")
+        val iframe = document.select("iframe[src^=\"/?trembed\"]").attr("abs:src")
         return GET(iframe)
     }
 
@@ -135,7 +134,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         val elements = document.select(videoListSelector())
         for (element in elements) {
-            val url = element.attr("src")
+            val url = element.attr("abs:src")
             Log.i("lol", url)
             val location = element.ownerDocument().location()
             val videoHeaders = Headers.headersOf("Referer", location)
