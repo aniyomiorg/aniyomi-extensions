@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "eu.kanade.tachiyomi.animeextension.pt.animeyabu",
+  "variantName": "release",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "versionCode": 1,
+      "versionName": "12.1",
+      "outputFile": "aniyomi-pt.animeyabu-v12.1-release.apk"
+    }
+  ]
+}
