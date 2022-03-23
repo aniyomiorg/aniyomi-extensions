@@ -513,6 +513,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: Animeyabu",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animeyabu",
+    "apk": "aniyomi-pt.animeyabu-v12.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: Anitube",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.anitube",
     "apk": "aniyomi-pt.anitube-v12.4.apk",
