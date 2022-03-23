@@ -31,7 +31,7 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
 
             val jsonResponse = client.newCall(
                 GET(
-                    "https://gogoplay4.com/encrypt-ajax.php?id=$encryptedId",
+                    "https://gogoplay5.com/encrypt-ajax.php?id=$encryptedId",
                     Headers.headersOf("X-Requested-With", "XMLHttpRequest")
                 )
             ).execute().body!!.string()
@@ -44,8 +44,8 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
                 val fileURL = array[0].jsonObject["file"].toString().trim('"')
                 val masterPlaylist = client.newCall(GET(fileURL)).execute().body!!.string()
                 masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
-                    .split("#EXT-X-STREAM-INF:").reversed().forEach {
-                        val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p"
+                    .split("#EXT-X-STREAM-INF:").forEach {
+                        val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",NAME").substringBefore("\n") + "p"
                         val videoUrl = fileURL.substringBeforeLast("/") + "/" + it.substringAfter("\n").substringBefore("\n")
                         videoList.add(Video(videoUrl, quality, videoUrl, null))
                     }
@@ -65,7 +65,7 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
                 )
                 else videoList.add(Video(fileURL, label, fileURL, null, videoHeaders))
             }
-            return videoList.reversed() + autoList
+            return videoList.sortedByDescending { it.quality.substringBefore("p").toInt() } + autoList
         } catch (e: Exception) {
             return emptyList()
         }
