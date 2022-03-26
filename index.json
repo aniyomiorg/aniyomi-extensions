@@ -218,10 +218,10 @@
   {
     "name": "Aniyomi: AsianLoad",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.asianload",
-    "apk": "aniyomi-en.asianload-v12.9.apk",
+    "apk": "aniyomi-en.asianload-v12.10.apk",
     "lang": "en",
-    "code": 9,
-    "version": "12.9",
+    "code": 10,
+    "version": "12.10",
     "nsfw": 0
   },
   {
@@ -236,19 +236,19 @@
   {
     "name": "Aniyomi: DramaCool",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.dramacool",
-    "apk": "aniyomi-en.dramacool-v12.10.apk",
+    "apk": "aniyomi-en.dramacool-v12.11.apk",
     "lang": "en",
-    "code": 10,
-    "version": "12.10",
+    "code": 11,
+    "version": "12.11",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: GenoAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.genoanime",
-    "apk": "aniyomi-en.genoanime-v12.8.apk",
+    "apk": "aniyomi-en.genoanime-v12.9.apk",
     "lang": "en",
-    "code": 8,
-    "version": "12.8",
+    "code": 9,
+    "version": "12.9",
     "nsfw": 0
   },
   {
@@ -317,10 +317,10 @@
   {
     "name": "Aniyomi: Vidembed",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.vidembed",
-    "apk": "aniyomi-en.vidembed-v12.8.apk",
+    "apk": "aniyomi-en.vidembed-v12.9.apk",
     "lang": "en",
-    "code": 8,
-    "version": "12.8",
+    "code": 9,
+    "version": "12.9",
     "nsfw": 0
   },
   {
