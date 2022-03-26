@@ -146,24 +146,24 @@ class GenoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         videoList.add(video)
                     }
                 }
-                embedUrl.contains("fembed.com") ||
-                    embedUrl.contains("anime789.com") || embedUrl.contains("24hd.club") || embedUrl.contains("fembad.org") ||
-                    embedUrl.contains("vcdn.io") || embedUrl.contains("sharinglink.club") || embedUrl.contains("moviemaniac.org") ||
-                    embedUrl.contains("votrefiles.club") || embedUrl.contains("femoload.xyz") || embedUrl.contains("albavido.xyz") ||
-                    embedUrl.contains("feurl.com") || embedUrl.contains("dailyplanet.pw") || embedUrl.contains("ncdnstm.com") ||
-                    embedUrl.contains("jplayer.net") || embedUrl.contains("xstreamcdn.com") || embedUrl.contains("fembed-hd.com") ||
-                    embedUrl.contains("gcloud.live") || embedUrl.contains("vcdnplay.com") || embedUrl.contains("superplayxyz.club") ||
-                    embedUrl.contains("vidohd.com") || embedUrl.contains("vidsource.me") || embedUrl.contains("cinegrabber.com") ||
-                    embedUrl.contains("votrefile.xyz") || embedUrl.contains("zidiplay.com") || embedUrl.contains("ndrama.xyz") ||
-                    embedUrl.contains("fcdn.stream") || embedUrl.contains("mediashore.org") || embedUrl.contains("suzihaza.com") ||
-                    embedUrl.contains("there.to") || embedUrl.contains("femax20.com") || embedUrl.contains("javstream.top") ||
-                    embedUrl.contains("viplayer.cc") || embedUrl.contains("sexhd.co") || embedUrl.contains("fembed.net") ||
-                    embedUrl.contains("mrdhan.com") || embedUrl.contains("votrefilms.xyz") || // embedUrl.contains("") ||
-                    embedUrl.contains("embedsito.com") || embedUrl.contains("dutrag.com") || // embedUrl.contains("") ||
-                    embedUrl.contains("youvideos.ru") || embedUrl.contains("streamm4u.club") || // embedUrl.contains("") ||
-                    embedUrl.contains("moviepl.xyz") || embedUrl.contains("asianclub.tv") || // embedUrl.contains("") ||
-                    embedUrl.contains("vidcloud.fun") || embedUrl.contains("fplayer.info") || // embedUrl.contains("") ||
-                    embedUrl.contains("diasfem.com") || embedUrl.contains("javpoll.com") // embedUrl.contains("")
+                url.contains("fembed.com") ||
+                    url.contains("anime789.com") || url.contains("24hd.club") || url.contains("fembad.org") ||
+                    url.contains("vcdn.io") || url.contains("sharinglink.club") || url.contains("moviemaniac.org") ||
+                    url.contains("votrefiles.club") || url.contains("femoload.xyz") || url.contains("albavido.xyz") ||
+                    url.contains("feurl.com") || url.contains("dailyplanet.pw") || url.contains("ncdnstm.com") ||
+                    url.contains("jplayer.net") || url.contains("xstreamcdn.com") || url.contains("fembed-hd.com") ||
+                    url.contains("gcloud.live") || url.contains("vcdnplay.com") || url.contains("superplayxyz.club") ||
+                    url.contains("vidohd.com") || url.contains("vidsource.me") || url.contains("cinegrabber.com") ||
+                    url.contains("votrefile.xyz") || url.contains("zidiplay.com") || url.contains("ndrama.xyz") ||
+                    url.contains("fcdn.stream") || url.contains("mediashore.org") || url.contains("suzihaza.com") ||
+                    url.contains("there.to") || url.contains("femax20.com") || url.contains("javstream.top") ||
+                    url.contains("viplayer.cc") || url.contains("sexhd.co") || url.contains("fembed.net") ||
+                    url.contains("mrdhan.com") || url.contains("votrefilms.xyz") || // url.contains("") ||
+                    url.contains("embedsito.com") || url.contains("dutrag.com") || // url.contains("") ||
+                    url.contains("youvideos.ru") || url.contains("streamm4u.club") || // url.contains("") ||
+                    url.contains("moviepl.xyz") || url.contains("asianclub.tv") || // url.contains("") ||
+                    url.contains("vidcloud.fun") || url.contains("fplayer.info") || // url.contains("") ||
+                    url.contains("diasfem.com") || url.contains("javpoll.com") // url.contains("")
 
                 -> {
                     val videos = FembedExtractor().videosFromUrl(url)
