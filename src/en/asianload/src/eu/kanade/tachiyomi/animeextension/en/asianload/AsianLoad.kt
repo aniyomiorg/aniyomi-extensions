@@ -99,7 +99,7 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videosFromElement(document)
     }
 
-    override fun videoListSelector() = "ul.list-server-items li[data-video*=https://sbplay2.com], ul.list-server-items li[data-video*=https://dood], ul.list-server-items li[data-video*=https://streamtape], ul.list-server-items li[data-video*=https://fembed]"
+    override fun videoListSelector() = "ul.list-server-items li"
 
     private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
@@ -110,21 +110,12 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val location = element.ownerDocument().location()
             val videoHeaders = Headers.headersOf("Referer", location)
             when {
-                url.contains("sbplay2") -> {
-                    /*val id = url.substringAfter("e/").substringBefore("?")
-                    Log.i("idtest", id)
-                    val bytes = id.toByteArray()
-                    Log.i("idencode", "$bytes")
-                    val bytesToHex = bytesToHex(bytes)
-                    Log.i("bytesToHex", bytesToHex)
-                    val nheaders = headers.newBuilder()
-                        .set("watchsb", "streamsb")
-                        .build()
-                    val master = "https://sbplay2.com/sourcesx38/7361696b6f757c7c${bytesToHex}7c7c7361696b6f757c7c73747265616d7362/7361696b6f757c7c363136653639366436343663363136653639366436343663376337633631366536393664363436633631366536393664363436633763376336313665363936643634366336313665363936643634366337633763373337343732363536313664373336327c7c7361696b6f757c7c73747265616d7362"
-                    Log.i("master", master)
-
-                    val callMaster = client.newCall(GET(master, nheaders)).execute().asJsoup()
-                    Log.i("testt", "$callMaster")*/
+                url.contains("sbembed.com") || url.contains("sbembed1.com") || url.contains("sbplay.org") ||
+                    url.contains("sbvideo.net") || url.contains("streamsb.net") || url.contains("sbplay.one") ||
+                    url.contains("cloudemb.com") || url.contains("playersb.com") || url.contains("tubesb.com") ||
+                    url.contains("sbplay1") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
+                    url.contains("sbplay2") || url.contains("japopav.tv") || url.contains("viewsb.com")
+                -> {
                     val headers = headers.newBuilder()
                         .set("Referer", url)
                         .set("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
@@ -140,7 +131,26 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         videoList.add(video)
                     }
                 }
-                url.contains("fembed") -> {
+                url.contains("fembed.com") ||
+                    url.contains("anime789.com") || url.contains("24hd.club") || url.contains("fembad.org") ||
+                    url.contains("vcdn.io") || url.contains("sharinglink.club") || url.contains("moviemaniac.org") ||
+                    url.contains("votrefiles.club") || url.contains("femoload.xyz") || url.contains("albavido.xyz") ||
+                    url.contains("feurl.com") || url.contains("dailyplanet.pw") || url.contains("ncdnstm.com") ||
+                    url.contains("jplayer.net") || url.contains("xstreamcdn.com") || url.contains("fembed-hd.com") ||
+                    url.contains("gcloud.live") || url.contains("vcdnplay.com") || url.contains("superplayxyz.club") ||
+                    url.contains("vidohd.com") || url.contains("vidsource.me") || url.contains("cinegrabber.com") ||
+                    url.contains("votrefile.xyz") || url.contains("zidiplay.com") || url.contains("ndrama.xyz") ||
+                    url.contains("fcdn.stream") || url.contains("mediashore.org") || url.contains("suzihaza.com") ||
+                    url.contains("there.to") || url.contains("femax20.com") || url.contains("javstream.top") ||
+                    url.contains("viplayer.cc") || url.contains("sexhd.co") || url.contains("fembed.net") ||
+                    url.contains("mrdhan.com") || url.contains("votrefilms.xyz") || // url.contains("") ||
+                    url.contains("embedsito.com") || url.contains("dutrag.com") || // url.contains("") ||
+                    url.contains("youvideos.ru") || url.contains("streamm4u.club") || // url.contains("") ||
+                    url.contains("moviepl.xyz") || url.contains("asianclub.tv") || // url.contains("") ||
+                    url.contains("vidcloud.fun") || url.contains("fplayer.info") || // url.contains("") ||
+                    url.contains("diasfem.com") || url.contains("javpoll.com") // url.contains("")
+
+                -> {
                     val videos = FembedExtractor().videosFromUrl(url)
                     videoList.addAll(videos)
                 }
