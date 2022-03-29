@@ -24,8 +24,8 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
     fun videosFromUrl(serverUrl: String): List<Video> {
         try {
             val id = serverUrl.toHttpUrl().queryParameter("id") ?: throw Exception("error getting id")
-            val iv = "31323835363732333833393339383532".decodeHex()
-            val secretKey = "3235373136353338353232393338333936313634363632323738383333323838".decodeHex()
+            val iv = "4770478969418267".toByteArray()
+            val secretKey = "63976882873559819639988080820907".toByteArray()
 
             val encryptedId = try { cryptoHandler(id, iv, secretKey) } catch (e: Exception) { e.message ?: "" }
 
@@ -87,12 +87,5 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
             cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec)
             Base64.encodeToString(cipher.doFinal(string.toByteArray()), Base64.NO_WRAP)
         }
-    }
-
-    private fun String.decodeHex(): ByteArray {
-        check(length % 2 == 0) { "Must have an even length" }
-        return chunked(2)
-            .map { it.toInt(16).toByte() }
-            .toByteArray()
     }
 }
