@@ -38,19 +38,19 @@
   {
     "name": "Aniyomi: AnimeLek",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.animelek",
-    "apk": "aniyomi-ar.animelek-v12.4.apk",
+    "apk": "aniyomi-ar.animelek-v12.5.apk",
     "lang": "ar",
-    "code": 4,
-    "version": "12.4",
+    "code": 5,
+    "version": "12.5",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: Animerco",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.animerco",
-    "apk": "aniyomi-ar.animerco-v12.3.apk",
+    "apk": "aniyomi-ar.animerco-v12.4.apk",
     "lang": "ar",
-    "code": 3,
-    "version": "12.3",
+    "code": 4,
+    "version": "12.4",
     "nsfw": 0
   },
   {
@@ -218,10 +218,10 @@
   {
     "name": "Aniyomi: AsianLoad",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.asianload",
-    "apk": "aniyomi-en.asianload-v12.10.apk",
+    "apk": "aniyomi-en.asianload-v12.11.apk",
     "lang": "en",
-    "code": 10,
-    "version": "12.10",
+    "code": 11,
+    "version": "12.11",
     "nsfw": 0
   },
   {
@@ -236,19 +236,19 @@
   {
     "name": "Aniyomi: DramaCool",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.dramacool",
-    "apk": "aniyomi-en.dramacool-v12.11.apk",
+    "apk": "aniyomi-en.dramacool-v12.12.apk",
     "lang": "en",
-    "code": 11,
-    "version": "12.11",
+    "code": 12,
+    "version": "12.12",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: GenoAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.genoanime",
-    "apk": "aniyomi-en.genoanime-v12.9.apk",
+    "apk": "aniyomi-en.genoanime-v12.10.apk",
     "lang": "en",
-    "code": 9,
-    "version": "12.9",
+    "code": 10,
+    "version": "12.10",
     "nsfw": 0
   },
   {
@@ -317,10 +317,10 @@
   {
     "name": "Aniyomi: Vidembed",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.vidembed",
-    "apk": "aniyomi-en.vidembed-v12.9.apk",
+    "apk": "aniyomi-en.vidembed-v12.10.apk",
     "lang": "en",
-    "code": 9,
-    "version": "12.9",
+    "code": 10,
+    "version": "12.10",
     "nsfw": 0
   },
   {
@@ -362,10 +362,10 @@
   {
     "name": "Aniyomi: AnimeFLV",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.animeflv",
-    "apk": "aniyomi-es.animeflv-v12.14.apk",
+    "apk": "aniyomi-es.animeflv-v12.15.apk",
     "lang": "es",
-    "code": 14,
-    "version": "12.14",
+    "code": 15,
+    "version": "12.15",
     "nsfw": 0
   },
   {
@@ -398,10 +398,10 @@
   {
     "name": "Aniyomi: Pelisplushd",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.pelisplushd",
-    "apk": "aniyomi-es.pelisplushd-v12.4.apk",
+    "apk": "aniyomi-es.pelisplushd-v12.5.apk",
     "lang": "es",
-    "code": 4,
-    "version": "12.4",
+    "code": 5,
+    "version": "12.5",
     "nsfw": 0
   },
   {
@@ -416,10 +416,10 @@
   {
     "name": "Aniyomi: AnimeWorld (experimental)",
     "pkg": "eu.kanade.tachiyomi.animeextension.hi.animeWorld",
-    "apk": "aniyomi-hi.animeWorld-v12.4.apk",
+    "apk": "aniyomi-hi.animeWorld-v12.5.apk",
     "lang": "hi",
-    "code": 4,
-    "version": "12.4",
+    "code": 5,
+    "version": "12.5",
     "nsfw": 0
   },
   {
@@ -479,10 +479,10 @@
   {
     "name": "Aniyomi: ANIMEWORLD.tv",
     "pkg": "eu.kanade.tachiyomi.animeextension.it.animeworld",
-    "apk": "aniyomi-it.animeworld-v12.5.apk",
+    "apk": "aniyomi-it.animeworld-v12.6.apk",
     "lang": "it",
-    "code": 5,
-    "version": "12.5",
+    "code": 6,
+    "version": "12.6",
     "nsfw": 0
   },
   {
