@@ -38,7 +38,7 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AnimeFLV"
 
-    override val baseUrl = "https://www3.animeflv.net"
+    override val baseUrl = "https://ww3.animeflv.cc"
 
     override val lang = "es"
 
