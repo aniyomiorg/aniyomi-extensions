@@ -5,7 +5,7 @@ ext {
     extName = 'AnimeFLV'
     pkgNameSuffix = 'es.animeflv'
     extClass = '.AnimeFlv'
-    extVersionCode = 16
+    extVersionCode = 17
     libVersion = '12'
 }
 

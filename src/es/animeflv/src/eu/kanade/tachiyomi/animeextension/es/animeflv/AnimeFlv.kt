@@ -76,30 +76,28 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector(): String = "ul.pagination li a[rel=next]:not(li.disabled)"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val episodes = mutableListOf<SEpisode>()
-        val jsoup = response.asJsoup()
-        jsoup.select("script").forEach { script ->
-            if (script.data().contains("var episodes = [")) {
-                val data = script.data().substringAfter("var episodes = [").substringBefore("];")
-                val animeId = response.request.url.pathSegments.last()
-                data.split("],").forEach {
-                    val epNum = it.removePrefix("[").substringBefore(",")
-                    val episode = SEpisode.create().apply {
-                        episode_number = epNum.toFloat()
-                        name = "Episodio $epNum"
-                        url = "/ver/$animeId-$epNum"
-                        date_upload = System.currentTimeMillis()
-                    }
-                    episodes.add(episode)
-                }
-            }
-        }
-        return episodes
+        return super.episodeListParse(response).reversed()
     }
 
-    override fun episodeListSelector() = throw Exception("not used")
+    override fun episodeListSelector() = "ul.ListCaps li a"
 
-    override fun episodeFromElement(element: Element) = throw Exception("not used")
+    override fun episodeFromElement(element: Element): SEpisode {
+        val episode = SEpisode.create()
+        val epNum = getNumberFromEpsString(element.select("p").text())
+        episode.setUrlWithoutDomain(element.attr("abs:href"))
+        episode.episode_number = when {
+            (epNum.isNotEmpty()) -> epNum.toFloat()
+            else -> 1F
+        }
+        episode.name = element.select("p").text()
+        episode.date_upload = System.currentTimeMillis()
+
+        return episode
+    }
+
+    private fun getNumberFromEpsString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }
+    }
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
