@@ -93,9 +93,8 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val doodUrl = document.select("div.anime_muti_link > ul > li.doodstream > a")
             .attr("data-video")
         val gogoVideos = GogoCdnExtractor(client, json).videosFromUrl(serverUrl)
-        return gogoVideos.ifEmpty {
-            DoodExtractor(client).videosFromUrl(doodUrl)
-        }
+        val doodVideos = DoodExtractor(client).videosFromUrl(doodUrl)
+        return gogoVideos + doodVideos
     }
 
     override fun videoListSelector() = throw Exception("not used")
