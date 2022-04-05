@@ -398,10 +398,10 @@
   {
     "name": "Aniyomi: Pelisplushd",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.pelisplushd",
-    "apk": "aniyomi-es.pelisplushd-v12.5.apk",
+    "apk": "aniyomi-es.pelisplushd-v12.6.apk",
     "lang": "es",
-    "code": 5,
-    "version": "12.5",
+    "code": 6,
+    "version": "12.6",
     "nsfw": 0
   },
   {
