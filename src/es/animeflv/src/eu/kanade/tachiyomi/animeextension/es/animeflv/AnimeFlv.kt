@@ -2,9 +2,9 @@ package eu.kanade.tachiyomi.animeextension.es.animeflv
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.StreamSBExtractor
@@ -17,13 +17,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -73,7 +67,7 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun popularAnimeNextPageSelector(): String = "ul.pagination li a[rel=next]:not(li.disabled)"
+    override fun popularAnimeNextPageSelector(): String = "ul.pagination li.selected ~ li"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         return super.episodeListParse(response).reversed()
@@ -84,7 +78,7 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         val epNum = getNumberFromEpsString(element.select("p").text())
-        episode.setUrlWithoutDomain(element.attr("abs:href"))
+        episode.setUrlWithoutDomain(element.attr("href"))
         episode.episode_number = when {
             (epNum.isNotEmpty()) -> epNum.toFloat()
             else -> 1F
@@ -102,62 +96,38 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-        document.select("script").forEach { script ->
-            if (script.data().contains("var videos = {")) {
-                val data = script.data().substringAfter("var videos = ").substringBefore(";")
-                val jsonObject = json.decodeFromString<JsonObject>(data)
-                val sub = jsonObject["SUB"]!!
-                val lat = jsonObject["LAT"]
-                Log.i("bruh", " a $lat")
-                if (sub !is JsonNull) {
-                    for (server in sub.jsonArray) {
-                        val url = server.jsonObject["code"]!!.jsonPrimitive.content.replace("\\/", "/")
-                        val quality = server.jsonObject["title"]!!.jsonPrimitive.content
-                        if (quality == "SB") {
-                            val headers = headers.newBuilder()
-                                .set("Referer", url)
-                                .set("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
-                                .set("Accept-Language", "en-US,en;q=0.5")
-                                .set("watchsb", "streamsb")
-                                .build()
-                            val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
-                            videoList.addAll(videos)
-                        }
-                        if (quality == "Fembed") {
-                            val videos = FembedExtractor().videosFromUrl(url)
-                            videoList.addAll(videos)
-                        }
-                        if (quality == "Stape") {
-                            val video = StreamTapeExtractor(client).videoFromUrl(url, quality)
-                            if (video != null) {
-                                videoList.add(video)
-                            }
-                        }
-                        if (quality == "Okru") {
-                            val videos = OkruExtractor(client).videosFromUrl(url)
-                            videoList.addAll(videos)
-                        }
-                    }
+        document.select("ul.CapiTnv li:not([title='Our Server'])").forEach { script ->
+            val quality = script.attr("title")
+            val url = script.attr("data-video")
+            if (quality == "Streamsb") {
+                val headers = headers.newBuilder()
+                    .set("Referer", url)
+                    .set("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
+                    .set("Accept-Language", "en-US,en;q=0.5")
+                    .set("watchsb", "streamsb")
+                    .build()
+                val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
+                videoList.addAll(videos)
+            }
+            if (quality == "Fembed") {
+                val videos = FembedExtractor().videosFromUrl(url)
+                videoList.addAll(videos)
+            }
+            if (quality == "Streamtape") {
+                val video = StreamTapeExtractor(client).videoFromUrl(url, quality)
+                if (video != null) {
+                    videoList.add(video)
                 }
-                if (lat !is JsonNull) {
-
-                    if (lat != null) {
-                        for (server in lat.jsonArray) {
-                            val url = server.jsonObject["code"]!!.jsonPrimitive.content.replace("\\/", "/")
-                            val quality = server.jsonObject["title"]!!.jsonPrimitive.content
-
-                            if (quality == "Fembed") {
-                                val videos = FembedExtractor().videosFromUrl(url, "DUB: ")
-                                videoList.addAll(videos)
-                            }
-
-                            if (quality == "Okru") {
-                                val videos = OkruExtractor(client).videosFromUrl(url, "DUB: ")
-                                videoList.addAll(videos)
-                            }
-                        }
-                    }
+            }
+            if (quality == "Doodstream") {
+                val video = try { DoodExtractor(client).videoFromUrl(url, "DoodStream") } catch (e: Exception) { null }
+                if (video != null) {
+                    videoList.add(video)
                 }
+            }
+            if (quality == "Okru") {
+                val videos = OkruExtractor(client).videosFromUrl(url)
+                videoList.addAll(videos)
             }
         }
         return videoList
@@ -199,12 +169,16 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = baseUrl + "/" + document.selectFirst("div.AnimeCover div.Image figure img").attr("src")
-        anime.title = document.selectFirst("div.Ficha.fchlt div.Container h1.Title").text()
+        anime.thumbnail_url = externalOrInternalImg(document.selectFirst("div.AnimeCover div.Image figure img").attr("src"))
+        anime.title = document.selectFirst("div.Ficha.fchlt div.Container .Title").text()
         anime.description = document.selectFirst("div.Description").text().removeSurrounding("\"")
         anime.genre = document.select("nav.Nvgnrs a").joinToString { it.text() }
         anime.status = parseStatus(document.select("span.fa-tv").text())
         return anime
+    }
+
+    private fun externalOrInternalImg(url: String): String {
+        return if (url.contains("https")) url else "$baseUrl/$url"
     }
 
     private fun parseStatus(statusString: String): Int {
