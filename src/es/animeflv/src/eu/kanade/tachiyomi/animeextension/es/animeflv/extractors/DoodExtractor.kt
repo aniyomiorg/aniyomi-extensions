@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.fr.vostfree.extractors
+package eu.kanade.tachiyomi.animeextension.es.animeflv.extractors
 
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
