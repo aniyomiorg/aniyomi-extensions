@@ -26,7 +26,7 @@ class StreamSBExtractor(private val client: OkHttpClient) {
     }
 
     fun videosFromUrl(url: String, headers: Headers): List<Video> {
-        val id = url.substringAfter("embed-").substringBefore(".html")
+        val id = url.substringAfter("embed-").substringBefore(".html").substringAfter("/e/")
         Log.i("id", id)
         val bytes = id.toByteArray()
         Log.i("bytes", "$bytes")

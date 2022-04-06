@@ -8,6 +8,7 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamSBExtractor
+import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -20,7 +21,6 @@ import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
@@ -97,39 +97,50 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         document.select("ul.TbVideoNv li").forEach { it ->
             val server = it.select("a").text()
             val option = it.attr("data-id")
-            document.select("script").forEach() { script ->
-                if (script.data().contains("video[1] =")) {
+            Log.i("bruh", "$option : $server")
+            document.select("div.page-container div#link_url span").forEach() { servers ->
 
-                    if (server == "PlusTo") {
-                        val iframeUrl = script.data().substringAfter("video[$option] = '").substringBefore("';")
-                        val jsoup = Jsoup.connect(iframeUrl).get()
-                        val url = jsoup.select("iframe").attr("src").replace("#caption=&poster=#", "")
-                        Log.i("bruh", "$url")
+                if (servers.attr("lid") == option && server == "PlusTo") {
+                    val url = servers.attr("url")
+                    Log.i("bruh", "id:${servers.attr("lid")} server:$server Url: $url")
+                    val videos = FembedExtractor().videosFromUrl(url)
+                    videoList.addAll(videos)
+                }
+                //probably the conditions are redundant idk
+                if (servers.attr("lid") == option && server == "DoFast" || servers.attr("lid") == option && server == "DoodStream") {
+                    val url = servers.attr("url").replace("doodstream.com", "dood.so")
+                    Log.i("bruh", "id:${servers.attr("lid")} server:$server Url1: $url")
+                    val video = try { DoodExtractor(client).videoFromUrl(url, "DoodStream") } catch (e: Exception) { null }
+                    if (video != null) {
+                        videoList.add(video)
+                    }
+                }
+                if (servers.attr("lid") == option && server == "FastTape" || servers.attr("lid") == option && server == "StreamTape") {
+                    val url = servers.attr("url")
+                    Log.i("bruh", "id:${servers.attr("lid")} server:$server Url1: $url")
+                    val video = StreamTapeExtractor(client).videoFromUrl(url, "StreamTape")
+                    if (video != null) {
+                        videoList.add(video)
+                    }
+                }
 
-                        val videos = FembedExtractor().videosFromUrl(url)
-                        videoList.addAll(videos)
-                    }
-                    if (server == "DoodStream") {
-                        val url = script.data().substringAfter("video[$option] = '").substringBefore("';")
-                        val video = try { DoodExtractor(client).videoFromUrl(url, "DoodStream") } catch (e: Exception) { null }
-                        if (video != null) {
-                            videoList.add(video)
-                        }
-                    }
-                    if (server == "SBFast") {
-                        val url = script.data().substringAfter("video[$option] = '").substringBefore("';")
-                        val headers = headers.newBuilder()
-                            .set("Referer", url)
-                            .set("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
-                            .set("Accept-Language", "en-US,en;q=0.5")
-                            .set("watchsb", "streamsb")
-                            .build()
-                        val video = StreamSBExtractor(client).videosFromUrl(url, headers)
+                if (servers.attr("lid") == option && server == "SBFast" || servers.attr("lid") == option && server == "SBFas") {
+                    val url = servers.attr("url")
+                    Log.i("bruh", "id:${servers.attr("lid")} server:$server Url2: $url")
+                    val headers = headers.newBuilder()
+                        .set("Referer", url)
+                        .set("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
+                        .set("Accept-Language", "en-US,en;q=0.5")
+                        .set("watchsb", "streamsb")
+                        .build()
+                    val video = try { StreamSBExtractor(client).videosFromUrl(url, headers) } catch (e: Exception) { null }
+                    if (video != null) {
                         videoList.addAll(video)
                     }
                 }
             }
         }
+
         return videoList
     }
 
