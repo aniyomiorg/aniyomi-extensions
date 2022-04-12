@@ -1,6 +1,11 @@
 package eu.kanade.tachiyomi.animeextension.ru.animevost
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ru.animevost.dto.AnimeDetailsDto
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -9,6 +14,7 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import okhttp3.FormBody
@@ -18,9 +24,11 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.lang.Exception
 
-class Animevost : ParsedAnimeHttpSource() {
+class Animevost : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private enum class SortBy(val by: String) {
         RATING("rating"),
         DATE("date"),
@@ -37,6 +45,10 @@ class Animevost : ParsedAnimeHttpSource() {
     private val json = Json {
         isLenient = true
         ignoreUnknownKeys = true
+    }
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
     override val name = "Animevost"
@@ -195,11 +207,64 @@ class Animevost : ParsedAnimeHttpSource() {
 
     // Video
 
-    override fun videoFromElement(element: Element): Video {
-        return Video(element.attr("href"), element.text(), element.attr("href"), null)
+    override fun videoListParse(response: Response): List<Video> {
+        val videoList = mutableListOf<Video>()
+        val document = response.asJsoup()
+
+        val videoData = document.html().substringAfter("file\":\"").substringBefore("\",").split(",")
+
+        videoData.forEach {
+            val linkData = it.replace("[", "").split("]")
+            val quality = linkData.first()
+            val url = linkData.last().split(" or").first()
+            videoList.add(Video(url, quality, url, null))
+        }
+
+        return videoList
     }
 
-    override fun videoListSelector() = "a[download]"
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString("preferred_quality", null)
+        if (quality != null) {
+            val newList = mutableListOf<Video>()
+            var preferred = 0
+            for (video in this) {
+                if (video.quality.contains(quality)) {
+                    newList.add(preferred, video)
+                    preferred++
+                } else {
+                    newList.add(video)
+                }
+            }
+            return newList
+        }
+        return this
+    }
+
+    override fun videoFromElement(element: Element) = throw Exception("not used")
+
+    override fun videoListSelector() = throw Exception("not used")
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
+
+    // Settings
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val videoQualityPref = ListPreference(screen.context).apply {
+            key = "preferred_quality"
+            title = "Preferred quality"
+            entries = arrayOf("720p", "480p")
+            entryValues = arrayOf("720", "480")
+            setDefaultValue("480")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(videoQualityPref)
+    }
 }
