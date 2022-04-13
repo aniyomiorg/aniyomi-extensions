@@ -551,10 +551,10 @@
   {
     "name": "Aniyomi: Animevost",
     "pkg": "eu.kanade.tachiyomi.animeextension.ru.animevost",
-    "apk": "aniyomi-ru.animevost-v12.2.apk",
+    "apk": "aniyomi-ru.animevost-v12.3.apk",
     "lang": "ru",
-    "code": 2,
-    "version": "12.2",
+    "code": 3,
+    "version": "12.3",
     "nsfw": 0
   }
 ]
