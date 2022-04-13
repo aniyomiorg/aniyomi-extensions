@@ -6,6 +6,7 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ru.animevost.dto.AnimeDetailsDto
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -19,6 +20,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import okhttp3.FormBody
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -28,7 +30,8 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
 
-class AnimevostSource(override val name: String, override val baseUrl: String, private val baseApiUrl: String) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+class AnimevostSource(override val name: String, override val baseUrl: String, private val baseApiUrl: String) :
+    ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private enum class SortBy(val by: String) {
         RATING("rating"),
         DATE("date"),
@@ -67,17 +70,29 @@ class AnimevostSource(override val name: String, override val baseUrl: String, p
         return anime
     }
 
-    private fun animeRequest(page: Int, sortBy: SortBy, sortDirection: SortDirection = SortDirection.DESC): Request {
+    private fun animeRequest(page: Int, sortBy: SortBy, sortDirection: SortDirection = SortDirection.DESC, genre: String = "all"): Request {
         val headers: Headers =
             Headers.headersOf("Content-Type", "application/x-www-form-urlencoded", "charset", "UTF-8")
-        val body = FormBody.Builder()
+        val url = baseUrl.toHttpUrlOrNull()!!.newBuilder()
+
+        var body = FormBody.Builder()
             .add("dlenewssortby", sortBy.by)
             .add("dledirection", sortDirection.direction)
-            .add("set_new_sort", "dle_sort_main")
-            .add("set_direction_sort", "dle_direction_main")
-            .build()
 
-        return POST("$baseUrl/page/$page", headers, body)
+        body = if (genre != "all") {
+            url.addPathSegment("zhanr")
+            url.addPathSegment(genre)
+            body.add("set_new_sort", "dle_sort_cat")
+                .add("set_direction_sort", "dle_direction_cat")
+        } else {
+            body.add("set_new_sort", "dle_sort_main")
+                .add("set_direction_sort", "dle_direction_main")
+        }
+
+        url.addPathSegment("page")
+        url.addPathSegment("$page")
+
+        return POST(url.toString(), headers, body.build())
     }
 
     private fun parseAnimeIdFromUrl(url: String): String = url.split("/").last().split("-").first()
@@ -181,20 +196,43 @@ class AnimevostSource(override val name: String, override val baseUrl: String, p
     override fun searchAnimeNextPageSelector() = nextPageSelector
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val searchStart = if (page <= 1) 0 else page
-        val resultFrom = (page - 1) * 10 + 1
-        val headers: Headers =
-            Headers.headersOf("Content-Type", "application/x-www-form-urlencoded", "charset", "UTF-8")
-        val body = FormBody.Builder()
-            .add("do", "search")
-            .add("subaction", "search")
-            .add("search_start", searchStart.toString())
-            .add("full_search", "0")
-            .add("result_from", resultFrom.toString())
-            .add("story", query)
-            .build()
+        return if (query.isNotBlank()) {
+            val searchStart = if (page <= 1) 0 else page
+            val resultFrom = (page - 1) * 10 + 1
+            val headers: Headers =
+                Headers.headersOf("Content-Type", "application/x-www-form-urlencoded", "charset", "UTF-8")
+            val body = FormBody.Builder()
+                .add("do", "search")
+                .add("subaction", "search")
+                .add("search_start", searchStart.toString())
+                .add("full_search", "0")
+                .add("result_from", resultFrom.toString())
+                .add("story", query)
+                .build()
 
-        return POST("$baseUrl/index.php?do=search", headers, body)
+            POST("$baseUrl/index.php?do=search", headers, body)
+        } else {
+            var sortBy = SortBy.DATE
+            var sortDirection = SortDirection.DESC
+            var genre = "all"
+
+            filters.forEach { filter ->
+                when (filter) {
+                    is GenreFilter -> {
+                        genre = filter.toString()
+                    }
+                    is SortFilter -> {
+                        if (filter.state != null) {
+                            sortBy = sortableList[filter.state!!.index].second
+
+                            sortDirection = if (filter.state!!.ascending) SortDirection.ASC else SortDirection.DESC
+                        }
+                    }
+                }
+            }
+
+            animeRequest(page, sortBy, sortDirection, genre)
+        }
     }
 
     override fun searchAnimeSelector() = animeSelector
@@ -240,6 +278,63 @@ class AnimevostSource(override val name: String, override val baseUrl: String, p
     override fun videoListSelector() = throw Exception("not used")
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
+
+    // Filters
+
+    override fun getFilterList() = AnimeFilterList(
+        AnimeFilter.Header("NOTE: Не работают при текстовом поиске!"),
+        AnimeFilter.Separator(),
+        GenreFilter(getGenreList()),
+        SortFilter(sortableList.map { it.first }.toTypedArray()),
+    )
+
+    private class GenreFilter(genres: Array<Pair<String, String>>) : UriPartFilter("Жанр", genres)
+
+    private fun getGenreList() = arrayOf(
+        Pair("Все", "all"),
+        Pair("Боевые искусства", "boyevyye-iskusstva"),
+        Pair("Война", "voyna"),
+        Pair("Драма", "drama"),
+        Pair("Детектив", "detektiv"),
+        Pair("История", "istoriya"),
+        Pair("Комедия", "komediya"),
+        Pair("Мистика", "mistika"),
+        Pair("Меха", "mekha"),
+        Pair("Махо-сёдзё", "makho-sedze"),
+        Pair("Музыкальный", "muzykalnyy"),
+        Pair("Повседневность", "povsednevnost"),
+        Pair("Приключения", "priklyucheniya"),
+        Pair("Пародия", "parodiya"),
+        Pair("Романтика", "romantika"),
+        Pair("Сёнэн", "senen"),
+        Pair("Сёдзё", "sedze"),
+        Pair("Спорт", "sport"),
+        Pair("Сказка", "skazka"),
+        Pair("Сёдзё-ай", "sedze-ay"),
+        Pair("Сёнэн-ай", "senen-ay"),
+        Pair("Самураи", "samurai"),
+        Pair("Триллер", "triller"),
+        Pair("Ужасы", "uzhasy"),
+        Pair("Фантастика", "fantastika"),
+        Pair("Фэнтези", "fentezi"),
+        Pair("Школа", "shkola"),
+        Pair("Этти", "etti"),
+    )
+
+    open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :
+        AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
+        override fun toString() = vals[state].second
+    }
+
+    private val sortableList = listOf(
+        Pair("Дате", SortBy.DATE),
+        Pair("Популярности", SortBy.RATING),
+        Pair("Посещаемости", SortBy.NEWS_READ),
+        Pair("Комментариям", SortBy.COMM_NUM),
+        Pair("Алфавиту", SortBy.TITLE),
+    )
+
+    class SortFilter(sortables: Array<String>) : AnimeFilter.Sort("Сортировать по", sortables, Selection(0, false))
 
     // Settings
 
