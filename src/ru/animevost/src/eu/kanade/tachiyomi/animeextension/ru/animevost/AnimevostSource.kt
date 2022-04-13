@@ -166,7 +166,7 @@ class AnimevostSource(override val name: String, override val baseUrl: String, p
             }
         }
 
-        return episodeList
+        return episodeList.reversed()
     }
 
     // Latest
