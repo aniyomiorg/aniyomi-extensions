@@ -2,13 +2,12 @@ package eu.kanade.tachiyomi.animeextension.es.pelisplushd
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Base64
 import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamSBExtractor
-import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -31,7 +30,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Pelisplushd"
 
-    override val baseUrl = "https://pelisplushd.lat"
+    override val baseUrl = "https://ww1.pelisplushd.nu"
 
     override val lang = "es"
 
@@ -53,7 +52,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             element.select("a").attr("href")
         )
         anime.title = element.select("a div.listing-content p").text()
-        anime.thumbnail_url = baseUrl + element.select("a img").attr("src")
+        anime.thumbnail_url = element.select("a img").attr("src")
         return anime
     }
 
@@ -79,7 +78,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 episode.name = element.text()
                 episode.setUrlWithoutDomain(element.attr("href"))
                 episodes.add(episode)
-                Log.i("bruh", "${episodes[index].name}")
+                Log.i("bruh", episodes[index].name)
             }
             episodes.removeLast()
         }
@@ -94,39 +93,15 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
 
-        document.select("ul.TbVideoNv li").forEach { it ->
-            val server = it.select("a").text()
-            val option = it.attr("data-id")
-            Log.i("bruh", "$option : $server")
-            document.select("div.page-container div#link_url span").forEach() { servers ->
-
-                if (servers.attr("lid") == option && server == "PlusTo") {
-                    val url = servers.attr("url")
-                    Log.i("bruh", "id:${servers.attr("lid")} server:$server Url: $url")
-                    val videos = FembedExtractor().videosFromUrl(url)
-                    videoList.addAll(videos)
-                }
-                //probably the conditions are redundant idk
-                if (servers.attr("lid") == option && server == "DoFast" || servers.attr("lid") == option && server == "DoodStream") {
-                    val url = servers.attr("url").replace("doodstream.com", "dood.so")
-                    Log.i("bruh", "id:${servers.attr("lid")} server:$server Url1: $url")
-                    val video = try { DoodExtractor(client).videoFromUrl(url, "DoodStream") } catch (e: Exception) { null }
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
-                if (servers.attr("lid") == option && server == "FastTape" || servers.attr("lid") == option && server == "StreamTape") {
-                    val url = servers.attr("url")
-                    Log.i("bruh", "id:${servers.attr("lid")} server:$server Url1: $url")
-                    val video = StreamTapeExtractor(client).videoFromUrl(url, "StreamTape")
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
-
-                if (servers.attr("lid") == option && server == "SBFast" || servers.attr("lid") == option && server == "SBFas") {
-                    val url = servers.attr("url")
-                    Log.i("bruh", "id:${servers.attr("lid")} server:$server Url2: $url")
+        val data = document.selectFirst("script:containsData(video[1] = )").data()
+        val apiUrl = data.substringAfter("video[1] = '", "")
+            .substringBefore("';", "")
+            .ifEmpty { throw Exception("no video links found.") }
+        val apiResponse = client.newCall(GET(apiUrl)).execute().asJsoup()
+        apiResponse.select("li[data-r]").forEach {
+            val url = String(Base64.decode(it.attr("data-r"), Base64.DEFAULT))
+            when (it.select("span").text()) {
+                "sbfast" -> {
                     val headers = headers.newBuilder()
                         .set("Referer", url)
                         .set("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
@@ -138,9 +113,12 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         videoList.addAll(video)
                     }
                 }
+                "plusto" -> {
+                    val videos = FembedExtractor().videosFromUrl(url)
+                    videoList.addAll(videos)
+                }
             }
         }
-
         return videoList
     }
 
