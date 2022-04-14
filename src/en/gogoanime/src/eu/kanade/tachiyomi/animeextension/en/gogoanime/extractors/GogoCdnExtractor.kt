@@ -24,8 +24,8 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
     fun videosFromUrl(serverUrl: String): List<Video> {
         try {
             val id = serverUrl.toHttpUrl().queryParameter("id") ?: throw Exception("error getting id")
-            val iv = "4770478969418267".toByteArray()
-            val secretKey = "63976882873559819639988080820907".toByteArray()
+            val iv = "4786443969418267".toByteArray()
+            val secretKey = "63976882873536819639922083275907".toByteArray()
 
             val encryptedId = try { cryptoHandler(id, iv, secretKey) } catch (e: Exception) { e.message ?: "" }
 
