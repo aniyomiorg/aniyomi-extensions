@@ -31,4 +31,8 @@ data class Data(
     val type: String? = null,
     @SerialName("series")
     val series: String? = null,
+    @SerialName("rating")
+    val rating: Int? = null,
+    @SerialName("votes")
+    val votes: Int? = null,
 )

@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ru.animevost.dto.AnimeDetailsDto
+import eu.kanade.tachiyomi.animeextension.ru.animevost.dto.Data
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -29,6 +30,7 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
+import kotlin.math.roundToInt
 
 class AnimevostSource(override val name: String, override val baseUrl: String, private val baseApiUrl: String) :
     ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -119,7 +121,7 @@ class AnimevostSource(override val name: String, override val baseUrl: String, p
             }
 
             author = animeData.director
-            description = animeData.description
+            description = formatDescription(animeData)
 
             if (animeData.timer != null) {
                 status = if (animeData.timer > 0) SAnime.ONGOING else SAnime.COMPLETED
@@ -129,6 +131,32 @@ class AnimevostSource(override val name: String, override val baseUrl: String, p
         }
 
         return anime
+    }
+
+    private fun formatDescription(animeData: Data): String {
+        var description = ""
+
+        if (animeData.year != null) {
+            description += "Год: ${animeData.year}\n"
+        }
+
+        if (animeData.rating != null && animeData.votes != null) {
+            val rating = (animeData.rating.toDouble() / animeData.votes.toDouble()).roundToInt()
+
+            description += "Рейтинг: ${"★".repeat(rating)}${"☆".repeat(Math.max(5 - rating, 0))} (Голосов: ${animeData.votes})\n"
+        }
+
+        if (animeData.type != null) {
+            description += "Тип: ${animeData.type}\n"
+        }
+
+        if (description.isNotEmpty()) {
+            description += "\n"
+        }
+
+        description += animeData.description?.replace("<br />", "")
+
+        return description
     }
 
     override fun animeDetailsParse(document: Document) = throw Exception("not used")
