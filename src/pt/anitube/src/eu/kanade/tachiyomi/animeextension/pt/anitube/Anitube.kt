@@ -55,10 +55,12 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/anime/page/$page")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
+        val anime: SAnime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.title = element.selectFirst("img").attr("title")
-        anime.thumbnail_url = element.selectFirst("img").attr("src")
+        anime.thumbnail_url = element.selectFirst("img")
+            .attr("src")
+            .replace("https://www.anitube.in", baseUrl) // Fix images
         return anime
     }
 
@@ -350,7 +352,7 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun hasNextPage(document: Document): Boolean {
         val pagination = document.selectFirst("div.pagination")
         val items = pagination?.select("a.page-numbers")
-        if (pagination == null || items!!.size == 0) return false
+        if (pagination == null || items!!.size < 2) return false
         val currentPage: Int = pagination.selectFirst("a.page-numbers.current")
             ?.attr("href")
             ?.toPageNum() ?: 1

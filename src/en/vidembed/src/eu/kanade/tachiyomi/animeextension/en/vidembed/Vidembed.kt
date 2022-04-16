@@ -109,7 +109,12 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                     if (video != null) videoList.add(video)
                 }
-                url.contains("https://sbplay") -> {
+                url.contains("sbembed.com") || url.contains("sbembed1.com") || url.contains("sbplay.org") ||
+                    url.contains("sbvideo.net") || url.contains("streamsb.net") || url.contains("sbplay.one") ||
+                    url.contains("cloudemb.com") || url.contains("playersb.com") || url.contains("tubesb.com") ||
+                    url.contains("sbplay1") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
+                    url.contains("sbplay2") || url.contains("japopav.tv") || url.contains("viewsb.com")
+                -> {
                     val newUrl = url.replace("/d/", "/e/")
                     val headers = headers.newBuilder()
                         .set("Referer", url)

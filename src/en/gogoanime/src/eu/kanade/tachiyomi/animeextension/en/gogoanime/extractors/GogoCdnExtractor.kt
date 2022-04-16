@@ -24,14 +24,14 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
     fun videosFromUrl(serverUrl: String): List<Video> {
         try {
             val id = serverUrl.toHttpUrl().queryParameter("id") ?: throw Exception("error getting id")
-            val iv = "31323835363732333833393339383532".decodeHex()
-            val secretKey = "3235373136353338353232393338333936313634363632323738383333323838".decodeHex()
+            val iv = "4786443969418267".toByteArray()
+            val secretKey = "63976882873536819639922083275907".toByteArray()
 
             val encryptedId = try { cryptoHandler(id, iv, secretKey) } catch (e: Exception) { e.message ?: "" }
 
             val jsonResponse = client.newCall(
                 GET(
-                    "http://gogoplay.io/encrypt-ajax.php?id=$encryptedId",
+                    "https://gogoplay5.com/encrypt-ajax.php?id=$encryptedId",
                     Headers.headersOf("X-Requested-With", "XMLHttpRequest")
                 )
             ).execute().body!!.string()
@@ -44,8 +44,8 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
                 val fileURL = array[0].jsonObject["file"].toString().trim('"')
                 val masterPlaylist = client.newCall(GET(fileURL)).execute().body!!.string()
                 masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
-                    .split("#EXT-X-STREAM-INF:").reversed().forEach {
-                        val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p"
+                    .split("#EXT-X-STREAM-INF:").forEach {
+                        val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",NAME").substringBefore("\n") + "p"
                         val videoUrl = fileURL.substringBeforeLast("/") + "/" + it.substringAfter("\n").substringBefore("\n")
                         videoList.add(Video(videoUrl, quality, videoUrl, null))
                     }
@@ -65,7 +65,7 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
                 )
                 else videoList.add(Video(fileURL, label, fileURL, null, videoHeaders))
             }
-            return videoList.reversed() + autoList
+            return videoList.sortedByDescending { it.quality.substringBefore("p").toInt() } + autoList
         } catch (e: Exception) {
             return emptyList()
         }
@@ -87,12 +87,5 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
             cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec)
             Base64.encodeToString(cipher.doFinal(string.toByteArray()), Base64.NO_WRAP)
         }
-    }
-
-    private fun String.decodeHex(): ByteArray {
-        check(length % 2 == 0) { "Must have an even length" }
-        return chunked(2)
-            .map { it.toInt(16).toByte() }
-            .toByteArray()
     }
 }

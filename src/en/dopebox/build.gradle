@@ -5,7 +5,7 @@ ext {
     extName = 'DopeBox'
     pkgNameSuffix = 'en.dopebox'
     extClass = '.DopeBox'
-    extVersionCode = 2
+    extVersionCode = 3
     libVersion = '12'
 }
 

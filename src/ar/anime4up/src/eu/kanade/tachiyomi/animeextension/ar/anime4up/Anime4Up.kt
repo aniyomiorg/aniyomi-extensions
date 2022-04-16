@@ -30,7 +30,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Anime4Up"
 
-    override val baseUrl = "https://w1.anime4up.com"
+    override val baseUrl = "https://anime4up.vip"
 
     override val lang = "ar"
 
@@ -44,7 +44,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun headersBuilder(): Headers.Builder {
         return super.headersBuilder()
-            .add("Referer", "https://w1.anime4up.com/") // https://s12.gemzawy.com https://moshahda.net
+            .add("Referer", "https://anime4up.vip/") // https://s12.gemzawy.com https://moshahda.net
     }
 
     // Popular

@@ -12,7 +12,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.Headers
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -94,9 +93,10 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val unescapedData = JSONUtil.unescape(data)
         val serversHtml = Jsoup.parse(unescapedData)
         val videoList = mutableListOf<Video>()
-        serversHtml.select("div.server-item").forEach {
-            val id = it.attr("data-id")
-            val subDub = it.attr("data-type")
+        for (server in serversHtml.select("div.server-item")) {
+            if (server.text() == "StreamSB" || server.text() == "Streamtape") continue
+            val id = server.attr("data-id")
+            val subDub = server.attr("data-type")
             val videos = getVideosFromServer(
                 client.newCall(GET("$baseUrl/ajax/v2/episode/sources?id=$id", episodeReferer)).execute(),
                 subDub
@@ -108,16 +108,12 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun getVideosFromServer(response: Response, subDub: String): List<Video>? {
         val body = response.body!!.string()
-        val url = body.substringAfter("\"link\":\"").substringBefore("\"").toHttpUrl()
-        val id = url.pathSegments.last()
-        val getSources = url.toString().substringBefore("embed-6") + "ajax/embed-6/getSources?id=$id&_token="
+        val url = body.substringAfter("\"link\":\"").substringBefore("\"") + "&autoPlay=1&oa=0"
+        val getSourcesLink = ZoroExtractor(client).getSourcesLink(url) ?: return null
 
-        val referer = Headers.headersOf("Referer", baseUrl)
-        val recaptchaClient = client.newBuilder().addInterceptor(GetSourcesInterceptor(getSources, client)).build()
-
-        val lol = recaptchaClient.newCall(GET("$url&autoPlay=1", referer)).execute().body!!.string()
-        if (!lol.contains("{\"sources\":[{\"file\":\"")) return null
-        val masterUrl = lol.substringAfter("{\"sources\":[{\"file\":\"").substringBefore("\"")
+        val source = client.newCall(GET(getSourcesLink)).execute().body!!.string()
+        if (!source.contains("{\"sources\":[{\"file\":\"")) return null
+        val masterUrl = source.substringAfter("{\"sources\":[{\"file\":\"").substringBefore("\"")
         val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
         val videoList = mutableListOf<Video>()
         masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
