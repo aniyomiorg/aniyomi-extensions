@@ -26,6 +26,8 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
+import java.lang.NumberFormatException
+import kotlin.math.abs
 
 @ExperimentalSerializationApi
 class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -109,16 +111,30 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val newList = mutableListOf<Video>()
             var preferred = 0
             for (video in this) {
-                if (video.quality.contains(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
+                when {
+                    video.quality.contains(quality) -> {
+                        newList.add(preferred, video)
+                        preferred++
+                    }
+                    abs(qualityToInt(video.quality) - quality.toInt()) < 100 -> {
+                        newList.add(preferred, video)
+                    }
+                    else -> {
+                        newList.add(video)
+                    }
                 }
             }
             return newList
         }
         return this
+    }
+
+    private fun qualityToInt(quality: String): Int {
+        return try {
+            quality.substringBefore("p").toInt()
+        } catch (e: NumberFormatException) {
+            -100
+        }
     }
 
     override fun searchAnimeFromElement(element: Element): SAnime {
