@@ -100,7 +100,7 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val videos = FembedExtractor().videosFromUrl(url)
                 videoList.addAll(videos)
             }
-            if (server == "ok" || server == "Ok") {
+            if (server == "ok" && !url.contains("streamcherry") || server == "Ok" && !url.contains("streamcherry")) {
                 val videos = OkruExtractor(client).videosFromUrl(url)
                 videoList.addAll(videos)
             }
