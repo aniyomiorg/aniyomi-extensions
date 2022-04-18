@@ -90,13 +90,21 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val serverUrl = "https:" + document.select("div.anime_muti_link > ul > li.anime > a")
-            .attr("data-video")
-        val doodUrl = document.select("div.anime_muti_link > ul > li.doodstream > a")
-            .attr("data-video")
-        val gogoVideos = GogoCdnExtractor(client, json).videosFromUrl(serverUrl)
-        val doodVideos = DoodExtractor(client).videosFromUrl(doodUrl)
-        return gogoVideos + doodVideos
+        val extractor = GogoCdnExtractor(client, json)
+        val videoList = mutableListOf<Video>()
+        // GogoCdn:
+        document.select("div.anime_muti_link > ul > li.vidcdn > a")
+            .firstOrNull()?.attr("data-video")
+            ?.let { videoList.addAll(extractor.videosFromUrl("https:$it")) }
+        // Vidstreaming:
+        document.select("div.anime_muti_link > ul > li.anime > a")
+            .firstOrNull()?.attr("data-video")
+            ?.let { videoList.addAll(extractor.videosFromUrl("https:$it")) }
+        // Doodstream mirror:
+        document.select("div.anime_muti_link > ul > li.doodstream > a")
+            .firstOrNull()?.attr("data-video")
+            ?.let { videoList.addAll(DoodExtractor(client).videosFromUrl(it)) }
+        return videoList
     }
 
     override fun videoListSelector() = throw Exception("not used")

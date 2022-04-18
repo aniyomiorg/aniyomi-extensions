@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.gogoanime.extractors
 
 import android.util.Base64
-import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -24,19 +23,21 @@ import javax.crypto.spec.SecretKeySpec
 class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json) {
     fun videosFromUrl(serverUrl: String): List<Video> {
         try {
-            val iv = "8244002440089157".toByteArray()
-            val secretKey = "93106165734640459728346589106791".toByteArray()
-            val decryptionKey = "97952160493714852094564712118349".toByteArray()
+            val iv = "4968442212618524".toByteArray()
+            val secretKey = "34541577475429958244002440089157".toByteArray()
+            val decryptionKey = "20945647121183498244002440089157".toByteArray()
 
             val httpUrl = serverUrl.toHttpUrl()
             val host = "https://" + httpUrl.host + "/"
             val id = httpUrl.queryParameter("id") ?: throw Exception("error getting id")
+            val token = httpUrl.queryParameter("token")
+            val tokenString = if (token != null) { "&token=$token&op=2" } else ""
 
             val encryptedId = cryptoHandler(id, iv, secretKey)
 
             val jsonResponse = client.newCall(
                 GET(
-                    "${host}encrypt-ajax.php?id=$encryptedId&alias=$id",
+                    "${host}encrypt-ajax.php?id=$encryptedId$tokenString&alias=$id",
                     Headers.headersOf(
                         "X-Requested-With", "XMLHttpRequest",
                         "Referer", host,
@@ -49,14 +50,16 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
             val videoList = mutableListOf<Video>()
             val autoList = mutableListOf<Video>()
             val array = json.decodeFromString<JsonObject>(decryptedData)["source"]!!.jsonArray
-            Log.i("bruh", array.toString())
-            if (array.size == 1) {
+            if (array.size == 1 && array[0].jsonObject["type"]!!.jsonPrimitive.content == "hls") {
                 val fileURL = array[0].jsonObject["file"].toString().trim('"')
                 val masterPlaylist = client.newCall(GET(fileURL)).execute().body!!.string()
                 masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
                     .split("#EXT-X-STREAM-INF:").forEach {
                         val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",").substringBefore("\n") + "p"
-                        val videoUrl = it.substringAfter("\n").substringBefore("\n")
+                        var videoUrl = it.substringAfter("\n").substringBefore("\n")
+                        if (!videoUrl.startsWith("http")) {
+                            videoUrl = fileURL.substringBeforeLast("/") + "/$videoUrl"
+                        }
                         videoList.add(Video(videoUrl, quality, videoUrl, null))
                     }
             } else array.forEach {
