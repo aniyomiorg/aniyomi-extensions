@@ -31,6 +31,7 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
             val host = "https://" + httpUrl.host + "/"
             val id = httpUrl.queryParameter("id") ?: throw Exception("error getting id")
             val token = httpUrl.queryParameter("token")
+            val qualityPrefix = if (token != null) "Gogostream: " else "Vidstreaming: "
             val tokenString = if (token != null) { "&token=$token&op=2" } else ""
 
             val encryptedId = cryptoHandler(id, iv, secretKey)
@@ -60,7 +61,7 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
                         if (!videoUrl.startsWith("http")) {
                             videoUrl = fileURL.substringBeforeLast("/") + "/$videoUrl"
                         }
-                        videoList.add(Video(videoUrl, quality, videoUrl, null))
+                        videoList.add(Video(videoUrl, qualityPrefix + quality, videoUrl, null))
                     }
             } else array.forEach {
                 val label = it.jsonObject["label"].toString().lowercase(Locale.ROOT)
@@ -70,15 +71,17 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
                 if (label == "auto") autoList.add(
                     Video(
                         fileURL,
-                        label,
+                        qualityPrefix + label,
                         fileURL,
                         null,
                         videoHeaders
                     )
                 )
-                else videoList.add(Video(fileURL, label, fileURL, null, videoHeaders))
+                else videoList.add(Video(fileURL, qualityPrefix + label, fileURL, null, videoHeaders))
             }
-            return videoList.sortedByDescending { it.quality.substringBefore("p").toInt() } + autoList
+            return videoList.sortedByDescending {
+                it.quality.substringAfter(qualityPrefix).substringBefore("p").toIntOrNull() ?: -1
+            } + autoList
         } catch (e: Exception) {
             return emptyList()
         }

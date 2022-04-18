@@ -139,7 +139,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun qualityToInt(quality: String): Int {
         return try {
-            quality.substringBefore("p").toInt()
+            quality.filter { it.isDigit() }.toInt()
         } catch (e: NumberFormatException) {
             -100
         }

@@ -21,7 +21,6 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
-import java.util.Locale
 
 class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val name = "Kuramanime"
@@ -76,22 +75,22 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun episodeListSelector(): String = "#episodeLists"
-    
+
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
-        
+
         val html = document.select(episodeListSelector()).attr("data-content")
         val jsoupE = Jsoup.parse(html)
 
         return jsoupE.select("a").filter { ele -> !ele.attr("href").contains("batch") }.map { episodeFromElement(it) }
     }
 
-    private fun parseShortInfo(element : Element): SAnime {
+    private fun parseShortInfo(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("a").first().attr("href"))
         anime.thumbnail_url = element.select("a > div").first().attr("data-setbg")
         anime.title = element.select("div.product__item__text > h5").text()
-        return anime     
+        return anime
     }
 
     override fun latestUpdatesFromElement(element: Element): SAnime = parseShortInfo(element)
