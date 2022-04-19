@@ -6,6 +6,7 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.en.gogoanime.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.en.gogoanime.extractors.GogoCdnExtractor
+import eu.kanade.tachiyomi.animeextension.en.gogoanime.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -90,7 +91,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val extractor = GogoCdnExtractor(client, json)
+        val extractor = GogoCdnExtractor(network.client, json)
         val videoList = mutableListOf<Video>()
         // GogoCdn:
         document.select("div.anime_muti_link > ul > li.vidcdn > a")
@@ -104,6 +105,10 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         document.select("div.anime_muti_link > ul > li.doodstream > a")
             .firstOrNull()?.attr("data-video")
             ?.let { videoList.addAll(DoodExtractor(client).videosFromUrl(it)) }
+        // StreamSB mirror:
+        document.select("div.anime_muti_link > ul > li.streamsb > a")
+            .firstOrNull()?.attr("data-video")
+            ?.let { videoList.addAll(StreamSBExtractor(client).videosFromUrl(it, headers)) }
         return videoList
     }
 

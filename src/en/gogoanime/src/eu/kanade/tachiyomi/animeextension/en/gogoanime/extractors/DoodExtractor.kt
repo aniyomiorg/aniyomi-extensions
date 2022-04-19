@@ -23,7 +23,7 @@ class DoodExtractor(private val client: OkHttpClient) {
                 )
             ).execute().body!!.string()
             val videoUrl = "$videoUrlStart$randomString?token=$token&expiry=$expiry"
-            return listOf(Video(serverUrl, "Doodstream mirror", videoUrl, null, doodHeaders(doodTld)))
+            return listOf(Video(serverUrl, "Doodstream", videoUrl, null, doodHeaders(doodTld)))
         } catch (e: Exception) {
             return emptyList()
         }

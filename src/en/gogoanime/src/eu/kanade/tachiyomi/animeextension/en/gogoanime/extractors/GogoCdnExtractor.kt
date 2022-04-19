@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.en.gogoanime.extractors
 
 import android.util.Base64
+import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -24,6 +25,7 @@ import javax.crypto.spec.SecretKeySpec
 class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json) {
     fun videosFromUrl(serverUrl: String): List<Video> {
         try {
+            Log.i("bruh", serverUrl)
             val document = client.newCall(GET(serverUrl)).execute().asJsoup()
             val iv = document.select("div.wrapper")
                 .attr("class").substringAfter("container-")
@@ -34,23 +36,26 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
             val decryptionKey = document.select("div.videocontent")
                 .attr("class").substringAfter("videocontent-")
                 .filter { it.isDigit() }.toByteArray()
+            val encryptAjaxParams = cryptoHandler(
+                document.select("script[data-value]")
+                    .attr("data-value"),
+                iv, secretKey, false
+            ).substringAfter("&")
+            Log.i("bruh", encryptAjaxParams)
 
             val httpUrl = serverUrl.toHttpUrl()
             val host = "https://" + httpUrl.host + "/"
             val id = httpUrl.queryParameter("id") ?: throw Exception("error getting id")
+            val encryptedId = cryptoHandler(id, iv, secretKey)
+            Log.i("bruh", "${host}encrypt-ajax.php?id=$encryptedId&$encryptAjaxParams&alias=$id")
             val token = httpUrl.queryParameter("token")
             val qualityPrefix = if (token != null) "Gogostream: " else "Vidstreaming: "
-            val tokenString = if (token != null) { "&token=$token&op=2" } else ""
-
-            val encryptedId = cryptoHandler(id, iv, secretKey)
 
             val jsonResponse = client.newCall(
                 GET(
-                    "${host}encrypt-ajax.php?id=$encryptedId$tokenString&alias=$id",
+                    "${host}encrypt-ajax.php?id=$encryptedId&$encryptAjaxParams&alias=$id",
                     Headers.headersOf(
-                        "X-Requested-With", "XMLHttpRequest",
-                        "Referer", host,
-                        "Alias", id
+                        "X-Requested-With", "XMLHttpRequest"
                     )
                 )
             ).execute().body!!.string()
