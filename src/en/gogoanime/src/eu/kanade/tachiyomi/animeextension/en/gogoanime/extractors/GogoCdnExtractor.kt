@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.animeextension.en.gogoanime.extractors
 import android.util.Base64
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -23,9 +24,16 @@ import javax.crypto.spec.SecretKeySpec
 class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json) {
     fun videosFromUrl(serverUrl: String): List<Video> {
         try {
-            val iv = "4968442212618524".toByteArray()
-            val secretKey = "34541577475429958244002440089157".toByteArray()
-            val decryptionKey = "20945647121183498244002440089157".toByteArray()
+            val document = client.newCall(GET(serverUrl)).execute().asJsoup()
+            val iv = document.select("div.wrapper")
+                .attr("class").substringAfter("container-")
+                .filter { it.isDigit() }.toByteArray()
+            val secretKey = document.select("body[class]")
+                .attr("class").substringAfter("container-")
+                .filter { it.isDigit() }.toByteArray()
+            val decryptionKey = document.select("div.videocontent")
+                .attr("class").substringAfter("videocontent-")
+                .filter { it.isDigit() }.toByteArray()
 
             val httpUrl = serverUrl.toHttpUrl()
             val host = "https://" + httpUrl.host + "/"
