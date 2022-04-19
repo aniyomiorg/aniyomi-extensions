@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.en.animepahe
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
@@ -175,7 +174,6 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun episodeListRequest(anime: SAnime): Request {
         val animeId = anime.url.substringAfterLast("?anime_id=")
         val session = getSession(anime.title, animeId)
-        Log.i("bruh", session)
         return GET("$baseUrl/api?m=release&id=$session&sort=episode_desc&page=1")
     }
 

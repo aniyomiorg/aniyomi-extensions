@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.es.jkhentai
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.jkhentai.extractors.StreamTapeExtractor
@@ -61,12 +60,9 @@ class Jkhentai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val jsoup = response.asJsoup()
         val animeId = response.request.url.pathSegments.last().replace("-sub-espanol", "").replace("-080p", "-1080p")
-        Log.i("bruh", "$animeId")
         jsoup.select("div#contenedor div.items.ptts div#movie div.post div#cssmenu ul li.has-sub.open ul li").forEach { it ->
-            Log.i("bruh", "e")
 
             val epNum = it.select("a").attr("href").replace("https://www.jkhentai.net/ver/$animeId-", "")
-            Log.i("bruh", "Episode-$epNum")
             val episode = SEpisode.create().apply {
                 episode_number = epNum.toFloat()
                 name = "Episodio $epNum"
@@ -88,7 +84,6 @@ class Jkhentai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         document.select("div#contenedor div.items.ptts div#movie div.post div#player-container ul.player-menu li").forEach { it ->
             val server = it.select("a").text()
-            Log.i("bruh", "1Server:$server")
             document.select("div#contenedor div.items.ptts div#movie div.post div#player-container div.play-c").forEach() {
                 if (server == "StreamTape") {
                     val url = it.select("div.player-content iframe").attr("src")

@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.ar.animerco.extractors
 
-import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.POST
 import kotlinx.serialization.decodeFromString
@@ -13,7 +12,6 @@ import okhttp3.OkHttpClient
 class FembedExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String): List<Video> {
         val videoApi = url.replace("/v/", "/api/source/").replace("https://www.fembed.com", "https://suzihaza.com")
-        Log.i("jsoo", "$videoApi")
         // val jsonR = Json.decodeFromString<JSONObject>(client.newCall(POST(videoApi)).execute().body!!.string())
         /*val jsonR = Json.decodeFromString<JsonObject>(
             Jsoup.connect(videoApi).ignoreContentType(true)
@@ -22,18 +20,14 @@ class FembedExtractor(private val client: OkHttpClient) {
         val jsonR = Json.decodeFromString<JsonObject>(
             client.newCall(POST(videoApi)).execute().body!!.string()
         )
-        Log.i("jsoo", "$jsonR")
         val jsonText = client.newCall(POST(videoApi)).execute().body!!.string()
-        Log.i("jsoo", jsonR["success"].toString())
 
         val videoList = mutableListOf<Video>()
         if (jsonR["success"].toString() == "true") {
             val videoList = mutableListOf<Video>()
             jsonR["data"]!!.jsonArray.forEach() {
                 val videoUrl = it.jsonObject["file"].toString().trim('"')
-                Log.i("jsoon", "$videoUrl")
                 val quality = "Fembed:" + it.jsonObject["label"].toString().trim('"')
-                Log.i("jsoon", "$quality")
                 videoList.add(Video(videoUrl, quality, videoUrl, null))
             }
             /*val jsonArray = json.getJSONArray("data")

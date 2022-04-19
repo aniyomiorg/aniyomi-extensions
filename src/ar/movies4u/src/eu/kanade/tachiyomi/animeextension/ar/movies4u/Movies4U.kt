@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.ar.movies4u
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -99,11 +98,9 @@ class Movies4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun parseEpisodesFromSeries(element: Element): List<SEpisode> {
         val seasonId = element.select("div.card__content h3.card__title a").attr("href")
         val seasonName = element.select("div.card__content h3.card__title a").text()
-        Log.i("seasonname", seasonName)
-        val episodesUrl = seasonId
         val episodesHtml = client.newCall(
             GET(
-                episodesUrl,
+                seasonId,
             )
         ).execute().asJsoup()
         val episodeElements = episodesHtml.select("div.col-6.col-sm-4.col-md-3.col-xl-2")
@@ -125,15 +122,12 @@ class Movies4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val iframe1 = client.newCall(GET(document.selectFirst("iframe#video").attr("data-src")))
             .execute().asJsoup()
-        Log.i("lol", "$iframe1")
         val iframe = iframe1.selectFirst("iframe").attr("src")
 
-        Log.i("lol", "$iframe")
         val referer = response.request.url.encodedPath
         val newHeaders = Headers.headersOf("referer", baseUrl + referer)
         val iframeResponse = client.newCall(GET(iframe, newHeaders))
             .execute().asJsoup()
-        Log.i("lol", "$iframeResponse")
         return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
     }
 
@@ -180,7 +174,6 @@ class Movies4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val tokenUrl = client.newCall(GET(baseUrl))
             .execute().asJsoup()
         val token = tokenUrl.select("meta[name=csrf-token]").attr("content")
-        Log.i("token", "$token")
         return token
     }
     /*private fun loadToken(): String? {
@@ -212,17 +205,15 @@ class Movies4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 when (filter) {
                     is GenreList -> {
                         if (filter.state > 0) {
-                            val GenreN = getGenreList()[filter.state].query
-                            val genreUrl = "$baseUrl/movies?category=$GenreN&quality=&imdb=0.0|10.0&year=1900|2021&page=$page"
-                            Log.i("lol", genreUrl)
+                            val genreN = getGenreList()[filter.state].query
+                            val genreUrl = "$baseUrl/movies?category=$genreN&quality=&imdb=0.0|10.0&year=1900|2021&page=$page"
                             return GET(genreUrl, headers)
                         }
                     }
                     is GenreList2 -> {
                         if (filter.state > 0) {
-                            val GenreN = getGenreList()[filter.state].query
-                            val genreUrl = "$baseUrl/series?category=$GenreN&quality=undefined&imdb=0.0|10.0&year=1900|2021&page=$page"
-                            Log.i("lol", genreUrl)
+                            val genreN = getGenreList()[filter.state].query
+                            val genreUrl = "$baseUrl/series?category=$genreN&quality=undefined&imdb=0.0|10.0&year=1900|2021&page=$page"
                             return GET(genreUrl, headers)
                         }
                     }

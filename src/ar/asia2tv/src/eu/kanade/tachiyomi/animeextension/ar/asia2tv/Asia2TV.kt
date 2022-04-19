@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.ar.asia2tv
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -109,18 +108,14 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
                 url.contains("https://www.fembed.com") -> {
                     val apiCall = client.newCall(POST(url.replace("https://www.fembed.com/v", "http://diasfem.com/api/source"))).execute().body!!.string()
-                    Log.i("lol", "$apiCall")
                     val data = apiCall.substringAfter("\"data\":[").substringBefore("],")
                     val sources = data.split("\"file\":\"").drop(1)
-                    val videoList = mutableListOf<Video>()
                     for (source in sources) {
                         val src = source.substringAfter("\"file\":\"").substringBefore("\"").replace("\\/", "/")
-                        Log.i("lol", "$src")
                         val quality = source.substringAfter("\"label\":\"").substringBefore("\"")
                         val video = Video(url, quality, src, null)
                         videoList.add(video)
                     }
-                    return videoList
                 }
             }
         }
@@ -146,7 +141,6 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 Headers.headersOf("referer", url)
             )
         ).execute().body!!.string()
-        Log.i("lol", "$videoUrlStart$randomString?token=$token&expiry=$expiry")
         return "$videoUrlStart$randomString?token=$token&expiry=$expiry"
     }
 

@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.gogoanime.extractors
 
 import android.util.Base64
-import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -25,7 +24,6 @@ import javax.crypto.spec.SecretKeySpec
 class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json) {
     fun videosFromUrl(serverUrl: String): List<Video> {
         try {
-            Log.i("bruh", serverUrl)
             val document = client.newCall(GET(serverUrl)).execute().asJsoup()
             val iv = document.select("div.wrapper")
                 .attr("class").substringAfter("container-")
@@ -41,13 +39,11 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
                     .attr("data-value"),
                 iv, secretKey, false
             ).substringAfter("&")
-            Log.i("bruh", encryptAjaxParams)
 
             val httpUrl = serverUrl.toHttpUrl()
             val host = "https://" + httpUrl.host + "/"
             val id = httpUrl.queryParameter("id") ?: throw Exception("error getting id")
             val encryptedId = cryptoHandler(id, iv, secretKey)
-            Log.i("bruh", "${host}encrypt-ajax.php?id=$encryptedId&$encryptAjaxParams&alias=$id")
             val token = httpUrl.queryParameter("token")
             val qualityPrefix = if (token != null) "Gogostream: " else "Vidstreaming: "
 

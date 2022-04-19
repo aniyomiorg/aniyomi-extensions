@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.ar.arabseed
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -71,10 +70,6 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val srcVid = preferences.getString("preferred_quality", "سيرفر عرب سيد - 720p")!!
-        Log.i(
-            "plsWork",
-            document.select("li:contains($srcVid) noscript iframe").attr("src") // :contains($srcVid)
-        )
         val iframe = document.select("li:contains($srcVid) noscript iframe").attr("src")
         val referer = response.request.url.encodedPath
         val newHeaders = Headers.headersOf("referer", baseUrl + referer)
@@ -86,7 +81,6 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector() = "source" // , video"
 
     override fun videoFromElement(element: Element): Video {
-        Log.i("plsWork", element.attr("src"))
         return Video(element.attr("src").replace("https", "http"), "Default: If you want to change the quality go to extension settings", element.attr("src").replace("https", "http"), null)
     }
 

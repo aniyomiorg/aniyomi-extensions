@@ -19,10 +19,7 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
-import java.lang.RuntimeException
-import java.lang.StringBuilder
 import java.net.URLDecoder
-import java.text.SimpleDateFormat
 import java.util.Locale
 
 class MiniOppai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -42,7 +39,7 @@ class MiniOppai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.title = infox.select("div.infox > h1").text().replace("Judul: ", "")
         anime.genre = infox.select("div.spe > span:nth-child(1)").joinToString(", ") { it.text() }
         anime.status = status
-        anime.artist = infox.select("div.spe > span:nth-child(3)").text().replace("Studio: ","")
+        anime.artist = infox.select("div.spe > span:nth-child(3)").text().replace("Studio: ", "")
         anime.author = "UNKNOWN"
         anime.description = "Synopsis: \n" + document.select("div.desc > div > span").text()
         return anime

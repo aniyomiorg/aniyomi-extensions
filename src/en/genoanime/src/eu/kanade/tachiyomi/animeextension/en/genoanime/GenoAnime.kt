@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.en.genoanime
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.en.genoanime.extractors.DoodExtractor
@@ -121,7 +120,6 @@ class GenoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val elements = document.select(videoListSelector())
         for (element in elements) {
             val url = element.attr("data-video")
-            Log.i("lol", url)
             val location = element.ownerDocument().location()
             val videoHeaders = Headers.headersOf("Referer", location)
             when {

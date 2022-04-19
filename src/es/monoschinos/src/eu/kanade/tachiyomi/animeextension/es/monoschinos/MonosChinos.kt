@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.animeextension.es.monoschinos
 import android.app.Application
 import android.content.SharedPreferences
 import android.util.Base64
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.FembedExtractor
@@ -64,11 +63,9 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val jsoup = response.asJsoup()
         val animeId = response.request.url.pathSegments.last().replace("-sub-espanol", "").replace("-080p", "-1080p")
-        Log.i("bruh", "$animeId")
         jsoup.select("div.heroarea2 div.heromain2 div.allanimes div.row.jpage.row-cols-md-6 div.col-item").forEach { it ->
 
             val epNum = it.attr("data-episode")
-            Log.i("bruh", "Episode-$epNum")
             val episode = SEpisode.create().apply {
                 episode_number = epNum.toFloat()
                 name = "Episodio $epNum"
@@ -92,9 +89,7 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val server = it.select("a").text()
             val urlBase64 = it.select("a").attr("data-player")
             val url1 = Base64.decode(urlBase64, Base64.DEFAULT)
-            Log.i("bruh", "$url1")
             val url = String(url1).replace("https://monoschinos2.com/reproductor?url=", "")
-            Log.i("bruh", "$url")
 
             if (server == "fembed" || server == "Fembed") {
                 val videos = FembedExtractor().videosFromUrl(url)

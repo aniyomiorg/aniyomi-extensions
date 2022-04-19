@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.pt.betteranime.dto
 
 import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
@@ -23,12 +24,14 @@ data class LivewireEffects(
     val html: String? = null
 )
 
+@ExperimentalSerializationApi
 @Serializable
 data class PayloadItem(
     val payload: PayloadData,
     val type: String
 )
 
+@ExperimentalSerializationApi
 @Serializable
 data class PayloadData(
     val name: String = "",

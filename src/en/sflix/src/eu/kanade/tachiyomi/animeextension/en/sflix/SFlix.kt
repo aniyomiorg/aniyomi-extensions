@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Base64
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -40,7 +39,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    //private val domain = "aHR0cHM6Ly9yYWJiaXRzdHJlYW0ubmV0OjQ0Mw.."
+    // private val domain = "aHR0cHM6Ly9yYWJiaXRzdHJlYW0ubmV0OjQ0Mw.."
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -139,14 +138,11 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         // get embed id
         val getVidID = document.selectFirst("a").attr("data-id")
-        Log.i("lol2", "$getVidID")
         val getVidApi = client.newCall(GET("https://dopebox.to/ajax/get_link/" + getVidID)).execute().asJsoup()
 
         // streamrapid URL
         val getVideoEmbed = getVidApi.text().substringAfter("link\":\"").substringBefore("\"")
-        Log.i("lol3", "$getVideoEmbed")
         val videoEmbedUrlId = getVideoEmbed.substringAfterLast("/").substringBefore("?")
-        Log.i("videoEmbedId", "$videoEmbedUrlId")
         val callVideolink = client.newCall(GET(getVideoEmbed, refererHeaders)).execute().asJsoup()
         val uri = Uri.parse(getVideoEmbed)
         val domain = (Base64.encodeToString((uri.scheme + "://" + uri.host + ":443").encodeToByteArray(), Base64.NO_PADDING) + ".").replace("\n", "")
@@ -167,7 +163,6 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .build()
         val iframeResponse = client.newCall(GET(jsonLink, reloadHeaderss))
             .execute().asJsoup()
-        Log.i("iframere", "$iframeResponse")
 
         return videosFromElement(iframeResponse)
     }

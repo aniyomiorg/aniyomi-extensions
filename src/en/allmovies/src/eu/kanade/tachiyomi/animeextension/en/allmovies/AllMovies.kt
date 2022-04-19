@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.en.allmovies
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -95,7 +94,6 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun parseEpisodesFromSeries(element: Element): List<SEpisode> {
         val seasonId = element.attr("abs:href")
         val seasonName = element.text()
-        Log.i("seasonname", seasonName)
         val episodesUrl = seasonId
         val episodesHtml = client.newCall(
             GET(
@@ -135,7 +133,6 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val elements = document.select(videoListSelector())
         for (element in elements) {
             val url = element.attr("abs:src")
-            Log.i("lol", url)
             val location = element.ownerDocument().location()
             val videoHeaders = Headers.headersOf("Referer", location)
             when {
@@ -149,9 +146,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val script = response.selectFirst("script:containsData(m3u8)")
                     val data = script.data()
                     val masterUrl = masterExtractor(data)
-                    Log.i("lol1", masterUrl)
                     val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
-                    Log.i("lol2", masterPlaylist)
                     val videoList = mutableListOf<Video>()
                     masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
                         val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
@@ -205,7 +200,6 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 Headers.headersOf("referer", url)
             )
         ).execute().body!!.string()
-        Log.i("lol", "$videoUrlStart$randomString?token=$token&expiry=$expiry")
         return "$videoUrlStart$randomString?token=$token&expiry=$expiry"
     }
 
@@ -274,7 +268,6 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.title = document.select("div.TPMvCn h1.Title").text()
         anime.genre = document.select("p.Genre a").joinToString(", ") { it.text() }
-        Log.i("status", document.select("div.Info").text())
         anime.status = parseStatus(document.select("div.Info").text()) // span.Qlty
         anime.author = document.select("p.Director span a").joinToString(", ") { it.text() }
         anime.description = document.select("div.TPMvCn div.Description p:first-of-type").text()

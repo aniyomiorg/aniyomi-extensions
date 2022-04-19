@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.ar.faselhdmovies
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -89,11 +88,9 @@ class FASELHDMOVIES : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector() = "button.hd_btn:contains(auto)"
 
     private fun videosFromElement(element: Element, headers: Headers): List<Video> {
-        //val masterUrl = element.data().substringAfter("setup({\"file\":\"").substringBefore("\"").replace("\\/", "/")
+        // val masterUrl = element.data().substringAfter("setup({\"file\":\"").substringBefore("\"").replace("\\/", "/")
         val masterUrl = element.attr("data-url")
-        Log.i("lol", masterUrl)
         val masterPlaylist = client.newCall(GET(masterUrl, headers)).execute().body!!.string()
-        Log.i("lol", "$masterPlaylist")
         val videoList = mutableListOf<Video>()
         masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
             val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"

@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.fr.vostfree
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.fr.vostfree.extractors.DoodExtractor
@@ -57,7 +56,6 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeRequest(page: Int): Request = GET("https://vostfree.tv/films-vf-vostfr/page/$page/")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
-        Log.i("bruh", "${element.baseUri()}")
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
             element.select("div.movie-poster div.play a").attr("href")
@@ -74,8 +72,6 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val jsoup = response.asJsoup()
         jsoup.select("select.new_player_selector option").forEach { it ->
             val epNum = it.text().replace("Episode", "").drop(2)
-            Log.i("Bruh", "Episodio:$epNum")
-            Log.i("bruh", "${response.request.url}-episode:0;")
 
             if (it.text() == "Film") {
                 val episode = SEpisode.create().apply {
@@ -104,10 +100,8 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element) = throw Exception("not used")
 
     override fun videoListParse(response: Response): List<Video> {
-        Log.i("bruh", "aaa${response.request.url}")
         val epNum = response.request.url.toString().substringAfter("https://vostfree.tv/?episode:").substringBefore("/")
         val realUrl = response.request.url.toString().replace("https://vostfree.tv/?episode:$epNum/", "")
-        Log.i("bruh", "RealURL: $realUrl")
         val document = Jsoup.connect(realUrl).get()
         val videoList = mutableListOf<Video>()
         val allPlayerIds = document.select("div.tab-content div div.new_player_top div.new_player_bottom div.button_box")[epNum.toInt()]

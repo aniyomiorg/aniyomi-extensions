@@ -51,7 +51,7 @@ class AnimeFire : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         .add("Referer", baseUrl)
         .add("Accept-Language", ACCEPT_LANGUAGE)
 
-    // ============================== Popular ===============================   
+    // ============================== Popular ===============================
     override fun popularAnimeSelector() = latestUpdatesSelector()
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/top-animes/$page")
     override fun popularAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
@@ -102,11 +102,11 @@ class AnimeFire : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun searchAnimeRequest(page: Int, query: String, filters: AFFilters.FilterSearchParams): Request {
         if (query.isBlank()) {
             return when {
-                !filters.season.isBlank() -> GET("$baseUrl/temporada/${filters.season}/$page")
+                filters.season.isNotBlank() -> GET("$baseUrl/temporada/${filters.season}/$page")
                 else -> GET("$baseUrl/genero/${filters.genre}/$page")
             }
         }
-        val fixedQuery = query.trim().replace(" ", "-").toLowerCase()
+        val fixedQuery = query.trim().replace(" ", "-").lowercase()
         return GET("$baseUrl/pesquisar/$fixedQuery/$page")
     }
 
@@ -155,7 +155,7 @@ class AnimeFire : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/home/$page")
 
-    // ============================== Settings ============================== 
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREFERRED_QUALITY
@@ -200,7 +200,7 @@ class AnimeFire : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val newList = mutableListOf<Video>()
             var preferred = 0
             for (video in this) {
-                if (video.quality.equals(quality)) {
+                if (video.quality == quality) {
                     newList.add(preferred, video)
                     preferred++
                 } else {

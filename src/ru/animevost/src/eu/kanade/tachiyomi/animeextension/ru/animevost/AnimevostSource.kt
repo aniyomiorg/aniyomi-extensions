@@ -143,7 +143,7 @@ class AnimevostSource(override val name: String, override val baseUrl: String, p
         if (animeData.rating != null && animeData.votes != null) {
             val rating = (animeData.rating.toDouble() / animeData.votes.toDouble()).roundToInt()
 
-            description += "Рейтинг: ${"★".repeat(rating)}${"☆".repeat(Math.max(5 - rating, 0))} (Голосов: ${animeData.votes})\n"
+            description += "Рейтинг: ${"★".repeat(rating)}${"☆".repeat((5 - rating).coerceAtLeast(0))} (Голосов: ${animeData.votes})\n"
         }
 
         if (animeData.type != null) {
@@ -256,6 +256,7 @@ class AnimevostSource(override val name: String, override val baseUrl: String, p
                             sortDirection = if (filter.state!!.ascending) SortDirection.ASC else SortDirection.DESC
                         }
                     }
+                    else -> {}
                 }
             }
 

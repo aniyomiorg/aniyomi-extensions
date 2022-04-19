@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.es.animefenix
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.animefenix.extractors.FembedExtractor
@@ -66,7 +65,6 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         jsoup.select("ul.anime-page__episode-list.is-size-6 li").forEach { it ->
 
             val epNum = it.select("a span").text().replace("Episodio", "")
-            Log.i("bruh", "Episode-$epNum")
             val episode = SEpisode.create().apply {
                 episode_number = epNum.toFloat()
                 name = "Episodio $epNum"
@@ -94,8 +92,6 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .substringBefore("&amp;thumbnail")
                 .substringAfter("code=")
                 .substringBefore("&amp")
-
-            Log.i("bruh", "1Server:$server, ServerId:$serverId")
 
             if (server == "Fembed" || server == "fembed") {
                 val fembedUrl = "https://www.fembed.com/v/$serverCode"
@@ -126,7 +122,6 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoUrl = jsoup.select("body script").toString()
             .substringAfter("[{\"file\":\"")
             .substringBefore("\",").replace("\\", "")
-        Log.i("bruh", videoUrl)
         return videoUrl
     }
 

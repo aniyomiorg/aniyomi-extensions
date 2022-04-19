@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.pt.betteranime
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.betteranime.dto.LivewireResponseDto
@@ -62,7 +61,7 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         .add("Referer", baseUrl)
         .add("Accept-Language", ACCEPT_LANGUAGE)
 
-    // ============================== Popular ===============================   
+    // ============================== Popular ===============================
     private fun nextPageSelector(): String = "ul.pagination li.page-item:contains(›)"
     override fun popularAnimeNextPageSelector() = throw Exception("not used")
     override fun popularAnimeSelector(): String = "div.list-animes article"
@@ -215,7 +214,7 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesParse(response: Response) = popularAnimeParse(response)
 
-    // ============================== Settings ============================== 
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREFERRED_QUALITY
@@ -274,7 +273,6 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val url = "$baseUrl/livewire/message/$path"
         val items = updates.joinToString(",") { json.encodeToString(it) }
         val data = "$INITIAL_DATA, \"updates\": [$items]}"
-        Log.d("wireData", data)
         val reqBody = data.toRequestBody("application/json".toMediaType())
         val headers = headersBuilder()
             .add("x-livewire", "true")
