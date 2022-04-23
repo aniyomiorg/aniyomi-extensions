@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.ar.animerco.extractors
 
-import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -10,14 +9,11 @@ class VidBomExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String): List<Video> {
         val doc = client.newCall(GET(url)).execute().asJsoup()
         val script = doc.selectFirst("script:containsData(sources)")
-        Log.i("looool", "$script")
         val data = script.data().substringAfter("sources: [").substringBefore("],")
-        Log.i("loool", "$data")
         val sources = data.split("file:\"").drop(1)
         val videoList = mutableListOf<Video>()
         for (source in sources) {
             val src = source.substringBefore("\"")
-            Log.i("looo", src)
             val quality = "Vidbom:" + source.substringAfter("label:\"").substringBefore("\"") // .substringAfter("format: '")
             val video = Video(src, quality, src, null)
             videoList.add(video)

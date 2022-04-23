@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
-import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -138,7 +137,6 @@ class Cartoons4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val url = "$baseUrl/page/$page/?s=$query".toHttpUrlOrNull()!!.newBuilder()
         return GET(url.build().toString(), headers)
     }
-
 
     // Anime Details
 

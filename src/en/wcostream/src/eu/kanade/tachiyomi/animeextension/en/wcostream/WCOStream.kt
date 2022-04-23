@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.en.wcostream
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -92,21 +91,16 @@ class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val referer = response.request.url.encodedPath
         val newHeaders = Headers.headersOf("referer", baseUrl + referer)
         val iframe = document.selectFirst("div#servers-list ul.nav li a:contains(VidStream)").attr("data-embed")
-        Log.i("lol0", iframe)
         val getSKey = client.newCall(GET(iframe, newHeaders)).execute().body!!.string() // .asJsoup()
-        Log.i("lol1", "$getSKey")
         val sKey = getSKey.substringAfter("window.skey = '").substringBefore("'")
-        Log.i("lol2", sKey)
         val apiHeaders = headers.newBuilder()
             .set("referer1", "$iframe")
             .build()
         val apiLink = iframe.replace("/e/", "/info/") + "&skey=" + sKey
-        Log.i("lol3", apiLink)
         /*val referer = response.request.url.toString()
         val refererHeaders = Headers.headersOf("referer", referer)*/
         val iframeResponse = client.newCall(GET(apiLink, apiHeaders))
             .execute().asJsoup()
-        Log.i("lol4", "$iframeResponse")
         return videosFromElement(iframeResponse) // .selectFirst(videoListSelector())
     }
 
@@ -114,9 +108,7 @@ class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun videosFromElement(element: Element): List<Video> {
         val masterUrl = element.text().substringAfterLast("file\":\"").substringBeforeLast("\"}").replace("\\/", "/")
-        Log.i("lol5", masterUrl)
         val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
-        Log.i("lol6", "$masterPlaylist")
         val videoList = mutableListOf<Video>()
         masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
             val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("hls").replace("\n", "") + "p"

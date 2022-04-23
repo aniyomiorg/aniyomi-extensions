@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.ar.egybest
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -62,35 +61,28 @@ class EgyBest : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
         val seriesLink = document.select("div.movie_img a").attr("href")
-        Log.i("seriesLink", "$seriesLink")
         if (seriesLink.contains("series")) {
-            val seasonUrl = seriesLink
-            Log.i("seasonUrl", seasonUrl)
             val seasonsHtml = client.newCall(
                 GET(
-                    seasonUrl
+                    seriesLink
                     // headers = Headers.headersOf("Referer", document.location())
                 )
             ).execute().asJsoup()
-            Log.i("seasonsHtml", "$seasonsHtml")
             val seasonP = seasonsHtml.selectFirst("div.contents.movies_small")
             val seasonsElements = seasonP.select("a.movie")
-            Log.i("seasonsElements", "$seasonsElements")
             seasonsElements.forEach {
                 val seasonEpList = parseEpisodesFromSeries(it)
                 episodeList.addAll(seasonEpList)
             }
         } else {
-            val movieUrl = seriesLink
             val episode = SEpisode.create()
             episode.name = document.select("div.movie_title h1 span").text()
             episode.episode_number = 1F
-            episode.setUrlWithoutDomain(movieUrl)
+            episode.setUrlWithoutDomain(seriesLink)
             episodeList.add(episode)
         }
         return episodeList
     }
-
 
     private fun parseEpisodesFromSeries(element: Element): List<SEpisode> {
         val episodesUrl = element.attr("abs:href")
@@ -112,7 +104,6 @@ class EgyBest : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         val seasonName = element.ownerDocument().select("div.movie_title h1").text().replace(" مسلسل ", "")
         episode.name = "$seasonName : " + element.select("span.title").text()
-        Log.i("episodelink", element.select("div.episodiotitle a").attr("abs:href"))
         episode.setUrlWithoutDomain(element.attr("abs:href"))
         return episode
     }
@@ -125,9 +116,7 @@ class EgyBest : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        Log.i("loooo", "$document")
         val movUrl = document.select("div.movie_img a").attr("href")
-        Log.i("looo", movUrl)
         val apiUrl = "https://zawmedia-api.herokuapp.com/egybest?url=$movUrl"
         return videosFromElement(apiUrl)
     }
@@ -139,16 +128,12 @@ class EgyBest : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .set("Sec-Fetch-Dest", "document")
             .build()
         val document = client.newCall(GET(url, newHeaders)).execute().asJsoup()
-        Log.i("tessst", "$document")
         val jjson = document.text()
-        Log.i("text", jjson)
         val data = document.text().substringAfter("[").substringBeforeLast("]")
-        Log.i("loool", "$data")
         val sources = data.split("\"link\":\"").drop(1)
         val videoList = mutableListOf<Video>()
         for (source in sources) {
             val src = source.substringBefore("\"")
-            Log.i("looo", src)
             val quality = source.substringAfter("quality\":").substringBefore("}")
             val video = Video(src, quality, src, null)
             videoList.add(video)

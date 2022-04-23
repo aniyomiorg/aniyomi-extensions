@@ -76,16 +76,19 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     override val client: OkHttpClient = network.cloudflareClient
 
     override fun animeDetailsRequest(anime: SAnime): Request {
-        val responseString = runBlocking {
+        val animeId = anime.url.substringAfterLast("?anime_id=")
+        val session = getSession(anime.title, animeId)
+        return GET("$baseUrl/anime/$session?anime_id=$animeId")
+    }
+
+    private fun getSession(title: String, animeId: String): String {
+        return runBlocking {
             withContext(Dispatchers.IO) {
-                client.newCall(GET("$baseUrl/api?m=search&q=${anime.title}"))
+                client.newCall(GET("$baseUrl/api?m=search&q=$title"))
                     .execute().body!!.string()
             }
-        }
-        val animeId = anime.url.substringAfterLast("?anime_id=")
-        val session = responseString.substringAfter("\"id\":$animeId")
+        }.substringAfter("\"id\":$animeId")
             .substringAfter("\"session\":\"").substringBefore("\"")
-        return GET("$baseUrl/anime/$session?anime_id=$animeId")
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
@@ -170,7 +173,8 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun episodeListRequest(anime: SAnime): Request {
         val animeId = anime.url.substringAfterLast("?anime_id=")
-        return GET("$baseUrl/api?m=release&id=$animeId&sort=episode_desc&page=1")
+        val session = getSession(anime.title, animeId)
+        return GET("$baseUrl/api?m=release&id=$session&sort=episode_desc&page=1")
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
@@ -224,16 +228,16 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         val videos = mutableListOf<Video>()
         for (item in array) {
             val quality = item.jsonObject.keys.first()
-            val adflyLink = item.jsonObject[quality]!!.jsonObject["kwik_pahewin"]!!.jsonPrimitive.content
+            val paheWinLink = item.jsonObject[quality]!!.jsonObject["kwik_pahewin"]!!.jsonPrimitive.content
             val kwikLink = item.jsonObject[quality]!!.jsonObject["kwik"]!!.jsonPrimitive.content
             val audio = item.jsonObject[quality]!!.jsonObject["audio"]!!
             val qualityString = if (audio is JsonNull) "${quality}p" else "${quality}p (" + audio.jsonPrimitive.content + " audio)"
-            videos.add(getVideo(adflyLink, kwikLink, qualityString))
+            videos.add(getVideo(paheWinLink, kwikLink, qualityString))
         }
         return videos
     }
 
-    private fun getVideo(adflyUrl: String, kwikUrl: String, quality: String): Video {
+    private fun getVideo(paheUrl: String, kwikUrl: String, quality: String): Video {
         return if (preferences.getBoolean("preferred_link_type", false)) {
             val videoUrl = KwikExtractor(client).getHlsStreamUrl(kwikUrl, referer = baseUrl)
             Video(
@@ -241,7 +245,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
                 Headers.headersOf("referer", "https://kwik.cx")
             )
         } else {
-            val videoUrl = KwikExtractor(client).getStreamUrlFromKwik(adflyUrl)
+            val videoUrl = KwikExtractor(client).getStreamUrlFromKwik(paheUrl)
             Video(videoUrl, quality, videoUrl, null)
         }
     }

@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.ar.animelek
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.animelek.extractors.DoodExtractor
@@ -100,9 +99,7 @@ class AnimeLek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val elements = document.select(videoListSelector())
         for (element in elements) {
             val url = element.attr("data-ep-url")
-            Log.i("lol", url)
             val qualityy = element.text()
-            Log.i("lol", qualityy)
             val location = element.ownerDocument().location()
             val videoHeaders = Headers.headersOf("Referer", location)
             when {

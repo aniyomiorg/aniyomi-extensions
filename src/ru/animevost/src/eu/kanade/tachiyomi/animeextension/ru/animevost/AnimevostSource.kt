@@ -256,6 +256,7 @@ class AnimevostSource(override val name: String, override val baseUrl: String, p
                             sortDirection = if (filter.state!!.ascending) SortDirection.ASC else SortDirection.DESC
                         }
                     }
+                    else -> {}
                 }
             }
 

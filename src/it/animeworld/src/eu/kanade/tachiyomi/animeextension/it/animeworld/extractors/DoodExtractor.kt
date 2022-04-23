@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.it.animeworld.extractors
 
-import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.Headers
@@ -26,7 +25,6 @@ class DoodExtractor(private val client: OkHttpClient) {
         ).execute().body!!.string()
         val videoUrl = "$videoUrlStart$randomString?token=$token&expiry=$expiry"
         val newQuality = "Doodstream mirror"
-        Log.i("lol", "$videoUrlStart$randomString?token=$token&expiry=$expiry")
 
         return Video(url, newQuality, videoUrl, null, doodHeaders(doodTld))
     }

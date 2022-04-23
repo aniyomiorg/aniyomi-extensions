@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.ar.animerco
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.DoodExtractor
@@ -77,23 +76,16 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
         val seriesLink1 = document.select("ol[itemscope] li:last-child a").attr("href")
-        Log.i("seriesLink1", "$seriesLink1")
         val seriesLink = document.select("input[name=red]").attr("value")
-        Log.i("seriesLink", "$seriesLink")
         val type = document.select("div.dtsingle").attr("itemtype").substringAfterLast("/")
-        Log.i("type", "$type")
         if (type.contains("TVSeries")) {
-            val seasonUrl = seriesLink
-            Log.i("seasonUrl", seasonUrl)
             val seasonsHtml = client.newCall(
                 GET(
-                    seasonUrl
+                    seriesLink
                     // headers = Headers.headersOf("Referer", document.location())
                 )
             ).execute().asJsoup()
-            Log.i("seasonsHtml", "$seasonsHtml")
             val seasonsElements = seasonsHtml.select("span.se-t a")
-            Log.i("seasonsElements", "$seasonsElements")
             seasonsElements.forEach {
                 val seasonEpList = parseEpisodesFromSeries(it)
                 episodeList.addAll(seasonEpList)
@@ -136,7 +128,6 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         // val SeasonNum = element.ownerDocument().select("div.Title span").text()
         val seasonName = element.ownerDocument().select("span.tagline").text()
         episode.name = "$seasonName : " + element.select("div.episodiotitle a").text()
-        Log.i("episodelink", element.select("div.episodiotitle a").attr("abs:href"))
         episode.setUrlWithoutDomain(element.select("div.episodiotitle a").attr("abs:href"))
         return episode
     }
@@ -149,15 +140,12 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListRequest(episode: SEpisode): Request {
         val document = client.newCall(GET(baseUrl + episode.url)).execute().asJsoup()
-        Log.i("episodelink2", "$document")
         val iframe = baseUrl + episode.url
-        Log.i("episodelink1", iframe)
         return GET(iframe)
     }
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        Log.i("loooo", "$document")
         return videosFromElement(document)
     }
 
@@ -166,26 +154,21 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
         val elements = document.select(videoListSelector())
-        Log.i("elements", "$elements")
         for (element in elements) {
             val location = element.ownerDocument().location()
             val videoHeaders = Headers.headersOf("Referer", location)
             val qualityy = element.text()
             val post = element.attr("data-post")
-            Log.i("lol1", post)
             val num = element.attr("data-nume")
-            Log.i("lol1", num)
             val type = element.attr("data-type")
-            Log.i("lol1", type)
             val pageData = FormBody.Builder()
                 .add("action", "doo_player_ajax")
-                .add("nume", "$num")
-                .add("post", "$post")
-                .add("type", "$type")
+                .add("nume", num)
+                .add("post", post)
+                .add("type", type)
                 .build()
             val url = "https://animerco.com/wp-json/dooplayer/v1/post/$post?type=$type&source=$num"
             val ajax1 = "https://animerco.com/wp-admin/admin-ajax.php"
-            Log.i("lol1", url)
             // val json = Json.decodeFromString<JsonObject>(Jsoup.connect(url).header("X-Requested-With", "XMLHttpRequest").ignoreContentType(true).execute().body())
             /*val json = Json.decodeFromString<JsonObject>(
                 client.newCall(GET(url))
@@ -195,11 +178,9 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val ajax = client.newCall(POST(ajax1, videoHeaders, pageData)).execute().asJsoup()
             // client.newCall(GET(url)).execute().body!!.string()
 
-            Log.i("lol1", "$ajax")
             val embedUrlT = ajax.text().substringAfter("embed_url\":\"").substringBefore("\"")
             val embedUrl = embedUrlT.replace("\\/", "/")
             // json!!.jsonArray[0].jsonObject["embed_url"].toString().trim('"')
-            Log.i("lol1", embedUrl)
 
             when {
                 embedUrl.contains("sbembed.com") || embedUrl.contains("sbembed1.com") || embedUrl.contains("sbplay.org") ||

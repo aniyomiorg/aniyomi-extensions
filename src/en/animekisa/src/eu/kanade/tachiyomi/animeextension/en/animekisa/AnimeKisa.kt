@@ -60,7 +60,7 @@ class AnimeKisa : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector(): String = "ul.pagination li.page-item a[rel=next]"
 
     // episodes
-    
+
     override fun episodeListParse(response: Response): List<SEpisode> {
         return super.episodeListParse(response).reversed()
     }

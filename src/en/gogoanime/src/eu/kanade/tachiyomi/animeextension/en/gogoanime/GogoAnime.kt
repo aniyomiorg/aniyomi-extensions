@@ -6,6 +6,7 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.en.gogoanime.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.en.gogoanime.extractors.GogoCdnExtractor
+import eu.kanade.tachiyomi.animeextension.en.gogoanime.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -26,6 +27,8 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
+import java.lang.NumberFormatException
+import kotlin.math.abs
 
 @ExperimentalSerializationApi
 class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -88,13 +91,25 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val serverUrl = "https:" + document.select("div.anime_muti_link > ul > li.anime > a")
-            .attr("data-video")
-        val doodUrl = document.select("div.anime_muti_link > ul > li.doodstream > a")
-            .attr("data-video")
-        val gogoVideos = GogoCdnExtractor(client, json).videosFromUrl(serverUrl)
-        val doodVideos = DoodExtractor(client).videosFromUrl(doodUrl)
-        return gogoVideos + doodVideos
+        val extractor = GogoCdnExtractor(network.client, json)
+        val videoList = mutableListOf<Video>()
+        // GogoCdn:
+        document.select("div.anime_muti_link > ul > li.vidcdn > a")
+            .firstOrNull()?.attr("data-video")
+            ?.let { videoList.addAll(extractor.videosFromUrl("https:$it")) }
+        // Vidstreaming:
+        document.select("div.anime_muti_link > ul > li.anime > a")
+            .firstOrNull()?.attr("data-video")
+            ?.let { videoList.addAll(extractor.videosFromUrl("https:$it")) }
+        // Doodstream mirror:
+        document.select("div.anime_muti_link > ul > li.doodstream > a")
+            .firstOrNull()?.attr("data-video")
+            ?.let { videoList.addAll(DoodExtractor(client).videosFromUrl(it)) }
+        // StreamSB mirror:
+        document.select("div.anime_muti_link > ul > li.streamsb > a")
+            .firstOrNull()?.attr("data-video")
+            ?.let { videoList.addAll(StreamSBExtractor(client).videosFromUrl(it, headers)) }
+        return videoList
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -109,16 +124,30 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val newList = mutableListOf<Video>()
             var preferred = 0
             for (video in this) {
-                if (video.quality.contains(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
+                when {
+                    video.quality.contains(quality) -> {
+                        newList.add(preferred, video)
+                        preferred++
+                    }
+                    abs(qualityToInt(video.quality) - quality.toInt()) < 100 -> {
+                        newList.add(preferred, video)
+                    }
+                    else -> {
+                        newList.add(video)
+                    }
                 }
             }
             return newList
         }
         return this
+    }
+
+    private fun qualityToInt(quality: String): Int {
+        return try {
+            quality.filter { it.isDigit() }.toInt()
+        } catch (e: NumberFormatException) {
+            -100
+        }
     }
 
     override fun searchAnimeFromElement(element: Element): SAnime {

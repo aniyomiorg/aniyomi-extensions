@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.animeextension.es.pelisplushd
 import android.app.Application
 import android.content.SharedPreferences
 import android.util.Base64
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.FembedExtractor
@@ -71,14 +70,12 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             episodes.add(episode)
         } else {
             jsoup.select("div.tab-content div a").forEachIndexed { index, element ->
-                Log.i("bruh", "episodio:$index, nombre:${element.text()}")
                 val epNum = index + 1
                 val episode = SEpisode.create()
                 episode.episode_number = epNum.toFloat()
                 episode.name = element.text()
                 episode.setUrlWithoutDomain(element.attr("href"))
                 episodes.add(episode)
-                Log.i("bruh", episodes[index].name)
             }
             episodes.removeLast()
         }

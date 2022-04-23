@@ -53,13 +53,19 @@ class KwikExtractor(private val client: OkHttpClient) {
         val urlParts = substring.split("|").reversed()
         assert(urlParts.lastIndex == 8)
         return urlParts[0] + "://" + urlParts[1] + "-" + urlParts[2] + "." + urlParts[3] + "." +
-                urlParts[4] + "." + urlParts[5] + "/" + urlParts[6] + "/" + urlParts[7] + "/" +
-                urlParts[8] + "/uwu.m3u8"
+            urlParts[4] + "." + urlParts[5] + "/" + urlParts[6] + "/" + urlParts[7] + "/" +
+            urlParts[8] + "/uwu.m3u8"
     }
 
-    fun getStreamUrlFromKwik(adflyUri: String): String {
+    fun getStreamUrlFromKwik(paheUrl: String): String {
+        val noRedirects = client.newBuilder()
+            .followRedirects(false)
+            .followSslRedirects(false)
+            .build()
+        val kwikUrl = "https://" + noRedirects.newCall(GET("$paheUrl/i")).execute()
+            .header("location")!!.substringAfterLast("https://")
         val fContent =
-            client.newCall(GET(adflyUri, Headers.headersOf("referer", "https://kwik.cx/"))).execute()
+            client.newCall(GET(kwikUrl, Headers.headersOf("referer", "https://kwik.cx/"))).execute()
         cookies += (fContent.header("set-cookie")!!)
         val fContentString = fContent.body!!.string()
 

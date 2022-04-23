@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.pt.animeyabu
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.animeyabu.AYFilters.applyFilterParams
@@ -59,7 +58,7 @@ class AnimeYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         .add("Accept-Language", AYConstants.ACCEPT_LANGUAGE)
         .add("Referer", baseUrl)
 
-    // ============================== Popular ===============================   
+    // ============================== Popular ===============================
     override fun popularAnimeSelector(): String = "div.video-thumb > a.clip-link"
     override fun popularAnimeRequest(page: Int): Request = GET(baseUrl)
 
@@ -70,7 +69,6 @@ class AnimeYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.title = img.attr("title")
         anime.thumbnail_url = "$baseUrl/${img.attr("src")}"
-        Log.i("ID", "$id")
         return anime
     }
 
@@ -224,7 +222,7 @@ class AnimeYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/page/$page/")
 
-    // ============================== Settings ============================== 
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
 
         val videoPlayerPref = ListPreference(screen.context).apply {
