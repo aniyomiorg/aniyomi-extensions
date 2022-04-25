@@ -66,10 +66,9 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodeList = mutableListOf<SEpisode>()
         val seriesLink = document.select("link[rel=canonical]").attr("abs:href")
         if (seriesLink.contains("/series/")) {
-            val seasonUrl = seriesLink
             val seasonsHtml = client.newCall(
                 GET(
-                    seasonUrl,
+                    seriesLink,
                     headers = Headers.headersOf("Referer", document.location())
                 )
             ).execute().asJsoup()
@@ -79,45 +78,36 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 episodeList.addAll(seasonEpList)
             }
         } else {
-            val movieUrl = seriesLink
             val episode = SEpisode.create()
             episode.name = document.select("div.TPMvCn h1.Title").text()
             episode.episode_number = 1F
-            episode.setUrlWithoutDomain(movieUrl)
+            episode.setUrlWithoutDomain(seriesLink)
             episodeList.add(episode)
         }
-        return episodeList
+        return episodeList.reversed()
     }
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
+    override fun episodeFromElement(element: Element): SEpisode {
+        val episode = SEpisode.create()
+        episode.episode_number = element.select("td > span.Num").text().toFloat()
+        val seasonNum = element.ownerDocument().select("div.Title span").text()
+        episode.name = "Season $seasonNum" + "x" + element.select("td span.Num").text() + " : " + element.select("td.MvTbTtl > a").text()
+        episode.setUrlWithoutDomain(element.select("td.MvTbPly > a.ClA").attr("abs:href"))
+        return episode
+    }
 
     private fun parseEpisodesFromSeries(element: Element): List<SEpisode> {
         val seasonId = element.attr("abs:href")
-        val seasonName = element.text()
-        val episodesUrl = seasonId
-        val episodesHtml = client.newCall(
-            GET(
-                episodesUrl,
-            )
-        ).execute().asJsoup()
+        val episodesHtml = client.newCall(GET(seasonId)).execute().asJsoup()
         val episodeElements = episodesHtml.select("tr.Viewed")
-        return episodeElements.map { episodeFromElement(it, seasonName) }
-    }
-
-    private fun episodeFromElement(element: Element, seasonName: String): SEpisode {
-        val episode = SEpisode.create()
-        episode.episode_number = element.select("td > span.Num").text().toFloat()
-        val SeasonNum = element.ownerDocument().select("div.Title span").text()
-        episode.name = "Season $SeasonNum" + "x" + element.select("td span.Num").text() + " : " + element.select("td.MvTbTtl > a").text()
-        episode.setUrlWithoutDomain(element.select("td.MvTbPly > a.ClA").attr("abs:href"))
-        return episode
+        return episodeElements.map { episodeFromElement(it) }
     }
 
     // Video urls
 
     override fun videoListRequest(episode: SEpisode): Request {
         val document = client.newCall(GET(baseUrl + episode.url)).execute().asJsoup()
-        val iframe = document.select("iframe[src^=\"/?trembed\"]").attr("abs:src")
+        val iframe = document.select("iframe[src*=/?trembed]").attr("abs:src")
         return GET(iframe)
     }
 
@@ -147,13 +137,11 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val data = script.data()
                     val masterUrl = masterExtractor(data)
                     val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
-                    val videoList = mutableListOf<Video>()
                     masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
                         val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
                         val videoUrl = it.substringAfter("\n").substringBefore("\n")
                         videoList.add(Video(videoUrl, quality, videoUrl, null))
                     }
-                    return videoList
                 }
             }
         }
@@ -172,7 +160,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val numbers = numbersRegex.findAll(code).map {
             it.value.toInt()
         }.toList()
-        var a = numbers[0]
+        val a = numbers[0]
         var c = numbers[1] - 1
 
         while (c >= 0) {
@@ -252,8 +240,8 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val url = "$baseUrl/category/".toHttpUrlOrNull()!!.newBuilder()
             filters.forEach { filter ->
                 when (filter) {
-
                     is GenreFilter -> url.addPathSegment(filter.toUriPart())
+                    else -> {}
                 }
             }
             url.addPathSegment("page")
@@ -282,7 +270,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Latest
 
-    override fun latestUpdatesNextPageSelector(): String? = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
 
     override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
 
