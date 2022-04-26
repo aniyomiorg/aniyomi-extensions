@@ -14,7 +14,10 @@ class GlobalVisionExtractor {
         val qualities = mapOf("SD" to "480p", "HD" to "720p", "FULLHD" to "1080p")
         return qualities.mapNotNull { (qualityName, qualityStr) ->
             if (qualityName in players) {
-                val videoUrl = if ("480p" in url) url else url.replace("480p", qualityStr)
+                val videoUrl = when {
+                    qualityName == "SD" -> url
+                    else -> url.replace("480p", qualityStr)
+                }
                 Video(videoUrl, "$PREFIX $qualityName", videoUrl, null)
             } else { null }
         }
