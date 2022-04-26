@@ -5,9 +5,12 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.pt.animesvision.dto.AVResponseDto
+import eu.kanade.tachiyomi.animeextension.pt.animesvision.dto.PayloadData
+import eu.kanade.tachiyomi.animeextension.pt.animesvision.dto.PayloadItem
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.DoodExtractor
+import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.GlobalVisionExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.StreamTapeExtractor
-import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.VisionFreeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -20,12 +23,8 @@ import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -64,7 +63,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         .add("Accept-Language", ACCEPT_LANGUAGE)
 
     // ============================== Popular ===============================   
-    private fun nextPageSelector(): String = "ul.pagination li.page-item:contains(›)"
+    private fun nextPageSelector(): String = "ul.pagination li.page-item:contains(›):not(.disabled)"
     override fun popularAnimeSelector(): String = "div#anime-trending div.item > a.film-poster"
     override fun popularAnimeRequest(page: Int): Request = GET(baseUrl)
 
@@ -99,7 +98,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val epElementList = doc.select(episodeListSelector())
         epList.addAll(epElementList.map { episodeFromElement(it) })
-        if (hasNextPage(doc)) {
+        if (doc.hasNextPage()) {
             val nextUrl = doc.selectFirst(nextPageSelector())
                 .selectFirst("a")
                 .attr("href")
@@ -130,11 +129,9 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videosFromEpisode(document)
     }
 
-    private fun getPlayersUrl(doc: Document): List<String> {
+    private fun getPlayersUrl(doc: Document, players: String): List<String> {
         val wireDiv: Element = doc.selectFirst("div[wire:id]")
-        val divData: String = wireDiv.attr("wire:initial-data")!!
-        val jsonObject = json.decodeFromString<JsonObject>(divData)
-        val jsonMap: Map<*, *> = jsonObject.toMap()
+        val initialData: String = wireDiv.attr("wire:initial-data")!!.dropLast(1)
         val wireToken: String = doc.html()
             .substringAfter("livewire_token")
             .substringAfter("'")
@@ -152,42 +149,35 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val ignoreDO = ignoredHosts?.contains(HOSTS_NAMES.elementAt(1)) ?: false
         val ignoreST = ignoredHosts?.contains(HOSTS_NAMES.elementAt(2)) ?: false
 
-        if (!ignoreST)
+        if (!ignoreST && "Streamtape" in players)
             hosts_ids.add(5)
-        if (!ignoreDO)
+
+        if (!ignoreDO && "DOOD" in players)
             hosts_ids.add(8)
 
         return hosts_ids.mapNotNull { id ->
-
-            val updateData = listOf(
-                mapOf(
-                    "type" to "callMethod",
-                    "payload" to mapOf(
-                        "id" to "",
-                        "method" to "mudarPlayer",
-                        "params" to listOf(id)
-                    )
-                )
-            )
-
-            val requestMap = jsonMap.toMutableMap().apply {
-                put("updates", updateData)
-            }
-            val body = requestMap.toJsonObject().toString()
+            val updateItem = PayloadItem(PayloadData(listOf(id)))
+            val updateString = json.encodeToString(updateItem)
+            val body = "$initialData, \"updates\": [$updateString]}"
             val reqBody = body.toRequestBody()
             val url = "$baseUrl/livewire/message/components.episodio.player-episodio-component"
-            val res = client.newCall(POST(url, headers, reqBody)).execute()
-            val resJson = json.decodeFromString<AVResponseDto>(res.body?.string().orEmpty())
+            val response = client.newCall(POST(url, headers, reqBody)).execute()
+            val responseBody = response.body?.string().orEmpty()
+            val resJson = json.decodeFromString<AVResponseDto>(responseBody)
             resJson.serverMemo?.data?.framePlay
-        } as List<String>
+        }
     }
 
     private fun videosFromEpisode(doc: Document): List<Video> {
-        val html: String = doc.html()
-        val videoList = VisionFreeExtractor()
-            .videoListFromHtml(html)
+        val players = doc.select("div.server-item > a.btn")
+            .joinToString(", ") {
+                it.text()
+            }
+        val videoList = GlobalVisionExtractor()
+            .videoListFromHtml(doc.html(), players)
             .toMutableList()
-        getPlayersUrl(doc).forEach {
+
+        getPlayersUrl(doc, players).forEach {
             val video = if (it.contains("streamtape")) {
                 StreamTapeExtractor(client).videoFromUrl(it)
             } else if (it.contains("dood")) {
@@ -213,17 +203,9 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun searchAnimeNextPageSelector() = throw Exception("not used")
+    override fun searchAnimeNextPageSelector(): String = nextPageSelector()
 
     override fun searchAnimeSelector(): String = "div.film_list-wrap div.film-poster"
-
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        val document = response.asJsoup()
-        val animes = document.select(searchAnimeSelector()).map { element ->
-            searchAnimeFromElement(element)
-        }
-        return AnimesPage(animes, hasNextPage(document))
-    }
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         val params = AVFilters.getSearchParameters(filters)
@@ -284,7 +266,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // =============================== Latest ===============================
-    override fun latestUpdatesNextPageSelector() = throw Exception("not used")
+    override fun latestUpdatesNextPageSelector(): String = nextPageSelector()
     override fun latestUpdatesSelector(): String = episodeListSelector()
 
     override fun latestUpdatesFromElement(element: Element): SAnime {
@@ -296,15 +278,6 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/lancamentos?page=$page")
-
-    override fun latestUpdatesParse(response: Response): AnimesPage {
-        val document = response.asJsoup()
-        val animes = document.select(latestUpdatesSelector()).map { element ->
-            latestUpdatesFromElement(element)
-        }
-        val hasNextPage = hasNextPage(document)
-        return AnimesPage(animes, hasNextPage)
-    }
 
     // ============================== Settings ============================== 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -327,7 +300,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREFERRED_QUALITY
-            title = "Qualidade preferida (Válido apenas no VisionFree)"
+            title = "Qualidade preferida (Válido apenas no GlobalVision)"
             entries = QUALITY_LIST
             entryValues = QUALITY_LIST
             setDefaultValue(QUALITY_LIST.last())
@@ -381,11 +354,8 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    private fun hasNextPage(document: Document): Boolean {
-        val next = document.selectFirst(nextPageSelector())
-        if (next == null) return false
-        return !next.hasClass("disabled")
-    }
+    private fun Element.hasNextPage(): Boolean =
+        this.selectFirst(nextPageSelector()) != null
 
     private fun Element.getInfo(key: String): String? {
         val div: Element? = this.selectFirst("div.item:contains($key)")
@@ -432,28 +402,14 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         return this
     }
-    private fun Any?.toJsonElement(): JsonElement = when (this) {
-        is Number -> JsonPrimitive(this)
-        is Boolean -> JsonPrimitive(this)
-        is String -> JsonPrimitive(this)
-        is Array<*> -> this.toJsonArray()
-        is List<*> -> this.toJsonArray()
-        is Map<*, *> -> this.toJsonObject()
-        is JsonElement -> this
-        else -> JsonNull
-    }
-
-    private fun Array<*>.toJsonArray() = JsonArray(map { it.toJsonElement() })
-    private fun Iterable<*>.toJsonArray() = JsonArray(map { it.toJsonElement() })
-    private fun Map<*, *>.toJsonObject() = JsonObject(mapKeys { it.key.toString() }.mapValues { it.value.toJsonElement() })
 
     companion object {
         private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
         private const val PREFERRED_HOST = "preferred_host"
         private const val PREFERRED_QUALITY = "preferred_quality"
         private const val IGNORED_HOSTS = "ignored_hosts"
-        private val HOSTS_NAMES = arrayOf("VisionFree", "DoodStream", "StreamTape")
+        private val HOSTS_NAMES = arrayOf("GlobalVision", "DoodStream", "StreamTape")
         private val HOSTS_URLS = arrayOf("animes.vision", "https://dood", "https://streamtape")
-        private val QUALITY_LIST = arrayOf("SD", "HD")
+        private val QUALITY_LIST = arrayOf("SD", "HD", "FULLHD")
     }
 }
