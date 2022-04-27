@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.ar.arabseed
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -63,27 +62,14 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("href"))
-        Log.i("ttttt", element.attr("href"))
-        val ajax = client.newCall(GET(element.attr("href"))).execute().asJsoup()
-        Log.i("tessst", "$ajax")
         episode.name = element.ownerDocument().select("div.InfoPartOne a h1.Title").text().replace(" مترجم", "").replace("فيلم ", "")
-
         return episode
     }
 
     // Video urls
 
-   /* override fun videoListRequest(episode: SEpisode): Request {
-        val document = client.newCall(GET(baseUrl + episode.url)).execute().asJsoup()
-        Log.i("iframme", "$document")
-        val iframe = baseUrl + episode.url
-        Log.i("episodeUrl", "$iframe")
-        return GET(iframe)
-    }*/
-
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        Log.i("iiframe", "$document")
         return videosFromElement(document)
     }
 
@@ -100,11 +86,8 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .build()
             // Headers.headersOf("Referer", location)
             val dataPost = element.attr("data-post")
-            Log.i("test", "$dataPost")
             val dataServer = element.attr("data-server")
-            Log.i("test", "$dataServer")
             val dataQu = element.attr("data-qu")
-            Log.i("test", "$dataQu")
             val pageData = FormBody.Builder()
                 .add("post_id", dataPost)
                 .add("server", dataServer)
@@ -112,11 +95,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .build()
             val ajax1 = "https://m.arabseed.ink/wp-content/themes/Elshaikh2021/Ajaxat/Single/Server.php"
             val ajax = client.newCall(POST(ajax1, videoHeaders, pageData)).execute().asJsoup()
-            Log.i("test", "$ajax")
             val embedUrl = ajax.select("iframe").attr("src")
-            Log.i("test", "$embedUrl")
-            val embedUrl1 = ajax.text() // .substringAfter("src\=\"").substringBefore("\"")
-            Log.i("test", "$embedUrl1")
             when {
                 embedUrl.contains("seeeed") -> {
                     val iframeResponse = client.newCall(GET(embedUrl)).execute().asJsoup()
