@@ -30,7 +30,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Anime4Up"
 
-    override val baseUrl = "https://w1.anime4up.com"
+    override val baseUrl = "https://anime4up.art"
 
     override val lang = "ar"
 
@@ -44,7 +44,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun headersBuilder(): Headers.Builder {
         return super.headersBuilder()
-            .add("Referer", "https://w1.anime4up.com/") // https://s12.gemzawy.com https://moshahda.net
+            .add("Referer", "https://anime4up.art/") // https://s12.gemzawy.com https://moshahda.net
     }
 
     // Popular
@@ -126,54 +126,6 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
         }
     }
-
-    /*override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        val iframe = document.selectFirst("iframe").attr("src")
-        val referer = response.request.url.encodedPath
-        val newHeaders = Headers.headersOf("referer", baseUrl + referer)
-        val iframeResponse = client.newCall(GET(iframe, newHeaders))
-            .execute().asJsoup()
-        return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
-    }
-
-
-
-
-
-    override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        // get POST valus
-        val postUrl = document.select("form[method=post]").attr("action")
-        val ur = document.select("input[name=ur]").attr("value")
-        val wl = document.select("input[name=wl]").attr("value")
-        val dl = document.select("input[name=dl]").attr("value")
-        val moshahda = document.select("input[name=moshahda]").attr("value")
-        val submit = document.select("input[name=submit]").attr("value")
-        Log.i("lolll", "$postUrl")
-
-        // POST data
-        val body = FormBody.Builder()
-            .add("ur", "$ur")
-            .add("wl", "$wl")
-            .add("dl", "$dl")
-            .add("moshahda", "$moshahda")
-            .add("submit", "$submit")
-            .build()
-        Log.i("lol0", "$body")
-
-        // Call POST
-        val referer = response.request.url.encodedPath
-        val newHeaders = Headers.headersOf("referer", baseUrl + referer)
-        val ifram1 = client.newCall(POST(postUrl, newHeaders, body)).execute().asJsoup()
-        Log.i("lol1", "$ifram1")
-
-        val iframe = ifram1.select("li.active").attr("data-server")
-        Log.i("lol", "$iframe")
-        val iframeResponse = client.newCall(GET(iframe, newHeaders))
-            .execute().asJsoup()
-        return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
-    }*/
 
     override fun videoListSelector() = "script:containsData(m3u8)"
 
