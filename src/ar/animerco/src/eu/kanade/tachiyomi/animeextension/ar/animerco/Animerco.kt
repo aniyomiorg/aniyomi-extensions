@@ -79,9 +79,10 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val seriesLink = document.select("input[name=red]").attr("value")
         val type = document.select("div.dtsingle").attr("itemtype").substringAfterLast("/")
         if (type.contains("TVSeries")) {
+            val seasonUrl = seriesLink
             val seasonsHtml = client.newCall(
                 GET(
-                    seriesLink
+                    seasonUrl
                     // headers = Headers.headersOf("Referer", document.location())
                 )
             ).execute().asJsoup()
@@ -163,24 +164,15 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val type = element.attr("data-type")
             val pageData = FormBody.Builder()
                 .add("action", "doo_player_ajax")
-                .add("nume", num)
-                .add("post", post)
-                .add("type", type)
+                .add("nume", "$num")
+                .add("post", "$post")
+                .add("type", "$type")
                 .build()
             val url = "https://animerco.com/wp-json/dooplayer/v1/post/$post?type=$type&source=$num"
             val ajax1 = "https://animerco.com/wp-admin/admin-ajax.php"
-            // val json = Json.decodeFromString<JsonObject>(Jsoup.connect(url).header("X-Requested-With", "XMLHttpRequest").ignoreContentType(true).execute().body())
-            /*val json = Json.decodeFromString<JsonObject>(
-                client.newCall(GET(url))
-                    .execute().body!!.string()
-            )*/
-            // val json =
             val ajax = client.newCall(POST(ajax1, videoHeaders, pageData)).execute().asJsoup()
-            // client.newCall(GET(url)).execute().body!!.string()
-
             val embedUrlT = ajax.text().substringAfter("embed_url\":\"").substringBefore("\"")
             val embedUrl = embedUrlT.replace("\\/", "/")
-            // json!!.jsonArray[0].jsonObject["embed_url"].toString().trim('"')
 
             when {
                 embedUrl.contains("sbembed.com") || embedUrl.contains("sbembed1.com") || embedUrl.contains("sbplay.org") ||
