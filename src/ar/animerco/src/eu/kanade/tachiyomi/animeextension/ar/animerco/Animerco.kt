@@ -79,14 +79,13 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val seriesLink = document.select("input[name=red]").attr("value")
         val type = document.select("div.dtsingle").attr("itemtype").substringAfterLast("/")
         if (type.contains("TVSeries")) {
-            val seasonUrl = seriesLink
             val seasonsHtml = client.newCall(
                 GET(
-                    seasonUrl
+                    seriesLink
                     // headers = Headers.headersOf("Referer", document.location())
                 )
             ).execute().asJsoup()
-            val seasonsElements = seasonsHtml.select("span.se-t a")
+            val seasonsElements = seasonsHtml.select("div.seasontitle a")
             seasonsElements.forEach {
                 val seasonEpList = parseEpisodesFromSeries(it)
                 episodeList.addAll(seasonEpList)
@@ -94,7 +93,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } else {
             val movieUrl = seriesLink
             val episode = SEpisode.create()
-            episode.name = document.select("div.TPMvCn h1.Title").text()
+            episode.name = document.select("div.data h1").text()
             episode.episode_number = 1F
             episode.setUrlWithoutDomain(movieUrl)
             episodeList.add(episode)
@@ -105,10 +104,10 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
 
     private fun parseEpisodesFromSeries(element: Element): List<SEpisode> {
-        val seasonId = element.attr("abs:href")
-        // val seasonName = element.text()
+        // val seasonId = element.attr("abs:href")
+        val seasonName = element.text()
         // Log.i("seasonname", seasonName)
-        val episodesUrl = seasonId
+        val episodesUrl = element.attr("abs:href")
         val episodesHtml = client.newCall(
             GET(
                 episodesUrl,
@@ -164,22 +163,32 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val type = element.attr("data-type")
             val pageData = FormBody.Builder()
                 .add("action", "doo_player_ajax")
-                .add("nume", "$num")
-                .add("post", "$post")
-                .add("type", "$type")
+                .add("nume", num)
+                .add("post", post)
+                .add("type", type)
                 .build()
             val url = "https://animerco.com/wp-json/dooplayer/v1/post/$post?type=$type&source=$num"
             val ajax1 = "https://animerco.com/wp-admin/admin-ajax.php"
+            // val json = Json.decodeFromString<JsonObject>(Jsoup.connect(url).header("X-Requested-With", "XMLHttpRequest").ignoreContentType(true).execute().body())
+            /*val json = Json.decodeFromString<JsonObject>(
+                client.newCall(GET(url))
+                    .execute().body!!.string()
+            )*/
+            // val json =
             val ajax = client.newCall(POST(ajax1, videoHeaders, pageData)).execute().asJsoup()
+            // client.newCall(GET(url)).execute().body!!.string()
+
             val embedUrlT = ajax.text().substringAfter("embed_url\":\"").substringBefore("\"")
             val embedUrl = embedUrlT.replace("\\/", "/")
+            // json!!.jsonArray[0].jsonObject["embed_url"].toString().trim('"')
 
             when {
                 embedUrl.contains("sbembed.com") || embedUrl.contains("sbembed1.com") || embedUrl.contains("sbplay.org") ||
                     embedUrl.contains("sbvideo.net") || embedUrl.contains("streamsb.net") || embedUrl.contains("sbplay.one") ||
                     embedUrl.contains("cloudemb.com") || embedUrl.contains("playersb.com") || embedUrl.contains("tubesb.com") ||
                     embedUrl.contains("sbplay1.com") || embedUrl.contains("embedsb.com") || embedUrl.contains("watchsb.com") ||
-                    embedUrl.contains("sbplay2.com") || embedUrl.contains("japopav.tv") || embedUrl.contains("viewsb.com")
+                    embedUrl.contains("sbplay2.com") || embedUrl.contains("japopav.tv") || embedUrl.contains("viewsb.com") ||
+                    embedUrl.contains("sbfast")
                 -> {
                     val headers = headers.newBuilder()
                         .set("Referer", embedUrl)
