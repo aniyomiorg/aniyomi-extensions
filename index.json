@@ -574,5 +574,14 @@
     "code": 4,
     "version": "12.4",
     "nsfw": 0
+  },
+  {
+    "name": "Aniyomi: Anime Srbija",
+    "pkg": "eu.kanade.tachiyomi.animeextension.sr.animesrbija",
+    "apk": "aniyomi-sr.animesrbija-v12.1.apk",
+    "lang": "sr",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
   }
 ]
