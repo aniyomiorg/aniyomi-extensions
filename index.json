@@ -180,6 +180,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: FireAnime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.de.fireanime",
+    "apk": "aniyomi-de.fireanime-v12.1.apk",
+    "lang": "de",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 1
+  },
+  {
     "name": "Aniyomi: AllMovies",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.allmovies",
     "apk": "aniyomi-en.allmovies-v12.9.apk",
