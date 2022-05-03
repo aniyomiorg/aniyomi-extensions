@@ -182,10 +182,10 @@
   {
     "name": "Aniyomi: FireAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.fireanime",
-    "apk": "aniyomi-de.fireanime-v12.1.apk",
+    "apk": "aniyomi-de.fireanime-v12.2.apk",
     "lang": "de",
-    "code": 1,
-    "version": "12.1",
+    "code": 2,
+    "version": "12.2",
     "nsfw": 1
   },
   {
