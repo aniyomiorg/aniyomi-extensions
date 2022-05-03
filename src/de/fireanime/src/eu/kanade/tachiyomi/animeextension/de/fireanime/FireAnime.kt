@@ -206,7 +206,7 @@ class FireAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             val lang = if (source.isSub == 1) FAConstants.LANG_SUB else FAConstants.LANG_DUB
             val quality = "$sourceName, $lang"
 
-            val sourceSelection = preferences.getStringSet(FAConstants.SOURCE_SELECTION, null)
+            val sourceSelection = preferences.getStringSet(FAConstants.SOURCE_SELECTION, FAConstants.SOURCE_NAMES.toSet())
 
             fun isSource(source: String): Boolean = sourceName == source && sourceSelection?.contains(source) == true
             when {
