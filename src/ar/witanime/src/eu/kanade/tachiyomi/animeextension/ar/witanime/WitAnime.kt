@@ -4,8 +4,8 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.FembedExtractor
-// import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.SoraPlayExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -78,7 +78,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val url = it.select("a").attr("data-ep-url")
             when {
                 server.contains("fembed") -> {
-                    val videos = FembedExtractor().videosFromUrl(url)
+                    val videos = FembedExtractor(client).videosFromUrl(url)
                     videoList.addAll(videos)
                 }
                 server.contains("soraplay") -> {
@@ -90,12 +90,18 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     videoList.addAll(videos)
                 }
                 server.contains("yuistream") -> {
-                    val videos = FembedExtractor().videosFromUrl(url)
+                    val videos = FembedExtractor(client).videosFromUrl(url)
                     videoList.addAll(videos)
                 }
                 server.contains("vivyplay") -> {
-                    val videos = FembedExtractor().videosFromUrl(url)
+                    val videos = FembedExtractor(client).videosFromUrl(url)
                     videoList.addAll(videos)
+                }
+                server.contains("dood") -> {
+                    val video = DoodExtractor(client).videoFromUrl(url, server)
+                    if (video != null) {
+                        videoList.add(video)
+                    }
                 }
                 /*server.contains("ok") -> {
                     val videos = OkruExtractor(client).videosFromUrl(url)
@@ -106,31 +112,6 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                 }*/
             }
-
-            /*if (server == "fembed") {
-                val videos = FembedExtractor().videosFromUrl(url)
-                videoList.addAll(videos)
-            }
-            if (server == "soraplay") {
-                val witAnime = "https://witanime.com/"
-                val newHeaders = headers.newBuilder()
-                    .set("referer", "$witAnime")
-                    .build()
-                val videos = SoraPlayExtractor(client).videosFromUrl(url, newHeaders)
-                videoList.addAll(videos)
-            }
-            if (server == "yuistream") {
-                val videos = FembedExtractor().videosFromUrl(url)
-                videoList.addAll(videos)
-            }
-            if (server == "ok.ru") {
-                val videos = OkruExtractor(client).videosFromUrl(url)
-                videoList.addAll(videos)
-            }*/
-            /*if (server == "4shared") {
-                val videos = SharedExtractor(client).videosFromUrl(url)
-                videoList.addAll(videos)
-            }*/
         }
         return videoList
     }
