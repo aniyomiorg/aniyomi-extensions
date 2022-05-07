@@ -245,10 +245,10 @@
   {
     "name": "Aniyomi: DramaCool",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.dramacool",
-    "apk": "aniyomi-en.dramacool-v12.13.apk",
+    "apk": "aniyomi-en.dramacool-v12.14.apk",
     "lang": "en",
-    "code": 13,
-    "version": "12.13",
+    "code": 14,
+    "version": "12.14",
     "nsfw": 0
   },
   {
