@@ -1,9 +1,11 @@
 package eu.kanade.tachiyomi.animeextension.en.dramacool
 
 import android.app.Application
+import android.widget.Toast
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.BuildConfig
 import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.StreamSBExtractor
@@ -32,7 +34,9 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "DramaCool"
 
-    override val baseUrl = "https://www.dramacool.ee"
+    private val defaultBaseUrl = "https://dramacool.ee/"
+
+    override val baseUrl by lazy { getPrefBaseUrl() }
 
     override val lang = "en"
 
@@ -44,6 +48,14 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    companion object {
+        private const val RESTART_ANIYOMI = "Restart Aniyomi to apply new setting."
+
+        private const val BASE_URL_PREF_TITLE = "Override BaseUrl"
+        private val BASE_URL_PREF = "overrideBaseUrl_v${BuildConfig.VERSION_NAME}"
+        private const val BASE_URL_PREF_SUMMARY = "For temporary uses. Update extension will erase this setting."
     }
 
     // Popular Anime
@@ -230,8 +242,30 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesSelector(): String = throw Exception("Not used")
 
     // Preferences
+    private fun getPrefBaseUrl(): String = preferences.getString(BASE_URL_PREF, defaultBaseUrl)!!
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+
+        val baseUrlPref = androidx.preference.EditTextPreference(screen.context).apply {
+            key = BASE_URL_PREF_TITLE
+            title = BASE_URL_PREF_TITLE
+            summary = BASE_URL_PREF_SUMMARY
+            this.setDefaultValue(defaultBaseUrl)
+            dialogTitle = BASE_URL_PREF_TITLE
+            dialogMessage = "Default: $defaultBaseUrl"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                try {
+                    val res = preferences.edit().putString(BASE_URL_PREF, newValue as String).commit()
+                    Toast.makeText(screen.context, RESTART_ANIYOMI, Toast.LENGTH_LONG).show()
+                    res
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    false
+                }
+            }
+        }
+
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
@@ -247,6 +281,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        screen.addPreference(baseUrlPref)
         screen.addPreference(videoQualityPref)
     }
 }
