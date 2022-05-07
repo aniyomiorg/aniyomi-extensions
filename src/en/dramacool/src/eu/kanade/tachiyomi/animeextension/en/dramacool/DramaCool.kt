@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.BuildConfig
 import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.StreamSBExtractor
