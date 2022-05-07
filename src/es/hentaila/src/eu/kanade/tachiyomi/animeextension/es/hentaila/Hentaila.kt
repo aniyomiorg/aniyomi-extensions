@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.es.hentaila
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.hentaila.extractors.FembedExtractor
@@ -136,24 +137,24 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val results = Jsoup.connect("https://hentaila.com/api/search").method(Connection.Method.POST).data("value", "$query").execute().body()
         val jsonObject = json.decodeFromString<JsonArray>(results)
-        // val animeSlug = JSONObject(jsonObject[0].toString())["slug"]
+        val animeSlug = JSONObject(jsonObject[0].toString())["slug"]
+        val ultimateHentaiLink = "https://hentaila.com/hentai-$animeSlug"
         // for (i in jsonObject) {
         // val anime = JSONObject(i.toString())
         // val animeSlug = anime["slug"]
 
         // }
         return when {
-            query.isNotBlank() && jsonObject.toString() != "[]" -> GET("https://hentaila.com/hentai-${JSONObject(jsonObject[0].toString())["slug"]}")
+            query.isNotBlank() && jsonObject.toString() != "[]" -> GET(ultimateHentaiLink)
             genreFilter.state != 0 -> GET("$baseUrl/genero/${genreFilter.toUriPart()}?p=$page")
             else -> GET("https://hentaila.com/directorio?p=$page")
         }
     }
 
     override fun searchAnimeFromElement(element: Element): SAnime {
-        val animeId = element.select("article.hentai-single header.h-header h1").text().replace(" ", "-").replace("!", "")
-
         val animeSearch = SAnime.create()
-        animeSearch.setUrlWithoutDomain("https://hentaila.com/hentai-$animeId")
+        val mainUrl = element.select("section.section:nth-child(2) > script:nth-child(3)").toString().substringAfter("this.page.url = \"").substringBefore("\"")
+        animeSearch.setUrlWithoutDomain(mainUrl)
         animeSearch.title = element.select("article.hentai-single header.h-header h1").text()
         animeSearch.thumbnail_url = baseUrl + element.select("article.hentai-single div.h-thumb figure img").attr("src")
 
