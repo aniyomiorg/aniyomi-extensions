@@ -380,10 +380,10 @@
   {
     "name": "Aniyomi: Hentaila",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.hentaila",
-    "apk": "aniyomi-es.hentaila-v12.1.apk",
+    "apk": "aniyomi-es.hentaila-v12.2.apk",
     "lang": "es",
-    "code": 1,
-    "version": "12.1",
+    "code": 2,
+    "version": "12.2",
     "nsfw": 1
   },
   {
@@ -533,10 +533,10 @@
   {
     "name": "Aniyomi: AnimesVision",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesvision",
-    "apk": "aniyomi-pt.animesvision-v12.3.apk",
+    "apk": "aniyomi-pt.animesvision-v12.4.apk",
     "lang": "pt",
-    "code": 3,
-    "version": "12.3",
+    "code": 4,
+    "version": "12.4",
     "nsfw": 0
   },
   {
