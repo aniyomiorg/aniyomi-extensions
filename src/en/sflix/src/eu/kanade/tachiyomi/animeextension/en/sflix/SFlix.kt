@@ -137,8 +137,8 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val newHeaders = Headers.headersOf("Referer", referer)
 
         // get embed id
-        val getVidID = document.selectFirst("a").attr("data-id")
-        val getVidApi = client.newCall(GET("https://dopebox.to/ajax/get_link/" + getVidID)).execute().asJsoup()
+        val getVidID = document.selectFirst("a:contains(Vidcloud)").attr("data-id")
+        val getVidApi = client.newCall(GET("https://sflix.to/ajax/get_link/" + getVidID)).execute().asJsoup()
 
         // streamrapid URL
         val getVideoEmbed = getVidApi.text().substringAfter("link\":\"").substringBefore("\"")
@@ -146,7 +146,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val callVideolink = client.newCall(GET(getVideoEmbed, refererHeaders)).execute().asJsoup()
         val uri = Uri.parse(getVideoEmbed)
         val domain = (Base64.encodeToString((uri.scheme + "://" + uri.host + ":443").encodeToByteArray(), Base64.NO_PADDING) + ".").replace("\n", "")
-        val soup = Jsoup.connect(getVideoEmbed).referrer("https://dopebox.to/").get().toString().replace("\n", "")
+        val soup = Jsoup.connect(getVideoEmbed).referrer("https://sflix.to/").get().toString().replace("\n", "")
 
         val key = soup.substringAfter("var recaptchaSiteKey = '").substringBefore("',")
         val number = soup.substringAfter("recaptchaNumber = '").substringBefore("';")

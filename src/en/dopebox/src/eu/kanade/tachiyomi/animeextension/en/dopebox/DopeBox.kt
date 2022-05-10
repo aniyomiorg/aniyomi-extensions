@@ -137,7 +137,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val newHeaders = Headers.headersOf("Referer", referer)
 
         // get embed id
-        val getVidID = document.selectFirst("a").attr("data-id")
+        val getVidID = document.selectFirst("a:contains(Vidcloud)").attr("data-id")
         val getVidApi = client.newCall(GET("https://dopebox.to/ajax/get_link/" + getVidID)).execute().asJsoup()
 
         // streamrapid URL
