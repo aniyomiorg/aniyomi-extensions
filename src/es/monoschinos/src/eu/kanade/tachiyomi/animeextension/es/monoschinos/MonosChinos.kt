@@ -91,7 +91,7 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val url1 = Base64.decode(urlBase64, Base64.DEFAULT)
             val url = String(url1).replace("https://monoschinos2.com/reproductor?url=", "")
 
-            if (server == "fembed" || server == "Fembed") {
+            if (server == "fembed" || server == "Fembed" || server == "fembed2" || server == "Fembed2") {
                 val videos = FembedExtractor().videosFromUrl(url)
                 videoList.addAll(videos)
             }

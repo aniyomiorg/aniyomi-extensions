@@ -61,7 +61,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("div.data a").attr("href"))
-        anime.thumbnail_url = "https:" + element.select("div.poster img").attr("data-lazy-src")
+        anime.thumbnail_url = element.select("div.poster img").attr("data-lazy-src")
         anime.title = element.select("div.data a").text()
         return anime
     }
@@ -322,7 +322,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = "https:" + document.select("div.poster img").attr("data-lazy-src")
+        anime.thumbnail_url = document.select("div.poster img").attr("data-lazy-src")
         anime.title = document.select("div.data h1").text()
         anime.genre = document.select("div.sgeneros a").joinToString(", ") { it.text() }
         anime.description = document.select("div[itemprop=description] p").text()
