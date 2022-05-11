@@ -2,19 +2,19 @@
   {
     "name": "Aniyomi: أكوام",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.akwam",
-    "apk": "aniyomi-ar.akwam-v12.4.apk",
+    "apk": "aniyomi-ar.akwam-v12.5.apk",
     "lang": "ar",
-    "code": 4,
-    "version": "12.4",
+    "code": 5,
+    "version": "12.5",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: اكوام مسلسلات",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.akwams",
-    "apk": "aniyomi-ar.akwams-v12.3.apk",
+    "apk": "aniyomi-ar.akwams-v12.4.apk",
     "lang": "ar",
-    "code": 3,
-    "version": "12.3",
+    "code": 4,
+    "version": "12.4",
     "nsfw": 0
   },
   {
@@ -47,10 +47,10 @@
   {
     "name": "Aniyomi: Animerco",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.animerco",
-    "apk": "aniyomi-ar.animerco-v12.5.apk",
+    "apk": "aniyomi-ar.animerco-v12.6.apk",
     "lang": "ar",
-    "code": 5,
-    "version": "12.5",
+    "code": 6,
+    "version": "12.6",
     "nsfw": 0
   },
   {
