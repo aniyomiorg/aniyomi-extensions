@@ -146,7 +146,7 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "StreamTape")
+        val quality = preferences.getString("preferred_quality", "Vudeo")
         if (quality != null) {
             val newList = mutableListOf<Video>()
             var preferred = 0
@@ -278,9 +278,9 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("StreamTape")
-            entryValues = arrayOf("StreamTape")
-            setDefaultValue("StreamTape")
+            entries = arrayOf("Vudeo", "Mytv", "Doodstream")
+            entryValues = arrayOf("Vudeo", "Mytv", "Doodstream")
+            setDefaultValue("Vudeo")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
