@@ -14,3 +14,4 @@ generated-src/
 .project
 .settings
 .classpath
+.gitpod.yml
