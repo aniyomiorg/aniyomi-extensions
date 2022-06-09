@@ -20,10 +20,10 @@
   {
     "name": "Aniyomi: Anime4up",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.anime4up",
-    "apk": "aniyomi-ar.anime4up-v12.26.apk",
+    "apk": "aniyomi-ar.anime4up-v12.27.apk",
     "lang": "ar",
-    "code": 26,
-    "version": "12.26",
+    "code": 27,
+    "version": "12.27",
     "nsfw": 0
   },
   {
@@ -47,10 +47,10 @@
   {
     "name": "Aniyomi: Animerco",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.animerco",
-    "apk": "aniyomi-ar.animerco-v12.6.apk",
+    "apk": "aniyomi-ar.animerco-v12.7.apk",
     "lang": "ar",
-    "code": 6,
-    "version": "12.6",
+    "code": 7,
+    "version": "12.7",
     "nsfw": 0
   },
   {
@@ -137,10 +137,10 @@
   {
     "name": "Aniyomi: WIT ANIME",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.witanime",
-    "apk": "aniyomi-ar.witanime-v12.13.apk",
+    "apk": "aniyomi-ar.witanime-v12.14.apk",
     "lang": "ar",
-    "code": 13,
-    "version": "12.13",
+    "code": 14,
+    "version": "12.14",
     "nsfw": 0
   },
   {
