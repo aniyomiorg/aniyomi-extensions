@@ -97,7 +97,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val videos = FembedExtractor(client).videosFromUrl(url)
                     videoList.addAll(videos)
                 }
-                server.contains("dood") -> {
+                server.contains("ddstream") -> {
                     val video = DoodExtractor(client).videoFromUrl(url, server)
                     if (video != null) {
                         videoList.add(video)
