@@ -61,7 +61,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("div.data a").attr("href"))
-        anime.thumbnail_url = element.select("div.poster img").attr("data-lazy-src")
+        anime.thumbnail_url = "http" + element.select("div.poster img").attr("data-lazy-src")
         anime.title = element.select("div.data a").text()
         return anime
     }
