@@ -139,12 +139,27 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        val params = BAFilters.getSearchParameters(filters)
-        return client.newCall(searchAnimeRequest(page, query, params))
-            .asObservableSuccess()
-            .map { response ->
-                searchAnimeParse(response)
-            }
+        return if (query.startsWith(PREFIX_SEARCH_PATH)) {
+            val path = query.removePrefix(PREFIX_SEARCH_PATH)
+            client.newCall(GET("$baseUrl/$path"))
+                .asObservableSuccess()
+                .map { response ->
+                    searchAnimeByPathParse(response, path)
+                }
+        } else {
+            val params = BAFilters.getSearchParameters(filters)
+            client.newCall(searchAnimeRequest(page, query, params))
+                .asObservableSuccess()
+                .map { response ->
+                    searchAnimeParse(response)
+                }
+        }
+    }
+
+    private fun searchAnimeByPathParse(response: Response, path: String): AnimesPage {
+        val details = animeDetailsParse(response)
+        details.url = "/$path"
+        return AnimesPage(listOf(details), false)
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
@@ -310,7 +325,7 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
         private const val PREFERRED_QUALITY = "preferred_quality"
         private val QUALITY_LIST = arrayOf("480p", "720p", "1080p")
-
+        const val PREFIX_SEARCH_PATH = "path:"
         private var INITIAL_DATA: String = ""
         private var WIRE_TOKEN: String = ""
     }
