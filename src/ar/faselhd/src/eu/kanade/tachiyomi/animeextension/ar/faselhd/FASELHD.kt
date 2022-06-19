@@ -28,7 +28,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "فاصل اعلاني"
 
-    override val baseUrl = "https://www.faselhd.top"
+    override val baseUrl = "https://www.faselhd.club"
 
     override val lang = "ar"
 
@@ -42,7 +42,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun headersBuilder(): Headers.Builder {
         return super.headersBuilder()
-            .add("Referer", "https://www.faselhd.top/")
+            .add("Referer", "https://www.faselhd.club/")
     }
 
     // Popular Anime
@@ -74,7 +74,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             document.select(episodeListSelector()).map { episodes.add(episodeFromElement(it)) }
             document.select(seasonsNextPageSelector(seasonNumber)).firstOrNull()?.let {
                 seasonNumber++
-                addEpisodes(client.newCall(GET("https://www.faselhd.pro/?p=" + it.select("div.seasonDiv").attr("data-href"), headers)).execute().asJsoup())
+                addEpisodes(client.newCall(GET("https://www.faselhd.club/?p=" + it.select("div.seasonDiv").attr("data-href"), headers)).execute().asJsoup())
             }
         }
 

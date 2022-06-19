@@ -28,7 +28,7 @@ class FASELHDMOVIES : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "فاصل اعلاني افلام بس"
 
-    override val baseUrl = "https://www.faselhd.pro"
+    override val baseUrl = "https://www.faselhd.club"
 
     override val lang = "ar"
 
@@ -42,7 +42,7 @@ class FASELHDMOVIES : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun headersBuilder(): Headers.Builder {
         return super.headersBuilder()
-            .add("Referer", "https://www.faselhd.top/")
+            .add("Referer", "https://www.faselhd.club/")
     }
 
     // Popular Anime
