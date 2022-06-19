@@ -119,7 +119,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     episodes.add(episode)
                 }
         }
-        return episodes
+        return episodes.reversed()
     }
 
     override fun episodeListSelector() = throw Exception("not used")
