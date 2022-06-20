@@ -387,6 +387,15 @@
     "nsfw": 1
   },
   {
+    "name": "Aniyomi: Jkanime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.jkanime",
+    "apk": "aniyomi-es.jkanime-v12.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: Jkhentai",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.jkhentai",
     "apk": "aniyomi-es.jkhentai-v12.2.apk",
