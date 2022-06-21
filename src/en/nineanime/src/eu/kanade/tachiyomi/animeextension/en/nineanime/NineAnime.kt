@@ -12,7 +12,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -126,15 +125,13 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodeBody = getEpisodeBody() ?: getEpisodeBody()!!
         val encryptedSourceUrl = json.decodeFromString<JsonObject>(episodeBody)["url"]!!.jsonPrimitive.content
         val embedLink = getLink(encryptedSourceUrl)
+        val vizcloudClient = client.newBuilder().addInterceptor(VizcloudInterceptor()).build()
         val referer = Headers.headersOf("Referer", "$baseUrl/")
-        val embed = client.newCall(GET(embedLink, referer)).execute().asJsoup()
-        val skey = embed.selectFirst("script:containsData(window.skey = )")
-            .data().substringAfter("window.skey = \'").substringBefore("\'")
         val sourceObject = json.decodeFromString<JsonObject>(
-            client.newCall(GET(embedLink.replace("/embed/", "/info/") + "?skey=$skey", referer))
+            vizcloudClient.newCall(GET(embedLink, referer))
                 .execute().body!!.string()
         )
-        val mediaSources = sourceObject["media"]!!.jsonObject["sources"]!!.jsonArray
+        val mediaSources = sourceObject["data"]!!.jsonObject["media"]!!.jsonObject["sources"]!!.jsonArray
         val masterUrls = mediaSources.map { it.jsonObject["file"]!!.jsonPrimitive.content }
         val masterUrl = masterUrls.find { !it.contains("/simple/") } ?: masterUrls.first()
         val origin = Headers.headersOf("origin", "https://" + masterUrl.toHttpUrl().topPrivateDomain())
@@ -362,4 +359,4 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun decode(input: String): String = java.net.URLDecoder.decode(input, "utf-8")
 }
 
-private const val key = "0wMrYU+ixjJ4QdzgfN2HlyIVAt3sBOZnCT9Lm7uFDovkb/EaKpRWhqXS5168ePcG"
+private const val key = "c/aUAorINHBLxWTy3uRiPt8J+vjsOheFG1E0q2X9CYwDZlnmd4Kb5M6gSVzfk7pQ"

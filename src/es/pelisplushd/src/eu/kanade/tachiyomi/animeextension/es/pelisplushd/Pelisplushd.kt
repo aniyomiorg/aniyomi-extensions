@@ -77,7 +77,6 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 episode.setUrlWithoutDomain(element.attr("href"))
                 episodes.add(episode)
             }
-
         }
         return episodes
     }

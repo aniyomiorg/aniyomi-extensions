@@ -1,8 +1,8 @@
 package eu.kanade.tachiyomi.animeextension.en.dramacool
 
 import android.app.Application
-import android.widget.Toast
 import android.content.SharedPreferences
+import android.widget.Toast
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.BuildConfig
