@@ -76,7 +76,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         val anime = SAnime.create()
         val animeId = response.request.url.toString().substringAfterLast("?anime_id=")
         anime.setUrlWithoutDomain("$baseUrl/anime/?anime_id=$animeId")
-        anime.title = jsoup.selectFirst("div.title-wrapper h1").text()
+        anime.title = jsoup.selectFirst("div.title-wrapper > h1 > span").text()
         anime.author = jsoup.select("div.col-sm-4.anime-info p:contains(Studio:)")
             .firstOrNull()?.text()?.replace("Studio: ", "")
         anime.status = parseStatus(jsoup.selectFirst("div.col-sm-4.anime-info p:contains(Status:) a").text())
