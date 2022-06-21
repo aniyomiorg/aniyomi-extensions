@@ -49,29 +49,9 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val lang = "en"
 
-    // Create bypass object
-    private val ddgbypass = DdosGuardBypass("https://animepahe.com/")
-
     override val supportsLatest = false
 
     private val json: Json by injectLazy()
-
-    override fun headersBuilder(): Headers.Builder {
-        try {
-            // Bypass...
-            // Only required once. Then you can browse any page on the domain.
-            if (!ddgbypass.isBypassed) {
-                ddgbypass.bypass()
-            }
-            // Set Cookie header
-            if (ddgbypass.isBypassed) {
-                return super.headersBuilder().add("cookie", ddgbypass.cookiesAsString)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return super.headersBuilder()
-    }
 
     override val client: OkHttpClient = network.cloudflareClient
 

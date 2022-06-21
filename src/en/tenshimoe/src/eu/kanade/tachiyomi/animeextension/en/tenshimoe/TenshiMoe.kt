@@ -14,6 +14,7 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -37,7 +38,12 @@ class TenshiMoe : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    private val ddgInterceptor = DdosGuardInterceptor(network.client)
+
+    override val client: OkHttpClient = network.client
+        .newBuilder()
+        .addInterceptor(ddgInterceptor)
+        .build()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -128,7 +134,14 @@ class TenshiMoe : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         for (source in sources) {
             val src = source.substringBefore("'")
             val size = source.substringAfter("size: ").substringBefore(",")
-            val video = Video(src, size + "p", src, null)
+            val cookie = ddgInterceptor.getNewCookie(src.toHttpUrl())?.value ?: ""
+            val video = Video(
+                src,
+                size + "p",
+                src,
+                null,
+                Headers.headersOf("cookie", "__ddg2_=$cookie"),
+            )
             videoList.add(video)
         }
         return videoList
