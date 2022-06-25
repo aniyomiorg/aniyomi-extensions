@@ -213,7 +213,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val url = if (query.isNotBlank()) {
-            "$baseUrl/page/$page/?s=l$query"
+            "$baseUrl/page/$page/?s=$query"
         } else {
             (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
                 when (filter) {
