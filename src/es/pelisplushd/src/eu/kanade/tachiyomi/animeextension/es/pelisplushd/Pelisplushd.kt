@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.animeextension.es.pelisplushd
 import android.app.Application
 import android.content.SharedPreferences
 import android.util.Base64
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.DoodExtractor
@@ -173,7 +172,6 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             }
             "voex" -> {
-                Log.i("bruh", "VOEZ")
                 val body = client.newCall(GET(url)).execute().asJsoup()
                 val data1 = body.selectFirst("script:containsData(const sources = {)").data()
                 val video = data1.substringAfter("hls\": \"").substringBefore("\"")
