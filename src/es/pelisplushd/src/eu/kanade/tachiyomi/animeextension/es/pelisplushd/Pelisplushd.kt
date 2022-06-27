@@ -161,7 +161,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "uwu" -> {
                 if (!url.contains("disable")) {
                     val body = client.newCall(GET(url)).execute().asJsoup()
-                    if (body.selectFirst("script:containsData(var shareId)").toString().isNotBlank()) {
+                    if (body.select("script:containsData(var shareId)").toString().isNotBlank()) {
                         val shareId = body.selectFirst("script:containsData(var shareId)").data().substringAfter("shareId = \"").substringBefore("\"")
                         val amazonApiJson = client.newCall(GET("https://www.amazon.com/drive/v1/shares/$shareId?resourceVersion=V2&ContentType=JSON&asset=ALL")).execute().asJsoup()
                         val epId = amazonApiJson.toString().substringAfter("\"id\":\"").substringBefore("\"")
@@ -187,7 +187,8 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             }
             "doodstream" -> {
-                val video = DoodExtractor(client).videoFromUrl(url, "DoodStream")
+                val url2 = url.replace("https://doodstream.com/e/", "https://dood.to/e/")
+                val video = DoodExtractor(client).videoFromUrl(url2, "DoodStream")
                 if (video != null) {
                     videoList.add(video)
                 }
