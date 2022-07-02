@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.es.animeflv.extractors
+package eu.kanade.tachiyomi.animeextension.es.doramasyt.extractors
 
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
