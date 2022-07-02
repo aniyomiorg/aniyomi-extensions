@@ -168,7 +168,6 @@ class FireAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 episode_number = ep.episode.toFloat()
                 name = if (ep.title.startsWith("Episode")) ep.title else "Episode ${i + 1}: ${ep.title}"
                 url = animeUrl + (-1..i).joinToString("") { " " } // Add some spaces so that all episodes are shown
-                date_upload = System.currentTimeMillis()
             }
         }.reversed()
     }

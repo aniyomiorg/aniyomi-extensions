@@ -179,7 +179,6 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
                     setUrlWithoutDomain("$baseUrl/api/episode/show/$animeUrl/season/${season.number!!}/episode/${episode.number}")
                     episode_number = episode.number!!.toFloat()
                     name = "Staffel ${season.number}: Folge ${episode.number}"
-                    date_upload = System.currentTimeMillis()
                 }
                 episodeList.add(newEpisode)
             }

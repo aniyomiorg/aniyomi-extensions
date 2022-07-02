@@ -187,7 +187,6 @@ class AnimevostSource(override val name: String, override val baseUrl: String, p
                         val id = entry.value.toString().replace("\"", "")
                         name = entry.key
                         episode_number = index.toFloat()
-                        date_upload = System.currentTimeMillis()
                         url = "/frame5.php?play=$id&old=1"
                     }
                 )

@@ -85,7 +85,6 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val ep = element.selectFirst("div.name").ownText().substringAfter(" ")
         episode.episode_number = ep.toFloat()
         episode.name = "Episode $ep"
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 

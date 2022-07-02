@@ -103,7 +103,6 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         episode.url = "/ajax/anime/servers?id=$animeId&vrf=$vrf&episode=$epNum"
         episode.episode_number = epNum.toFloat()
         episode.name = "Episode $epNum"
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 

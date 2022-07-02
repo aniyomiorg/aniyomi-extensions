@@ -76,7 +76,6 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         episode.setUrlWithoutDomain(document.location())
         episode.episode_number = 1F
         episode.name = document.selectFirst("div.name.col-xs-12 span h1").text()
-        episode.date_upload = System.currentTimeMillis()
         return listOf(episode)
     }
 
@@ -92,7 +91,6 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         // episode.episode_number = element.select("span:nth-child(3)").text().replace(" - ", "").toFloat()
         episode.name = element.select("span:nth-child(3)").text() + " :" + element.select("span:nth-child(1)").text()
-        episode.date_upload = System.currentTimeMillis()
 
         return episode
     }

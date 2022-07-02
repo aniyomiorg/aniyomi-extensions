@@ -84,7 +84,6 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> 1F
         }
         episode.name = element.select("p").text()
-        episode.date_upload = System.currentTimeMillis()
 
         return episode
     }

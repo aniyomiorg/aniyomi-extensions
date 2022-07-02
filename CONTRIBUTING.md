@@ -191,8 +191,29 @@ a.k.a. the Latest source entry point in the app (invoked by tapping on the "Late
 #### Episode
 
 - After an episode list for the anime is fetched and the app is going to cache the data, `prepareNewEpisode` will be called.
-- `SEpisode.date_upload` is the [UNIX Epoch time](https://en.wikipedia.org/wiki/Unix_time) **expressed in miliseconds**.
-    - If you don't pass `SEpisode.date_upload`, the user won't get notifications for new episodes. refer to [this issue](https://github.com/tachiyomiorg/tachiyomi/issues/2089) for more info. `System.currentTimeMillis()` works as a substitute when real data is not available.
+- `SEpisode.date_upload` is the [UNIX Epoch time](https://en.wikipedia.org/wiki/Unix_time) **expressed in milliseconds**.
+    - If you don't pass `SEpisode.date_upload` and leave it zero, the app will use the default date instead, but it's recommended to always fill it if it's available.
+    - To get the time in milliseconds from a date string, you can use a `SimpleDateFormat` like in the example below.
+
+      ```kotlin
+      private fun parseDate(dateStr: String): Long {
+          return runCatching { DATE_FORMATTER.parse(dateStr)?.time }
+              .getOrNull() ?: 0L
+      }
+      companion object {
+          private val DATE_FORMATTER by lazy {
+              SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+          }
+      }
+      ```
+
+      Make sure you make the `SimpleDateFormat` a class constant or variable so it doesn't get recreated for every episode. If you need to parse or format dates in anime description, create another instance since `SimpleDateFormat` is not thread-safe.
+    - If the parsing have any problem, make sure to return `0L` so the app will use the default date instead.
+    - The app will overwrite dates of existing old episodes **UNLESS** `0L` is returned.
+    - The default date has [changed](https://github.com/tachiyomiorg/tachiyomi/pull/7197) in Tachiyomi preview ≥ r4442 or stable > 0.13.4.
+        - In older versions, the default date is always the fetch date.
+        - In newer versions, this is the same if every (new) episode has `0L` returned.
+        - However, if the source only provides the upload date of the latest episode, you can now set it to the latest episode and leave other episodes default. The app will automatically set it (instead of fetch date) to every new episode and leave old episodes' dates untouched.
 
 #### Episode Videos
 

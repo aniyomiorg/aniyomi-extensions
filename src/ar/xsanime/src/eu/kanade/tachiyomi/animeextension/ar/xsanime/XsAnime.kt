@@ -67,7 +67,6 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             (epNum.isNotEmpty()) -> epNum.toFloat()
             else -> 1F
         }
-        episode.date_upload = System.currentTimeMillis()
 
         return episode
     }

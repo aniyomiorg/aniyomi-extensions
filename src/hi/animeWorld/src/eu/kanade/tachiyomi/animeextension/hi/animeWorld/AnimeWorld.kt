@@ -106,7 +106,6 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val epNo = it.select("span.num-epi").text()
             episode.name = "$epNo : ${it.select("h2.entry-title").text()}"
             episode.episode_number = epNo.substringAfter("x").toFloat()
-            episode.date_upload = System.currentTimeMillis()
             episodeList.add(episode)
         }
         return episodeList
@@ -124,7 +123,6 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         episode.episode_number = epNo
         episode.name = if (ep == epName) epName else "Episode $ep"
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 

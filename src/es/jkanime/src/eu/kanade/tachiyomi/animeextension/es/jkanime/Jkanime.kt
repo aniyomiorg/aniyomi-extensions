@@ -84,7 +84,6 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val episode = SEpisode.create().apply {
                         episode_number = (j + checkLast).toFloat()
                         name = "Episodio ${j + checkLast}"
-                        date_upload = System.currentTimeMillis()
                     }
                     episode.setUrlWithoutDomain("$episodeLink/${j + checkLast}")
                     episodes.add(episode)
@@ -98,7 +97,6 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val episode = SEpisode.create().apply {
                         episode_number = number.toFloat()
                         name = "Episodio $number"
-                        date_upload = System.currentTimeMillis()
                     }
                     episode.setUrlWithoutDomain("$episodeLink/$number")
                     episodes.add(episode)
@@ -113,7 +111,6 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val episode = SEpisode.create().apply {
                         episode_number = number.toFloat()
                         name = "Episodio $number"
-                        date_upload = System.currentTimeMillis()
                     }
                     episode.setUrlWithoutDomain("$episodeLink/$number")
                     episodes.add(episode)

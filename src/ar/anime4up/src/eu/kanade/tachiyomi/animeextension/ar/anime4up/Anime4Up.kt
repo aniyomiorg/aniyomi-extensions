@@ -81,7 +81,6 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> 1F
         }
         episode.name = element.select("div.episodes-card-container div.episodes-card div.ehover6 h3 a").text()
-        episode.date_upload = System.currentTimeMillis()
 
         return episode
     }
