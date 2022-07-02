@@ -75,7 +75,6 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         episode.episode_number = epNo
         episode.name = if (ep == epName) epName else "Episode $ep"
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 

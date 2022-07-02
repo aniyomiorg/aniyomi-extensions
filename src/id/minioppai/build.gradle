@@ -5,7 +5,7 @@ ext {
     extName = 'MiniOppai'
     pkgNameSuffix = 'id.minioppai'
     extClass = '.MiniOppai'
-    extVersionCode = 1
+    extVersionCode = 2
     libVersion = '12'
     containsNsfw = true
 }

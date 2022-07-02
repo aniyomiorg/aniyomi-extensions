@@ -166,7 +166,6 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         episode.setUrlWithoutDomain("$url/ep$number")
         episode.episode_number = number.toFloat() + 1F
         episode.name = "Episode ${number + 1}"
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 

@@ -90,7 +90,6 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         episodeName = if (season == epName) episodeName else "Season $season"
         episode.episode_number = epNo + (seasonNo * 100)
         episode.name = episodeName
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 

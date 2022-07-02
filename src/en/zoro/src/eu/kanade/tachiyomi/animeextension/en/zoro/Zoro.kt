@@ -72,7 +72,6 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             episode.episode_number = a.attr("data-number").toFloat()
             episode.name = "Episode ${a.attr("data-number")}: ${a.attr("title")}"
             episode.url = a.attr("href")
-            episode.date_upload = System.currentTimeMillis()
             episodeList.add(episode)
         }
         return episodeList.reversed()

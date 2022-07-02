@@ -62,7 +62,6 @@ class MiniOppai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> 1F
         }
         episode.name = element.select("span.lchx").text()
-        episode.date_upload = System.currentTimeMillis()
 
         return episode
     }

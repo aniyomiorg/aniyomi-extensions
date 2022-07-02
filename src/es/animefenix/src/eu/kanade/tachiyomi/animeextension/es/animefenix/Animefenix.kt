@@ -68,7 +68,6 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val episode = SEpisode.create().apply {
                 episode_number = epNum.toFloat()
                 name = "Episodio $epNum"
-                date_upload = System.currentTimeMillis()
             }
             episode.setUrlWithoutDomain(it.select("a").attr("href"))
             episodes.add(episode)

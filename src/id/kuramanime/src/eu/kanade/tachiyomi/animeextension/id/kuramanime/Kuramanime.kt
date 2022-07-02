@@ -65,7 +65,6 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> 1F
         }
         episode.name = element.text()
-        episode.date_upload = System.currentTimeMillis()
 
         return episode
     }

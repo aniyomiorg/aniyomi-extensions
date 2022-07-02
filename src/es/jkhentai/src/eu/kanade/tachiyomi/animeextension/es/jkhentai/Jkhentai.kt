@@ -67,7 +67,6 @@ class Jkhentai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 episode_number = epNum.toFloat()
                 name = "Episodio $epNum"
                 url = "/ver/$animeId-$epNum"
-                date_upload = System.currentTimeMillis()
             }
             episodes.add(episode)
         }

@@ -97,7 +97,6 @@ class GenoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         episode.setUrlWithoutDomain(element.attr("href"))
         episode.name = element.select("a").text()
         episode.episode_number = element.text().removePrefix("Ep ").toFloat()
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 

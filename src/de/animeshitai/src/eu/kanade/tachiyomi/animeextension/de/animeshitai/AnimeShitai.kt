@@ -203,7 +203,6 @@ class AnimeShitai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val ep = element.child(0).text()
         episode.episode_number = ep.toFloat()
         episode.name = "Episode $ep"
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 

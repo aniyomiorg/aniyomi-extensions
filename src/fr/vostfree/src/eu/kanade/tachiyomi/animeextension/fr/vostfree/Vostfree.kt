@@ -77,7 +77,6 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val episode = SEpisode.create().apply {
                     episode_number = "1".toFloat()
                     name = "Film"
-                    date_upload = System.currentTimeMillis()
                 }
                 episode.url = ("?episode:${0}/${response.request.url}")
                 episodes.add(episode)
@@ -85,7 +84,6 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val episode = SEpisode.create().apply {
                     episode_number = epNum.toFloat()
                     name = "Épisode $epNum"
-                    date_upload = System.currentTimeMillis()
                 }
                 episode.setUrlWithoutDomain("?episode:${epNum.toInt() - 1}/${response.request.url}")
                 episodes.add(episode)

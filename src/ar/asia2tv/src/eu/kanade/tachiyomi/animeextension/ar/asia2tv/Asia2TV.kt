@@ -69,7 +69,6 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("href"))
         episode.name = element.attr("href").substringAfterLast("-").substringBeforeLast("/") + " : الحلقة"
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 

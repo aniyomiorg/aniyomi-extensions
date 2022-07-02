@@ -89,7 +89,6 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         episode.setUrlWithoutDomain(element.attr("abs:href"))
         episode.name = element.ownerDocument().select("div.seasonDiv.active > div.title").text() + " : " + element.text()
         episode.episode_number = element.text().replace("الحلقة ", "").toFloat()
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 

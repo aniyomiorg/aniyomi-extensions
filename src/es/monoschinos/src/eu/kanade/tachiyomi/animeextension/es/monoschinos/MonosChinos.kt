@@ -70,7 +70,6 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 episode_number = epNum.toFloat()
                 name = "Episodio $epNum"
                 url = "/ver/$animeId-episodio-$epNum"
-                date_upload = System.currentTimeMillis()
             }
             episodes.add(episode)
         }

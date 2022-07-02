@@ -90,7 +90,6 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> 1F
         }
         episode.name = element.ownerDocument().select("div.List--Seasons--Episodes a.selected").text() + " : " + element.text()
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 

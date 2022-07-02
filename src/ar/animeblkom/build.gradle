@@ -5,7 +5,7 @@ ext {
     extName = 'أنمي بالكوم'
     pkgNameSuffix = 'ar.animeblkom'
     extClass = '.AnimeBlkom'
-    extVersionCode = 5
+    extVersionCode = 6
     libVersion = '12'
 }
 

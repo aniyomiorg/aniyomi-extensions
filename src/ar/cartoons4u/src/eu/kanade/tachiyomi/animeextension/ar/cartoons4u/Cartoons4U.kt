@@ -64,7 +64,6 @@ class Cartoons4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("href"))
         episode.name = element.ownerDocument().select("header.Top h1").text()
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 

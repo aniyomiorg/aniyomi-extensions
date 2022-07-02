@@ -106,7 +106,6 @@ class AnimeSrbija : ParsedAnimeHttpSource() {
         episode.name = element.text()
         val episodeNumberString = element.text().removePrefix("Episode ")
         episode.episode_number = if (episodeNumberString.toFloatOrNull() != null) episodeNumberString.toFloat() else 0.0f
-        episode.date_upload = System.currentTimeMillis()
 
         return episode
     }

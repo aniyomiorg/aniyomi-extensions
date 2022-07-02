@@ -73,7 +73,6 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             episode.episode_number = epNumber.toFloat()
         }
         episode.name = epText
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 

@@ -64,7 +64,6 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("value"))
         episode.name = element.ownerDocument().select("picture > img.img-fluid").attr("alt")
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 
