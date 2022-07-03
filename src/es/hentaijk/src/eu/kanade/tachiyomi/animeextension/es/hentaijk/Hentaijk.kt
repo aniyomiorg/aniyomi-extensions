@@ -10,12 +10,12 @@ import eu.kanade.tachiyomi.animeextension.es.hentaijk.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -232,11 +232,12 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
 
         return when {
-            query.isNotBlank() -> GET("$baseUrl/buscar/$query/$page", headers)
+            query.isNotBlank() -> GET("$baseUrl/buscar/$query/$page/?filtro=fecha&tipo=none&estado=none&orden=desc", headers)
             genreFilter.state != 0 -> GET("$baseUrl/genero/${genreFilter.toUriPart()}/$page")
-            else -> GET("$baseUrl/directorio/$page ")
+            else -> GET("$baseUrl/directorio/$page/?filtro=fecha&tipo=none&estado=none&fecha=none&temporada=none&orden=desc")
         }
     }
+
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
@@ -250,7 +251,46 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
-    override fun searchAnimeSelector(): String = "div.row div.col-lg-2.col-md-6.col-sm-6"
+    override fun searchAnimeSelector(): String = ".anime__page__content #botones ~ .row"
+
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        return parseSearchJson(response)
+        // return super.searchAnimeParse(response)
+    }
+
+    private fun parseSearchJson(jsonLine: Response): AnimesPage {
+        val animeList = mutableListOf<SAnime>()
+        val document = jsonLine.asJsoup()
+        val hasNextPage = document.select("section.contenido.spad div.container div.navigation a.nav-next").any()
+        var isSearchLayer = document.select(".col-lg-2.col-md-6.col-sm-6").any()
+        val isFilterLayer = document.select(".card.mb-3.custom_item2").any()
+        if (isSearchLayer) {
+            document.select(".col-lg-2.col-md-6.col-sm-6").forEach { animeData ->
+                val anime = SAnime.create()
+                anime.title = animeData.select("div.anime__item #ainfo div.title").html()
+                anime.thumbnail_url = animeData.select("div.anime__item a div.anime__item__pic").attr("data-setbg")
+                anime.setUrlWithoutDomain(animeData.select("div.anime__item a").attr("href"))
+                anime.status = parseStatus(animeData.select("div.anime__item div.anime__item__text ul li:nth-child(1)").html())
+                val tags = animeData.select("div.anime__item div.anime__item__text ul li").joinToString { it.text() }
+                anime.genre = tags
+                animeList.add(anime)
+            }
+        } else if (isFilterLayer) {
+            document.select(".card.mb-3.custom_item2").forEach { animeData ->
+                val anime = SAnime.create()
+                anime.title = animeData.select("div.row div.col-md-7 div.card-body h5.card-title a").html()
+                anime.thumbnail_url = animeData.select("div.row div.custom_thumb2 a img").attr("src")
+                anime.setUrlWithoutDomain(animeData.select("div.row div.col-md-7 div.card-body h5.card-title a").attr("href"))
+                anime.status = parseStatus(animeData.select("div.row div.col-md-7 div.card-body div.card-info p.card-status").text())
+                val tags = animeData.select("div.row div.col-md-7 div.card-body div.card-info p").joinToString { it.text() }
+                anime.genre = tags
+                anime.description = animeData.select("div.row div.col-md-7 div.card-body p.synopsis").text()
+                animeList.add(anime)
+            }
+        }
+        Log.i("bruh parseSearchJson", hasNextPage.toString())
+        return AnimesPage(animeList, hasNextPage)
+    }
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
@@ -275,6 +315,7 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun parseStatus(statusString: String): Int {
         return when {
+            statusString.contains("Por estrenar") -> SAnime.ONGOING
             statusString.contains("En emision") -> SAnime.ONGOING
             statusString.contains("Concluido") -> SAnime.COMPLETED
             else -> SAnime.UNKNOWN
@@ -306,7 +347,7 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private class GenreFilter : UriPartFilter(
         "Generos",
         arrayOf(
-            Pair("<selecionar>", ""),
+            Pair("<selecionar>", "none"),
             Pair("Español latino", "latino"),
             Pair("Accion", "accion"),
             Pair("Artes Marciales", "artes-marciales"),
