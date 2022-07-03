@@ -1,12 +1,12 @@
-package eu.kanade.tachiyomi.animeextension.es.jkanime
+package eu.kanade.tachiyomi.animeextension.es.hentaijk
 
 import android.app.Application
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.jkanime.extractors.FembedExtractor
-import eu.kanade.tachiyomi.animeextension.es.jkanime.extractors.OkruExtractor
+import eu.kanade.tachiyomi.animeextension.es.hentaijk.extractors.FembedExtractor
+import eu.kanade.tachiyomi.animeextension.es.hentaijk.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -28,11 +28,11 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
 
-class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "Jkanime"
+    override val name = "Hentaijk"
 
-    override val baseUrl = "https://jkanime.net"
+    override val baseUrl = "https://hentaijk.com"
 
     override val lang = "es"
 
@@ -46,7 +46,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "div.col-lg-12 div.list"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("https://jkanime.net/top/")
+    override fun popularAnimeRequest(page: Int): Request = GET("https://hentaijk.com/top/")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -65,8 +65,10 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodes = mutableListOf<SEpisode>()
         val episodeLink = response.request.url
         val pageBody = response.asJsoup()
-        val animeId = pageBody.select("div.anime__details__text div.anime__details__title div#guardar-anime.btn.btn-light.btn-sm.ml-2")
-            .attr("data-anime")
+        val scriptText = pageBody.selectFirst("script:containsData(var invertir =)").data()
+        val animeId = scriptText.substringAfter("'/ajax/last_episode/", "")
+            .substringBefore("/',", "")
+            .ifEmpty { throw Exception("no video links found.") }
 
         val pageNumber = pageBody.select("div.anime__pagination a")
         val lastPage = pageNumber.last()?.attr("href")
@@ -84,19 +86,21 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val episode = SEpisode.create().apply {
                         episode_number = (j + checkLast).toFloat()
                         name = "Episodio ${j + checkLast}"
+                        date_upload = System.currentTimeMillis()
                     }
                     episode.setUrlWithoutDomain("$episodeLink/${j + checkLast}")
                     episodes.add(episode)
                 }
                 checkLast += 12
             }
-            Jsoup.connect("https://jkanime.net/ajax/pagination_episodes/$animeId/$lastPage").get()
+            Jsoup.connect("https://hentaijk.com/ajax/pagination_episodes/$animeId/$lastPage").get()
                 .body().select("body").text().replace("}]", "").split("}").forEach { json ->
                     val number = json.substringAfter("\"number\":\"").substringBefore("\"")
                     Log.i("bruh", number)
                     val episode = SEpisode.create().apply {
                         episode_number = number.toFloat()
                         name = "Episodio $number"
+                        date_upload = System.currentTimeMillis()
                     }
                     episode.setUrlWithoutDomain("$episodeLink/$number")
                     episodes.add(episode)
@@ -104,13 +108,14 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
 
         if (firstPage == lastPage) {
-            Jsoup.connect("https://jkanime.net/ajax/pagination_episodes/$animeId/$lastPage").get()
+            Jsoup.connect("https://hentaijk.com/ajax/pagination_episodes/$animeId/$lastPage").get()
                 .body().select("body").text().replace("}]", "").split("}").forEach { json ->
                     val number = json.substringAfter("\"number\":\"").substringBefore("\"")
                     Log.i("bruh", number)
                     val episode = SEpisode.create().apply {
                         episode_number = number.toFloat()
                         name = "Episodio $number"
+                        date_upload = System.currentTimeMillis()
                     }
                     episode.setUrlWithoutDomain("$episodeLink/$number")
                     episodes.add(episode)
@@ -133,7 +138,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             document.select("script").forEach { script ->
                 if (script.data().contains("var video = [];")) {
                     val url = (
-                        baseUrl + script.data().substringAfter("video[$serverId] = '<iframe class=\"player_conte\" src=\"")
+                        script.data().substringAfter("video[$serverId] = '<iframe class=\"player_conte\" src=\"")
                             .substringBefore("\"")
                         )
                         .replace("$baseUrl/jkfembed.php?u=", "https://embedsito.com/v/")
@@ -145,12 +150,12 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         val dataKey = doc.select("form input[value]").attr("value")
                         Jsoup.connect("$baseUrl/gsplay/redirect_post.php").headers(
                             mapOf(
-                                "Host" to "jkanime.net",
+                                "Host" to "hentaijk.com",
                                 "Accept" to "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
                                 "Accept-Language" to "en-US,en;q=0.5",
                                 "Referer" to url,
                                 "Content-Type" to "application/x-www-form-urlencoded",
-                                "Origin" to "https://jkanime.net",
+                                "Origin" to "https://hentaijk.com",
                                 "DNT" to "1",
                                 "Connection" to "keep-alive",
                                 "Upgrade-Insecure-Requests" to "1",
@@ -164,7 +169,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         ).data(mapOf("data" to dataKey)).method(Connection.Method.POST).followRedirects(false)
                             .execute().headers("location").forEach { loc ->
                                 val postkey = loc.replace("/gsplay/player.html#", "")
-                                val nozomitext = Jsoup.connect("https://jkanime.net/gsplay/api.php").method(Connection.Method.POST).data("v", postkey).ignoreContentType(true).execute().body()
+                                val nozomitext = Jsoup.connect("https://hentaijk.com/gsplay/api.php").method(Connection.Method.POST).data("v", postkey).ignoreContentType(true).execute().body()
                                 nozomitext.toString().split("}").forEach { file ->
                                     val nozomiUrl = file.substringAfter("\"file\":\"").substringBefore("\"").replace("\\", "")
                                     if (nozomiUrl.isNotBlank() && !nozomiUrl.contains("{")) {
@@ -178,7 +183,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         "embedsito" in url -> FembedExtractor().videosFromUrl(url).forEach { videos.add(it) }
                         "ok" in url -> OkruExtractor(client).videosFromUrl(url).forEach { videos.add(it) }
                         "stream/jkmedia" in url -> videos.add(Video(url, "Xtreme S", url, null))
-                        "um.php" in url -> videos.add(JkanimeExtractor().videoFromUrl(url, server))
+                        "um.php" in url -> videos.add(HentaijkExtractor().videoFromUrl(url, server))
                     }
                 }
             }
@@ -186,7 +191,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videos
     }
 
-    private class JkanimeExtractor() {
+    private class HentaijkExtractor() {
         fun videoFromUrl(url: String, server: String): Video {
             var url1 = ""
             Jsoup.connect(url).get().body().select("script").forEach {
@@ -205,7 +210,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "Nozomi")
+        val quality = preferences.getString("preferred_quality", "Sabrosio")
         if (quality != null) {
             val newList = mutableListOf<Video>()
             var preferred = 0
@@ -232,6 +237,19 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> GET("$baseUrl/directorio/$page/?filtro=fecha&tipo=none&estado=none&fecha=none&temporada=none&orden=desc")
         }
     }
+
+    override fun searchAnimeFromElement(element: Element): SAnime {
+        val anime = SAnime.create()
+        anime.setUrlWithoutDomain(
+            element.select("div.anime__item a").attr("href")
+        )
+        anime.title = element.select("div.anime__item div#ainfo div.title").text()
+        anime.thumbnail_url = element.select("div.anime__item a div").attr("data-setbg")
+        anime.description = element.select("div.anime__item#ainfo p").text()
+        return anime
+    }
+
+    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
     override fun searchAnimeSelector(): String = ".anime__page__content #botones ~ .row"
 
@@ -270,21 +288,9 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 animeList.add(anime)
             }
         }
+        Log.i("bruh parseSearchJson", hasNextPage.toString())
         return AnimesPage(animeList, hasNextPage)
     }
-
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(
-            element.select("div.anime__item a").attr("href")
-        )
-        anime.title = element.select("div.anime__item div#ainfo div.title").text()
-        anime.thumbnail_url = element.select("div.anime__item a div").attr("data-setbg")
-        anime.description = element.select("div.anime__item#ainfo p").text()
-        return anime
-    }
-
-    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
@@ -329,7 +335,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("https://jkanime.net/directorio/$page/?filtro=fecha&tipo=none&estado=none&fecha=none&temporada=none&orden=desc")
+    override fun latestUpdatesRequest(page: Int): Request = GET("https://hentaijk.com/directorio/$page/?filtro=fecha&tipo=none&estado=none&fecha=none&temporada=none&orden=desc")
 
     override fun latestUpdatesSelector(): String = "div.card.mb-3.custom_item2"
 
@@ -427,7 +433,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Thriller", "thriller"),
             Pair("Vampiros", "vampiros"),
             Pair("Yaoi", "yaoi"),
-            Pair("Yuri", "yuri")
+            Pair("Yuri", "yuri"),
         )
     )
 
@@ -440,9 +446,9 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("Nozomi", "Desu", "Xtreme S", "Fembed:480p", "Fembed:720p", "Fembed:1080p", "Okru: full", "Okru: sd", "Okru: low", "Okru: lowest", "Okru: mobile")
-            entryValues = arrayOf("Nozomi", "Desu", "Xtreme S", "Fembed:480p", "Fembed:720p", "Fembed:1080p", "Okru: full", "Okru: sd", "Okru: low", "Okru: lowest", "Okru: mobile")
-            setDefaultValue("Nozomi")
+            entries = arrayOf("Sabrosio", "Desu", "Xtreme S", "Fembed:480p", "Fembed:720p", "Fembed:1080p", "Okru: full", "Okru: sd", "Okru: low", "Okru: lowest", "Okru: mobile")
+            entryValues = arrayOf("Sabrosio", "Desu", "Xtreme S", "Fembed:480p", "Fembed:720p", "Fembed:1080p", "Okru: full", "Okru: sd", "Okru: low", "Okru: lowest", "Okru: mobile")
+            setDefaultValue("Sabrosio")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
