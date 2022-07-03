@@ -369,6 +369,24 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: Doramasyt",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.doramasyt",
+    "apk": "aniyomi-es.doramasyt-v12.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
+    "name": "Aniyomi: Hentaijk",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.hentaijk",
+    "apk": "aniyomi-es.hentaijk-v12.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: Hentaila",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.hentaila",
     "apk": "aniyomi-es.hentaila-v12.3.apk",
@@ -380,10 +398,10 @@
   {
     "name": "Aniyomi: Jkanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.jkanime",
-    "apk": "aniyomi-es.jkanime-v12.2.apk",
+    "apk": "aniyomi-es.jkanime-v12.3.apk",
     "lang": "es",
-    "code": 2,
-    "version": "12.2",
+    "code": 3,
+    "version": "12.3",
     "nsfw": 0
   },
   {
