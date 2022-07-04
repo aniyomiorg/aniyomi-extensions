@@ -6,8 +6,12 @@ ext {
     extName = 'Anime Fire'
     pkgNameSuffix = 'pt.animefire'
     extClass = '.AnimeFire'
-    extVersionCode = 1
+    extVersionCode = 2
     libVersion = '12'
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }
 
 
