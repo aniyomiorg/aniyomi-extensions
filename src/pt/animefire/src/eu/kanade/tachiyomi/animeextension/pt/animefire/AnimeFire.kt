@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.animefire.extractors.AnimeFireExtractor
+import eu.kanade.tachiyomi.animeextension.pt.animefire.extractors.IframeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -49,7 +50,7 @@ class AnimeFire : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Referer", baseUrl)
-        .add("Accept-Language", ACCEPT_LANGUAGE)
+        .add("Accept-Language", AFConstants.ACCEPT_LANGUAGE)
 
     // ============================== Popular ===============================
     override fun popularAnimeSelector() = latestUpdatesSelector()
@@ -75,8 +76,12 @@ class AnimeFire : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
         val document: Document = response.asJsoup()
-        val extractor = AnimeFireExtractor(client, json)
-        return extractor.videoListFromDocument(document)
+        val videoElement = document.selectFirst("video#my-video")
+        return if (videoElement != null) {
+            AnimeFireExtractor(client, json).videoListFromElement(videoElement)
+        } else {
+            IframeExtractor(client).videoListFromDocument(document)
+        }
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -89,12 +94,27 @@ class AnimeFire : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        val params = AFFilters.getSearchParameters(filters)
-        return client.newCall(searchAnimeRequest(page, query, params))
-            .asObservableSuccess()
-            .map { response ->
-                searchAnimeParse(response)
-            }
+        return if (query.startsWith(AFConstants.PREFIX_SEARCH)) {
+            val id = query.removePrefix(AFConstants.PREFIX_SEARCH)
+            client.newCall(GET("$baseUrl/animes/$id"))
+                .asObservableSuccess()
+                .map { response ->
+                    searchAnimeByIdParse(response, id)
+                }
+        } else {
+            val params = AFFilters.getSearchParameters(filters)
+            client.newCall(searchAnimeRequest(page, query, params))
+                .asObservableSuccess()
+                .map { response ->
+                    searchAnimeParse(response)
+                }
+        }
+    }
+
+    private fun searchAnimeByIdParse(response: Response, id: String): AnimesPage {
+        val details = animeDetailsParse(response)
+        details.url = "/animes/$id"
+        return AnimesPage(listOf(details), false)
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
@@ -158,11 +178,11 @@ class AnimeFire : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = PREFERRED_QUALITY
+            key = AFConstants.PREFERRED_QUALITY
             title = "Qualidade preferida"
-            entries = QUALITY_LIST
-            entryValues = QUALITY_LIST
-            setDefaultValue(QUALITY_LIST.last())
+            entries = AFConstants.QUALITY_LIST
+            entryValues = AFConstants.QUALITY_LIST
+            setDefaultValue(AFConstants.QUALITY_LIST.last())
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -195,7 +215,7 @@ class AnimeFire : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(PREFERRED_QUALITY, null)
+        val quality = preferences.getString(AFConstants.PREFERRED_QUALITY, null)
         if (quality != null) {
             val newList = mutableListOf<Video>()
             var preferred = 0
@@ -210,11 +230,5 @@ class AnimeFire : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             return newList
         }
         return this
-    }
-
-    companion object {
-        private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
-        private const val PREFERRED_QUALITY = "preferred_quality"
-        private val QUALITY_LIST = arrayOf("360p", "720p")
     }
 }
