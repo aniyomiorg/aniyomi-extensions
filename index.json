@@ -369,6 +369,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: AnimeonlineNinja",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.animeonlineninja",
+    "apk": "aniyomi-es.animeonlineninja-v12.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: Doramasyt",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.doramasyt",
     "apk": "aniyomi-es.doramasyt-v12.1.apk",
@@ -542,10 +551,10 @@
   {
     "name": "Aniyomi: Anime Fire",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animefire",
-    "apk": "aniyomi-pt.animefire-v12.1.apk",
+    "apk": "aniyomi-pt.animefire-v12.2.apk",
     "lang": "pt",
-    "code": 1,
-    "version": "12.1",
+    "code": 2,
+    "version": "12.2",
     "nsfw": 0
   },
   {
