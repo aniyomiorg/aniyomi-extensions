@@ -82,7 +82,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
-        return episodes
+        return episodes.reversed()
     }
 
     override fun episodeListSelector() = throw Exception("not used")
