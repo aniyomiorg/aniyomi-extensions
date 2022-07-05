@@ -70,7 +70,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         document.select("div#serie_contenido div#seasons div.se-c div.se-a ul.episodios li").forEach {
             val epTemp = it.select("div.numerando").text().substringBefore("-").replace(" ", "")
-            val epNum = it.select("div.numerando").text().substringAfter("-").replace(" ", "")
+            val epNum = it.select("div.numerando").text().substringAfter("-").replace(" ", "").replace(".", "")
             val epName = it.select("div.episodiotitle a").text()
             if (epTemp.isNotBlank() && epNum.isNotBlank()) {
                 val episode = SEpisode.create().apply {
@@ -82,7 +82,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
-        return episodes
+        return episodes.reversed()
     }
 
     override fun episodeListSelector() = throw Exception("not used")
@@ -151,7 +151,9 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             serverUrl.contains("mixdrop") && lang.contains(langSelect) -> {
                 val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(eval)").data()
                 val url = "http:" + JsUnpacker(jsE).unpack().toString().substringAfter("MDCore.wurl=\"").substringBefore("\"")
-                videos.add(Video(url, "$lang MixDrop", url, null))
+                if (!url.contains("\$(document).ready(function(){});")) {
+                    videos.add(Video(url, "$lang MixDrop", url, null))
+                }
             }
             serverUrl.contains("wolfstream") && lang.contains(langSelect) -> {
                 val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(sources)").data()
@@ -205,8 +207,14 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.select("div.sheader div.data h1").text()
-        anime.genre = document.select("div.sheader div.data div.sgeneros a").joinToString { it.text() }
-        anime.description = document.selectFirst("div#info.sbox.fixidtab div.wp-content p").text()
+        anime.genre = document.select("div.sheader div.data div.sgeneros a").joinToString {
+            if (!it.text().lowercase().contains("anime")) {
+                it.text()
+            } else {
+                ""
+            }
+        }
+        anime.description = document.select("div.wp-content p").joinToString { it.text() }
         anime.author = document.select("div.sheader div.data div.extra span a").text()
         return anime
     }
