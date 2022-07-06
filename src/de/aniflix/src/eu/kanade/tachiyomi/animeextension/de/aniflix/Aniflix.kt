@@ -12,7 +12,6 @@ import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.Release
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.Season
 import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.StreamTapeExtractor
-import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.StreamlareExtractor
 import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.VoeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
