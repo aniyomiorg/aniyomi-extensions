@@ -12,6 +12,7 @@ import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.Release
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.Season
 import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.StreamTapeExtractor
+import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.VoeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -207,6 +208,12 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
                         videoList.add(video)
                     }
                 }
+                link.contains("https://voe.sx") && hosterSelection?.contains("voe") == true -> {
+                    val video = VoeExtractor(client).videoFromUrl(link, quality)
+                    if (video != null) {
+                        videoList.add(video)
+                    }
+                }
             }
         }
         return videoList
@@ -250,8 +257,8 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
         val hosterPref = ListPreference(screen.context).apply {
             key = "preferred_hoster"
             title = "Standard-Hoster"
-            entries = arrayOf("Streamtape", "Doodstream")
-            entryValues = arrayOf("https://streamtape.com", "https://dood")
+            entries = arrayOf("Streamtape", "Doodstream", "Voe")
+            entryValues = arrayOf("https://streamtape.com", "https://dood", "https://voe.sx")
             setDefaultValue("https://streamtape.com")
             summary = "%s"
 
@@ -280,9 +287,9 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
         val subSelection = MultiSelectListPreference(screen.context).apply {
             key = "hoster_selection"
             title = "Hoster auswählen"
-            entries = arrayOf("Streamtape", "Doodstream")
-            entryValues = arrayOf("stape", "dood")
-            setDefaultValue(setOf("stape", "dood"))
+            entries = arrayOf("Streamtape", "Doodstream", "Voe")
+            entryValues = arrayOf("stape", "dood", "voe")
+            setDefaultValue(setOf("stape", "dood", "voe"))
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
