@@ -378,6 +378,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: Animeyt",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.animeyt",
+    "apk": "aniyomi-es.animeyt-v12.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: Doramasyt",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.doramasyt",
     "apk": "aniyomi-es.doramasyt-v12.1.apk",
