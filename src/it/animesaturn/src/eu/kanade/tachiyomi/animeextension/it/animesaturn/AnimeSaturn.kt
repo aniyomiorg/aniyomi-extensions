@@ -27,7 +27,7 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AnimeSaturn"
 
-    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://animesaturn.it")!! }
+    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://animesaturn.cc")!! }
 
     override val lang = "it"
 
@@ -439,9 +439,9 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val domainPref = ListPreference(screen.context).apply {
             key = "preferred_domain"
             title = "Domain in uso (riavvio dell'app richiesto)"
-            entries = arrayOf("animesaturn.it", "animesaturn.io")
-            entryValues = arrayOf("https://animesaturn.it", "https://animesaturn.io")
-            setDefaultValue("https://animesaturn.it")
+            entries = arrayOf("animesaturn.cc", "animesaturn.io")
+            entryValues = arrayOf("https://animesaturn.cc", "https://animesaturn.io")
+            setDefaultValue("https://animesaturn.cc")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->

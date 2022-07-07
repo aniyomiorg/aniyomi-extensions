@@ -12,6 +12,8 @@ import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.Release
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.Season
 import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.StreamTapeExtractor
+import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.StreamlareExtractor
+import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.VoeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -193,7 +195,7 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
         for (stream in streams) {
             val quality = "${stream.hoster?.name}, ${stream.lang}"
             val link = stream.link ?: return emptyList()
-            val hosterSelection = preferences.getStringSet("hoster_selection", setOf("dood", "stape"))
+            val hosterSelection = preferences.getStringSet("hoster_selection", setOf("dood", "stape", "voe", "slare"))
             when {
                 link.contains("https://dood") && hosterSelection?.contains("dood") == true -> {
                     val video = try { DoodExtractor(client).videoFromUrl(link, quality) } catch (e: Exception) { null }
@@ -203,6 +205,18 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
                 }
                 link.contains("https://streamtape") && hosterSelection?.contains("stape") == true -> {
                     val video = StreamTapeExtractor(client).videoFromUrl(link, quality)
+                    if (video != null) {
+                        videoList.add(video)
+                    }
+                }
+                link.contains("https://voe.sx") && hosterSelection?.contains("voe") == true -> {
+                    val video = VoeExtractor(client).videoFromUrl(link, quality)
+                    if (video != null) {
+                        videoList.add(video)
+                    }
+                }
+                link.contains("https://streamlare") && hosterSelection?.contains("slare") == true -> {
+                    val video = StreamlareExtractor(client).videoFromUrl(link, quality)
                     if (video != null) {
                         videoList.add(video)
                     }
@@ -250,8 +264,8 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
         val hosterPref = ListPreference(screen.context).apply {
             key = "preferred_hoster"
             title = "Standard-Hoster"
-            entries = arrayOf("Streamtape", "Doodstream")
-            entryValues = arrayOf("https://streamtape.com", "https://dood")
+            entries = arrayOf("Streamtape", "Doodstream", "Voe", "Streamlare")
+            entryValues = arrayOf("https://streamtape.com", "https://dood", "https://voe.sx", "https://streamlare.com")
             setDefaultValue("https://streamtape.com")
             summary = "%s"
 
@@ -280,9 +294,9 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
         val subSelection = MultiSelectListPreference(screen.context).apply {
             key = "hoster_selection"
             title = "Hoster auswählen"
-            entries = arrayOf("Streamtape", "Doodstream")
-            entryValues = arrayOf("stape", "dood")
-            setDefaultValue(setOf("stape", "dood"))
+            entries = arrayOf("Streamtape", "Doodstream", "Voe", "Streamlare")
+            entryValues = arrayOf("stape", "dood", "voe", "slare")
+            setDefaultValue(setOf("stape", "dood", "voe", "slare"))
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
