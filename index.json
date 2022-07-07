@@ -155,10 +155,10 @@
   {
     "name": "Aniyomi: Aniflix",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.aniflix",
-    "apk": "aniyomi-de.aniflix-v12.9.apk",
+    "apk": "aniyomi-de.aniflix-v12.10.apk",
     "lang": "de",
-    "code": 9,
-    "version": "12.9",
+    "code": 10,
+    "version": "12.10",
     "nsfw": 0
   },
   {
@@ -497,10 +497,10 @@
   {
     "name": "Aniyomi: NeoNime",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.neonime",
-    "apk": "aniyomi-id.neonime-v12.5.apk",
+    "apk": "aniyomi-id.neonime-v12.6.apk",
     "lang": "id",
-    "code": 5,
-    "version": "12.5",
+    "code": 6,
+    "version": "12.6",
     "nsfw": 0
   },
   {
@@ -515,10 +515,10 @@
   {
     "name": "Aniyomi: OtakuDesu",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.otakudesu",
-    "apk": "aniyomi-id.otakudesu-v12.11.apk",
+    "apk": "aniyomi-id.otakudesu-v12.12.apk",
     "lang": "id",
-    "code": 11,
-    "version": "12.11",
+    "code": 12,
+    "version": "12.12",
     "nsfw": 0
   },
   {
