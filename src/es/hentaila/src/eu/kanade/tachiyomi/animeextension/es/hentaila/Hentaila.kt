@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.es.hentaila
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.hentaila.extractors.FembedExtractor
@@ -15,9 +16,11 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -35,7 +38,7 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Hentaila"
 
-    override val baseUrl = "https://hentaila.com"
+    override val baseUrl = "https://www3.hentaila.com"
 
     override val lang = "es"
 
@@ -67,12 +70,12 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val episodes = mutableListOf<SEpisode>()
-        val animeId = response.request.url.toString().replace("https://hentaila.com/hentai-", "").toLowerCase()
+        val animeId = response.request.url.toString().substringAfter("hentai-").lowercase()
         val jsoup = response.asJsoup()
+        Log.i("bruh", animeId)
 
         jsoup.select("div.episodes-list article").forEach { it ->
             val epNum = it.select("a").attr("href").replace("/ver/$animeId-", "")
-            val test = it.select("a").attr("href")
             val episode = SEpisode.create().apply {
                 episode_number = epNum.toFloat()
                 name = "Episodio $epNum"
@@ -88,20 +91,29 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element) = throw Exception("not used")
 
+    @OptIn(ExperimentalSerializationApi::class)
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-        document.select("script").forEach { it ->
-            if (it.data().contains("var videos = [")) {
-                val data = it.data().substringAfter("var videos = [").substringBefore("];")
-                val arcUrl = data.substringAfter("[\"Arc\",\"").substringBefore("\",").replace("\\", "")
-                val fembedUrl = data.substringAfter("[\"Fembed\",\"").substringBefore("\",").replace("\\", "")
-                val videos = FembedExtractor().videosFromUrl(fembedUrl)
+        val videoServerList = document.selectFirst("script:containsData(var videos = [)").data().substringAfter("videos = ").substringBefore(";")
+            .replace("[", "{").replace("]", "}")
+            .replace("\",", "\":")
+            .replace(":0,0", "").replace(":0,1", "")
+            .replace("{{", "{").replace("}}", "}")
+            .replace("},{", ",")
+        val jsonServers = json.decodeFromString<JsonObject>(videoServerList)
+        jsonServers.forEach {
+            val url = it.value.toString().replace("\"", "")
+            if (it.key.lowercase() == "fembed") {
+                val videos = FembedExtractor().videosFromUrl(url)
                 videoList.addAll(videos)
-                val url = arcUrl.replace("/direct.html#", "")
-                videoList.add(Video(url, "Arc", url, null))
+            }
+            if (it.key.lowercase() == "arc") {
+                val videoUrl = url.substringAfter("#")
+                videoList.add(Video(videoUrl, "Arc", videoUrl, null))
             }
         }
+
         return videoList
     }
 
@@ -129,14 +141,15 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
-        val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
+        // val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
+        val results = Jsoup.connect("https://www3.hentaila.com/api/search").method(Connection.Method.POST).data("value", query).execute().body()
 
-        val results = Jsoup.connect("https://hentaila.com/api/search").method(Connection.Method.POST).data("value", "$query").execute().body()
         val jsonObject = json.decodeFromString<JsonArray>(results)
         val animeSlug = JSONObject(jsonObject[0].toString())["slug"]
-        val ultimateHentaiLink = "https://hentaila.com/hentai-$animeSlug"
+        val ultimateHentaiLink = "$baseUrl/hentai-$animeSlug"
         // for (i in jsonObject) {
         // val anime = JSONObject(i.toString())
         // val animeSlug = anime["slug"]
@@ -144,29 +157,29 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         // }
         return when {
             query.isNotBlank() && jsonObject.toString() != "[]" -> GET(ultimateHentaiLink)
-            genreFilter.state != 0 -> GET("$baseUrl/genero/${genreFilter.toUriPart()}?p=$page")
-            else -> GET("https://hentaila.com/directorio?p=$page")
+            // genreFilter.state != 0 -> GET("$baseUrl/genero/${genreFilter.toUriPart()}?p=$page")
+            else -> GET("$baseUrl/directorio?p=$page")
         }
     }
 
     override fun searchAnimeFromElement(element: Element): SAnime {
-        val animeSearch = SAnime.create()
-        val mainUrl = element.select("section.section:nth-child(2) > script:nth-child(3)").toString().substringAfter("this.page.url = \"").substringBefore("\"")
-        animeSearch.setUrlWithoutDomain(mainUrl)
-        animeSearch.title = element.select("article.hentai-single header.h-header h1").text()
-        animeSearch.thumbnail_url = baseUrl + element.select("article.hentai-single div.h-thumb figure img").attr("src")
-
+        if (!element.select("article.hentai-single").isNullOrEmpty()) {
+            Log.i("bruh", "a")
+            val animeSearch = SAnime.create()
+            val mainUrl = element.select("section.section:nth-child(2) > script:nth-child(3)").toString().substringAfter("this.page.url = \"").substringBefore("\"")
+            animeSearch.setUrlWithoutDomain(mainUrl)
+            animeSearch.title = element.select("article.hentai-single header.h-header h1").text()
+            animeSearch.thumbnail_url = baseUrl + element.select("article.hentai-single div.h-thumb figure img").attr("src")
+            return animeSearch
+        }
+        Log.i("bruh", "b")
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
             element.select("div.grid.hentais article.hentai a").attr("href")
         )
         anime.title = element.select("div.grid.hentais article.hentai header.h-header h2").text()
         anime.thumbnail_url = baseUrl + element.select("div.grid.hentais article.hentai div.h-thumb figure img").attr("src")
-
-        return when {
-            element.select("article.hentai-single").toString() != "" -> animeSearch
-            else -> anime
-        }
+        return anime
     }
 
     override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
@@ -191,9 +204,9 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesSelector() = throw Exception("not used")
 
-    override fun getFilterList(): AnimeFilterList = AnimeFilterList(
+   /* override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
-        GenreFilter()
+         GenreFilter()
     )
 
     private class GenreFilter : UriPartFilter(
@@ -234,7 +247,7 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Yuri", "yuri"),
             Pair("Bondage", "bondage")
         )
-    )
+    ) */
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
         AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
@@ -247,7 +260,7 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title = "Preferred quality"
             entries = arrayOf("Arc", "Fembed:480p", "Fembed:720p", "Fembed:1080p")
             entryValues = arrayOf("Arc", "Fembed:480p", "Fembed:720p", "Fembed:1080p")
-            setDefaultValue("Arc")
+            setDefaultValue("Fembed:480p")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
