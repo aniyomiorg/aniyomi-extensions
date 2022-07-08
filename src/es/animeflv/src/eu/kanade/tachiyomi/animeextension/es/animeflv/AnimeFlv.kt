@@ -10,6 +10,7 @@ import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -48,7 +49,7 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "div.Container ul.ListAnimes li article"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/browse?order=rating&page=$page")
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/browse?order=5&page=$page")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -156,7 +157,73 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/browse?q=$query&page=$page")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val filterList = if (filters.isEmpty()) getFilterList() else filters
+        val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
+
+        return when {
+            query.isNotBlank() -> GET("$baseUrl/browse?q=$query&order=4&page=$page")
+            genreFilter.state != 0 -> GET("$baseUrl/browse?genres=${genreFilter.toUriPart()}&order=4&page=$page")
+            else -> GET("$baseUrl/browse?page=$page&order=4")
+        }
+    }
+
+    override fun getFilterList(): AnimeFilterList = AnimeFilterList(
+        AnimeFilter.Header("La busqueda por texto ignora el filtro"),
+        GenreFilter()
+    )
+
+    private class GenreFilter : UriPartFilter(
+        "Géneros",
+        arrayOf(
+            Pair("<Selecionar>", "all"),
+            Pair("Acción", "accion"),
+            Pair("Artes Marciales", "artes_marciales"),
+            Pair("Aventuras", "aventura"),
+            Pair("Carreras", "carreras"),
+            Pair("Ciencia Ficción", "ciencia_ficcion"),
+            Pair("Comedia", "comedia"),
+            Pair("Demencia", "demencia"),
+            Pair("Demonios", "demonios"),
+            Pair("Deportes", "deportes"),
+            Pair("Drama", "drama"),
+            Pair("Ecchi", "ecchi"),
+            Pair("Escolares", "escolares"),
+            Pair("Espacial", "espacial"),
+            Pair("Fantasía", "fantasia"),
+            Pair("Harem", "harem"),
+            Pair("Historico", "historico"),
+            Pair("Infantil", "infantil"),
+            Pair("Josei", "josei"),
+            Pair("Juegos", "juegos"),
+            Pair("Magia", "magia"),
+            Pair("Mecha", "mecha"),
+            Pair("Militar", "militar"),
+            Pair("Misterio", "misterio"),
+            Pair("Música", "musica"),
+            Pair("Parodia", "parodia"),
+            Pair("Policía", "policia"),
+            Pair("Psicológico", "psicologico"),
+            Pair("Recuentos de la vida", "recuentos_de_la_vida"),
+            Pair("Romance", "romance"),
+            Pair("Samurai", "samurai"),
+            Pair("Seinen", "seinen"),
+            Pair("Shoujo", "shoujo"),
+            Pair("Shounen", "shounen"),
+            Pair("Sobrenatural", "sobrenatural"),
+            Pair("Superpoderes", "superpoderes"),
+            Pair("Suspenso", "suspenso"),
+            Pair("Terror", "terror"),
+            Pair("Vampiros", "vampiros"),
+            Pair("Yaoi", "yaoi"),
+            Pair("Yuri", "yuri")
+        )
+    )
+
+    private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
+        AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
+        fun toUriPart() = vals[state].second
+    }
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         return popularAnimeFromElement(element)
