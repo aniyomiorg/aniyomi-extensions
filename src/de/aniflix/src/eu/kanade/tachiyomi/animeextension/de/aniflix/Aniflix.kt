@@ -216,8 +216,7 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
                     }
                 }
                 link.contains("https://streamlare") && hosterSelection?.contains("slare") == true -> {
-                    val resPreference = preferences.getString("preferred_res", "1080")
-                    val video = StreamlareExtractor(client).videoFromUrl(link, stream, resPreference)
+                    val video = StreamlareExtractor(client).videoFromUrl(link, stream, preferences)
                     if (video != null) {
                         videoList.add(video)
                     }
