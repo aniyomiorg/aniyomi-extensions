@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.es.hentaila
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.hentaila.extractors.FembedExtractor
@@ -72,7 +71,7 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodes = mutableListOf<SEpisode>()
         val animeId = response.request.url.toString().substringAfter("hentai-").lowercase()
         val jsoup = response.asJsoup()
-        Log.i("bruh", animeId)
+ 
 
         jsoup.select("div.episodes-list article").forEach { it ->
             val epNum = it.select("a").attr("href").replace("/ver/$animeId-", "")
@@ -164,7 +163,7 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         if (!element.select("article.hentai-single").isNullOrEmpty()) {
-            Log.i("bruh", "a")
+            
             val animeSearch = SAnime.create()
             val mainUrl = element.select("section.section:nth-child(2) > script:nth-child(3)").toString().substringAfter("this.page.url = \"").substringBefore("\"")
             animeSearch.setUrlWithoutDomain(mainUrl)
@@ -172,7 +171,7 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             animeSearch.thumbnail_url = baseUrl + element.select("article.hentai-single div.h-thumb figure img").attr("src")
             return animeSearch
         }
-        Log.i("bruh", "b")
+        
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
             element.select("div.grid.hentais article.hentai a").attr("href")
