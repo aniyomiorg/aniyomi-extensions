@@ -10,7 +10,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 
 class StreamlareExtractor(private val client: OkHttpClient) {
 
-    fun videoFromUrl(url: String, stream: Stream, resPreference: String?): Video? {
+    fun videoFromUrl(url: String, stream: Stream, preferences: SharedPreferences): Video? {
         val id = url.split("/").last()
         val referer = client.newCall(
             POST(
@@ -21,22 +21,11 @@ class StreamlareExtractor(private val client: OkHttpClient) {
         )
             .execute().asJsoup().toString()
 
+        val resPreference = preferences.getString("preferred_res", "1080")
         val token =
             when {
-                referer.contains("1080p") && resPreference?.contains("1080") == true ->
-                    referer.substringAfter("\"label\":\"1080p\",\"file\":\"https:\\/\\/larecontent.com\\/video?token=")
-                        .substringBefore("\",")
-
-                referer.contains("720p") && resPreference?.contains("720") == true ->
-                    referer.substringAfter("\"label\":\"720p\",\"file\":\"https:\\/\\/larecontent.com\\/video?token=")
-                        .substringBefore("\",")
-
-                referer.contains("480p") && resPreference?.contains("480") == true ->
-                    referer.substringAfter("\"label\":\"480p\",\"file\":\"https:\\/\\/larecontent.com\\/video?token=")
-                        .substringBefore("\",")
-
-                referer.contains("360p") && resPreference?.contains("360") == true ->
-                    referer.substringAfter("\"label\":\"360p\",\"file\":\"https:\\/\\/larecontent.com\\/video?token=")
+                referer.contains("$resPreference" + "p") && resPreference?.contains("$resPreference") == true ->
+                    referer.substringAfter("\"label\":\"$resPreference" + "p\",\"file\":\"https:\\/\\/larecontent.com\\/video?token=")
                         .substringBefore("\",")
 
                 else ->
@@ -46,17 +35,8 @@ class StreamlareExtractor(private val client: OkHttpClient) {
 
         val quality =
             when {
-                referer.contains("1080p") && resPreference?.contains("1080") == true -> {
-                    "${stream.hoster?.name}, 1080p, ${stream.lang}"
-                }
-                referer.contains("720p") && resPreference?.contains("720") == true -> {
-                    "${stream.hoster?.name}, 720p, ${stream.lang}"
-                }
-                referer.contains("480p") && resPreference?.contains("480") == true -> {
-                    "${stream.hoster?.name}, 480p, ${stream.lang}"
-                }
-                referer.contains("360p") && resPreference?.contains("360") == true -> {
-                    "${stream.hoster?.name}, 360p, ${stream.lang}"
+                referer.contains("$resPreference" + "p") && resPreference?.contains("$resPreference") == true -> {
+                    "${stream.hoster?.name}, $resPreference" + "p, ${stream.lang}"
                 }
                 else -> {
                     "${stream.hoster?.name} Unknown, ${stream.lang}"
