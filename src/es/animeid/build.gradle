@@ -5,7 +5,7 @@ ext {
     extName = 'AnimeID'
     pkgNameSuffix = 'es.animeid'
     extClass = '.AnimeID'
-    extVersionCode = 1
+    extVersionCode = 2
     libVersion = '12'
 }
 
