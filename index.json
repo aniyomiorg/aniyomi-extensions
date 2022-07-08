@@ -369,6 +369,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: AnimeID",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.animeid",
+    "apk": "aniyomi-es.animeid-v12.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: AnimeonlineNinja",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.animeonlineninja",
     "apk": "aniyomi-es.animeonlineninja-v12.1.apk",
