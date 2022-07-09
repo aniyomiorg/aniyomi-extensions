@@ -2,12 +2,11 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    extName = 'Hentaila'
-    pkgNameSuffix = 'es.hentaila'
-    extClass = '.Hentaila'
-    extVersionCode = 5
+    extName = 'TioanimeH'
+    pkgNameSuffix = 'es.tioanimeh'
+    extClass = '.TioanimeHFactory'
+    extVersionCode = 1
     libVersion = '12'
-    containsNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"
