@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.de.aniflix.extractors
 
-import android.content.SharedPreferences
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.Stream
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.POST
