@@ -148,17 +148,16 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.selectFirst("div.chapterpic img").attr("src")
-        anime.title = document.selectFirst("div.chapterdetails h1").text()
-        anime.description = document.select("p.textShort").first().ownText()
-        anime.genre = document.select("ol.breadcrumb li.breadcrumb-item a").joinToString { it.text() }
-        anime.status = parseStatus(document.select("div.butns button.btn1").text())
+        anime.title = document.select("h1.title").text()
+        anime.description = document.select("p.sinopsis").first().ownText()
+        anime.genre = document.select("p.genres span.btn.btn-sm.btn-primary.rounded-pill a").joinToString { it.text() }
+        anime.status = parseStatus(document.select("a.btn.btn-success.btn-block.status").text())
         return anime
     }
 
     private fun parseStatus(statusString: String): Int {
         return when {
-            statusString.contains("Estreno") -> SAnime.ONGOING
+            statusString.contains("En emision") -> SAnime.ONGOING
             statusString.contains("Finalizado") -> SAnime.COMPLETED
             else -> SAnime.UNKNOWN
         }
