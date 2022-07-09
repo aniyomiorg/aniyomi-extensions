@@ -155,10 +155,10 @@
   {
     "name": "Aniyomi: Aniflix",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.aniflix",
-    "apk": "aniyomi-de.aniflix-v12.12.apk",
+    "apk": "aniyomi-de.aniflix-v12.13.apk",
     "lang": "de",
-    "code": 12,
-    "version": "12.12",
+    "code": 13,
+    "version": "12.13",
     "nsfw": 0
   },
   {
@@ -362,19 +362,19 @@
   {
     "name": "Aniyomi: AnimeFLV",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.animeflv",
-    "apk": "aniyomi-es.animeflv-v12.20.apk",
+    "apk": "aniyomi-es.animeflv-v12.21.apk",
     "lang": "es",
-    "code": 20,
-    "version": "12.20",
+    "code": 21,
+    "version": "12.21",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: AnimeID",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.animeid",
-    "apk": "aniyomi-es.animeid-v12.1.apk",
+    "apk": "aniyomi-es.animeid-v12.2.apk",
     "lang": "es",
-    "code": 1,
-    "version": "12.1",
+    "code": 2,
+    "version": "12.2",
     "nsfw": 0
   },
   {
@@ -416,10 +416,10 @@
   {
     "name": "Aniyomi: Hentaila",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.hentaila",
-    "apk": "aniyomi-es.hentaila-v12.4.apk",
+    "apk": "aniyomi-es.hentaila-v12.5.apk",
     "lang": "es",
-    "code": 4,
-    "version": "12.4",
+    "code": 5,
+    "version": "12.5",
     "nsfw": 1
   },
   {
@@ -456,6 +456,15 @@
     "lang": "es",
     "code": 10,
     "version": "12.10",
+    "nsfw": 0
+  },
+  {
+    "name": "Aniyomi: TioanimeH",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.tioanimeh",
+    "apk": "aniyomi-es.tioanimeh-v12.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "12.1",
     "nsfw": 0
   },
   {
