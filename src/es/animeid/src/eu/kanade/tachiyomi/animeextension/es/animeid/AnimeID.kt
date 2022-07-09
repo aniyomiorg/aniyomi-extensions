@@ -31,6 +31,7 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.net.URI
 import java.text.SimpleDateFormat
+import java.util.Date
 
 class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -88,42 +89,39 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
             var responseString = client.newCall(GET("https://www.animeid.tv/ajax/caps?id=$animeId&ord=DESC&pag=$nextPage", headers))
                 .execute().asJsoup().body()!!.toString().substringAfter("<body>").substringBefore("</body>")
-            Log.i("bruh", responseString)
             val jObject = json.decodeFromString<JsonObject>(responseString)
             var listCaps = jObject["list"]!!.jsonArray
-            Log.i("bruh list", jObject["list"]!!.toString())
             listCaps!!.forEach { cap ->
                 var capParsed = cap.jsonObject
-                Log.i("bruh ep", capParsed.toString())
                 val epNum = capParsed["numero"]!!.jsonPrimitive.content!!.toFloat()
-                val format = SimpleDateFormat("dd MMM yyyy")
                 val episode = SEpisode.create()
+                var dateUpload = manualDateParse(capParsed["date"]!!.jsonPrimitive.content!!.toString())
                 episode.episode_number = epNum
                 episode.name = "Episodio $epNum"
-                episode.date_upload = format.parse(capParsed["date"]!!.jsonPrimitive.content!!.toString()).time
+                dateUpload!!.also { episode.date_upload = it }
                 episode.setUrlWithoutDomain(baseUrl + capParsed["href"]!!.jsonPrimitive.content!!.toString())
                 capList.add(episode)
             }
-
             if (listCaps!!.any()) nextPage += 1 else nextPage = -1
         } while (nextPage != -1)
         return capList
     }
 
-    override fun episodeFromElement(element: Element) = throw Exception("not used")
-
-    /*override fun episodeFromElement(element: Element): SEpisode {
-        val episode = SEpisode.create()
-        val epNum = getNumberFromEpsString(element.select("p").text())
-        episode.setUrlWithoutDomain(element.attr("href"))
-        episode.episode_number = when {
-            (epNum.isNotEmpty()) -> epNum.toFloat()
-            else -> 1F
+    private fun manualDateParse(stringDate: String): Long? {
+        return try {
+            val format = SimpleDateFormat("dd MMM yyyy")
+            format.parse(stringDate!!.toString()).time
+        } catch (e: Exception) {
+            var dateParsed = stringDate.split(" ")
+            val arrMonths = arrayOf("Jun", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+            val day = dateParsed[0]!!.trim().toInt()
+            val month = arrMonths.indexOf(dateParsed[1].trim()) + 1
+            val year = dateParsed[2]!!.trim().toInt()
+            Date(year, month, day).time
         }
-        episode.name = element.select("p").text()
+    }
 
-        return episode
-    }*/
+    override fun episodeFromElement(element: Element) = throw Exception("not used")
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
