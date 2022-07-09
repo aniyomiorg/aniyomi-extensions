@@ -216,11 +216,7 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
                     }
                 }
                 link.contains("https://streamlare") && hosterSelection?.contains("slare") == true -> {
-                    val resPreference = preferences.getString("preferred_res", "1080")
-                    val video = StreamlareExtractor(client).videoFromUrl(link, stream, resPreference)
-                    if (video != null) {
-                        videoList.add(video)
-                    }
+                    videoList.addAll(StreamlareExtractor(client).videosFromUrl(link, stream))
                 }
             }
         }
@@ -303,24 +299,8 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
             }
         }
-        val resPref = ListPreference(screen.context).apply {
-            key = "preferred_res"
-            title = "Streamlare Standard-Auflösung"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
-            setDefaultValue("1080")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
         screen.addPreference(subPref)
         screen.addPreference(hosterPref)
         screen.addPreference(subSelection)
-        screen.addPreference(resPref)
     }
 }
