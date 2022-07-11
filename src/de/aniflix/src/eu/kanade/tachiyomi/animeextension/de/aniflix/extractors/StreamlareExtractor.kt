@@ -23,9 +23,10 @@ class StreamlareExtractor(private val client: OkHttpClient) {
 
         playlist.substringAfter("\"label\":\"").split("\"label\":\"").forEach {
             val quality = it.substringAfter("\"label\":\"").substringBefore("\",") + ", ${stream.lang}"
-            val videoUrl =
-                "https://larecontent.com/video?token=" + it.substringAfter("\"file\":\"https:\\/\\/larecontent.com\\/video?token=")
-                    .substringBefore("\",")
+            val token = it.substringAfter("\"file\":\"https:\\/\\/larecontent.com\\/video?token=")
+                .substringBefore("\",")
+            val response = client.newCall(POST("https://larecontent.com/video?token=$token")).execute()
+            val videoUrl = response.request.url.toString()
             videoList.addAll((listOf(Video(videoUrl, quality, videoUrl, null))))
         }
         return videoList
