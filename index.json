@@ -407,11 +407,11 @@
   {
     "name": "Aniyomi: Hentaijk",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.hentaijk",
-    "apk": "aniyomi-es.hentaijk-v12.1.apk",
+    "apk": "aniyomi-es.hentaijk-v12.2.apk",
     "lang": "es",
-    "code": 1,
-    "version": "12.1",
-    "nsfw": 0
+    "code": 2,
+    "version": "12.2",
+    "nsfw": 1
   },
   {
     "name": "Aniyomi: Hentaila",
@@ -434,11 +434,11 @@
   {
     "name": "Aniyomi: Jkhentai",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.jkhentai",
-    "apk": "aniyomi-es.jkhentai-v12.3.apk",
+    "apk": "aniyomi-es.jkhentai-v12.4.apk",
     "lang": "es",
-    "code": 3,
-    "version": "12.3",
-    "nsfw": 0
+    "code": 4,
+    "version": "12.4",
+    "nsfw": 1
   },
   {
     "name": "Aniyomi: MonosChinos",
