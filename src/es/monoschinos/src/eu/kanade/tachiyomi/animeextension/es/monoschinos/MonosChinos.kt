@@ -8,6 +8,7 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.SolidFilesExtractor
+import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.uploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -51,7 +52,7 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.setUrlWithoutDomain(
             element.select("a").attr("href")
         )
-        anime.title = element.select("a div.series div.seriesdetails h5").text()
+        anime.title = element.select("a div.series div.seriesdetails h3").text()
         anime.thumbnail_url = element.select("a div.series div.seriesimg img").attr("src")
         return anime
     }
@@ -90,7 +91,7 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val url1 = Base64.decode(urlBase64, Base64.DEFAULT)
             val url = String(url1).replace("https://monoschinos2.com/reproductor?url=", "")
 
-            if (server == "fembed" || server == "Fembed" || server == "fembed2" || server == "Fembed2") {
+            if (server.lowercase() == "fembed" || server.lowercase() == "fembed2") {
                 val videos = FembedExtractor().videosFromUrl(url)
                 videoList.addAll(videos)
             }
@@ -98,9 +99,14 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val videos = OkruExtractor(client).videosFromUrl(url)
                 videoList.addAll(videos)
             }
-            if (server == "zeus" || server == "Zeus") {
+            if (server.lowercase() == "zeus") {
                 val videos = SolidFilesExtractor(client).videosFromUrl(url)
                 videoList.addAll(videos)
+            }
+            if (server == "uqload") {
+                val headers = headers.newBuilder().add("referer", "https://uqload.com/").build()
+                val video = uploadExtractor(client).videofromurl(url, headers)
+                videoList.add(video)
             }
         }
         return videoList
