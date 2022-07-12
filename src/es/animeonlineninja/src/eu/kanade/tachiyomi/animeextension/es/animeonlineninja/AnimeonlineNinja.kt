@@ -209,11 +209,12 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.select("div.sheader div.data h1").text()
-        anime.genre = document.select("div.sheader div.data div.sgeneros a").joinToString {
-            if (!it.text().lowercase().contains("anime")) {
-                it.text()
-            } else {
+        val uselessTags = listOf("supergoku", "younime", "zonamixs", "monoschinos", "otakustv", "Hanaojara", "series flv", "zenkimex", "Crunchyroll")
+        anime.genre = document.select("div.sheader div.data div.sgeneros a").joinToString("") {
+            if (it.text() in uselessTags || it.text().lowercase().contains("anime")) {
                 ""
+            } else {
+                it.text() + ", "
             }
         }
         anime.description = document.select("div.wp-content p").joinToString { it.text() }
