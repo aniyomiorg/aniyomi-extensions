@@ -130,7 +130,7 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
-        val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
+        val genreFilter = if (filterList.isNotEmpty())filterList.find { it is GenreFilter } as GenreFilter else { GenreFilter().apply { state = 0 } }
 
         return when {
             query.isNotBlank() -> GET("$baseUrl/directorio?q=$query&p=$page", headers)
