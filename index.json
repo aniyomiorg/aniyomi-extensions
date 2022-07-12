@@ -396,6 +396,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: AsiaLiveAction",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.asialiveaction",
+    "apk": "aniyomi-es.asialiveaction-v12.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: Doramasyt",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.doramasyt",
     "apk": "aniyomi-es.doramasyt-v12.1.apk",
