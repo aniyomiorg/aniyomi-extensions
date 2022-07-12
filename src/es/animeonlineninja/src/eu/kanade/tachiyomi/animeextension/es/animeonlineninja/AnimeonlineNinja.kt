@@ -150,9 +150,11 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             serverUrl.contains("mixdrop") && lang.contains(langSelect) -> {
                 val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(eval)").data()
-                val url = "http:" + JsUnpacker(jsE).unpack().toString().substringAfter("MDCore.wurl=\"").substringBefore("\"")
-                if (!url.contains("\$(document).ready(function(){});")) {
-                    videos.add(Video(url, "$lang MixDrop", url, null))
+                if (jsE.contains("MDCore")) {
+                    val url = "http:" + JsUnpacker(jsE).unpack().toString().substringAfter("MDCore.wurl=\"").substringBefore("\"")
+                    if (!url.contains("\$(document).ready(function(){});")) {
+                        videos.add(Video(url, "$lang MixDrop", url, null))
+                    }
                 }
             }
             serverUrl.contains("wolfstream") && lang.contains(langSelect) -> {
