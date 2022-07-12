@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.es.tioanimeh
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.tioanimeh.extractors.fembedExtractor
@@ -176,7 +177,7 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
         GenreFilter()
     )
 
-    private class GenreFilter : UriPartFilter(
+    class GenreFilter : UriPartFilter(
         "Generos",
         arrayOf(
             Pair("<selecionar>", ""),
