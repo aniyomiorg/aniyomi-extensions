@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.FembedE
 import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.JsUnpacker
 import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.StreamTapeExtractor
+import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.uploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -161,6 +162,11 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(sources)").data()
                 val url = jsE.substringAfter("{file:\"").substringBefore("\"")
                 videos.add(Video(url, "$lang WolfStream", url, null))
+            }
+            serverUrl.contains("uqload") && lang.contains(langSelect) -> {
+                val headers = headers.newBuilder().add("referer", "https://uqload.com/").build()
+                val video = uploadExtractor(client).videofromurl(serverUrl, headers, lang)
+                videos.add(video)
             }
         }
 

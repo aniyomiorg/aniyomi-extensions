@@ -6,7 +6,7 @@ import org.jsoup.Connection
 import org.jsoup.Jsoup
 
 class FembedExtractor {
-    fun videosFromUrl(url: String, lang: String): List<Video> {
+    fun videosFromUrl(url: String, qualityP: String): List<Video> {
         val videoApi = url.replace("/v/", "/api/source/")
         val json = JSONObject(Jsoup.connect(videoApi).ignoreContentType(true).method(Connection.Method.POST).execute().body())
         val videoList = mutableListOf<Video>()
@@ -16,13 +16,13 @@ class FembedExtractor {
             for (i in 0 until jsonArray.length()) {
                 val `object` = jsonArray.getJSONObject(i)
                 val videoUrl = `object`.getString("file")
-                val quality = "$lang Fembed:" + `object`.getString("label")
+                val quality = "$qualityP Fembed:" + `object`.getString("label")
                 videoList.add(Video(videoUrl, quality, videoUrl, null))
             }
             return videoList
         } else {
             val videoUrl = "not used"
-            val quality = "Video taken down for dmca"
+            val quality = "$qualityP Video taken down for dmca"
             videoList.add(Video(videoUrl, quality, videoUrl, null))
         }
         return videoList
