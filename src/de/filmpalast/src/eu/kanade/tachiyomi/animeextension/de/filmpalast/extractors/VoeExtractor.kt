@@ -9,8 +9,7 @@ class VoeExtractor(private val client: OkHttpClient) {
 
     fun videoFromUrl(url: String, quality: String): Video? {
         val document = client.newCall(GET(url)).execute().asJsoup()
-        val script = document.select("script:containsData(const sources = {)")
-            .firstOrNull()?.data()?.substringAfter("\"hls\": \"") ?: return null
+        val script = document.select("script:containsData(const sources = {)").toString()
         val videoUrl = script.substringAfter("\"hls\": \"").substringBefore("\",")
         return Video(url, quality, videoUrl, null)
     }
