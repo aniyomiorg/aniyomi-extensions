@@ -362,10 +362,10 @@
   {
     "name": "Aniyomi: AnimeFLV",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.animeflv",
-    "apk": "aniyomi-es.animeflv-v12.21.apk",
+    "apk": "aniyomi-es.animeflv-v12.22.apk",
     "lang": "es",
-    "code": 21,
-    "version": "12.21",
+    "code": 22,
+    "version": "12.22",
     "nsfw": 0
   },
   {
@@ -380,10 +380,10 @@
   {
     "name": "Aniyomi: AnimeonlineNinja",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.animeonlineninja",
-    "apk": "aniyomi-es.animeonlineninja-v12.1.apk",
+    "apk": "aniyomi-es.animeonlineninja-v12.2.apk",
     "lang": "es",
-    "code": 1,
-    "version": "12.1",
+    "code": 2,
+    "version": "12.2",
     "nsfw": 0
   },
   {
@@ -452,10 +452,10 @@
   {
     "name": "Aniyomi: MonosChinos",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.monoschinos",
-    "apk": "aniyomi-es.monoschinos-v12.5.apk",
+    "apk": "aniyomi-es.monoschinos-v12.6.apk",
     "lang": "es",
-    "code": 5,
-    "version": "12.5",
+    "code": 6,
+    "version": "12.6",
     "nsfw": 0
   },
   {
@@ -479,10 +479,10 @@
   {
     "name": "Aniyomi: TioanimeH",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.tioanimeh",
-    "apk": "aniyomi-es.tioanimeh-v12.1.apk",
+    "apk": "aniyomi-es.tioanimeh-v12.3.apk",
     "lang": "es",
-    "code": 1,
-    "version": "12.1",
+    "code": 3,
+    "version": "12.3",
     "nsfw": 0
   },
   {
