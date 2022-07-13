@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.FembedE
 import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.JsUnpacker
 import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.StreamTapeExtractor
+import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.uploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -150,15 +151,22 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             serverUrl.contains("mixdrop") && lang.contains(langSelect) -> {
                 val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(eval)").data()
-                val url = "http:" + JsUnpacker(jsE).unpack().toString().substringAfter("MDCore.wurl=\"").substringBefore("\"")
-                if (!url.contains("\$(document).ready(function(){});")) {
-                    videos.add(Video(url, "$lang MixDrop", url, null))
+                if (jsE.contains("MDCore")) {
+                    val url = "http:" + JsUnpacker(jsE).unpack().toString().substringAfter("MDCore.wurl=\"").substringBefore("\"")
+                    if (!url.contains("\$(document).ready(function(){});")) {
+                        videos.add(Video(url, "$lang MixDrop", url, null))
+                    }
                 }
             }
             serverUrl.contains("wolfstream") && lang.contains(langSelect) -> {
                 val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(sources)").data()
                 val url = jsE.substringAfter("{file:\"").substringBefore("\"")
                 videos.add(Video(url, "$lang WolfStream", url, null))
+            }
+            serverUrl.contains("uqload") && lang.contains(langSelect) -> {
+                val headers = headers.newBuilder().add("referer", "https://uqload.com/").build()
+                val video = uploadExtractor(client).videofromurl(serverUrl, headers, lang)
+                videos.add(video)
             }
         }
 
@@ -207,11 +215,12 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.select("div.sheader div.data h1").text()
-        anime.genre = document.select("div.sheader div.data div.sgeneros a").joinToString {
-            if (!it.text().lowercase().contains("anime")) {
-                it.text()
-            } else {
+        val uselessTags = listOf("supergoku", "younime", "zonamixs", "monoschinos", "otakustv", "Hanaojara", "series flv", "zenkimex", "Crunchyroll")
+        anime.genre = document.select("div.sheader div.data div.sgeneros a").joinToString("") {
+            if (it.text() in uselessTags || it.text().lowercase().contains("anime")) {
                 ""
+            } else {
+                it.text() + ", "
             }
         }
         anime.description = document.select("div.wp-content p").joinToString { it.text() }
