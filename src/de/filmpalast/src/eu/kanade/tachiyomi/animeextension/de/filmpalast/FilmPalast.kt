@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.de.filmpalast.extractors.VoeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -14,6 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -75,38 +75,81 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
+        return videosFromElement(document)
+    }
+
+    private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
-        val link = document.select("ul.currentStreamLinks> li > a")
-        val hosterSelection = preferences.getStringSet("hoster_selection", setOf("voe"))
-        when {
-            link.toString().contains("https://voe.sx") && hosterSelection?.contains("voe") == true -> {
-                val url = link.attr("href")
-                val quality = "Voe"
-                val video = VoeExtractor(client).videoFromUrl(url, quality)
-                if (video != null) {
+        val elements = document.select("ul.currentStreamLinks > li > a")
+        val hosterSelection = preferences.getStringSet("hoster_selection", setOf("voe", "stape"))
+        for (element in elements) {
+            val url = element.attr("abs:href")
+            when {
+                url.contains("https://voe.sx") && hosterSelection?.contains("voe") == true -> {
+                    val quality = "Voe"
+                    val doc = client.newCall(GET(url)).execute().asJsoup()
+                    val script = doc.select("script:containsData(const sources = {)").toString()
+                    val videoUrl = script.substringAfter("\"hls\": \"").substringBefore("\",")
+                    val video = Video(url, quality, videoUrl, null)
                     videoList.add(video)
+                }
+            }
+        }
+        for (element in elements) {
+            val url = element.attr("abs:data-player-url")
+            when {
+                url.contains("https://streamtape.com") && hosterSelection?.contains("stape") == true -> {
+                    try {
+                        with(
+                            client.newCall(GET(url, headers = Headers.headersOf("Referer", baseUrl, "Cookie", "Fuck Streamtape because they add concatenation to fuck up scrapers")))
+                                .execute().asJsoup()
+                        ) {
+                            linkRegex.find(this.select("script:containsData(document.getElementById('robotlink'))").toString())?.let {
+                                val quality = "Streamtape"
+                                val videoUrl = "https://streamtape.com/get_video?${it.groupValues[1]}&stream=1".replace("""" + '""", "")
+                                val video = Video(videoUrl, quality, videoUrl, null)
+                                videoList.add(video)
+                            }
+                        }
+                    } catch (e: Exception) {
+                    }
                 }
             }
         }
         return videoList
     }
 
+    private val linkRegex =
+        Regex("""(i(|" \+ ')d(|" \+ ')=.*?&(|" \+ ')e(|" \+ ')x(|" \+ ')p(|" \+ ')i(|" \+ ')r(|" \+ ')e(|" \+ ')s(|" \+ ')=.*?&(|" \+ ')i(|" \+ ')p(|" \+ ')=.*?&(|" \+ ')t(|" \+ ')o(|" \+ ')k(|" \+ ')e(|" \+ ')n(|" \+ ')=.*)'""")
+
     override fun List<Video>.sort(): List<Video> {
-        val hoster = preferences.getString("preferred_hoster", null)
+        val hoster = preferences.getString("preferred_hoster", "Voe")
+        val hosterList = mutableListOf<Video>()
+        val otherList = mutableListOf<Video>()
         if (hoster != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
             for (video in this) {
-                if (video.quality.contains(hoster)) {
-                    newList.add(preferred, video)
-                    preferred++
+                if (video.url.contains(hoster)) {
+                    hosterList.add(video)
                 } else {
-                    newList.add(video)
+                    otherList.add(video)
                 }
             }
-            return newList
+        } else otherList += this
+        val newList = mutableListOf<Video>()
+        var preferred = 0
+        for (video in hosterList) {
+            if (hoster?.let { video.quality.contains(it) } == true) {
+                newList.add(preferred, video)
+                preferred++
+            } else newList.add(video)
         }
-        return this
+        for (video in otherList) {
+            if (hoster?.let { video.quality.contains(it) } == true) {
+                newList.add(preferred, video)
+                preferred++
+            } else newList.add(video)
+        }
+        return newList
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -165,8 +208,8 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val hosterPref = ListPreference(screen.context).apply {
             key = "preferred_hoster"
             title = "Standard-Hoster"
-            entries = arrayOf("Voe")
-            entryValues = arrayOf("https://voe.sx")
+            entries = arrayOf("Voe", "Streamtape")
+            entryValues = arrayOf("https://voe.sx", "https://streamtape.com")
             setDefaultValue("https://voe.sx")
             summary = "%s"
 
@@ -180,9 +223,9 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val subSelection = MultiSelectListPreference(screen.context).apply {
             key = "hoster_selection"
             title = "Hoster auswählen"
-            entries = arrayOf("Voe")
-            entryValues = arrayOf("voe")
-            setDefaultValue(setOf("voe"))
+            entries = arrayOf("Voe", "Streamtape")
+            entryValues = arrayOf("voe", "stape")
+            setDefaultValue(setOf("voe", "stape"))
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
