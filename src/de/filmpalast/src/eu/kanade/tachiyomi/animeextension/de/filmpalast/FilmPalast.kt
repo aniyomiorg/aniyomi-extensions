@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.de.filmpalast.extractors.EvoloadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -81,7 +82,7 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
         val elements = document.select("ul.currentStreamLinks > li > a")
-        val hosterSelection = preferences.getStringSet("hoster_selection", setOf("voe", "stape"))
+        val hosterSelection = preferences.getStringSet("hoster_selection", setOf("voe", "stape", "evo"))
         for (element in elements) {
             val url = element.attr("abs:href")
             when {
@@ -91,7 +92,9 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val script = doc.select("script:containsData(const sources = {)").toString()
                     val videoUrl = script.substringAfter("\"hls\": \"").substringBefore("\",")
                     val video = Video(url, quality, videoUrl, null)
-                    videoList.add(video)
+                    if (video != null) {
+                        videoList.add(video)
+                    }
                 }
             }
         }
@@ -101,21 +104,51 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 url.contains("https://streamtape.com") && hosterSelection?.contains("stape") == true -> {
                     try {
                         with(
-                            client.newCall(GET(url, headers = Headers.headersOf("Referer", baseUrl, "Cookie", "Fuck Streamtape because they add concatenation to fuck up scrapers")))
+                            client.newCall(
+                                GET(
+                                    url,
+                                    headers = Headers.headersOf(
+                                        "Referer",
+                                        baseUrl,
+                                        "Cookie",
+                                        "Fuck Streamtape because they add concatenation to fuck up scrapers"
+                                    )
+                                )
+                            )
                                 .execute().asJsoup()
                         ) {
-                            linkRegex.find(this.select("script:containsData(document.getElementById('robotlink'))").toString())?.let {
+                            linkRegex.find(
+                                this.select("script:containsData(document.getElementById('robotlink'))").toString()
+                            )?.let {
                                 val quality = "Streamtape"
-                                val videoUrl = "https://streamtape.com/get_video?${it.groupValues[1]}&stream=1".replace("""" + '""", "")
+                                val videoUrl = "https://streamtape.com/get_video?${it.groupValues[1]}&stream=1".replace(
+                                    """" + '""",
+                                    ""
+                                )
                                 val video = Video(videoUrl, quality, videoUrl, null)
-                                videoList.add(video)
+                                if (video != null) {
+                                    videoList.add(video)
+                                }
                             }
                         }
                     } catch (e: Exception) {
                     }
                 }
+                url.contains("https://evoload.io") && hosterSelection?.contains("evo") == true -> {
+                    val quality = "Evoload"
+                    if (document.select("#EvoVid_html5_api").attr("src").contains("EvoStreams")) {
+                        val videoUrl = document.select("#EvoVid_html5_api").attr("src")
+                        if (Video(videoUrl, quality, videoUrl, null) != null) {
+                            videoList.add(Video(videoUrl, quality, videoUrl, null))
+                        }
+                    } else {
+                        EvoloadExtractor(client).videoFromUrl(url, quality)
+                        videoList.addAll(EvoloadExtractor(client).videoFromUrl(url, quality))
+                    }
+                }
             }
         }
+
         return videoList
     }
 
@@ -208,8 +241,8 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val hosterPref = ListPreference(screen.context).apply {
             key = "preferred_hoster"
             title = "Standard-Hoster"
-            entries = arrayOf("Voe", "Streamtape")
-            entryValues = arrayOf("https://voe.sx", "https://streamtape.com")
+            entries = arrayOf("Voe", "Streamtape", "Evoload")
+            entryValues = arrayOf("https://voe.sx", "https://streamtape.com", "https://evoload.io")
             setDefaultValue("https://voe.sx")
             summary = "%s"
 
@@ -223,9 +256,9 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val subSelection = MultiSelectListPreference(screen.context).apply {
             key = "hoster_selection"
             title = "Hoster auswählen"
-            entries = arrayOf("Voe", "Streamtape")
-            entryValues = arrayOf("voe", "stape")
-            setDefaultValue(setOf("voe", "stape"))
+            entries = arrayOf("Voe", "Streamtape", "Evoload")
+            entryValues = arrayOf("voe", "stape", "evo")
+            setDefaultValue(setOf("voe", "stape", "evo"))
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
