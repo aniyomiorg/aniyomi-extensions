@@ -29,7 +29,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "عرب سيد"
 
-    override val baseUrl = "https://m.arabseed.ink"
+    override val baseUrl = "https://m.arabseed.sbs"
 
     override val lang = "ar"
 
@@ -81,7 +81,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         for (element in elements) {
             val location = element.ownerDocument().location()
             val videoHeaders = headers.newBuilder()
-                .set("Referer", "https://m.arabseed.ink/")
+                .set("Referer", "https://m.arabseed.sbs/")
                 .set("X-Requested-With", "XMLHttpRequest")
                 .build()
             // Headers.headersOf("Referer", location)
@@ -93,7 +93,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .add("server", dataServer)
                 .add("qu", dataQu)
                 .build()
-            val ajax1 = "https://m.arabseed.ink/wp-content/themes/Elshaikh2021/Ajaxat/Single/Server.php"
+            val ajax1 = "https://m.arabseed.sbs/wp-content/themes/Elshaikh2021/Ajaxat/Single/Server.php"
             val ajax = client.newCall(POST(ajax1, videoHeaders, pageData)).execute().asJsoup()
             val embedUrl = ajax.select("iframe").attr("src")
             when {
