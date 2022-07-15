@@ -22,10 +22,16 @@ class EvoloadExtractor(private val client: OkHttpClient) {
                 body = "{\"code\":\"$id\",\"token\":\"ok\",\"csrv_token\":\"$csrv_token\",\"pass\":\"$captchaPass\",\"reff\":\"https://filmpalast.to/\"}".toRequestBody("application/json".toMediaType())
             )
         ).execute().body!!.string()
-        val src = file.substringAfter("\"src\":\"").substringBefore("\",")
-        val res = client.newCall(POST(src)).execute()
-        val videoUrl = res.request.url.toString()
-        videoList.addAll(listOf(Video(url, quality, videoUrl, null)))
+
+        if (file.contains("backup")) {
+            val videoUrl = file.substringAfter("\"encoded_src\":\"").substringBefore("\",")
+            val video = Video(url, quality, videoUrl, null)
+            videoList.add(video)
+        } else {
+            val videoUrl = file.substringAfter("\"src\":\"").substringBefore("\",")
+            val video = Video(url, quality, videoUrl, null)
+            videoList.add(video)
+        }
         return videoList
     }
 }
