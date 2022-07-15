@@ -25,12 +25,20 @@ class EvoloadExtractor(private val client: OkHttpClient) {
 
         if (file.contains("backup")) {
             val videoUrl = file.substringAfter("\"encoded_src\":\"").substringBefore("\",")
-            val video = Video(url, quality, videoUrl, null)
-            videoList.add(video)
+            when {
+                !file.substringAfter("\"xstatus\":\"").substringBefore("\",").contains("del") -> {
+                    val video = Video(url, quality, videoUrl, null)
+                    videoList.add(video)
+                }
+            }
         } else {
             val videoUrl = file.substringAfter("\"src\":\"").substringBefore("\",")
-            val video = Video(url, quality, videoUrl, null)
-            videoList.add(video)
+            when {
+                !file.substringAfter("\"xstatus\":\"").substringBefore("\",").contains("del") -> {
+                    val video = Video(url, quality, videoUrl, null)
+                    videoList.add(video)
+                }
+            }
         }
         return videoList
     }
