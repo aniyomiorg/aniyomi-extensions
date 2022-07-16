@@ -215,12 +215,27 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeSelector(): String = "div.film_list-wrap div.film-poster"
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        val params = AVFilters.getSearchParameters(filters)
-        return client.newCall(searchAnimeRequest(page, query, params))
-            .asObservableSuccess()
-            .map { response ->
-                searchAnimeParse(response)
-            }
+        return if (query.startsWith(PREFIX_SEARCH)) {
+            val path = query.removePrefix(PREFIX_SEARCH)
+            client.newCall(GET("$baseUrl/$path"))
+                .asObservableSuccess()
+                .map { response ->
+                    searchAnimeByPathParse(response, path)
+                }
+        } else {
+            val params = AVFilters.getSearchParameters(filters)
+            client.newCall(searchAnimeRequest(page, query, params))
+                .asObservableSuccess()
+                .map { response ->
+                    searchAnimeParse(response)
+                }
+        }
+    }
+
+    private fun searchAnimeByPathParse(response: Response, path: String): AnimesPage {
+        val details = animeDetailsParse(response)
+        details.url = "/$path"
+        return AnimesPage(listOf(details), false)
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
@@ -387,5 +402,6 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val IGNORED_HOSTS = "ignored_hosts"
         private val HOSTS_NAMES = arrayOf("DoodStream", "StreamTape", "VoeCDN")
         private val QUALITY_LIST = arrayOf("480p", "720p", "1080p", "4K")
+        const val PREFIX_SEARCH = "path:"
     }
 }
