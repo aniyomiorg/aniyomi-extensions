@@ -11,6 +11,7 @@ import eu.kanade.tachiyomi.animeextension.pt.animesvision.dto.PayloadItem
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.GlobalVisionExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.StreamTapeExtractor
+import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.VoeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -148,10 +149,12 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val ignoredHosts = preferences.getStringSet(IGNORED_HOSTS, null)
         val ignoreDO = ignoredHosts?.contains(HOSTS_NAMES.elementAt(1)) ?: false
         val ignoreST = ignoredHosts?.contains(HOSTS_NAMES.elementAt(2)) ?: false
+        val ignoreVO = ignoredHosts?.contains(HOSTS_NAMES.elementAt(3)) ?: false
 
         if (!ignoreST && "Streamtape" in players)
             hosts_ids.add(5)
-
+        if (!ignoreVO && "VoeCDN" in players)
+            hosts_ids.add(7)
         if (!ignoreDO && "DOOD" in players)
             hosts_ids.add(8)
 
@@ -174,15 +177,19 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 it.text()
             }
         val videoList = GlobalVisionExtractor()
-            .videoListFromHtml(doc.html(), players)
+            .videoListFromHtml(doc.html())
             .toMutableList()
 
         getPlayersUrl(doc, players).forEach {
-            val video = if (it.contains("streamtape")) {
-                StreamTapeExtractor(client).videoFromUrl(it)
-            } else if (it.contains("dood")) {
-                DoodExtractor(client).videoFromUrl(it)
-            } else { null }
+            val video = when {
+                "streamtape" in it ->
+                    StreamTapeExtractor(client).videoFromUrl(it)
+                "dood" in it ->
+                    DoodExtractor(client).videoFromUrl(it)
+                "voe.sx" in it ->
+                    VoeExtractor(client).videoFromUrl(it)
+                else -> null
+            }
             if (video != null)
                 videoList.add(video)
         }
@@ -286,8 +293,8 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             key = PREFERRED_HOST
             title = "Host preferido"
             entries = HOSTS_NAMES
-            entryValues = HOSTS_URLS
-            setDefaultValue(HOSTS_URLS.first())
+            entryValues = HOSTS_NAMES
+            setDefaultValue(HOSTS_NAMES.first())
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -381,9 +388,9 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             var preferred = 0
             val newList = mutableListOf<Video>()
             for (video in this) {
-                if (video.url.contains(host)) {
-                    if (host == HOSTS_URLS.first() && quality != null) {
-                        val contains: Boolean = video.quality.contains(quality)
+                if (video.quality.contains(host)) {
+                    if (host == HOSTS_NAMES.first() && quality != null) {
+                        val contains = video.quality.contains(quality)
                         if (contains) {
                             newList.add(preferred, video)
                             preferred++
@@ -408,8 +415,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREFERRED_HOST = "preferred_host"
         private const val PREFERRED_QUALITY = "preferred_quality"
         private const val IGNORED_HOSTS = "ignored_hosts"
-        private val HOSTS_NAMES = arrayOf("GlobalVision", "DoodStream", "StreamTape")
-        private val HOSTS_URLS = arrayOf("animes.vision", "https://dood", "https://streamtape")
-        private val QUALITY_LIST = arrayOf("SD", "HD", "FULLHD")
+        private val HOSTS_NAMES = arrayOf("GlobalVision", "DoodStream", "StreamTape", "VoeCDN")
+        private val QUALITY_LIST = arrayOf("480p", "720p", "1080p", "4K")
     }
 }
