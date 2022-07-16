@@ -147,13 +147,13 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val hosts_ids = mutableListOf<Int>()
 
         val ignoredHosts = preferences.getStringSet(IGNORED_HOSTS, null)
-        val ignoreDO = ignoredHosts?.contains(HOSTS_NAMES.elementAt(1)) ?: false
-        val ignoreST = ignoredHosts?.contains(HOSTS_NAMES.elementAt(2)) ?: false
-        val ignoreVO = ignoredHosts?.contains(HOSTS_NAMES.elementAt(3)) ?: false
+        val ignoreDO = ignoredHosts?.contains(HOSTS_NAMES.elementAt(0)) ?: false
+        val ignoreST = ignoredHosts?.contains(HOSTS_NAMES.elementAt(1)) ?: false
+        val ignoreVO = ignoredHosts?.contains(HOSTS_NAMES.elementAt(2)) ?: false
 
         if (!ignoreST && "Streamtape" in players)
             hosts_ids.add(5)
-        if (!ignoreVO && "VoeCDN" in players)
+        if (!ignoreVO && "Voe CDN" in players)
             hosts_ids.add(7)
         if (!ignoreDO && "DOOD" in players)
             hosts_ids.add(8)
@@ -288,23 +288,6 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Settings ============================== 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-
-        val videoServerPref = ListPreference(screen.context).apply {
-            key = PREFERRED_HOST
-            title = "Host preferido"
-            entries = HOSTS_NAMES
-            entryValues = HOSTS_NAMES
-            setDefaultValue(HOSTS_NAMES.first())
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREFERRED_QUALITY
             title = "Qualidade preferida (Válido apenas no GlobalVision)"
@@ -321,11 +304,10 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
 
         val ignoredHosts = MultiSelectListPreference(screen.context).apply {
-            val values = HOSTS_NAMES.drop(1).toTypedArray()
             key = IGNORED_HOSTS
             title = "Hosts ignorados ao carregar"
-            entries = values
-            entryValues = values
+            entries = HOSTS_NAMES
+            entryValues = HOSTS_NAMES
             setDefaultValue(emptySet<String>())
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit()
@@ -334,7 +316,6 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
-        screen.addPreference(videoServerPref)
         screen.addPreference(videoQualityPref)
         screen.addPreference(ignoredHosts)
     }
@@ -382,29 +363,19 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val host = preferences.getString(PREFERRED_HOST, null)
         val quality = preferences.getString(PREFERRED_QUALITY, null)
-        if (host != null) {
-            var preferred = 0
+        if (quality != null) {
             val newList = mutableListOf<Video>()
+            var preferred = 0
             for (video in this) {
-                if (video.quality.contains(host)) {
-                    if (host == HOSTS_NAMES.first() && quality != null) {
-                        val contains = video.quality.contains(quality)
-                        if (contains) {
-                            newList.add(preferred, video)
-                            preferred++
-                        } else {
-                            newList.add(video)
-                        }
-                    } else {
-                        newList.add(preferred, video)
-                        preferred++
-                    }
+                if (quality in video.quality) {
+                    newList.add(preferred, video)
+                    preferred++
                 } else {
                     newList.add(video)
                 }
             }
+
             return newList
         }
         return this
@@ -412,10 +383,9 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     companion object {
         private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
-        private const val PREFERRED_HOST = "preferred_host"
         private const val PREFERRED_QUALITY = "preferred_quality"
         private const val IGNORED_HOSTS = "ignored_hosts"
-        private val HOSTS_NAMES = arrayOf("GlobalVision", "DoodStream", "StreamTape", "VoeCDN")
+        private val HOSTS_NAMES = arrayOf("DoodStream", "StreamTape", "VoeCDN")
         private val QUALITY_LIST = arrayOf("480p", "720p", "1080p", "4K")
     }
 }
