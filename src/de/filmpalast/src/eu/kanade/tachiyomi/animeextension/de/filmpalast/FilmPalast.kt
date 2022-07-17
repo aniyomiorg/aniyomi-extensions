@@ -6,6 +6,7 @@ import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.de.filmpalast.extractors.EvoloadExtractor
+import eu.kanade.tachiyomi.animeextension.de.filmpalast.extractors.VoeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -88,10 +89,7 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             when {
                 url.contains("https://voe.sx") && hosterSelection?.contains("voe") == true -> {
                     val quality = "Voe"
-                    val doc = client.newCall(GET(url)).execute().asJsoup()
-                    val script = doc.select("script:containsData(const sources = {)").toString()
-                    val videoUrl = script.substringAfter("\"hls\": \"").substringBefore("\",")
-                    val video = Video(url, quality, videoUrl, null)
+                    val video = VoeExtractor(client).videoFromUrl(url, quality)
                     if (video != null) {
                         videoList.add(video)
                     }
@@ -104,27 +102,12 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 url.contains("https://streamtape.com") && hosterSelection?.contains("stape") == true -> {
                     try {
                         with(
-                            client.newCall(
-                                GET(
-                                    url,
-                                    headers = Headers.headersOf(
-                                        "Referer",
-                                        baseUrl,
-                                        "Cookie",
-                                        "Fuck Streamtape because they add concatenation to fuck up scrapers"
-                                    )
-                                )
-                            )
+                            client.newCall(GET(url, headers = Headers.headersOf("Referer", baseUrl, "Cookie", "Fuck Streamtape because they add concatenation to fuck up scrapers")))
                                 .execute().asJsoup()
                         ) {
-                            linkRegex.find(
-                                this.select("script:containsData(document.getElementById('robotlink'))").toString()
-                            )?.let {
+                            linkRegex.find(this.select("script:containsData(document.getElementById('robotlink'))").toString())?.let {
                                 val quality = "Streamtape"
-                                val videoUrl = "https://streamtape.com/get_video?${it.groupValues[1]}&stream=1".replace(
-                                    """" + '""",
-                                    ""
-                                )
+                                val videoUrl = "https://streamtape.com/get_video?${it.groupValues[1]}&stream=1".replace("""" + '""", "")
                                 val video = Video(videoUrl, quality, videoUrl, null)
                                 if (video != null) {
                                     videoList.add(video)

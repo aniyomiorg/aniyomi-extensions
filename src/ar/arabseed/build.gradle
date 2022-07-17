@@ -5,7 +5,7 @@ ext {
     extName = 'عرب سيد'
     pkgNameSuffix = 'ar.arabseed'
     extClass = '.ArabSeed'
-    extVersionCode = 3
+    extVersionCode = 4
     libVersion = '12'
 }
 
