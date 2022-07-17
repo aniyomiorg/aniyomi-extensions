@@ -76,7 +76,7 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val epNum = element.select("div.season_m a span.c").text().removePrefix("Episode ")
         val date = SimpleDateFormat("MMM. dd, yyyy").parse(element.select("div.data > span").text())
         episode.setUrlWithoutDomain(element.select("div.season_m a").attr("href"))
-        episode.name = element.select("div.season_m a span.c").text()
+        episode.name = element.select("div.data h3").text()
         episode.date_upload = date.time
         episode.episode_number = when {
             (epNum.isNotEmpty()) -> epNum.toFloat()
