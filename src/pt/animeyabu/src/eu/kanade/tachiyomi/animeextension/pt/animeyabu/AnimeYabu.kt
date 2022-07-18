@@ -127,6 +127,14 @@ class AnimeYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = PlayerOneExtractor()
             .videoListFromHtml(html)
             .toMutableList()
+        val kanraElement = document.selectFirst("script:containsData(kanra.dev)")
+        if (kanraElement != null) {
+            val kanraUrl = kanraElement.html()
+                .substringAfter("src='")
+                .substringBefore("'")
+            val kanraVideos = PlayerOneExtractor(client).videoListFromKanraUrl(kanraUrl)
+            videoList.addAll(kanraVideos)
+        }
         val iframe = document.selectFirst("div#tab-2 > iframe")
         if (iframe != null) {
             val playerUrl = iframe.attr("src")
