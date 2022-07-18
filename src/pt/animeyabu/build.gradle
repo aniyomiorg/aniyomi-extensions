@@ -6,9 +6,12 @@ ext {
     extName = 'AnimeYabu!'
     pkgNameSuffix = 'pt.animeyabu'
     extClass = '.AnimeYabu'
-    extVersionCode = 2
+    extVersionCode = 3
     libVersion = '12'
 }
 
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+}
 
 apply from: "$rootDir/common.gradle"

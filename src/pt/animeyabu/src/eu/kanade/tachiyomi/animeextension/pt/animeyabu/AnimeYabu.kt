@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -127,6 +128,14 @@ class AnimeYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = PlayerOneExtractor()
             .videoListFromHtml(html)
             .toMutableList()
+        val kanraElement = document.selectFirst("script:containsData(kanra.dev)")
+        if (kanraElement != null) {
+            val kanraUrl = kanraElement.html()
+                .substringAfter("src='")
+                .substringBefore("'")
+            val kanraVideos = PlayerOneExtractor(client).videoListFromKanraUrl(kanraUrl)
+            videoList.addAll(kanraVideos)
+        }
         val iframe = document.selectFirst("div#tab-2 > iframe")
         if (iframe != null) {
             val playerUrl = iframe.attr("src")
@@ -144,7 +153,9 @@ class AnimeYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =============================== Search ===============================
     override fun searchAnimeFromElement(element: Element) = throw Exception("not used")
 
-    private fun searchAnimeFromResult(result: SearchResultDto): SAnime {
+    override fun searchAnimeParse(response: Response) = throw Exception("not used")
+
+    private fun searchAnimeParse(result: SearchResultDto): SAnime {
         val anime: SAnime = SAnime.create()
         anime.title = result.title
         anime.setUrlWithoutDomain("/" + result.slug)
@@ -156,11 +167,23 @@ class AnimeYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector() = throw Exception("not used")
 
-    override fun searchAnimeParse(response: Response) = throw Exception("not used")
-
+    private fun searchAnimeByIdParse(response: Response, slug: String): AnimesPage {
+        val details = animeDetailsParse(response)
+        details.url = "/anime/$slug"
+        return AnimesPage(listOf(details), false)
+    }
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        val params = AYFilters.getSearchParameters(filters)
-        return Observable.just(searchAnimeRequest(page, query, params))
+        return if (query.startsWith(AYConstants.PREFIX_SEARCH_SLUG)) {
+            val slug = query.removePrefix(AYConstants.PREFIX_SEARCH_SLUG)
+            client.newCall(GET("$baseUrl/anime/$slug"))
+                .asObservableSuccess()
+                .map { response ->
+                    searchAnimeByIdParse(response, slug)
+                }
+        } else {
+            val params = AYFilters.getSearchParameters(filters)
+            Observable.just(searchAnimeRequest(page, query, params))
+        }
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
@@ -180,7 +203,7 @@ class AnimeYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val currentPage = if (results.size == 0) {
             emptyList<SAnime>()
         } else {
-            results.get(page - 1).map { searchAnimeFromResult(it) }
+            results.get(page - 1).map { searchAnimeParse(it) }
         }
         return AnimesPage(currentPage, hasNextPage)
     }
