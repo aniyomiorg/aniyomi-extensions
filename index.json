@@ -657,6 +657,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: Puray.moe",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.puraymoe",
+    "apk": "aniyomi-pt.puraymoe-v12.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: Animevost",
     "pkg": "eu.kanade.tachiyomi.animeextension.ru.animevost",
     "apk": "aniyomi-ru.animevost-v12.5.apk",
