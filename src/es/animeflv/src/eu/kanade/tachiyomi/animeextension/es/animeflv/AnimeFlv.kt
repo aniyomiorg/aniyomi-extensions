@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.es.animeflv
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.DoodExtractor
@@ -9,6 +10,7 @@ import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.StreamTapeExtractor
+import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -18,7 +20,12 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -33,7 +40,7 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AnimeFLV"
 
-    override val baseUrl = "https://ww3.animeflv.cc"
+    override val baseUrl = "https://www3.animeflv.net"
 
     override val lang = "es"
 
@@ -49,7 +56,7 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "div.Container ul.ListAnimes li article"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/browse?order=5&page=$page")
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/browse?order=rating&page=$page")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -68,26 +75,37 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun popularAnimeNextPageSelector(): String = "ul.pagination li.selected ~ li"
+    override fun popularAnimeNextPageSelector(): String = "ul.pagination li a[rel=\"next\"]"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        return super.episodeListParse(response).reversed()
-    }
-
-    override fun episodeListSelector() = "ul.ListCaps li a"
-
-    override fun episodeFromElement(element: Element): SEpisode {
-        val episode = SEpisode.create()
-        val epNum = getNumberFromEpsString(element.select("p").text())
-        episode.setUrlWithoutDomain(element.attr("href"))
-        episode.episode_number = when {
-            (epNum.isNotEmpty()) -> epNum.toFloat()
-            else -> 1F
+        val document = response.asJsoup()
+        val episodeList = mutableListOf<SEpisode>()
+        document.select("script").forEach { script ->
+            if (script.data().contains("var anime_info =")) {
+                val animeInfo = script.data().substringAfter("var anime_info = [").substringBefore("];")
+                val arrInfo = animeInfo.split(",")
+                val animeUri = arrInfo[2]!!.replace("\"", "")
+                val episodes = script.data().substringAfter("var episodes = [").substringBefore("];").trim()
+                val arrEpisodes = episodes.split("],[")
+                arrEpisodes!!.forEach { arrEp ->
+                    val noEpisode = arrEp!!.replace("[", "")!!.replace("]", "")!!.split(",")!![0]
+                    Log.i("bruh noEpisode", noEpisode)
+                    val ep = SEpisode.create()
+                    val url = "$baseUrl/ver/$animeUri-$noEpisode"
+                    ep.setUrlWithoutDomain(url)
+                    ep.name = "Episodio $noEpisode"
+                    ep.episode_number = noEpisode.toFloat()
+                    episodeList.add(ep)
+                }
+            }
         }
-        episode.name = element.select("p").text()
-
-        return episode
+        return episodeList
     }
+
+    override fun episodeListSelector() = "uwu"
+
+    override fun episodeFromElement(element: Element) = throw Exception("not used")
+
 
     private fun getNumberFromEpsString(epsStr: String): String {
         return epsStr.filter { it.isDigit() }
@@ -96,38 +114,61 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-        document.select("ul.CapiTnv li:not([title='Our Server'])").forEach { script ->
-            val quality = script.attr("title")
-            val url = script.attr("data-video")
-            if (quality == "Streamsb") {
-                val headers = headers.newBuilder()
-                    .set("Referer", url)
-                    .set("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
-                    .set("Accept-Language", "en-US,en;q=0.5")
-                    .set("watchsb", "streamsb")
-                    .build()
-                val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
-                videoList.addAll(videos)
-            }
-            if (quality == "Fembed") {
-                val videos = FembedExtractor().videosFromUrl(url)
-                videoList.addAll(videos)
-            }
-            if (quality == "Streamtape") {
-                val video = StreamTapeExtractor(client).videoFromUrl(url, quality)
-                if (video != null) {
-                    videoList.add(video)
+        document.select("script").forEach { script ->
+            Log.i("bruh script", script.data())
+            if (script.data().contains("var videos = {")) {
+                val responseString = script.data().substringAfter("var videos =").substringBefore(";").trim()
+                val jObject = json.decodeFromString<JsonObject>(responseString)
+                jObject["SUB"]!!.jsonArray!!.forEach { servers ->
+                    val json = servers!!.jsonObject
+                    val quality = json!!["title"]!!.jsonPrimitive!!.content
+                    var url = json!!["code"]!!.jsonPrimitive!!.content
+
+                    if (quality == "SB") {
+                        val headers = headers.newBuilder()
+                            .set("referer", url)
+                            .set(
+                                "User-Agent",
+                                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"
+                            )
+                            .set("Accept-Language", "es-MX,es-419;q=0.9,es;q=0.8,en;q=0.7")
+                            .set("watchsb", "streamsb")
+                            .set("authority", "embedsb.com")
+                            .build()
+                        val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
+                        videoList.addAll(videos)
+                    }
+                    if (quality == "Fembed") {
+                        val videos = FembedExtractor().videosFromUrl(url)
+                        videoList.addAll(videos)
+                    }
+                    if (quality == "Stape") {
+                        val url1 = json!!["url"]!!.jsonPrimitive!!.content
+                        val video = StreamTapeExtractor(client).videoFromUrl(url1, quality)
+                        if (video != null) {
+                            videoList.add(video)
+                        }
+                    }
+                    if (quality == "Doodstream") {
+                        val video = try {
+                            DoodExtractor(client).videoFromUrl(url, "DoodStream")
+                        } catch (e: Exception) {
+                            null
+                        }
+                        if (video != null) {
+                            videoList.add(video)
+                        }
+                    }
+                    if (quality == "Okru") {
+                        val videos = OkruExtractor(client).videosFromUrl(url)
+                        videoList.addAll(videos)
+                    }
+                    if (quality == "YourUpload") {
+                        val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
+                        val videos = YourUploadExtractor(client).videoFromUrl(url, headers = headers)
+                        if (!videos.isEmpty()) videoList.addAll(videos)
+                    }
                 }
-            }
-            if (quality == "Doodstream") {
-                val video = try { DoodExtractor(client).videoFromUrl(url, "DoodStream") } catch (e: Exception) { null }
-                if (video != null) {
-                    videoList.add(video)
-                }
-            }
-            if (quality == "Okru") {
-                val videos = OkruExtractor(client).videosFromUrl(url)
-                videoList.addAll(videos)
             }
         }
         return videoList
@@ -162,9 +203,9 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
 
         return when {
-            query.isNotBlank() -> GET("$baseUrl/browse?q=$query&order=4&page=$page")
-            genreFilter.state != 0 -> GET("$baseUrl/browse?genres=${genreFilter.toUriPart()}&order=4&page=$page")
-            else -> GET("$baseUrl/browse?page=$page&order=4")
+            query.isNotBlank() -> GET("$baseUrl/browse?q=$query&order=rating&page=$page")
+            genreFilter.state != 0 -> GET("$baseUrl/browse?genre[]=${genreFilter.toUriPart()}&order=rating&page=$page")
+            else -> GET("$baseUrl/browse?page=$page&order=rating")
         }
     }
 
