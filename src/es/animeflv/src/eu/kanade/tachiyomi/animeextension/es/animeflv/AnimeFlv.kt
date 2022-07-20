@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.es.animeflv
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.DoodExtractor
@@ -89,7 +88,6 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val arrEpisodes = episodes.split("],[")
                 arrEpisodes!!.forEach { arrEp ->
                     val noEpisode = arrEp!!.replace("[", "")!!.replace("]", "")!!.split(",")!![0]
-                    Log.i("bruh noEpisode", noEpisode)
                     val ep = SEpisode.create()
                     val url = "$baseUrl/ver/$animeUri-$noEpisode"
                     ep.setUrlWithoutDomain(url)
@@ -106,7 +104,6 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element) = throw Exception("not used")
 
-
     private fun getNumberFromEpsString(epsStr: String): String {
         return epsStr.filter { it.isDigit() }
     }
@@ -115,7 +112,6 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
         document.select("script").forEach { script ->
-            Log.i("bruh script", script.data())
             if (script.data().contains("var videos = {")) {
                 val responseString = script.data().substringAfter("var videos =").substringBefore(";").trim()
                 val jObject = json.decodeFromString<JsonObject>(responseString)
