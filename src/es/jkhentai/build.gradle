@@ -1,0 +1,13 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Jkhentai'
+    pkgNameSuffix = 'es.jkhentai'
+    extClass = '.Jkhentai'
+    extVersionCode = 4
+    libVersion = '12'
+    containsNsfw = true
+}
+
+apply from: "$rootDir/common.gradle"

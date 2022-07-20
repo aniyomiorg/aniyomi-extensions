@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'WIT ANIME'
+    pkgNameSuffix = 'ar.witanime'
+    extClass = '.WitAnime'
+    extVersionCode = 16
+    libVersion = '12'
+}
+
+apply from: "$rootDir/common.gradle"

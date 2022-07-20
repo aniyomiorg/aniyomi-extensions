@@ -1,0 +1,13 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'haho.moe'
+    pkgNameSuffix = 'en.hahomoe'
+    extClass = '.HahoMoe'
+    extVersionCode = 7
+    libVersion = '12'
+    containsNsfw = true
+}
+
+apply from: "$rootDir/common.gradle"

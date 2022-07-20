@@ -1,0 +1,74 @@
+apply plugin: 'org.jmailen.kotlinter'
+
+android {
+    compileSdkVersion AndroidConfig.compileSdk
+    buildToolsVersion AndroidConfig.buildTools
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile "AndroidManifest.xml"
+            java.srcDirs = ['src']
+            res.srcDirs = ['res']
+        }
+        release {
+            manifest.srcFile "AndroidManifest.xml"
+        }
+        debug {
+            manifest.srcFile "AndroidManifest.xml"
+        }
+    }
+
+    defaultConfig {
+        minSdkVersion AndroidConfig.minSdk
+        targetSdkVersion AndroidConfig.targetSdk
+        applicationIdSuffix pkgNameSuffix
+        versionCode extVersionCode
+        versionName "$libVersion.$extVersionCode"
+        setProperty("archivesBaseName", "aniyomi-$pkgNameSuffix-v$versionName")
+        manifestPlaceholders = [
+                appName : "Aniyomi: $extName",
+                extClass: extClass,
+                extFactory: project.ext.properties.getOrDefault("extFactory", ""),
+                nsfw: project.ext.properties.getOrDefault("containsNsfw", false) ? 1 : 0,
+        ]
+    }
+
+    dependenciesInfo {
+        includeInApk = false
+    }
+
+    buildFeatures {
+        // Disable unused AGP features
+        aidl false
+        renderScript false
+        resValues false
+        shaders false
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(":core")
+}
+apply from: "$rootDir/common-dependencies.gradle"
+
+preBuild.dependsOn(lintKotlin)
+lintKotlin.dependsOn(formatKotlin)

@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'عرب سيد'
+    pkgNameSuffix = 'ar.arabseed'
+    extClass = '.ArabSeed'
+    extVersionCode = 4
+    libVersion = '12'
+}
+
+apply from: "$rootDir/common.gradle"

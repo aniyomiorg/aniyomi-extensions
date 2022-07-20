@@ -1,0 +1,17 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'AnimeYabu!'
+    pkgNameSuffix = 'pt.animeyabu'
+    extClass = '.AnimeYabu'
+    extVersionCode = 3
+    libVersion = '12'
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+}
+
+apply from: "$rootDir/common.gradle"

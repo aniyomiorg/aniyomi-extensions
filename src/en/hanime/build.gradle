@@ -1,0 +1,13 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'hanime.tv'
+    pkgNameSuffix = 'en.hanime'
+    extClass = '.Hanime'
+    extVersionCode = 14
+    libVersion = '12'
+    containsNsfw = true
+}
+
+apply from: "$rootDir/common.gradle"

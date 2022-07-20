@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'twist.moe'
+    pkgNameSuffix = 'en.twistmoe'
+    extClass = '.TwistMoe'
+    extVersionCode = 8
+    libVersion = '12'
+}
+
+apply from: "$rootDir/common.gradle"

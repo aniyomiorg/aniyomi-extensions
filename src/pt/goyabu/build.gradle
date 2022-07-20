@@ -1,0 +1,14 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'Goyabu'
+    pkgNameSuffix = 'pt.goyabu'
+    extClass = '.Goyabu'
+    extVersionCode = 1
+    libVersion = '12'
+}
+
+
+apply from: "$rootDir/common.gradle"

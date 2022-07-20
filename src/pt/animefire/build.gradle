@@ -1,0 +1,18 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'Anime Fire'
+    pkgNameSuffix = 'pt.animefire'
+    extClass = '.AnimeFire'
+    extVersionCode = 2
+    libVersion = '12'
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+}
+
+
+apply from: "$rootDir/common.gradle"

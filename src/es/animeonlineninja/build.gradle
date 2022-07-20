@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'AnimeonlineNinja'
+    pkgNameSuffix = 'es.animeonlineninja'
+    extClass = '.AnimeonlineNinja'
+    extVersionCode = 2
+    libVersion = '12'
+}
+
+apply from: "$rootDir/common.gradle"

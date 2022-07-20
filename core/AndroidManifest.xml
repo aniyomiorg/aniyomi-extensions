@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="eu.kanade.tachiyomi.animeextension">
+
+    <uses-feature android:name="tachiyomi.animeextension" />
+
+    <application android:icon="@mipmap/ic_launcher" android:allowBackup="false" android:label="${appName}">
+
+        <meta-data android:name="tachiyomi.animeextension.class" android:value="${extClass}" />
+        <meta-data android:name="tachiyomi.animeextension.factory" android:value="${extFactory}" />
+        <meta-data android:name="tachiyomi.animeextension.nsfw" android:value="${nsfw}" />
+
+    </application>
+
+</manifest>

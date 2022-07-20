@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'موفيز فور يو'
+    pkgNameSuffix = 'ar.movies4u'
+    extClass = '.Movies4U'
+    extVersionCode = 3
+    libVersion = '12'
+}
+
+apply from: "$rootDir/common.gradle"

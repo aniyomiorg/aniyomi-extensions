@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Vidembed'
+    pkgNameSuffix = 'en.vidembed'
+    extClass = '.Vidembed'
+    extVersionCode = 12
+    libVersion = '12'
+}
+
+apply from: "$rootDir/common.gradle"
