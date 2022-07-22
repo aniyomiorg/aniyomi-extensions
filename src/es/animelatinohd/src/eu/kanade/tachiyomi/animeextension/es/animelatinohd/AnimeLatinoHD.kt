@@ -83,9 +83,7 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return AnimesPage(animeList, hasNextPage)
     }
 
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        TODO("Not yet implemented")
-    }
+    override fun popularAnimeFromElement(element: Element) = throw Exception("not used")
 
     override fun popularAnimeNextPageSelector(): String = "uwu"
 
@@ -110,9 +108,7 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return newAnime
     }
 
-    override fun animeDetailsParse(document: Document): SAnime {
-        TODO("Not yet implemented")
-    }
+    override fun animeDetailsParse(document: Document) = throw Exception("not used")
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
@@ -139,14 +135,14 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListSelector() = "uwu"
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        TODO("Not yet implemented")
-    }
-    private fun parseTemp(json: JsonElement?): List<JsonElement> {
+    override fun episodeFromElement(element: Element) = throw Exception("not used")
+
+    private fun parseJsonArray(json: JsonElement?): List<JsonElement> {
         var list = mutableListOf<JsonElement>()
         json!!.jsonObject!!.entries!!.forEach { list.add(it.value) }
         return list
     }
+
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
@@ -157,7 +153,7 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val pageProps = props["pageProps"]!!.jsonObject
                 val data = pageProps["data"]!!.jsonObject
                 val playersElement = data["players"]
-                val players = if (playersElement !is JsonArray) JsonArray(parseTemp(playersElement)) else playersElement!!.jsonArray
+                val players = if (playersElement !is JsonArray) JsonArray(parseJsonArray(playersElement)) else playersElement!!.jsonArray
                 players.forEach { player ->
                     val servers = player!!.jsonArray
                     servers.forEach { server ->
@@ -206,7 +202,10 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             videoList.addAll(videos)
                         }
                         if (url.lowercase().contains("od.lk")) {
-                            videoList.add(Video(url, language + "od.lk", url, null))
+                            videoList.add(Video(url, language + "Od.lk", url, null))
+                        }
+                        if (url.lowercase().contains("cldup.com")) {
+                            videoList.add(Video(url, language + "CldUp", url, null))
                         }
                     }
                 }
@@ -243,7 +242,7 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
         val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
         return when {
-            query.isNotBlank() -> GET("$baseUrl/browse?q=$query&order=4&page=$page")
+            query.isNotBlank() -> GET("$baseUrl/animes?page=$page&search=$query")
             genreFilter.state != 0 -> GET("$baseUrl/animes?page=$page&genre=${genreFilter.toUriPart()}")
             else -> GET("$baseUrl/animes?page=$page")
         }
@@ -253,6 +252,38 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
         GenreFilter()
     )
+
+    override fun searchAnimeFromElement(element: Element): SAnime {
+        return popularAnimeFromElement(element)
+    }
+
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        val document = response.asJsoup()
+        val animeList = mutableListOf<SAnime>()
+        val hasNextPage = document.select("#__next > main > div > div[class*=\"Animes_paginate\"] a:last-child svg").any()
+        document.select("script").forEach { script ->
+            if (script.data().contains("{\"props\":{\"pageProps\":")) {
+                val jObject = json.decodeFromString<JsonObject>(script.data())
+                val props = jObject["props"]!!.jsonObject
+                val pageProps = props["pageProps"]!!.jsonObject
+                val data = pageProps["data"]!!.jsonObject
+                val arrData = data["data"]!!.jsonArray
+                arrData.forEach { item ->
+                    val animeItem = item!!.jsonObject
+                    val anime = SAnime.create()
+                    anime.setUrlWithoutDomain(externalOrInternalImg("anime/${animeItem["slug"]!!.jsonPrimitive!!.content}"))
+                    anime.thumbnail_url = "https://image.tmdb.org/t/p/w200${animeItem["poster"]!!.jsonPrimitive!!.content}"
+                    anime.title = animeItem["name"]!!.jsonPrimitive!!.content
+                    animeList.add(anime)
+                }
+            }
+        }
+        return AnimesPage(animeList, hasNextPage)
+    }
+
+    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
+
+    override fun searchAnimeSelector(): String = popularAnimeSelector()
 
     private class GenreFilter : UriPartFilter(
         "Géneros",
@@ -313,21 +344,7 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         fun toUriPart() = vals[state].second
     }
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        return popularAnimeFromElement(element)
-    }
-
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        return popularAnimeParse(response)
-    }
-
-    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
-
-    override fun searchAnimeSelector(): String = popularAnimeSelector()
-
-    private fun externalOrInternalImg(url: String): String {
-        return if (url.contains("https")) url else "$baseUrl/$url"
-    }
+    private fun externalOrInternalImg(url: String) = if (url.contains("https")) url else "$baseUrl/$url"
 
     private fun parseStatus(statusString: String): Int {
         return when {
@@ -337,25 +354,23 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
-
-    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
-
-    override fun latestUpdatesParse(response: Response): AnimesPage {
-        return popularAnimeParse(response)
-    }
+    override fun latestUpdatesSelector() = popularAnimeSelector()
 
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/animes?page=$page&status=1")
 
-    override fun latestUpdatesSelector() = popularAnimeSelector()
+    override fun latestUpdatesParse(response: Response) = popularAnimeParse(response)
+
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
+
+    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("Fembed:480p", "Fembed:720p", "Stape", "hd", "sd", "low", "lowest", "mobile")
-            entryValues = arrayOf("Fembed:480p", "Fembed:720p", "Stape", "hd", "sd", "low", "lowest", "mobile")
-            setDefaultValue("Fembed:720p")
+            entries = arrayOf("[Sub] Od.lk", "[Sub] CldUp", "[Sub] SolidFiles", "[Sub] Fembed:720p", "[Sub] Fembed:480p", "[Lat] Od.lk", "[Lat] CldUp", "[Lat] SolidFiles", "[Lat] Fembed:720p", "[Lat] Fembed:480p")
+            entryValues = arrayOf("[Sub] Od.lk", "[Sub] CldUp", "[Sub] SolidFiles", "[Sub] Fembed:720p", "[Sub] Fembed:480p", "[Lat] Od.lk", "[Lat] CldUp", "[Lat] SolidFiles", "[Lat] Fembed:720p", "[Lat] Fembed:480p")
+            setDefaultValue("[Sub] Fembed:720p")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
