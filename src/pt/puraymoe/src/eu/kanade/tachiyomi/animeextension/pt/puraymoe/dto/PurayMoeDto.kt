@@ -66,7 +66,7 @@ data class EpisodeDto(
 data class MinimalEpisodeDto(
     @SerialName("temporada")
     val season: MinimalSeasonDto? = null,
-    val streams: List<VideoDto>
+    val streams: List<VideoDto>? = null
 )
 
 @Serializable

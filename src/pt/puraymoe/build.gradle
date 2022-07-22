@@ -6,7 +6,7 @@ ext {
     extName = 'Puray.moe'
     pkgNameSuffix = 'pt.puraymoe'
     extClass = '.PurayMoe'
-    extVersionCode = 1
+    extVersionCode = 2
     libVersion = '12'
 }
 
