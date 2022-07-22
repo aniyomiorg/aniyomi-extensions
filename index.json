@@ -668,10 +668,10 @@
   {
     "name": "Aniyomi: Puray.moe",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.puraymoe",
-    "apk": "aniyomi-pt.puraymoe-v12.1.apk",
+    "apk": "aniyomi-pt.puraymoe-v12.2.apk",
     "lang": "pt",
-    "code": 1,
-    "version": "12.1",
+    "code": 2,
+    "version": "12.2",
     "nsfw": 0
   },
   {
