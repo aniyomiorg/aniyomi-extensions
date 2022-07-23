@@ -7,6 +7,7 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.SoraPlayExtractor
+import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -101,6 +102,23 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     if (video != null) {
                         videoList.add(video)
                     }
+                }
+                server.contains("sbembed.com") || server.contains("sbembed1.com") || server.contains("sbplay.org") ||
+                    server.contains("sbvideo.net") || server.contains("streamsb.net") || server.contains("sbplay.one") ||
+                    server.contains("cloudemb.com") || server.contains("playersb.com") || server.contains("tubesb.com") ||
+                    server.contains("sbplay1.com") || server.contains("embedsb.com") || server.contains("watchsb.com") ||
+                    server.contains("sbplay2.com") || server.contains("japopav.tv") || server.contains("viewsb.com") ||
+                    server.contains("sbfast")|| server.contains("sbfull.com") || server.contains("javplaya.com") ||
+                    server.contains("ssbstream.net") || server.contains("p1ayerjavseen.com") || server.contains("sbthe.com")
+                -> {
+                    val headers = headers.newBuilder()
+                        .set("Referer", server)
+                        .set("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
+                        .set("Accept-Language", "en-US,en;q=0.5")
+                        .set("watchsb", "streamsb")
+                        .build()
+                    val videos = StreamSBExtractor(client).videosFromUrl(server, headers)
+                    videoList.addAll(videos)
                 }
                 /*server.contains("ok") -> {
                     val videos = OkruExtractor(client).videosFromUrl(url)

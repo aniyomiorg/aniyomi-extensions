@@ -188,7 +188,8 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     embedUrl.contains("cloudemb.com") || embedUrl.contains("playersb.com") || embedUrl.contains("tubesb.com") ||
                     embedUrl.contains("sbplay1.com") || embedUrl.contains("embedsb.com") || embedUrl.contains("watchsb.com") ||
                     embedUrl.contains("sbplay2.com") || embedUrl.contains("japopav.tv") || embedUrl.contains("viewsb.com") ||
-                    embedUrl.contains("sbfast")
+                    embedUrl.contains("sbfast")|| embedUrl.contains("sbfull.com") || embedUrl.contains("javplaya.com") ||
+                    embedUrl.contains("ssbstream.net") || embedUrl.contains("p1ayerjavseen.com") || embedUrl.contains("sbthe.com")
                 -> {
                     val headers = headers.newBuilder()
                         .set("Referer", embedUrl)
