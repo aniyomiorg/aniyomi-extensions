@@ -38,7 +38,11 @@ class HDFilmExtractor(private val client: OkHttpClient) {
         playlist.toString().substringAfter("var vip_source = [{\"file\":\"").substringBefore("];").split("\"file\":\"").forEach {
             val quality = it.substringAfter("\"label\":\"").substringBefore("\"}")
             val videoUrl = it.substringAfter("\"file\":\"").substringBefore("\",\"type").replace("\\", "")
-            videoList.addAll((listOf(Video(videoUrl, quality, videoUrl, null))))
+            if (client.newCall(GET(videoUrl)).execute().code == 204) {
+                throw Exception("Einmal WebView öffnen und wieder schließen")
+            } else {
+                videoList.addAll((listOf(Video(videoUrl, quality, videoUrl, null))))
+            }
         }
         return videoList
     }
