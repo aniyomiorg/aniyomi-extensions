@@ -200,10 +200,10 @@
   {
     "name": "Aniyomi: xCine",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.xcine",
-    "apk": "aniyomi-de.xcine-v12.1.apk",
+    "apk": "aniyomi-de.xcine-v12.2.apk",
     "lang": "de",
-    "code": 1,
-    "version": "12.1",
+    "code": 2,
+    "version": "12.2",
     "nsfw": 0
   },
   {
