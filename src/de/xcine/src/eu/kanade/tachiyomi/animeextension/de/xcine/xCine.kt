@@ -73,7 +73,7 @@ class xCine : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodeList = mutableListOf<SEpisode>()
         if (document.select("#breadcrumbDiv a[title=\"Serien stream\"]").attr("href").contains("/serien1")) {
             val seriesLink = document.select("link[rel=canonical]").attr("abs:href")
-            val seasonHtml = client.newCall(GET("$seriesLink/folge-1", headers = Headers.headersOf("Referer", document.location(), headersBuilder().build().toString())))
+            val seasonHtml = client.newCall(GET("$seriesLink/folge-1", headers = Headers.headersOf("Referer", document.location())))
                 .execute().asJsoup()
             val episodeElement = seasonHtml.select("ul.list-inline.list-film li")
             episodeElement.forEach {
@@ -160,7 +160,8 @@ class xCine : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         return POST(
             "$baseUrl/search?page=$page&key=$query", body = "load=full-page".toRequestBody("application/x-www-form-urlencoded; charset=UTF-8".toMediaType()),
-            headers = headersBuilder().build())
+            headers = headersBuilder().build()
+        )
     }
 
     // Details
