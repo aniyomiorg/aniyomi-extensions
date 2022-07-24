@@ -1,7 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.all.onepace
 
-import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -20,12 +18,11 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 import java.net.URLEncoder
 
-open class Onepace(override val lang: String, override val name: String) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+open class Onepace(override val lang: String, override val name: String) : ParsedAnimeHttpSource() {
 
     override val baseUrl = "https://www.zippyshare.com/rest/public/getTree?user=onepace&ident=kbvatgfc&id=%23"
 
@@ -36,7 +33,6 @@ open class Onepace(override val lang: String, override val name: String) : Confi
     private val json: Json by injectLazy()
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val animes = mutableListOf<SAnime>()
         val document = client.newCall(GET(baseUrl)).execute().asJsoup()
         val responseJson = json.decodeFromString<JsonObject>(document.select("body").text().dropLast(1).drop(1))
         val childrenJson = responseJson["children"]?.jsonArray
@@ -48,26 +44,24 @@ open class Onepace(override val lang: String, override val name: String) : Confi
             else -> 0
         }
         val langAnJson = childrenJson!![langId].jsonObject["children"]!!.jsonArray
-        langAnJson.forEach {
-            val anName = it.jsonObject["text"].toString().replace("\"", "")
-            val anId = it.jsonObject["li_attr"]!!.jsonObject["ident"].toString().replace("\"", "")
-            val anStatus = if (anName.contains("Completo")) SAnime.COMPLETED else SAnime.ONGOING
-            val thumUrl = thumAnimeParser(anName)
-            animes.add(
+        val thumJson = client.newCall(GET("https://onepace.net/_next/data/BM0nGdjN96o4xOSQR37x8/es/watch.json")).execute().asJsoup()
+        return AnimesPage(
+            langAnJson.map {
+                val anName = it.jsonObject["text"].toString().replace("\"", "")
+                val anId = it.jsonObject["li_attr"]!!.jsonObject["ident"].toString().replace("\"", "")
+                val anStatus = if (anName.contains("Completo")) SAnime.COMPLETED else SAnime.ONGOING
                 SAnime.create().apply {
                     title = anName
                     status = anStatus
                     url = "https://www.zippyshare.com/onepace/$anId/dir.html"
-                    thumbnail_url = thumUrl
+                    thumbnail_url = thumAnimeParser(anName, thumJson)
                 }
-            )
-        }
-
-        return AnimesPage(animes, false)
+            },
+            false
+        )
     }
 
-    private fun thumAnimeParser(animeName: String): String {
-        val document = client.newCall(GET("https://onepace.net/_next/data/BM0nGdjN96o4xOSQR37x8/es/watch.json")).execute().asJsoup()
+    private fun thumAnimeParser(animeName: String, document: Document): String {
         val jsonResponse = json.decodeFromString<JsonObject>(document.body().text())["pageProps"]!!
         val arcsJson = jsonResponse.jsonObject["arcs"]!!.jsonArray
         arcsJson.forEach {
@@ -93,23 +87,18 @@ open class Onepace(override val lang: String, override val name: String) : Confi
     override fun popularAnimeFromElement(element: Element) = throw Exception("not used")
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val episodes = mutableListOf<SEpisode>()
         val Realurl = response.request.url.toString().substringAfter("%23")
         val jsoup = client.newCall(GET(Realurl)).execute().asJsoup()
-        jsoup.select("table.listingplikow tbody tr.filerow.even").forEach {
+        return jsoup.select("table.listingplikow tbody tr.filerow.even").map {
             val epName = it.select("td.cien a.name").text().replace(".mp4", "")
             val epNum = epName.substringAfter("][").substringBefore("]").replace("-", ".").replace(",", ".").toFloat()
             val epUrl = it.select("td.cien a.name").attr("href")
-            episodes.add(
-                SEpisode.create().apply {
-                    name = epName
-                    url = epUrl
-                    episode_number = epNum
-                }
-            )
+            SEpisode.create().apply {
+                name = epName
+                url = epUrl
+                episode_number = epNum
+            }
         }
-
-        return episodes
     }
 
     override fun episodeListSelector() = throw Exception("not used")
@@ -150,7 +139,7 @@ open class Onepace(override val lang: String, override val name: String) : Confi
 
     override fun latestUpdatesSelector() = throw Exception("not used")
 
-    override fun animeDetailsParse(document: Document) = throw Exception("ඞ")
-
-    override fun setupPreferenceScreen(screen: PreferenceScreen) = throw Exception("not used")
+    override fun animeDetailsParse(document: Document): SAnime {
+        return SAnime.create().apply { title = "OnePace" }
+    }
 }
