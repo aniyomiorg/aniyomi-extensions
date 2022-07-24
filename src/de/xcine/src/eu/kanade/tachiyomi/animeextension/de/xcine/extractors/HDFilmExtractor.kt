@@ -18,27 +18,13 @@ class HDFilmExtractor(private val client: OkHttpClient) {
         } else {
             val movielink =
                 document.select("a.play-film").attr("href")
-            val headers = Headers.Builder()
-                .add("origin", "https://xcine.me")
-                .add("referer", movielink)
-                .add("user-agent", "Mozilla/5.0 (Linux; Android 12; Pixel 5 Build/SP2A.220405.004; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/100.0.4896.127 Safari/537.36")
-                .add("cookie", "PHPSESSID=2fd5dbd220411ec5a3d0bc0d4213dd3b; SERVERID=s2; _ibota=_0xc60; _ga=GA1.2.1460439608.1658572957; _gid=GA1.2.584006335.1658572957; _pop=1; dom3ic8zudi28v8lr6fgphwffqoz0j6c=3a52b94d-a131-4af0-953c-154ce04acffc%3A1%3A1")
-                .add("Content-Type", "application/x-www-form-urlencoded")
-                .build()
-            val moviehtml = client.newCall(GET(movielink, headers = headers)).execute().asJsoup()
+            val moviehtml = client.newCall(GET(movielink)).execute().asJsoup()
             moviehtml.select("link[rel=canonical]").attr("href")
         }
         val loadid = if (document.select("#breadcrumbDiv a[title=\"Serien stream\"]").attr("href").contains("/serien1")) {
             document.select("a[href=$link]").attr("data-episode-id")
         } else {
-            val headers = Headers.Builder()
-                .add("origin", "https://xcine.me")
-                .add("referer", link)
-                .add("user-agent", "Mozilla/5.0 (Linux; Android 12; Pixel 5 Build/SP2A.220405.004; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/100.0.4896.127 Safari/537.36")
-                .add("cookie", "PHPSESSID=2d88418b469e522a75dd4c8327c3a936; SERVERID=s2; _ga=GA1.2.826139063.1658618592; _gid=GA1.2.162365688.1658618592; _gat_gtag_UA_144665518_1=1; __gads=ID=4fe53672dd9aeab8-22d4864165d40078:T=1658618593:RT=1658618593:S=ALNI_MYrmBvhl86smHeaNwW8I5UMS2ZOlA; _pop=1; dom3ic8zudi28v8lr6fgphwffqoz0j6c=3f6f53a9-7930-4d7a-87b1-c67125d128e0%3A2%3A1; m5a4xojbcp2nx3gptmm633qal3gzmadn=hopefullyapricot.com; _TqHT6=_0xc53")
-                .add("Content-Type", "application/x-www-form-urlencoded")
-                .build()
-            val moviehtml = client.newCall(GET(link, headers = headers)).execute().asJsoup()
+            val moviehtml = client.newCall(GET(link)).execute().asJsoup()
             moviehtml.select("a#nextEpisodeToPlay").attr("data-episode-id")
         }
         val headers = Headers.Builder()
