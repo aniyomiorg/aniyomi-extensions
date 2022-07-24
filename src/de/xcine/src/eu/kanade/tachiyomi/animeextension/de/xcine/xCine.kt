@@ -43,13 +43,13 @@ class xCine : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("Cookie", "PHPSESSID=dfe9b1d10226c722092f7c3c42df9163; SERVERID=s2; _mFEcx=_0xc56; _ga=GA1.2.826139063.1658618592; _gid=GA1.2.162365688.1658618592; _gat_gtag_UA_144665518_1=1; __gads=ID=4fe53672dd9aeab8-22d4864165d40078:T=1658618593:RT=1658618593:S=ALNI_MYrmBvhl86smHeaNwW8I5UMS2ZOlA; _pop=1; dom3ic8zudi28v8lr6fgphwffqoz0j6c=3f6f53a9-7930-4d7a-87b1-c67125d128e0%3A2%3A1; m5a4xojbcp2nx3gptmm633qal3gzmadn=hopefullyapricot.com")
+        .add("cookie", "PHPSESSID=2d88418b469e522a75dd4c8327c3a936; SERVERID=s2; _ga=GA1.2.826139063.1658618592; _gid=GA1.2.162365688.1658618592; _gat_gtag_UA_144665518_1=1; __gads=ID=4fe53672dd9aeab8-22d4864165d40078:T=1658618593:RT=1658618593:S=ALNI_MYrmBvhl86smHeaNwW8I5UMS2ZOlA; _pop=1; dom3ic8zudi28v8lr6fgphwffqoz0j6c=3f6f53a9-7930-4d7a-87b1-c67125d128e0%3A2%3A1; m5a4xojbcp2nx3gptmm633qal3gzmadn=hopefullyapricot.com; _TqHT6=_0xc53")
 
     override fun popularAnimeSelector(): String = "div.group-film-small a"
 
     override fun popularAnimeRequest(page: Int): Request = POST(
         "$baseUrl/filme1?page=$page&sort=view_total&sort_type=desc", body = "load=full-page".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
-        headers = Headers.headersOf("cookie", "PHPSESSID=dfe9b1d10226c722092f7c3c42df9163; SERVERID=s2; _mFEcx=_0xc56; _ga=GA1.2.826139063.1658618592; _gid=GA1.2.162365688.1658618592; _gat_gtag_UA_144665518_1=1; __gads=ID=4fe53672dd9aeab8-22d4864165d40078:T=1658618593:RT=1658618593:S=ALNI_MYrmBvhl86smHeaNwW8I5UMS2ZOlA; _pop=1; dom3ic8zudi28v8lr6fgphwffqoz0j6c=3f6f53a9-7930-4d7a-87b1-c67125d128e0%3A2%3A1; m5a4xojbcp2nx3gptmm633qal3gzmadn=hopefullyapricot.com")
+        headers = headersBuilder().build()
     )
 
     override fun popularAnimeFromElement(element: Element): SAnime {
@@ -71,9 +71,10 @@ class xCine : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
-        if (document.select("h1.title-film-detail-1").text().contains("Staffel")) {
+        if (document.select("#breadcrumbDiv a[title=\"Serien stream\"]").attr("href").contains("/serien1")) {
             val seriesLink = document.select("link[rel=canonical]").attr("abs:href")
-            val seasonHtml = client.newCall(GET("$seriesLink/folge-1", headers = Headers.headersOf("Referer", document.location(), "cookie", "PHPSESSID=dfe9b1d10226c722092f7c3c42df9163; SERVERID=s2; _mFEcx=_0xc56; _ga=GA1.2.826139063.1658618592; _gid=GA1.2.162365688.1658618592; _gat_gtag_UA_144665518_1=1; __gads=ID=4fe53672dd9aeab8-22d4864165d40078:T=1658618593:RT=1658618593:S=ALNI_MYrmBvhl86smHeaNwW8I5UMS2ZOlA; _pop=1; dom3ic8zudi28v8lr6fgphwffqoz0j6c=3f6f53a9-7930-4d7a-87b1-c67125d128e0%3A2%3A1; m5a4xojbcp2nx3gptmm633qal3gzmadn=hopefullyapricot.com"))).execute().asJsoup()
+            val seasonHtml = client.newCall(GET("$seriesLink/folge-1", headers = Headers.headersOf("Referer", document.location(), headersBuilder().build().toString())))
+                .execute().asJsoup()
             val episodeElement = seasonHtml.select("ul.list-inline.list-film li")
             episodeElement.forEach {
                 val episode = parseEpisodesFromSeries(it)
@@ -159,8 +160,7 @@ class xCine : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         return POST(
             "$baseUrl/search?page=$page&key=$query", body = "load=full-page".toRequestBody("application/x-www-form-urlencoded; charset=UTF-8".toMediaType()),
-            headers = Headers.headersOf("cookie", "PHPSESSID=dfe9b1d10226c722092f7c3c42df9163; SERVERID=s2; _mFEcx=_0xc56; _ga=GA1.2.826139063.1658618592; _gid=GA1.2.162365688.1658618592; _gat_gtag_UA_144665518_1=1; __gads=ID=4fe53672dd9aeab8-22d4864165d40078:T=1658618593:RT=1658618593:S=ALNI_MYrmBvhl86smHeaNwW8I5UMS2ZOlA; _pop=1; dom3ic8zudi28v8lr6fgphwffqoz0j6c=3f6f53a9-7930-4d7a-87b1-c67125d128e0%3A2%3A1; m5a4xojbcp2nx3gptmm633qal3gzmadn=hopefullyapricot.com")
-        )
+            headers = headersBuilder().build())
     }
 
     // Details
