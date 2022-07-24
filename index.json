@@ -198,6 +198,15 @@
     "nsfw": 1
   },
   {
+    "name": "Aniyomi: xCine",
+    "pkg": "eu.kanade.tachiyomi.animeextension.de.xcine",
+    "apk": "aniyomi-de.xcine-v12.1.apk",
+    "lang": "de",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: AllMovies",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.allmovies",
     "apk": "aniyomi-en.allmovies-v12.9.apk",
