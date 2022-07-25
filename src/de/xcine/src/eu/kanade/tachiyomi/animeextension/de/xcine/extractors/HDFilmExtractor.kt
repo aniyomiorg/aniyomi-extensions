@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.de.xcine.extractors
 
+import eu.kanade.tachiyomi.animeextension.de.xcine.CookieInterceptor
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -16,8 +17,8 @@ class HDFilmExtractor(private val client: OkHttpClient) {
         val link = if (document.select("#breadcrumbDiv a[title=\"Serien stream\"]").attr("href").contains("/serien1")) {
             document.select("link[rel=canonical]").attr("href")
         } else {
-            val movielink =
-                document.select("a.play-film").attr("href")
+            val movielink = document.select("a.play-film").attr("href")
+            // val cookies = cookieClient.newCall(GET(movielink)).execute().request.headers
             val moviehtml = client.newCall(GET(movielink)).execute().asJsoup()
             moviehtml.select("link[rel=canonical]").attr("href")
         }
@@ -27,10 +28,12 @@ class HDFilmExtractor(private val client: OkHttpClient) {
             val moviehtml = client.newCall(GET(link)).execute().asJsoup()
             moviehtml.select("a#nextEpisodeToPlay").attr("data-episode-id")
         }
+        val cookieClient = client.newBuilder().addInterceptor(CookieInterceptor()).build()
+        val cookieheaders = cookieClient.newCall(GET(link)).execute().headers
         val headers = Headers.Builder()
+            .addAll(cookieheaders)
             .add("origin", "https://xcine.me")
             .add("referer", link)
-            .add("user-agent", "Mozilla/5.0 (Linux; Android 12; Pixel 5 Build/SP2A.220405.004; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/100.0.4896.127 Safari/537.36")
             .add("X-Requested-With", "XMLHttpRequest")
             .add("Content-Type", "application/x-www-form-urlencoded")
             .build()
