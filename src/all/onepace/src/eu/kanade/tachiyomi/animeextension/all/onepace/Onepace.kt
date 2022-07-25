@@ -1,5 +1,10 @@
 package eu.kanade.tachiyomi.animeextension.all.onepace
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -18,11 +23,13 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 import java.net.URLEncoder
 
-open class Onepace(override val lang: String, override val name: String) : ParsedAnimeHttpSource() {
+open class Onepace(override val lang: String, override val name: String) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val baseUrl = "https://www.zippyshare.com/rest/public/getTree?user=onepace&ident=kbvatgfc&id=%23"
 
@@ -31,6 +38,12 @@ open class Onepace(override val lang: String, override val name: String) : Parse
     override val client: OkHttpClient = network.cloudflareClient
 
     private val json: Json by injectLazy()
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    private val thumPref by lazy { preferences.getString("thumpreference", "false")!! }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val document = client.newCall(GET(baseUrl)).execute().asJsoup()
@@ -44,7 +57,7 @@ open class Onepace(override val lang: String, override val name: String) : Parse
             else -> 0
         }
         val langAnJson = childrenJson!![langId].jsonObject["children"]!!.jsonArray
-        val thumJson = client.newCall(GET("https://onepace.net/_next/data/BM0nGdjN96o4xOSQR37x8/es/watch.json")).execute().asJsoup()
+        val thumJson by lazy { client.newCall(GET("https://onepace.net/_next/data/BM0nGdjN96o4xOSQR37x8/es/watch.json")).execute().asJsoup() }
         return AnimesPage(
             langAnJson.map {
                 val anName = it.jsonObject["text"].toString().replace("\"", "")
@@ -54,7 +67,10 @@ open class Onepace(override val lang: String, override val name: String) : Parse
                     title = anName
                     status = anStatus
                     url = "https://www.zippyshare.com/onepace/$anId/dir.html"
-                    thumbnail_url = thumAnimeParser(anName, thumJson)
+                    thumbnail_url = when (thumPref) {
+                        "true" -> thumAnimeParser(anName, thumJson)
+                        else -> ""
+                    }
                 }
             },
             false
@@ -87,11 +103,14 @@ open class Onepace(override val lang: String, override val name: String) : Parse
     override fun popularAnimeFromElement(element: Element) = throw Exception("not used")
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val Realurl = response.request.url.toString().substringAfter("%23")
-        val jsoup = client.newCall(GET(Realurl)).execute().asJsoup()
+        val realUrl = response.request.url.toString().substringAfter("%23")
+        val jsoup = client.newCall(GET(realUrl)).execute().asJsoup()
         return jsoup.select("table.listingplikow tbody tr.filerow.even").map {
             val epName = it.select("td.cien a.name").text().replace(".mp4", "")
-            val epNum = epName.substringAfter("][").substringBefore("]").replace("-", ".").replace(",", ".").toFloat()
+            val epNum = epName.substringAfter("][").substringBefore("]")
+                .replace("-", ".")
+                .replace(",", ".")
+                .replace("F", ".").replace("B", "0").toFloat()
             val epUrl = it.select("td.cien a.name").attr("href")
             SEpisode.create().apply {
                 name = epName
@@ -141,5 +160,34 @@ open class Onepace(override val lang: String, override val name: String) : Parse
 
     override fun animeDetailsParse(document: Document): SAnime {
         return SAnime.create().apply { title = "OnePace" }
+    }
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val thumPreference = ListPreference(screen.context).apply {
+            key = "thumpreference"
+            title = when (lang) {
+                "es" -> "Habilita la carga de miniaturas (requiere reiniciar)"
+                "en" -> "Enable load thumbnails (requires app restart)"
+                "fr" -> "Activer le chargement des vignettes (nécessite un redémarrage)"
+                else -> "Enable load thumbnails (requires app restart)"
+            }
+            entries = when (lang) {
+                "es" -> arrayOf("Habilitar", "Deshabilitar")
+                "en" -> arrayOf("Enable", "Unable")
+                "fr" -> arrayOf("Activer", "désactiver")
+                else -> arrayOf("Enable", "Unable")
+            }
+            entryValues = arrayOf("true", "false")
+            setDefaultValue("false")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(thumPreference)
     }
 }
