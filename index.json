@@ -2,10 +2,10 @@
   {
     "name": "Aniyomi: Onepace",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.onepace",
-    "apk": "aniyomi-all.onepace-v12.2.apk",
+    "apk": "aniyomi-all.onepace-v12.3.apk",
     "lang": "all",
-    "code": 2,
-    "version": "12.2",
+    "code": 3,
+    "version": "12.3",
     "nsfw": 0
   },
   {
@@ -317,10 +317,10 @@
   {
     "name": "Aniyomi: 9anime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.nineanime",
-    "apk": "aniyomi-en.nineanime-v12.7.apk",
+    "apk": "aniyomi-en.nineanime-v12.8.apk",
     "lang": "en",
-    "code": 7,
-    "version": "12.7",
+    "code": 8,
+    "version": "12.8",
     "nsfw": 0
   },
   {
