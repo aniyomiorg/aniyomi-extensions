@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.en.nineanime
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -105,7 +104,6 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val vrf = encodeVrf(sourceId)
         val episodeBody = network.client.newCall(GET("$baseUrl/ajax/server/$sourceId?vrf=$vrf"))
             .execute().body!!.string()
-        Log.i("bruh", episodeBody)
         val encryptedSourceUrl = json.decodeFromString<JsonObject>(episodeBody)["result"]!!
             .jsonObject["url"]!!.jsonPrimitive.content
         val embedLink = decodeVrf(encryptedSourceUrl)
