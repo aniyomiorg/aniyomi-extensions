@@ -102,7 +102,7 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 url.contains("https://dood") -> {
                     val newQuality = "Doodstream mirror"
                     val video = try {
-                        Video(url, newQuality, doodUrlParse(url), videoHeaders)
+                        Video(url, newQuality, doodUrlParse(url), headers = videoHeaders)
                     } catch (e: Exception) {
                         null
                     }
@@ -134,7 +134,7 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         else -> quality
                     }
                     val video =
-                        Video(url, parsedQuality, videoUrlParse(url, location), videoHeaders)
+                        Video(url, parsedQuality, videoUrlParse(url, location), headers = videoHeaders)
                     videoList.add(video)
                 }
             }

@@ -15,7 +15,7 @@ class PlayerOneExtractor(private val client: OkHttpClient? = null) {
         return regex.findAll(html).map { it ->
             val quality = "$PREFIX (${it.groupValues[1]})"
             val videoUrl = it.groupValues[2]
-            Video(videoUrl, quality, videoUrl, headers)
+            Video(videoUrl, quality, videoUrl, headers = headers)
         }.toList()
     }
 

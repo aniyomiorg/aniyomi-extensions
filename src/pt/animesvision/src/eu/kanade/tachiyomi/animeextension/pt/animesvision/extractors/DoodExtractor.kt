@@ -26,7 +26,7 @@ class DoodExtractor(private val client: OkHttpClient) {
         val videoUrl = "$videoUrlStart$randomString?token=$token&expiry=$expiry"
         val newQuality = "DoodStream mirror"
 
-        return Video(url, newQuality, videoUrl, doodHeaders(doodTld))
+        return Video(url, newQuality, videoUrl, headers = doodHeaders(doodTld))
     }
 
     private fun getRandomString(length: Int = 10): String {

@@ -63,7 +63,7 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
                         videoHeaders
                     )
                 )
-                else videoList.add(Video(fileURL, label, fileURL, videoHeaders))
+                else videoList.add(Video(fileURL, label, fileURL, headers = videoHeaders))
             }
             return videoList.reversed() + autoList
         } catch (e: Exception) {

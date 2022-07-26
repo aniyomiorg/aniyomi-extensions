@@ -19,7 +19,7 @@ class IframeExtractor(private val client: OkHttpClient) {
         val url = html.substringAfter("play_url")
             .substringAfter(":\"")
             .substringBefore("\"")
-        val video = Video(url, "Default", url, headers)
+        val video = Video(url, "Default", url, headers = headers)
         return listOf(video)
     }
 }

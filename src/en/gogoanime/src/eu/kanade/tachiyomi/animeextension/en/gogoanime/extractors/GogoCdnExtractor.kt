@@ -86,7 +86,7 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
                         videoHeaders
                     )
                 )
-                else videoList.add(Video(fileURL, qualityPrefix + label, fileURL, videoHeaders))
+                else videoList.add(Video(fileURL, qualityPrefix + label, fileURL, headers = videoHeaders))
             }
             return videoList.sortedByDescending {
                 it.quality.substringAfter(qualityPrefix).substringBefore("p").toIntOrNull() ?: -1

@@ -114,7 +114,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
             val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
             val videoUrl = it.substringAfter("\n").substringBefore("\n").replace("https", "http")
-            videoList.add(Video(videoUrl, quality, videoUrl, headers))
+            videoList.add(Video(videoUrl, quality, videoUrl, headers = headers))
         }
         return videoList
     }

@@ -18,7 +18,7 @@ class YourUploadExtractor(private val client: OkHttpClient) {
                     content!!.selectFirst("script:containsData(jwplayerOptions)")!!.data()
                 if (!baseData.isNullOrEmpty()) {
                     val basicUrl = baseData.substringAfter("file: '").substringBefore("',")
-                    videoList.add(Video(basicUrl, "YourUpload", basicUrl, headers))
+                    videoList.add(Video(basicUrl, "YourUpload", basicUrl, headers = headers))
                 }
             }
         } catch (e: IOException) {
