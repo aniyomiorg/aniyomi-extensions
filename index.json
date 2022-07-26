@@ -632,10 +632,10 @@
   {
     "name": "Aniyomi: Hentai Saturn",
     "pkg": "eu.kanade.tachiyomi.animeextension.it.hentaisaturn",
-    "apk": "aniyomi-it.hentaisaturn-v13.4.apk",
+    "apk": "aniyomi-it.hentaisaturn-v13.5.apk",
     "lang": "it",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 1
   },
   {
