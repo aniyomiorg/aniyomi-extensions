@@ -221,8 +221,8 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         return if (preferences.getBoolean("preferred_link_type", false)) {
             val videoUrl = KwikExtractor(client).getHlsStreamUrl(kwikUrl, referer = baseUrl)
             Video(
-                videoUrl, quality, videoUrl, null,
-                Headers.headersOf("referer", "https://kwik.cx")
+                videoUrl, quality, videoUrl,
+                headers = Headers.headersOf("referer", "https://kwik.cx")
             )
         } else {
             val videoUrl = KwikExtractor(client).getStreamUrlFromKwik(paheUrl)

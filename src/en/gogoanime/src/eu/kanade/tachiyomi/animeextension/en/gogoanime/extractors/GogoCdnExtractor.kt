@@ -82,8 +82,7 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
                         fileURL,
                         qualityPrefix + label,
                         fileURL,
-                        null,
-                        videoHeaders
+                        headers = videoHeaders
                     )
                 )
                 else videoList.add(Video(fileURL, qualityPrefix + label, fileURL, headers = videoHeaders))

@@ -124,7 +124,7 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     url,
                     "Qualità predefinita",
                     url,
-                    Headers.headersOf("Referer", referer)
+                    headers = Headers.headersOf("Referer", referer)
                 )
             )
         }

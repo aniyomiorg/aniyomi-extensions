@@ -141,7 +141,6 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
                         url = streamObject["url"]!!.jsonPrimitive.content,
                         quality = streamObject["height"]!!.jsonPrimitive.content + "p",
                         videoUrl = streamObject["url"]!!.jsonPrimitive.content,
-                        uri = null
                     )
                 )
             }

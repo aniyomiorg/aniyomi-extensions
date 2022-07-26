@@ -124,8 +124,7 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     url,
                     "Qualità predefinita",
                     url,
-                    null,
-                    Headers.headersOf("Referer", referer)
+                    headers = Headers.headersOf("Referer", referer)
                 )
             )
         }
