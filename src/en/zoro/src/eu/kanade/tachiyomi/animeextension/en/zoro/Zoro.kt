@@ -8,9 +8,16 @@ import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
+import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -20,6 +27,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 
 class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -33,6 +41,8 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
+
+    private val json: Json by injectLazy()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -112,13 +122,21 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val source = client.newCall(GET(getSourcesLink)).execute().body!!.string()
         if (!source.contains("{\"sources\":[{\"file\":\"")) return null
-        val masterUrl = source.substringAfter("{\"sources\":[{\"file\":\"").substringBefore("\"")
+        val json = json.decodeFromString<JsonObject>(source)
+        val masterUrl = json["sources"]!!.jsonArray[0].jsonObject["file"]!!.jsonPrimitive.content
+        val subs = json["tracks"]?.jsonArray
+            ?.filter { it.jsonObject["kind"]!!.jsonPrimitive.content == "captions" }
+            ?.map { track ->
+                val trackUrl = track.jsonObject["file"]!!.jsonPrimitive.content
+                val lang = track.jsonObject["label"]!!.jsonPrimitive.content
+                Track(trackUrl, lang)
+            } ?: emptyList()
         val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
         val videoList = mutableListOf<Video>()
         masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
             val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p - $subDub"
             val videoUrl = masterUrl.substringBeforeLast("/") + "/" + it.substringAfter("\n").substringBefore("\n")
-            videoList.add(Video(videoUrl, quality, videoUrl))
+            videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subs))
         }
         return videoList
     }
