@@ -12,6 +12,6 @@ class VoeExtractor(private val client: OkHttpClient) {
         val script = document.select("script:containsData(function d04ad2e48229ae25a282e15c7c2f69a2(dea04c5949242bfd216e35def894b930))")
             .firstOrNull()?.data()?.substringAfter("\"hls\": \"") ?: return null
         val videoUrl = script.substringAfter("\"hls\": \"").substringBefore("\",")
-        return Video(url, quality, videoUrl, null)
+        return Video(url, quality, videoUrl)
     }
 }

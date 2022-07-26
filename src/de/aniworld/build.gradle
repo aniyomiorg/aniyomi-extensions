@@ -6,8 +6,8 @@ ext {
     extName = 'AniWorld'
     pkgNameSuffix = 'de.aniworld'
     extClass = '.AniWorld'
-    extVersionCode = 2
-    libVersion = '12'
+    extVersionCode = 3
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"
