@@ -63,7 +63,7 @@ class RedirectInterceptor : Interceptor {
                     view: WebView,
                     request: WebResourceRequest,
                 ): WebResourceResponse? {
-                    if (request.url.toString().contains("token") || request.url.toString().contains("dood") || request.url.toString().contains("streamtape")) {
+                    if (request.url.toString().contains("token") || request.url.toString().contains("dood") || request.url.toString().contains("streamtape") || request.url.toString().contains("voe")) {
                         newRequest = GET(request.url.toString(), request.requestHeaders.toHeaders())
                         latch.countDown()
                     }

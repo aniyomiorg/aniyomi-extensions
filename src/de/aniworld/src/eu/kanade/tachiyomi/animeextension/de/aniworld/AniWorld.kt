@@ -11,6 +11,7 @@ import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.de.aniworld.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.de.aniworld.extractors.StreamTapeExtractor
+import eu.kanade.tachiyomi.animeextension.de.aniworld.extractors.VoeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -73,9 +74,8 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector(): String? = null
 
     override fun popularAnimeRequest(page: Int): Request {
-        // val head = authClient.newCall(GET(baseUrl)).execute().request.url.toString()
         val headers = Headers.Builder()
-            //  .add("Referer", head)
+            .add("Referer", baseUrl)
             .add("Upgrade-Insecure-Requests", "1")
             .build()
         return GET("$baseUrl/beliebte-animes")
@@ -231,20 +231,19 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val engSubs = getRedirectLinks(document, AWConstants.KEY_ENG_SUB)
         val videoList = mutableListOf<Video>()
         val hosterSelection = preferences.getStringSet(AWConstants.HOSTER_SELECTION, null)
-        val headers = Headers.Builder()
-            .add("Referer", response.request.url.toString())
-            .add("Upgrade-Insecure-Requests", "1")
-            .build()
         val redirectInterceptor = client.newBuilder().addInterceptor(RedirectInterceptor()).build()
         gerSubs.forEach {
             val redirectgs = baseUrl + it.selectFirst("a.watchEpisode").attr("href")
-            // val redirectInterceptorgs = client.newBuilder().addInterceptor(RedirectInterceptor()).build()
             val redirectsgs = redirectInterceptor.newCall(GET(redirectgs)).execute().request.url.toString()
-            if (redirectgs.contains("paylaod")) {
-                throw Exception("Bitte WebView öffne und Captcha lösen")
-            }
             if (hosterSelection != null) {
                 when {
+                    redirectsgs.contains("https://voe.sx") || redirectsgs.contains("https://launchreliantcleaverriver") && hosterSelection.contains(AWConstants.NAME_VOE) -> {
+                        val quality = "Voe Deutscher Sub"
+                        val video = VoeExtractor(client).videoFromUrl(redirectsgs, quality)
+                        if (video != null) {
+                            videoList.add(video)
+                        }
+                    }
                     redirectsgs.contains("https://dood") && hosterSelection.contains(AWConstants.NAME_DOOD) -> {
                         val quality = "Doodstream Deutscher Sub"
                         val video = DoodExtractor(client).videoFromUrl(redirectsgs, quality)
@@ -267,6 +266,13 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val redirectsgd = redirectInterceptor.newCall(GET(redirectgd)).execute().request.url.toString()
             if (hosterSelection != null) {
                 when {
+                    redirectsgd.contains("https://voe.sx") || redirectsgd.contains("https://launchreliantcleaverriver") && hosterSelection.contains(AWConstants.NAME_VOE) -> {
+                        val quality = "Voe Deutscher Dub"
+                        val video = VoeExtractor(client).videoFromUrl(redirectsgd, quality)
+                        if (video != null) {
+                            videoList.add(video)
+                        }
+                    }
                     redirectsgd.contains("https://dood") && hosterSelection.contains(AWConstants.NAME_DOOD) -> {
                         val quality = "Doodstream Deutscher Dub"
                         val video = DoodExtractor(client).videoFromUrl(redirectsgd, quality)
@@ -285,20 +291,27 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         engSubs.forEach {
-            val redirectes = baseUrl + it.selectFirst("a.watchEpisode").attr("href")
-            val redirectses = redirectInterceptor.newCall(GET(redirectes)).execute().request.url.toString()
+            val redirecten = baseUrl + it.selectFirst("a.watchEpisode").attr("href")
+            val redirectsen = redirectInterceptor.newCall(GET(redirecten)).execute().request.url.toString()
             if (hosterSelection != null) {
                 when {
-                    redirectses.contains("https://dood") && hosterSelection.contains(AWConstants.NAME_DOOD) -> {
-                        val quality = "Doodstream Englischer Sub"
-                        val video = DoodExtractor(client).videoFromUrl(redirectses, quality)
+                    redirectsen.contains("https://voe.sx") || redirectsen.contains("https://launchreliantcleaverriver") && hosterSelection.contains(AWConstants.NAME_VOE) -> {
+                        val quality = "Voe Englischer Sub"
+                        val video = VoeExtractor(client).videoFromUrl(redirectsen, quality)
                         if (video != null) {
                             videoList.add(video)
                         }
                     }
-                    redirectses.contains("https://streamtape") && hosterSelection.contains(AWConstants.NAME_STAPE) -> {
+                    redirectsen.contains("https://dood") && hosterSelection.contains(AWConstants.NAME_DOOD) -> {
+                        val quality = "Doodstream Englischer Sub"
+                        val video = DoodExtractor(client).videoFromUrl(redirectsen, quality)
+                        if (video != null) {
+                            videoList.add(video)
+                        }
+                    }
+                    redirectsen.contains("https://streamtape") && hosterSelection.contains(AWConstants.NAME_STAPE) -> {
                         val quality = "Streamtape Englischer Sub"
-                        val video = StreamTapeExtractor(client).videoFromUrl(redirectses, quality)
+                        val video = StreamTapeExtractor(client).videoFromUrl(redirectsen, quality)
                         if (video != null) {
                             videoList.add(video)
                         }
