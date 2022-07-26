@@ -6,8 +6,8 @@ ext {
     extName = 'Puray.moe'
     pkgNameSuffix = 'pt.puraymoe'
     extClass = '.PurayMoe'
-    extVersionCode = 2
-    libVersion = '12'
+    extVersionCode = 3
+    libVersion = '13'
 }
 
 dependencies {

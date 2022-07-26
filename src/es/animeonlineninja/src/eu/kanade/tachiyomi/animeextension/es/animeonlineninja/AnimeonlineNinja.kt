@@ -154,14 +154,14 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 if (jsE.contains("MDCore")) {
                     val url = "http:" + JsUnpacker(jsE).unpack().toString().substringAfter("MDCore.wurl=\"").substringBefore("\"")
                     if (!url.contains("\$(document).ready(function(){});")) {
-                        videos.add(Video(url, "$lang MixDrop", url, null))
+                        videos.add(Video(url, "$lang MixDrop", url))
                     }
                 }
             }
             serverUrl.contains("wolfstream") && lang.contains(langSelect) -> {
                 val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(sources)").data()
                 val url = jsE.substringAfter("{file:\"").substringBefore("\"")
-                videos.add(Video(url, "$lang WolfStream", url, null))
+                videos.add(Video(url, "$lang WolfStream", url))
             }
             serverUrl.contains("uqload") && lang.contains(langSelect) -> {
                 val headers = headers.newBuilder().add("referer", "https://uqload.com/").build()

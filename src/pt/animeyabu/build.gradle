@@ -6,8 +6,8 @@ ext {
     extName = 'AnimeYabu!'
     pkgNameSuffix = 'pt.animeyabu'
     extClass = '.AnimeYabu'
-    extVersionCode = 3
-    libVersion = '12'
+    extVersionCode = 4
+    libVersion = '13'
 }
 
 dependencies {

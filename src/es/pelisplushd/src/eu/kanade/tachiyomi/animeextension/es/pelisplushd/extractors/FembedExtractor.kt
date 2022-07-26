@@ -16,7 +16,7 @@ class FembedExtractor {
                 val `object` = jsonArray.getJSONObject(i)
                 val videoUrl = `object`.getString("file")
                 val quality = "Fembed:" + `object`.getString("label")
-                videoList.add(Video(videoUrl, quality, videoUrl, null))
+                videoList.add(Video(videoUrl, quality, videoUrl))
             }
             videoList.reversed()
         } else {

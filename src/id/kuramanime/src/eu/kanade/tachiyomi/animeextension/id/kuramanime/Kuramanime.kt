@@ -146,7 +146,7 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 else -> "Default"
             }
         }
-        return Video(url, quality, url, null)
+        return Video(url, quality, url)
     }
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")

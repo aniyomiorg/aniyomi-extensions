@@ -102,7 +102,7 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 url.contains("https://dood") -> {
                     val newQuality = "Doodstream mirror"
                     val video = try {
-                        Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
+                        Video(url, newQuality, doodUrlParse(url), videoHeaders)
                     } catch (e: Exception) {
                         null
                     }
@@ -113,7 +113,7 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     url.contains("cloudemb.com") || url.contains("playersb.com") || url.contains("tubesb.com") ||
                     url.contains("sbplay1.com") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
                     url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
-                    url.contains("sbfast")|| url.contains("sbfull.com") || url.contains("javplaya.com") ||
+                    url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
                     url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com")
                 -> {
                     val newUrl = url.replace("/d/", "/e/")
@@ -134,7 +134,7 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         else -> quality
                     }
                     val video =
-                        Video(url, parsedQuality, videoUrlParse(url, location), null, videoHeaders)
+                        Video(url, parsedQuality, videoUrlParse(url, location), videoHeaders)
                     videoList.add(video)
                 }
             }

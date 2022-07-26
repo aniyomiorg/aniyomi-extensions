@@ -13,6 +13,6 @@ class FastreamExtractor(private val client: OkHttpClient) {
                 url1 = it.data().substringAfter("sources: [{file:\"").substringBefore("\"}],")
             }
         }
-        return Video(url1, server, url1, null)
+        return Video(url1, server, url1)
     }
 }

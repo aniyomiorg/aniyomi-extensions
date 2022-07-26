@@ -6,8 +6,8 @@ ext {
     extName = 'HentaiYabu'
     pkgNameSuffix = 'pt.hentaiyabu'
     extClass = '.HentaiYabu'
-    extVersionCode = 1
-    libVersion = '12'
+    extVersionCode = 2
+    libVersion = '13'
     containsNsfw = true
 }
 

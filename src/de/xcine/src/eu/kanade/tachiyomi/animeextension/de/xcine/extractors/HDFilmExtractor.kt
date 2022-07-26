@@ -44,7 +44,7 @@ class HDFilmExtractor(private val client: OkHttpClient) {
             if (client.newCall(GET(videoUrl)).execute().code == 204) {
                 throw Exception("Einmal WebView öffnen und wieder schließen")
             } else {
-                videoList.addAll((listOf(Video(videoUrl, quality, videoUrl, null))))
+                videoList.addAll((listOf(Video(videoUrl, quality, videoUrl))))
             }
         }
         return videoList

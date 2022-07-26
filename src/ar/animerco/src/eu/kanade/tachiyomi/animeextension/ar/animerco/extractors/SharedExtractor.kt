@@ -11,9 +11,9 @@ class SharedExtractor(private val client: OkHttpClient) {
         val check = document.select("div.error4shared").text()
         val videoUrl = document.select("source").attr("src")
         return if (check.contains("This file is not available any more")) {
-            Video(url, "no 1video", "https", null)
+            Video(url, "no 1video", "https")
         } else {
-            Video(url, quality, videoUrl, null)
+            Video(url, quality, videoUrl)
         }
     }
 }

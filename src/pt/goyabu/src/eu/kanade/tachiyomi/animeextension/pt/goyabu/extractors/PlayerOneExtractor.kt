@@ -11,7 +11,7 @@ class PlayerOneExtractor {
         return GYConstants.PLAYER_REGEX.findAll(html).map { it ->
             val quality = "$PREFIX (${it.groupValues[1]})"
             val videoUrl = it.groupValues[2]
-            Video(videoUrl, quality, videoUrl, null)
+            Video(videoUrl, quality, videoUrl)
         }.toList()
     }
 }

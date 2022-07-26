@@ -124,8 +124,8 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .body().select("video source").attr("src")
 
         val videoList = mutableListOf<Video>()
-        videoList.add(Video(source1, "Mirror 1", source1, null))
-        videoList.add(Video(source2, "Mirror 2", source2, null))
+        videoList.add(Video(source1, "Mirror 1", source1))
+        videoList.add(Video(source2, "Mirror 2", source2))
         return videoList
     }
 

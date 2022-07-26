@@ -5,8 +5,8 @@ ext {
     extName = 'MundoDonghua'
     pkgNameSuffix = 'es.mundodonghua'
     extClass = '.MundoDonghua'
-    extVersionCode = 1
-    libVersion = '12'
+    extVersionCode = 2
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

@@ -5,8 +5,8 @@ ext {
     extName = 'AsiaLiveAction'
     pkgNameSuffix = 'es.asialiveaction'
     extClass = '.AsiaLiveAction'
-    extVersionCode = 1
-    libVersion = '12'
+    extVersionCode = 2
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

@@ -5,8 +5,8 @@ ext {
     extName = 'TioanimeH'
     pkgNameSuffix = 'es.tioanimeh'
     extClass = '.TioanimeHFactory'
-    extVersionCode = 3
-    libVersion = '12'
+    extVersionCode = 4
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

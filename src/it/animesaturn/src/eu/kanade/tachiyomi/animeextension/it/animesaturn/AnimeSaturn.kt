@@ -115,8 +115,7 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 Video(
                     link,
                     qualities[i],
-                    link,
-                    null
+                    link
                 )
             }
         } else {

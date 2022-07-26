@@ -137,13 +137,13 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         hd?.let {
             if (it.isNotEmpty()) {
                 val videoUrl = "$server/getvid?evid=$it"
-                videoList.add(Video(videoUrl, "HD", videoUrl, null))
+                videoList.add(Video(videoUrl, "HD", videoUrl))
             }
         }
         sd?.let {
             if (it.isNotEmpty()) {
                 val videoUrl = "$server/getvid?evid=$it"
-                videoList.add(Video(videoUrl, "SD", videoUrl, null))
+                videoList.add(Video(videoUrl, "SD", videoUrl))
             }
         }
         return videoList

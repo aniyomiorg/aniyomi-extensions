@@ -108,7 +108,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     server.contains("cloudemb.com") || server.contains("playersb.com") || server.contains("tubesb.com") ||
                     server.contains("sbplay1.com") || server.contains("embedsb.com") || server.contains("watchsb.com") ||
                     server.contains("sbplay2.com") || server.contains("japopav.tv") || server.contains("viewsb.com") ||
-                    server.contains("sbfast")|| server.contains("sbfull.com") || server.contains("javplaya.com") ||
+                    server.contains("sbfast") || server.contains("sbfull.com") || server.contains("javplaya.com") ||
                     server.contains("ssbstream.net") || server.contains("p1ayerjavseen.com") || server.contains("sbthe.com")
                 -> {
                     val headers = headers.newBuilder()

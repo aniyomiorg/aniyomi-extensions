@@ -17,7 +17,7 @@ class AnimeFireExtractor(private val client: OkHttpClient, private val json: Jso
         )
         val videoList = responseDto.videos.map {
             val url = it.url.replace("\\", "")
-            Video(url, it.quality, url, null)
+            Video(url, it.quality, url)
         }
         return videoList
     }

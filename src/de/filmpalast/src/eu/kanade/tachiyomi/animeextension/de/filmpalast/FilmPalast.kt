@@ -108,10 +108,7 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             linkRegex.find(this.select("script:containsData(document.getElementById('robotlink'))").toString())?.let {
                                 val quality = "Streamtape"
                                 val videoUrl = "https://streamtape.com/get_video?${it.groupValues[1]}&stream=1".replace("""" + '""", "")
-                                val video = Video(videoUrl, quality, videoUrl, null)
-                                if (video != null) {
-                                    videoList.add(video)
-                                }
+                                videoList.add(Video(videoUrl, quality, videoUrl))
                             }
                         }
                     } catch (e: Exception) {
@@ -121,8 +118,8 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val quality = "Evoload"
                     if (document.select("#EvoVid_html5_api").attr("src").contains("EvoStreams")) {
                         val videoUrl = document.select("#EvoVid_html5_api").attr("src")
-                        if (Video(videoUrl, quality, videoUrl, null) != null) {
-                            videoList.add(Video(videoUrl, quality, videoUrl, null))
+                        if (videoUrl.isNotEmpty()) {
+                            videoList.add(Video(videoUrl, quality, videoUrl))
                         }
                     } else {
                         EvoloadExtractor(client).videoFromUrl(url, quality)

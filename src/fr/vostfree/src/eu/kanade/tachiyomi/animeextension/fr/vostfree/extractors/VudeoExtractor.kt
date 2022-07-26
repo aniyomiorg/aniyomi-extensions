@@ -13,7 +13,7 @@ class VudeoExtractor(private val client: OkHttpClient) {
             if (script.data().contains("sources: [\"")) {
                 val videoUrl = script.data().substringAfter("sources: [\"").substringBefore("\"],")
                 val quality = "Vudeo"
-                videoList.add(Video(videoUrl, quality, videoUrl, null))
+                videoList.add(Video(videoUrl, quality, videoUrl))
             }
         }
         return videoList

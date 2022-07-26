@@ -6,8 +6,8 @@ ext {
     extName = 'Better Anime'
     pkgNameSuffix = 'pt.betteranime'
     extClass = '.BetterAnime'
-    extVersionCode = 2
-    libVersion = '12'
+    extVersionCode = 3
+    libVersion = '13'
 }
 
 dependencies {

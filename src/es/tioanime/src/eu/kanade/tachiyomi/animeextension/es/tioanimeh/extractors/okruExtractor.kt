@@ -17,7 +17,7 @@ class okruExtractor(private val client: OkHttpClient) {
                 .replace("\\\\u0026", "&")
             val videoQuality = qualityPrefix + "Okru: " + it.substringBefore("\\\"")
             if (videoUrl.startsWith("https://")) {
-                videoList.add(Video(videoUrl, videoQuality, videoUrl, null))
+                videoList.add(Video(videoUrl, videoQuality, videoUrl))
             }
         }
         return videoList

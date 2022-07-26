@@ -5,8 +5,8 @@ ext {
     extName = 'AllMovies'
     pkgNameSuffix = 'en.allmovies'
     extClass = '.AllMovies'
-    extVersionCode = 9
-    libVersion = '12'
+    extVersionCode = 10
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

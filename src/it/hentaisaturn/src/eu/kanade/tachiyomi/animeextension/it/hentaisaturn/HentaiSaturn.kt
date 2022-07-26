@@ -115,8 +115,7 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 Video(
                     link,
                     qualities[i],
-                    link,
-                    null
+                    link
                 )
             }
         } else {
@@ -125,7 +124,6 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     url,
                     "Qualità predefinita",
                     url,
-                    null,
                     Headers.headersOf("Referer", referer)
                 )
             )

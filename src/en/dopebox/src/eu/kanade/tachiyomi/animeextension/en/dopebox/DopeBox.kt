@@ -176,11 +176,11 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
                 val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p"
                 val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                videoList.add(Video(videoUrl, quality, videoUrl, null))
+                videoList.add(Video(videoUrl, quality, videoUrl))
             }
             return videoList
         } else if (test.contains("index.m3u8")) {
-            return listOf(Video(masterUrl, "Default", masterUrl, null))
+            return listOf(Video(masterUrl, "Default", masterUrl))
         } else {
             throw Exception("never give up and try again :)")
         }

@@ -10,6 +10,6 @@ class yourUploadExtractor(private val client: OkHttpClient) {
     fun videofromurl(url: String, headers: Headers): Video {
         val document = client.newCall(GET(url)).execute().asJsoup()
         val basicUrl = document.selectFirst("script:containsData(jwplayerOptions)").data().substringAfter("file: '").substringBefore("',")
-        return Video(basicUrl, "YourUpload", basicUrl, null, headers)
+        return Video(basicUrl, "YourUpload", basicUrl, headers)
     }
 }

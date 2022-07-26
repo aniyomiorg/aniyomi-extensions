@@ -28,7 +28,7 @@ class FembedExtractor(private val client: OkHttpClient) {
             jsonR["data"]!!.jsonArray.forEach() {
                 val videoUrl = it.jsonObject["file"].toString().trim('"')
                 val quality = "Fembed:" + it.jsonObject["label"].toString().trim('"')
-                videoList.add(Video(videoUrl, quality, videoUrl, null))
+                videoList.add(Video(videoUrl, quality, videoUrl))
             }
             /*val jsonArray = json.getJSONArray("data")
             Log.i("jsoon", "$jsonArray")
@@ -36,13 +36,13 @@ class FembedExtractor(private val client: OkHttpClient) {
                 val `object` = jsonArray.getJSONObject(i)
                 val videoUrl = `object`.getString("file")
                 val quality = "Fembed:" + `object`.getString("label")
-                videoList.add(Video(videoUrl, quality, videoUrl, null))
+                videoList.add(Video(videoUrl, quality, videoUrl))
             }*/
             return videoList
         } else {
             val videoUrl = "not used"
             val quality = "Video taken down for dmca"
-            videoList.add(Video(videoUrl, quality, videoUrl, null))
+            videoList.add(Video(videoUrl, quality, videoUrl))
         }
         return videoList
     }

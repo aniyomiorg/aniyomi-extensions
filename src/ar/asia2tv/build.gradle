@@ -5,8 +5,8 @@ ext {
     extName = 'asia2tv'
     pkgNameSuffix = 'ar.asia2tv'
     extClass = '.Asia2TV'
-    extVersionCode = 4
-    libVersion = '12'
+    extVersionCode = 5
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

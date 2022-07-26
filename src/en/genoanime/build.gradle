@@ -5,8 +5,8 @@ ext {
     extName = 'GenoAnime'
     pkgNameSuffix = 'en.genoanime'
     extClass = '.GenoAnime'
-    extVersionCode = 13
-    libVersion = '12'
+    extVersionCode = 14
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

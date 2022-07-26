@@ -6,8 +6,8 @@ ext {
     extName = 'Anime Fire'
     pkgNameSuffix = 'pt.animefire'
     extClass = '.AnimeFire'
-    extVersionCode = 2
-    libVersion = '12'
+    extVersionCode = 3
+    libVersion = '13'
 }
 
 dependencies {

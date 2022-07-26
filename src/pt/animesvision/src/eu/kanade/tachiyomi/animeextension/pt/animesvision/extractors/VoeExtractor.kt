@@ -16,6 +16,6 @@ class VoeExtractor(private val client: OkHttpClient) {
         val quality = script.substringAfter("video_height\": ")
             .substringBefore(",")
         val qualityStr = "VoeCDN(${quality}p)"
-        return Video(videoUrl, qualityStr, videoUrl, null)
+        return Video(videoUrl, qualityStr, videoUrl)
     }
 }

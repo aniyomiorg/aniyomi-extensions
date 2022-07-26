@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.es.tioanimeh
 
-import android.util.Log
 import eu.kanade.tachiyomi.animesource.AnimeSource
 import eu.kanade.tachiyomi.animesource.AnimeSourceFactory
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList

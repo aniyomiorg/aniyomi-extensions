@@ -10,7 +10,7 @@ class GlobalVisionExtractor {
         return REGEX_URL.findAll(html).map {
             val videoUrl = it.groupValues[1].replace("\\", "")
             val qualityName = it.groupValues[2]
-            Video(videoUrl, "$PREFIX $qualityName", videoUrl, null)
+            Video(videoUrl, "$PREFIX $qualityName", videoUrl)
         }.toList()
     }
 }

@@ -136,7 +136,7 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         val episodeObject = response.parseAs<MinimalEpisodeDto>()
         return episodeObject.streams!!.map {
             val quality = "${it.quality.last()}p"
-            Video(it.url, quality, it.url, null)
+            Video(it.url, quality, it.url)
         }.toList()
     }
 

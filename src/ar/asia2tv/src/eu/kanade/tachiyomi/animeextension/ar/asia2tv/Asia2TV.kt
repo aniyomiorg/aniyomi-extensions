@@ -97,12 +97,12 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             when {
                 url.contains("https://dood") -> {
                     val newQuality = "Doodstream mirror"
-                    val video = Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
+                    val video = Video(url, newQuality, doodUrlParse(url), videoHeaders)
                     videoList.add(video)
                 }
                 url.contains("https://streamtape") -> {
                     val newQuality = "StreamTape mirror"
-                    val video = Video(url, newQuality, streamTapeParse(url), null, videoHeaders)
+                    val video = Video(url, newQuality, streamTapeParse(url), videoHeaders)
                     videoList.add(video)
                 }
                 url.contains("https://www.fembed.com") -> {
@@ -112,7 +112,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     for (source in sources) {
                         val src = source.substringAfter("\"file\":\"").substringBefore("\"").replace("\\/", "/")
                         val quality = source.substringAfter("\"label\":\"").substringBefore("\"")
-                        val video = Video(url, quality, src, null)
+                        val video = Video(url, quality, src)
                         videoList.add(video)
                     }
                 }
@@ -172,8 +172,8 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         for (source in sources) {
             val src = source.substringAfter("\"file\":\"").substringBefore("\"")
             val quality = source.substringBefore("\"") // .substringAfter("format: '")
-            //val videos = Video(src, quality, src, null)
-            return Video(url, quality, src, null)
+            //val videos = Video(src, quality, src)
+            return Video(url, quality, src)
         }
          return Video(url, quality, )
     }*/

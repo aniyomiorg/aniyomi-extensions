@@ -133,7 +133,7 @@ open class Onepace(override val lang: String, override val name: String) : Confi
         val videoId = realUrl.substringAfter("/v/").substringBefore("/file")
         val videoName = document.selectFirst("div.center div font+font").text()
         val videoUrl = "$hostUrl/d/$videoId/${(timeId.toInt() % 1000) + 11}/${URLEncoder.encode(videoName)}"
-        return listOf(Video(videoUrl, "ZippyShare", videoUrl, null))
+        return listOf(Video(videoUrl, "ZippyShare", videoUrl))
     }
 
     override fun videoListSelector() = throw Exception("not used")

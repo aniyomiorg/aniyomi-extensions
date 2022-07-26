@@ -202,10 +202,10 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             videoList.addAll(videos)
                         }
                         if (url.lowercase().contains("od.lk")) {
-                            videoList.add(Video(url, language + "Od.lk", url, null))
+                            videoList.add(Video(url, language + "Od.lk", url))
                         }
                         if (url.lowercase().contains("cldup.com")) {
-                            videoList.add(Video(url, language + "CldUp", url, null))
+                            videoList.add(Video(url, language + "CldUp", url))
                         }
                     }
                 }

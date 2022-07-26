@@ -226,7 +226,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             )
         } else {
             val videoUrl = KwikExtractor(client).getStreamUrlFromKwik(paheUrl)
-            Video(videoUrl, quality, videoUrl, null)
+            Video(videoUrl, quality, videoUrl)
         }
     }
 

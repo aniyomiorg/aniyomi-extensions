@@ -100,7 +100,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 embedUrl.contains("seeeed") -> {
                     val iframeResponse = client.newCall(GET(embedUrl)).execute().asJsoup()
                     val videoUrl = iframeResponse.select("source").attr("src")
-                    val video = Video(embedUrl, dataQu + "p", videoUrl.replace("https", "http"), null)
+                    val video = Video(embedUrl, dataQu + "p", videoUrl.replace("https", "http"))
                     videoList.add(video)
                 }
             }

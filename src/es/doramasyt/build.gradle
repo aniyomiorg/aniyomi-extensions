@@ -5,8 +5,8 @@ ext {
     extName = 'Doramasyt'
     pkgNameSuffix = 'es.doramasyt'
     extClass = '.Doramasyt'
-    extVersionCode = 1
-    libVersion = '12'
+    extVersionCode = 2
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

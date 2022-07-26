@@ -5,8 +5,8 @@ ext {
     extName = 'Animerco'
     pkgNameSuffix = 'ar.animerco'
     extClass = '.Animerco'
-    extVersionCode = 9
-    libVersion = '12'
+    extVersionCode = 10
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

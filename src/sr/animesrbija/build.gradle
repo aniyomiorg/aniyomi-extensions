@@ -5,9 +5,9 @@ ext {
     extName = 'Anime Srbija'
     pkgNameSuffix = 'sr.animesrbija'
     extClass = '.AnimeSrbija'
-    extVersionCode = 2
+    extVersionCode = 3
     isNsfw = false
-    libVersion = '12'
+    libVersion = '13'
 }
 dependencies {
     compileOnly 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2'

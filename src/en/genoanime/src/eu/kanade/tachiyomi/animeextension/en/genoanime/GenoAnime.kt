@@ -127,7 +127,7 @@ class GenoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     url.contains("cloudemb.com") || url.contains("playersb.com") || url.contains("tubesb.com") ||
                     url.contains("sbplay1.com") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
                     url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
-                    url.contains("sbfast")|| url.contains("sbfull.com") || url.contains("javplaya.com") ||
+                    url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
                     url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com")
                 -> {
                     val headers = headers.newBuilder()

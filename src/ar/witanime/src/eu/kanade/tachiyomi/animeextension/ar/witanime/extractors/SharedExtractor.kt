@@ -10,10 +10,10 @@ class SharedExtractor(private val client: OkHttpClient) {
         val document = client.newCall(GET(url)).execute().asJsoup()
         /*val videoList = mutableListOf<Video>()
         val src = document.select("source > src")
-        val video = Video(src, "4Shared", src, null)
+        val video = Video(src, "4Shared", src)
         videoList.add(video)
         return videoList*/
         // val vidSource = 4Shared.select("source")
-        return Video(document.attr("source > src"), "4Shared", document.attr("source > src"), null)
+        return Video(document.attr("source > src"), "4Shared", document.attr("source > src"))
     }
 }

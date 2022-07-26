@@ -139,7 +139,7 @@ class MiniOppai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 else -> "ZippyShare - Unknown Resolution"
             }
         }
-        return Video(url, quality, url, null)
+        return Video(url, quality, url)
     }
 
     override fun videoListSelector(): String = throw Exception("not used")

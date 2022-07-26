@@ -70,7 +70,7 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
                         if (!videoUrl.startsWith("http")) {
                             videoUrl = fileURL.substringBeforeLast("/") + "/$videoUrl"
                         }
-                        videoList.add(Video(videoUrl, qualityPrefix + quality, videoUrl, null))
+                        videoList.add(Video(videoUrl, qualityPrefix + quality, videoUrl))
                     }
             } else array.forEach {
                 val label = it.jsonObject["label"].toString().lowercase(Locale.ROOT)
@@ -86,7 +86,7 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
                         videoHeaders
                     )
                 )
-                else videoList.add(Video(fileURL, qualityPrefix + label, fileURL, null, videoHeaders))
+                else videoList.add(Video(fileURL, qualityPrefix + label, fileURL, videoHeaders))
             }
             return videoList.sortedByDescending {
                 it.quality.substringAfter(qualityPrefix).substringBefore("p").toIntOrNull() ?: -1

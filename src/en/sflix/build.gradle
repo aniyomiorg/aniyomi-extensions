@@ -5,8 +5,8 @@ ext {
     extName = 'Sflix'
     pkgNameSuffix = 'en.sflix'
     extClass = '.SFlix'
-    extVersionCode = 5
-    libVersion = '12'
+    extVersionCode = 6
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"
