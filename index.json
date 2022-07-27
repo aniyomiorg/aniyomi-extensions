@@ -263,10 +263,10 @@
   {
     "name": "Aniyomi: DopeBox",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.dopebox",
-    "apk": "aniyomi-en.dopebox-v13.6.apk",
+    "apk": "aniyomi-en.dopebox-v13.7.apk",
     "lang": "en",
-    "code": 6,
-    "version": "13.6",
+    "code": 7,
+    "version": "13.7",
     "nsfw": 0
   },
   {
@@ -335,10 +335,10 @@
   {
     "name": "Aniyomi: Sflix",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.sflix",
-    "apk": "aniyomi-en.sflix-v13.7.apk",
+    "apk": "aniyomi-en.sflix-v13.8.apk",
     "lang": "en",
-    "code": 7,
-    "version": "13.7",
+    "code": 8,
+    "version": "13.8",
     "nsfw": 0
   },
   {
@@ -389,10 +389,10 @@
   {
     "name": "Aniyomi: zoro.to (experimental)",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.zoro",
-    "apk": "aniyomi-en.zoro-v13.7.apk",
+    "apk": "aniyomi-en.zoro-v13.8.apk",
     "lang": "en",
-    "code": 7,
-    "version": "13.7",
+    "code": 8,
+    "version": "13.8",
     "nsfw": 0
   },
   {
@@ -506,10 +506,10 @@
   {
     "name": "Aniyomi: MonosChinos",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.monoschinos",
-    "apk": "aniyomi-es.monoschinos-v13.8.apk",
+    "apk": "aniyomi-es.monoschinos-v13.9.apk",
     "lang": "es",
-    "code": 8,
-    "version": "13.8",
+    "code": 9,
+    "version": "13.9",
     "nsfw": 0
   },
   {
