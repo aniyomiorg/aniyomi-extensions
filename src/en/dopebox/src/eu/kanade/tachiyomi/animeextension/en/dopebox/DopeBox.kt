@@ -100,7 +100,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             episode.setUrlWithoutDomain(movieUrl)
             episodeList.add(episode)
         }
-        return episodeList
+        return episodeList.reversed()
     }
 
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
@@ -182,7 +182,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val masterUrl = json["sources"]!!.jsonArray[0].jsonObject["file"].toString().trim('"')
         val subsList = mutableListOf<Track>()
         json["tracks"]!!.jsonArray.forEach {
-            val subLang = it.jsonObject["label"].toString().substringAfter("\"").substringBefore("\"") // .trim('"')
+            val subLang = it.jsonObject["label"].toString().substringAfter("\"").substringBefore("\"")
             val subUrl = it.jsonObject["file"].toString().trim('"')
             subsList.add(Track(subUrl, subLang))
         }
@@ -192,11 +192,23 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
                 val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p"
                 val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                videoList.add(Video(videoUrl, quality, videoUrl, null, subsList, emptyList()))
+                videoList.add(
+                    try {
+                        Video(videoUrl, quality, videoUrl, subtitleTracks = subsList)
+                    } catch (e: NoSuchMethodError) {
+                        Video(videoUrl, quality, videoUrl)
+                    }
+                )
             }
             return videoList
         } else if (masterUrl.contains("index.m3u8")) {
-            return listOf(Video(masterUrl, "Default", masterUrl, null, subsList, emptyList()))
+            return listOf(
+                try {
+                    Video(masterUrl, "Default", masterUrl, subtitleTracks = subsList)
+                } catch (e: NoSuchMethodError) {
+                    Video(masterUrl, "Default", masterUrl)
+                }
+            )
         } else {
             throw Exception("never give up and try again :)")
         }

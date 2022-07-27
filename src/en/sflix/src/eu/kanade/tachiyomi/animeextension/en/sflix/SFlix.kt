@@ -191,11 +191,23 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
                 val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p"
                 val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                videoList.add(Video(videoUrl, quality, videoUrl, null, subsList, emptyList()))
+                videoList.add(
+                    try {
+                        Video(videoUrl, quality, videoUrl, subtitleTracks = subsList)
+                    } catch (e: NoSuchMethodError) {
+                        Video(videoUrl, quality, videoUrl)
+                    }
+                )
             }
             return videoList
         } else if (masterUrl.contains("index.m3u8")) {
-            return listOf(Video(masterUrl, "Default", masterUrl, null, subsList, emptyList()))
+            return listOf(
+                try {
+                    Video(masterUrl, "Default", masterUrl, subtitleTracks = subsList)
+                } catch (e: NoSuchMethodError) {
+                    Video(masterUrl, "Default", masterUrl)
+                }
+            )
         } else {
             throw Exception("never give up and try again :)")
         }
