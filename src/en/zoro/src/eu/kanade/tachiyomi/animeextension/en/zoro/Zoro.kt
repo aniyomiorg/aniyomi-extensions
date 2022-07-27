@@ -124,12 +124,15 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (!source.contains("{\"sources\":[{\"file\":\"")) return null
         val json = json.decodeFromString<JsonObject>(source)
         val masterUrl = json["sources"]!!.jsonArray[0].jsonObject["file"]!!.jsonPrimitive.content
-        val subs = json["tracks"]?.jsonArray
+        val subs = mutableListOf<Track>()
+        json["tracks"]?.jsonArray
             ?.filter { it.jsonObject["kind"]!!.jsonPrimitive.content == "captions" }
             ?.map { track ->
                 val trackUrl = track.jsonObject["file"]!!.jsonPrimitive.content
                 val lang = track.jsonObject["label"]!!.jsonPrimitive.content
-                Track(trackUrl, lang)
+                try {
+                    subs.add(Track(trackUrl, lang))
+                } catch (e: Error) {}
             } ?: emptyList()
         val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
         val videoList = mutableListOf<Video>()
@@ -139,7 +142,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             videoList.add(
                 try {
                     Video(videoUrl, quality, videoUrl, subtitleTracks = subs)
-                } catch (e: NoSuchMethodError) {
+                } catch (e: Error) {
                     Video(videoUrl, quality, videoUrl)
                 }
             )

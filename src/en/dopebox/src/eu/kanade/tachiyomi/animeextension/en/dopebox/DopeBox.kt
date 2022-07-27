@@ -31,7 +31,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 
 class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -184,7 +183,9 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         json["tracks"]!!.jsonArray.forEach {
             val subLang = it.jsonObject["label"].toString().substringAfter("\"").substringBefore("\"")
             val subUrl = it.jsonObject["file"].toString().trim('"')
-            subsList.add(Track(subUrl, subLang))
+            try {
+                subsList.add(Track(subUrl, subLang))
+            } catch (e: Error) {}
         }
         if (masterUrl.contains("playlist.m3u8")) {
             val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
@@ -195,7 +196,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 videoList.add(
                     try {
                         Video(videoUrl, quality, videoUrl, subtitleTracks = subsList)
-                    } catch (e: NoSuchMethodError) {
+                    } catch (e: Error) {
                         Video(videoUrl, quality, videoUrl)
                     }
                 )
@@ -205,7 +206,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             return listOf(
                 try {
                     Video(masterUrl, "Default", masterUrl, subtitleTracks = subsList)
-                } catch (e: NoSuchMethodError) {
+                } catch (e: Error) {
                     Video(masterUrl, "Default", masterUrl)
                 }
             )

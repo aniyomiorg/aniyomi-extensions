@@ -31,7 +31,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 
 class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -183,7 +182,9 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         json["tracks"]!!.jsonArray.forEach {
             val subLang = it.jsonObject["label"].toString().substringAfter("\"").substringBefore("\"") // .trim('"')
             val subUrl = it.jsonObject["file"].toString().trim('"')
-            subsList.add(Track(subUrl, subLang))
+            try {
+                subsList.add(Track(subUrl, subLang))
+            } catch (e: Error) {}
         }
         if (masterUrl.contains("playlist.m3u8")) {
             val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
@@ -194,7 +195,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 videoList.add(
                     try {
                         Video(videoUrl, quality, videoUrl, subtitleTracks = subsList)
-                    } catch (e: NoSuchMethodError) {
+                    } catch (e: Error) {
                         Video(videoUrl, quality, videoUrl)
                     }
                 )
@@ -204,7 +205,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             return listOf(
                 try {
                     Video(masterUrl, "Default", masterUrl, subtitleTracks = subsList)
-                } catch (e: NoSuchMethodError) {
+                } catch (e: Error) {
                     Video(masterUrl, "Default", masterUrl)
                 }
             )
