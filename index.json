@@ -326,10 +326,10 @@
   {
     "name": "Aniyomi: 9anime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.nineanime",
-    "apk": "aniyomi-en.nineanime-v13.10.apk",
+    "apk": "aniyomi-en.nineanime-v13.11.apk",
     "lang": "en",
-    "code": 10,
-    "version": "13.10",
+    "code": 11,
+    "version": "13.11",
     "nsfw": 0
   },
   {
