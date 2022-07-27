@@ -171,13 +171,14 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.select("h1.title").text()
-        anime.genre = document.select("div:contains(Genre) > span > a[title]").joinToString { it.text() }
-        anime.description = document.select("p[itemprop=description]").text()
+        anime.genre = document.select("div:contains(Genre) > span > a").joinToString { it.text() }
+        anime.description = document.select("div.synopsis > div.shorting > div.content").text()
+        anime.author = document.select("div:contains(Studios) > span > a").text()
         anime.status = parseStatus(document.select("div:contains(Status) > span").text())
 
         // add alternative name to anime description
         val altName = "Other name(s): "
-        document.select("div.alias").firstOrNull()?.ownText()?.let {
+        document.select("h1.title").attr("data-jp")?.let {
             if (it.isBlank().not()) {
                 anime.description = when {
                     anime.description.isNullOrBlank() -> altName + it
@@ -190,7 +191,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun parseStatus(statusString: String): Int {
         return when (statusString) {
-            "Airing" -> SAnime.ONGOING
+            "Releasing" -> SAnime.ONGOING
             "Completed" -> SAnime.COMPLETED
             else -> SAnime.UNKNOWN
         }
