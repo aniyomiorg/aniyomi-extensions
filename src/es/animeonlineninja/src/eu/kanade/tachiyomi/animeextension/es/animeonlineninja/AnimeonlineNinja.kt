@@ -45,7 +45,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "div.content.right div.items article"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("https://www1.animeonline.ninja/tendencias/page/$page/")
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/tendencias/page/$page/")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -137,7 +137,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videos = mutableListOf<Video>()
         val langSelect = preferences.getString("preferred_lang", "SUB").toString()
         when {
-            serverUrl.contains("fembed") && lang.contains(langSelect) -> {
+            serverUrl.contains("fembed888") && lang.contains(langSelect) -> {
                 videos.addAll(FembedExtractor().videosFromUrl(serverUrl, lang))
             }
             serverUrl.contains("streamtape") && lang.contains(langSelect) -> {
@@ -147,11 +147,23 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 DoodExtractor(client).videoFromUrl(serverUrl, "$lang DoodStream")?.let { it1 -> videos.add(it1) }
             }
             serverUrl.contains("sb") && lang.contains(langSelect) -> {
-                videos.addAll(StreamSBExtractor(client).videosFromUrl(serverUrl, headers, lang))
+                try {
+                    val headers = headers.newBuilder()
+                        .set("referer", serverUrl)
+                        .set(
+                            "User-Agent",
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"
+                        )
+                        .set("Accept-Language", "es-MX,es-419;q=0.9,es;q=0.8,en;q=0.7")
+                        .set("watchsb", "streamsb")
+                        .set("authority", "embedsb.com")
+                        .build()
+                    videos.addAll(StreamSBExtractor(client).videosFromUrl(serverUrl, headers, lang))
+                } catch (e: Exception) { }
             }
             serverUrl.contains("mixdrop") && lang.contains(langSelect) -> {
                 val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(eval)").data()
-                if (jsE.contains("MDCore")) {
+                if (jsE.contains("MDCore.wurl=")) {
                     val url = "http:" + JsUnpacker(jsE).unpack().toString().substringAfter("MDCore.wurl=\"").substringBefore("\"")
                     if (!url.contains("\$(document).ready(function(){});")) {
                         videos.add(Video(url, "$lang MixDrop", url))
@@ -198,7 +210,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        return GET("https://www1.animeonline.ninja/?s=$query")
+        return GET("$baseUrl/?s=$query")
     }
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
