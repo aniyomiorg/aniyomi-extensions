@@ -506,10 +506,10 @@
   {
     "name": "Aniyomi: MonosChinos",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.monoschinos",
-    "apk": "aniyomi-es.monoschinos-v13.9.apk",
+    "apk": "aniyomi-es.monoschinos-v13.10.apk",
     "lang": "es",
-    "code": 9,
-    "version": "13.9",
+    "code": 10,
+    "version": "13.10",
     "nsfw": 0
   },
   {
