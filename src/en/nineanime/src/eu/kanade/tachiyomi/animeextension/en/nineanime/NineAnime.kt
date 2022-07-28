@@ -64,7 +64,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         title = element.select("a.name").text()
     }
 
-    override fun popularAnimeNextPageSelector(): String = "li"
+    override fun popularAnimeNextPageSelector(): String = "nav > ul.pagination > li > a[aria-label=pagination.next]"
 
     override fun episodeListRequest(anime: SAnime): Request {
         val id = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup().selectFirst("div[data-id]").attr("data-id")
@@ -151,17 +151,11 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this
     }
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(baseUrl + element.select("a.name").attr("href"))
-        anime.thumbnail_url = element.select("div.poster img").attr("src")
-        anime.title = element.select("a.name").text()
-        return anime
-    }
+    override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
 
-    override fun searchAnimeNextPageSelector(): String = "a.btn-primary.next:not(.disabled)"
+    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
-    override fun searchAnimeSelector(): String = "div.ani.items > div"
+    override fun searchAnimeSelector(): String = popularAnimeSelector()
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val vrf = encodeVrf(query)
@@ -197,15 +191,13 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("not used")
+    override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
 
-    override fun latestUpdatesFromElement(element: Element) = throw Exception("not used")
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/ajax/home/widget?name=updated_all&page=$page")
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/filter?sort=recently_updated&page=$page")
 
-    override fun latestUpdatesSelector(): String = throw Exception("not used")
-
-    override fun latestUpdatesParse(response: Response) = popularAnimeParse(response)
+    override fun latestUpdatesSelector(): String = popularAnimeSelector()
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val domainPref = ListPreference(screen.context).apply {
