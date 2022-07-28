@@ -326,10 +326,10 @@
   {
     "name": "Aniyomi: 9anime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.nineanime",
-    "apk": "aniyomi-en.nineanime-v13.11.apk",
+    "apk": "aniyomi-en.nineanime-v13.12.apk",
     "lang": "en",
-    "code": 11,
-    "version": "13.11",
+    "code": 12,
+    "version": "13.12",
     "nsfw": 0
   },
   {
@@ -434,10 +434,10 @@
   {
     "name": "Aniyomi: AnimeonlineNinja",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.animeonlineninja",
-    "apk": "aniyomi-es.animeonlineninja-v13.4.apk",
+    "apk": "aniyomi-es.animeonlineninja-v13.5.apk",
     "lang": "es",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 0
   },
   {
