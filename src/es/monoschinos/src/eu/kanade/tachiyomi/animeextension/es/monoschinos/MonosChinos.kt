@@ -123,12 +123,15 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } catch (e: Exception) {
             "false"
         }
-        val letterFilter = (filters.find { it is LetterFilter } as LetterFilter).state.first()
-        val letterFilter2 = if (letterFilter.isLetter()) letterFilter.uppercase() else "false"
+        val letterFilter = try {
+            (filters.find { it is LetterFilter } as LetterFilter).state.first().uppercase()
+        } catch (e: Exception) {
+            "false"
+        }
 
         return when {
             query.isNotBlank() -> GET("$baseUrl/buscar?q=$query&p=$page")
-            else -> GET("$baseUrl/animes?categoria=false&genero=${genreFilter.toUriPart()}&fecha=$yearFilter&letra=$letterFilter2&p=$page")
+            else -> GET("$baseUrl/animes?categoria=false&genero=${genreFilter.toUriPart()}&fecha=$yearFilter&letra=$letterFilter&p=$page")
         }
     }
     override fun searchAnimeFromElement(element: Element): SAnime {
