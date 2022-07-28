@@ -161,7 +161,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeNextPageSelector(): String = "a.btn-primary.next:not(.disabled)"
 
-    override fun searchAnimeSelector(): String = "div.ani.items div"
+    override fun searchAnimeSelector(): String = "div.ani.items > div"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val vrf = encodeVrf(query)
