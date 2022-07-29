@@ -84,18 +84,23 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         val epNum = element.attr("data-num")
         val ids = element.attr("data-ids")
+        val sub = element.attr("data-sub").toInt().toBoolean()
+        val dub = element.attr("data-dub").toInt().toBoolean()
         val vrf = encodeVrf(ids)
         episode.url = "/ajax/server/list/$ids?vrf=$vrf"
         episode.episode_number = epNum.toFloat()
+        val langPrefix = "["+ if(sub) {"Sub"} else {""} + if(dub) {",Dub"} else {""} + "]"
         val name = element.parent()?.select("span.d-title")?.text().orEmpty()
         val namePrefix = "Episode $epNum"
-        episode.name = if (name.isNotEmpty() && name != namePrefix) {
-            "Episode $epNum: $name"
-        } else {
-            "Episode $epNum"
-        }
+        episode.name = "Episode $epNum" + if(sub||dub){
+                ": $langPrefix"
+            }else{""} + if (name.isNotEmpty() && name != namePrefix) {
+                " $name"
+            }else{""}
         return episode
     }
+
+    private fun Int.toBoolean() = this == 1
 
     override fun videoListParse(response: Response): List<Video> {
         val responseObject = json.decodeFromString<JsonObject>(response.body!!.string())
@@ -158,6 +163,18 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     preferred++
                 } else {
                     newList.add(video)
+                }
+            }
+            // If dub is preferred language and anime do not have dub version, respect preferred quality
+            if (lang == "Dub" && newList.first().quality.contains("Dub").not()) {
+                newList.clear()
+                for (video in this) {
+                    if (video.quality.contains(quality)) {
+                        newList.add(preferred, video)
+                        preferred++
+                    } else {
+                        newList.add(video)
+                    }
                 }
             }
             return newList
