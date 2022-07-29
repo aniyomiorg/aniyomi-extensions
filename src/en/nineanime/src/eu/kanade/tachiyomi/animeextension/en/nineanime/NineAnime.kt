@@ -165,6 +165,18 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     newList.add(video)
                 }
             }
+            // If dub is preferred language and anime do not have dub version, respect preferred quality
+            if (lang == "Dub" && newList.first().quality.contains("Dub").not()) {
+                newList.clear()
+                for (video in this) {
+                    if (video.quality.contains(quality)) {
+                        newList.add(preferred, video)
+                        preferred++
+                    } else {
+                        newList.add(video)
+                    }
+                }
+            }
             return newList
         }
         return this
