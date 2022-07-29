@@ -100,7 +100,20 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val responseObject = json.decodeFromString<JsonObject>(response.body!!.string())
         val document = Jsoup.parse(JSONUtil.unescape(responseObject["result"]!!.jsonPrimitive.content))
-        val sourceId = document.select("ul > li[data-sv-id=41]").attr("data-link-id")
+        val videoList = mutableListOf<Video>()
+
+        // Sub
+        document.select("div[data-type=sub] > ul > li[data-sv-id=41]")
+            .firstOrNull()?.attr("data-link-id")
+            ?.let { videoList.addAll(extractVideo(it, "Sub")) }
+        // Dub
+        document.select("div[data-type=dub] > ul > li[data-sv-id=41]")
+            .firstOrNull()?.attr("data-link-id")
+            ?.let { videoList.addAll(extractVideo(it, "Dub")) }
+        return videoList
+    }
+
+    private fun extractVideo(sourceId: String, lang: String): List<Video> {
         val vrf = encodeVrf(sourceId)
         val episodeBody = network.client.newCall(GET("$baseUrl/ajax/server/$sourceId?vrf=$vrf"))
             .execute().body!!.string()
@@ -121,7 +134,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val masterPlaylist = result.body!!.string()
         return masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
             .split("#EXT-X-STREAM-INF:").map {
-                val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p"
+                val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p $lang"
                 val videoUrl = masterUrl.substringBeforeLast("/") + "/" + it.substringAfter("\n").substringBefore("\n")
                 Video(videoUrl, quality, videoUrl, headers = headers)
             }
@@ -135,11 +148,12 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", "1080")
-        if (quality != null) {
+        val lang = preferences.getString("preferred_language", "Sub")
+        if (quality != null && lang != null) {
             val newList = mutableListOf<Video>()
             var preferred = 0
             for (video in this) {
-                if (video.quality.contains(quality)) {
+                if (video.quality.contains(quality) && video.quality.contains(lang)) {
                     newList.add(preferred, video)
                     preferred++
                 } else {
@@ -230,8 +244,24 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val videoLanguagePref = ListPreference(screen.context).apply {
+            key = "preferred_language"
+            title = "Preferred language"
+            entries = arrayOf("Sub", "Dub")
+            entryValues = arrayOf("Sub", "Dub")
+            setDefaultValue("Sub")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
         screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
+        screen.addPreference(videoLanguagePref)
     }
 
     private fun encodeVrf(id: String) = encode(encrypt(cipher(encode(id))).replace("""=+$""".toRegex(), ""))
