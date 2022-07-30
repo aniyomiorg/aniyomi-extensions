@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.es.animeonlineninja
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.DoodExtractor
@@ -137,8 +138,9 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videos = mutableListOf<Video>()
         val langSelect = preferences.getString("preferred_lang", "SUB").toString()
         when {
-            serverUrl.contains("fembed888") && lang.contains(langSelect) -> {
-                videos.addAll(FembedExtractor().videosFromUrl(serverUrl, lang))
+            serverUrl.contains("fembed") && lang.contains(langSelect) -> {
+                val video = FembedExtractor().videosFromUrl(serverUrl)
+                videos.addAll(video.map { Video(it.url, "$lang ${it.quality}", it.url) })
             }
             serverUrl.contains("streamtape") && lang.contains(langSelect) -> {
                 StreamTapeExtractor(client).videoFromUrl(serverUrl, "$lang StreamTape")?.let { it1 -> videos.add(it1) }
@@ -158,7 +160,9 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         .set("watchsb", "streamsb")
                         .set("authority", "embedsb.com")
                         .build()
-                    videos.addAll(StreamSBExtractor(client).videosFromUrl(serverUrl, headers, lang))
+
+                    val video = StreamSBExtractor(client).videosFromUrl(serverUrl, headers)
+                    videos.addAll(video.map { Video(it.url, "$lang ${it.quality}", it.url) })
                 } catch (e: Exception) { }
             }
             serverUrl.contains("mixdrop") && lang.contains(langSelect) -> {
