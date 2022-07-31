@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors
 
-import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.decodeFromString
@@ -32,7 +31,7 @@ class StreamSBExtractor(private val client: OkHttpClient) {
         val bytesToHex = bytesToHex(bytes)
         val master =
             "$sbUrl/sources43/416f794d637048744d4565577c7c${bytesToHex}7c7c776e6c7a365964385a484b767c7c73747265616d7362/656d5a62394f713230524a667c7c373635353537333734623561373634613330353134633631376337633339353037343631363934393335363434333730373633363763376337613737353836323434353534363431343633323533376137633763373337343732363536313664373336327c7c59304b7778506d424c4c32767c7c73747265616d7362"
-        Log.i("bruh sb", master)
+        
         val json = Json.decodeFromString<JsonObject>(
             client.newCall(GET(master, headers))
                 .execute().body!!.string()
