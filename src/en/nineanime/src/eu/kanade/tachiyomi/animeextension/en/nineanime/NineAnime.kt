@@ -281,7 +281,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         screen.addPreference(videoLanguagePref)
     }
 
-    private fun encodeVrf(id: String) = encode(encrypt(cipher(encode(id))).replace("""=+$""".toRegex(), ""))
+    private fun encodeVrf(id: String) = encode(encrypt(cipher(encode(id))))
 
     private fun decodeVrf(text: String) = decode(cipher(decrypt(text)))
 
@@ -375,4 +375,5 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 }
 
 private const val nineAnimeKey = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-private const val cipherKey = "rTKp3auwu0ULA6II"
+private const val cipherKey = "kMXzgyNzT3k5dYab"
+// credit goes to https://github.com/saikou-app/saikou/
