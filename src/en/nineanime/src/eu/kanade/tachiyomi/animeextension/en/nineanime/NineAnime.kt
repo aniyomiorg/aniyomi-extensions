@@ -375,5 +375,5 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 }
 
 private const val nineAnimeKey = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-private const val cipherKey = "kMXzgyNzT3k5dYab"
-// credit goes to https://github.com/saikou-app/saikou/
+private const val cipherKey = "oZH6q4X4VAIHk0Ol"
+// credit goes to https://github.com/consumet/consumet.ts
