@@ -89,14 +89,14 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val vrf = encodeVrf(ids)
         episode.url = "/ajax/server/list/$ids?vrf=$vrf"
         episode.episode_number = epNum.toFloat()
-        val langPrefix = "["+ if(sub) {"Sub"} else {""} + if(dub) {",Dub"} else {""} + "]"
+        val langPrefix = "[" + if (sub) { "Sub" } else { "" } + if (dub) { ",Dub" } else { "" } + "]"
         val name = element.parent()?.select("span.d-title")?.text().orEmpty()
         val namePrefix = "Episode $epNum"
-        episode.name = "Episode $epNum" + if(sub||dub){
-                ": $langPrefix"
-            }else{""} + if (name.isNotEmpty() && name != namePrefix) {
-                " $name"
-            }else{""}
+        episode.name = "Episode $epNum" + if (sub || dub) {
+            ": $langPrefix"
+        } else { "" } + if (name.isNotEmpty() && name != namePrefix) {
+            " $name"
+        } else { "" }
         return episode
     }
 
@@ -281,9 +281,9 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         screen.addPreference(videoLanguagePref)
     }
 
-    private fun encodeVrf(id: String) = encode(encrypt(cipher(encode(id))))
+    private fun encodeVrf(id: String) = encode(encrypt(cipher(encode(id), cipherKey)))
 
-    private fun decodeVrf(text: String) = decode(cipher(decrypt(text)))
+    private fun decodeVrf(text: String) = decode(cipher(decrypt(text), decipherKey))
 
     private fun encrypt(input: String): String {
         if (input.any { it.code > 255 }) throw Exception("illegal characters!")
@@ -310,7 +310,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return output
     }
 
-    private fun cipher(input: String): String {
+    private fun cipher(input: String, cipherKey: String): String {
         val arr = IntArray(256) { it }
 
         var u = 0
@@ -376,4 +376,5 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
 private const val nineAnimeKey = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 private const val cipherKey = "oZH6q4X4VAIHk0Ol"
-// credit goes to https://github.com/consumet/consumet.ts
+private const val decipherKey = "hlPeNwkncH0fq9so"
+// thanks to the community for finding these keys, and 9anime pls don't change them again
