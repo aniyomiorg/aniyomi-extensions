@@ -101,14 +101,12 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
 
         val data = document.selectFirst("script:containsData(video[1] = )").data()
-        val apiUrl = data.substringAfter("video[1] = '", "")
-            .substringBefore("';", "")
-            .ifEmpty { throw Exception("no video links found.") }
+        val apiUrl = data.substringAfter("video[1] = '", "").substringBefore("';", "")
         val alternativeServers = document.select("ul.TbVideoNv.nav.nav-tabs li:not(:first-child)")
-        if (apiUrl.contains("/embed.php?") || apiUrl.contains("/video/")) {
+        if (apiUrl.isNotEmpty()) {
             val apiResponse = client.newCall(GET(apiUrl)).execute().asJsoup()
-            var encryptedList = apiResponse.select("li[data-r]")
-            var decryptedList = apiResponse.select(".REactiv li:not([data-r])")
+            var encryptedList = apiResponse!!.select("#PlayerDisplay div[class*=\"OptionsLangDisp\"] div[class*=\"ODDIV\"] div[class*=\"OD\"] li[data-r]")
+            var decryptedList = apiResponse!!.select("#PlayerDisplay div[class*=\"OptionsLangDisp\"] div[class*=\"ODDIV\"] div[class*=\"OD\"] li:not([data-r])")
             encryptedList.forEach {
                 val url = String(Base64.decode(it.attr("data-r"), Base64.DEFAULT))
                 val server = it.select("span").text()
