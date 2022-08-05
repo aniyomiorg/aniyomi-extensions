@@ -248,7 +248,15 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> "$baseUrl/tendencias/?"
         }
 
-        if (letterFilter.state.isNotBlank()) url = "$baseUrl/letra/b/?"
+        if (letterFilter.state.isNotBlank()) url = try {
+            if (letterFilter.state.first().isLetter()) {
+                "$baseUrl/letra/${letterFilter.state.first().uppercase()}/?"
+            } else {
+                "$baseUrl/letra/a/?"
+            }
+        } catch (e: Exception) {
+            "$baseUrl/letra/a/?"
+        }
 
         if (typeFilter.state != 0) url += if (url.contains("tendencias")) {
             "&get=${when (typeFilter.toUriPart()){
@@ -262,10 +270,8 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         if (invertedResultsFilter.state) url += "&orden=asc"
 
-
         return GET(url)
     }
-
 
     override fun searchAnimeParse(response: Response): AnimesPage {
         return if (response.request.url.toString().contains("?s=")) {
@@ -278,11 +284,17 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             }
             AnimesPage(animes, false)
-        } else if(response.request.url.toString().contains("letra")){
+        } else if (response.request.url.toString().contains("letra")) {
             val document = response.asJsoup()
-            val animes = document.select(popularAnimeSelector()).map { popularAnimeFromElement(it) }
+            val animes = document.select("div.content div#archive-content.animation-2.items article").map {
+                SAnime.create().apply {
+                    setUrlWithoutDomain(it.select("div.data h3 a").attr("href"))
+                    title = it.select("div.data h3 a").text()
+                    thumbnail_url = it.select("div.poster img").attr("data-src").replace("-500x750", "")
+                }
+            }
             AnimesPage(animes, true)
-        }else{
+        } else {
             val document = response.asJsoup()
             val animes = document.select(popularAnimeSelector()).map { popularAnimeFromElement(it) }
             AnimesPage(animes, true)
@@ -355,7 +367,6 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         screen.addPreference(langPref)
     }
 
-
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         InvertedResultsFilter(),
         TypeFilter(),
@@ -419,12 +430,8 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         )
     )
 
-
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
         AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
     }
-
-
-
 }
