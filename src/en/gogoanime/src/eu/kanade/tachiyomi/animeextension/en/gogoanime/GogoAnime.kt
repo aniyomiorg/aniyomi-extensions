@@ -35,7 +35,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Gogoanime"
 
-    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://gogoanime.sk")!! }
+    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://gogoanime.lu")!! }
 
     override val lang = "en"
 
@@ -220,9 +220,9 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val domainPref = ListPreference(screen.context).apply {
             key = "preferred_domain"
             title = "Preferred domain (requires app restart)"
-            entries = arrayOf("gogoanime.sk", "gogoanime.gg")
-            entryValues = arrayOf("https://gogoanime.sk", "https://gogoanime.gg")
-            setDefaultValue("https://gogoanime.fi")
+            entries = arrayOf("gogoanime.lu", "gogoanime.gg")
+            entryValues = arrayOf("https://gogoanime.lu", "https://gogoanime.gg")
+            setDefaultValue("https://gogoanime.lu")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
