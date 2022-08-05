@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.DoodExtracto
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamTapeExtractor
+import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -103,30 +104,43 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val apiUrl = data.substringAfter("video[1] = '", "")
             .substringBefore("';", "")
             .ifEmpty { throw Exception("no video links found.") }
-
+        val alternativeServers = document.select("ul.TbVideoNv.nav.nav-tabs li:not(:first-child)")
+        if (apiUrl.contains("/embed.php?") || apiUrl.contains("/video/")) {
+            val apiResponse = client.newCall(GET(apiUrl)).execute().asJsoup()
+            var encryptedList = apiResponse.select("li[data-r]")
+            var decryptedList = apiResponse.select(".REactiv li:not([data-r])")
+            encryptedList.forEach {
+                val url = String(Base64.decode(it.attr("data-r"), Base64.DEFAULT))
+                val server = it.select("span").text()
+                serverVideoResolver(url, server.toString()).forEach { video -> videoList.add(video) }
+            }
+            decryptedList.forEach {
+                val url = it.attr("onclick")
+                    .substringAfter("go_to_player('")
+                    .substringBefore("?cover_url=")
+                    .substringBefore("')")
+                    .substringBefore("?poster")
+                    .substringBefore("#poster=")
+                val server = it.select("span").text()
+                serverVideoResolver(url, server.toString()).forEach { video -> videoList.add(video) }
+            }
+        }
         // verifier for old series
-        if (!apiUrl.contains("/video/")) {
+        if (!apiUrl.contains("/video/") || alternativeServers.any()) {
             document.select("ul.TbVideoNv.nav.nav-tabs li").forEach { id ->
                 val serverName = id.select("a").text()
                 val serverId = id.attr("data-id")
-                var serverUrl = data.substringAfter("video[$serverId] = '", "")
-                    .substringBefore("';", "")
+                var serverUrl = data.substringAfter("video[$serverId] = '", "").substringBefore("';", "")
                 if (serverUrl.contains("api.mycdn.moe")) {
                     val urlId = serverUrl.substringAfter("id=")
                     when (serverName.lowercase()) {
                         "sbfast" -> { serverUrl = "https://sbfull.com/e/$urlId" }
                         "plusto" -> { serverUrl = "https://owodeuwu.xyz/v/$urlId" }
                         "doodstream" -> { serverUrl = "https://dood.to/e/$urlId" }
+                        "upload" -> { serverUrl = "https://uqload.com/embed-$urlId.html" }
                     }
                 }
                 serverVideoResolver(serverUrl, serverName.toString()).forEach { video -> videoList.add(video) }
-            }
-        } else {
-            val apiResponse = client.newCall(GET(apiUrl)).execute().asJsoup()
-            apiResponse.select("li[data-r]").forEach {
-                val url = String(Base64.decode(it.attr("data-r"), Base64.DEFAULT))
-                val server = it.select("span").text()
-                serverVideoResolver(url, server.toString()).forEach { video -> videoList.add(video) }
             }
         }
         return videoList
@@ -192,6 +206,11 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 if (video != null) {
                     videoList.add(video)
                 }
+            }
+            "upload" -> {
+                val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
+                val videos = YourUploadExtractor(client).videoFromUrl(url, headers = headers)
+                if (videos.isNotEmpty()) videoList.addAll(videos)
             }
         }
         return videoList
@@ -268,8 +287,25 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Peliculas", "peliculas"),
             Pair("Series", "series"),
             Pair("Doramas", "generos/dorama"),
-            Pair("Animes", "animes")
-
+            Pair("Animes", "animes"),
+            Pair("Acción", "generos/accion"),
+            Pair("Animación", "generos/animacion"),
+            Pair("Aventura", "generos/aventura"),
+            Pair("Ciencia Ficción", "generos/ciencia-ficcion"),
+            Pair("Comedia", "generos/comedia"),
+            Pair("Crimen", "generos/crimen"),
+            Pair("Documental", "generos/documental"),
+            Pair("Drama", "generos/drama"),
+            Pair("Fantasía", "generos/fantasia"),
+            Pair("Foreign", "generos/foreign"),
+            Pair("Guerra", "generos/guerra"),
+            Pair("Historia", "generos/historia"),
+            Pair("Misterio", "generos/misterio"),
+            Pair("Pelicula de Televisión", "generos/pelicula-de-la-television"),
+            Pair("Romance", "generos/romance"),
+            Pair("Suspense", "generos/suspense"),
+            Pair("Terror", "generos/terror"),
+            Pair("Western", "generos/western")
         )
     )
 
@@ -297,20 +333,3 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         screen.addPreference(videoQualityPref)
     }
 }
-
-/*     ⠀⠀⠀⠀⠀⣠⣴⣶⣿⣿⣷⣶⣄⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⣾⣿⣿⡿⢿⣿⣿⣿⣿⣿⣿⣿⣷⣦⡀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⢀⣾⣿⣿⡟⠁⣰⣿⣿⣿⡿⠿⠻⠿⣿⣿⣿⣿⣧⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⣾⣿⣿⠏⠀⣴⣿⣿⣿⠉⠀⠀⠀⠀⠀⠈⢻⣿⣿⣇⠀⠀⠀
-⠀⠀⠀⠀⢀⣠⣼⣿⣿⡏⠀⢠⣿⣿⣿⠇⠀⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⡀⠀⠀
-⠀⠀⠀⣰⣿⣿⣿⣿⣿⡇⠀⢸⣿⣿⣿⡀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⡇⠀⠀
-⠀⠀⢰⣿⣿⡿⣿⣿⣿⡇⠀⠘⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⢀⣸⣿⣿⣿⠁⠀⠀
-⠀⠀⣿⣿⣿⠁⣿⣿⣿⡇⠀⠀⠻⣿⣿⣿⣷⣶⣶⣶⣶⣶⣿⣿⣿⣿⠃⠀⠀⠀
-⠀⢰⣿⣿⡇⠀⣿⣿⣿⠀⠀⠀⠀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠁⠀⠀⠀⠀
-⠀⢸⣿⣿⡇⠀⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠉⠛⠛⠛⠉⢉⣿⣿⠀⠀⠀⠀⠀⠀
-⠀⢸⣿⣿⣇⠀⣿⣿⣿⠀⠀⠀⠀⠀⢀⣤⣤⣤⡀⠀⠀⢸⣿⣿⣿⣷⣦⠀⠀⠀
-⠀⠀⢻⣿⣿⣶⣿⣿⣿⠀⠀⠀⠀⠀⠈⠻⣿⣿⣿⣦⡀⠀⠉⠉⠻⣿⣿⡇⠀⠀
-⠀⠀⠀⠛⠿⣿⣿⣿⣿⣷⣤⡀⠀⠀⠀⠀⠈⠹⣿⣿⣇⣀⠀⣠⣾⣿⣿⡇⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣿⣦⣤⣤⣤⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⡟⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠻⢿⣿⣿⣿⣿⣿⣿⠿⠋⠉⠛⠋⠉⠉⠁⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠁      */
