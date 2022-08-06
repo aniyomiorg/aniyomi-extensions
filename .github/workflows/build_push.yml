@@ -187,6 +187,7 @@ jobs:
       - name: Create repo artifacts
         run: |
           cd master
+          ./.github/scripts/move-apks.sh
           ./.github/scripts/create-repo.sh
 
       - name: Checkout repo branch
