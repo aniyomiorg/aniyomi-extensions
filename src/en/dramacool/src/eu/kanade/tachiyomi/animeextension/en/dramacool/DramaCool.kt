@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.BuildConfig
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.StreamSBExtractor
@@ -54,7 +54,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val RESTART_ANIYOMI = "Restart Aniyomi to apply new setting."
 
         private const val BASE_URL_PREF_TITLE = "Override BaseUrl"
-        private val BASE_URL_PREF = "overrideBaseUrl_v${BuildConfig.VERSION_NAME}"
+        private val BASE_URL_PREF = "overrideBaseUrl_v${AppInfo.getVersionName()}"
         private const val BASE_URL_PREF_SUMMARY = "For temporary uses. Update extension will erase this setting."
     }
 
