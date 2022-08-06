@@ -10,9 +10,7 @@ ext {
     libVersion = '13'
 }
 
-dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-}
+
 
 
 apply from: "$rootDir/common.gradle"

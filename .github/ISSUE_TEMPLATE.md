@@ -2,18 +2,18 @@
 
 I acknowledge that:
 
-- I have updated to the latest version of the app (stable is v0.10.12)
+- I have updated to the latest version of the app (stable is v0.12.3.7)
 - I have updated all extensions
 - If this is an issue with the app itself, that I should be opening an issue in https://github.com/jmir1/aniyomi
 - I have searched the existing issues for duplicates
-- For source requests, I have checked the list of existing extensions including the multi-source spreadsheet: https://tachiyomi.org/extensions/
+- For source requests, I have checked the list of existing extensions including the multi-source spreadsheet: https://aniyomi.jmir.xyz/extensions/
 
 **DELETE THIS SECTION IF YOU HAVE READ AND ACKNOWLEDGED IT**
 
 ---
 
 ## Device information
-* Tachiyomi version: ?
+* Aniyomi version: ?
 * Android version: ?
 * Device: ?
 
