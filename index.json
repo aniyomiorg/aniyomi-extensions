@@ -515,19 +515,19 @@
   {
     "name": "Aniyomi: MundoDonghua",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.mundodonghua",
-    "apk": "aniyomi-es.mundodonghua-v13.2.apk",
+    "apk": "aniyomi-es.mundodonghua-v13.3.apk",
     "lang": "es",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: Pelisplushd",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.pelisplushd",
-    "apk": "aniyomi-es.pelisplushd-v13.13.apk",
+    "apk": "aniyomi-es.pelisplushd-v13.14.apk",
     "lang": "es",
-    "code": 13,
-    "version": "13.13",
+    "code": 14,
+    "version": "13.14",
     "nsfw": 0
   },
   {
