@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -162,7 +163,22 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeParse(response: Response) = throw Exception("not used")
 
+    private fun searchAnimeBySlugParse(response: Response, slug: String): AnimesPage {
+        val details = animeDetailsParse(response)
+        details.url = "/assistir/$slug"
+        return AnimesPage(listOf(details), false)
+    }
+
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        if (query.startsWith(GYConstants.PREFIX_SEARCH_SLUG)) {
+            val slug = query.removePrefix(GYConstants.PREFIX_SEARCH_SLUG)
+            return client.newCall(GET("$baseUrl/assistir/$slug"))
+                .asObservableSuccess()
+                .map { response ->
+                    searchAnimeBySlugParse(response, slug)
+                }
+        }
+        // else
         val params = GYFilters.getSearchParameters(filters)
         return Observable.just(searchAnimeRequest(page, query, params))
     }
