@@ -375,6 +375,6 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 }
 
 private const val nineAnimeKey = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-private const val cipherKey = "QWRAjFNnga1GNSkf"
+private const val cipherKey = "Ml6DEBjOkhWXxXg4"
 private const val decipherKey = "hlPeNwkncH0fq9so"
-// thanks to the community for finding these keys, and 9anime pls don't change them again
+// will implement the new algorithm soon (TM)
