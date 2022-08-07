@@ -28,6 +28,9 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -56,7 +59,10 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         .add("Referer", baseUrl)
 
     // ============================== Popular ===============================   
-    override fun popularAnimeSelector(): String = "div.item > div.anime-episode"
+    private fun popularAnimeContainerSelector(): String = "div.index-size > div.episodes-container"
+
+    override fun popularAnimeSelector(): String = "div.anime-episode"
+
     override fun popularAnimeRequest(page: Int): Request = GET(baseUrl)
 
     override fun popularAnimeFromElement(element: Element): SAnime {
@@ -71,7 +77,7 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
-        val content = document.select("div.episodes-container").get(2)
+        val content = document.selectFirst(popularAnimeContainerSelector())
         val animes = content.select(popularAnimeSelector()).map { element ->
             popularAnimeFromElement(element)
         }
@@ -79,7 +85,7 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector(): String = "div.episodes-container > div.anime-episode"
+    override fun episodeListSelector(): String = "div.episodes-container > div.row > a"
 
     private fun getAllEps(response: Response): List<SEpisode> {
         val epList = mutableListOf<SEpisode>()
@@ -100,17 +106,20 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        return getAllEps(response).reversed()
+        return getAllEps(response)
     }
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-
-        episode.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
-        val epName = element.selectFirst("h3").text().substringAfter("– ")
-        episode.name = epName
+        val info_div = element.selectFirst("div.chaps-infs")
+        episode.setUrlWithoutDomain(element.attr("href"))
+        val epName = info_div.ownText()
+        episode.name = epName.substringAfter("– ")
+        episode.date_upload = info_div.selectFirst("small").ownText().toDate()
         episode.episode_number = try {
-            epName.substringAfter(" ").substringBefore(" ").toFloat()
+            epName.substringAfter("#")
+                .substringBefore(" ")
+                .toFloat()
         } catch (e: NumberFormatException) { 0F }
         return episode
     }
@@ -268,10 +277,10 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun Element.getInfo(item: String, cut: Boolean = true): String {
         val text = this.selectFirst("div.anime-info-right div:contains($item)").text()
-        if (cut)
-            return text.substringAfter(": ")
-        else
-            return text.substringAfter(" ")
+        return when {
+            cut -> text.substringAfter(": ")
+            else -> text.substringAfter(" ")
+        }
     }
 
     private fun parseStatus(statusString: String?): Int {
@@ -279,6 +288,14 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "Completo" -> SAnime.COMPLETED
             "Em lançamento" -> SAnime.ONGOING
             else -> SAnime.UNKNOWN
+        }
+    }
+
+    private fun String.toDate(): Long {
+        return try {
+            DATE_FORMATTER.parse(this)?.time ?: 0L
+        } catch (e: ParseException) {
+            0L
         }
     }
 
@@ -301,5 +318,11 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         return newList
+    }
+
+    companion object {
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("dd/MM/yy", Locale.ENGLISH)
+        }
     }
 }
