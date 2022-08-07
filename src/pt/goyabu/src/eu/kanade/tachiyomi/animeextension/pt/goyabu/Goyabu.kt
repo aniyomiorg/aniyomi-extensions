@@ -6,7 +6,6 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.goyabu.GYFilters.applyFilterParams
 import eu.kanade.tachiyomi.animeextension.pt.goyabu.extractors.PlayerOneExtractor
-import eu.kanade.tachiyomi.animeextension.pt.goyabu.extractors.PlayerTwoExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -129,16 +128,21 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document: Document = response.asJsoup()
         val html: String = document.html()
-        val videoList = PlayerOneExtractor()
-            .videoListFromHtml(html)
-            .toMutableList()
-        val iframe = document.selectFirst("div#tab-2 > iframe")
-        if (iframe != null) {
-            val playerUrl = iframe.attr("src")
-            val video = PlayerTwoExtractor(client).videoFromPlayerUrl(playerUrl)
-            if (video != null)
-                videoList.add(video)
+        val videoList = mutableListOf<Video>()
+        val kanraElement = document.selectFirst("script:containsData(kanra.dev)")
+        if (kanraElement != null) {
+            val kanraUrl = kanraElement.html()
+                .substringAfter("src='")
+                .substringBefore("'")
+            val kanraVideos =
+                PlayerOneExtractor(client).videoListFromKanraUrl(kanraUrl)
+            videoList.addAll(kanraVideos)
+        } else {
+            val extracted = PlayerOneExtractor()
+                .videoListFromHtml(html)
+            videoList.addAll(extracted)
         }
+
         return videoList
     }
 
@@ -243,22 +247,6 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Settings ============================== 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-
-        val videoPlayerPref = ListPreference(screen.context).apply {
-            key = GYConstants.PREFERRED_PLAYER
-            title = "Player preferido"
-            entries = GYConstants.PLAYER_NAMES
-            entryValues = GYConstants.PLAYER_NAMES
-            setDefaultValue(GYConstants.PLAYER_NAMES.first())
-            summary = "%s"
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-
         val videoQualityPref = ListPreference(screen.context).apply {
             key = GYConstants.PREFERRED_QUALITY
             title = "Qualidade preferida"
@@ -273,7 +261,6 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
-        screen.addPreference(videoPlayerPref)
         screen.addPreference(videoQualityPref)
     }
 
@@ -317,23 +304,20 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(GYConstants.PREFERRED_QUALITY, null)
-        val player = preferences.getString(GYConstants.PREFERRED_PLAYER, null)
-        val newList = mutableListOf<Video>()
-        var preferred = 0
-        for (video in this) {
-            when {
-                quality != null && video.quality.contains(quality) -> {
+        if (quality != null) {
+            val newList = mutableListOf<Video>()
+            var preferred = 0
+            for (video in this) {
+                if (video.quality.equals(quality)) {
                     newList.add(preferred, video)
                     preferred++
+                } else {
+                    newList.add(video)
                 }
-                player != null && video.quality.contains(player) -> {
-                    newList.add(preferred, video)
-                    preferred++
-                }
-                else -> newList.add(video)
             }
+            return newList
         }
-        return newList
+        return this
     }
 
     companion object {
