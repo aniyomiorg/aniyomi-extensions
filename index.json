@@ -542,10 +542,10 @@
   {
     "name": "Aniyomi: Vostfree",
     "pkg": "eu.kanade.tachiyomi.animeextension.fr.vostfree",
-    "apk": "aniyomi-fr.vostfree-v13.7.apk",
+    "apk": "aniyomi-fr.vostfree-v13.8.apk",
     "lang": "fr",
-    "code": 7,
-    "version": "13.7",
+    "code": 8,
+    "version": "13.8",
     "nsfw": 0
   },
   {
