@@ -189,6 +189,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: Cinemathek",
+    "pkg": "eu.kanade.tachiyomi.animeextension.de.cinemathek",
+    "apk": "aniyomi-de.cinemathek-v13.1.apk",
+    "lang": "de",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: FilmPalast",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.filmpalast",
     "apk": "aniyomi-de.filmpalast-v13.5.apk",
@@ -443,10 +452,10 @@
   {
     "name": "Aniyomi: Animeyt",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.animeyt",
-    "apk": "aniyomi-es.animeyt-v13.2.apk",
+    "apk": "aniyomi-es.animeyt-v13.3.apk",
     "lang": "es",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0
   },
   {
@@ -686,10 +695,10 @@
   {
     "name": "Aniyomi: Goyabu",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.goyabu",
-    "apk": "aniyomi-pt.goyabu-v13.2.apk",
+    "apk": "aniyomi-pt.goyabu-v13.3.apk",
     "lang": "pt",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0
   },
   {
