@@ -11,7 +11,7 @@ import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
-import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -26,14 +26,13 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.util.regex.Pattern
 
 @ExperimentalSerializationApi
-class KickAssAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "KickAssAnime"
 
@@ -51,12 +50,6 @@ class KickAssAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun popularAnimeSelector(): String = throw Exception("not used")
-
-    override fun popularAnimeFromElement(element: Element) = throw Exception("not used")
-
-    override fun popularAnimeNextPageSelector(): String = throw Exception("not used")
-
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/api/get_anime_list/all/$page")
 
     override fun popularAnimeParse(response: Response): AnimesPage {
@@ -72,10 +65,6 @@ class KickAssAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return AnimesPage(animes, true)
     }
 
-    override fun episodeListSelector() = throw Exception("not used")
-
-    override fun episodeFromElement(element: Element) = throw Exception("not used")
-
     override fun episodeListParse(response: Response): List<SEpisode> {
         val data = getJson(response.asJsoup(), "appData")
         val episodeList = data["episodes"]!!.jsonArray
@@ -87,6 +76,10 @@ class KickAssAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
     }
+
+    override fun latestUpdatesParse(response: Response) = throw Exception("not used")
+
+    override fun latestUpdatesRequest(page: Int) = throw Exception("not used")
 
     override fun videoListParse(response: Response): List<Video> {
         val data = getJson(response.asJsoup(), "appData")
@@ -129,12 +122,6 @@ class KickAssAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
     }
 
-    override fun videoListSelector() = throw Exception("not used")
-
-    override fun videoFromElement(element: Element) = throw Exception("not used")
-
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
-
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", "1080")
 
@@ -154,12 +141,6 @@ class KickAssAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this
     }
 
-    override fun searchAnimeFromElement(element: Element): SAnime = throw Exception("not used")
-
-    override fun searchAnimeNextPageSelector(): String = "not used"
-
-    override fun searchAnimeSelector(): String = throw Exception("not used")
-
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         return GET("$baseUrl/search?q=${encode(query)}")
     }
@@ -177,9 +158,9 @@ class KickAssAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return AnimesPage(animes, false)
     }
 
-    override fun animeDetailsParse(document: Document): SAnime {
+    override fun animeDetailsParse(response: Response): SAnime {
         val anime = SAnime.create()
-        val appData = getJson(document, "appData")
+        val appData = getJson(response.asJsoup(), "appData")
         if (appData.isEmpty().not()) {
             val ani = appData["anime"]!!.jsonObject
             anime.title = ani["name"].toString().trim('"')
@@ -251,14 +232,6 @@ class KickAssAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         return decodedScripts
     }
-
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("not used")
-
-    override fun latestUpdatesFromElement(element: Element) = throw Exception("not used")
-
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("not used")
-
-    override fun latestUpdatesSelector(): String = throw Exception("not used")
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val domainPref = ListPreference(screen.context).apply {
