@@ -22,7 +22,7 @@ import java.lang.Exception
 import java.util.Locale
 
 class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
-    override val baseUrl: String = "https://kuronime.org"
+    override val baseUrl: String = "https://45.12.2.2"
     override val lang: String = "id"
     override val name: String = "Kuronime"
     override val supportsLatest: Boolean = true
