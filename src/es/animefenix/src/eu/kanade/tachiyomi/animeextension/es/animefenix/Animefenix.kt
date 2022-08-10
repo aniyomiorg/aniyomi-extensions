@@ -105,12 +105,12 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (server == "Amazon" || server == "AMAZON" || server == "amazon") {
                 val amazonUrl = "https://www.animefenix.com/stream/amz.php?v=$serverCode"
                 val video = amazonExtractor(amazonUrl)
-                videoList.add(Video(video, "Amazon", video, null))
+                videoList.add(Video(video, "Amazon", video))
             }
             if (server == "AmazonEs" || server == "AmazonES" || server == "amazones") {
                 val amazonUrl = "https://www.animefenix.com/stream/amz.php?v=$serverCode&ext=es"
                 val video = amazonExtractor(amazonUrl)
-                videoList.add(Video(video, "AmazonES", video, null))
+                videoList.add(Video(video, "AmazonES", video))
             }
         }
         return videoList

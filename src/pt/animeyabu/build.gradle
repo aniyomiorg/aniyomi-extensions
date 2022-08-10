@@ -6,9 +6,10 @@ ext {
     extName = 'AnimeYabu!'
     pkgNameSuffix = 'pt.animeyabu'
     extClass = '.AnimeYabu'
-    extVersionCode = 2
-    libVersion = '12'
+    extVersionCode = 5
+    libVersion = '13'
 }
+
 
 
 apply from: "$rootDir/common.gradle"

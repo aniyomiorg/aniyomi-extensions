@@ -5,8 +5,8 @@ ext {
     extName = 'فاصل اعلاني افلام بس'
     pkgNameSuffix = 'ar.faselhdmovies'
     extClass = '.FASELHDMOVIES'
-    extVersionCode = 4
-    libVersion = '12'
+    extVersionCode = 6
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

@@ -5,8 +5,8 @@ ext {
     extName = 'haho.moe'
     pkgNameSuffix = 'en.hahomoe'
     extClass = '.HahoMoe'
-    extVersionCode = 7
-    libVersion = '12'
+    extVersionCode = 8
+    libVersion = '13'
     containsNsfw = true
 }
 

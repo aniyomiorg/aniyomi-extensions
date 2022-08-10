@@ -6,12 +6,12 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
-import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -54,76 +54,77 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return Headers.Builder().add("Referer", baseUrl)
     }
 
-    override fun popularAnimeSelector(): String = "li"
+    override fun popularAnimeSelector(): String = "div.ani.items > div"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/ajax/home/widget?name=trending&page=$page")
-
-    override fun popularAnimeParse(response: Response): AnimesPage {
-        val responseObject = json.decodeFromString<JsonObject>(response.body!!.string())
-        val document = Jsoup.parse(JSONUtil.unescape(responseObject["html"]!!.jsonPrimitive.content))
-
-        val animes = document.select(popularAnimeSelector()).map { element ->
-            popularAnimeFromElement(element)
-        }
-
-        val hasNextPage = popularAnimeNextPageSelector().let { selector ->
-            document.select(selector).first()
-        } != null
-
-        return AnimesPage(animes, hasNextPage)
-    }
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/filter?sort=trending&page=$page")
 
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.select("a.name").attr("href").substringBefore("?"))
-        thumbnail_url = element.select("a.poster img").attr("src")
+        thumbnail_url = element.select("div.poster img").attr("src")
         title = element.select("a.name").text()
     }
 
-    override fun popularAnimeNextPageSelector(): String = "li"
+    override fun popularAnimeNextPageSelector(): String = "nav > ul.pagination > li > a[aria-label=pagination.next]"
 
     override fun episodeListRequest(anime: SAnime): Request {
-        val animeId = anime.url.substringAfterLast(".")
-        val vrf = encode(getVrf(animeId))
-        return GET("$baseUrl/ajax/anime/servers?id=$animeId&vrf=$vrf")
+        val id = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup().selectFirst("div[data-id]").attr("data-id")
+        val vrf = encodeVrf(id)
+        return GET("$baseUrl/ajax/episode/list/$id?vrf=$vrf")
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val responseObject = json.decodeFromString<JsonObject>(response.body!!.string())
-        val document = Jsoup.parse(JSONUtil.unescape(responseObject["html"]!!.jsonPrimitive.content))
-        val animeId = response.request.url.queryParameter("id")!!
-        val vrf = encode(response.request.url.queryParameter("vrf")!!)
-        return document.select(episodeListSelector()).map { episodeFromElement(it, animeId, vrf) }.reversed()
+        val document = Jsoup.parse(JSONUtil.unescape(responseObject["result"]!!.jsonPrimitive.content))
+        return document.select(episodeListSelector()).map(::episodeFromElement).reversed()
     }
 
-    override fun episodeListSelector() = "ul.episodes li a"
+    override fun episodeListSelector() = "div.episodes ul > li > a"
 
-    private fun episodeFromElement(element: Element, animeId: String, vrf: String): SEpisode {
+    override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-        val epNum = element.attr("data-base")
-        episode.url = "/ajax/anime/servers?id=$animeId&vrf=$vrf&episode=$epNum"
+        val epNum = element.attr("data-num")
+        val ids = element.attr("data-ids")
+        val sub = element.attr("data-sub").toInt().toBoolean()
+        val dub = element.attr("data-dub").toInt().toBoolean()
+        val vrf = encodeVrf(ids)
+        episode.url = "/ajax/server/list/$ids?vrf=$vrf"
         episode.episode_number = epNum.toFloat()
-        episode.name = "Episode $epNum"
+        val langPrefix = "[" + if (sub) { "Sub" } else { "" } + if (dub) { ",Dub" } else { "" } + "]"
+        val name = element.parent()?.select("span.d-title")?.text().orEmpty()
+        val namePrefix = "Episode $epNum"
+        episode.name = "Episode $epNum" + if (sub || dub) {
+            ": $langPrefix"
+        } else { "" } + if (name.isNotEmpty() && name != namePrefix) {
+            " $name"
+        } else { "" }
         return episode
     }
 
-    override fun episodeFromElement(element: Element) = throw Exception("not used")
+    private fun Int.toBoolean() = this == 1
 
     override fun videoListParse(response: Response): List<Video> {
         val responseObject = json.decodeFromString<JsonObject>(response.body!!.string())
-        val document = Jsoup.parse(JSONUtil.unescape(responseObject["html"]!!.jsonPrimitive.content))
-        val epNum = response.request.url.queryParameter("episode")
-        val sources = document.select("ul.episodes li a[data-base=$epNum]").attr("data-sources")
-        val sourceId = json.decodeFromString<JsonObject>(sources)["41"]!!.jsonPrimitive.content
-        fun getEpisodeBody(): String? {
-            val res = network.client
-                .newCall(GET("$baseUrl/ajax/anime/episode?id=$sourceId"))
-                .execute()
-            return if (res.code == 200) res.body!!.string() else null
-        }
-        // sometimes I have to retry the request for some reason (???)
-        val episodeBody = getEpisodeBody() ?: getEpisodeBody()!!
-        val encryptedSourceUrl = json.decodeFromString<JsonObject>(episodeBody)["url"]!!.jsonPrimitive.content
-        val embedLink = getLink(encryptedSourceUrl)
+        val document = Jsoup.parse(JSONUtil.unescape(responseObject["result"]!!.jsonPrimitive.content))
+        val videoList = mutableListOf<Video>()
+
+        // Sub
+        document.select("div[data-type=sub] > ul > li[data-sv-id=41]")
+            .firstOrNull()?.attr("data-link-id")
+            ?.let { videoList.addAll(extractVideo(it, "Sub")) }
+        // Dub
+        document.select("div[data-type=dub] > ul > li[data-sv-id=41]")
+            .firstOrNull()?.attr("data-link-id")
+            ?.let { videoList.addAll(extractVideo(it, "Dub")) }
+        return videoList
+    }
+
+    private fun extractVideo(sourceId: String, lang: String): List<Video> {
+        val vrf = encodeVrf(sourceId)
+        val episodeBody = network.client.newCall(GET("$baseUrl/ajax/server/$sourceId?vrf=$vrf"))
+            .execute().body!!.string()
+        val encryptedSourceUrl = json.decodeFromString<JsonObject>(episodeBody)["result"]!!
+            .jsonObject["url"]!!.jsonPrimitive.content
+        val embedLink = decodeVrf(encryptedSourceUrl)
         val vizcloudClient = client.newBuilder().addInterceptor(VizcloudInterceptor()).build()
         val referer = Headers.headersOf("Referer", "$baseUrl/")
         val sourceObject = json.decodeFromString<JsonObject>(
@@ -138,9 +139,9 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val masterPlaylist = result.body!!.string()
         return masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
             .split("#EXT-X-STREAM-INF:").map {
-                val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p"
+                val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p $lang"
                 val videoUrl = masterUrl.substringBeforeLast("/") + "/" + it.substringAfter("\n").substringBefore("\n")
-                Video(videoUrl, quality, videoUrl, null, headers)
+                Video(videoUrl, quality, videoUrl, headers = headers)
             }
     }
 
@@ -152,15 +153,28 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", "1080")
-        if (quality != null) {
+        val lang = preferences.getString("preferred_language", "Sub")
+        if (quality != null && lang != null) {
             val newList = mutableListOf<Video>()
             var preferred = 0
             for (video in this) {
-                if (video.quality.contains(quality)) {
+                if (video.quality.contains(quality) && video.quality.contains(lang)) {
                     newList.add(preferred, video)
                     preferred++
                 } else {
                     newList.add(video)
+                }
+            }
+            // If dub is preferred language and anime do not have dub version, respect preferred quality
+            if (lang == "Dub" && newList.first().quality.contains("Dub").not()) {
+                newList.clear()
+                for (video in this) {
+                    if (video.quality.contains(quality)) {
+                        newList.add(preferred, video)
+                        preferred++
+                    } else {
+                        newList.add(video)
+                    }
                 }
             }
             return newList
@@ -168,33 +182,28 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this
     }
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(baseUrl + element.select("a.name").attr("href"))
-        anime.thumbnail_url = element.select("a.poster img").attr("src")
-        anime.title = element.select("a.name").text()
-        return anime
-    }
+    override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
 
-    override fun searchAnimeNextPageSelector(): String = "a.btn-primary.next:not(.disabled)"
+    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
-    override fun searchAnimeSelector(): String = "ul.anime-list li"
+    override fun searchAnimeSelector(): String = popularAnimeSelector()
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val vrf = encode(getVrf(query))
-        return GET("$baseUrl/search?keyword=${encode(query)}&vrf=$vrf&page=$page")
+        val vrf = encodeVrf(query)
+        return GET("$baseUrl/filter?keyword=${encode(query)}&vrf=$vrf&page=$page")
     }
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.select("h1.title").text()
-        anime.genre = document.select("div:contains(Genre) > span > a[title]").joinToString { it.text() }
-        anime.description = document.select("p[itemprop=description]").text()
+        anime.genre = document.select("div:contains(Genre) > span > a").joinToString { it.text() }
+        anime.description = document.select("div.synopsis > div.shorting > div.content").text()
+        anime.author = document.select("div:contains(Studios) > span > a").text()
         anime.status = parseStatus(document.select("div:contains(Status) > span").text())
 
         // add alternative name to anime description
         val altName = "Other name(s): "
-        document.select("div.alias").firstOrNull()?.ownText()?.let {
+        document.select("h1.title").attr("data-jp")?.let {
             if (it.isBlank().not()) {
                 anime.description = when {
                     anime.description.isNullOrBlank() -> altName + it
@@ -207,21 +216,19 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun parseStatus(statusString: String): Int {
         return when (statusString) {
-            "Airing" -> SAnime.ONGOING
+            "Releasing" -> SAnime.ONGOING
             "Completed" -> SAnime.COMPLETED
             else -> SAnime.UNKNOWN
         }
     }
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("not used")
+    override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
 
-    override fun latestUpdatesFromElement(element: Element) = throw Exception("not used")
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/ajax/home/widget?name=updated_all&page=$page")
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/filter?sort=recently_updated&page=$page")
 
-    override fun latestUpdatesSelector(): String = throw Exception("not used")
-
-    override fun latestUpdatesParse(response: Response) = popularAnimeParse(response)
+    override fun latestUpdatesSelector(): String = popularAnimeSelector()
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val domainPref = ListPreference(screen.context).apply {
@@ -254,23 +261,32 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val videoLanguagePref = ListPreference(screen.context).apply {
+            key = "preferred_language"
+            title = "Preferred language"
+            entries = arrayOf("Sub", "Dub")
+            entryValues = arrayOf("Sub", "Dub")
+            setDefaultValue("Sub")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
         screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
+        screen.addPreference(videoLanguagePref)
     }
 
-    private fun getVrf(id: String): String {
-        val reversed = ue(encode(id) + "0000000").slice(0..5).reversed()
-        return reversed + ue(je(reversed, encode(id))).replace("""=+$""".toRegex(), "")
-    }
+    private fun encodeVrf(id: String) = encode(encrypt(cipher(encode(id), cipherKey)))
 
-    private fun getLink(url: String): String {
-        val i = url.slice(0..5)
-        val n = url.slice(6..url.lastIndex)
-        return decode(je(i, ze(n)))
-    }
+    private fun decodeVrf(text: String) = decode(cipher(decrypt(text), decipherKey))
 
-    private fun ue(input: String): String {
-        if (input.any { it.code >= 256 }) throw Exception("illegal characters!")
+    private fun encrypt(input: String): String {
+        if (input.any { it.code > 255 }) throw Exception("illegal characters!")
         var output = ""
         for (i in input.indices step 3) {
             val a = intArrayOf(-1, -1, -1, -1)
@@ -287,38 +303,38 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             for (n in a) {
                 if (n == -1) output += "="
                 else {
-                    if (n in 0..63) output += key[n]
+                    if (n in 0..63) output += nineAnimeKey[n]
                 }
             }
         }
         return output
     }
 
-    private fun je(inputOne: String, inputTwo: String): String {
+    private fun cipher(input: String, cipherKey: String): String {
         val arr = IntArray(256) { it }
-        var output = ""
+
         var u = 0
         var r: Int
-        for (a in arr.indices) {
-            u = (u + arr[a] + inputOne[a % inputOne.length].code) % 256
-            r = arr[a]
-            arr[a] = arr[u]
+        arr.indices.forEach {
+            u = (u + arr[it] + cipherKey[it % cipherKey.length].code) % 256
+            r = arr[it]
+            arr[it] = arr[u]
             arr[u] = r
         }
         u = 0
         var c = 0
-        for (f in inputTwo.indices) {
-            c = (c + f) % 256
+
+        return input.indices.map { j ->
+            c = (c + 1) % 256
             u = (u + arr[c]) % 256
             r = arr[c]
             arr[c] = arr[u]
             arr[u] = r
-            output += (inputTwo[f].code xor arr[(arr[c] + arr[u]) % 256]).toChar()
-        }
-        return output
+            (input[j].code xor arr[(arr[c] + arr[u]) % 256]).toChar()
+        }.joinToString("")
     }
 
-    private fun ze(input: String): String {
+    private fun decrypt(input: String): String {
         val t = if (input.replace("""[\t\n\f\r]""".toRegex(), "").length % 4 == 0) {
             input.replace("""==?$""".toRegex(), "")
         } else input
@@ -329,7 +345,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         var u = 0
         for (o in t.indices) {
             e = e shl 6
-            i = key.indexOf(t[o])
+            i = nineAnimeKey.indexOf(t[o])
             e = e or i
             u += 6
             if (24 == u) {
@@ -358,4 +374,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun decode(input: String): String = java.net.URLDecoder.decode(input, "utf-8")
 }
 
-private const val key = "c/aUAorINHBLxWTy3uRiPt8J+vjsOheFG1E0q2X9CYwDZlnmd4Kb5M6gSVzfk7pQ"
+private const val nineAnimeKey = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+private const val cipherKey = "Ml6DEBjOkhWXxXg4"
+private const val decipherKey = "hlPeNwkncH0fq9so"
+// will implement the new algorithm soon (TM)

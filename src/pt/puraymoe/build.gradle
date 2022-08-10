@@ -1,0 +1,16 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'Puray.moe'
+    pkgNameSuffix = 'pt.puraymoe'
+    extClass = '.PurayMoe'
+    extVersionCode = 3
+    libVersion = '13'
+}
+
+
+
+
+apply from: "$rootDir/common.gradle"

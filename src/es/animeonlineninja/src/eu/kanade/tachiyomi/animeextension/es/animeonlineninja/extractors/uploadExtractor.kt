@@ -10,6 +10,6 @@ class uploadExtractor(private val client: OkHttpClient) {
     fun videofromurl(url: String, headers: Headers, quality: String): Video {
         val document = client.newCall(GET(url)).execute().asJsoup()
         val basicUrl = document.selectFirst("script:containsData(var player =)").data().substringAfter("sources: [\"").substringBefore("\"],")
-        return Video(basicUrl, "$quality Uqload", basicUrl, null, headers)
+        return Video(basicUrl, "$quality Uqload", basicUrl, headers = headers)
     }
 }

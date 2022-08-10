@@ -11,6 +11,7 @@ import eu.kanade.tachiyomi.animeextension.pt.animesvision.dto.PayloadItem
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.GlobalVisionExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.StreamTapeExtractor
+import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.VoeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -146,12 +147,14 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val hosts_ids = mutableListOf<Int>()
 
         val ignoredHosts = preferences.getStringSet(IGNORED_HOSTS, null)
-        val ignoreDO = ignoredHosts?.contains(HOSTS_NAMES.elementAt(1)) ?: false
-        val ignoreST = ignoredHosts?.contains(HOSTS_NAMES.elementAt(2)) ?: false
+        val ignoreDO = ignoredHosts?.contains(HOSTS_NAMES.elementAt(0)) ?: false
+        val ignoreST = ignoredHosts?.contains(HOSTS_NAMES.elementAt(1)) ?: false
+        val ignoreVO = ignoredHosts?.contains(HOSTS_NAMES.elementAt(2)) ?: false
 
         if (!ignoreST && "Streamtape" in players)
             hosts_ids.add(5)
-
+        if (!ignoreVO && "Voe CDN" in players)
+            hosts_ids.add(7)
         if (!ignoreDO && "DOOD" in players)
             hosts_ids.add(8)
 
@@ -174,15 +177,19 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 it.text()
             }
         val videoList = GlobalVisionExtractor()
-            .videoListFromHtml(doc.html(), players)
+            .videoListFromHtml(doc.html())
             .toMutableList()
 
         getPlayersUrl(doc, players).forEach {
-            val video = if (it.contains("streamtape")) {
-                StreamTapeExtractor(client).videoFromUrl(it)
-            } else if (it.contains("dood")) {
-                DoodExtractor(client).videoFromUrl(it)
-            } else { null }
+            val video = when {
+                "streamtape" in it ->
+                    StreamTapeExtractor(client).videoFromUrl(it)
+                "dood" in it ->
+                    DoodExtractor(client).videoFromUrl(it)
+                "voe.sx" in it ->
+                    VoeExtractor(client).videoFromUrl(it)
+                else -> null
+            }
             if (video != null)
                 videoList.add(video)
         }
@@ -208,12 +215,27 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeSelector(): String = "div.film_list-wrap div.film-poster"
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        val params = AVFilters.getSearchParameters(filters)
-        return client.newCall(searchAnimeRequest(page, query, params))
-            .asObservableSuccess()
-            .map { response ->
-                searchAnimeParse(response)
-            }
+        return if (query.startsWith(PREFIX_SEARCH)) {
+            val path = query.removePrefix(PREFIX_SEARCH)
+            client.newCall(GET("$baseUrl/$path"))
+                .asObservableSuccess()
+                .map { response ->
+                    searchAnimeByPathParse(response, path)
+                }
+        } else {
+            val params = AVFilters.getSearchParameters(filters)
+            client.newCall(searchAnimeRequest(page, query, params))
+                .asObservableSuccess()
+                .map { response ->
+                    searchAnimeParse(response)
+                }
+        }
+    }
+
+    private fun searchAnimeByPathParse(response: Response, path: String): AnimesPage {
+        val details = animeDetailsParse(response)
+        details.url = "/$path"
+        return AnimesPage(listOf(details), false)
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
@@ -281,23 +303,6 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Settings ============================== 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-
-        val videoServerPref = ListPreference(screen.context).apply {
-            key = PREFERRED_HOST
-            title = "Host preferido"
-            entries = HOSTS_NAMES
-            entryValues = HOSTS_URLS
-            setDefaultValue(HOSTS_URLS.first())
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREFERRED_QUALITY
             title = "Qualidade preferida (Válido apenas no GlobalVision)"
@@ -314,11 +319,10 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
 
         val ignoredHosts = MultiSelectListPreference(screen.context).apply {
-            val values = HOSTS_NAMES.drop(1).toTypedArray()
             key = IGNORED_HOSTS
             title = "Hosts ignorados ao carregar"
-            entries = values
-            entryValues = values
+            entries = HOSTS_NAMES
+            entryValues = HOSTS_NAMES
             setDefaultValue(emptySet<String>())
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit()
@@ -327,7 +331,6 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
-        screen.addPreference(videoServerPref)
         screen.addPreference(videoQualityPref)
         screen.addPreference(ignoredHosts)
     }
@@ -375,29 +378,19 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val host = preferences.getString(PREFERRED_HOST, null)
         val quality = preferences.getString(PREFERRED_QUALITY, null)
-        if (host != null) {
-            var preferred = 0
+        if (quality != null) {
             val newList = mutableListOf<Video>()
+            var preferred = 0
             for (video in this) {
-                if (video.url.contains(host)) {
-                    if (host == HOSTS_URLS.first() && quality != null) {
-                        val contains: Boolean = video.quality.contains(quality)
-                        if (contains) {
-                            newList.add(preferred, video)
-                            preferred++
-                        } else {
-                            newList.add(video)
-                        }
-                    } else {
-                        newList.add(preferred, video)
-                        preferred++
-                    }
+                if (quality in video.quality) {
+                    newList.add(preferred, video)
+                    preferred++
                 } else {
                     newList.add(video)
                 }
             }
+
             return newList
         }
         return this
@@ -405,11 +398,10 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     companion object {
         private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
-        private const val PREFERRED_HOST = "preferred_host"
         private const val PREFERRED_QUALITY = "preferred_quality"
         private const val IGNORED_HOSTS = "ignored_hosts"
-        private val HOSTS_NAMES = arrayOf("GlobalVision", "DoodStream", "StreamTape")
-        private val HOSTS_URLS = arrayOf("animes.vision", "https://dood", "https://streamtape")
-        private val QUALITY_LIST = arrayOf("SD", "HD", "FULLHD")
+        private val HOSTS_NAMES = arrayOf("DoodStream", "StreamTape", "VoeCDN")
+        private val QUALITY_LIST = arrayOf("480p", "720p", "1080p", "4K")
+        const val PREFIX_SEARCH = "path:"
     }
 }

@@ -6,12 +6,9 @@ ext {
     extName = 'FireAnime'
     pkgNameSuffix = 'de.fireanime'
     extClass = '.FireAnime'
-    extVersionCode = 3
-    libVersion = '12'
+    extVersionCode = 5
+    libVersion = '13'
     containsNsfw = true
-}
-dependencies {
-    implementation project(':lib-ratelimit')
 }
 
 apply from: "$rootDir/common.gradle"

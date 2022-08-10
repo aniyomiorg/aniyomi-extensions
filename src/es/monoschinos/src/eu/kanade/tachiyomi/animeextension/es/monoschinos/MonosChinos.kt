@@ -48,34 +48,26 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeRequest(page: Int): Request = GET("https://monoschinos2.com/animes?p=$page")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(
-            element.select("a").attr("href")
-        )
-        anime.title = element.select("a div.series div.seriesdetails h3").text()
-        anime.thumbnail_url = element.select("a div.series div.seriesimg img").attr("src")
-        return anime
+        return SAnime.create().apply {
+            setUrlWithoutDomain(element.select("a").attr("href"))
+            title = element.select("a div.series div.seriesdetails h3").text()
+            thumbnail_url = element.select("a div.series div.seriesimg img").attr("src")
+        }
     }
 
     override fun popularAnimeNextPageSelector(): String = "li.page-item a.page-link"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val episodes = mutableListOf<SEpisode>()
-
         val jsoup = response.asJsoup()
         val animeId = response.request.url.pathSegments.last().replace("-sub-espanol", "").replace("-080p", "-1080p")
-        jsoup.select("div.heroarea2 div.heromain2 div.allanimes div.row.jpage.row-cols-md-6 div.col-item").forEach { it ->
-
+        return jsoup.select("div.col-item").map { it ->
             val epNum = it.attr("data-episode")
-            val episode = SEpisode.create().apply {
+            SEpisode.create().apply {
                 episode_number = epNum.toFloat()
                 name = "Episodio $epNum"
                 url = "/ver/$animeId-episodio-$epNum"
             }
-            episodes.add(episode)
         }
-
-        return episodes.reversed()
     }
 
     override fun episodeListSelector() = throw Exception("not used")
@@ -85,28 +77,16 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
+        val headers = headers.newBuilder().add("referer", "https://uqload.com/").build()
         document.select("div.heroarea div.row div.col-md-12 ul.dropcaps li").forEach { it ->
-            val server = it.select("a").text()
+            // val server = it.select("a").text()
             val urlBase64 = it.select("a").attr("data-player")
-            val url1 = Base64.decode(urlBase64, Base64.DEFAULT)
-            val url = String(url1).replace("https://monoschinos2.com/reproductor?url=", "")
-
-            if (server.lowercase() == "fembed" || server.lowercase() == "fembed2") {
-                val videos = FembedExtractor().videosFromUrl(url)
-                videoList.addAll(videos)
-            }
-            if (server == "ok" && !url.contains("streamcherry") || server == "Ok" && !url.contains("streamcherry")) {
-                val videos = OkruExtractor(client).videosFromUrl(url)
-                videoList.addAll(videos)
-            }
-            if (server.lowercase() == "zeus") {
-                val videos = SolidFilesExtractor(client).videosFromUrl(url)
-                videoList.addAll(videos)
-            }
-            if (server == "uqload") {
-                val headers = headers.newBuilder().add("referer", "https://uqload.com/").build()
-                val video = uploadExtractor(client).videofromurl(url, headers)
-                videoList.add(video)
+            val url = Base64.decode(urlBase64, Base64.DEFAULT).toString(Charsets.UTF_8).substringAfter("=")
+            when {
+                url.contains("fembed") -> videoList.addAll(FembedExtractor().videosFromUrl(url))
+                url.contains("ok") -> if (!url.contains("streamcherry")) videoList.addAll(OkruExtractor(client).videosFromUrl(url))
+                url.contains("solidfiles") -> videoList.addAll(SolidFilesExtractor(client).videosFromUrl(url))
+                url.contains("uqload") -> videoList.add(uploadExtractor(client).videofromurl(url, headers))
             }
         }
         return videoList
@@ -119,7 +99,7 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "Fembed: 720p")
+        val quality = preferences.getString("preferred_quality", "SolidFiles")
         if (quality != null) {
             val newList = mutableListOf<Video>()
             var preferred = 0
@@ -137,13 +117,21 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val filterList = if (filters.isEmpty()) getFilterList() else filters
-        val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
+        val genreFilter = filters.find { it is GenreFilter } as GenreFilter
+        val yearFilter = try {
+            (filters.find { it is YearFilter } as YearFilter).state.toInt()
+        } catch (e: Exception) {
+            "false"
+        }
+        val letterFilter = try {
+            (filters.find { it is LetterFilter } as LetterFilter).state.first().uppercase()
+        } catch (e: Exception) {
+            "false"
+        }
 
         return when {
-            query.isNotBlank() -> GET("$baseUrl/buscar?q=$query&p=$page", headers)
-            genreFilter.state != 0 -> GET("$baseUrl/animes?categoria=false&genero=${genreFilter.toUriPart()}&fecha=false&letra=false&p=$page")
-            else -> GET("$baseUrl/animes?p=$page ")
+            query.isNotBlank() -> GET("$baseUrl/buscar?q=$query&p=$page")
+            else -> GET("$baseUrl/animes?categoria=false&genero=${genreFilter.toUriPart()}&fecha=$yearFilter&letra=$letterFilter&p=$page")
         }
     }
     override fun searchAnimeFromElement(element: Element): SAnime {
@@ -155,13 +143,13 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeSelector(): String = popularAnimeSelector()
 
     override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
-        anime.thumbnail_url = document.selectFirst("div.chapterpic img").attr("src")
-        anime.title = document.selectFirst("div.chapterdetails h1").text()
-        anime.description = document.select("p.textShort").first().ownText()
-        anime.genre = document.select("ol.breadcrumb li.breadcrumb-item a").joinToString { it.text() }
-        anime.status = parseStatus(document.select("div.butns button.btn1").text())
-        return anime
+        return SAnime.create().apply {
+            thumbnail_url = document.selectFirst("div.chapterpic img").attr("src")
+            title = document.selectFirst("div.chapterdetails h1").text()
+            description = document.select("p.textShort").first().ownText()
+            genre = document.select("ol.breadcrumb li.breadcrumb-item a").joinToString { it.text() }
+            status = parseStatus(document.select("div.butns button.btn1").text())
+        }
     }
 
     private fun parseStatus(statusString: String): Int {
@@ -182,8 +170,14 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
-        GenreFilter()
+        GenreFilter(),
+        AnimeFilter.Separator(),
+        YearFilter(),
+        LetterFilter()
     )
+
+    private class YearFilter : AnimeFilter.Text("Año", "2022")
+    private class LetterFilter : AnimeFilter.Text("Letra", "")
 
     private class GenreFilter : UriPartFilter(
         "Generos",

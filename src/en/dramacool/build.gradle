@@ -5,8 +5,8 @@ ext {
     extName = 'DramaCool'
     pkgNameSuffix = 'en.dramacool'
     extClass = '.DramaCool'
-    extVersionCode = 15
-    libVersion = '12'
+    extVersionCode = 18
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

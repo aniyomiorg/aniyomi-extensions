@@ -5,8 +5,8 @@ ext {
     extName = 'أكوام'
     pkgNameSuffix = 'ar.akwam'
     extClass = '.Akwam'
-    extVersionCode = 6
-    libVersion = '12'
+    extVersionCode = 7
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

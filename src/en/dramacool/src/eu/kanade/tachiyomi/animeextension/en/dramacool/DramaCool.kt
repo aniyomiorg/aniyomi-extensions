@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.BuildConfig
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.StreamSBExtractor
@@ -54,7 +54,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val RESTART_ANIYOMI = "Restart Aniyomi to apply new setting."
 
         private const val BASE_URL_PREF_TITLE = "Override BaseUrl"
-        private val BASE_URL_PREF = "overrideBaseUrl_v${BuildConfig.VERSION_NAME}"
+        private val BASE_URL_PREF = "overrideBaseUrl_v${AppInfo.getVersionName()}"
         private const val BASE_URL_PREF_SUMMARY = "For temporary uses. Update extension will erase this setting."
     }
 
@@ -121,8 +121,10 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 url.contains("sbembed.com") || url.contains("sbembed1.com") || url.contains("sbplay.org") ||
                     url.contains("sbvideo.net") || url.contains("streamsb.net") || url.contains("sbplay.one") ||
                     url.contains("cloudemb.com") || url.contains("playersb.com") || url.contains("tubesb.com") ||
-                    url.contains("sbplay1") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
-                    url.contains("sbplay2") || url.contains("japopav.tv") || url.contains("viewsb.com")
+                    url.contains("sbplay1.com") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
+                    url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
+                    url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
+                    url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com")
                 -> {
                     val headers = headers.newBuilder()
                         .set("Referer", url)

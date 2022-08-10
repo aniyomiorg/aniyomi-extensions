@@ -277,7 +277,7 @@ class AnimevostSource(override val name: String, override val baseUrl: String, p
             val linkData = it.replace("[", "").split("]")
             val quality = linkData.first()
             val url = linkData.last().split(" or").first()
-            videoList.add(Video(url, quality, url, null))
+            videoList.add(Video(url, quality, url))
         }
 
         return videoList

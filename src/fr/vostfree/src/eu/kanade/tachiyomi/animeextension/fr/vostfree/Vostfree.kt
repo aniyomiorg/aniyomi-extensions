@@ -19,29 +19,23 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.Connection
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 
 class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Vostfree"
 
-    override val baseUrl = "https://vostfree.tv"
+    override val baseUrl = "https://vostfree.cx"
 
     override val lang = "fr"
-
-    private val json: Json by injectLazy()
 
     override val supportsLatest = false
 
@@ -53,7 +47,7 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "div#page-content div.page-left div#content div#dle-content div.movie-poster"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("https://vostfree.tv/films-vf-vostfr/page/$page/")
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/films-vf-vostfr/page/$page/")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -98,27 +92,33 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element) = throw Exception("not used")
 
     override fun videoListParse(response: Response): List<Video> {
-        val epNum = response.request.url.toString().substringAfter("https://vostfree.tv/?episode:").substringBefore("/")
-        val realUrl = response.request.url.toString().replace("https://vostfree.tv/?episode:$epNum/", "")
-        val document = Jsoup.connect(realUrl).get()
+        val epNum = response.request.url.toString().substringAfter("$baseUrl/?episode:").substringBefore("/")
+        val realUrl = response.request.url.toString().replace("$baseUrl/?episode:$epNum/", "")
+
+        val document = client.newCall(GET(realUrl)).execute().asJsoup()
         val videoList = mutableListOf<Video>()
         val allPlayerIds = document.select("div.tab-content div div.new_player_top div.new_player_bottom div.button_box")[epNum.toInt()]
 
         allPlayerIds.select("div").forEach() {
             val server = it.text()
-            if (server == "Vudeo") {
+            if (server.lowercase() == "vudeo") {
+                val headers = headers.newBuilder()
+                    .set("referer", "https://vudeo.io/")
+                    .build()
                 val playerId = it.attr("id")
                 val url = document.select("div#player-tabs div.tab-blocks div.tab-content div div#content_$playerId").text()
-                val video = VudeoExtractor(client).videosFromUrl(url)
-                videoList.addAll(video)
+                try {
+                    val video = VudeoExtractor(client).videosFromUrl(url, headers)
+                    videoList.addAll(video)
+                } catch (e: Exception) {}
             }
-            if (server == "Ok" || server == "OK") {
+            if (server.lowercase() == "ok") {
                 val playerId = it.attr("id")
                 val url = "https://ok.ru/videoembed/" + document.select("div#player-tabs div.tab-blocks div.tab-content div div#content_$playerId").text()
                 val video = OkruExtractor(client).videosFromUrl(url)
                 videoList.addAll(video)
             }
-            if (server == "Doodstream") {
+            if (server.lowercase() == "doodstream") {
                 val playerId = it.attr("id")
                 val url = document.select("div#player-tabs div.tab-blocks div.tab-content div div#content_$playerId").text()
                 val video = DoodExtractor(client).videoFromUrl(url, "DoodStream")
@@ -126,7 +126,7 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     videoList.add(video)
                 }
             }
-            if (server == "Mytv" || server == "Stream") {
+            if (server.lowercase() == "mytv" || server.lowercase() == "stream") {
                 val playerId = it.attr("id")
                 val url = "https://www.myvi.tv/embed/" + document.select("div#player-tabs div.tab-blocks div.tab-content div div#content_$playerId").text()
                 val video = MytvExtractor(client).videosFromUrl(url)
@@ -172,16 +172,14 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .addEncoded("search_start", "0")
             .addEncoded("full_search", "0")
             .addEncoded("result_from", "1")
-            .addEncoded("story", "$query")
+            .addEncoded("story", query)
             .build()
 
-        val test = Jsoup.connect("https://vostfree.tv/index.php?do=search").method(Connection.Method.POST).data("do", "search").data("subaction", "search").data("search_start", "0").data("full_search", "0").data("result_from", "1").data("story", "$query").get()
-
         return when {
-            query.isNotBlank() && test.select("div.search-result").toString() != "" -> POST("https://vostfree.tv/index.php?do=search", headers, formData)
+            query.isNotBlank() -> try { POST("$baseUrl/index.php?do=search", headers, formData) } catch (e: Exception) { GET("$baseUrl/animes-vostfr/page/$page/") }
             genreFilter.state != 0 -> GET("$baseUrl/genre/${genreFilter.toUriPart()}/page/$page/")
-            typeFilter.state != 0 -> GET("https://vostfree.tv/${typeFilter.toUriPart()}/page/$page/")
-            else -> GET("https://vostfree.tv/animes-vostfr/page/$page/")
+            typeFilter.state != 0 -> GET("$baseUrl/${typeFilter.toUriPart()}/page/$page/")
+            else -> GET("$baseUrl/animes-vostfr/page/$page/")
         }
     }
 

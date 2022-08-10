@@ -15,7 +15,7 @@ class VidBomExtractor(private val client: OkHttpClient) {
         for (source in sources) {
             val src = source.substringBefore("\"")
             val quality = "Vidbom:" + source.substringAfter("label:\"").substringBefore("\"") // .substringAfter("format: '")
-            val video = Video(src, quality, src, null)
+            val video = Video(src, quality, src)
             videoList.add(video)
         }
         return videoList
@@ -29,7 +29,7 @@ class VidBomExtractor(private val client: OkHttpClient) {
             val videoUrl = `object`.getString("file")
             Log.i("looool", videoUrl)
             val quality = "Vidbom:" + `object`.getString("label")
-            videoList.add(Video(videoUrl, quality, videoUrl, null))
+            videoList.add(Video(videoUrl, quality, videoUrl))
         }
         return videoList*/
         /*if (jas.contains("sources")) {
@@ -42,12 +42,12 @@ class VidBomExtractor(private val client: OkHttpClient) {
                 val videoUrl = `object`.getString("file")
                 Log.i("lol", videoUrl)
                 val quality = "Vidbom:" + `object`.getString("label")
-                videoList.add(Video(videoUrl, quality, videoUrl, null))
+                videoList.add(Video(videoUrl, quality, videoUrl))
             }
             return videoList
         } else {
             val videoList = mutableListOf<Video>()
-            videoList.add(Video(url, "no 2video", null, null))
+            videoList.add(Video(url, "no 2video", null))
             return videoList
         }*/
     }

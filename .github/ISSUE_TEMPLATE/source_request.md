@@ -1,7 +1,7 @@
 ---
 name: "🌐 Source Request"
 title: "[Source Request] <Source Name>"
-about: "Suggest a new source for Tachiyomi"
+about: "Suggest a new source for Aniyomi"
 labels: "Source Request"
 ---
 
@@ -11,7 +11,7 @@ I acknowledge that:
 
 - I have checked that the extension does not already exist:
   - In the list of existing extensions in the application
-  - In the multi-source spreadsheet: https://tachiyomi.org/extensions
+  - In the multi-source spreadsheet: https://aniyomi.jmir.xyz/extensions
   - By searching the GitHub repository for the extension and verify it does not appear in the code base
 - I have searched the existing GitHub issues and this extension does **NOT** have an open request
 - I will fill out the title and the information in this template

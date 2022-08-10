@@ -5,8 +5,8 @@ ext {
     extName = 'WCOStream'
     pkgNameSuffix = 'en.wcostream'
     extClass = '.WCOStream'
-    extVersionCode = 2
-    libVersion = '12'
+    extVersionCode = 3
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

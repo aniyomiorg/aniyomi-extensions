@@ -90,7 +90,7 @@ class Cartoons4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         for (source in sources) {
             val src = source.substringAfter("\"file\":\"").substringBefore("\"").replace("\\/", "/")
             val quality = source.substringAfter("\"label\":\"").substringBefore("\"")
-            val video = Video(vidURL, quality, src, null)
+            val video = Video(vidURL, quality, src)
             videoList.add(video)
         }
         return videoList

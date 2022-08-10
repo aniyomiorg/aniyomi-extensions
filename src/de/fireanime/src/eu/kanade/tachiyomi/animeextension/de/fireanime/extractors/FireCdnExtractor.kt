@@ -24,6 +24,6 @@ class FireCdnExtractor(private val client: OkHttpClient, private val json: Json)
 
         val file = json.decodeFromString(FireCdnFileDto.serializer(), client.newCall(fileRequest).execute().body!!.string())
         val videoUrl = "${file.proxy.replace("\\", "")}/share/${file.file}/apple.mp4"
-        return Video(url, quality, videoUrl, null)
+        return Video(url, quality, videoUrl)
     }
 }

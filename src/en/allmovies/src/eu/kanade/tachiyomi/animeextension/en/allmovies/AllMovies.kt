@@ -128,7 +128,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             when {
                 url.contains("https://dood") -> {
                     val newQuality = "Doodstream mirror"
-                    val video = Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
+                    val video = Video(url, newQuality, doodUrlParse(url), headers = videoHeaders)
                     videoList.add(video)
                 }
                 url.contains("streamhub") -> {
@@ -140,7 +140,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
                         val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
                         val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                        videoList.add(Video(videoUrl, quality, videoUrl, null))
+                        videoList.add(Video(videoUrl, quality, videoUrl))
                     }
                 }
             }

@@ -1,14 +1,14 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Extensions list
-    url: https://tachiyomi.org/extensions
-    about: List of all available extensions with download links.
-  - name: Multi-source extensions spreadsheet
-    url: https://tachiyomi.org/extensions-spreadsheet
-    about: The sources inside multi-source extensions can be found in this spreadsheet.
-  - name: Tachiyomi help website
-    url: https://tachiyomi.org/help/
+  - name: ⚠️ Application issue
+    url: https://github.com/jmir1/aniyomi/issues/new/choose
+    about: Issues and requests about the app itself should be opened in the tachiyomi repository instead
+  - name: 📦 Aniyomi extensions
+    url: https://aniyomi.jmir.xyz/extensions
+    about: List of all available extensions with download links
+  - name: 🖥️ Aniyomi website
+    url: https://aniyomi.jmir.xyz/help/
     about: Common questions are answered here.
-  - name: Tachiyomi app GitHub repository
+  - name: Aniyomi app GitHub repository
     url: https://github.com/jmir1/aniyomi
     about: Issues about the app itself should be opened here instead.

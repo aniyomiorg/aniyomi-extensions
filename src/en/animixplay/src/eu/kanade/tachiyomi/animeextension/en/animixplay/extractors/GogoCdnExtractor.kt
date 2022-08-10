@@ -47,7 +47,7 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
                     .split("#EXT-X-STREAM-INF:").reversed().forEach {
                         val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p"
                         val videoUrl = fileURL.substringBeforeLast("/") + "/" + it.substringAfter("\n").substringBefore("\n")
-                        videoList.add(Video(videoUrl, quality, videoUrl, null))
+                        videoList.add(Video(videoUrl, quality, videoUrl))
                     }
             } else array.forEach {
                 val label = it.jsonObject["label"].toString().toLowerCase(Locale.ROOT)
@@ -59,11 +59,10 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
                         fileURL,
                         label,
                         fileURL,
-                        null,
-                        videoHeaders
+                        headers = videoHeaders
                     )
                 )
-                else videoList.add(Video(fileURL, label, fileURL, null, videoHeaders))
+                else videoList.add(Video(fileURL, label, fileURL, headers = videoHeaders))
             }
             return videoList.reversed() + autoList
         } catch (e: Exception) {

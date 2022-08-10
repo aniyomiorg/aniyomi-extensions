@@ -5,8 +5,8 @@ ext {
     extName = 'AnimeFLV'
     pkgNameSuffix = 'es.animeflv'
     extClass = '.AnimeFlv'
-    extVersionCode = 22
-    libVersion = '12'
+    extVersionCode = 25
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

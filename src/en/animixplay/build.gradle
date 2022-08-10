@@ -5,8 +5,8 @@ ext {
     extName = 'Animixplay'
     pkgNameSuffix = 'en.animixplay'
     extClass = '.Animixplay'
-    extVersionCode = 11
-    libVersion = '12'
+    extVersionCode = 13
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

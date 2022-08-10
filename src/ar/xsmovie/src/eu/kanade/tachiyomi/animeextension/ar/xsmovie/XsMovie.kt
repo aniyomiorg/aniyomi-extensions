@@ -80,7 +80,7 @@ class XsMovie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector() = "source"
 
     override fun videoFromElement(element: Element): Video {
-        return Video(element.attr("src"), "Default: If you want to change the quality go to extension settings", element.attr("src"), null)
+        return Video(element.attr("src"), "Default: If you want to change the quality go to extension settings", element.attr("src"))
     }
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")

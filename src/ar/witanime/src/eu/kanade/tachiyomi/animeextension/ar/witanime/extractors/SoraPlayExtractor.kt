@@ -24,7 +24,7 @@ class SoraPlayExtractor(private val client: OkHttpClient) {
         for (source in sources) {
             val src = source.substringBefore("\"")
             val quality = "soraplay: " + source.substringAfter("\"label\":\"").substringBefore("\"") // .substringAfter("format: '")
-            val video = Video(src, quality, src, null)
+            val video = Video(src, quality, src)
             videoList.add(video)
         }
         return videoList

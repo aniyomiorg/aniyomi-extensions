@@ -85,7 +85,7 @@ class Animeyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .replace("http://", "")
             val url = container.attr("src")
             if (server == "fastream") {
-                videoList.add(FastreamExtractor(client).videoFromUrl(url, server))
+                FastreamExtractor(client).videoFromUrl(url).forEach { videoList.add(it) }
             }
         }
         return videoList

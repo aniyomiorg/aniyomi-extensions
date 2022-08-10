@@ -5,8 +5,8 @@ ext {
     extName = 'Animeyt'
     pkgNameSuffix = 'es.animeyt'
     extClass = '.Animeyt'
-    extVersionCode = 1
-    libVersion = '12'
+    extVersionCode = 3
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

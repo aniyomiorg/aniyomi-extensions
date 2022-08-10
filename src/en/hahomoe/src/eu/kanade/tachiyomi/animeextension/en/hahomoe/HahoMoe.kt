@@ -114,7 +114,7 @@ class HahoMoe : ParsedAnimeHttpSource() {
     override fun videoListSelector() = "source"
 
     override fun videoFromElement(element: Element): Video {
-        return Video(element.attr("src"), element.attr("title"), element.attr("src"), null)
+        return Video(element.attr("src"), element.attr("title"), element.attr("src"))
     }
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")

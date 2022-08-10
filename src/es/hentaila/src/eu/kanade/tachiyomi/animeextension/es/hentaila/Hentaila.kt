@@ -106,7 +106,7 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             if (nameServer.lowercase() == "arc") {
                 val videoUrl = urlServer.substringAfter("#")
-                videoList.add(Video(videoUrl, "Arc", videoUrl, null))
+                videoList.add(Video(videoUrl, "Arc", videoUrl))
             }
         }
 

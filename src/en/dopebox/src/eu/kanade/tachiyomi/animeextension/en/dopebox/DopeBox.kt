@@ -11,10 +11,16 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
+import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -25,7 +31,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 
 class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -158,29 +163,53 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .post().toString().replace("\n", "").substringAfter("rresp\",\"").substringBefore("\"")
 
         val jsonLink = "https://rabbitstream.net/ajax/embed-4/getSources?id=$videoEmbedUrlId&_token=$token&_number=$number&sId=test"
-        val reloadHeaderss = headers.newBuilder()
+        /*val reloadHeaderss = headers.newBuilder()
             .set("X-Requested-With", "XMLHttpRequest")
             .build()
         val iframeResponse = client.newCall(GET(jsonLink, reloadHeaderss))
             .execute().asJsoup()
+        */
 
-        return videosFromElement(iframeResponse)
+        return videosFromElement(jsonLink)
     }
 
-    private fun videosFromElement(element: Element): List<Video> {
-        val test = element.text()
-        val masterUrl = element.text().substringAfter("file\":\"").substringBefore("\",\"type")
-        if (test.contains("playlist.m3u8")) {
+    private fun videosFromElement(url: String): List<Video> {
+        val reloadHeaderss = headers.newBuilder()
+            .set("X-Requested-With", "XMLHttpRequest")
+            .build()
+        val json = Json.decodeFromString<JsonObject>(Jsoup.connect(url).header("X-Requested-With", "XMLHttpRequest").ignoreContentType(true).execute().body())
+        val masterUrl = json["sources"]!!.jsonArray[0].jsonObject["file"].toString().trim('"')
+        val subsList = mutableListOf<Track>()
+        json["tracks"]!!.jsonArray.forEach {
+            val subLang = it.jsonObject["label"].toString().substringAfter("\"").substringBefore("\"")
+            val subUrl = it.jsonObject["file"].toString().trim('"')
+            try {
+                subsList.add(Track(subUrl, subLang))
+            } catch (e: Error) {}
+        }
+        if (masterUrl.contains("playlist.m3u8")) {
             val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
             val videoList = mutableListOf<Video>()
             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
                 val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p"
                 val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                videoList.add(Video(videoUrl, quality, videoUrl, null))
+                videoList.add(
+                    try {
+                        Video(videoUrl, quality, videoUrl, subtitleTracks = subsList)
+                    } catch (e: Error) {
+                        Video(videoUrl, quality, videoUrl)
+                    }
+                )
             }
             return videoList
-        } else if (test.contains("index.m3u8")) {
-            return listOf(Video(masterUrl, "Default", masterUrl, null))
+        } else if (masterUrl.contains("index.m3u8")) {
+            return listOf(
+                try {
+                    Video(masterUrl, "Default", masterUrl, subtitleTracks = subsList)
+                } catch (e: Error) {
+                    Video(masterUrl, "Default", masterUrl)
+                }
+            )
         } else {
             throw Exception("never give up and try again :)")
         }

@@ -41,7 +41,7 @@ class StreamSBExtractor(private val client: OkHttpClient) {
         masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
             val quality = "StreamSB:" + it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
             val videoUrl = it.substringAfter("\n").substringBefore("\n")
-            videoList.add(Video(videoUrl, quality, videoUrl, null, headers))
+            videoList.add(Video(videoUrl, quality, videoUrl, headers = headers))
         }
         return videoList
     }

@@ -7,7 +7,7 @@ shopt -s globstar nullglob extglob
 APKS=( **/*".apk" )
 
 # Fail if too little extensions seem to have been built
-if [ "${#APKS[@]}" < "1" ]; then
+if [ "${#APKS[@]}" -le "50" ]; then
     echo "Insufficient amount of APKs found. Please check the project configuration."
     exit 1;
 fi;

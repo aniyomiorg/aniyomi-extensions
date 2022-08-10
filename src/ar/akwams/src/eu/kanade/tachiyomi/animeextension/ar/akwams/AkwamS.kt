@@ -91,7 +91,7 @@ class AkwamS : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector() = "source"
 
     override fun videoFromElement(element: Element): Video {
-        return Video(element.attr("src").replace("https", "http"), element.attr("size") + "p", element.attr("src").replace("https", "http"), null)
+        return Video(element.attr("src").replace("https", "http"), element.attr("size") + "p", element.attr("src").replace("https", "http"))
     }
 
     override fun List<Video>.sort(): List<Video> {

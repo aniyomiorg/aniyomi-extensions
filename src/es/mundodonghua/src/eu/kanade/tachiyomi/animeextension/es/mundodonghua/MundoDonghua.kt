@@ -2,10 +2,11 @@ package eu.kanade.tachiyomi.animeextension.es.mundodonghua
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.mundodonghua.extractors.FembedExtractor
+import eu.kanade.tachiyomi.animeextension.es.mundodonghua.extractors.JsUnpacker
+import eu.kanade.tachiyomi.animeextension.es.mundodonghua.extractors.ProteaExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -78,31 +79,70 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episode
     }
 
+    private fun getAndUnpack(string: String): Sequence<String> {
+        return JsUnpacker.unpack(string)
+    }
+
+    private fun fetchUrls(text: String?): List<String> {
+        if (text.isNullOrEmpty()) return listOf()
+        val linkRegex = Regex("""(https?://(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*))""")
+        return linkRegex.findAll(text).map { it.value.trim().removeSurrounding("\"") }.toList()
+    }
+
+    private fun fixUrl(url: String): String {
+        if (url.startsWith("http")) return url
+        if (url.isEmpty()) return ""
+        val startsWithNoHttp = url.startsWith("//")
+        if (startsWithNoHttp) return "https:$url"
+        else {
+            if (url.startsWith('/')) return baseUrl + url
+            return "$baseUrl/$url"
+        }
+    }
+
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
         document.select("script").forEach { script ->
-            if (script.data().contains("|fembed_done|")) {
-                var key = script.data().substringAfter("|view_counter|html5|").substringBefore("|width|height|").split("|").joinToString("-")
-                    .substringAfter("|fembed_tab|com|").substringBefore("|width|height|").split("|").joinToString("-")
-                    .substringAfter("|src|https|r4|com|").substringAfter("|").split("|").joinToString("-")
-                    .substringAfter("|append|src|https|").substringBefore("|").split("|").joinToString("-")
-                    .substringAfter("|append|src|https|").substringBefore("|").split("|").joinToString("-")
-                    .substringAfter("https-fembed_tab-com-")
-
-                Log.i("bruh key", key)
-                var serverName = ""
-                if (script.data().contains("diasfem")) {
-                    serverName = "suzihaza"
+            if (script.data().contains("eval(function(p,a,c,k,e")) {
+                val packedRegex = Regex("eval\\(function\\(p,a,c,k,e,.*\\)\\)")
+                packedRegex.findAll(script.data()).map {
+                    it.value
+                }.toList().map {
+                    val unpack = getAndUnpack(it)
+                    fetchUrls(unpack!!.first()).map { url ->
+                        if (url.contains("diasfem")) {
+                            var serverUrl = url.replace("diasfem", "embedsito")
+                            var videos = FembedExtractor().videosFromUrl(serverUrl)
+                            videoList.addAll(videos)
+                        }
+                    }
+                    if (unpack!!.first()!!.contains("protea_tab")) {
+                        val protearegex = Regex("(protea_tab.*slug.*,type)")
+                        val slug = protearegex.findAll(unpack!!.first()).map {
+                            it.value.replace(Regex("(protea_tab.*slug\":\")"), "").replace("\"},type", "")
+                        }.first()
+                        val requestlink = "$baseUrl/api_donghua.php?slug=$slug"
+                        val headers = headers.newBuilder()
+                            .set("authority", "www.mundodonghua.com")
+                            .set("accept", "*/*")
+                            .set("accept-language", "es-MX,es-419;q=0.9,es;q=0.8,en;q=0.7")
+                            .set("dnt", "1")
+                            .set("Connection", "keep-alive")
+                            .set("Sec-Fetch-Dest", "empty")
+                            .set("Sec-Fetch-Mode", "no-cors")
+                            .set("Sec-Fetch-Site", "same-origin")
+                            .set("TE", "trailers")
+                            .set("Pragma", "no-cache")
+                            .set("Cache-Control", "no-cache")
+                            .set("referer", response!!.request!!.url!!.toString())
+                            .set("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36")
+                            .build()
+                        ProteaExtractor().videosFromUrl(requestlink, "Protea", headers = headers, baseUrl).forEach {
+                            videoList.add(it)
+                        }
+                    }
                 }
-                var url = "https://$serverName.com/v/$key"
-                Log.i("bruh url", url)
-                var videos = FembedExtractor().videosFromUrl(url)
-                if (videos!!.first()!!.url!!.contains("not used")) {
-                    videos = FembedExtractor().videosFromUrl("$url-")
-                    Log.i("bruh alternative url", "$url-")
-                }
-                videoList.addAll(videos)
             }
         }
         return videoList
@@ -115,7 +155,9 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "Fembed:720p")
+        var quality = preferences.getString("preferred_quality", "Protea:720p")
+        if (quality == null) quality = preferences.getString("preferred_quality", "Fembed:720p")
+
         if (quality != null) {
             val newList = mutableListOf<Video>()
             var preferred = 0
@@ -232,8 +274,8 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("Fembed:480p", "Fembed:720p", "Stape", "hd", "sd", "low", "lowest", "mobile")
-            entryValues = arrayOf("Fembed:480p", "Fembed:720p", "Stape", "hd", "sd", "low", "lowest", "mobile")
+            entries = arrayOf("Protea:1080p", "Protea:720p", "Protea:480p", "Protea:380p", "Protea:360p", "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:380p", "Fembed:360p")
+            entryValues = arrayOf("Protea:1080p", "Protea:720p", "Protea:480p", "Protea:380p", "Protea:360p", "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:380p", "Fembed:360p")
             setDefaultValue("Fembed:720p")
             summary = "%s"
 

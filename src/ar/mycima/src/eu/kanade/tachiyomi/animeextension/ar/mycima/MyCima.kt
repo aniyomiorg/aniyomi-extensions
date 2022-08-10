@@ -124,13 +124,13 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             for (source in sources) {
                 val src = source.substringAfter("src: \"").substringBefore("\"")
                 val quality = source.substringBefore("'") // .substringAfter("format: '")
-                val video = Video(src, quality, src, null)
+                val video = Video(src, quality, src)
                 videoList.add(video)
             }
             return videoList
         }
         val sourceTag = element.ownerDocument().select("source").firstOrNull()!!
-        return listOf(Video(sourceTag.attr("src"), "Default", sourceTag.attr("src"), null))
+        return listOf(Video(sourceTag.attr("src"), "Default", sourceTag.attr("src")))
     }
 
     override fun List<Video>.sort(): List<Video> {

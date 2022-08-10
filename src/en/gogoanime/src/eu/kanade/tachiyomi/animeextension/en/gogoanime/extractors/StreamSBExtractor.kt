@@ -54,7 +54,7 @@ class StreamSBExtractor(private val client: OkHttpClient) {
                     val quality = "StreamSB: " + it.substringAfter("RESOLUTION=").substringAfter("x")
                         .substringBefore(",") + "p"
                     val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                    videoList.add(Video(videoUrl, quality, videoUrl, null, sbHeaders))
+                    videoList.add(Video(videoUrl, quality, videoUrl, headers = sbHeaders))
                 }
             return videoList.reversed()
         } catch (e: Exception) {

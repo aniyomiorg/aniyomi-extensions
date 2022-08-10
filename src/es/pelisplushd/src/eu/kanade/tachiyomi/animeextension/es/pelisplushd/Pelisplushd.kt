@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.DoodExtracto
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamTapeExtractor
+import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -100,33 +101,44 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
 
         val data = document.selectFirst("script:containsData(video[1] = )").data()
-        val apiUrl = data.substringAfter("video[1] = '", "")
-            .substringBefore("';", "")
-            .ifEmpty { throw Exception("no video links found.") }
-
+        val apiUrl = data.substringAfter("video[1] = '", "").substringBefore("';", "")
+        val alternativeServers = document.select("ul.TbVideoNv.nav.nav-tabs li:not(:first-child)")
+        if (apiUrl.isNotEmpty()) {
+            val apiResponse = client.newCall(GET(apiUrl)).execute().asJsoup()
+            var encryptedList = apiResponse!!.select("#PlayerDisplay div[class*=\"OptionsLangDisp\"] div[class*=\"ODDIV\"] div[class*=\"OD\"] li[data-r]")
+            var decryptedList = apiResponse!!.select("#PlayerDisplay div[class*=\"OptionsLangDisp\"] div[class*=\"ODDIV\"] div[class*=\"OD\"] li:not([data-r])")
+            encryptedList.forEach {
+                val url = String(Base64.decode(it.attr("data-r"), Base64.DEFAULT))
+                val server = it.select("span").text()
+                serverVideoResolver(url, server.toString()).forEach { video -> videoList.add(video) }
+            }
+            decryptedList.forEach {
+                val url = it.attr("onclick")
+                    .substringAfter("go_to_player('")
+                    .substringBefore("?cover_url=")
+                    .substringBefore("')")
+                    .substringBefore("?poster")
+                    .substringBefore("#poster=")
+                val server = it.select("span").text()
+                serverVideoResolver(url, server.toString()).forEach { video -> videoList.add(video) }
+            }
+        }
         // verifier for old series
-        if (!apiUrl.contains("/video/")) {
+        if (!apiUrl.contains("/video/") || alternativeServers.any()) {
             document.select("ul.TbVideoNv.nav.nav-tabs li").forEach { id ->
                 val serverName = id.select("a").text()
                 val serverId = id.attr("data-id")
-                var serverUrl = data.substringAfter("video[$serverId] = '", "")
-                    .substringBefore("';", "")
+                var serverUrl = data.substringAfter("video[$serverId] = '", "").substringBefore("';", "")
                 if (serverUrl.contains("api.mycdn.moe")) {
                     val urlId = serverUrl.substringAfter("id=")
                     when (serverName.lowercase()) {
                         "sbfast" -> { serverUrl = "https://sbfull.com/e/$urlId" }
                         "plusto" -> { serverUrl = "https://owodeuwu.xyz/v/$urlId" }
                         "doodstream" -> { serverUrl = "https://dood.to/e/$urlId" }
+                        "upload" -> { serverUrl = "https://uqload.com/embed-$urlId.html" }
                     }
                 }
                 serverVideoResolver(serverUrl, serverName.toString()).forEach { video -> videoList.add(video) }
-            }
-        } else {
-            val apiResponse = client.newCall(GET(apiUrl)).execute().asJsoup()
-            apiResponse.select("li[data-r]").forEach {
-                val url = String(Base64.decode(it.attr("data-r"), Base64.DEFAULT))
-                val server = it.select("span").text()
-                serverVideoResolver(url, server.toString()).forEach { video -> videoList.add(video) }
             }
         }
         return videoList
@@ -167,7 +179,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         val epId = amazonApiJson.toString().substringAfter("\"id\":\"").substringBefore("\"")
                         val amazonApi = client.newCall(GET("https://www.amazon.com/drive/v1/nodes/$epId/children?resourceVersion=V2&ContentType=JSON&limit=200&sort=%5B%22kind+DESC%22%2C+%22modifiedDate+DESC%22%5D&asset=ALL&tempLink=true&shareId=$shareId")).execute().asJsoup()
                         val videoUrl = amazonApi.toString().substringAfter("\"FOLDER\":").substringAfter("tempLink\":\"").substringBefore("\"")
-                        videoList.add(Video(videoUrl, "uwu", videoUrl, null))
+                        videoList.add(Video(videoUrl, "uwu", videoUrl))
                     }
                 }
             }
@@ -175,7 +187,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val body = client.newCall(GET(url)).execute().asJsoup()
                 val data1 = body.selectFirst("script:containsData(const sources = {)").data()
                 val video = data1.substringAfter("hls\": \"").substringBefore("\"")
-                videoList.add(Video(video, "Voex", video, null))
+                videoList.add(Video(video, "Voex", video))
             }
             "streamlare" -> {
                 val id = url.substringAfter("/e/").substringBefore("?poster")
@@ -183,7 +195,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 json.decodeFromString<JsonObject>(videoUrlResponse.select("body").text())["result"]?.jsonObject?.forEach { quality ->
                     val resolution = quality.toString().substringAfter("\"label\":\"").substringBefore("\"")
                     val videoUrl = quality.toString().substringAfter("\"file\":\"").substringBefore("\"")
-                    videoList.add(Video(videoUrl, "Streamlare:$resolution", videoUrl, null))
+                    videoList.add(Video(videoUrl, "Streamlare:$resolution", videoUrl))
                 }
             }
             "doodstream" -> {
@@ -192,6 +204,11 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 if (video != null) {
                     videoList.add(video)
                 }
+            }
+            "upload" -> {
+                val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
+                val videos = YourUploadExtractor(client).videoFromUrl(url, headers = headers)
+                if (videos.isNotEmpty()) videoList.addAll(videos)
             }
         }
         return videoList
@@ -268,8 +285,25 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Peliculas", "peliculas"),
             Pair("Series", "series"),
             Pair("Doramas", "generos/dorama"),
-            Pair("Animes", "animes")
-
+            Pair("Animes", "animes"),
+            Pair("Acción", "generos/accion"),
+            Pair("Animación", "generos/animacion"),
+            Pair("Aventura", "generos/aventura"),
+            Pair("Ciencia Ficción", "generos/ciencia-ficcion"),
+            Pair("Comedia", "generos/comedia"),
+            Pair("Crimen", "generos/crimen"),
+            Pair("Documental", "generos/documental"),
+            Pair("Drama", "generos/drama"),
+            Pair("Fantasía", "generos/fantasia"),
+            Pair("Foreign", "generos/foreign"),
+            Pair("Guerra", "generos/guerra"),
+            Pair("Historia", "generos/historia"),
+            Pair("Misterio", "generos/misterio"),
+            Pair("Pelicula de Televisión", "generos/pelicula-de-la-television"),
+            Pair("Romance", "generos/romance"),
+            Pair("Suspense", "generos/suspense"),
+            Pair("Terror", "generos/terror"),
+            Pair("Western", "generos/western")
         )
     )
 
@@ -297,20 +331,3 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         screen.addPreference(videoQualityPref)
     }
 }
-
-/*     ⠀⠀⠀⠀⠀⣠⣴⣶⣿⣿⣷⣶⣄⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⣾⣿⣿⡿⢿⣿⣿⣿⣿⣿⣿⣿⣷⣦⡀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⢀⣾⣿⣿⡟⠁⣰⣿⣿⣿⡿⠿⠻⠿⣿⣿⣿⣿⣧⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⣾⣿⣿⠏⠀⣴⣿⣿⣿⠉⠀⠀⠀⠀⠀⠈⢻⣿⣿⣇⠀⠀⠀
-⠀⠀⠀⠀⢀⣠⣼⣿⣿⡏⠀⢠⣿⣿⣿⠇⠀⠀⠀⠀⠀⠀⠀⠈⣿⣿⣿⡀⠀⠀
-⠀⠀⠀⣰⣿⣿⣿⣿⣿⡇⠀⢸⣿⣿⣿⡀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⡇⠀⠀
-⠀⠀⢰⣿⣿⡿⣿⣿⣿⡇⠀⠘⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⢀⣸⣿⣿⣿⠁⠀⠀
-⠀⠀⣿⣿⣿⠁⣿⣿⣿⡇⠀⠀⠻⣿⣿⣿⣷⣶⣶⣶⣶⣶⣿⣿⣿⣿⠃⠀⠀⠀
-⠀⢰⣿⣿⡇⠀⣿⣿⣿⠀⠀⠀⠀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠁⠀⠀⠀⠀
-⠀⢸⣿⣿⡇⠀⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠉⠛⠛⠛⠉⢉⣿⣿⠀⠀⠀⠀⠀⠀
-⠀⢸⣿⣿⣇⠀⣿⣿⣿⠀⠀⠀⠀⠀⢀⣤⣤⣤⡀⠀⠀⢸⣿⣿⣿⣷⣦⠀⠀⠀
-⠀⠀⢻⣿⣿⣶⣿⣿⣿⠀⠀⠀⠀⠀⠈⠻⣿⣿⣿⣦⡀⠀⠉⠉⠻⣿⣿⡇⠀⠀
-⠀⠀⠀⠛⠿⣿⣿⣿⣿⣷⣤⡀⠀⠀⠀⠀⠈⠹⣿⣿⣇⣀⠀⣠⣾⣿⣿⡇⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣿⣦⣤⣤⣤⣤⣾⣿⣿⣿⣿⣿⣿⣿⣿⡟⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠻⢿⣿⣿⣿⣿⣿⣿⠿⠋⠉⠛⠋⠉⠉⠁⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⠁      */

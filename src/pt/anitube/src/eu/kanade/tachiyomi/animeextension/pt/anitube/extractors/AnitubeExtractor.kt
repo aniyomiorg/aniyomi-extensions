@@ -24,7 +24,7 @@ object AnitubeExtractor {
         return qualities.mapIndexed { index, quality ->
             val path = paths[index]
             val url = serverUrl.replace(type, path)
-            Video(url, quality, url, null, headers)
+            Video(url, quality, url, headers = headers)
         }.reversed()
     }
 }

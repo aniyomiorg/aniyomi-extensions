@@ -5,8 +5,8 @@ ext {
     extName = 'Vostfree'
     pkgNameSuffix = 'fr.vostfree'
     extClass = '.Vostfree'
-    extVersionCode = 5
-    libVersion = '12'
+    extVersionCode = 8
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

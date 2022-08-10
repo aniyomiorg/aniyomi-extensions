@@ -27,7 +27,7 @@ class StreamlareExtractor(private val client: OkHttpClient) {
                 .substringBefore("\",")
             val response = client.newCall(POST("https://larecontent.com/video?token=$token")).execute()
             val videoUrl = response.request.url.toString()
-            videoList.addAll((listOf(Video(videoUrl, quality, videoUrl, null))))
+            videoList.addAll((listOf(Video(videoUrl, quality, videoUrl))))
         }
         return videoList
     }

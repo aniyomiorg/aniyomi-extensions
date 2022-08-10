@@ -110,7 +110,7 @@ class AnimeKisa : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
             val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("hls").replace("\n", "") + "p"
             val videoUrl = masterUrl.substringBeforeLast("/") + "/" + it.substringAfter("\n").substringBefore("\n")
-            videoList.add(Video(videoUrl, quality, videoUrl, null))
+            videoList.add(Video(videoUrl, quality, videoUrl))
         }
         return videoList
     }

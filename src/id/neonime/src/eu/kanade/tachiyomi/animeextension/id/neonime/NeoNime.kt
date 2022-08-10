@@ -232,7 +232,7 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 else -> "Default"
             }
         }
-        return Video(url, quality, url, null)
+        return Video(url, quality, url)
     }
 
     // screen

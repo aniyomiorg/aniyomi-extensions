@@ -139,8 +139,7 @@ class TenshiMoe : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 src,
                 size + "p",
                 src,
-                null,
-                Headers.headersOf("cookie", "__ddg2_=$cookie"),
+                headers = Headers.headersOf("cookie", "__ddg2_=$cookie"),
             )
             videoList.add(video)
         }

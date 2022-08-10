@@ -1,0 +1,16 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'HentaiYabu'
+    pkgNameSuffix = 'pt.hentaiyabu'
+    extClass = '.HentaiYabu'
+    extVersionCode = 3
+    libVersion = '13'
+    containsNsfw = true
+}
+
+
+
+apply from: "$rootDir/common.gradle"

@@ -30,7 +30,7 @@ class BetterAnimeExtractor(
             if (videoUrl == null)
                 null
             else
-                Video(videoUrl, it.first, videoUrl, null)
+                Video(videoUrl, it.first, videoUrl)
         }.toList()
     }
 

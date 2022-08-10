@@ -92,7 +92,7 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoFromElement(element: Element): Video {
         element.attr("src")
-        return Video(element.attr("src"), "Default: If you want to change the quality go to extension settings", element.attr("src"), null)
+        return Video(element.attr("src"), "Default: If you want to change the quality go to extension settings", element.attr("src"))
     }
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")

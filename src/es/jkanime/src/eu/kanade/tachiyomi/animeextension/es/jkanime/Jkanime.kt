@@ -168,7 +168,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                 nozomitext.toString().split("}").forEach { file ->
                                     val nozomiUrl = file.substringAfter("\"file\":\"").substringBefore("\"").replace("\\", "")
                                     if (nozomiUrl.isNotBlank() && !nozomiUrl.contains("{")) {
-                                        videos.add(Video(nozomiUrl, server, nozomiUrl, null))
+                                        videos.add(Video(nozomiUrl, server, nozomiUrl))
                                     }
                                 }
                             }
@@ -177,7 +177,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     when {
                         "embedsito" in url -> FembedExtractor().videosFromUrl(url).forEach { videos.add(it) }
                         "ok" in url -> OkruExtractor(client).videosFromUrl(url).forEach { videos.add(it) }
-                        "stream/jkmedia" in url -> videos.add(Video(url, "Xtreme S", url, null))
+                        "stream/jkmedia" in url -> videos.add(Video(url, "Xtreme S", url))
                         "um.php" in url -> videos.add(JkanimeExtractor().videoFromUrl(url, server))
                     }
                 }
@@ -194,7 +194,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     url1 = it.data().substringAfter("url: '").substringBefore("'")
                 }
             }
-            return Video(url1, server, url1, null)
+            return Video(url1, server, url1)
         }
     }
 

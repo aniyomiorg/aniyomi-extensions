@@ -115,7 +115,7 @@ class AnimeSrbija : ParsedAnimeHttpSource() {
         val source = element.attr("src").substringAfter("?file=")
         val relative = source.substringAfter("/file/")
         val testSource = "https://cdn.asroll.tk/file/$relative"
-        return Video(testSource, "AS Cloud", testSource, null)
+        return Video(testSource, "AS Cloud", testSource)
     }
 
     override fun videoListSelector(): String {

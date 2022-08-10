@@ -201,7 +201,7 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
                 val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
                 val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                videosList.add(Video(videoUrl, quality, videoUrl, null, headers))
+                videosList.add(Video(videoUrl, quality, videoUrl, headers = headers))
             }
             videosList
         }
@@ -213,7 +213,7 @@ class Animixplay : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
             val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
             val videoUrl = "$masterUrlPrefix/${it.substringAfter("\n").substringBefore("\r").substringBefore("\n")}"
-            videosList.add(Video(videoUrl, quality, videoUrl, null, headers))
+            videosList.add(Video(videoUrl, quality, videoUrl, headers = headers))
         }
         return videosList
     }
