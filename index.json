@@ -587,10 +587,10 @@
   {
     "name": "Aniyomi: Kuronime",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.kuronime",
-    "apk": "aniyomi-id.kuronime-v13.3.apk",
+    "apk": "aniyomi-id.kuronime-v13.4.apk",
     "lang": "id",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0
   },
   {
