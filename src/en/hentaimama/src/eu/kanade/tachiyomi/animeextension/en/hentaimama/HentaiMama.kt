@@ -124,8 +124,8 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .body().select("video source").attr("src")
 
         val videoList = mutableListOf<Video>()
-        videoList.add(Video(source1, "Mirror 1", source1, null))
-        videoList.add(Video(source2, "Mirror 2", source2, null))
+        videoList.add(Video(source1, "Mirror 1", source1))
+        videoList.add(Video(source2, "Mirror 2", source2))
         return videoList
     }
 
@@ -531,8 +531,23 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     )
 
+    private data class Order(val name: String, val id: String)
+    private class OrderList(Orders: Array<String>) : AnimeFilter.Select<String>("Order", Orders)
+    private val orderName = getOrder().map {
+        it.name
+    }.toTypedArray()
+    private fun getOrder() = listOf(
+        Order("Weekly Views", "weekly"),
+        Order("Monthly Views", "monthly"),
+        Order("Alltime Views", "alltime"),
+        Order("A-Z", "alphabet"),
+        Order("Rating", "rating"),
+
+    )
+
     private fun getSearchParameters(filters: AnimeFilterList): String {
         var totalstring = ""
+        var sortBy = ""
 
         filters.forEach { filter ->
             when (filter) {
@@ -562,15 +577,21 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         }
                     }
                 }
+                is OrderList -> { // ---Order
+                    sortBy = getOrder()[filter.state].id
+                }
+
                 else -> {}
             }
         }
-        return "$totalstring&submit=Submit"
+
+        return "$totalstring&submit=Submit&filter=$sortBy"
     }
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("Ignored if using Text Search"),
         AnimeFilter.Separator(),
+        OrderList(orderName),
         GenreList(getGenres()),
         YearList(getYears()),
         ProducerList(getProducer()),
