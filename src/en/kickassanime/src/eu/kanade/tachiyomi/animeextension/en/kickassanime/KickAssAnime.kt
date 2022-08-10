@@ -235,11 +235,11 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             anime.status = parseStatus(ani["status"]!!.jsonPrimitive.content)
 
             val altName = "Other name(s): "
-            ani["alternate"]!!.jsonArray.let { jsonArray ->
-                if (jsonArray.isEmpty().not()) {
+            json.decodeFromString<JsonArray>(ani["alternate"].toString().replace("\"\"", "[]")).let { altArray ->
+                if (altArray.isEmpty().not()) {
                     anime.description = when {
-                        anime.description.isNullOrBlank() -> altName + jsonArray.joinToString { it.jsonPrimitive.content }
-                        else -> anime.description + "\n\n$altName" + jsonArray.joinToString { it.jsonPrimitive.content }
+                        anime.description.isNullOrBlank() -> altName + altArray.joinToString { it.jsonPrimitive.content }
+                        else -> anime.description + "\n\n$altName" + altArray.joinToString { it.jsonPrimitive.content }
                     }
                 }
             }
