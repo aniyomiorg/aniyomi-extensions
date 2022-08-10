@@ -152,7 +152,11 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                         val pos = videoLink.lastIndexOf('/') + 1
                         videoUrl = videoLink.substring(0, pos) + videoUrl
                     }
-                    playlist.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subsList, headers = headers))
+                    try {
+                        playlist.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subsList, headers = headers))
+                    } catch (e: Error) {
+                        playlist.add(Video(videoUrl, quality, videoUrl, headers = headers))
+                    }
                 }
         }
         return playlist
