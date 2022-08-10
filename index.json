@@ -326,10 +326,10 @@
   {
     "name": "Aniyomi: HentaiMama",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.hentaimama",
-    "apk": "aniyomi-en.hentaimama-v13.3.apk",
+    "apk": "aniyomi-en.hentaimama-v13.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 1
   },
   {
@@ -349,6 +349,15 @@
     "code": 20,
     "version": "13.20",
     "nsfw": 0
+  },
+  {
+    "name": "Aniyomi: Rule34Video",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.rule34video",
+    "apk": "aniyomi-en.rule34video-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 1
   },
   {
     "name": "Aniyomi: Sflix",
