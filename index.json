@@ -333,6 +333,15 @@
     "nsfw": 1
   },
   {
+    "name": "Aniyomi: KickAssAnime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.kickassanime",
+    "apk": "aniyomi-en.kickassanime-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: 9anime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.nineanime",
     "apk": "aniyomi-en.nineanime-v13.20.apk",
