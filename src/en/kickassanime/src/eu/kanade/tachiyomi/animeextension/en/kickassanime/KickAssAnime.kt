@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.en.kickassanime
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.net.Uri
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -131,7 +132,8 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             val json = Json.decodeFromString<JsonObject>(subResponse)
             json["subtitles"]!!.jsonArray.forEach {
                 val subLang = it.jsonObject["name"]!!.jsonPrimitive.content
-                val subUrl = "https://maverickki.com/subtitle" + it.jsonObject["src"]!!.jsonPrimitive.content
+                val uri = Uri.parse(serverLink)
+                val subUrl = "${uri.scheme}://${uri.host}" + it.jsonObject["src"]!!.jsonPrimitive.content
                 try {
                     subsList.add(Track(subUrl, subLang))
                 } catch (e: Error) {}
@@ -144,7 +146,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
                 .split("#EXT-X-STREAM-INF:").map {
                     val quality = it.substringAfter("RESOLUTION=").split(",")[0].split("\n")[0].substringAfter("x") + "p $server" +
-                        if (subsList.size > 0) { " (Subtitle Available)" } else { "" }
+                        if (subsList.size > 0) { " (Toggleable Sub Available)" } else { "" }
                     var videoUrl = it.substringAfter("\n").substringBefore("\n")
                     if (videoUrl.startsWith("https").not()) {
                         val pos = videoLink.lastIndexOf('/') + 1
