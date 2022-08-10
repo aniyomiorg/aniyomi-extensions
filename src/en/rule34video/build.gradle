@@ -6,7 +6,7 @@ ext {
     pkgNameSuffix = 'en.rule34video'
     extClass = '.Rule34Video'
     extVersionCode = 1
-    libVersion = '12'
+    libVersion = '13'
     containsNsfw = true
 }
 
