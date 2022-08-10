@@ -27,11 +27,11 @@ import uy.kohesive.injekt.injectLazy
 import java.io.IOException
 import java.lang.Exception
 
-class Pelisflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+open class Pelisflix(override val name: String, override val baseUrl: String) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "Pelisflix"
+    // override val name = "Pelisflix"
 
-    override val baseUrl = "https://pelisflix.app"
+    // override val baseUrl = "https://pelisflix.app"
 
     override val lang = "es"
 
@@ -108,10 +108,10 @@ class Pelisflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-        document.select("div.TPost.A.D div.Container div.optns-bx div.drpdn button.bstd").forEach { script ->
-            val langTag = script.selectFirst("span").text()
+        document.select("div.TPost.A.D div.Container div.optns-bx div.drpdn button.bstd").forEach { serverList ->
+            val langTag = serverList.selectFirst("span").text()
             val lang = if (langTag.contains("LATINO")) "LAT" else if (langTag.contains("CASTELLANO")) "CAST" else "SUB"
-            script.select("ul.optnslst li div[data-url]").forEach {
+            serverList.select("ul.optnslst li div[data-url]").forEach {
                 val encryptedUrl = it.attr("data-url")
                 val url = String(Base64.decode(encryptedUrl, Base64.DEFAULT))
                 if (url.contains("nupload")) {

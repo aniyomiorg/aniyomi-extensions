@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android'
 ext {
     extName = 'Pelisflix'
     pkgNameSuffix = 'es.pelisflix'
-    extClass = '.Pelisflix'
+    extClass = '.PelisflixFactory'
     extVersionCode = 1
     libVersion = '13'
 }
