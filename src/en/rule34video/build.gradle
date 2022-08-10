@@ -2,10 +2,10 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    extName = 'HentaiMama'
-    pkgNameSuffix = 'en.hentaimama'
-    extClass = '.HentaiMama'
-    extVersionCode = 4
+    extName = 'Rule34Video'
+    pkgNameSuffix = 'en.rule34video'
+    extClass = '.Rule34Video'
+    extVersionCode = 1
     libVersion = '13'
     containsNsfw = true
 }
