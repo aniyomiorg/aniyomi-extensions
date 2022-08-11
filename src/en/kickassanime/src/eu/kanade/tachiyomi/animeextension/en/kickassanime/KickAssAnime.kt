@@ -5,6 +5,9 @@ import android.content.SharedPreferences
 import android.net.Uri
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.en.kickassanime.extractors.DoodExtractor
+import eu.kanade.tachiyomi.animeextension.en.kickassanime.extractors.GogoCdnExtractor
+import eu.kanade.tachiyomi.animeextension.en.kickassanime.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -28,7 +31,6 @@ import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -90,9 +92,16 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         val data = getAppdata(response.asJsoup())
         val episode = data["episode"]!!.jsonObject
         val link1 = episode["link1"]!!.jsonPrimitive.content
+        val videoList = mutableListOf<Video>()
+
+        if (link1.contains("gogoplay4.com")) {
+            videoList.addAll(
+                extractGogoVideo(link1)
+            )
+            return videoList
+        }
         val resp = client.newCall(GET(link1)).execute()
         val sources = getVideoSource(resp.asJsoup())
-        val videoList = mutableListOf<Video>()
 
         sources.forEach { source ->
             when (source.jsonObject["name"]!!.jsonPrimitive.content) {
@@ -119,29 +128,33 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun extractVideo(serverLink: String, server: String): List<Video> {
-        val playlistInterceptor = MasterPlaylistInterceptor()
-        val kickAssClient = client.newBuilder().addInterceptor(playlistInterceptor).build()
-        kickAssClient.newCall(GET(serverLink)).execute()
-        val data = playlistInterceptor.playlist
         val playlist = mutableListOf<Video>()
         val subsList = mutableListOf<Track>()
+        val data: MutableList<Pair<String, Headers>>
 
         if (server == "MAVERICKKI") {
-            val subLink = serverLink.replace("embed", "api/source")
-            val subResponse = Jsoup.connect(subLink).ignoreContentType(true).execute().body()
-            val json = Json.decodeFromString<JsonObject>(subResponse)
+            val apiLink = serverLink.replace("embed", "api/source")
+            // for some reason the request to the api is only working reliably this way
+            val apiResponse = client.newCall(GET(apiLink, headers)).execute().asJsoup().text()
+            val json = Json.decodeFromString<JsonObject>(apiResponse)
+            val uri = Uri.parse(serverLink)
+
             json["subtitles"]!!.jsonArray.forEach {
                 val subLang = it.jsonObject["name"]!!.jsonPrimitive.content
-                val uri = Uri.parse(serverLink)
                 val subUrl = "${uri.scheme}://${uri.host}" + it.jsonObject["src"]!!.jsonPrimitive.content
                 try {
                     subsList.add(Track(subUrl, subLang))
                 } catch (e: Error) {}
             }
+            data = mutableListOf(Pair("${uri.scheme}://${uri.host}" + json["hls"]!!.jsonPrimitive.content, headers))
+        } else {
+            val playlistInterceptor = MasterPlaylistInterceptor()
+            val kickAssClient = client.newBuilder().addInterceptor(playlistInterceptor).build()
+            kickAssClient.newCall(GET(serverLink, headers)).execute()
+            data = playlistInterceptor.playlist
         }
 
-        data.forEach { playlistPair ->
-            val (videoLink, headers) = playlistPair
+        data.forEach { (videoLink, headers) ->
             val masterPlaylist = client.newCall(GET(videoLink, headers)).execute().body!!.string()
             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
                 .split("#EXT-X-STREAM-INF:").map {
@@ -186,6 +199,24 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             )
         }
         return playlist
+    }
+
+    private fun extractGogoVideo(link: String): List<Video> {
+        val url = "https:" + decode(link).substringAfter("data=").substringBefore("&vref")
+        val videoList = mutableListOf<Video>()
+        val document = client.newCall(GET(url)).execute().asJsoup()
+
+        // Vidstreaming:
+        videoList.addAll(GogoCdnExtractor(network.client, json).videosFromUrl(url))
+        // Doodstream mirror:
+        document.select("div#list-server-more > ul > li.linkserver:contains(Doodstream)")
+            .firstOrNull()?.attr("data-video")
+            ?.let { videoList.addAll(DoodExtractor(client).videosFromUrl(it)) }
+        // StreamSB mirror:
+        document.select("div#list-server-more > ul > li.linkserver:contains(StreamSB)")
+            .firstOrNull()?.attr("data-video")
+            ?.let { videoList.addAll(StreamSBExtractor(client).videosFromUrl(it, headers)) }
+        return videoList
     }
 
     override fun List<Video>.sort(): List<Video> {
@@ -323,4 +354,6 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun encode(input: String): String = java.net.URLEncoder.encode(input, "utf-8")
+
+    private fun decode(input: String): String = java.net.URLDecoder.decode(input, "utf-8")
 }
