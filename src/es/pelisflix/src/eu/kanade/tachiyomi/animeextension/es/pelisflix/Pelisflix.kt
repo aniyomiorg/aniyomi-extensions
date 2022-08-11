@@ -29,10 +29,6 @@ import java.lang.Exception
 
 open class Pelisflix(override val name: String, override val baseUrl: String) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    // override val name = "Pelisflix"
-
-    // override val baseUrl = "https://pelisflix.app"
-
     override val lang = "es"
 
     override val supportsLatest = false

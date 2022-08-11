@@ -1,8 +1,12 @@
 package eu.kanade.tachiyomi.animeextension.es.pelisflix
 
-import android.util.Log
+import eu.kanade.tachiyomi.animeextension.es.pelisflix.extractors.DoodExtractor
+import eu.kanade.tachiyomi.animeextension.es.pelisflix.extractors.FembedExtractor
+import eu.kanade.tachiyomi.animeextension.es.pelisflix.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animesource.AnimeSource
 import eu.kanade.tachiyomi.animesource.AnimeSourceFactory
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
+import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
@@ -35,6 +39,32 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
         return anime
     }
 
+    private fun loadVideoSources(urlResponse: String, lang: String): List<Video> {
+        val videoList = mutableListOf<Video>()
+        fetchUrls(urlResponse).map { serverUrl ->
+            if (serverUrl.contains("fembed") || serverUrl.contains("vanfem")) {
+                FembedExtractor().videosFromUrl(serverUrl, lang)!!.map { video ->
+                    videoList.add(video)
+                }
+            }
+            if (serverUrl.contains("doodstream")) {
+                val video = DoodExtractor(client).videoFromUrl(serverUrl.replace("https://doodstream.com", "https://dood.wf"), lang)
+                if (video != null) videoList.add(video)
+            }
+            if (serverUrl.contains("streamtape")) {
+                val video = StreamTapeExtractor(client).videoFromUrl(serverUrl, "$lang StreamTape")
+                if (video != null) videoList.add(video)
+            }
+        }
+        return videoList
+    }
+
+    private fun fetchUrls(text: String?): List<String> {
+        if (text.isNullOrEmpty()) return listOf()
+        val linkRegex = "(http|ftp|https):\\/\\/([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:\\/~+#-]*[\\w@?^=%&\\/~+#-])".toRegex()
+        return linkRegex.findAll(text).map { it.value.trim().removeSurrounding("\"") }.toList()
+    }
+
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
@@ -43,9 +73,8 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
             val serverID = serverList.attr("data-key")
             val type = if (response.request.url.toString().contains("movies")) 1 else 2
             val url = "$baseUrl/?trembed=$serverID&trid=$movieID&trtype=$type"
-            val langTag = serverList.selectFirst("p.AAIco-language").text()
+            val langTag = serverList.selectFirst("p.AAIco-language").text().uppercase()
             val lang = if (langTag.contains("LATINO")) "LAT" else if (langTag.contains("CASTELLANO")) "CAST" else "SUB"
-            Log.i("bruh server", url)
             var request = client.newCall(GET(url)).execute()
             if (request.isSuccessful) {
                 val serverLinks = request.asJsoup()
@@ -53,7 +82,6 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
                     val iframe = it.attr("src")
                     if (iframe.contains("https://sc.seriesflix.video/index.php")) {
                         val postKey = iframe.replace("https://sc.seriesflix.video/index.php?h=", "")
-                        Log.i("bruh frame", postKey)
                         val mediaType = ("application/x-www-form-urlencoded").toMediaType()
                         val body: RequestBody = "h=$postKey".toRequestBody(mediaType)
                         val newClient = OkHttpClient().newBuilder().build()
@@ -76,27 +104,68 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
                             .addHeader("Connection", "keep-alive")
                             .addHeader("Upgrade-Insecure-Requests", "1")
                             .addHeader("Sec-Fetch-Dest", "iframe")
-                            .addHeader("Sec-Fetch-Mode", "navigate")
-                            .addHeader("Sec-Fetch-Site", "same-origin")
+                            .addHeader("Sec-Fetch-Mode", "no-cors")
+                            .addHeader("sec-fetch-site", "same-origin")
                             .addHeader("Sec-Fetch-User", "?1")
                             .addHeader("Alt-Used", "sc.seriesflix.video")
+                            .addHeader("Access-Control-Allow-Methods", "POST")
                             .build()
                         val document = newClient.newCall(requestServer).execute()
-                        if (document.isSuccessful) {
-                            
-                            Log.i("bruh headers", document.networkResponse!!.headers.toString())
-                            // Log.i("bruh body", document.body().toString())
-                            document.request.headers.forEach { link ->
-                                if (link.first.contains("location")) Log.i("bruh link", link.second)
-                            }
-                        } else {
-                            Log.i("bruh error", document.message)
+                        val urlResponse = document!!.networkResponse!!.toString()
+
+                        loadVideoSources(urlResponse, lang)!!.forEach { source ->
+                            videoList.add(source)
                         }
+                    } else {
+                        loadVideoSources(iframe, lang)
                     }
                 }
             }
-            // nuploadExtractor(lang, url)!!.forEach { video -> videoList.add(video) }
         }
         return videoList
+    }
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val filterList = if (filters.isEmpty()) getFilterList() else filters
+        val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
+
+        return when {
+            query.isNotBlank() -> GET("$baseUrl/?s=$query&page=$page")
+            genreFilter.state != 0 -> GET("$baseUrl/${genreFilter.toUriPart()}/page/$page")
+            else -> popularAnimeRequest(page)
+        }
+    }
+
+    override fun getFilterList(): AnimeFilterList = AnimeFilterList(
+        AnimeFilter.Header("La busqueda por texto ignora el filtro"),
+        GenreFilter()
+    )
+
+    private class GenreFilter : UriPartFilter(
+        "Géneros",
+        arrayOf(
+            Pair("<Selecionar>", ""),
+            Pair("Acción", "genero/accion"),
+            Pair("Animación", "genero/animacion"),
+            Pair("Anime", "genero/anime"),
+            Pair("Antiguas", "genero/series-antiguas"),
+            Pair("Aventura", "genero/aventura"),
+            Pair("Ciencia ficción", "genero/ciencia-ficcion"),
+            Pair("Comedia", "genero/comedia"),
+            Pair("Crimen", "genero/crimen"),
+            Pair("DC Comics", "genero/dc-comics"),
+            Pair("Drama", "genero/drama"),
+            Pair("Dorama", "genero/dorama"),
+            Pair("Estrenos", "genero/estrenos"),
+            Pair("Fantasía", "genero/fantasia"),
+            Pair("Misterio", "genero/misterio"),
+            Pair("Romance", "genero/romance"),
+            Pair("Terror", "genero/terror")
+        )
+    )
+
+    private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
+        AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
+        fun toUriPart() = vals[state].second
     }
 }
