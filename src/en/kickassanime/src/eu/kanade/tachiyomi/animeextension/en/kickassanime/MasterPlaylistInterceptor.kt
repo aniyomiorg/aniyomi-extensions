@@ -73,7 +73,7 @@ class MasterPlaylistInterceptor : Interceptor {
 
         // Wait a reasonable amount of time to retrieve the solution. The minimum should be
         // around 4 seconds but it can take more due to slow networks or server issues.
-        latch.await(7, TimeUnit.SECONDS)
+        latch.await(9, TimeUnit.SECONDS)
 
         handler.post {
             webView?.stopLoading()
