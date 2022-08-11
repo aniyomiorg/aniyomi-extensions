@@ -549,6 +549,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: Pelisflix",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.pelisflix",
+    "apk": "aniyomi-es.pelisflix-v13.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: Pelisplushd",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.pelisplushd",
     "apk": "aniyomi-es.pelisplushd-v13.14.apk",
