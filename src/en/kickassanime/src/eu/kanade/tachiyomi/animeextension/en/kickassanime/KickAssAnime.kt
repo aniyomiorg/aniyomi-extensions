@@ -31,7 +31,6 @@ import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -129,25 +128,30 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun extractVideo(serverLink: String, server: String): List<Video> {
-        val playlistInterceptor = MasterPlaylistInterceptor()
-        val kickAssClient = client.newBuilder().addInterceptor(playlistInterceptor).build()
-        kickAssClient.newCall(GET(serverLink)).execute()
-        val data = playlistInterceptor.playlist
         val playlist = mutableListOf<Video>()
         val subsList = mutableListOf<Track>()
+        val data: MutableList<Pair<String, Headers>>
 
         if (server == "MAVERICKKI") {
-            val subLink = serverLink.replace("embed", "api/source")
-            val subResponse = Jsoup.connect(subLink).ignoreContentType(true).execute().body()
-            val json = Json.decodeFromString<JsonObject>(subResponse)
+            val apiLink = serverLink.replace("embed", "api/source")
+            // for some reason the request to the api is only working reliably this way
+            val apiResponse = client.newCall(GET(apiLink, headers)).execute().asJsoup().text()
+            val json = Json.decodeFromString<JsonObject>(apiResponse)
+            val uri = Uri.parse(serverLink)
+
             json["subtitles"]!!.jsonArray.forEach {
                 val subLang = it.jsonObject["name"]!!.jsonPrimitive.content
-                val uri = Uri.parse(serverLink)
                 val subUrl = "${uri.scheme}://${uri.host}" + it.jsonObject["src"]!!.jsonPrimitive.content
                 try {
                     subsList.add(Track(subUrl, subLang))
                 } catch (e: Error) {}
             }
+            data = mutableListOf(Pair("${uri.scheme}://${uri.host}" + json["hls"]!!.jsonPrimitive.content, headers))
+        } else {
+            val playlistInterceptor = MasterPlaylistInterceptor()
+            val kickAssClient = client.newBuilder().addInterceptor(playlistInterceptor).build()
+            kickAssClient.newCall(GET(serverLink, headers)).execute()
+            data = playlistInterceptor.playlist
         }
 
         data.forEach { (videoLink, headers) ->
