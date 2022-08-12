@@ -29,10 +29,10 @@
   {
     "name": "Aniyomi: Anime4up",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.anime4up",
-    "apk": "aniyomi-ar.anime4up-v13.29.apk",
+    "apk": "aniyomi-ar.anime4up-v13.30.apk",
     "lang": "ar",
-    "code": 29,
-    "version": "13.29",
+    "code": 30,
+    "version": "13.30",
     "nsfw": 0
   },
   {
@@ -146,19 +146,19 @@
   {
     "name": "Aniyomi: XS Anime",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.xsanime",
-    "apk": "aniyomi-ar.xsanime-v13.9.apk",
+    "apk": "aniyomi-ar.xsanime-v13.10.apk",
     "lang": "ar",
-    "code": 9,
-    "version": "13.9",
+    "code": 10,
+    "version": "13.10",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: XS Movie",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.xsmovie",
-    "apk": "aniyomi-ar.xsmovie-v13.4.apk",
+    "apk": "aniyomi-ar.xsmovie-v13.5.apk",
     "lang": "ar",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 0
   },
   {
@@ -344,10 +344,10 @@
   {
     "name": "Aniyomi: 9anime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.nineanime",
-    "apk": "aniyomi-en.nineanime-v13.20.apk",
+    "apk": "aniyomi-en.nineanime-v13.21.apk",
     "lang": "en",
-    "code": 20,
-    "version": "13.20",
+    "code": 21,
+    "version": "13.21",
     "nsfw": 0
   },
   {
