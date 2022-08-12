@@ -49,7 +49,7 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.title = element.attr("title")
-        anime.thumbnail_url = element.select("div.itemtype_anime_poster img").first().attr("abs:src")
+        anime.thumbnail_url = element.select("div.itemtype_anime_poster img").first().attr("data-src")
         return anime
     }
 
@@ -103,7 +103,7 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.title = element.attr("title")
-        anime.thumbnail_url = element.select("div.itemtype_anime_poster img").first().attr("abs:src")
+        anime.thumbnail_url = element.select("div.itemtype_anime_poster img").first().attr("data-src")
         return anime
     }
 
