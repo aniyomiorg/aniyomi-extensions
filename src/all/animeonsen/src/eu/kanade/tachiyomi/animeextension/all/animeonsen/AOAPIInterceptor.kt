@@ -1,11 +1,15 @@
 package eu.kanade.tachiyomi.animeextension.all.animeonsen
 
-import android.util.Base64
-import android.util.Log
-import eu.kanade.tachiyomi.network.GET
-import okhttp3.HttpUrl.Companion.toHttpUrl
+import eu.kanade.tachiyomi.network.POST
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.Headers
 import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 
 class AOAPIInterceptor(client: OkHttpClient) : Interceptor {
@@ -13,19 +17,27 @@ class AOAPIInterceptor(client: OkHttpClient) : Interceptor {
     private val token: String
 
     init {
-        val cookie = client.cookieJar
-            .loadForRequest("https://animeonsen.xyz".toHttpUrl())
-            .find { it.name == "ao.session" }?.value
-            ?: client.newCall(GET("https://animeonsen.xyz")).execute().header("set-cookie")
+        val body = """
+            {
+                "client_id": "f296be26-28b5-4358-b5a1-6259575e23b7",
+                "client_secret": "349038c4157d0480784753841217270c3c5b35f4281eaee029de21cb04084235",
+                "grant_type": "client_credentials"
+            }
+        """.trimIndent().toRequestBody("application/json".toMediaType())
 
-        token = String(
-            Base64.decode(
-                java.net.URLDecoder.decode(cookie, "utf-8"),
-                Base64.DEFAULT
+        val headers = Headers.headersOf("user-agent", AO_USER_AGENT)
+
+        val tokenResponse = client.newCall(
+            POST(
+                "https://auth.animeonsen.xyz/oauth/token",
+                headers,
+                body,
             )
-        )
+        ).execute().body!!.string()
 
-        Log.i("bruh", token)
+        val tokenObject = Json.decodeFromString<JsonObject>(tokenResponse)
+
+        token = tokenObject["access_token"]!!.jsonPrimitive.content
     }
 
     override fun intercept(chain: Interceptor.Chain): Response {

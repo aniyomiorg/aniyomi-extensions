@@ -49,7 +49,8 @@ class AnimeOnsen : AnimeHttpSource() {
     }
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("Referer", baseUrl)
+        .add("referer", baseUrl)
+        .add("user-agent", AO_USER_AGENT)
 
     // ============================== Popular ===============================
     // The site doesn't have a popular anime tab, so we use the home page instead (latest anime).
@@ -91,7 +92,10 @@ class AnimeOnsen : AnimeHttpSource() {
         val videoData = json.decodeFromString<VideoData>(response.body!!.string())
         val videoUrl = videoData.uri.stream
         val subtitleLangs = videoData.metadata.subtitles
-        val headers = Headers.headersOf("Referer", baseUrl)
+        val headers = Headers.headersOf(
+            "referer", baseUrl,
+            "user-agent", AO_USER_AGENT,
+        )
         val video = try {
             val subtitles = videoData.uri.subtitles.keys.map {
                 val lang = subtitleLangs[it]!!.jsonPrimitive.content
@@ -166,3 +170,5 @@ class AnimeOnsen : AnimeHttpSource() {
         thumbnail_url = "https://api.animeonsen.xyz/v4/image/420x600/$content_id"
     }
 }
+
+const val AO_USER_AGENT = "Aniyomi/app (mobile)"
