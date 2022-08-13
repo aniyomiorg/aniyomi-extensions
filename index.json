@@ -1,5 +1,14 @@
 [
   {
+    "name": "Aniyomi: AnimeOnsen",
+    "pkg": "eu.kanade.tachiyomi.animeextension.all.animeonsen",
+    "apk": "aniyomi-all.animeonsen-v13.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: Onepace",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.onepace",
     "apk": "aniyomi-all.onepace-v13.4.apk",
