@@ -12,13 +12,14 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.CacheControl
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -31,7 +32,6 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 
-@ExperimentalSerializationApi
 class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "9anime"
@@ -372,9 +372,23 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun encode(input: String): String = java.net.URLEncoder.encode(input, "utf-8").replace("+", "%20")
 
     private fun decode(input: String): String = java.net.URLDecoder.decode(input, "utf-8")
+
+    private val cipherKey: String
+    private val decipherKey: String
+
+    init {
+        val allJsScript = runBlocking {
+            client.newCall(
+                GET(
+                    url = "https://s2.bunnycdn.ru/assets/_9anime/min/all.js",
+                    cache = CacheControl.FORCE_NETWORK
+                )
+            ).execute().body!!.string()
+        }
+        val keys = getKeys(allJsScript, json)
+        cipherKey = keys.first
+        decipherKey = keys.second
+    }
 }
 
 private const val nineAnimeKey = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-private const val cipherKey = "Ml6DEBjOkhWXxXg4"
-private const val decipherKey = "hlPeNwkncH0fq9so"
-// will implement the new algorithm soon (TM)

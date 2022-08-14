@@ -30,7 +30,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Anime4Up"
 
-    override val baseUrl = "https://anime4up.art"
+    override val baseUrl = "https://anime4up.vip"
 
     override val lang = "ar"
 
@@ -44,7 +44,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun headersBuilder(): Headers.Builder {
         return super.headersBuilder()
-            .add("Referer", "https://anime4up.art/") // https://s12.gemzawy.com https://moshahda.net
+            .add("Referer", "https://anime4up.vip/") // https://s12.gemzawy.com https://moshahda.net
     }
 
     // Popular
@@ -117,7 +117,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .build()
             // Call POST
             val referer = response.request.url.encodedPath
-            val newHeaders = Headers.headersOf("referer", baseUrl + "/")
+            val newHeaders = Headers.headersOf("referer", "$postUrl")
             val ifram1 = client.newCall(POST(postUrl, newHeaders, body)).execute().asJsoup()
             val iframe2 = ifram1.select("li[data-i=moshahda] a").attr("data-ep-url")
             val iframeResponse = client.newCall(GET(iframe2, newHeaders))
