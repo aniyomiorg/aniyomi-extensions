@@ -362,10 +362,10 @@
   {
     "name": "Aniyomi: Rule34Video",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.rule34video",
-    "apk": "aniyomi-en.rule34video-v13.1.apk",
+    "apk": "aniyomi-en.rule34video-v13.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "13.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 1
   },
   {
@@ -690,6 +690,15 @@
     "lang": "pt",
     "code": 4,
     "version": "13.4",
+    "nsfw": 0
+  },
+  {
+    "name": "Aniyomi: Animes House",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animeshouse",
+    "apk": "aniyomi-pt.animeshouse-v13.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "13.1",
     "nsfw": 0
   },
   {
