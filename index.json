@@ -225,6 +225,15 @@
     "nsfw": 1
   },
   {
+    "name": "Aniyomi: Kinoking",
+    "pkg": "eu.kanade.tachiyomi.animeextension.de.kinoking",
+    "apk": "aniyomi-de.kinoking-v13.1.apk",
+    "lang": "de",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: xCine",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.xcine",
     "apk": "aniyomi-de.xcine-v13.4.apk",
