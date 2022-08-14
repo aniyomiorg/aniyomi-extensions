@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.en.rule34video
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.media.tv.TvContract
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -44,6 +43,7 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeSelector(): String = "div.item.thumb"
 
     override fun popularAnimeRequest(page: Int): Request =
+
         GET("$baseUrl/latest-updates/$page/")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
@@ -51,6 +51,7 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.setUrlWithoutDomain(element.select("a.th").attr("href"))
         anime.title = element.select("a.th div.thumb_title").text()
         anime.thumbnail_url = element.select("a.th div.img img").attr("data-original")
+
         return anime
     }
 
@@ -58,8 +59,6 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val episodes = mutableListOf<SEpisode>()
-
-        val jsoup = response.asJsoup()
 
         val episode = SEpisode.create().apply {
             name = "Video"
@@ -78,30 +77,15 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
 
-        val VideoLinks = document.select("div.video_tools div:nth-child(3) div a.tag_item")
+        val videoLinks = document.select("div.video_tools div:nth-child(3) div a.tag_item")
             .map {
                 it.attr("href") + it.text()
                     .replace("MP4", "")
             }
 
         val videoList = mutableListOf<Video>()
-
-        for (i in VideoLinks) {
-            if (i.split(" ")[1] == "2160p") {
-                videoList.add(Video(i.split(" ")[0], "2160p", i.split(" ")[0]))
-            }
-            if (i.split(" ")[1] == "1080p") {
-                videoList.add(Video(i.split(" ")[0], "1080p", i.split(" ")[0]))
-            }
-            if (i.split(" ")[1] == "720p") {
-                videoList.add(Video(i.split(" ")[0], "720p", i.split(" ")[0]))
-            }
-            if (i.split(" ")[1] == "480p") {
-                videoList.add(Video(i.split(" ")[0], "480p", i.split(" ")[0]))
-            }
-            if (i.split(" ")[1] == "360p") {
-                videoList.add(Video(i.split(" ")[0], "360p", i.split(" ")[0]))
-            }
+        for (video in videoLinks) {
+            videoList.add(Video(video.split(" ")[0], video.split(" ")[1], video.split(" ")[0]))
         }
 
         return videoList
@@ -131,8 +115,36 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this
     }
 
+    // Search
+
+    private var cat = false
+
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        return GET("$baseUrl/search/$query/?from_videos=$page", headers)
+
+        val sortedBy = getSearchParameters(filters).split(":")[0]
+        val catBy = getSearchParameters(filters).split(":")[1]
+
+        return if (query.isNotEmpty()) {
+
+            cat = false
+            var newSort = ""
+            when (sortedBy) {
+                "latest-updates" -> {
+                    newSort = "post_date"
+                }
+                "most-popular" -> {
+                    newSort = "video_viewed"
+                }
+                "top-rated" -> {
+                    newSort = "rating"
+                }
+            }
+
+            GET("$baseUrl/search/$query/?flag1=$catBy&sort_by=$newSort&from_videos=$page", headers) // with search
+        } else {
+            cat = true
+            GET("$baseUrl/$sortedBy/$page/?flag1=$catBy", headers) // without search
+        }
     }
 
     override fun searchAnimeSelector(): String = "div.item.thumb"
@@ -173,8 +185,8 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080p", "720p", "480p", "360p")
+            entries = arrayOf("2160p", "1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("2160p", "1080p", "720p", "480p", "360p")
             setDefaultValue("1080p")
             summary = "%s"
 
@@ -190,4 +202,57 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Filters
 
+    private data class View(val name: String, val id: String)
+    private class ViewList(Views: Array<String>) : AnimeFilter.Select<String>("Order", Views)
+    private val viewBy = getView().map {
+        it.name
+    }.toTypedArray()
+    private fun getView() = listOf(
+        View("Latest", "latest-updates"),
+        View("Most Viewed", "most-popular"),
+        View("Top Rated", "top-rated"),
+
+    )
+
+    private data class Category(val name: String, val id: String)
+    private class CategoryList(Categories: Array<String>) : AnimeFilter.Select<String>("Category", Categories)
+    private val categoryBy = getCategory().map {
+        it.name
+    }.toTypedArray()
+    private fun getCategory() = listOf(
+        Category("All", ""),
+        Category("Futa", "15"),
+        Category("Gay", "192"),
+    )
+
+    override fun getFilterList(): AnimeFilterList = AnimeFilterList(
+        AnimeFilter.Header("Might not work in first try."),
+        AnimeFilter.Separator(),
+        ViewList(viewBy),
+        CategoryList(categoryBy),
+    )
+
+    private fun getSearchParameters(filters: AnimeFilterList): String {
+        var viewBy = ""
+        var categoryBy = ""
+
+        filters.forEach { filter ->
+            when (filter) {
+
+                is ViewList -> { // ---Order
+                    viewBy = getView()[filter.state].id
+                }
+
+                is CategoryList -> { // ---Category
+                    if (cat) {
+                        categoryBy = getCategory()[filter.state].id
+                    }
+                }
+
+                else -> {}
+            }
+        }
+
+        return "$viewBy:$categoryBy"
+    }
 }
