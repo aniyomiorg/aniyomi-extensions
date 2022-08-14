@@ -52,7 +52,7 @@ class MasterPlaylistInterceptor : Interceptor {
                 useWideViewPort = false
                 loadWithOverviewMode = false
                 userAgentString = request.header("User-Agent")
-                    ?: "\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36 Edg/88.0.705.63\""
+                    ?: "\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36 Edg/88.0.705.63\""
             }
 
             webview.webViewClient = object : WebViewClient() {
@@ -73,7 +73,7 @@ class MasterPlaylistInterceptor : Interceptor {
 
         // Wait a reasonable amount of time to retrieve the solution. The minimum should be
         // around 4 seconds but it can take more due to slow networks or server issues.
-        latch.await(7, TimeUnit.SECONDS)
+        latch.await(9, TimeUnit.SECONDS)
 
         handler.post {
             webView?.stopLoading()

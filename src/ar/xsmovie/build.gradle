@@ -5,7 +5,7 @@ ext {
     extName = 'XS Movie'
     pkgNameSuffix = 'ar.xsmovie'
     extClass = '.XsMovie'
-    extVersionCode = 4
+    extVersionCode = 5
     libVersion = '13'
 }
 
