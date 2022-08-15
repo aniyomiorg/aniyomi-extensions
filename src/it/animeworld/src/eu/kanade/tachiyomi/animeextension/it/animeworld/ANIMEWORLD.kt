@@ -85,10 +85,14 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videosFromElement(document)
     }
 
-    override fun videoListSelector() = "center a[href*=dood], center a[href*=streamtape], center a[href*=animeworld.biz]"
+    override fun videoListSelector() = "center a[href*=dood], center a[href*=streamtape], center a[href*=animeworld.biz], center a[href*=streamingaw.online][id=alternativeDownloadLink]"
 
     private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
+        // afaik this element appears when videos are taken down, in this case instead of
+        // displaying Videolist empty show the element's text
+        val copyrightError = document.select("div.alert.alert-primary:contains(Copyright)")
+        if (copyrightError.hasText()) throw Exception(copyrightError.text())
         val elements = document.select(videoListSelector())
         for (element in elements) {
             val url = element.attr("href")
@@ -111,6 +115,11 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         .build()
                     val videos = StreamSBExtractor(client).videosFromUrl(url.replace("/d/", "/e/"), headers)
                     videoList.addAll(videos)
+                }
+                url.contains("streamingaw") -> {
+                    videoList.add(
+                        Video(url, "AnimeWorld Server", url)
+                    )
                 }
                 url.contains("dood") -> {
                     val video = DoodExtractor(client).videoFromUrl(url.replace("/d/", "/e/"))
