@@ -202,7 +202,10 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun extractGogoVideo(link: String): List<Video> {
-        val url = "https:" + decode(link).substringAfter("data=").substringBefore("&vref")
+        var url = decode(link).substringAfter("data=").substringBefore("&vref")
+        if (url.startsWith("https").not()) {
+            url = "https:" + url
+        }
         val videoList = mutableListOf<Video>()
         val document = client.newCall(GET(url)).execute().asJsoup()
 
