@@ -129,19 +129,17 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document: Document = response.asJsoup()
         val html: String = document.html()
         val videoList = mutableListOf<Video>()
+        val extractor = PlayerOneExtractor()
         val kanraElement = document.selectFirst("script:containsData(kanra.dev)")
         if (kanraElement != null) {
             val kanraUrl = kanraElement.html()
                 .substringAfter("src='")
                 .substringBefore("'")
-            val kanraVideos =
-                PlayerOneExtractor(client).videoListFromKanraUrl(kanraUrl)
+            val kanraVideos = extractor.videoListFromKanraUrl(kanraUrl, client)
             videoList.addAll(kanraVideos)
-        } else {
-            val extracted = PlayerOneExtractor()
-                .videoListFromHtml(html)
-            videoList.addAll(extracted)
         }
+        val extracted = extractor.videoListFromHtml(html)
+        videoList.addAll(extracted)
 
         return videoList
     }
