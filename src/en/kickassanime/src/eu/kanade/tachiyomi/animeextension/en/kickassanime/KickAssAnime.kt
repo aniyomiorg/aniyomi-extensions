@@ -35,6 +35,8 @@ import org.jsoup.nodes.Document
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.text.SimpleDateFormat
+import java.util.Locale
 import java.util.regex.Pattern
 
 @ExperimentalSerializationApi
@@ -54,6 +56,12 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    companion object {
+        private val DateFormatter by lazy {
+            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+        }
     }
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/api/get_anime_list/all/$page")
@@ -80,8 +88,14 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 url = item.jsonObject["slug"]!!.jsonPrimitive.content
                 episode_number = item.jsonObject["num"]!!.jsonPrimitive.float
                 name = item.jsonObject["epnum"]!!.jsonPrimitive.content
+                date_upload = parseDate(item.jsonObject["createddate"]!!.jsonPrimitive.content)
             }
         }
+    }
+
+    private fun parseDate(dateStr: String): Long {
+        return runCatching { DateFormatter.parse(dateStr)?.time }
+            .getOrNull() ?: 0L
     }
 
     override fun latestUpdatesParse(response: Response) = throw Exception("not used")
@@ -94,33 +108,48 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         val link1 = episode["link1"]!!.jsonPrimitive.content
         val videoList = mutableListOf<Video>()
 
-        if (link1.contains("gogoplay4.com")) {
-            videoList.addAll(
-                extractGogoVideo(link1)
-            )
-            return videoList
-        }
-        val resp = client.newCall(GET(link1)).execute()
-        val sources = getVideoSource(resp.asJsoup())
-
-        sources.forEach { source ->
-            when (source.jsonObject["name"]!!.jsonPrimitive.content) {
-                "BETAPLAYER" -> {
-                    videoList.addAll(
-                        extractBetaVideo(
-                            source.jsonObject["src"]!!.jsonPrimitive.content,
-                            source.jsonObject["name"]!!.jsonPrimitive.content
-                        )
-                    )
+        when {
+            link1.contains("gogoplay4.com") -> {
+                videoList.addAll(
+                    extractGogoVideo(link1)
+                )
+            }
+            link1.contains("betaplayer.life") -> {
+                var url = decode(link1).substringAfter("data=").substringBefore("&vref")
+                if (url.startsWith("https").not()) {
+                    url = "https:$url"
                 }
-                "BETASERVER3" -> {}
-                else -> {
-                    videoList.addAll(
-                        extractVideo(
-                            source.jsonObject["src"]!!.jsonPrimitive.content,
-                            source.jsonObject["name"]!!.jsonPrimitive.content
-                        )
-                    )
+                videoList.addAll(
+                    extractBetaVideo(url, "BETAPLAYER")
+                )
+            }
+            else -> {
+                val resp = client.newCall(GET(link1)).execute()
+                val sources = getVideoSource(resp.asJsoup())
+
+                sources.forEach { source ->
+                    when (source.jsonObject["name"]!!.jsonPrimitive.content) {
+                        "BETA-SERVER" -> {}
+                        "BETASERVER1" -> {}
+                        "BETASERVER3" -> {}
+                        "THETA-ORIGINAL-V4" -> {}
+                        "BETAPLAYER" -> {
+                            videoList.addAll(
+                                extractBetaVideo(
+                                    source.jsonObject["src"]!!.jsonPrimitive.content,
+                                    source.jsonObject["name"]!!.jsonPrimitive.content
+                                )
+                            )
+                        }
+                        else -> {
+                            videoList.addAll(
+                                extractVideo(
+                                    source.jsonObject["src"]!!.jsonPrimitive.content,
+                                    source.jsonObject["name"]!!.jsonPrimitive.content
+                                )
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -204,7 +233,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun extractGogoVideo(link: String): List<Video> {
         var url = decode(link).substringAfter("data=").substringBefore("&vref")
         if (url.startsWith("https").not()) {
-            url = "https:" + url
+            url = "https:$url"
         }
         val videoList = mutableListOf<Video>()
         val document = client.newCall(GET(url)).execute().asJsoup()
@@ -242,7 +271,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        return GET("$baseUrl/search?q=${encode(query)}")
+        return GET("$baseUrl/search?q=${encode(query.trim())}")
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage {
