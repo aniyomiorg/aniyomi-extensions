@@ -1,0 +1,16 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'SuperStream'
+    pkgNameSuffix = 'en.superstream'
+    extClass = '.SuperStream'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+dependencies {
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1")
+}
+
+apply from: "$rootDir/common.gradle"
