@@ -33,6 +33,7 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.io.IOException
 import java.lang.Exception
 
 class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -104,7 +105,7 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element) = throw Exception("not used")
 
-    private fun getNumberFromEpsString(epsStr: String): String {
+    private fun getNumberFromString(epsStr: String): String {
         return epsStr.filter { it.isDigit() }
     }
 
@@ -177,21 +178,20 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "Stape")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality == quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
+        return try {
+            var videoSorted = this.sortedWith(compareByDescending<Video> { it.quality }
+                .thenByDescending { getNumberFromString(it.quality) }).toTypedArray()
+
+            val userPreferredQuality = preferences.getString("preferred_quality", "Fembed") ?: "Stream"
+            val preferred = videoSorted.firstOrNull { x -> x.quality.contains(userPreferredQuality) }
+            if (preferred != null) {
+                videoSorted = videoSorted.filter { x -> x != preferred }.toTypedArray()
+                videoSorted[0] = preferred
             }
-            return newList
+            videoSorted.toList()
+        } catch (e: IOException){
+            this
         }
-        return this
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
