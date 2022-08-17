@@ -594,6 +594,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: NekoSama",
+    "pkg": "eu.kanade.tachiyomi.animeextension.fr.nekosama",
+    "apk": "aniyomi-fr.nekosama-v13.1.apk",
+    "lang": "fr",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: Vostfree",
     "pkg": "eu.kanade.tachiyomi.animeextension.fr.vostfree",
     "apk": "aniyomi-fr.vostfree-v13.8.apk",
