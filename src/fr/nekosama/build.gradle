@@ -1,0 +1,13 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'NekoSama'
+    pkgNameSuffix = 'fr.nekosama'
+    extClass = '.NekoSama'
+    extVersionCode = 1
+    libVersion = '13'
+    containsNsfw = false
+}
+
+apply from: "$rootDir/common.gradle"
