@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.animeextension.en.kickassanime
 import android.app.Application
 import android.content.SharedPreferences
 import android.net.Uri
+import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.extractors.DoodExtractor
@@ -63,6 +64,12 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
         }
     }
+
+    // Add non working server names here
+    private val DeadServers = listOf(
+        "BETA-SERVER", "BETASERVER1", "BETASERVER3", "DEVSTREAM",
+        "THETA-ORIGINAL-V4", "DAILYMOTION", "KICKASSANIME1"
+    )
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/api/get_anime_list/all/$page")
 
@@ -129,13 +136,18 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
                 sources.forEach { source ->
                     when (source.jsonObject["name"]!!.jsonPrimitive.content) {
-                        "BETA-SERVER" -> {}
-                        "BETASERVER1" -> {}
-                        "BETASERVER3" -> {}
-                        "THETA-ORIGINAL-V4" -> {}
+                        in DeadServers -> {}
                         "BETAPLAYER" -> {
                             videoList.addAll(
                                 extractBetaVideo(
+                                    source.jsonObject["src"]!!.jsonPrimitive.content,
+                                    source.jsonObject["name"]!!.jsonPrimitive.content
+                                )
+                            )
+                        }
+                        "KICKASSANIMEV2", "ORIGINAL-QUALITY-V2" -> {
+                            videoList.addAll(
+                                extractKickasssVideo(
                                     source.jsonObject["src"]!!.jsonPrimitive.content,
                                     source.jsonObject["name"]!!.jsonPrimitive.content
                                 )
@@ -215,6 +227,38 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 val matcher = pattern.matcher(element.data())
                 if (matcher.find()) {
                     playlistArray = json.decodeFromString(matcher.group(1)!!.toString())
+                }
+                break
+            }
+        }
+        val playlist = mutableListOf<Video>()
+        playlistArray.forEach {
+            val quality = it.jsonObject["label"]!!.jsonPrimitive.content + " $server"
+            val videoUrl = it.jsonObject["file"]!!.jsonPrimitive.content
+            playlist.add(
+                Video(videoUrl, quality, videoUrl, headers = headers)
+            )
+        }
+        return playlist
+    }
+
+    private fun extractKickasssVideo(serverLink: String, server: String): List<Video> {
+        val url = serverLink.replace("embed.php", "pref.php")
+        val document = client.newCall(GET(url)).execute().asJsoup()
+        val scripts = document.getElementsByTag("script")
+        var playlistArray = JsonArray(arrayListOf())
+        for (element in scripts) {
+            if (element.data().contains("document.write")) {
+                val pattern = Pattern.compile(".*atob\\(\"(.*)\"\\)")
+                val matcher = pattern.matcher(element.data())
+                if (matcher.find()) {
+                    val player = Base64.decode(matcher.group(1)!!.toString(), Base64.DEFAULT).toString(Charsets.UTF_8)
+                    val playerPattern = Pattern.compile(".*setup\\(\\{sources:\\[(.*)\\]")
+                    val playerMatcher = playerPattern.matcher(player)
+                    if (playerMatcher.find()) {
+                        val playlistString = "[" + playerMatcher.group(1)!!.toString() + "]"
+                        playlistArray = json.decodeFromString(playlistString)
+                    }
                 }
                 break
             }
