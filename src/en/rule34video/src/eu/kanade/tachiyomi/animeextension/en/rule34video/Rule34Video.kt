@@ -120,42 +120,50 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private var cat = false
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val sortedBy = filters.find { it is OrderFilter } as OrderFilter
+        val catBy = filters.find { it is CategoryBy } as CategoryBy
+        val newSort = when (sortedBy.toUriPart()) {
+            "latest-updates" -> "post_date"
 
-        val sortedBy = getSearchParameters(filters).split(":")[0]
-        val catBy = getSearchParameters(filters).split(":")[1]
+            "most-popular" -> "video_viewed"
 
-        return if (query.isNotEmpty()) {
+            "top-rated" -> "rating"
+            else -> ""
+        }
+        val tagFilter = try {
+            verifyTag = true
+            (filters.find { it is TagFilter } as TagFilter).state
+        } catch (e: Exception) {
+            verifyTag = false
+            ""
+        }
 
-            cat = false
-            var newSort = ""
-            when (sortedBy) {
-                "latest-updates" -> {
-                    newSort = "post_date"
-                }
-                "most-popular" -> {
-                    newSort = "video_viewed"
-                }
-                "top-rated" -> {
-                    newSort = "rating"
-                }
+        tagDocument = if (tagFilter.isNotBlank()) client.newCall(GET("$baseUrl/search_ajax.php?tag=$tagFilter", headers)).execute().asJsoup() else Document("")
+
+        val tagSearch = try {
+            filters.find { it is TagSearch } as TagSearch
+        } catch (e: Exception) {
+            TagSearch(arrayOf()).apply { state = 0 }
+        }
+
+        getFilterList()
+        return when {
+            query.isNotEmpty() -> {
+                GET("$baseUrl/search/$query/?flag1=${catBy.toUriPart()}&sort_by=$newSort&from_videos=$page", headers) // with search
             }
-
-            GET("$baseUrl/search/$query/?flag1=$catBy&sort_by=$newSort&from_videos=$page", headers) // with search
-        } else {
-            cat = true
-            GET("$baseUrl/$sortedBy/$page/?flag1=$catBy", headers) // without search
+            sortedBy.state != 0 || catBy.state != 0 -> {
+                GET("$baseUrl/search/?flag1=${catBy.toUriPart()}&sort_by=${sortedBy.toUriPart()}&from_videos=$page", headers) // with sort and category
+            }
+            tagSearch.state != 0 -> GET("$baseUrl/tags/${tagSearch.toUriPart()}")
+            else -> {
+                GET("$baseUrl/latest-updates/$page/", headers) // without search
+            }
         }
     }
 
-    override fun searchAnimeSelector(): String = "div.item.thumb"
+    override fun searchAnimeSelector(): String = popularAnimeSelector()
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a.th").attr("href"))
-        anime.title = element.select("a.th div.thumb_title").text()
-        anime.thumbnail_url = element.select("a.th div.img img").attr("data-original")
-        return anime
-    }
+    override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
 
     override fun searchAnimeNextPageSelector(): String = "div.item.pager.next a"
 
@@ -201,58 +209,58 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // Filters
+    private var verifyTag = false
+    private var tagDocument = Document("")
 
-    private data class View(val name: String, val id: String)
-    private class ViewList(Views: Array<String>) : AnimeFilter.Select<String>("Order", Views)
-    private val viewBy = getView().map {
-        it.name
-    }.toTypedArray()
-    private fun getView() = listOf(
-        View("Latest", "latest-updates"),
-        View("Most Viewed", "most-popular"),
-        View("Top Rated", "top-rated"),
-
-    )
-
-    private data class Category(val name: String, val id: String)
-    private class CategoryList(Categories: Array<String>) : AnimeFilter.Select<String>("Category", Categories)
-    private val categoryBy = getCategory().map {
-        it.name
-    }.toTypedArray()
-    private fun getCategory() = listOf(
-        Category("All", ""),
-        Category("Futa", "15"),
-        Category("Gay", "192"),
-    )
+    private fun tagsResults(document: Document): Array<Pair<String, String>> {
+        val tagList = mutableListOf(Pair("<Select>", ""))
+        tagList.addAll(
+            document.select("div.item").map {
+                val tagValue = it.select("input").attr("value")
+                val tagName = it.select("label").text()
+                Pair(tagName, tagValue)
+            }
+        )
+        return tagList.toTypedArray()
+    }
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
-        AnimeFilter.Header("Might not work in first try."),
+        OrderFilter(),
+        CategoryBy(),
         AnimeFilter.Separator(),
-        ViewList(viewBy),
-        CategoryList(categoryBy),
+        AnimeFilter.Header("Tags Search (Experimental)"),
+        AnimeFilter.Header("Click in \"filter\" to make te search and click in \"reset\" to see the results."),
+        TagFilter(),
+        if (verifyTag) TagSearch(tagsResults(tagDocument)) else AnimeFilter.Separator(),
     )
 
-    private fun getSearchParameters(filters: AnimeFilterList): String {
-        var viewBy = ""
-        var categoryBy = ""
+    private class TagFilter : AnimeFilter.Text("Tag", "")
 
-        filters.forEach { filter ->
-            when (filter) {
+    private class TagSearch(results: Array<Pair<String, String>>) : UriPartFilter(
+        "Category Filter",
+        results
+    )
 
-                is ViewList -> { // ---Order
-                    viewBy = getView()[filter.state].id
-                }
+    private class CategoryBy : UriPartFilter(
+        "Category Filter",
+        arrayOf(
+            Pair("All", ""),
+            Pair("Futa", "15"),
+            Pair("Gay", "192"),
+        )
+    )
 
-                is CategoryList -> { // ---Category
-                    if (cat) {
-                        categoryBy = getCategory()[filter.state].id
-                    }
-                }
+    private class OrderFilter : UriPartFilter(
+        "Order",
+        arrayOf(
+            Pair("Latest", "latest-updates"),
+            Pair("Most Viewed", "most-popular"),
+            Pair("Top Rated", "top-rated"),
+        )
+    )
 
-                else -> {}
-            }
-        }
-
-        return "$viewBy:$categoryBy"
+    private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
+        AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
+        fun toUriPart() = vals[state].second
     }
 }
