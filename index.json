@@ -371,10 +371,10 @@
   {
     "name": "Aniyomi: Rule34Video",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.rule34video",
-    "apk": "aniyomi-en.rule34video-v13.2.apk",
+    "apk": "aniyomi-en.rule34video-v13.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 1
   },
   {
