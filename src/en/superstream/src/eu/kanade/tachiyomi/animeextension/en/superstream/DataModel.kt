@@ -12,7 +12,7 @@ data class LinkData(
 data class LinkDataProp(
     @JsonProperty("code") val code: Int? = null,
     @JsonProperty("msg") val msg: String? = null,
-    @JsonProperty("data") val data: ParsedLinkData? = ParsedLinkData()
+    @JsonProperty("data") val data: ArrayList<ParsedLinkData?> = arrayListOf()
 )
 
 data class ParsedLinkData(
@@ -106,6 +106,7 @@ data class MovieData(
     @JsonProperty("description") val description: String? = null,
     @JsonProperty("cats") val cats: String? = null,
     @JsonProperty("year") val year: Int? = null,
+    @JsonProperty("update_time") val updateTime: Int? = null,
     @JsonProperty("imdb_id") val imdbId: String? = null,
     @JsonProperty("imdb_rating") val imdbRating: String? = null,
     @JsonProperty("trailer") val trailer: String? = null,

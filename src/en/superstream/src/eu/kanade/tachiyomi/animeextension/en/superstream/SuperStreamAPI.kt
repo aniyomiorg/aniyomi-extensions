@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.en.superstream
 
 import android.annotation.SuppressLint
 import android.util.Base64
-import android.util.Log
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -12,19 +11,15 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.POST
-import okhttp3.ConnectionSpec
 import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.OkHttpClient
-import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.Response
-import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.security.SecureRandom
-import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
@@ -39,14 +34,9 @@ const val TYPE_SERIES = 2
 const val TYPE_MOVIES = 1
 
 // Ported from CS3
-class SuperStreamAPI(originalClient: OkHttpClient) {
+class SuperStreamAPI {
 
-    private val client = configureToIgnoreCertificate(
-        originalClient.newBuilder()
-            .connectionSpecs(
-                arrayListOf( ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT)
-            )
-    ).build()
+    private val client = configureToIgnoreCertificate()
 
     // 0 to get nsfw
     private val hideNsfw = 1
@@ -164,26 +154,15 @@ class SuperStreamAPI(originalClient: OkHttpClient) {
             // Probably best to randomize this
             .add("medium", "Website&token$token")
             .build()
-        val req = POST(apiUrl, headers = headers, body = formData)
         try {
-            val copy: Request = req.newBuilder().build()
-            val buffer = okio.Buffer()
-            copy.body!!.writeTo(buffer)
-            Log.i("manualoutPut", buffer.readUtf8() + "\n$req")
-        } catch (e: IOException) {
-            Log.i("manualoutPut", "did not work")
-        }
-
-        try {
-            return client.newCall(req).execute()
+            return client.newCall(POST(apiUrl, headers = headers, body = formData)).execute()
         } catch (e: Exception) {
-            Log.i("manualoutPut", "Erroring OUT")
             throw Exception("Query Failed $e")
         }
     }
 
     private inline fun <reified T : Any> queryApiParsed(query: String): T {
-        return parseJson(queryApi(query).body!!.toString())
+        return parseJson(queryApi(query).body!!.string())
     }
 
     private val unixTime: Long
@@ -211,7 +190,7 @@ class SuperStreamAPI(originalClient: OkHttpClient) {
         val json = queryApi(
             """{"childmode":"$hideNsfw","app_version":"11.5","appid":"$appId","module":"Home_list_type_v2","channel":"Website","page":"$page","lang":"en","type":"all","pagelimit":"10","expired_date":"${getExpiryDate()}","platform":"android"}
             """.trimIndent()
-        ).body!!.toString()
+        ).body!!.string()
         val animes = mutableListOf<SAnime>()
 
         // Cut off the first row (featured)
@@ -281,7 +260,7 @@ class SuperStreamAPI(originalClient: OkHttpClient) {
                 val seasonQuery =
                     """{"childmode":"$hideNsfw","app_version":"11.5","year":"0","appid":"$appId","module":"TV_episode","display_all":"1","channel":"Website","season":"$it","lang":"en","expired_date":"${getExpiryDate()}","platform":"android","tid":"${loadData.id}"}"""
                 (queryApiParsed<SeriesSeasonProp>(seasonQuery)).data
-            }.flatten()
+            }.flatten().reversed()
 
             return Pair(null, Pair(data, episodes))
         }
@@ -304,8 +283,12 @@ class SuperStreamAPI(originalClient: OkHttpClient) {
 
         val linkData = queryApiParsed<LinkDataProp>(query)
 
+        if (linkData.code == -102) {
+            return arrayListOf()
+        }
+
         // Should really run this query for every link :(
-        val fid = linkData.data?.list?.firstOrNull { it.fid != null }?.fid
+        val fid = linkData.data[0]!!.list.firstOrNull { it.fid != null }?.fid
 
         val subtitleQuery = if (parsed.type == TYPE_MOVIES) {
             """{"childmode":"0","fid":"$fid","uid":"","app_version":"11.5","appid":"$appId","module":"Movie_srt_list_v2","channel":"Website","mid":"${parsed.id}","lang":"en","expired_date":"${getExpiryDate()}","platform":"android"}"""
@@ -314,27 +297,30 @@ class SuperStreamAPI(originalClient: OkHttpClient) {
         }
 
         val subtitles = queryApiParsed<SubtitleDataProp>(subtitleQuery).data
-        subtitles?.list?.forEach {
-            it.subtitles.forEach second@{ sub ->
-                if (sub.filePath.isNullOrBlank().not()) {
-                    subsList.add(
-                        Track(
-                            sub.filePath ?: return listOf(),
-                            sub.language ?: sub.lang ?: ""
+        try {
+            subtitles?.list?.forEach {
+                it.subtitles.forEach second@{ sub ->
+                    if (sub.filePath.isNullOrBlank().not()) {
+
+                        subsList.add(
+                            Track(
+                                sub.filePath ?: return listOf(),
+                                sub.language ?: sub.lang ?: ""
+                            )
                         )
-                    )
+                    }
                 }
             }
-        }
+        } catch (e: Error) {}
 
-        linkData.data?.list?.forEach {
+        linkData.data[0]!!.list.forEach {
             if (it.path.isNullOrBlank().not()) {
                 val videoUrl = it.path?.replace("\\/", "") ?: ""
                 try {
                     videoList.add(
                         Video(
                             videoUrl,
-                            it.quality ?: it.realQuality ?: "quality",
+                            (it.quality ?: it.realQuality ?: "quality") + " ${it.size}",
                             videoUrl,
                             subtitleTracks = subsList,
                             headers = headers
@@ -344,7 +330,7 @@ class SuperStreamAPI(originalClient: OkHttpClient) {
                     videoList.add(
                         Video(
                             videoUrl,
-                            it.quality ?: it.realQuality ?: "quality",
+                            (it.quality ?: it.realQuality ?: "quality") + " ${it.size}",
                             videoUrl,
                             headers = headers
                         )
@@ -374,14 +360,16 @@ class SuperStreamAPI(originalClient: OkHttpClient) {
     }
 
     val mapper: JsonMapper = JsonMapper.builder().addModule(KotlinModule.Builder().build())
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).build()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+        .build()
 
     private inline fun <reified T> parseJson(value: String): T {
         return mapper.readValue(value)
     }
 }
 
-private fun configureToIgnoreCertificate(builder: OkHttpClient.Builder): OkHttpClient.Builder {
+private fun configureToIgnoreCertificate(): OkHttpClient {
     try {
 
         // Create a trust manager that does not validate certificate chains
@@ -389,11 +377,11 @@ private fun configureToIgnoreCertificate(builder: OkHttpClient.Builder): OkHttpC
             @SuppressLint("CustomX509TrustManager")
             object : X509TrustManager {
 
-                override fun checkClientTrusted(chain: Array<X509Certificate?>?, authType: String?): Unit =
-                    throw CertificateException()
+                @SuppressLint("TrustAllX509TrustManager")
+                override fun checkClientTrusted(chain: Array<X509Certificate?>?, authType: String?) {}
 
-                override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?): Unit =
-                    throw CertificateException()
+                @SuppressLint("TrustAllX509TrustManager")
+                override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
 
                 override fun getAcceptedIssuers(): Array<X509Certificate> {
                     return arrayOf()
@@ -406,10 +394,11 @@ private fun configureToIgnoreCertificate(builder: OkHttpClient.Builder): OkHttpC
         sslContext.init(null, trustAllCerts, SecureRandom())
         // Create an ssl socket factory with our all-trusting manager
         val sslSocketFactory: SSLSocketFactory = sslContext.socketFactory
-        builder.sslSocketFactory(sslSocketFactory, trustAllCerts[0] as X509TrustManager)
-        builder.hostnameVerifier { _, _ -> true }
+        return OkHttpClient.Builder()
+            .sslSocketFactory(sslSocketFactory, trustAllCerts[0] as X509TrustManager)
+            .hostnameVerifier { _, _ -> true }
+            .build()
     } catch (e: Exception) {
         throw Exception("Exception while configuring IgnoreSslCertificate: $e")
     }
-    return builder
 }

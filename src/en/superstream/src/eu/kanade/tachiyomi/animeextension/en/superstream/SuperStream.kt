@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.en.superstream.SuperStreamAPI.LinkData
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -18,6 +17,7 @@ import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.util.Date
 
 @ExperimentalSerializationApi
 class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
@@ -30,9 +30,9 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val supportsLatest = false
 
-    override val client: OkHttpClient = network.cloudflareClient
+    private val superStreamAPI = SuperStreamAPI()
 
-    private val superStreamAPI = SuperStreamAPI(client)
+    override val client: OkHttpClient = network.cloudflareClient
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -58,19 +58,23 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
                     SEpisode.create().apply {
                         url = LinkData(mov.id, mov.boxType ?: 1, 0, 1).toJson()
                         name = "Movie"
+                        date_upload = getDateTime(mov.updateTime)
                     }
                 )
             }
         }
         series?.mapNotNull { ser ->
             ser.id?.let {
-                episodes.add(
-                    SEpisode.create().apply {
-                        url = LinkData(ser.id, 2, ser.season, ser.episode).toJson()
-                        episode_number = ser.episode?.toFloat() ?: 0F
-                        name = ser.title ?: ""
-                    }
-                )
+                if (ser.sourceFile!! == 1) {
+                    episodes.add(
+                        SEpisode.create().apply {
+                            url = LinkData(ser.tid ?: ser.id, 2, ser.season, ser.episode).toJson()
+                            episode_number = ser.episode?.toFloat() ?: 0F
+                            name = "Season ${ser.season} Ep ${ser.episode}: ${ser.title}"
+                            date_upload = getDateTime(ser.updateTime)
+                        }
+                    )
+                }
             }
         }
         return Observable.just(episodes)
@@ -84,7 +88,8 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val videos = superStreamAPI.loadLinks(episode.url)
-        return Observable.just(videos)
+        val sortedVideos = videos.sort()
+        return Observable.just(sortedVideos)
     }
 
     override fun videoListParse(response: Response) = throw Exception("not used")
@@ -114,8 +119,9 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
         filters: AnimeFilterList
     ): Observable<AnimesPage> {
         val searchResult = superStreamAPI.search(page, query)
-        return Observable.just(AnimesPage(searchResult, true))
+        return Observable.just(AnimesPage(searchResult, page < 8))
     }
+
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = throw Exception("not used")
 
     override fun searchAnimeParse(response: Response) = throw Exception("not used")
@@ -127,10 +133,12 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
         val (detail, _) = seriesData
         if (movie != null) {
             ani.title = movie.title ?: "Movie"
-            ani.genre = movie.cats
+            ani.genre = movie.cats!!.split(",").let { genArray ->
+                genArray.joinToString { genList -> genList.replaceFirstChar { gen -> gen.uppercase() } }
+            }
             ani.description = movie.description
             ani.status = SAnime.COMPLETED
-            ani.author = movie.director
+            ani.author = movie.writer!!.substringBefore("\n")
 
             val releasedDate = "Released: "
             movie.released?.let { date ->
@@ -144,10 +152,12 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
         } else {
             detail?.let {
                 ani.title = it.title ?: "Series"
-                ani.genre = it.cats
+                ani.genre = it.cats!!.split(",").let { genArray ->
+                    genArray.joinToString { genList -> genList.replaceFirstChar { gen -> gen.uppercase() } }
+                }
                 ani.description = it.description
                 ani.status = SAnime.UNKNOWN
-                ani.author = it.director
+                ani.author = it.writer!!.substringBefore("\n")
 
                 val releasedDate = "Released: "
                 it.released?.let { date ->
@@ -183,8 +193,8 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p", "240p")
-            entryValues = arrayOf("1080", "720", "480", "360", "240")
+            entries = arrayOf("4k", "1080p", "720p", "480p", "360p", "240p")
+            entryValues = arrayOf("4k", "1080", "720", "480", "360", "240")
             setDefaultValue("1080")
             summary = "%s"
 
@@ -202,5 +212,13 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun Any.toJson(): String {
         if (this is String) return this
         return superStreamAPI.mapper.writeValueAsString(this)
+    }
+
+    private fun getDateTime(s: Int?): Long {
+        return try {
+            Date(s!!.toLong() * 1000).time
+        } catch (e: Exception) {
+            0L
+        }
     }
 }
