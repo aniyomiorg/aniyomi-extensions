@@ -146,15 +146,14 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             TagSearch(arrayOf()).apply { state = 0 }
         }
 
-        getFilterList()
         return when {
             query.isNotEmpty() -> {
                 GET("$baseUrl/search/$query/?flag1=${catBy.toUriPart()}&sort_by=$newSort&from_videos=$page", headers) // with search
             }
+            tagSearch.state != 0 -> GET("$baseUrl/search/?tag_ids=all,${tagSearch.toUriPart()}&sort_by=$newSort&from_videos=$page") // with tag search
             sortedBy.state != 0 || catBy.state != 0 -> {
                 GET("$baseUrl/search/?flag1=${catBy.toUriPart()}&sort_by=${sortedBy.toUriPart()}&from_videos=$page", headers) // with sort and category
             }
-            tagSearch.state != 0 -> GET("$baseUrl/tags/${tagSearch.toUriPart()}")
             else -> {
                 GET("$baseUrl/latest-updates/$page/", headers) // without search
             }
