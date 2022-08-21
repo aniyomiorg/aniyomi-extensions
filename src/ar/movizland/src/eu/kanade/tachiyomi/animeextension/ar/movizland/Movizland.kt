@@ -270,7 +270,7 @@ class Movizland : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title = "Preferred quality"
             entries = arrayOf("1080p", "720p", "480p", "360p", "240p")
             entryValues = arrayOf("1080", "720", "480", "360", "240")
-            setDefaultValue("240")
+            setDefaultValue("1080")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
