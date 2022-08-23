@@ -20,7 +20,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
@@ -40,9 +39,11 @@ class AnimeOnsen : AnimeHttpSource() {
 
     private val cfClient = network.cloudflareClient
 
-    override val client: OkHttpClient = network.client.newBuilder()
-        .addInterceptor(AOAPIInterceptor(cfClient))
-        .build()
+    override val client by lazy {
+        network.client.newBuilder()
+            .addInterceptor(AOAPIInterceptor(cfClient))
+            .build()
+    }
 
     private val json = Json {
         ignoreUnknownKeys = true

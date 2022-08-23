@@ -373,10 +373,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun decode(input: String): String = java.net.URLDecoder.decode(input, "utf-8")
 
-    private val cipherKey: String
-    private val decipherKey: String
-
-    init {
+    private val keys by lazy {
         val allJsScript = runBlocking {
             client.newCall(
                 GET(
@@ -385,9 +382,13 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 )
             ).execute().body!!.string()
         }
-        val keys = getKeys(allJsScript, json)
-        cipherKey = keys.first
-        decipherKey = keys.second
+        getKeys(allJsScript, json)
+    }
+    private val cipherKey by lazy {
+        keys.first
+    }
+    private val decipherKey by lazy {
+        keys.second
     }
 }
 

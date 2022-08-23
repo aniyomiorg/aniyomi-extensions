@@ -6,7 +6,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
-const val fallbackcipherKey = "xtbmecCv4faAOSLV"
+const val fallbackcipherKey = "mcYrOtBqfRISotfM"
 const val fallbackdecipherKey = "hlPeNwkncH0fq9so"
 
 fun getKeys(allJsScript: String, json: Json): Pair<String, String> {
