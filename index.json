@@ -2,10 +2,10 @@
   {
     "name": "Aniyomi: AnimeOnsen",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.animeonsen",
-    "apk": "aniyomi-all.animeonsen-v13.2.apk",
+    "apk": "aniyomi-all.animeonsen-v13.3.apk",
     "lang": "all",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0
   },
   {
@@ -371,10 +371,10 @@
   {
     "name": "Aniyomi: 9anime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.nineanime",
-    "apk": "aniyomi-en.nineanime-v13.21.apk",
+    "apk": "aniyomi-en.nineanime-v13.22.apk",
     "lang": "en",
-    "code": 21,
-    "version": "13.21",
+    "code": 22,
+    "version": "13.22",
     "nsfw": 0
   },
   {
