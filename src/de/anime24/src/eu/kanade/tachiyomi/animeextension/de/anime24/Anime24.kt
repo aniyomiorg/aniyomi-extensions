@@ -6,7 +6,7 @@ import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.de.anime24.extractors.StreamTapeExtractor
-import eu.kanade.tachiyomi.animeextension.de.kinoking.extractors.VoeExtractor
+import eu.kanade.tachiyomi.animeextension.de.anime24.extractors.VoeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
