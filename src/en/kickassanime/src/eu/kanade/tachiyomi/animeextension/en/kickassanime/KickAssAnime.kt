@@ -66,7 +66,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // Add non working server names here
-    private val DeadServers = listOf(
+    private val deadServers = listOf(
         "BETA-SERVER", "BETASERVER1", "BETASERVER3", "DEVSTREAM",
         "THETA-ORIGINAL-V4", "DAILYMOTION", "KICKASSANIME1"
     )
@@ -112,17 +112,27 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val data = getAppdata(response.asJsoup())
         val episode = data["episode"]!!.jsonObject
-        val link1 = episode["link1"]!!.jsonPrimitive.content
+        var link = episode["link1"]!!.jsonPrimitive.content
+        //check if link1 is not blank (link2-4 does work), if so check external servers for gogo links
+        if (link.isBlank()) {
+            for (li in data["ext_servers"]!!.jsonArray) {
+                if (li.jsonObject["name"]!!.jsonPrimitive.content == "Vidcdn") {
+                    link = li.jsonObject["link"]!!.jsonPrimitive.content
+                    break
+                }
+            }
+        }
+        if (link.isBlank()) return listOf()
         val videoList = mutableListOf<Video>()
 
         when {
-            link1.contains("gogoplay4.com") -> {
+            link.contains("gogoplay4.com") -> {
                 videoList.addAll(
-                    extractGogoVideo(link1)
+                    extractGogoVideo(link)
                 )
             }
-            link1.contains("betaplayer.life") -> {
-                var url = decode(link1).substringAfter("data=").substringBefore("&vref")
+            link.contains("betaplayer.life") -> {
+                var url = decode(link).substringAfter("data=").substringBefore("&vref")
                 if (url.startsWith("https").not()) {
                     url = "https:$url"
                 }
@@ -131,12 +141,12 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 )
             }
             else -> {
-                val resp = client.newCall(GET(link1)).execute()
+                val resp = client.newCall(GET(link)).execute()
                 val sources = getVideoSource(resp.asJsoup())
 
                 sources.forEach { source ->
                     when (source.jsonObject["name"]!!.jsonPrimitive.content) {
-                        in DeadServers -> {}
+                        in deadServers -> {}
                         "BETAPLAYER" -> {
                             videoList.addAll(
                                 extractBetaVideo(
