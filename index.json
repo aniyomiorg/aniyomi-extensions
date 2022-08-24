@@ -396,6 +396,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: SuperStream",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.superstream",
+    "apk": "aniyomi-en.superstream-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: tenshi.moe",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.tenshimoe",
     "apk": "aniyomi-en.tenshimoe-v13.25.apk",
