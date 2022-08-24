@@ -153,6 +153,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: شاهد فور يو",
+    "pkg": "eu.kanade.tachiyomi.animeextension.ar.shahid4u",
+    "apk": "aniyomi-ar.shahid4u-v13.1.apk",
+    "lang": "ar",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: WIT ANIME",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.witanime",
     "apk": "aniyomi-ar.witanime-v13.19.apk",
