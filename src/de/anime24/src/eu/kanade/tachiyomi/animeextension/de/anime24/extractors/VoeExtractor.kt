@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.de.kinoking.extractors
+package eu.kanade.tachiyomi.animeextension.de.anime24.extractors
 
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
