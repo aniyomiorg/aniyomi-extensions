@@ -198,6 +198,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: Anime24",
+    "pkg": "eu.kanade.tachiyomi.animeextension.de.anime24",
+    "apk": "aniyomi-de.anime24-v13.1.apk",
+    "lang": "de",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: Anime Shitai",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.animeshitai",
     "apk": "aniyomi-de.animeshitai-v13.4.apk",
