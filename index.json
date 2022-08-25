@@ -128,10 +128,10 @@
   {
     "name": "Aniyomi: موفيزلاند",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.movizland",
-    "apk": "aniyomi-ar.movizland-v13.1.apk",
+    "apk": "aniyomi-ar.movizland-v13.2.apk",
     "lang": "ar",
-    "code": 1,
-    "version": "13.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 0
   },
   {
@@ -326,10 +326,10 @@
   {
     "name": "Aniyomi: DramaCool",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.dramacool",
-    "apk": "aniyomi-en.dramacool-v13.18.apk",
+    "apk": "aniyomi-en.dramacool-v13.19.apk",
     "lang": "en",
-    "code": 18,
-    "version": "13.18",
+    "code": 19,
+    "version": "13.19",
     "nsfw": 0
   },
   {
