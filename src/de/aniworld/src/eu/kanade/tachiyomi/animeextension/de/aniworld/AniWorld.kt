@@ -74,10 +74,6 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector(): String? = null
 
     override fun popularAnimeRequest(page: Int): Request {
-        val headers = Headers.Builder()
-            .add("Referer", baseUrl)
-            .add("Upgrade-Insecure-Requests", "1")
-            .build()
         return GET("$baseUrl/beliebte-animes")
     }
 
@@ -146,6 +142,9 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val title = result["title"]!!.jsonPrimitive.content
         val link = result["link"]!!.jsonPrimitive.content
         anime.title = title.replace("<em>", "").replace("</em>", "")
+        val thumpage = client.newCall(GET("$baseUrl$link")).execute().asJsoup()
+        anime.thumbnail_url = baseUrl +
+            thumpage.selectFirst("div.seriesCoverBox img").attr("data-src")
         anime.url = link
         return anime
     }
@@ -226,92 +225,35 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val gerSubs = getRedirectLinks(document, AWConstants.KEY_GER_SUB)
-        val gerDubs = getRedirectLinks(document, AWConstants.KEY_GER_DUB)
-        val engSubs = getRedirectLinks(document, AWConstants.KEY_ENG_SUB)
+        val redirectlink = document.select("ul.row li")
         val videoList = mutableListOf<Video>()
         val hosterSelection = preferences.getStringSet(AWConstants.HOSTER_SELECTION, null)
         val redirectInterceptor = client.newBuilder().addInterceptor(RedirectInterceptor()).build()
-        gerSubs.forEach {
+        redirectlink.forEach {
+            val langkey = it.attr("data-lang-key")
+            val language = getlanguage(langkey)
             val redirectgs = baseUrl + it.selectFirst("a.watchEpisode").attr("href")
-            val redirectsgs = redirectInterceptor.newCall(GET(redirectgs)).execute().request.url.toString()
+            val redirects = redirectInterceptor.newCall(GET(redirectgs)).execute().request.url.toString()
             if (hosterSelection != null) {
                 when {
-                    redirectsgs.contains("https://voe.sx") || redirectsgs.contains("https://launchreliantcleaverriver") && hosterSelection.contains(AWConstants.NAME_VOE) -> {
-                        val quality = "Voe Deutscher Sub"
-                        val video = VoeExtractor(client).videoFromUrl(redirectsgs, quality)
+                    redirects.contains("https://voe.sx") || redirects.contains("https://launchreliantcleaverriver") ||
+                        redirects.contains("https://fraudclatterflyingcar") && hosterSelection.contains(AWConstants.NAME_VOE) -> {
+                        val quality = "Voe $language"
+                        val video = VoeExtractor(client).videoFromUrl(redirects, quality)
                         if (video != null) {
                             videoList.add(video)
                         }
                     }
-                    redirectsgs.contains("https://dood") && hosterSelection.contains(AWConstants.NAME_DOOD) -> {
-                        val quality = "Doodstream Deutscher Sub"
-                        val video = DoodExtractor(client).videoFromUrl(redirectsgs, quality)
+                    redirects.contains("https://dood") && hosterSelection.contains(AWConstants.NAME_DOOD) -> {
+                        val quality = "Doodstream $language"
+                        val video = DoodExtractor(client).videoFromUrl(redirects, quality)
                         if (video != null) {
                             videoList.add(video)
                         }
                     }
-                    redirectsgs.contains("https://streamtape") && hosterSelection.contains(AWConstants.NAME_STAPE) -> {
-                        val quality = "Streamtape Deutscher Sub"
-                        val video = StreamTapeExtractor(client).videoFromUrl(redirectsgs, quality)
-                        if (video != null) {
-                            videoList.add(video)
-                        }
-                    }
-                }
-            }
-        }
-        gerDubs.forEach {
-            val redirectgd = baseUrl + it.selectFirst("a.watchEpisode").attr("href")
-            val redirectsgd = redirectInterceptor.newCall(GET(redirectgd)).execute().request.url.toString()
-            if (hosterSelection != null) {
-                when {
-                    redirectsgd.contains("https://voe.sx") || redirectsgd.contains("https://launchreliantcleaverriver") && hosterSelection.contains(AWConstants.NAME_VOE) -> {
-                        val quality = "Voe Deutscher Dub"
-                        val video = VoeExtractor(client).videoFromUrl(redirectsgd, quality)
-                        if (video != null) {
-                            videoList.add(video)
-                        }
-                    }
-                    redirectsgd.contains("https://dood") && hosterSelection.contains(AWConstants.NAME_DOOD) -> {
-                        val quality = "Doodstream Deutscher Dub"
-                        val video = DoodExtractor(client).videoFromUrl(redirectsgd, quality)
-                        if (video != null) {
-                            videoList.add(video)
-                        }
-                    }
-                    redirectsgd.contains("https://streamtape") && hosterSelection.contains(AWConstants.NAME_STAPE) -> {
-                        val quality = "Streamtape Deutscher Dub"
-                        val video = StreamTapeExtractor(client).videoFromUrl(redirectsgd, quality)
-                        if (video != null) {
-                            videoList.add(video)
-                        }
-                    }
-                }
-            }
-        }
-        engSubs.forEach {
-            val redirecten = baseUrl + it.selectFirst("a.watchEpisode").attr("href")
-            val redirectsen = redirectInterceptor.newCall(GET(redirecten)).execute().request.url.toString()
-            if (hosterSelection != null) {
-                when {
-                    redirectsen.contains("https://voe.sx") || redirectsen.contains("https://launchreliantcleaverriver") && hosterSelection.contains(AWConstants.NAME_VOE) -> {
-                        val quality = "Voe Englischer Sub"
-                        val video = VoeExtractor(client).videoFromUrl(redirectsen, quality)
-                        if (video != null) {
-                            videoList.add(video)
-                        }
-                    }
-                    redirectsen.contains("https://dood") && hosterSelection.contains(AWConstants.NAME_DOOD) -> {
-                        val quality = "Doodstream Englischer Sub"
-                        val video = DoodExtractor(client).videoFromUrl(redirectsen, quality)
-                        if (video != null) {
-                            videoList.add(video)
-                        }
-                    }
-                    redirectsen.contains("https://streamtape") && hosterSelection.contains(AWConstants.NAME_STAPE) -> {
-                        val quality = "Streamtape Englischer Sub"
-                        val video = StreamTapeExtractor(client).videoFromUrl(redirectsen, quality)
+                    redirects.contains("https://streamtape") && hosterSelection.contains(AWConstants.NAME_STAPE) -> {
+                        val quality = "Streamtape $language"
+                        val video = StreamTapeExtractor(client).videoFromUrl(redirects, quality)
                         if (video != null) {
                             videoList.add(video)
                         }
@@ -322,11 +264,21 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoList
     }
 
-    private fun getRedirectLinks(document: Document, key: Int): List<Element> {
-        val hosterSelection = preferences.getStringSet(AWConstants.HOSTER_SELECTION, null)
-        val selector = "li[class*=episodeLink][data-lang-key="
-        return document.select("$selector$key]")
-            .filter { hosterSelection?.contains(it.select("div > a > h4").text()) == true }
+    private fun getlanguage(langkey: String): String? {
+        when {
+            langkey.contains("${AWConstants.KEY_GER_SUB}") -> {
+                return "Deutscher Sub"
+            }
+            langkey.contains("${AWConstants.KEY_GER_DUB}") -> {
+                return "Deutscher Dub"
+            }
+            langkey.contains("${AWConstants.KEY_ENG_SUB}") -> {
+                return "Englischer Sub"
+            }
+            else -> {
+                return null
+            }
+        }
     }
 
     override fun videoFromElement(element: Element): Video = throw Exception("not Used")
