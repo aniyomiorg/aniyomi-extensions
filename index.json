@@ -218,10 +218,10 @@
   {
     "name": "Aniyomi: AniWorld",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.aniworld",
-    "apk": "aniyomi-de.aniworld-v13.4.apk",
+    "apk": "aniyomi-de.aniworld-v13.5.apk",
     "lang": "de",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 0
   },
   {
