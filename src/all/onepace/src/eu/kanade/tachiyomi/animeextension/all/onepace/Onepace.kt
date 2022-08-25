@@ -57,7 +57,7 @@ open class Onepace(override val lang: String, override val name: String) : Confi
             else -> 0
         }
         val langAnJson = childrenJson!![langId].jsonObject["children"]!!.jsonArray
-        val thumJson by lazy { client.newCall(GET("https://onepace.net/_next/data/BM0nGdjN96o4xOSQR37x8/es/watch.json")).execute().asJsoup() }
+        val thumJson by lazy { client.newCall(GET("https://onepace.net/_next/data/RQ8jGOTF74G85UWtiDofs/es/watch.json")).execute().asJsoup() }
         return AnimesPage(
             langAnJson.map {
                 val anName = it.jsonObject["text"].toString().replace("\"", "")
@@ -129,10 +129,15 @@ open class Onepace(override val lang: String, override val name: String) : Confi
         val realUrl = "https:" + response.request.url.toString().substringAfter("%23")
         val hostUrl = realUrl.substringBefore("/v/")
         val document = client.newCall(GET(realUrl)).execute().asJsoup()
-        val timeId = document.selectFirst("script:containsData(var a = function())").data().substringAfter("+(").substringBefore("%1000")
+        // ZippyShare Scraper
+        val jscript = document.selectFirst("script:containsData(asdasd)").data()
+        val a = jscript.substringAfter("var a = ").substringBefore(";").toInt()
+        val firstB = jscript.substringAfter(".substr(").substringBefore(",").toInt()
+        val b = jscript.substringAfter(".substr($firstB, ").substringBefore(")").toInt() - firstB
+
         val videoId = realUrl.substringAfter("/v/").substringBefore("/file")
         val videoName = document.selectFirst("div.center div font+font").text()
-        val videoUrl = "$hostUrl/d/$videoId/${(timeId.toInt() % 1000) + 11}/${URLEncoder.encode(videoName)}"
+        val videoUrl = "$hostUrl/d/$videoId/${(Math.pow(a.toDouble(),b.toDouble()).toInt() + b)}/${URLEncoder.encode(videoName)}"
         return listOf(Video(videoUrl, "ZippyShare", videoUrl))
     }
 

@@ -5,7 +5,7 @@ ext {
     extName = 'Onepace'
     pkgNameSuffix = 'all.onepace'
     extClass = '.OnepaceFactory'
-    extVersionCode = 4
+    extVersionCode = 5
     libVersion = '13'
     containsNsfw = false
 }
