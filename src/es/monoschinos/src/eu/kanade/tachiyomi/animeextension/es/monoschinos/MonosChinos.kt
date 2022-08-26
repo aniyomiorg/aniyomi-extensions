@@ -59,15 +59,18 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val jsoup = response.asJsoup()
+        val episodeList = mutableListOf<SEpisode>()
         val animeId = response.request.url.pathSegments.last().replace("-sub-espanol", "").replace("-080p", "-1080p")
-        return jsoup.select("div.col-item").map { it ->
+        jsoup.select("div.col-item").map { it ->
             val epNum = it.attr("data-episode")
-            SEpisode.create().apply {
+            val ep = SEpisode.create().apply {
                 episode_number = epNum.toFloat()
                 name = "Episodio $epNum"
                 url = "/ver/$animeId-episodio-$epNum"
             }
+            episodeList.add(ep)
         }
+        return episodeList.reversed()
     }
 
     override fun episodeListSelector() = throw Exception("not used")
