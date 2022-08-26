@@ -67,7 +67,7 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 name = "Episodio $epNum"
                 url = "/ver/$animeId-episodio-$epNum"
             }
-        }
+        }.reversed()
     }
 
     override fun episodeListSelector() = throw Exception("not used")
