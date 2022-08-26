@@ -27,7 +27,6 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
-import java.net.URLEncoder
 
 open class Onepace(override val lang: String, override val name: String) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -136,8 +135,9 @@ open class Onepace(override val lang: String, override val name: String) : Confi
         val b = jscript.substringAfter(".substr($firstB, ").substringBefore(")").toInt() - firstB
 
         val videoId = realUrl.substringAfter("/v/").substringBefore("/file")
-        val videoName = document.selectFirst("div.center div font+font").text()
-        val videoUrl = "$hostUrl/d/$videoId/${(Math.pow(a.toDouble(),b.toDouble()).toInt() + b)}/${URLEncoder.encode(videoName)}"
+        val videoName = jscript.substringAfter("+\"").substringBefore("\";")
+        val videoUrl = "$hostUrl/d/$videoId/${(Math.pow(a.toDouble(),b.toDouble()).toInt() + b)}$videoName"
+
         return listOf(Video(videoUrl, "ZippyShare", videoUrl))
     }
 
