@@ -99,10 +99,13 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
                 realUrl.contains("/stream/amz.php?") -> {
                     val video = amazonExtractor(baseUrl + realUrl.substringAfter(".."))
-                    if (realUrl.contains("&ext=es")) {
-                        videoList.add(Video(video, "Amazon ES", video))
-                    } else {
-                        videoList.add(Video(video, "Amazon", video))
+                    if (video.isNotBlank()) {
+                        if (realUrl.contains("&ext=es")) {
+
+                            videoList.add(Video(video, "Amazon ES", video))
+                        } else {
+                            videoList.add(Video(video, "Amazon", video))
+                        }
                     }
                 }
                 realUrl.contains("streamtape") -> {
