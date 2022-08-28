@@ -124,7 +124,8 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     url.contains("sbplay1.com") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
                     url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
                     url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
-                    url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com")
+                    url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com") ||
+                    url.contains("streamsss.net") // || url.contains("") // || url.contains("")
                 -> {
                     val headers = headers.newBuilder()
                         .set("Referer", url)
@@ -153,7 +154,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     url.contains("fcdn.stream") || url.contains("mediashore.org") || url.contains("suzihaza.com") ||
                     url.contains("there.to") || url.contains("femax20.com") || url.contains("javstream.top") ||
                     url.contains("viplayer.cc") || url.contains("sexhd.co") || url.contains("fembed.net") ||
-                    url.contains("mrdhan.com") || url.contains("votrefilms.xyz") || // url.contains("") ||
+                    url.contains("mrdhan.com") || url.contains("votrefilms.xyz") ||  url.contains("fembed9hd.com") ||
                     url.contains("embedsito.com") || url.contains("dutrag.com") || // url.contains("") ||
                     url.contains("youvideos.ru") || url.contains("streamm4u.club") || // url.contains("") ||
                     url.contains("moviepl.xyz") || url.contains("asianclub.tv") || // url.contains("") ||

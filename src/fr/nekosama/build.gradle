@@ -1,0 +1,14 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'NekoSama'
+    pkgNameSuffix = 'fr.nekosama'
+    extClass = '.NekoSama'
+    extVersionCode = 2
+    libVersion = '13'
+    containsNsfw = false
+}
+
+apply from: "$rootDir/common.gradle"

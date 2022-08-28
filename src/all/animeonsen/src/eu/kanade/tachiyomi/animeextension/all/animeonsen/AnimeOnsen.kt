@@ -14,13 +14,13 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
-import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
@@ -40,16 +40,17 @@ class AnimeOnsen : AnimeHttpSource() {
 
     private val cfClient = network.cloudflareClient
 
-    override val client: OkHttpClient = network.client.newBuilder()
-        .addInterceptor(AOAPIInterceptor(cfClient))
-        .build()
+    override val client by lazy {
+        network.client.newBuilder()
+            .addInterceptor(AOAPIInterceptor(cfClient))
+            .build()
+    }
 
     private val json = Json {
         ignoreUnknownKeys = true
     }
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("referer", baseUrl)
         .add("user-agent", AO_USER_AGENT)
 
     // ============================== Popular ===============================
@@ -68,23 +69,22 @@ class AnimeOnsen : AnimeHttpSource() {
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val episodes = response.asJsoup().select("div.episode-list > a")
-        return episodes.map {
-            val num = it.attr("data-episode")
-            val episodeSpan = it.select("div.episode > span.general")
-            val titleSpan = it.select("div.episode > span.title")
+        val contentId = response.request.url.toString().substringBeforeLast("/episodes")
+            .substringAfterLast("/")
+        val responseJson = json.decodeFromString<JsonObject>(response.body!!.string())
+        return responseJson.keys.toList().sortedDescending().map { epNum ->
             SEpisode.create().apply {
-                url = it.attr("href")
-                    .substringAfter("/watch/")
-                    .replace("?episode=", "/video/")
-                episode_number = num.toFloat()
-                name = episodeSpan.text() + ": " + titleSpan.text()
+                url = "$contentId/video/$epNum"
+                episode_number = epNum.toFloat()
+                val episodeName =
+                    responseJson[epNum]!!.jsonObject["contentTitle_episode_en"]!!.jsonPrimitive.content
+                name = "Episode $epNum: $episodeName"
             }
-        }.reversed()
+        }
     }
 
     override fun episodeListRequest(anime: SAnime): Request {
-        return GET("$baseUrl/details/${anime.url}")
+        return GET("$apiUrl/content/${anime.url}/episodes")
     }
 
     // ============================ Video Links =============================
@@ -134,7 +134,7 @@ class AnimeOnsen : AnimeHttpSource() {
             author = details.mal_data?.studios?.joinToString { it.name }
             genre = details.mal_data?.genres?.joinToString { it.name }
             description = details.mal_data?.synopsis
-            thumbnail_url = "https://api.animeonsen.xyz/v4/image/420x600/${details.content_id}"
+            thumbnail_url = "https://api.animeonsen.xyz/v4/image/210x300/${details.content_id}"
         }
         return anime
     }
@@ -167,7 +167,7 @@ class AnimeOnsen : AnimeHttpSource() {
     private fun AnimeListItem.toSAnime() = SAnime.create().apply {
         url = content_id
         title = content_title ?: content_title_en!!
-        thumbnail_url = "https://api.animeonsen.xyz/v4/image/420x600/$content_id"
+        thumbnail_url = "https://api.animeonsen.xyz/v4/image/210x300/$content_id"
     }
 }
 
