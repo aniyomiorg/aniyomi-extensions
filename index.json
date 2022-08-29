@@ -11,10 +11,10 @@
   {
     "name": "Aniyomi: Onepace",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.onepace",
-    "apk": "aniyomi-all.onepace-v13.6.apk",
+    "apk": "aniyomi-all.onepace-v13.7.apk",
     "lang": "all",
-    "code": 6,
-    "version": "13.6",
+    "code": 7,
+    "version": "13.7",
     "nsfw": 0
   },
   {
@@ -650,10 +650,10 @@
   {
     "name": "Aniyomi: Vostfree",
     "pkg": "eu.kanade.tachiyomi.animeextension.fr.vostfree",
-    "apk": "aniyomi-fr.vostfree-v13.8.apk",
+    "apk": "aniyomi-fr.vostfree-v13.9.apk",
     "lang": "fr",
-    "code": 8,
-    "version": "13.8",
+    "code": 9,
+    "version": "13.9",
     "nsfw": 0
   },
   {
