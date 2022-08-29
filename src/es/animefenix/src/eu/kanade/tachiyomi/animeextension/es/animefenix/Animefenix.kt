@@ -108,6 +108,14 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         }
                     }
                 }
+                realUrl.contains("/stream/fl.php") -> {
+                    val video = realUrl.substringAfter("/stream/fl.php?v=")
+                    client.newCall(GET(video)).execute().code.let {
+                        if (it == 200) {
+                            videoList.add(Video(video, "FireLoad", video))
+                        }
+                    }
+                }
                 realUrl.contains("streamtape") -> {
                     val video = StreamTapeExtractor(client).videoFromUrl(realUrl, "Streamtape")
                     if (video != null) {
@@ -125,24 +133,6 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
-
-    override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "Amazon")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality == quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
-    }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
@@ -184,13 +174,6 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/animes?order=added&page=$page")
 
     override fun latestUpdatesSelector() = popularAnimeSelector()
-
-    private fun amazonExtractor(url: String): String {
-        val document = client.newCall(GET(url)).execute().asJsoup()
-        return document.selectFirst("script:containsData(sources: [)").data()
-            .substringAfter("[{\"file\":\"")
-            .substringBefore("\",").replace("\\", "")
-    }
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
@@ -255,13 +238,31 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         fun toUriPart() = vals[state].second
     }
 
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString("preferred_quality", "Amazon")
+        if (quality != null) {
+            val newList = mutableListOf<Video>()
+            var preferred = 0
+            for (video in this) {
+                if (video.quality == quality) {
+                    newList.add(preferred, video)
+                    preferred++
+                } else {
+                    newList.add(video)
+                }
+            }
+            return newList
+        }
+        return this
+    }
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
 
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("Amazon", "Fembed:480p", "Fembed:720p", "Amazon", "AmazonES")
-            entryValues = arrayOf("Amazon")
+            title = "Servidor Preferido"
+            entries = arrayOf("Amazon", "Fembed:480p", "Fembed:720p", "Amazon", "AmazonES", "FireLoad")
+            entryValues = arrayOf("Amazon", "Fembed:480p", "Fembed:720p", "Amazon", "AmazonES", "FireLoad")
             setDefaultValue("Amazon")
             summary = "%s"
 
@@ -273,5 +274,13 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         screen.addPreference(videoQualityPref)
+    }
+
+    private fun amazonExtractor(url: String): String {
+        val document = client.newCall(GET(url)).execute().asJsoup()
+        val videoURl = document.selectFirst("script:containsData(sources: [)").data()
+            .substringAfter("[{\"file\":\"")
+            .substringBefore("\",").replace("\\", "")
+        return if (client.newCall(GET(videoURl)).execute().code == 200) videoURl else ""
     }
 }
