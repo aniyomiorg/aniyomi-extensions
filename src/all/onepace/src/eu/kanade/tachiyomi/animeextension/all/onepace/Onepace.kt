@@ -26,7 +26,7 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.lang.Exception
+import kotlin.Exception
 
 open class Onepace(override val lang: String, override val name: String) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -106,10 +106,15 @@ open class Onepace(override val lang: String, override val name: String) : Confi
         val jsoup = client.newCall(GET(realUrl)).execute().asJsoup()
         return jsoup.select("table.listingplikow tbody tr.filerow.even").map {
             val epName = it.select("td.cien a.name").text().replace(".mp4", "")
-            val epNum = epName.substringAfter("][").substringBefore("]")
-                .replace("-", ".")
-                .replace(",", ".")
-                .replace("F", ".").replace("B", "0").toFloat()
+            val epNum = try {
+                epName.substringAfter("][").substringBefore("]")
+                    .replace("-", ".")
+                    .replace(",", ".")
+                    .replace("F", ".").replace("B", "0").toFloat()
+            } catch (e: Exception) {
+                // bruh
+                (Math.random() * 100).toFloat()
+            }
             val epUrl = it.select("td.cien a.name").attr("href")
             SEpisode.create().apply {
                 name = epName
