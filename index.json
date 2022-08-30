@@ -596,10 +596,10 @@
   {
     "name": "Aniyomi: MonosChinos",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.monoschinos",
-    "apk": "aniyomi-es.monoschinos-v13.11.apk",
+    "apk": "aniyomi-es.monoschinos-v13.12.apk",
     "lang": "es",
-    "code": 11,
-    "version": "13.11",
+    "code": 12,
+    "version": "13.12",
     "nsfw": 0
   },
   {
@@ -623,10 +623,10 @@
   {
     "name": "Aniyomi: Pelisplushd",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.pelisplushd",
-    "apk": "aniyomi-es.pelisplushd-v13.14.apk",
+    "apk": "aniyomi-es.pelisplushd-v13.15.apk",
     "lang": "es",
-    "code": 14,
-    "version": "13.14",
+    "code": 15,
+    "version": "13.15",
     "nsfw": 0
   },
   {
