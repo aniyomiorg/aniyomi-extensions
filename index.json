@@ -288,6 +288,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: Animension",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.animension",
+    "apk": "aniyomi-en.animension-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: AnimePahe",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.animepahe",
     "apk": "aniyomi-en.animepahe-v13.17.apk",
