@@ -23,6 +23,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.float
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
@@ -35,7 +36,7 @@ class Animension() : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val baseUrl = "https://animension.to/"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     private val apiUrl = "https://animension.to/public-api"
 
@@ -81,12 +82,13 @@ class Animension() : ConfigurableAnimeSource, AnimeHttpSource() {
                 name = "Episode ${data[2]}"
                 url = data[1].jsonPrimitive.content
                 episode_number = data[2].jsonPrimitive.float
+                date_upload = data[3].jsonPrimitive.long.toMilli()
             }
         }
         return episodes
     }
 
-    // Vide urls
+    // Video urls
     override fun videoListRequest(episode: SEpisode): Request =
         GET("$apiUrl/episode.php?id=${episode.url}", headers)
 
@@ -184,15 +186,28 @@ class Animension() : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // Latest
-    override fun latestUpdatesParse(response: Response): AnimesPage {
-        throw Exception("Not used")
-    }
+    override fun latestUpdatesRequest(page: Int): Request =
+        GET("$apiUrl/index.php?page=$page&mode=sub")
 
-    override fun latestUpdatesRequest(page: Int): Request {
-        throw Exception("Not used")
+    override fun latestUpdatesParse(response: Response): AnimesPage {
+        val responseJson = json.decodeFromString<JsonArray>(response.body!!.string())
+        val animes = responseJson.map { anime ->
+            val data = anime.jsonArray
+            SAnime.create().apply {
+                title = data[0].jsonPrimitive.content
+                url = data[1].jsonPrimitive.content
+                thumbnail_url = data[4].jsonPrimitive.content
+            }
+        }
+        val hasNextPage = responseJson.size >= 25
+
+        return AnimesPage(animes, hasNextPage)
     }
 
     // Search
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request =
+        GET("$apiUrl/search.php?search_text=$query&page=$page", headers)
+
     override fun searchAnimeParse(response: Response): AnimesPage {
         val responseJson = json.decodeFromString<JsonArray>(response.body!!.string())
         val animes = responseJson.map { anime ->
@@ -209,17 +224,16 @@ class Animension() : ConfigurableAnimeSource, AnimeHttpSource() {
         return AnimesPage(animes, hasNextPage)
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request =
-        GET("$apiUrl/search.php?search_text=$query&page=$page", headers)
-
     // Utilities
     private fun parseStatus(statusString: String): Int {
         return when (statusString) {
             "Ongoing" -> SAnime.ONGOING
-            "Completed" -> SAnime.COMPLETED
+            "Finished" -> SAnime.COMPLETED
             else -> SAnime.UNKNOWN
         }
     }
+
+    private fun Long.toMilli(): Long = this * 1000
 
     // Preferences
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
