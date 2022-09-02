@@ -335,10 +335,10 @@
   {
     "name": "Aniyomi: DramaCool",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.dramacool",
-    "apk": "aniyomi-en.dramacool-v13.19.apk",
+    "apk": "aniyomi-en.dramacool-v13.20.apk",
     "lang": "en",
-    "code": 19,
-    "version": "13.19",
+    "code": 20,
+    "version": "13.20",
     "nsfw": 0
   },
   {
@@ -816,6 +816,15 @@
     "lang": "pt",
     "code": 3,
     "version": "13.3",
+    "nsfw": 1
+  },
+  {
+    "name": "Aniyomi: Pi Fansubs",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.pifansubs",
+    "apk": "aniyomi-pt.pifansubs-v13.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "13.1",
     "nsfw": 1
   },
   {
