@@ -1,7 +1,9 @@
 package eu.kanade.tachiyomi.animeextension.en.superstream
 
-import com.fasterxml.jackson.annotation.JsonProperty
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
+@Serializable
 data class LinkData(
     val id: Int,
     val type: Int,
@@ -9,269 +11,279 @@ data class LinkData(
     val episode: Int?
 )
 
+@Serializable
 data class LinkDataProp(
-    @JsonProperty("code") val code: Int? = null,
-    @JsonProperty("msg") val msg: String? = null,
-    @JsonProperty("data") val data: ArrayList<ParsedLinkData?> = arrayListOf()
+    val code: Int? = null,
+    val msg: String? = null,
+    val data: ParsedLinkData? = null
 )
 
+@Serializable
 data class ParsedLinkData(
-    @JsonProperty("seconds") val seconds: Int? = null,
-    @JsonProperty("quality") val quality: ArrayList<String> = arrayListOf(),
-    @JsonProperty("list") val list: ArrayList<LinkList> = arrayListOf()
+    val seconds: Int? = null,
+    val quality: ArrayList<String> = arrayListOf(),
+    val list: ArrayList<LinkList> = arrayListOf()
 )
 
+@Serializable
 data class LinkList(
-    @JsonProperty("path") val path: String? = null,
-    @JsonProperty("quality") val quality: String? = null,
-    @JsonProperty("real_quality") val realQuality: String? = null,
-    @JsonProperty("format") val format: String? = null,
-    @JsonProperty("size") val size: String? = null,
-    @JsonProperty("size_bytes") val sizeBytes: Long? = null,
-    @JsonProperty("count") val count: Int? = null,
-    @JsonProperty("dateline") val dateline: Long? = null,
-    @JsonProperty("fid") val fid: Int? = null,
-    @JsonProperty("mmfid") val mmfid: Int? = null,
-    @JsonProperty("h265") val h265: Int? = null,
-    @JsonProperty("hdr") val hdr: Int? = null,
-    @JsonProperty("filename") val filename: String? = null,
-    @JsonProperty("original") val original: Int? = null,
-    @JsonProperty("colorbit") val colorbit: Int? = null,
-    @JsonProperty("success") val success: Int? = null,
-    @JsonProperty("timeout") val timeout: Int? = null,
-    @JsonProperty("vip_link") val vipLink: Int? = null,
-    @JsonProperty("fps") val fps: Int? = null,
-    @JsonProperty("bitstream") val bitstream: String? = null,
-    @JsonProperty("width") val width: Int? = null,
-    @JsonProperty("height") val height: Int? = null
+    val path: String? = null,
+    val quality: String? = null,
+    val real_quality: String? = null,
+    val format: String? = null,
+    val size: String? = null,
+    val size_bytes: Long? = null,
+    val count: Int? = null,
+    val dateline: Long? = null,
+    val fid: Int? = null,
+    val mmfid: Int? = null,
+    val h265: Int? = null,
+    val hdr: Int? = null,
+    val filename: String? = null,
+    val original: Int? = null,
+    val colorbit: Int? = null,
+    val success: Int? = null,
+    val timeout: Int? = null,
+    val vip_link: Int? = null,
+    val fps: Int? = null,
+    val bitstream: String? = null,
+    val width: Int? = null,
+    val height: Int? = null
 )
 
+@Serializable
 data class LoadData(
     val id: Int,
     val type: Int?
 )
 
+@Serializable
 data class DataJSON(
-    @JsonProperty("data") val data: ArrayList<ListJSON> = arrayListOf()
+    val data: ArrayList<ListJSON> = arrayListOf()
 )
 
+@Serializable
 data class ListJSON(
-    @JsonProperty("code") val code: Int? = null,
-    @JsonProperty("type") val type: String? = null,
-    @JsonProperty("name") val name: String? = null,
-    @JsonProperty("box_type") val boxType: Int? = null,
-    @JsonProperty("list") val list: ArrayList<PostJSON> = arrayListOf(),
+    val code: Int? = null,
+    val type: String? = null,
+    val name: String? = null,
+    val box_type: Int? = null,
+    val list: ArrayList<PostJSON> = arrayListOf(),
 )
 
+@Serializable
 data class PostJSON(
-    @JsonProperty("id") val id: Int? = null,
-    @JsonProperty("title") val title: String? = null,
-    @JsonProperty("poster") val poster: String? = null,
-    @JsonProperty("poster_2") val poster2: String? = null,
-    @JsonProperty("box_type") val boxType: Int? = null,
-    @JsonProperty("imdb_rating") val imdbRating: String? = null,
-    @JsonProperty("quality_tag") val quality_tag: String? = null,
+    val id: Int? = null,
+    val title: String? = null,
+    val poster: String? = null,
+    val poster_2: String? = null,
+    val box_type: Int? = null,
+    val imdb_rating: String? = null,
+    val quality_tag: String? = null,
 )
 
+@Serializable
 data class MainData(
-    @JsonProperty("data") val data: ArrayList<Data> = arrayListOf()
+    val data: ArrayList<Data> = arrayListOf()
 )
 
+@Serializable
 data class Data(
-    @JsonProperty("id") val id: Int? = null,
-    @JsonProperty("mid") val mid: Int? = null,
-    @JsonProperty("tid") val tid: Int? = null,
-    @JsonProperty("box_type") val boxType: Int? = null,
-    @JsonProperty("title") val title: String? = null,
-    @JsonProperty("poster_org") val posterOrg: String? = null,
-    @JsonProperty("poster") val poster: String? = null,
-    @JsonProperty("cats") val cats: String? = null,
-    @JsonProperty("year") val year: Int? = null,
-    @JsonProperty("imdb_rating") val imdbRating: String? = null,
-    @JsonProperty("quality_tag") val qualityTag: String? = null,
+    val id: Int? = null,
+    val mid: Int? = null,
+    val tid: Int? = null,
+    val box_type: Int? = null,
+    val title: String? = null,
+    val poster_org: String? = null,
+    val poster: String? = null,
+    val cats: String? = null,
+    val year: Int? = null,
+    val imdb_rating: String? = null,
+    val quality_tag: String? = null,
 )
 
+@Serializable
 data class MovieDataProp(
-    @JsonProperty("data") val data: MovieData? = MovieData()
+    val data: MovieData? = MovieData()
 )
 
+@Serializable
 data class MovieData(
-    @JsonProperty("id") val id: Int? = null,
-    @JsonProperty("title") val title: String? = null,
-    @JsonProperty("director") val director: String? = null,
-    @JsonProperty("writer") val writer: String? = null,
-    @JsonProperty("actors") val actors: String? = null,
-    @JsonProperty("runtime") val runtime: Int? = null,
-    @JsonProperty("poster") val poster: String? = null,
-    @JsonProperty("description") val description: String? = null,
-    @JsonProperty("cats") val cats: String? = null,
-    @JsonProperty("year") val year: Int? = null,
-    @JsonProperty("update_time") val updateTime: Int? = null,
-    @JsonProperty("imdb_id") val imdbId: String? = null,
-    @JsonProperty("imdb_rating") val imdbRating: String? = null,
-    @JsonProperty("trailer") val trailer: String? = null,
-    @JsonProperty("released") val released: String? = null,
-    @JsonProperty("content_rating") val contentRating: String? = null,
-    @JsonProperty("tmdb_id") val tmdbId: Int? = null,
-    @JsonProperty("tomato_meter") val tomatoMeter: Int? = null,
-    @JsonProperty("poster_org") val posterOrg: String? = null,
-    @JsonProperty("trailer_url") val trailerUrl: String? = null,
-    @JsonProperty("imdb_link") val imdbLink: String? = null,
-    @JsonProperty("box_type") val boxType: Int? = null,
-    @JsonProperty("recommend") val recommend: List<Data> = listOf() // series does not have any recommendations :pensive:
+    val id: Int? = null,
+    val title: String? = null,
+    val director: String? = null,
+    val writer: String? = null,
+    val actors: String? = null,
+    val runtime: Int? = null,
+    val poster: String? = null,
+    val description: String? = null,
+    val cats: String? = null,
+    val year: Int? = null,
+    val update_time: Int? = null,
+    val imdbId: String? = null,
+    val imdb_rating: String? = null,
+    val trailer: String? = null,
+    val released: String? = null,
+    val content_rating: String? = null,
+    val tmdb_id: Int? = null,
+    val tomatoMeter: Int? = null,
+    val poster_org: String? = null,
+    val trailer_url: String? = null,
+    val imdb_link: String? = null,
+    val box_type: Int? = null,
+    val recommend: List<Data> = listOf() // series does not have any recommendations :pensive:
 )
 
+@Serializable
 data class SeriesDataProp(
-    @JsonProperty("code") val code: Int? = null,
-    @JsonProperty("msg") val msg: String? = null,
-    @JsonProperty("data") val data: SeriesData? = SeriesData()
+    val code: Int? = null,
+    val msg: String? = null,
+    val data: SeriesData? = SeriesData()
 )
 
+@Serializable
 data class SeriesLanguage(
-    @JsonProperty("title") val title: String? = null,
-    @JsonProperty("lang") val lang: String? = null
+    val title: String? = null,
+    val lang: String? = null
 )
 
+@Serializable
 data class SeriesData(
-    @JsonProperty("id") val id: Int? = null,
-    @JsonProperty("mb_id") val mbId: Int? = null,
-    @JsonProperty("title") val title: String? = null,
-    @JsonProperty("display") val display: Int? = null,
-    @JsonProperty("state") val state: Int? = null,
-    @JsonProperty("vip_only") val vipOnly: Int? = null,
-    @JsonProperty("code_file") val codeFile: Int? = null,
-    @JsonProperty("director") val director: String? = null,
-    @JsonProperty("writer") val writer: String? = null,
-    @JsonProperty("actors") val actors: String? = null,
-    @JsonProperty("add_time") val addTime: Int? = null,
-    @JsonProperty("poster") val poster: String? = null,
-    @JsonProperty("poster_imdb") val posterImdb: Int? = null,
-    @JsonProperty("banner_mini") val bannerMini: String? = null,
-    @JsonProperty("description") val description: String? = null,
-    @JsonProperty("imdb_id") val imdbId: String? = null,
-    @JsonProperty("cats") val cats: String? = null,
-    @JsonProperty("year") val year: Int? = null,
-    @JsonProperty("collect") val collect: Int? = null,
-    @JsonProperty("view") val view: Int? = null,
-    @JsonProperty("download") val download: Int? = null,
-    @JsonProperty("update_time") val updateTime: String? = null,
-    @JsonProperty("released") val released: String? = null,
-    @JsonProperty("released_timestamp") val releasedTimestamp: Int? = null,
-    @JsonProperty("episode_released") val episodeReleased: String? = null,
-    @JsonProperty("episode_released_timestamp") val episodeReleasedTimestamp: Int? = null,
-    @JsonProperty("max_season") val maxSeason: Int? = null,
-    @JsonProperty("max_episode") val maxEpisode: Int? = null,
-    @JsonProperty("remark") val remark: String? = null,
-    @JsonProperty("imdb_rating") val imdbRating: String? = null,
-    @JsonProperty("content_rating") val contentRating: String? = null,
-    @JsonProperty("tmdb_id") val tmdbId: Int? = null,
-    @JsonProperty("tomato_url") val tomatoUrl: String? = null,
-    @JsonProperty("tomato_meter") val tomatoMeter: Int? = null,
-    @JsonProperty("tomato_meter_count") val tomatoMeterCount: Int? = null,
-    @JsonProperty("tomato_meter_state") val tomatoMeterState: String? = null,
-    @JsonProperty("reelgood_url") val reelgoodUrl: String? = null,
-    @JsonProperty("audience_score") val audienceScore: Int? = null,
-    @JsonProperty("audience_score_count") val audienceScoreCount: Int? = null,
-    @JsonProperty("no_tomato_url") val noTomatoUrl: Int? = null,
-    @JsonProperty("order_year") val orderYear: Int? = null,
-    @JsonProperty("episodate_id") val episodateId: String? = null,
-    @JsonProperty("weights_day") val weightsDay: Double? = null,
-    @JsonProperty("poster_min") val posterMin: String? = null,
-    @JsonProperty("poster_org") val posterOrg: String? = null,
-    @JsonProperty("banner_mini_min") val bannerMiniMin: String? = null,
-    @JsonProperty("banner_mini_org") val bannerMiniOrg: String? = null,
-    @JsonProperty("trailer_url") val trailerUrl: String? = null,
-    @JsonProperty("years") val years: ArrayList<Int> = arrayListOf(),
-    @JsonProperty("season") val season: ArrayList<Int> = arrayListOf(),
-    @JsonProperty("history") val history: ArrayList<String> = arrayListOf(),
-    @JsonProperty("imdb_link") val imdbLink: String? = null,
-    @JsonProperty("episode") val episode: ArrayList<SeriesEpisode> = arrayListOf(),
-//        @JsonProperty("is_collect") val isCollect: Int? = null,
-    @JsonProperty("language") val language: ArrayList<SeriesLanguage> = arrayListOf(),
-    @JsonProperty("box_type") val boxType: Int? = null,
-    @JsonProperty("year_year") val yearYear: String? = null,
-    @JsonProperty("season_episode") val seasonEpisode: String? = null,
-    @JsonProperty("recommend") val recommend: List<Data> = listOf()
+    val id: Int? = null,
+    val mb_id: Int? = null,
+    val title: String? = null,
+    val display: Int? = null,
+    val state: Int? = null,
+    val vip_only: Int? = null,
+    val code_file: Int? = null,
+    val director: String? = null,
+    val writer: String? = null,
+    val actors: String? = null,
+    val add_time: Int? = null,
+    val poster: String? = null,
+    val poster_imdb: Int? = null,
+    val banner_mini: String? = null,
+    val description: String? = null,
+    val imdb_id: String? = null,
+    val cats: String? = null,
+    val year: Int? = null,
+    val collect: Int? = null,
+    val view: Int? = null,
+    val download: Int? = null,
+    val update_time: String? = null,
+    val released: String? = null,
+    val released_timestamp: Int? = null,
+    val episode_released: String? = null,
+    val episode_released_timestamp: Int? = null,
+    val max_season: Int? = null,
+    val max_episode: Int? = null,
+    val remark: String? = null,
+    val imdb_rating: String? = null,
+    val content_rating: String? = null,
+    val tmdb_id: Int? = null,
+    val tomato_url: String? = null,
+    val tomato_meter: Int? = null,
+    val tomato_meter_count: Int? = null,
+    val tomato_meter_state: String? = null,
+    val reelgood_url: String? = null,
+    val audience_score: Int? = null,
+    val audience_score_count: Int? = null,
+    val no_tomato_url: Int? = null,
+    val order_year: Int? = null,
+    val episodate_id: String? = null,
+    val weights_day: Double? = null,
+    val poster_min: String? = null,
+    val poster_org: String? = null,
+    val banner_mini_min: String? = null,
+    val banner_mini_org: String? = null,
+    val trailer_url: String? = null,
+    val years: ArrayList<Int> = arrayListOf(),
+    val season: ArrayList<Int> = arrayListOf(),
+    val history: ArrayList<String> = arrayListOf(),
+    val imdb_link: String? = null,
+    val episode: ArrayList<SeriesEpisode> = arrayListOf(),
+    val language: ArrayList<SeriesLanguage> = arrayListOf(),
+    val box_type: Int? = null,
+    val year_year: String? = null,
+    val season_episode: String? = null,
+    val recommend: List<Data> = listOf()
 )
 
+@Serializable
 data class SeriesSeasonProp(
-    @JsonProperty("code") val code: Int? = null,
-    @JsonProperty("msg") val msg: String? = null,
-    @JsonProperty("data") val data: ArrayList<SeriesEpisode>? = arrayListOf()
+    val code: Int? = null,
+    val msg: String? = null,
+    val data: ArrayList<SeriesEpisode>? = arrayListOf()
 )
 
+@Serializable
 data class SeriesEpisode(
-    @JsonProperty("id") val id: Int? = null,
-    @JsonProperty("tid") val tid: Int? = null,
-    @JsonProperty("mb_id") val mbId: Int? = null,
-    @JsonProperty("imdb_id") val imdbId: String? = null,
-    @JsonProperty("imdb_id_status") val imdbIdStatus: Int? = null,
-    @JsonProperty("srt_status") val srtStatus: Int? = null,
-    @JsonProperty("season") val season: Int? = null,
-    @JsonProperty("episode") val episode: Int? = null,
-    @JsonProperty("state") val state: Int? = null,
-    @JsonProperty("title") val title: String? = null,
-    @JsonProperty("thumbs") val thumbs: String? = null,
-    @JsonProperty("thumbs_bak") val thumbsBak: String? = null,
-    @JsonProperty("thumbs_original") val thumbsOriginal: String? = null,
-    @JsonProperty("poster_imdb") val posterImdb: Int? = null,
-    @JsonProperty("synopsis") val synopsis: String? = null,
-    @JsonProperty("runtime") val runtime: Int? = null,
-    @JsonProperty("view") val view: Int? = null,
-    @JsonProperty("download") val download: Int? = null,
-    @JsonProperty("source_file") val sourceFile: Int? = null,
-    @JsonProperty("code_file") val codeFile: Int? = null,
-    @JsonProperty("add_time") val addTime: Int? = null,
-    @JsonProperty("update_time") val updateTime: Int? = null,
-    @JsonProperty("released") val released: String? = null,
-    @JsonProperty("released_timestamp") val releasedTimestamp: Long? = null,
-    @JsonProperty("audio_lang") val audioLang: String? = null,
-    @JsonProperty("quality_tag") val qualityTag: String? = null,
-    @JsonProperty("3d") val _3d: Int? = null,
-    @JsonProperty("remark") val remark: String? = null,
-    @JsonProperty("pending") val pending: String? = null,
-    @JsonProperty("imdb_rating") val imdbRating: String? = null,
-    @JsonProperty("display") val display: Int? = null,
-    @JsonProperty("sync") val sync: Int? = null,
-    @JsonProperty("tomato_meter") val tomatoMeter: Int? = null,
-    @JsonProperty("tomato_meter_count") val tomatoMeterCount: Int? = null,
-    @JsonProperty("tomato_audience") val tomatoAudience: Int? = null,
-    @JsonProperty("tomato_audience_count") val tomatoAudienceCount: Int? = null,
-    @JsonProperty("thumbs_min") val thumbsMin: String? = null,
-    @JsonProperty("thumbs_org") val thumbsOrg: String? = null,
-    @JsonProperty("imdb_link") val imdbLink: String? = null,
-//        @JsonProperty("quality_tags") val qualityTags: ArrayList<String> = arrayListOf(),
-//  @JsonProperty("play_progress"         ) val playProgress        : PlayProgress?     = PlayProgress()
-
+    val id: Int? = null,
+    val tid: Int? = null,
+    val mb_id: Int? = null,
+    val imdb_id: String? = null,
+    val imdb_id_status: Int? = null,
+    val srt_status: Int? = null,
+    val season: Int? = null,
+    val episode: Int? = null,
+    val state: Int? = null,
+    val title: String? = null,
+    val thumbs: String? = null,
+    val thumbs_bak: String? = null,
+    val thumbs_original: String? = null,
+    val poster_imdb: Int? = null,
+    val synopsis: String? = null,
+    val runtime: Int? = null,
+    val view: Int? = null,
+    val download: Int? = null,
+    val source_file: Int? = null,
+    val code_file: Int? = null,
+    val add_time: Int? = null,
+    val update_time: Int? = null,
+    val released: String? = null,
+    val released_timestamp: Long? = null,
+    val audio_lang: String? = null,
+    val quality_tag: String? = null,
+    val remark: String? = null,
+    val pending: String? = null,
+    val imdb_rating: String? = null,
+    val display: Int? = null,
+    val sync: Int? = null,
+    val tomato_meter: Int? = null,
+    val imdb_link: String? = null
 )
 
+@Serializable
 data class SubtitleList(
-    @JsonProperty("language") val language: String? = null,
-    @JsonProperty("subtitles") val subtitles: ArrayList<Subtitles> = arrayListOf()
+    val language: String? = null,
+    val subtitles: ArrayList<Subtitles> = arrayListOf()
 )
 
+@Serializable
 data class Subtitles(
-    @JsonProperty("sid") val sid: Int? = null,
-    @JsonProperty("mid") val mid: String? = null,
-    @JsonProperty("file_path") val filePath: String? = null,
-    @JsonProperty("lang") val lang: String? = null,
-    @JsonProperty("language") val language: String? = null,
-    @JsonProperty("delay") val delay: Int? = null,
-    @JsonProperty("point") val point: String? = null,
-    @JsonProperty("order") val order: Int? = null,
-    @JsonProperty("admin_order") val adminOrder: Int? = null,
-    @JsonProperty("myselect") val myselect: Int? = null,
-    @JsonProperty("add_time") val addTime: Long? = null,
-    @JsonProperty("count") val count: Int? = null
+    val sid: Int? = null,
+    val mid: String? = null,
+    val file_path: String? = null,
+    val lang: String? = null,
+    val language: String? = null,
+    val delay: Int? = null,
+    val point: JsonElement? = null,
+    val order: Int? = null,
+    val admin_order: Int? = null,
+    val myselect: Int? = null,
+    val add_time: Long? = null,
+    val count: Int? = null
 )
 
+@Serializable
 data class PrivateSubtitleData(
-    @JsonProperty("select") val select: ArrayList<String> = arrayListOf(),
-    @JsonProperty("list") val list: ArrayList<SubtitleList> = arrayListOf()
+    val select: ArrayList<String> = arrayListOf(),
+    val list: ArrayList<SubtitleList> = arrayListOf()
 )
 
+@Serializable
 data class SubtitleDataProp(
-    @JsonProperty("code") val code: Int? = null,
-    @JsonProperty("msg") val msg: String? = null,
-    @JsonProperty("data") val data: PrivateSubtitleData? = PrivateSubtitleData()
+    val code: Int? = null,
+    val msg: String? = null,
+    val data: PrivateSubtitleData? = PrivateSubtitleData()
 )
