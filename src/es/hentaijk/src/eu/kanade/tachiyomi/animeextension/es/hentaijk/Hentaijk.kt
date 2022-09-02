@@ -442,9 +442,9 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
-            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", //Fembed
-            "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", //Okru
-            "Xtreme S", "HentaiJk", "Nozomi", "Desu" //video servers without resolution
+            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", // Fembed
+            "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", // Okru
+            "Xtreme S", "HentaiJk", "Nozomi", "Desu" // video servers without resolution
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"

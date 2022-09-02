@@ -53,7 +53,7 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return SAnime.create().apply {
             setUrlWithoutDomain(element.select("a").attr("href"))
             title = element.select("a div.series div.seriesdetails h3").text()
-            thumbnail_url = if(thumbDiv.attr("src").contains("/public/img")){
+            thumbnail_url = if (thumbDiv.attr("src").contains("/public/img")) {
                 thumbDiv.attr("data-src")
             } else {
                 thumbDiv.attr("src")
@@ -251,9 +251,9 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
-            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", //Fembed
-            "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", //Okru
-            "SolidFiles", "Upload" //video servers without resolution
+            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", // Fembed
+            "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", // Okru
+            "SolidFiles", "Upload" // video servers without resolution
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"

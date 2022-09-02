@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.es.animeonlineninja
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.DoodExtractor
@@ -186,8 +185,8 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             serverUrl.contains("uqload") && lang.contains(langSelect) -> {
                 val headers = headers.newBuilder().add("referer", "https://uqload.com/").build()
-                val video = UploadExtractor(client).videofromurl(serverUrl, headers, lang)
-                videos.add(video)
+                val video = UploadExtractor(client).videoFromUrl(serverUrl, headers, lang)
+                if (video != null) videos.add(video)
             }
         }
 

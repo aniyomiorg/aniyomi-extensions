@@ -21,8 +21,7 @@ class SolidFilesExtractor(private val client: OkHttpClient) {
                 }
             }
             videoList
-        }
-        catch (e: IOException) {
+        } catch (e: IOException) {
             videoList
         }
     }

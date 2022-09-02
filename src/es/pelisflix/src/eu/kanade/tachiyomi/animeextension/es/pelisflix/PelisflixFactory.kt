@@ -203,8 +203,8 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
-            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", //Fembed
-            "DoodStream", "StreamTape" //video servers without resolution
+            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", // Fembed
+            "DoodStream", "StreamTape" // video servers without resolution
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"

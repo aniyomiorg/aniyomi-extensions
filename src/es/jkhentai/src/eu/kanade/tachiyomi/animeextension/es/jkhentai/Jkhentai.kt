@@ -93,7 +93,7 @@ class Jkhentai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         videoList.add(video)
                     }
                 }
-                if(server == "Upload") {
+                if (server == "Upload") {
                     val url = it.select("div.player-content iframe").attr("src")
                     val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
                     YourUploadExtractor(client).videoFromUrl(url, headers = headers).map { vid -> videoList.add(vid) }
