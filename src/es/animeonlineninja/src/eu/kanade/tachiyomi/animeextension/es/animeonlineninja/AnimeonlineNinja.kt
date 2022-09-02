@@ -9,7 +9,7 @@ import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.FembedE
 import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.JsUnpacker
 import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.StreamTapeExtractor
-import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.uploadExtractor
+import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.UploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -27,6 +27,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.io.IOException
 import java.lang.Exception
 
 class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -102,7 +103,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val iframeLink = apiCall.toString().substringAfter("{\"embed_url\":\"").substringBefore("\"")
             val sDocument = client.newCall(GET(iframeLink)).execute().asJsoup()
             sDocument.select("div.ODDIV div").forEach {
-                val lang = it.attr("class").toString().substringAfter("OD OD_").replace("REactiv", "")
+                val lang = it.attr("class").toString().substringAfter("OD OD_").replace("REactiv", "").trim()
                 it.select("li").forEach { source ->
                     val sourceUrl = source.attr("onclick").toString().substringAfter("go_to_player('").substringBefore("')")
                     serverslangParse(sourceUrl, lang).map { video -> videoList.add(video) }
@@ -116,7 +117,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val apiCall = client.newCall(GET("https://www1.animeonline.ninja/wp-json/dooplayer/v1/post/$datapost?type=$datatype&source=$sourceId")).execute().asJsoup().body()
                 val sourceUrl = apiCall.toString().substringAfter("{\"embed_url\":\"").substringBefore("\"").replace("\\/", "/")
 
-                val lang2 = preferences.getString("preferred_lang", "SUB").toString()
+                val lang2 = preferences.getString("preferred_lang", "SUB").toString().trim()
                 serverslangParse(sourceUrl, lang2).map { video -> videoList.add(video) }
             }
         }
@@ -184,8 +185,8 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             serverUrl.contains("uqload") && lang.contains(langSelect) -> {
                 val headers = headers.newBuilder().add("referer", "https://uqload.com/").build()
-                val video = uploadExtractor(client).videofromurl(serverUrl, headers, lang)
-                videos.add(video)
+                val video = UploadExtractor(client).videoFromUrl(serverUrl, headers, lang)
+                if (video != null) videos.add(video)
             }
         }
 
@@ -199,21 +200,24 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "Mixdrop")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality == quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
+        return try {
+            val videoSorted = this.sortedWith(
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+            ).toTypedArray()
+            val userPreferredQuality = preferences.getString("preferred_quality", "SUB Fembed:1080p")
+            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
+            if (preferredIdx != -1) {
+                videoSorted.drop(preferredIdx + 1)
+                videoSorted[0] = videoSorted[preferredIdx]
             }
-            return newList
+            videoSorted.toList()
+        } catch (e: IOException) {
+            this
         }
-        return this
+    }
+
+    private fun getNumberFromString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -337,7 +341,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title = "Preferred quality"
             entries = arrayOf("SUB Fembed:480p", "SUB Fembed:720p", "SUB Fembed:1080p")
             entryValues = arrayOf("SUB Fembed:480p", "SUB Fembed:720p", "SUB Fembed:1080p")
-            setDefaultValue("SUB Fembed:720p")
+            setDefaultValue("SUB Fembed:1080p")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->

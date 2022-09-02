@@ -6,6 +6,7 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.animefenix.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.animefenix.extractors.OkruExtractor
+import eu.kanade.tachiyomi.animeextension.es.animefenix.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.es.animefenix.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -23,6 +24,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.io.IOException
 import java.net.URLDecoder
 
 class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -90,18 +92,15 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
             when {
                 realUrl.contains("ok.ru") -> {
-                    val video = OkruExtractor(client).videosFromUrl(realUrl)
-                    videoList.addAll(video)
+                    OkruExtractor(client).videosFromUrl(realUrl).map { videoList.add(it) }
                 }
                 realUrl.contains("fembed") -> {
-                    val video = FembedExtractor().videosFromUrl(realUrl)
-                    videoList.addAll(video)
+                    FembedExtractor().videosFromUrl(realUrl).map { videoList.add(it) }
                 }
                 realUrl.contains("/stream/amz.php?") -> {
                     val video = amazonExtractor(baseUrl + realUrl.substringAfter(".."))
                     if (video.isNotBlank()) {
                         if (realUrl.contains("&ext=es")) {
-
                             videoList.add(Video(video, "Amazon ES", video))
                         } else {
                             videoList.add(Video(video, "Amazon", video))
@@ -117,14 +116,26 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                 }
                 realUrl.contains("streamtape") -> {
-                    val video = StreamTapeExtractor(client).videoFromUrl(realUrl, "Streamtape")
+                    val video = StreamTapeExtractor(client).videoFromUrl(realUrl, "StreamTape")
                     if (video != null) {
                         videoList.add(video)
                     }
                 }
+                realUrl.contains("sbthe") -> {
+                    val headers = headers.newBuilder()
+                        .set("referer", realUrl)
+                        .set(
+                            "User-Agent",
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"
+                        )
+                        .set("Accept-Language", "es-MX,es-419;q=0.9,es;q=0.8,en;q=0.7")
+                        .set("watchsb", "streamsb")
+                        .set("authority", "embedsb.com")
+                        .build()
+                    StreamSBExtractor(client).videosFromUrl(realUrl, headers).map { videoList.add(it) }
+                }
             }
         }
-
         return videoList
     }
 
@@ -133,6 +144,27 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
+
+    override fun List<Video>.sort(): List<Video> {
+        return try {
+            val videoSorted = this.sortedWith(
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+            ).toTypedArray()
+            val userPreferredQuality = preferences.getString("preferred_quality", "Amazon")
+            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
+            if (preferredIdx != -1) {
+                videoSorted.drop(preferredIdx + 1)
+                videoSorted[0] = videoSorted[preferredIdx]
+            }
+            videoSorted.toList()
+        } catch (e: IOException) {
+            this
+        }
+    }
+
+    private fun getNumberFromString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
+    }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
@@ -174,6 +206,14 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/animes?order=added&page=$page")
 
     override fun latestUpdatesSelector() = popularAnimeSelector()
+
+    private fun amazonExtractor(url: String): String {
+        val document = client.newCall(GET(url)).execute().asJsoup()
+        val videoURl = document.selectFirst("script:containsData(sources: [)").data()
+            .substringAfter("[{\"file\":\"")
+            .substringBefore("\",").replace("\\", "")
+        return if (client.newCall(GET(videoURl)).execute().code == 200) videoURl else ""
+    }
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
@@ -238,31 +278,23 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         fun toUriPart() = vals[state].second
     }
 
-    override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "Amazon")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality == quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
-    }
-
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
 
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
-            title = "Servidor Preferido"
-            entries = arrayOf("Amazon", "Fembed:480p", "Fembed:720p", "Amazon", "AmazonES", "FireLoad")
-            entryValues = arrayOf("Amazon", "Fembed:480p", "Fembed:720p", "Amazon", "AmazonES", "FireLoad")
+            title = "Preferred quality"
+            entries = arrayOf(
+                "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
+                "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
+                "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
+                "Amazon", "AmazonES", "StreamTape"
+            ) // video servers without resolution
+            entryValues = arrayOf(
+                "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
+                "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
+                "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
+                "Amazon", "AmazonES", "StreamTape"
+            ) // video servers without resolution
             setDefaultValue("Amazon")
             summary = "%s"
 
@@ -274,13 +306,5 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         screen.addPreference(videoQualityPref)
-    }
-
-    private fun amazonExtractor(url: String): String {
-        val document = client.newCall(GET(url)).execute().asJsoup()
-        val videoURl = document.selectFirst("script:containsData(sources: [)").data()
-            .substringAfter("[{\"file\":\"")
-            .substringBefore("\",").replace("\\", "")
-        return if (client.newCall(GET(videoURl)).execute().code == 200) videoURl else ""
     }
 }
