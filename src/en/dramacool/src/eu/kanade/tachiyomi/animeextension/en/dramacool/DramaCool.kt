@@ -12,13 +12,13 @@ import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.StreamSBExtrac
 import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -34,15 +34,13 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "DramaCool"
 
-    private val defaultBaseUrl = "https://dramacool.ee/"
+    private val defaultBaseUrl = "https://dramacool.cr"
 
     override val baseUrl by lazy { getPrefBaseUrl() }
 
     override val lang = "en"
 
-    override val supportsLatest = false
-
-    private val dateFormat: SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+    override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -50,16 +48,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    companion object {
-        private const val RESTART_ANIYOMI = "Restart Aniyomi to apply new setting."
-
-        private const val BASE_URL_PREF_TITLE = "Override BaseUrl"
-        private val BASE_URL_PREF = "overrideBaseUrl_v${AppInfo.getVersionName()}"
-        private const val BASE_URL_PREF_SUMMARY = "For temporary uses. Update extension will erase this setting."
-    }
-
     // Popular Anime
-
     override fun popularAnimeSelector(): String = "ul.list-episode-item li a"
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/most-popular-drama?page=$page") // page/$page
@@ -75,28 +64,22 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector(): String = "li.next a"
 
     // Episodes
-
     override fun episodeListSelector() = "ul.all-episode li a"
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
+        val epNum = element.select("h3").text().substringAfter("Episode ")
         episode.setUrlWithoutDomain(element.attr("abs:href"))
         episode.name = element.select("span.type").text() + " Episode: " + element.select("h3").text().substringAfter("Episode ")
-        val epNum = element.select("h3").text().substringAfter("Episode ")
         episode.episode_number = when {
             (epNum.isNotEmpty()) -> epNum.toFloat()
             else -> 1F
         }
-        // episode.date_upload = element.select("div.meta span.date").text()
+        episode.date_upload = parseDate(element.select("span.time").text())
         return episode
     }
 
-    private fun getNumberFromEpsString(epsStr: String): String {
-        return epsStr.filter { it.isDigit() }
-    }
-
     // Video urls
-
     override fun videoListRequest(episode: SEpisode): Request {
         val document = client.newCall(GET(baseUrl + episode.url)).execute().asJsoup()
         val iframe = "https:" + document.select("iframe").attr("src")
@@ -115,8 +98,6 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val elements = document.select(videoListSelector())
         for (element in elements) {
             val url = element.attr("data-video")
-            val location = element.ownerDocument().location()
-            val videoHeaders = Headers.headersOf("Referer", location)
             when {
                 url.contains("sbembed.com") || url.contains("sbembed1.com") || url.contains("sbplay.org") ||
                     url.contains("sbvideo.net") || url.contains("streamsb.net") || url.contains("sbplay.one") ||
@@ -136,12 +117,14 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
                     videoList.addAll(videos)
                 }
+
                 url.contains("dood") -> {
                     val video = DoodExtractor(client).videoFromUrl(url)
                     if (video != null) {
                         videoList.add(video)
                     }
                 }
+
                 url.contains("fembed.com") ||
                     url.contains("anime789.com") || url.contains("24hd.club") || url.contains("fembad.org") ||
                     url.contains("vcdn.io") || url.contains("sharinglink.club") || url.contains("moviemaniac.org") ||
@@ -154,17 +137,17 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     url.contains("fcdn.stream") || url.contains("mediashore.org") || url.contains("suzihaza.com") ||
                     url.contains("there.to") || url.contains("femax20.com") || url.contains("javstream.top") ||
                     url.contains("viplayer.cc") || url.contains("sexhd.co") || url.contains("fembed.net") ||
-                    url.contains("mrdhan.com") || url.contains("votrefilms.xyz") ||  url.contains("fembed9hd.com") ||
+                    url.contains("mrdhan.com") || url.contains("votrefilms.xyz") || url.contains("fembed9hd.com") ||
                     url.contains("embedsito.com") || url.contains("dutrag.com") || // url.contains("") ||
                     url.contains("youvideos.ru") || url.contains("streamm4u.club") || // url.contains("") ||
                     url.contains("moviepl.xyz") || url.contains("asianclub.tv") || // url.contains("") ||
                     url.contains("vidcloud.fun") || url.contains("fplayer.info") || // url.contains("") ||
                     url.contains("diasfem.com") || url.contains("javpoll.com") // url.contains("")
-
                 -> {
                     val videos = FembedExtractor().videosFromUrl(url)
                     videoList.addAll(videos)
                 }
+
                 url.contains("streamtape") -> {
                     val video = StreamTapeExtractor(client).videoFromUrl(url)
                     if (video != null) {
@@ -193,13 +176,11 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     newList.add(video)
                 }
             }
-            return newList
         }
         return this
     }
 
     // search
-
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("abs:href"))
@@ -215,34 +196,47 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/search?keyword=$query&page=$page")
 
     // Details
-
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.select("div.img img").attr("alt")
         anime.thumbnail_url = document.select("div.img img").attr("src")
-        anime.description = document.select("div.info p").text()
+        anime.description = document.select("div.info p").text().substringAfter("Description: ").substringBefore("Country: ").substringBefore("Director: ").substringBefore("Original Network: ")
+        anime.author = document.select("div.info p:contains(Original Network) a").text()
         anime.genre = document.select("div.info p:contains(Genre) a").joinToString(", ") { it.text() }
         anime.status = parseStatus(document.select("div.info p:contains(Status) a").text())
         return anime
     }
 
-    private fun parseStatus(statusString: String): Int {
-        return when (statusString) {
-            "Ongoing" -> SAnime.ONGOING
-            "Completed" -> SAnime.COMPLETED
-            else -> SAnime.UNKNOWN
+    // Latest
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/recently-added?page=$page")
+
+    override fun latestUpdatesParse(response: Response): AnimesPage {
+        val document = response.asJsoup()
+
+        val animes = document.select("ul.switch-block a").map { element ->
+            val _document = client.newCall(GET("$baseUrl/${element.attr("href")}")).execute().asJsoup()
+            SAnime.create().apply {
+                title = element.select("h3").text()
+                url = _document.select("div.category a").attr("abs:href").substringAfter(baseUrl)
+                thumbnail_url = element.select("img").attr("data-original").replace(" ", "%20")
+            }
         }
+        val hasNextPage = document.select("li.next a").first() != null
+
+        return AnimesPage(animes, hasNextPage)
     }
 
-    // Latest
+    override fun latestUpdatesFromElement(element: Element): SAnime {
+        throw Exception("not used")
+    }
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector(): String? {
+        throw Exception("not used")
+    }
 
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
-
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
-
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesSelector(): String {
+        throw Exception("not used")
+    }
 
     // Preferences
     private fun getPrefBaseUrl(): String = preferences.getString(BASE_URL_PREF, defaultBaseUrl)!!
@@ -286,5 +280,33 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         screen.addPreference(baseUrlPref)
         screen.addPreference(videoQualityPref)
+    }
+
+    // Utilities
+    private fun parseStatus(statusString: String): Int {
+        return when (statusString) {
+            "Ongoing" -> SAnime.ONGOING
+            "Completed" -> SAnime.COMPLETED
+            else -> SAnime.UNKNOWN
+        }
+    }
+
+    private fun parseDate(dateStr: String): Long {
+        return runCatching { DATE_FORMATTER.parse(dateStr)?.time }
+            .getOrNull() ?: 0L
+    }
+
+    companion object {
+        private const val RESTART_ANIYOMI = "Restart Aniyomi to apply new setting."
+
+        private const val BASE_URL_PREF_TITLE = "Override BaseUrl"
+
+        private val BASE_URL_PREF = "overrideBaseUrl_v${AppInfo.getVersionName()}"
+
+        private const val BASE_URL_PREF_SUMMARY = "For temporary uses. Update extension will erase this setting."
+
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+        }
     }
 }
