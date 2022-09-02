@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors
+package eu.kanade.tachiyomi.animeextension.es.tioanimeh.extractors
 
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET

@@ -6,7 +6,7 @@ import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 
-class uploadExtractor(private val client: OkHttpClient) {
+class UploadExtractor(private val client: OkHttpClient) {
     fun videofromurl(url: String, headers: Headers, quality: String): Video {
         val document = client.newCall(GET(url)).execute().asJsoup()
         val basicUrl = document.selectFirst("script:containsData(var player =)").data().substringAfter("sources: [\"").substringBefore("\"],")

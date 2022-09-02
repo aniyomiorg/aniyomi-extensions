@@ -10,7 +10,7 @@ import java.io.IOException
 class YourUploadExtractor(private val client: OkHttpClient) {
     fun videoFromUrl(url: String, headers: Headers): List<Video> {
         val videoList = mutableListOf<Video>()
-        try {
+        return try {
             val document = client.newCall(GET(url)).execute()
             if (document.isSuccessful) {
                 val content = document.asJsoup()
@@ -21,8 +21,9 @@ class YourUploadExtractor(private val client: OkHttpClient) {
                     videoList.add(Video(basicUrl, "YourUpload", basicUrl, headers = headers))
                 }
             }
+            videoList
         } catch (e: IOException) {
+            videoList
         }
-        return videoList
     }
 }

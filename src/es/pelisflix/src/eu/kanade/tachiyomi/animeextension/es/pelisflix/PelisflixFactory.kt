@@ -1,5 +1,9 @@
 package eu.kanade.tachiyomi.animeextension.es.pelisflix
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.pelisflix.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisflix.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisflix.extractors.StreamTapeExtractor
@@ -18,6 +22,9 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
+import java.io.IOException
 
 class PelisflixFactory : AnimeSourceFactory {
     override fun createSources(): List<AnimeSource> = listOf(PelisflixClass(), SeriesflixClass())
@@ -29,6 +36,10 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/ver-series-online/page/$page")
 
     override fun popularAnimeSelector() = "li[id*=post-] > article"
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -167,5 +178,49 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
         AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
+    }
+
+    override fun List<Video>.sort(): List<Video> {
+        return try {
+            val videoSorted = this.sortedWith(
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+            ).toTypedArray()
+            val userPreferredQuality = preferences.getString("preferred_quality", "Fembed:1080p")
+            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
+            if (preferredIdx != -1) {
+                videoSorted.drop(preferredIdx + 1)
+                videoSorted[0] = videoSorted[preferredIdx]
+            }
+            videoSorted.toList()
+        } catch (e: IOException) {
+            this
+        }
+    }
+
+    private fun getNumberFromString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
+    }
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val qualities = arrayOf(
+            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", //Fembed
+            "DoodStream", "StreamTape" //video servers without resolution
+        )
+        val videoQualityPref = ListPreference(screen.context).apply {
+            key = "preferred_quality"
+            title = "Preferred quality"
+            entries = qualities
+            entryValues = qualities
+            setDefaultValue("Fembed:1080p")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(videoQualityPref)
     }
 }

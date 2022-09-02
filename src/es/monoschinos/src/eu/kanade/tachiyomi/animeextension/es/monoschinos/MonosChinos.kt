@@ -8,7 +8,7 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.SolidFilesExtractor
-import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.uploadExtractor
+import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.UploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -25,6 +25,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.io.IOException
 import java.lang.Exception
 
 class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -86,7 +87,10 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 url.contains("fembed") -> videoList.addAll(FembedExtractor().videosFromUrl(url))
                 url.contains("ok") -> if (!url.contains("streamcherry")) videoList.addAll(OkruExtractor(client).videosFromUrl(url))
                 url.contains("solidfiles") -> videoList.addAll(SolidFilesExtractor(client).videosFromUrl(url))
-                url.contains("uqload") -> videoList.add(uploadExtractor(client).videofromurl(url, headers))
+                url.contains("uqload") -> {
+                    val video = UploadExtractor(client).videoFromUrl(url, headers)
+                    if (video != null) videoList.add(video)
+                }
             }
         }
         return videoList
@@ -99,21 +103,24 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "SolidFiles")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality == quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
+        return try {
+            val videoSorted = this.sortedWith(
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+            ).toTypedArray()
+            val userPreferredQuality = preferences.getString("preferred_quality", "Fembed:720p")
+            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
+            if (preferredIdx != -1) {
+                videoSorted.drop(preferredIdx + 1)
+                videoSorted[0] = videoSorted[preferredIdx]
             }
-            return newList
+            videoSorted.toList()
+        } catch (e: IOException) {
+            this
         }
-        return this
+    }
+
+    private fun getNumberFromString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -134,6 +141,7 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> GET("$baseUrl/animes?categoria=false&genero=${genreFilter.toUriPart()}&fecha=$yearFilter&letra=$letterFilter&p=$page")
         }
     }
+
     override fun searchAnimeFromElement(element: Element): SAnime {
         return popularAnimeFromElement(element)
     }
@@ -237,11 +245,16 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val qualities = arrayOf(
+            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", //Fembed
+            "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", //Okru
+            "SolidFiles", "Upload" //video servers without resolution
+        )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("Fembed:480p", "Fembed:720p", "Fembed:1080p", "SolidFiles", "Okru: full", "Okru: sd", "Okru: low", "Okru: lowest", "Okru: mobile")
-            entryValues = arrayOf("Fembed:480p", "Fembed:720p", "Fembed:1080p", "SolidFiles", "Okru: full", "Okru: sd", "Okru: low", "Okru: lowest", "Okru: mobile")
+            entries = qualities
+            entryValues = qualities
             setDefaultValue("Fembed:720p")
             summary = "%s"
 

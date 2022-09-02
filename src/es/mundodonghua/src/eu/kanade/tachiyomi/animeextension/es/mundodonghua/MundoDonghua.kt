@@ -23,6 +23,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.io.IOException
 import java.lang.Exception
 
 class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -113,8 +114,7 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     fetchUrls(unpack!!.first()).map { url ->
                         if (url.contains("diasfem")) {
                             var serverUrl = url.replace("diasfem", "embedsito")
-                            var videos = FembedExtractor().videosFromUrl(serverUrl)
-                            videoList.addAll(videos)
+                            FembedExtractor().videosFromUrl(serverUrl).map { vid -> videoList.add(vid) }
                         }
                     }
                     if (unpack!!.first()!!.contains("protea_tab")) {
@@ -138,9 +138,7 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             .set("referer", response!!.request!!.url!!.toString())
                             .set("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36")
                             .build()
-                        ProteaExtractor().videosFromUrl(requestlink, "Protea", headers = headers, baseUrl).forEach {
-                            videoList.add(it)
-                        }
+                        ProteaExtractor().videosFromUrl(requestlink, "Protea", headers = headers).map { vid -> videoList.add(vid) }
                     }
                 }
             }
@@ -155,23 +153,24 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        var quality = preferences.getString("preferred_quality", "Protea:720p")
-        if (quality == null) quality = preferences.getString("preferred_quality", "Fembed:720p")
-
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality == quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
+        return try {
+            val videoSorted = this.sortedWith(
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+            ).toTypedArray()
+            val userPreferredQuality = preferences.getString("preferred_quality", "Fembed:720p")
+            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
+            if (preferredIdx != -1) {
+                videoSorted.drop(preferredIdx + 1)
+                videoSorted[0] = videoSorted[preferredIdx]
             }
-            return newList
+            videoSorted.toList()
+        } catch (e: IOException) {
+            this
         }
-        return this
+    }
+
+    private fun getNumberFromString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -271,11 +270,15 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesSelector() = popularAnimeSelector()
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val qualities = arrayOf(
+            "Protea:1080p", "Protea:720p", "Protea:480p", "Protea:380p", "Protea:360p",
+            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:380p", "Fembed:360p"
+        )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("Protea:1080p", "Protea:720p", "Protea:480p", "Protea:380p", "Protea:360p", "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:380p", "Fembed:360p")
-            entryValues = arrayOf("Protea:1080p", "Protea:720p", "Protea:480p", "Protea:380p", "Protea:360p", "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:380p", "Fembed:360p")
+            entries = qualities
+            entryValues = qualities
             setDefaultValue("Fembed:720p")
             summary = "%s"
 

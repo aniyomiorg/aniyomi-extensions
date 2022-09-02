@@ -3,13 +3,14 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import org.json.JSONObject
 import org.jsoup.Connection
 import org.jsoup.Jsoup
+import java.io.IOException
 
-class fembedExtractor {
+class FembedExtractor {
     fun videosFromUrl(url: String, qualityPrefix: String = ""): List<Video> {
-        val videoApi = url.replace("/v/", "/api/source/")
-        val json = JSONObject(Jsoup.connect(videoApi).ignoreContentType(true).method(Connection.Method.POST).execute().body())
         val videoList = mutableListOf<Video>()
-        if (json.getBoolean("success")) {
+        return try {
+            val videoApi = url.replace("/v/", "/api/source/")
+            val json = JSONObject(Jsoup.connect(videoApi).ignoreContentType(true).method(Connection.Method.POST).execute().body())
             val videoList = mutableListOf<Video>()
             val jsonArray = json.getJSONArray("data")
             for (i in 0 until jsonArray.length()) {
@@ -18,12 +19,9 @@ class fembedExtractor {
                 val quality = qualityPrefix + "Fembed:" + `object`.getString("label")
                 videoList.add(Video(videoUrl, quality, videoUrl))
             }
-            return videoList
-        } else {
-            val videoUrl = "not used"
-            val quality = "Video taken down for dmca"
-            videoList.add(Video(videoUrl, quality, videoUrl))
+            videoList
+        } catch (e: IOException) {
+            videoList
         }
-        return videoList
     }
 }
