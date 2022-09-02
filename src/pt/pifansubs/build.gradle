@@ -1,0 +1,13 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Pi Fansubs'
+    pkgNameSuffix = 'pt.pifansubs'
+    extClass = '.PiFansubs'
+    extVersionCode = 1
+    libVersion = '13'
+    containsNsfw = true
+}
+
+apply from: "$rootDir/common.gradle"
