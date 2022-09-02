@@ -1,16 +1,13 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
 
 ext {
     extName = 'SuperStream'
     pkgNameSuffix = 'en.superstream'
     extClass = '.SuperStream'
-    extVersionCode = 2
+    extVersionCode = 3
     libVersion = '13'
-}
-
-dependencies {
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1")
 }
 
 apply from: "$rootDir/common.gradle"

@@ -681,15 +681,15 @@ package eu.kanade.tachiyomi.animeextension.en.superstream
 
 import android.annotation.SuppressLint
 import android.util.Base64
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.json.JsonMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.kotlin.readValue
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.POST
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.OkHttpClient
@@ -713,7 +713,7 @@ const val TYPE_SERIES = 2
 const val TYPE_MOVIES = 1
 
 // Ported from CS3
-class SuperStreamAPI {
+class SuperStreamAPI(val json: Json) {
 
     private val client = configureToIgnoreCertificate()
 
@@ -878,8 +878,8 @@ class SuperStreamAPI {
                 it.list.mapNotNull second@{ post ->
                     animes.add(
                         SAnime.create().apply {
-                            url = LoadData(post.id ?: return@mapNotNull null, post.boxType).toJson()
-                            thumbnail_url = post.poster ?: post.poster2
+                            url = LoadData(post.id ?: return@mapNotNull null, post.box_type).toJson()
+                            thumbnail_url = post.poster ?: post.poster_2
                             title = post.title ?: return@second null
                         }
                     )
@@ -892,9 +892,9 @@ class SuperStreamAPI {
         val it = this
         return SAnime.create().apply {
             title = it.title ?: return null
-            thumbnail_url = it.posterOrg ?: it.poster
+            thumbnail_url = it.poster_org ?: it.poster
             url = (
-                it.id?.let { id -> LoadData(id, it.boxType ?: return@let null) }
+                it.id?.let { id -> LoadData(id, it.box_type ?: return@let null) }
                     ?: it.mid?.let { id ->
                         LoadData(
                             id,
@@ -967,7 +967,7 @@ class SuperStreamAPI {
         }
 
         // Should really run this query for every link :(
-        val fid = linkData.data[0]!!.list.firstOrNull { it.fid != null }?.fid
+        val fid = linkData.data!!.list.firstOrNull { it.fid != null }?.fid
 
         val subtitleQuery = if (parsed.type == TYPE_MOVIES) {
             """{"childmode":"0","fid":"$fid","uid":"","app_version":"11.5","appid":"$appId","module":"Movie_srt_list_v2","channel":"Website","mid":"${parsed.id}","lang":"en","expired_date":"${getExpiryDate()}","platform":"android"}"""
@@ -979,11 +979,11 @@ class SuperStreamAPI {
         try {
             subtitles?.list?.forEach {
                 it.subtitles.forEachIndexed second@{ index, sub ->
-                    if (sub.filePath.isNullOrBlank().not()) {
+                    sub.file_path?.let {
                         subsList.add(
                             Track(
-                                sub.filePath ?: return listOf(),
-                                (sub.language ?: sub.lang ?: "Sub") + " ${index + 1} (${sub.point})"
+                                sub.file_path,
+                                (sub.language ?: sub.lang ?: "Sub") + " ${index + 1} (${sub.point!!.jsonPrimitive.content})"
                             )
                         )
                     }
@@ -991,14 +991,14 @@ class SuperStreamAPI {
             }
         } catch (e: Error) {}
 
-        linkData.data[0]!!.list.forEach {
+        linkData.data!!.list.forEach {
             if (it.path.isNullOrBlank().not()) {
                 val videoUrl = it.path?.replace("\\/", "") ?: ""
                 try {
                     videoList.add(
                         Video(
                             videoUrl,
-                            (it.quality ?: it.realQuality ?: "quality") + " ${it.size}",
+                            (it.quality ?: it.real_quality ?: "quality") + " ${it.size}",
                             videoUrl,
                             subtitleTracks = subsList,
                             headers = headers
@@ -1008,7 +1008,7 @@ class SuperStreamAPI {
                     videoList.add(
                         Video(
                             videoUrl,
-                            (it.quality ?: it.realQuality ?: "quality") + " ${it.size}",
+                            (it.quality ?: it.real_quality ?: "quality") + " ${it.size}",
                             videoUrl,
                             headers = headers
                         )
@@ -1019,9 +1019,8 @@ class SuperStreamAPI {
         return videoList
     }
 
-    private fun Any.toJson(): String {
-        if (this is String) return this
-        return mapper.writeValueAsString(this)
+    private fun LoadData.toJson(): String {
+        return json.encodeToString(this)
     }
 
     private fun base64Decode(string: String): String {
@@ -1037,13 +1036,8 @@ class SuperStreamAPI {
         }
     }
 
-    val mapper: JsonMapper = JsonMapper.builder().addModule(KotlinModule.Builder().build())
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        .enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
-        .build()
-
     private inline fun <reified T> parseJson(value: String): T {
-        return mapper.readValue(value)
+        return json.decodeFromString(value)
     }
 }
 
