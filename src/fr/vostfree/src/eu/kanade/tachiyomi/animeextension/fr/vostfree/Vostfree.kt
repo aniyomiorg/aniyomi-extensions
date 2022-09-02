@@ -64,7 +64,7 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> {
         val episodes = mutableListOf<SEpisode>()
         val jsoup = response.asJsoup()
-        jsoup.select("select.new_player_selector option").forEach { it ->
+        jsoup.select("select.new_player_selector option").forEachIndexed { index, it ->
             val epNum = it.text().replace("Episode", "").drop(2)
 
             if (it.text() == "Film") {
@@ -79,7 +79,7 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     episode_number = epNum.toFloat()
                     name = "Épisode $epNum"
                 }
-                episode.setUrlWithoutDomain("?episode:${epNum.toInt() - 1}/${response.request.url}")
+                episode.setUrlWithoutDomain("?episode:$index/${response.request.url}")
                 episodes.add(episode)
             }
         }

@@ -46,13 +46,18 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "div.heromain div.row div.col-md-4"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("https://monoschinos2.com/animes?p=$page")
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/animes?p=$page")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
+        val thumbDiv = element.select("a div.series div.seriesimg img")
         return SAnime.create().apply {
             setUrlWithoutDomain(element.select("a").attr("href"))
             title = element.select("a div.series div.seriesdetails h3").text()
-            thumbnail_url = element.select("a div.series div.seriesimg img").attr("src")
+            thumbnail_url = if(thumbDiv.attr("src").contains("/public/img")){
+                thumbDiv.attr("data-src")
+            } else {
+                thumbDiv.attr("src")
+            }
         }
     }
 

@@ -1,4 +1,4 @@
-/* 
+/*
 Credit goes to @ImZaw and @Blatzar from https://github.com/recloudstream/cloudstream
 This is modified file from https://github.com/recloudstream/cloudstream-extensions/blob/master/SuperStream/src/main/kotlin/com/lagradost/SuperStream.kt
 
@@ -978,13 +978,12 @@ class SuperStreamAPI {
         val subtitles = queryApiParsed<SubtitleDataProp>(subtitleQuery).data
         try {
             subtitles?.list?.forEach {
-                it.subtitles.forEach second@{ sub ->
+                it.subtitles.forEachIndexed second@{ index, sub ->
                     if (sub.filePath.isNullOrBlank().not()) {
-
                         subsList.add(
                             Track(
                                 sub.filePath ?: return listOf(),
-                                sub.language ?: sub.lang ?: ""
+                                (sub.language ?: sub.lang ?: "Sub") + " ${index + 1} (${sub.point})"
                             )
                         )
                     }

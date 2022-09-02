@@ -2,10 +2,10 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    extName = 'AnimeKisa'
-    pkgNameSuffix = 'en.animekisa'
-    extClass = '.AnimeKisa'
-    extVersionCode = 5
+    extName = 'Animension'
+    pkgNameSuffix = 'en.animension'
+    extClass = '.Animension'
+    extVersionCode = 2
     libVersion = '13'
 }
 

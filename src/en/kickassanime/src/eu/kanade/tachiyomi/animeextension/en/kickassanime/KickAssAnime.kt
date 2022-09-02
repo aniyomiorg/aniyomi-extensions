@@ -71,6 +71,11 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         "THETA-ORIGINAL-V4", "DAILYMOTION", "KICKASSANIME1"
     )
 
+    private val workingServers = arrayOf(
+        "StreamSB", "PINK-BIRD", "Doodstream", "MAVERICKKI",
+        "BETAPLAYER", "Vidstreaming", "SAPPHIRE-DUCK", "KICKASSANIMEV2", "ORIGINAL-QUALITY-V2"
+    )
+
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/api/get_anime_list/all/$page")
 
     override fun popularAnimeParse(response: Response): AnimesPage {
@@ -113,7 +118,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         val data = getAppdata(response.asJsoup())
         val episode = data["episode"]!!.jsonObject
         var link = episode["link1"]!!.jsonPrimitive.content
-        //check if link1 is not blank (link2-4 does work), if so check external servers for gogo links
+        // check if link1 is not blank (link2-4 doesn't work), if so check external servers for gogo links
         if (link.isBlank()) {
             for (li in data["ext_servers"]!!.jsonArray) {
                 if (li.jsonObject["name"]!!.jsonPrimitive.content == "Vidcdn") {
@@ -307,17 +312,36 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", "1080")
+        val server = preferences.getString("preferred_server", "MAVERICKKI")
 
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
+        if (quality != null || server != null) {
+            val qualityList = mutableListOf<Video>()
+            if (quality != null) {
+                var preferred = 0
+                for (video in this) {
+                    if (video.quality.contains(quality)) {
+                        qualityList.add(preferred, video)
+                        preferred++
+                    } else {
+                        qualityList.add(video)
+                    }
                 }
+            } else {
+                qualityList.addAll(this)
+            }
+            val newList = mutableListOf<Video>()
+            if (server != null) {
+                var preferred = 0
+                for (video in qualityList) {
+                    if (video.quality.contains(server)) {
+                        newList.add(preferred, video)
+                        preferred++
+                    } else {
+                        newList.add(video)
+                    }
+                }
+            } else {
+                newList.addAll(qualityList)
             }
             return newList
         }
@@ -435,8 +459,24 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val serverPref = ListPreference(screen.context).apply {
+            key = "preferred_server"
+            title = "Preferred server"
+            entries = workingServers
+            entryValues = workingServers
+            setDefaultValue("MAVERICKKI")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
         screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
+        screen.addPreference(serverPref)
     }
 
     private fun encode(input: String): String = java.net.URLEncoder.encode(input, "utf-8")

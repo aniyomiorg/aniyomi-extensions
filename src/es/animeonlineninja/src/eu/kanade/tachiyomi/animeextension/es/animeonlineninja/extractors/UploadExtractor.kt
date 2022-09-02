@@ -7,9 +7,14 @@ import okhttp3.Headers
 import okhttp3.OkHttpClient
 
 class UploadExtractor(private val client: OkHttpClient) {
-    fun videofromurl(url: String, headers: Headers, quality: String): Video {
-        val document = client.newCall(GET(url)).execute().asJsoup()
-        val basicUrl = document.selectFirst("script:containsData(var player =)").data().substringAfter("sources: [\"").substringBefore("\"],")
-        return Video(basicUrl, "$quality Uqload", basicUrl, headers = headers)
+    fun videoFromUrl(url: String, headers: Headers): Video? {
+        return try {
+            val document = client.newCall(GET(url)).execute().asJsoup()
+            val basicUrl = document.selectFirst("script:containsData(var player =)").data().substringAfter("sources: [\"").substringBefore("\"],")
+            return Video(basicUrl, "Uqload", basicUrl, headers = headers)
+        }
+        catch (e:IOException){
+            null
+        }
     }
 }
