@@ -6,6 +6,7 @@ import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.FembedExtractor
+import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.SolidFilesExtractor
 import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.UploadExtractor
@@ -26,7 +27,6 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.IOException
-import java.lang.Exception
 
 class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -95,6 +95,10 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 url.contains("uqload") -> {
                     val video = UploadExtractor(client).videoFromUrl(url, headers)
                     if (video != null) videoList.add(video)
+                }
+                url.contains("mp4upload") -> {
+                    val videoHeaders = headersBuilder().add("Referer", "https://mp4upload.com/").build()
+                    videoList.add(Mp4uploadExtractor().getVideoFromUrl(url, videoHeaders))
                 }
             }
         }
