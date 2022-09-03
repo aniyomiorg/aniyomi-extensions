@@ -21,7 +21,7 @@ class FembedExtractor {
                 videoList.add(Video(videoUrl, quality, videoUrl))
             }
             videoList
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             videoList
         }
     }
