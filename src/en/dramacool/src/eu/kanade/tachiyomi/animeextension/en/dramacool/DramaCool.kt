@@ -106,7 +106,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
                     url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
                     url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com") ||
-                    url.contains("streamsss.net") // || url.contains("") // || url.contains("")
+                    url.contains("streamsss.net")  || url.contains("sbplay2.xyz") // || url.contains("")
                 -> {
                     val headers = headers.newBuilder()
                         .set("Referer", url)
@@ -145,7 +145,9 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     url.contains("diasfem.com") || url.contains("javpoll.com") // url.contains("")
                 -> {
                     val videos = FembedExtractor().videosFromUrl(url)
-                    videoList.addAll(videos)
+                    if (videos != null) {
+                        videoList.addAll(videos)
+                    }
                 }
 
                 url.contains("streamtape") -> {
@@ -176,6 +178,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     newList.add(video)
                 }
             }
+            return newList
         }
         return this
     }
