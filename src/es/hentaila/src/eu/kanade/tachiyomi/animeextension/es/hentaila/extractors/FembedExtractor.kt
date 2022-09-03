@@ -4,7 +4,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import org.json.JSONObject
 import org.jsoup.Connection
 import org.jsoup.Jsoup
-import java.io.IOException
 
 class FembedExtractor {
     fun videosFromUrl(url: String, qualityPrefix: String = ""): List<Video> {
@@ -21,7 +20,7 @@ class FembedExtractor {
                 videoList.add(Video(videoUrl, quality, videoUrl))
             }
             videoList
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             videoList
         }
     }
