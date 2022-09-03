@@ -596,10 +596,10 @@
   {
     "name": "Aniyomi: MonosChinos",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.monoschinos",
-    "apk": "aniyomi-es.monoschinos-v13.14.apk",
+    "apk": "aniyomi-es.monoschinos-v13.15.apk",
     "lang": "es",
-    "code": 14,
-    "version": "13.14",
+    "code": 15,
+    "version": "13.15",
     "nsfw": 0
   },
   {
@@ -799,6 +799,15 @@
     "code": 3,
     "version": "13.3",
     "nsfw": 0
+  },
+  {
+    "name": "Aniyomi: CineVision",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.cinevision",
+    "apk": "aniyomi-pt.cinevision-v13.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 1
   },
   {
     "name": "Aniyomi: Goyabu",
