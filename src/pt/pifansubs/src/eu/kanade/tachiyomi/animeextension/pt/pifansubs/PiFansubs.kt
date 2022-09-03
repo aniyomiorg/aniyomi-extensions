@@ -229,7 +229,7 @@ class PiFansubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // =============================== Latest ===============================
-    override fun latestUpdatesNextPageSelector(): String = "div.resppages > a > span.icon-chevron-right"
+    override fun latestUpdatesNextPageSelector(): String = "div.resppages > a > span.fa-chevron-right"
 
     override fun latestUpdatesSelector(): String = "div.content article > div.poster"
 
@@ -258,7 +258,7 @@ class PiFansubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private val animeMenuSelector = "div.pag_episodes div.item a[href] i.icon-bars"
+    private val animeMenuSelector = "div.pag_episodes div.item a[href] i.fa-bars"
 
     private fun getRealDoc(document: Document): Document {
         val menu = document.selectFirst(animeMenuSelector)
