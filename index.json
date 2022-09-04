@@ -488,154 +488,154 @@
   {
     "name": "Aniyomi: Animefenix",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.animefenix",
-    "apk": "aniyomi-es.animefenix-v13.7.apk",
+    "apk": "aniyomi-es.animefenix-v13.8.apk",
     "lang": "es",
-    "code": 7,
-    "version": "13.7",
+    "code": 8,
+    "version": "13.8",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: AnimeFLV",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.animeflv",
-    "apk": "aniyomi-es.animeflv-v13.27.apk",
+    "apk": "aniyomi-es.animeflv-v13.28.apk",
     "lang": "es",
-    "code": 27,
-    "version": "13.27",
+    "code": 28,
+    "version": "13.28",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: AnimeID",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.animeid",
-    "apk": "aniyomi-es.animeid-v13.4.apk",
+    "apk": "aniyomi-es.animeid-v13.5.apk",
     "lang": "es",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: AnimeLatinoHD",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.animelatinohd",
-    "apk": "aniyomi-es.animelatinohd-v13.5.apk",
-    "lang": "es",
-    "code": 5,
-    "version": "13.5",
-    "nsfw": 0
-  },
-  {
-    "name": "Aniyomi: AnimeonlineNinja",
-    "pkg": "eu.kanade.tachiyomi.animeextension.es.animeonlineninja",
-    "apk": "aniyomi-es.animeonlineninja-v13.8.apk",
-    "lang": "es",
-    "code": 8,
-    "version": "13.8",
-    "nsfw": 0
-  },
-  {
-    "name": "Aniyomi: Animeyt",
-    "pkg": "eu.kanade.tachiyomi.animeextension.es.animeyt",
-    "apk": "aniyomi-es.animeyt-v13.4.apk",
-    "lang": "es",
-    "code": 4,
-    "version": "13.4",
-    "nsfw": 0
-  },
-  {
-    "name": "Aniyomi: AsiaLiveAction",
-    "pkg": "eu.kanade.tachiyomi.animeextension.es.asialiveaction",
-    "apk": "aniyomi-es.asialiveaction-v13.5.apk",
-    "lang": "es",
-    "code": 5,
-    "version": "13.5",
-    "nsfw": 0
-  },
-  {
-    "name": "Aniyomi: Doramasyt",
-    "pkg": "eu.kanade.tachiyomi.animeextension.es.doramasyt",
-    "apk": "aniyomi-es.doramasyt-v13.4.apk",
-    "lang": "es",
-    "code": 4,
-    "version": "13.4",
-    "nsfw": 0
-  },
-  {
-    "name": "Aniyomi: Hentaijk",
-    "pkg": "eu.kanade.tachiyomi.animeextension.es.hentaijk",
-    "apk": "aniyomi-es.hentaijk-v13.5.apk",
-    "lang": "es",
-    "code": 5,
-    "version": "13.5",
-    "nsfw": 1
-  },
-  {
-    "name": "Aniyomi: Hentaila",
-    "pkg": "eu.kanade.tachiyomi.animeextension.es.hentaila",
-    "apk": "aniyomi-es.hentaila-v13.8.apk",
-    "lang": "es",
-    "code": 8,
-    "version": "13.8",
-    "nsfw": 1
-  },
-  {
-    "name": "Aniyomi: Jkanime",
-    "pkg": "eu.kanade.tachiyomi.animeextension.es.jkanime",
-    "apk": "aniyomi-es.jkanime-v13.6.apk",
+    "apk": "aniyomi-es.animelatinohd-v13.6.apk",
     "lang": "es",
     "code": 6,
     "version": "13.6",
     "nsfw": 0
   },
   {
-    "name": "Aniyomi: Jkhentai",
-    "pkg": "eu.kanade.tachiyomi.animeextension.es.jkhentai",
-    "apk": "aniyomi-es.jkhentai-v13.7.apk",
+    "name": "Aniyomi: AnimeonlineNinja",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.animeonlineninja",
+    "apk": "aniyomi-es.animeonlineninja-v13.9.apk",
     "lang": "es",
-    "code": 7,
-    "version": "13.7",
-    "nsfw": 1
-  },
-  {
-    "name": "Aniyomi: MonosChinos",
-    "pkg": "eu.kanade.tachiyomi.animeextension.es.monoschinos",
-    "apk": "aniyomi-es.monoschinos-v13.15.apk",
-    "lang": "es",
-    "code": 15,
-    "version": "13.15",
+    "code": 9,
+    "version": "13.9",
     "nsfw": 0
   },
   {
-    "name": "Aniyomi: MundoDonghua",
-    "pkg": "eu.kanade.tachiyomi.animeextension.es.mundodonghua",
-    "apk": "aniyomi-es.mundodonghua-v13.5.apk",
+    "name": "Aniyomi: Animeyt",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.animeyt",
+    "apk": "aniyomi-es.animeyt-v13.5.apk",
     "lang": "es",
     "code": 5,
     "version": "13.5",
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: AsiaLiveAction",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.asialiveaction",
+    "apk": "aniyomi-es.asialiveaction-v13.6.apk",
+    "lang": "es",
+    "code": 6,
+    "version": "13.6",
+    "nsfw": 0
+  },
+  {
+    "name": "Aniyomi: Doramasyt",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.doramasyt",
+    "apk": "aniyomi-es.doramasyt-v13.5.apk",
+    "lang": "es",
+    "code": 5,
+    "version": "13.5",
+    "nsfw": 0
+  },
+  {
+    "name": "Aniyomi: Hentaijk",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.hentaijk",
+    "apk": "aniyomi-es.hentaijk-v13.6.apk",
+    "lang": "es",
+    "code": 6,
+    "version": "13.6",
+    "nsfw": 1
+  },
+  {
+    "name": "Aniyomi: Hentaila",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.hentaila",
+    "apk": "aniyomi-es.hentaila-v13.9.apk",
+    "lang": "es",
+    "code": 9,
+    "version": "13.9",
+    "nsfw": 1
+  },
+  {
+    "name": "Aniyomi: Jkanime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.jkanime",
+    "apk": "aniyomi-es.jkanime-v13.7.apk",
+    "lang": "es",
+    "code": 7,
+    "version": "13.7",
+    "nsfw": 0
+  },
+  {
+    "name": "Aniyomi: Jkhentai",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.jkhentai",
+    "apk": "aniyomi-es.jkhentai-v13.8.apk",
+    "lang": "es",
+    "code": 8,
+    "version": "13.8",
+    "nsfw": 1
+  },
+  {
+    "name": "Aniyomi: MonosChinos",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.monoschinos",
+    "apk": "aniyomi-es.monoschinos-v13.16.apk",
+    "lang": "es",
+    "code": 16,
+    "version": "13.16",
+    "nsfw": 0
+  },
+  {
+    "name": "Aniyomi: MundoDonghua",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.mundodonghua",
+    "apk": "aniyomi-es.mundodonghua-v13.6.apk",
+    "lang": "es",
+    "code": 6,
+    "version": "13.6",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: Pelisflix",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.pelisflix",
-    "apk": "aniyomi-es.pelisflix-v13.3.apk",
+    "apk": "aniyomi-es.pelisflix-v13.4.apk",
     "lang": "es",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: Pelisplushd",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.pelisplushd",
-    "apk": "aniyomi-es.pelisplushd-v13.17.apk",
+    "apk": "aniyomi-es.pelisplushd-v13.18.apk",
     "lang": "es",
-    "code": 17,
-    "version": "13.17",
+    "code": 18,
+    "version": "13.18",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: TioanimeH",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.tioanimeh",
-    "apk": "aniyomi-es.tioanimeh-v13.7.apk",
+    "apk": "aniyomi-es.tioanimeh-v13.8.apk",
     "lang": "es",
-    "code": 7,
-    "version": "13.7",
+    "code": 8,
+    "version": "13.8",
     "nsfw": 0
   },
   {
