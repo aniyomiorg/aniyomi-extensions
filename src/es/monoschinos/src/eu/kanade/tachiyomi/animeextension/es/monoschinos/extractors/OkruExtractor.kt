@@ -4,7 +4,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
-import java.io.IOException
 
 class OkruExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String, qualityPrefix: String = ""): List<Video> {
@@ -26,14 +25,14 @@ class OkruExtractor(private val client: OkHttpClient) {
                 val videoUrl = it.substringAfter("url\\\":\\\"")
                     .substringBefore("\\\"")
                     .replace("\\\\u0026", "&")
-                val quality = try { qualities.find { q -> q.first == it.substringBefore("\\\"") }?.second } catch (e: IOException) { it.substringBefore("\\\"") }
+                val quality = try { qualities.find { q -> q.first == it.substringBefore("\\\"") }?.second } catch (e: Exception) { it.substringBefore("\\\"") }
                 val videoQuality = qualityPrefix + "Okru:" + quality
                 if (videoUrl.startsWith("https://")) {
                     videoList.add(Video(videoUrl, videoQuality, videoUrl, headers = null))
                 }
             }
             videoList
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             videoList
         }
     }

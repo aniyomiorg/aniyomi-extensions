@@ -8,7 +8,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import okhttp3.Headers
 import okhttp3.OkHttpClient
-import java.io.IOException
 
 class StreamSBExtractor(private val client: OkHttpClient) {
     private val hexArray = "0123456789ABCDEF".toCharArray()
@@ -46,7 +45,7 @@ class StreamSBExtractor(private val client: OkHttpClient) {
                 videoList.add(Video(videoUrl, quality, videoUrl, headers = headers))
             }
             videoList
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             videoList
         }
     }

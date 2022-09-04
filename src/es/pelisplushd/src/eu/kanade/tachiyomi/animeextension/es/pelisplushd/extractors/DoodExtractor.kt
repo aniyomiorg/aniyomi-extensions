@@ -4,7 +4,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.Headers
 import okhttp3.OkHttpClient
-import java.io.IOException
 
 class DoodExtractor(private val client: OkHttpClient) {
     fun videoFromUrl(url: String, quality: String): Video? {
@@ -25,7 +24,7 @@ class DoodExtractor(private val client: OkHttpClient) {
             ).execute().body!!.string()
             val videoUrl = "$videoUrlStart$randomString?token=$token&expiry=$expiry"
             Video(url, quality, videoUrl, headers = doodHeaders(doodTld))
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             null
         }
     }

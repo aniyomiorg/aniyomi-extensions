@@ -4,7 +4,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
-import java.io.IOException
 
 class SolidFilesExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String, prefix: String = ""): List<Video> {
@@ -21,7 +20,7 @@ class SolidFilesExtractor(private val client: OkHttpClient) {
                 }
             }
             videoList
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             videoList
         }
     }

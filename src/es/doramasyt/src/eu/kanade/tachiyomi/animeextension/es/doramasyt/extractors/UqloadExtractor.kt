@@ -5,7 +5,6 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
 import okhttp3.OkHttpClient
-import java.io.IOException
 
 class UqloadExtractor(private val client: OkHttpClient) {
     fun videoFromUrl(url: String, headers: Headers, quality: String): List<Video> {
@@ -22,7 +21,7 @@ class UqloadExtractor(private val client: OkHttpClient) {
                 }
             }
             videoList
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             videoList
         }
     }

@@ -10,7 +10,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import okhttp3.OkHttpClient
 import uy.kohesive.injekt.injectLazy
-import java.io.IOException
 
 class FastreamExtractor(private val client: OkHttpClient) {
     private val json: Json by injectLazy()
@@ -70,7 +69,7 @@ class FastreamExtractor(private val client: OkHttpClient) {
                     }
                 }
             }
-        } catch (e: IOException) {
+        } catch (e: Exception) {
         }
         return videoList
     }

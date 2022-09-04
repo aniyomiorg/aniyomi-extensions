@@ -11,7 +11,6 @@ import okhttp3.Headers
 import org.jsoup.Connection
 import org.jsoup.Jsoup
 import uy.kohesive.injekt.injectLazy
-import java.io.IOException
 
 class ProteaExtractor() {
     private val json: Json by injectLazy()
@@ -45,7 +44,7 @@ class ProteaExtractor() {
                     videoList.add(Video("https://$urlVideo", quality, "https://$urlVideo", headers = newHeaders))
                 }
             }
-        } catch (e: IOException) {
+        } catch (e: Exception) {
         }
         return videoList
     }

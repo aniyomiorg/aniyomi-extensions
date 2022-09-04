@@ -28,7 +28,6 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.io.IOException
 import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -194,7 +193,7 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 videoSorted[0] = videoSorted[preferredIdx]
             }
             videoSorted.toList()
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             this
         }
     }

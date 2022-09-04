@@ -5,7 +5,6 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
 import okhttp3.OkHttpClient
-import java.io.IOException
 
 class UploadExtractor(private val client: OkHttpClient) {
     fun videoFromUrl(url: String, headers: Headers, quality: String): Video? {
@@ -13,7 +12,7 @@ class UploadExtractor(private val client: OkHttpClient) {
             val document = client.newCall(GET(url)).execute().asJsoup()
             val basicUrl = document.selectFirst("script:containsData(var player =)").data().substringAfter("sources: [\"").substringBefore("\"],")
             return Video(basicUrl, "$quality Uqload", basicUrl, headers = headers)
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             null
         }
     }
