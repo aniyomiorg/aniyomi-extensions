@@ -1,0 +1,13 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Hinata Soul'
+    pkgNameSuffix = 'pt.hinatasoul'
+    extClass = '.HinataSoul'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+
+apply from: "$rootDir/common.gradle"
