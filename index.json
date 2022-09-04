@@ -828,6 +828,15 @@
     "nsfw": 1
   },
   {
+    "name": "Aniyomi: Hinata Soul",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.hinatasoul",
+    "apk": "aniyomi-pt.hinatasoul-v13.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: Pi Fansubs",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.pifansubs",
     "apk": "aniyomi-pt.pifansubs-v13.2.apk",
