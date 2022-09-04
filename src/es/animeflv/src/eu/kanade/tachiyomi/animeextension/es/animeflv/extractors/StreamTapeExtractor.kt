@@ -4,7 +4,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
-import java.io.IOException
 
 class StreamTapeExtractor(private val client: OkHttpClient) {
     fun videoFromUrl(url: String, quality: String = "StreamTape"): Video? {
@@ -17,7 +16,7 @@ class StreamTapeExtractor(private val client: OkHttpClient) {
                 ?: return null
             val videoUrl = "https://" + script.substringBefore("'+ ('xcd") + script.substringAfter("+ ('xcd").substringBefore("')")
             Video(videoUrl, quality, videoUrl, headers = null)
-        } catch (i: IOException) {
+        } catch (i: Exception) {
             null
         }
     }

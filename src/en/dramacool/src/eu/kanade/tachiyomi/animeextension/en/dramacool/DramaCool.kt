@@ -106,7 +106,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
                     url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
                     url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com") ||
-                    url.contains("streamsss.net")  || url.contains("sbplay2.xyz") // || url.contains("")
+                    url.contains("streamsss.net") || url.contains("sbplay2.xyz") // || url.contains("")
                 -> {
                     val headers = headers.newBuilder()
                         .set("Referer", url)

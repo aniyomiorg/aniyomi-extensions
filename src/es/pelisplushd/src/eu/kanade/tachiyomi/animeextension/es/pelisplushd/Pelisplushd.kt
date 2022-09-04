@@ -32,8 +32,7 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.io.IOException
-import java.lang.Exception
+import kotlin.Exception
 
 class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -63,7 +62,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             element.select("a").attr("href")
         )
         anime.title = element.select("a div.listing-content p").text()
-        anime.thumbnail_url = element.select("a img").attr("src")
+        anime.thumbnail_url = element.select("a img").attr("src").replace("/w154/", "/w200/")
         return anime
     }
 
@@ -172,32 +171,48 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             }
             "uwu" -> {
-                if (!url.contains("disable")) {
-                    val body = client.newCall(GET(url)).execute().asJsoup()
-                    if (body.select("script:containsData(var shareId)").toString().isNotBlank()) {
-                        val shareId = body.selectFirst("script:containsData(var shareId)").data().substringAfter("shareId = \"").substringBefore("\"")
-                        val amazonApiJson = client.newCall(GET("https://www.amazon.com/drive/v1/shares/$shareId?resourceVersion=V2&ContentType=JSON&asset=ALL")).execute().asJsoup()
-                        val epId = amazonApiJson.toString().substringAfter("\"id\":\"").substringBefore("\"")
-                        val amazonApi = client.newCall(GET("https://www.amazon.com/drive/v1/nodes/$epId/children?resourceVersion=V2&ContentType=JSON&limit=200&sort=%5B%22kind+DESC%22%2C+%22modifiedDate+DESC%22%5D&asset=ALL&tempLink=true&shareId=$shareId")).execute().asJsoup()
-                        val videoUrl = amazonApi.toString().substringAfter("\"FOLDER\":").substringAfter("tempLink\":\"").substringBefore("\"")
-                        videoList.add(Video(videoUrl, "Amazon", videoUrl))
+                try {
+                    if (!url.contains("disable")) {
+                        val body = client.newCall(GET(url)).execute().asJsoup()
+                        if (body.select("script:containsData(var shareId)").toString()
+                            .isNotBlank()
+                        ) {
+                            val shareId =
+                                body.selectFirst("script:containsData(var shareId)").data()
+                                    .substringAfter("shareId = \"").substringBefore("\"")
+                            val amazonApiJson =
+                                client.newCall(GET("https://www.amazon.com/drive/v1/shares/$shareId?resourceVersion=V2&ContentType=JSON&asset=ALL"))
+                                    .execute().asJsoup()
+                            val epId = amazonApiJson.toString().substringAfter("\"id\":\"")
+                                .substringBefore("\"")
+                            val amazonApi =
+                                client.newCall(GET("https://www.amazon.com/drive/v1/nodes/$epId/children?resourceVersion=V2&ContentType=JSON&limit=200&sort=%5B%22kind+DESC%22%2C+%22modifiedDate+DESC%22%5D&asset=ALL&tempLink=true&shareId=$shareId"))
+                                    .execute().asJsoup()
+                            val videoUrl = amazonApi.toString().substringAfter("\"FOLDER\":")
+                                .substringAfter("tempLink\":\"").substringBefore("\"")
+                            videoList.add(Video(videoUrl, "Amazon", videoUrl))
+                        }
                     }
-                }
+                } catch (e: Exception) {}
             }
             "voex" -> {
-                val body = client.newCall(GET(url)).execute().asJsoup()
-                val data1 = body.selectFirst("script:containsData(const sources = {)").data()
-                val video = data1.substringAfter("hls\": \"").substringBefore("\"")
-                videoList.add(Video(video, "Voex", video))
+                try {
+                    val body = client.newCall(GET(url)).execute().asJsoup()
+                    val data1 = body.selectFirst("script:containsData(const sources = {)").data()
+                    val video = data1.substringAfter("hls\": \"").substringBefore("\"")
+                    videoList.add(Video(video, "Voex", video))
+                } catch (e: Exception) {}
             }
             "streamlare" -> {
-                val id = url.substringAfter("/e/").substringBefore("?poster")
-                val videoUrlResponse = client.newCall(POST("https://slwatch.co/api/video/stream/get?id=$id")).execute().asJsoup()
-                json.decodeFromString<JsonObject>(videoUrlResponse.select("body").text())["result"]?.jsonObject?.forEach { quality ->
-                    val resolution = quality.toString().substringAfter("\"label\":\"").substringBefore("\"")
-                    val videoUrl = quality.toString().substringAfter("\"file\":\"").substringBefore("\"")
-                    videoList.add(Video(videoUrl, "Streamlare:$resolution", videoUrl))
-                }
+                try {
+                    val id = url.substringAfter("/e/").substringBefore("?poster")
+                    val videoUrlResponse = client.newCall(POST("https://slwatch.co/api/video/stream/get?id=$id")).execute().asJsoup()
+                    json.decodeFromString<JsonObject>(videoUrlResponse.select("body").text())["result"]?.jsonObject?.forEach { quality ->
+                        val resolution = quality.toString().substringAfter("\"label\":\"").substringBefore("\"")
+                        val videoUrl = quality.toString().substringAfter("\"file\":\"").substringBefore("\"")
+                        videoList.add(Video(videoUrl, "Streamlare:$resolution", videoUrl))
+                    }
+                } catch (e: Exception) {}
             }
             "doodstream" -> {
                 val url2 = url.replace("https://doodstream.com/e/", "https://dood.to/e/")
@@ -233,7 +248,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 videoSorted[0] = videoSorted[preferredIdx]
             }
             videoSorted.toList()
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             this
         }
     }
@@ -263,6 +278,8 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.selectFirst("h1.m-b-5").text()
+        anime.thumbnail_url = document.selectFirst("div.card-body div.row div.col-sm-3 img.img-fluid")
+            .attr("src").replace("/w154/", "/w500/")
         anime.description = document.selectFirst("div.col-sm-4 div.text-large").ownText()
         anime.genre = document.select("div.p-v-20.p-h-15.text-center a span").joinToString { it.text() }
         anime.status = SAnime.COMPLETED

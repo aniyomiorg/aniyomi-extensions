@@ -26,7 +26,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.io.IOException
 
 class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -123,7 +122,7 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 videoSorted[0] = videoSorted[preferredIdx]
             }
             videoSorted.toList()
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             this
         }
     }

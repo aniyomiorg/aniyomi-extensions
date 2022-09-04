@@ -24,7 +24,6 @@ import okhttp3.Response
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.io.IOException
 
 class PelisflixFactory : AnimeSourceFactory {
     override fun createSources(): List<AnimeSource> = listOf(PelisflixClass(), SeriesflixClass())
@@ -192,7 +191,7 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
                 videoSorted[0] = videoSorted[preferredIdx]
             }
             videoSorted.toList()
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             this
         }
     }

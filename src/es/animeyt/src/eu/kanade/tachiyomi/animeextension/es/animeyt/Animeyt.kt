@@ -22,7 +22,6 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.io.IOException
 import java.lang.Exception
 
 class Animeyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -110,7 +109,7 @@ class Animeyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 videoSorted[0] = videoSorted[preferredIdx]
             }
             videoSorted.toList()
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             this
         }
     }

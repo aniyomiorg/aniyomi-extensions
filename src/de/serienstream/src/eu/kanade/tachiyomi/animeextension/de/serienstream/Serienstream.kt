@@ -9,10 +9,6 @@ import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.de.serienstream.DdosGuardInterceptor
-import eu.kanade.tachiyomi.animeextension.de.serienstream.RedirectInterceptor
-import eu.kanade.tachiyomi.animeextension.de.serienstream.SConstants
-import eu.kanade.tachiyomi.animeextension.de.serienstream.SerienstreamInterceptor
 import eu.kanade.tachiyomi.animeextension.de.serienstream.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.de.serienstream.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animeextension.de.serienstream.extractors.VoeExtractor

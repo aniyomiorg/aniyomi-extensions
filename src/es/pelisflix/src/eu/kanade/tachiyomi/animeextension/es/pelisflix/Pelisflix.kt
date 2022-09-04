@@ -24,7 +24,6 @@ import org.jsoup.select.Elements
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.io.IOException
 import java.lang.Exception
 
 open class Pelisflix(override val name: String, override val baseUrl: String) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -165,7 +164,7 @@ open class Pelisflix(override val name: String, override val baseUrl: String) : 
                 videoSorted[0] = videoSorted[preferredIdx]
             }
             videoSorted.toList()
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             this
         }
     }
@@ -230,13 +229,13 @@ open class Pelisflix(override val name: String, override val baseUrl: String) : 
                 .substringBefore("Recuerda ")
                 .substringBefore("Director:")
                 .trim()
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             document.selectFirst("article.TPost header div.TPMvCn div.Description p:nth-child(1)").text().removeSurrounding("\"").trim()
         }
 
         var title = try {
             document.selectFirst("article.TPost header.Container div.TPMvCn h1.Title").text().removePrefix("Serie").trim()
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             document.selectFirst("article.TPost header.Container div.TPMvCn a h1.Title").text().removePrefix("Serie").trim()
         }
 
