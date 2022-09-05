@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.pt.cinevision.extractors.StreamlareExtractor
 import eu.kanade.tachiyomi.animeextension.pt.cinevision.extractors.VidmolyExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -19,7 +20,6 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -43,11 +43,6 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.client
-
-    override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("Referer", baseUrl)
-        .add("Accept-Language", CVConstants.ACCEPT_LANGUAGE)
-        .add("User-Agent", CVConstants.USER_AGENT)
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -129,10 +124,11 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         )
         val url = "https:" + json["embed_url"]!!.jsonPrimitive.content
 
-        // It may need more extractors, but i only saw it using vidmoly
         return when {
             "vidmoly.to" in url ->
                 VidmolyExtractor(client).getVideoList(url, name)
+            "streamlare.com" in url ->
+                StreamlareExtractor(client).videosFromUrl(url, name)
             else -> emptyList<Video>()
         }
     }
@@ -206,13 +202,15 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        anime.title = element.text()
+        val img = element.selectFirst("img")
+        anime.title = img.attr("alt")
+        anime.thumbnail_url = img.attr("data-src").replace("/p/w92", "/p/w185")
         return anime
     }
 
     override fun searchAnimeNextPageSelector(): String = latestUpdatesNextPageSelector()
 
-    override fun searchAnimeSelector(): String = "div.result-item div.details div.title a"
+    override fun searchAnimeSelector(): String = "div.result-item div.image a"
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
