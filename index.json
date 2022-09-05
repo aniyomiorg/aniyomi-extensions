@@ -326,10 +326,10 @@
   {
     "name": "Aniyomi: DopeBox",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.dopebox",
-    "apk": "aniyomi-en.dopebox-v13.7.apk",
+    "apk": "aniyomi-en.dopebox-v13.8.apk",
     "lang": "en",
-    "code": 7,
-    "version": "13.7",
+    "code": 8,
+    "version": "13.8",
     "nsfw": 0
   },
   {
@@ -803,10 +803,10 @@
   {
     "name": "Aniyomi: CineVision",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.cinevision",
-    "apk": "aniyomi-pt.cinevision-v13.1.apk",
+    "apk": "aniyomi-pt.cinevision-v13.2.apk",
     "lang": "pt",
-    "code": 1,
-    "version": "13.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 1
   },
   {
