@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.cinevision.extractors.VidmolyExtractor
+import eu.kanade.tachiyomi.animeextension.pt.cinevision.extractors.StreamlareExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -129,10 +130,11 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         )
         val url = "https:" + json["embed_url"]!!.jsonPrimitive.content
 
-        // It may need more extractors, but i only saw it using vidmoly
         return when {
             "vidmoly.to" in url ->
                 VidmolyExtractor(client).getVideoList(url, name)
+            "streamlare.com" in url ->
+                StreamlareExtractor(client).videosFromUrl(url, name)
             else -> emptyList<Video>()
         }
     }
