@@ -206,13 +206,15 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        anime.title = element.text()
+        val img = element.selectFirst("img")
+        anime.title = img.attr("alt")
+        anime.thumbnail_url = img.attr("data-src").replace("/p/w92", "/p/w185")
         return anime
     }
 
     override fun searchAnimeNextPageSelector(): String = latestUpdatesNextPageSelector()
 
-    override fun searchAnimeSelector(): String = "div.result-item div.details div.title a"
+    override fun searchAnimeSelector(): String = "div.result-item div.image a"
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
