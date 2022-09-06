@@ -186,6 +186,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 subsList.add(Track(subUrl, subLang))
             } catch (e: Error) {}
         }
+        val prefSubsList = subLangOrder(subsList)
         if (masterUrl.contains("playlist.m3u8")) {
             val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
             val videoList = mutableListOf<Video>()
@@ -194,7 +195,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val videoUrl = it.substringAfter("\n").substringBefore("\n")
                 videoList.add(
                     try {
-                        Video(videoUrl, quality, videoUrl, subtitleTracks = subsList)
+                        Video(videoUrl, quality, videoUrl, subtitleTracks = prefSubsList)
                     } catch (e: Error) {
                         Video(videoUrl, quality, videoUrl)
                     }
@@ -204,7 +205,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } else if (masterUrl.contains("index.m3u8")) {
             return listOf(
                 try {
-                    Video(masterUrl, "Default", masterUrl, subtitleTracks = subsList)
+                    Video(masterUrl, "Default", masterUrl, subtitleTracks = prefSubsList)
                 } catch (e: Error) {
                     Video(masterUrl, "Default", masterUrl)
                 }
@@ -232,6 +233,24 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this
     }
 
+    private fun subLangOrder(tracks: List<Track>): List<Track> {
+        val language = preferences.getString("preferred_subLang", null)
+        if (language != null) {
+            val newList = mutableListOf<Track>()
+            var preferred = 0
+            for (track in tracks) {
+                if (track.lang.contains(language)) {
+                    newList.add(preferred, track)
+                    preferred++
+                } else {
+                    newList.add(track)
+                }
+            }
+            return newList
+        }
+        return tracks
+    }
+    
     override fun videoListSelector() = throw Exception("not used")
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
@@ -336,8 +355,24 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val subLangPref = ListPreference(screen.context).apply {
+            key = "preferred_subLang"
+            title = "Preferred sub language"
+            entries = arrayOf("Arabic", "English", "French", "German", "Hungarian", "Italian", "Japanese", "Portuguese", "Romanian", "Russian", "Spanish")
+            entryValues = arrayOf("Arabic", "English", "French", "German", "Hungarian", "Italian", "Japanese", "Portuguese", "Romanian", "Russian", "Spanish")
+            setDefaultValue("English")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
         screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
+        screen.addPreference(subLangPref)
     }
 
     // Filter
