@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.animefenix.extractors.FembedExtractor
+import eu.kanade.tachiyomi.animeextension.es.animefenix.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animeextension.es.animefenix.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.es.animefenix.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.es.animefenix.extractors.StreamTapeExtractor
@@ -58,7 +59,7 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun popularAnimeNextPageSelector(): String = "a.pagination-link"
+    override fun popularAnimeNextPageSelector(): String = "ul.pagination-list li a.pagination-link:contains(Siguiente)"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
@@ -86,8 +87,20 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         servers.forEach { server ->
             val decodedUrl = URLDecoder.decode(server, "UTF-8")
-            val realUrl = client.newCall(GET(decodedUrl)).execute().asJsoup().selectFirst("script").data()
-                .substringAfter("src=\"").substringBefore("\"")
+            val realUrl = try {
+                client.newCall(GET(decodedUrl)).execute().asJsoup().selectFirst("script")
+                    .data().substringAfter("src=\"").substringBefore("\"")
+            } catch (e: Exception) { "" }
+            /*
+            in case this is too slow:
+            Animefenix redirect links are associated with an id, ex: id:9=Amazon ; id:2=Fembed ; etc. ( $baseUrl/redirect.php?player=$id )
+            can be obtained in an easy way by adding this line :
+            Log.i("bruh", "${server.substringAfter("?player=").substringBefore("&")} = $realUrl}")
+            and play any episode,
+            the "code" part in the url represents represents what comes after the main domain like /embed/ or /v/ or /e/
+            ex of full url: $baseUrl/redirect.php?player=2&amp;code=4mdmxtzmpe8768k&amp;
+            in this case the playerId represent fembed and the full url is : https://www.fembed.com/v/4mdmxtzmpe8768k
+            */
 
             when {
                 realUrl.contains("ok.ru") -> {
@@ -108,10 +121,8 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
                 realUrl.contains("/stream/fl.php") -> {
                     val video = realUrl.substringAfter("/stream/fl.php?v=")
-                    client.newCall(GET(video)).execute().code.let {
-                        if (it == 200) {
-                            videoList.add(Video(video, "FireLoad", video))
-                        }
+                    if (client.newCall(GET(video)).execute().code == 200) {
+                        videoList.add(Video(video, "FireLoad", video))
                     }
                 }
                 realUrl.contains("streamtape") -> {
@@ -132,6 +143,11 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         .set("authority", "embedsb.com")
                         .build()
                     StreamSBExtractor(client).videosFromUrl(realUrl, headers).map { videoList.add(it) }
+                }
+                realUrl.contains("mp4upload") -> {
+                    val headers = headers.newBuilder().set("referer", "https://mp4upload.com/").build()
+                    val video = Mp4uploadExtractor().getVideoFromUrl(realUrl, headers)
+                    videoList.add(video)
                 }
             }
         }
@@ -166,12 +182,35 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val filterList = if (filters.isEmpty()) getFilterList() else filters
-        val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
+        val yearFilter = filters.find { it is YearFilter } as YearFilter
+        val stateFilter = filters.find { it is StateFilter } as StateFilter
+        val typeFilter = filters.find { it is TypeFilter } as TypeFilter
+
+        val genreFilter = (filters.find { it is TagFilter } as TagFilter).state.filter { it.state }
+
+        var filterUrl = "$baseUrl/animes?"
+        if (query.isNotBlank()) {
+            filterUrl += "&q=$query"
+        } // search by name
+        if (genreFilter.isNotEmpty()) {
+            genreFilter.forEach {
+                filterUrl += "&genero[]=${it.name}"
+            }
+        } // search by genre
+        if (yearFilter.state.isNotBlank()) {
+            filterUrl += "&year[]=${yearFilter.state}"
+        } // search by year
+        if (stateFilter.state != 0) {
+            filterUrl += "&estado[]=${stateFilter.toUriPart()}"
+        } // search by state
+        if (typeFilter.state != 0) {
+            filterUrl += "&type[]=${typeFilter.toUriPart()}"
+        } // search by type
+        filterUrl += "&page=$page" // add page
 
         return when {
-            query.isNotBlank() -> GET("$baseUrl/animes?q=$query&page=$page", headers)
-            genreFilter.state != 0 -> GET("$baseUrl/animes?genero[]=${genreFilter.toUriPart()}&order=default&page=$page")
+            genreFilter.isEmpty() || yearFilter.state.isNotBlank() ||
+                stateFilter.state != 0 || typeFilter.state != 0 || query.isNotBlank() -> GET(filterUrl, headers)
             else -> GET("$baseUrl/animes?order=likes&page=$page ")
         }
     }
@@ -211,67 +250,99 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoURl = document.selectFirst("script:containsData(sources: [)").data()
             .substringAfter("[{\"file\":\"")
             .substringBefore("\",").replace("\\", "")
-        return if (client.newCall(GET(videoURl)).execute().code == 200) videoURl else ""
+
+        return try {
+            if (client.newCall(GET(url)).execute().code == 200) {
+                videoURl
+            } else ""
+        } catch (e: Exception) {
+            ""
+        }
     }
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
-        AnimeFilter.Header("La busqueda por texto ignora el filtro"),
-        GenreFilter()
+        TagFilter("Generos", triStateBoxesFrom(genreList)),
+        StateFilter(),
+        TypeFilter(),
+        YearFilter(),
     )
 
-    private class GenreFilter : UriPartFilter(
-        "Generos",
+    private val genreList = arrayOf(
+        Pair("Acción", "acción"),
+        Pair("Aventura", "aventura"),
+        Pair("Angeles", "angeles"),
+        Pair("Artes Marciales", "artes-marciales"),
+        Pair("Ciencia Ficcion", "ciencia-ficcion"),
+        Pair("Comedia", "comedia"),
+        Pair("Cyberpunk", "cyberpunk"),
+        Pair("Demonios", "demonios"),
+        Pair("Deportes", "deportes"),
+        Pair("Dragones", "dragones"),
+        Pair("Drama", "drama"),
+        Pair("Ecchi", "ecchi"),
+        Pair("Escolares", "escolares"),
+        Pair("Fantasía", "fantasía"),
+        Pair("Gore", "gore"),
+        Pair("Harem", "harem"),
+        Pair("Historico", "historico"),
+        Pair("Horror", "horror"),
+        Pair("Infantil", "infantil"),
+        Pair("Isekai", "isekai"),
+        Pair("Josei", "josei"),
+        Pair("Juegos", "juegos"),
+        Pair("Magia", "magia"),
+        Pair("Mecha", "mecha"),
+        Pair("Militar", "militar"),
+        Pair("Misterio", "misterio"),
+        Pair("Música", "música"),
+        Pair("Ninjas", "ninjas"),
+        Pair("Parodias", "parodias"),
+        Pair("Policia", "policia"),
+        Pair("Psicológico", "psicológico"),
+        Pair("Recuerdos de la vida", "recuerdos-de-la-vida"),
+        Pair("Romance", "romance"),
+        Pair("Samurai", "samurai"),
+        Pair("Sci-Fi", "sci-fi"),
+        Pair("Seinen", "seinen"),
+        Pair("Shoujo", "shoujo"),
+        Pair("Shonen", "shonen"),
+        Pair("Slice of life", "slice-of-life"),
+        Pair("Sobrenatural", "sobrenatural"),
+        Pair("Space", "space"),
+        Pair("Spokon", "spokon"),
+        Pair("SteamPunk", "steampunk"),
+        Pair("SuperPoder", "superpoder"),
+        Pair("Vampiros", "vampiros"),
+        Pair("Yaoi", "yaoi"),
+        Pair("Yuri", "yuri")
+    )
+
+    private fun triStateBoxesFrom(tagArray: Array<Pair<String, String>>): List<TagTriState> = tagArray.map { TagTriState(it.second) }
+    class TagTriState(tag: String) : AnimeFilter.CheckBox(tag, false)
+    class TagFilter(name: String, triStateBoxes: List<TagTriState>) : AnimeFilter.Group<TagTriState>(name, triStateBoxes)
+
+    private class YearFilter : AnimeFilter.Text("Año", "2022")
+    private class StateFilter : UriPartFilter(
+        "Estado",
         arrayOf(
-            Pair("<selecionar>", ""),
-            Pair("Acción", "acción"),
-            Pair("Aventura", "aventura"),
-            Pair("Angeles", "angeles"),
-            Pair("Artes Marciales", "artes-marciales"),
-            Pair("Ciencia Ficcion", "ciencia-ficcion"),
-            Pair("Comedia", "comedia"),
-            Pair("Cyberpunk", "cyberpunk"),
-            Pair("Demonios", "demonios"),
-            Pair("Deportes", "deportes"),
-            Pair("Dragones", "dragones"),
-            Pair("Drama", "drama"),
-            Pair("Ecchi", "ecchi"),
-            Pair("Escolares", "escolares"),
-            Pair("Fantasía", "fantasía"),
-            Pair("Gore", "gore"),
-            Pair("Harem", "harem"),
-            Pair("Historico", "historico"),
-            Pair("Horror", "horror"),
-            Pair("Infantil", "infantil"),
-            Pair("Isekai", "isekai"),
-            Pair("Josei", "josei"),
-            Pair("Juegos", "juegos"),
-            Pair("Magia", "magia"),
-            Pair("Mecha", "mecha"),
-            Pair("Militar", "militar"),
-            Pair("Misterio", "misterio"),
-            Pair("Música", "música"),
-            Pair("Ninjas", "ninjas"),
-            Pair("Parodias", "parodias"),
-            Pair("Policia", "policia"),
-            Pair("Psicológico", "psicológico"),
-            Pair("Recuerdos de la vida", "recuerdos-de-la-vida"),
-            Pair("Romance", "romance"),
-            Pair("Samurai", "samurai"),
-            Pair("Sci-Fi", "sci-fi"),
-            Pair("Seinen", "seinen"),
-            Pair("Shoujo", "shoujo"),
-            Pair("Shonen", "shonen"),
-            Pair("Slice of life", "slice-of-life"),
-            Pair("Sobrenatural", "sobrenatural"),
-            Pair("Space", "space"),
-            Pair("Spokon", "spokon"),
-            Pair("SteamPunk", "steampunk"),
-            Pair("SuperPoder", "superpoder"),
-            Pair("Vampiros", "vampiros"),
-            Pair("Yaoi", "yaoi"),
-            Pair("Yuri", "yuri")
+            Pair("<Seleccionar>", ""),
+            Pair("Emision", "1"),
+            Pair("Finalizado", "2"),
+            Pair("Proximamente", "3"),
+            Pair("En Cuarentena", "4")
         )
     )
+    private class TypeFilter : UriPartFilter(
+        "Tipo",
+        arrayOf(
+            Pair("<Seleccionar>", ""),
+            Pair("TV", "tv"),
+            Pair("Pelicula", "movie"),
+            Pair("Especial", "special"),
+            Pair("OVA", "ova")
+        )
+    )
+
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
         AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
@@ -286,14 +357,14 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
                 "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
                 "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
-                "Amazon", "AmazonES", "StreamTape"
-            ) // video servers without resolution
+                "Amazon", "AmazonES", "StreamTape","Fireload","Mp4upload"
+            )
             entryValues = arrayOf(
                 "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
                 "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
                 "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
-                "Amazon", "AmazonES", "StreamTape"
-            ) // video servers without resolution
+                "Amazon", "AmazonES", "StreamTape","Fireload","Mp4upload"
+            )
             setDefaultValue("Amazon")
             summary = "%s"
 
@@ -304,6 +375,7 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+
         screen.addPreference(videoQualityPref)
     }
 }
