@@ -839,10 +839,10 @@
   {
     "name": "Aniyomi: Pi Fansubs",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.pifansubs",
-    "apk": "aniyomi-pt.pifansubs-v13.2.apk",
+    "apk": "aniyomi-pt.pifansubs-v13.3.apk",
     "lang": "pt",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 1
   },
   {
