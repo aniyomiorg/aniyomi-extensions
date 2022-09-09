@@ -111,14 +111,17 @@ class PiFansubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val players = document.select("div.source-box:not(#source-player-trailer) iframe")
         val videoList = mutableListOf<Video>()
         players.forEach { player ->
-            val url = player.attr("src")
+            val url = player.attr("data-src").ifEmpty { player.attr("src") }.let {
+                if (!it.startsWith("http"))
+                    "https:" + it
+                else it
+            }
             videoList.addAll(getPlayerVideos(url))
         }
         return videoList
     }
 
     private fun getPlayerVideos(url: String): List<Video> {
-
         return when {
             "player.jmvstream" in url ->
                 JMVStreamExtractor(client).getVideoList(url)
