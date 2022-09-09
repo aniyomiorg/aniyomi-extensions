@@ -121,9 +121,10 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
                 realUrl.contains("/stream/fl.php") -> {
                     val video = realUrl.substringAfter("/stream/fl.php?v=")
-                    if (client.newCall(GET(video)).execute().code == 200) {
+                    try{if (client.newCall(GET(video)).execute().code == 200) {
                         videoList.add(Video(video, "FireLoad", video))
-                    }
+                    }}catch (e: Exception) {}
+                    
                 }
                 realUrl.contains("streamtape") -> {
                     val video = StreamTapeExtractor(client).videoFromUrl(realUrl, "StreamTape")
