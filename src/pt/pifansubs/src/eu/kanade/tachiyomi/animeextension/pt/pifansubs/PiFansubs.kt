@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.net.Uri
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.pt.pifansubs.extractors.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.animeextension.pt.pifansubs.extractors.JMVStreamExtractor
 import eu.kanade.tachiyomi.animeextension.pt.pifansubs.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -110,7 +111,7 @@ class PiFansubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val players = document.select("div.source-box:not(#source-player-trailer) iframe")
         val videoList = mutableListOf<Video>()
         players.forEach { player ->
-            val url = player.attr("data-src")
+            val url = player.attr("src")
             videoList.addAll(getPlayerVideos(url))
         }
         return videoList
@@ -121,6 +122,8 @@ class PiFansubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return when {
             "player.jmvstream" in url ->
                 JMVStreamExtractor(client).getVideoList(url)
+            "gdriveplayer." in url ->
+                GdrivePlayerExtractor(client).getVideoList(url)
             "sbspeed.com" in url ->
                 StreamSBExtractor(client).videosFromUrl(url, headersBuilder().build())
             "/jwplayer/?source" in url -> {
