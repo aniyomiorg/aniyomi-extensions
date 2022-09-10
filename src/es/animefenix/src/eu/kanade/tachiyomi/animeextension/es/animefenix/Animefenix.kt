@@ -121,9 +121,11 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
                 realUrl.contains("/stream/fl.php") -> {
                     val video = realUrl.substringAfter("/stream/fl.php?v=")
-                    if (client.newCall(GET(video)).execute().code == 200) {
-                        videoList.add(Video(video, "FireLoad", video))
-                    }
+                    try {
+                        if (client.newCall(GET(video)).execute().code == 200) {
+                            videoList.add(Video(video, "FireLoad", video))
+                        }
+                    } catch (e: Exception) {}
                 }
                 realUrl.contains("streamtape") -> {
                     val video = StreamTapeExtractor(client).videoFromUrl(realUrl, "StreamTape")
@@ -151,7 +153,7 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             }
         }
-        return videoList
+        return videoList.filter { it.url.contains("https") || it.url.contains("http") }
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -252,16 +254,14 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .substringBefore("\",").replace("\\", "")
 
         return try {
-            if (client.newCall(GET(url)).execute().code == 200) {
-                videoURl
-            } else ""
+            if (client.newCall(GET(videoURl)).execute().code == 200) videoURl else ""
         } catch (e: Exception) {
             ""
         }
     }
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
-        TagFilter("Generos", triStateBoxesFrom(genreList)),
+        TagFilter("Generos", checkboxesFrom(genreList)),
         StateFilter(),
         TypeFilter(),
         YearFilter(),
@@ -317,9 +317,10 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("Yuri", "yuri")
     )
 
-    private fun triStateBoxesFrom(tagArray: Array<Pair<String, String>>): List<TagTriState> = tagArray.map { TagTriState(it.second) }
-    class TagTriState(tag: String) : AnimeFilter.CheckBox(tag, false)
-    class TagFilter(name: String, triStateBoxes: List<TagTriState>) : AnimeFilter.Group<TagTriState>(name, triStateBoxes)
+    private fun checkboxesFrom(tagArray: Array<Pair<String, String>>): List<TagCheckBox> = tagArray.map { TagCheckBox(it.second) }
+
+    class TagCheckBox(tag: String) : AnimeFilter.CheckBox(tag, false)
+    class TagFilter(name: String, checkBoxes: List<TagCheckBox>) : AnimeFilter.Group<TagCheckBox>(name, checkBoxes)
 
     private class YearFilter : AnimeFilter.Text("Año", "2022")
     private class StateFilter : UriPartFilter(
@@ -357,13 +358,13 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
                 "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
                 "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
-                "Amazon", "AmazonES", "StreamTape","Fireload","Mp4upload"
+                "Amazon", "AmazonES", "StreamTape", "Fireload", "Mp4upload"
             )
             entryValues = arrayOf(
                 "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
                 "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
                 "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
-                "Amazon", "AmazonES", "StreamTape","Fireload","Mp4upload"
+                "Amazon", "AmazonES", "StreamTape", "Fireload", "Mp4upload"
             )
             setDefaultValue("Amazon")
             summary = "%s"
