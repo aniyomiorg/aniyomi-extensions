@@ -216,6 +216,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: AnimeToast",
+    "pkg": "eu.kanade.tachiyomi.animeextension.de.animetoast",
+    "apk": "aniyomi-de.animetoast-v13.1.apk",
+    "lang": "de",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: AniWorld",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.aniworld",
     "apk": "aniyomi-de.aniworld-v13.5.apk",
