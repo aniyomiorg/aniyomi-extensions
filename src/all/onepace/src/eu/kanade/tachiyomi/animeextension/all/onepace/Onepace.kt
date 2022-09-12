@@ -129,20 +129,10 @@ open class Onepace(override val lang: String, override val name: String) : Confi
     override fun episodeFromElement(element: Element) = throw Exception("not used")
 
     override fun videoListParse(response: Response): List<Video> {
-        // This is a shit but work
         val realUrl = "https:" + response.request.url.toString().substringAfter("%23")
         val hostUrl = realUrl.substringBefore("/v/")
-        val document = client.newCall(GET(realUrl)).execute().asJsoup()
-        // ZippyShare Scraper
-        val jscript = document.selectFirst("script:containsData(asdasd)").data()
-        val a = jscript.substringAfter("var a = ").substringBefore(";").toInt()
-        val firstB = jscript.substringAfter(".substr(").substringBefore(",").toInt()
-        val b = jscript.substringAfter(".substr($firstB, ").substringBefore(")").toInt() - firstB
-
-        val videoId = realUrl.substringAfter("/v/").substringBefore("/file")
-        val videoName = jscript.substringAfter("+\"").substringBefore("\";")
-        val videoUrl = "$hostUrl/d/$videoId/${(Math.pow(a.toDouble(),b.toDouble()).toInt() + b)}$videoName"
-
+        val videoUrlD = ZippyExtractor().getVideoUrl(realUrl, json)
+        val videoUrl = hostUrl + videoUrlD
         return listOf(Video(videoUrl, "ZippyShare", videoUrl))
     }
 

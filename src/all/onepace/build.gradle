@@ -5,9 +5,13 @@ ext {
     extName = 'Onepace'
     pkgNameSuffix = 'all.onepace'
     extClass = '.OnepaceFactory'
-    extVersionCode = 7
+    extVersionCode = 8
     libVersion = '13'
     containsNsfw = false
+}
+
+dependencies {
+    compileOnly libs.bundles.coroutines
 }
 
 apply from: "$rootDir/common.gradle"
