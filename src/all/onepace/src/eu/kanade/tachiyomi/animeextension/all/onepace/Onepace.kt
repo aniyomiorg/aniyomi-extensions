@@ -134,15 +134,17 @@ open class Onepace(override val lang: String, override val name: String) : Confi
         val hostUrl = realUrl.substringBefore("/v/")
         val document = client.newCall(GET(realUrl)).execute().asJsoup()
         // ZippyShare Scraper
-        val jscript = document.selectFirst("script:containsData(asdasd)").data()
-        val a = jscript.substringAfter("var a = ").substringBefore(";").toInt()
-        val firstB = jscript.substringAfter(".substr(").substringBefore(",").toInt()
-        val b = jscript.substringAfter(".substr($firstB, ").substringBefore(")").toInt() - firstB
+        val jscript = document.selectFirst("script:containsData(dlbutton)").data()
+        val superMaths = jscript.substringAfter("+ (").substringBefore(") +").split(" + ")
+        var superMathsResult = 0
+        superMaths.forEach {
+            val numbers = it.split(" % ")
+            superMathsResult += numbers[0].toInt() % numbers[1].toInt()
+        }
 
         val videoId = realUrl.substringAfter("/v/").substringBefore("/file")
-        val videoName = jscript.substringAfter("+\"").substringBefore("\";")
-        val videoUrl = "$hostUrl/d/$videoId/${(Math.pow(a.toDouble(),b.toDouble()).toInt() + b)}$videoName"
-
+        val videoName = jscript.substringAfter("+ \"").substringBefore("\";")
+        val videoUrl = "$hostUrl/d/$videoId/${superMathsResult}$videoName"
         return listOf(Video(videoUrl, "ZippyShare", videoUrl))
     }
 
