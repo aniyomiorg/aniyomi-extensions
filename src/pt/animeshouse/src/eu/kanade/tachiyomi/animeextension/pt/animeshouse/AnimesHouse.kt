@@ -143,7 +143,7 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "embed.php?" in url ->
                 EmbedExtractor(headers).getVideoList(url, iframeBody)
             "edifier" in url ->
-                EdifierExtractor(client, headers).getVideoList(url, iframeBody)
+                EdifierExtractor(client, headers).getVideoList(url)
             "mp4doo" in url ->
                 MpFourDooExtractor(headers).getVideoList(unpackedBody)
             "clp-new" in url || "gcloud" in url ->

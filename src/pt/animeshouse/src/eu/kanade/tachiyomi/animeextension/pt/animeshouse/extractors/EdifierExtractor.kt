@@ -13,7 +13,7 @@ class EdifierExtractor(
     private val REGEX_EDIFIER = Regex(""""file":"(.*?)","label":"(\S+?)"""")
     private val PLAYER_NAME = "EDIFIER"
 
-    fun getVideoList(url: String, iframeBody: String): List<Video> {
+    fun getVideoList(url: String): List<Video> {
         val apiUrl = url.replace("/v/", "/api/source/")
         val req = client.newCall(POST(apiUrl)).execute()
         val body = req.body?.string().orEmpty()
