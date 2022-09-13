@@ -241,7 +241,7 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.genre = sheader.select("div.data > div.sgeneros > a")
             .joinToString(", ") { it.text() }
         val info = doc.selectFirst("div#info")
-        var description = info.selectFirst("p").text() + "\n"
+        var description = info.selectFirst("p")?.let { it.text() + "\n" } ?: ""
         info.getInfo("Título")?.let { description += "$it" }
         info.getInfo("Ano")?.let { description += "$it" }
         info.getInfo("Temporadas")?.let { description += "$it" }
