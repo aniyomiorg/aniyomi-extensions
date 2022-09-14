@@ -133,7 +133,9 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         players.forEach { player ->
             val url = getPlayerUrl(player)
-            videoList.addAll(getPlayerVideos(url))
+            val videos = runCatching { getPlayerVideos(url) }
+                .getOrNull() ?: emptyList<Video>()
+            videoList.addAll(videos)
         }
         return videoList
     }
