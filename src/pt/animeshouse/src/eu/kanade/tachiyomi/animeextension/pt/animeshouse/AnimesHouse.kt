@@ -10,6 +10,7 @@ import eu.kanade.tachiyomi.animeextension.pt.animeshouse.extractors.GenericExtra
 import eu.kanade.tachiyomi.animeextension.pt.animeshouse.extractors.JsUnpacker
 import eu.kanade.tachiyomi.animeextension.pt.animeshouse.extractors.McpExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animeshouse.extractors.MpFourDooExtractor
+import eu.kanade.tachiyomi.animeextension.pt.animeshouse.extractors.RedplayBypasser
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -119,7 +120,11 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .execute()
             .asJsoup()
         val iframe = doc.selectFirst("iframe")
-        return iframe.attr("src")
+        return iframe.attr("src").let {
+            if (it.startsWith("/redplay"))
+                RedplayBypasser(client, headers).fromUrl(baseUrl + it)
+            else it
+        }
     }
 
     override fun videoListParse(response: Response): List<Video> {
