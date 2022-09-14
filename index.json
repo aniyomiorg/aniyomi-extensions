@@ -776,10 +776,10 @@
   {
     "name": "Aniyomi: Animes House",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animeshouse",
-    "apk": "aniyomi-pt.animeshouse-v13.1.apk",
+    "apk": "aniyomi-pt.animeshouse-v13.2.apk",
     "lang": "pt",
-    "code": 1,
-    "version": "13.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 0
   },
   {
