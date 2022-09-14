@@ -101,19 +101,19 @@
   {
     "name": "Aniyomi: فاصل اعلاني",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.faselhd",
-    "apk": "aniyomi-ar.faselhd-v13.9.apk",
+    "apk": "aniyomi-ar.faselhd-v13.10.apk",
     "lang": "ar",
-    "code": 9,
-    "version": "13.9",
+    "code": 10,
+    "version": "13.10",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: فاصل اعلاني افلام بس",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.faselhdmovies",
-    "apk": "aniyomi-ar.faselhdmovies-v13.6.apk",
+    "apk": "aniyomi-ar.faselhdmovies-v13.7.apk",
     "lang": "ar",
-    "code": 6,
-    "version": "13.6",
+    "code": 7,
+    "version": "13.7",
     "nsfw": 0
   },
   {
@@ -308,10 +308,10 @@
   {
     "name": "Aniyomi: Animension",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.animension",
-    "apk": "aniyomi-en.animension-v13.3.apk",
+    "apk": "aniyomi-en.animension-v13.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0
   },
   {
@@ -335,10 +335,10 @@
   {
     "name": "Aniyomi: AsianLoad",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.asianload",
-    "apk": "aniyomi-en.asianload-v13.15.apk",
+    "apk": "aniyomi-en.asianload-v13.16.apk",
     "lang": "en",
-    "code": 15,
-    "version": "13.15",
+    "code": 16,
+    "version": "13.16",
     "nsfw": 0
   },
   {
@@ -353,10 +353,10 @@
   {
     "name": "Aniyomi: DramaCool",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.dramacool",
-    "apk": "aniyomi-en.dramacool-v13.21.apk",
+    "apk": "aniyomi-en.dramacool-v13.22.apk",
     "lang": "en",
-    "code": 21,
-    "version": "13.21",
+    "code": 22,
+    "version": "13.22",
     "nsfw": 0
   },
   {
