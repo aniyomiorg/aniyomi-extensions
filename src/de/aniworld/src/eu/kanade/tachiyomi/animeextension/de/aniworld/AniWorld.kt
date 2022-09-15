@@ -11,6 +11,7 @@ import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.de.aniworld.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.de.aniworld.extractors.StreamTapeExtractor
+import eu.kanade.tachiyomi.animeextension.de.aniworld.extractors.VidozaExtractor
 import eu.kanade.tachiyomi.animeextension.de.aniworld.extractors.VoeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -237,13 +238,15 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (hosterSelection != null) {
                 when {
                     redirects.contains("https://voe.sx") || redirects.contains("https://launchreliantcleaverriver") ||
-                        redirects.contains("https://fraudclatterflyingcar") && hosterSelection.contains(AWConstants.NAME_VOE) -> {
+                        redirects.contains("https://fraudclatterflyingcar") ||
+                        redirects.contains("https://uptodatefinishconferenceroom") || redirects.contains("https://realfinanceblogcenter") && hosterSelection.contains(AWConstants.NAME_VOE) -> {
                         val quality = "Voe $language"
                         val video = VoeExtractor(client).videoFromUrl(redirects, quality)
                         if (video != null) {
                             videoList.add(video)
                         }
                     }
+
                     redirects.contains("https://dood") && hosterSelection.contains(AWConstants.NAME_DOOD) -> {
                         val quality = "Doodstream $language"
                         val video = DoodExtractor(client).videoFromUrl(redirects, quality)
@@ -251,9 +254,17 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             videoList.add(video)
                         }
                     }
+
                     redirects.contains("https://streamtape") && hosterSelection.contains(AWConstants.NAME_STAPE) -> {
                         val quality = "Streamtape $language"
                         val video = StreamTapeExtractor(client).videoFromUrl(redirects, quality)
+                        if (video != null) {
+                            videoList.add(video)
+                        }
+                    }
+                    redirects.contains("https://vidoza") && hosterSelection.contains(AWConstants.NAME_VIZ) -> {
+                        val quality = "Vidoza $language"
+                        val video = VidozaExtractor(client).videoFromUrl(redirects, quality)
                         if (video != null) {
                             videoList.add(video)
                         }

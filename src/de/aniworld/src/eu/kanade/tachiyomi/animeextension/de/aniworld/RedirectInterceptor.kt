@@ -63,11 +63,22 @@ class RedirectInterceptor : Interceptor {
                     view: WebView,
                     request: WebResourceRequest,
                 ): WebResourceResponse? {
-                    if (request.url.toString().contains("token") || request.url.toString().contains("https://dood.") ||
-                        request.url.toString().contains("https://streamtape") || request.url.toString().contains("https://voe")
+                    if (request.url.toString().contains("token") || request.url.toString().contains("https://dood") || request.url.toString().contains("https://streamtape") ||
+                        request.url.toString().contains("https://voe") || request.url.toString().contains("https://realfinanceblogcenter") ||
+                        request.url.toString().contains("https://launchreliantcleaverriver") ||
+                        request.url.toString().contains("https://fraudclatterflyingcar") ||
+                        request.url.toString().contains("https://uptodatefinishconferenceroom")
                     ) {
-                        newRequest = GET(request.url.toString(), request.requestHeaders.toHeaders())
-                        latch.countDown()
+                        if (!request.url.toString().contains("ad.js")) {
+                            newRequest = GET(request.url.toString(), request.requestHeaders.toHeaders())
+                            latch.countDown()
+                        }
+                    }
+                    if (request.url.toString().contains("token") || request.url.toString().contains("https://vidoza.net/embed-")) {
+                        if (request.url.toString().contains(".html")) {
+                            newRequest = GET(request.url.toString(), request.requestHeaders.toHeaders())
+                            latch.countDown()
+                        }
                     }
                     return super.shouldInterceptRequest(view, request)
                 }
