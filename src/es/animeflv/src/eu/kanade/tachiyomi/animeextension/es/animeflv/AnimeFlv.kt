@@ -104,10 +104,6 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element) = throw Exception("not used")
 
-    private fun getNumberFromEpsString(epsStr: String): String {
-        return epsStr.filter { it.isDigit() }
-    }
-
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
@@ -119,7 +115,6 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val json = servers!!.jsonObject
                     val quality = json!!["title"]!!.jsonPrimitive!!.content
                     var url = json!!["code"]!!.jsonPrimitive!!.content
-
                     if (quality == "SB") {
                         val headers = headers.newBuilder()
                             .set("referer", url)
@@ -131,29 +126,19 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             .set("watchsb", "streamsb")
                             .set("authority", "embedsb.com")
                             .build()
-                        val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
-                        videoList.addAll(videos)
+                        StreamSBExtractor(client).videosFromUrl(url, headers).map { videoList.add(it) }
                     }
                     if (quality == "Fembed") {
-                        val videos = FembedExtractor().videosFromUrl(url)
-                        videoList.addAll(videos)
+                        FembedExtractor().videosFromUrl(url).map { videoList.add(it) }
                     }
                     if (quality == "Stape") {
                         val url1 = json!!["url"]!!.jsonPrimitive!!.content
-                        val video = StreamTapeExtractor(client).videoFromUrl(url1, quality)
-                        if (video != null) {
-                            videoList.add(video)
-                        }
+                        val video = StreamTapeExtractor(client).videoFromUrl(url1, "StreamTape")
+                        if (video != null) videoList.add(video)
                     }
                     if (quality == "Doodstream") {
-                        val video = try {
-                            DoodExtractor(client).videoFromUrl(url, "DoodStream")
-                        } catch (e: Exception) {
-                            null
-                        }
-                        if (video != null) {
-                            videoList.add(video)
-                        }
+                        val video = DoodExtractor(client).videoFromUrl(url, "DoodStream")
+                        if (video != null) videoList.add(video)
                     }
                     if (quality == "Okru") {
                         val videos = OkruExtractor(client).videosFromUrl(url)
@@ -161,8 +146,7 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                     if (quality == "YourUpload") {
                         val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
-                        val videos = YourUploadExtractor(client).videoFromUrl(url, headers = headers)
-                        if (!videos.isEmpty()) videoList.addAll(videos)
+                        YourUploadExtractor(client).videoFromUrl(url, headers = headers).map { videoList.add(it) }
                     }
                 }
             }
@@ -177,21 +161,24 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "Stape")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality == quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
+        return try {
+            val videoSorted = this.sortedWith(
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+            ).toTypedArray()
+            val userPreferredQuality = preferences.getString("preferred_quality", "Fembed:720p")
+            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
+            if (preferredIdx != -1) {
+                videoSorted.drop(preferredIdx + 1)
+                videoSorted[0] = videoSorted[preferredIdx]
             }
-            return newList
+            videoSorted.toList()
+        } catch (e: Exception) {
+            this
         }
-        return this
+    }
+
+    private fun getNumberFromString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -304,8 +291,18 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("Fembed:480p", "Fembed:720p", "Stape", "hd", "sd", "low", "lowest", "mobile")
-            entryValues = arrayOf("Fembed:480p", "Fembed:720p", "Stape", "hd", "sd", "low", "lowest", "mobile")
+            entries = arrayOf(
+                "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
+                "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
+                "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
+                "YourUpload", "DoodStream", "StreamTape"
+            ) // video servers without resolution
+            entryValues = arrayOf(
+                "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
+                "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
+                "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
+                "YourUpload", "DoodStream", "StreamTape"
+            ) // video servers without resolution
             setDefaultValue("Fembed:720p")
             summary = "%s"
 

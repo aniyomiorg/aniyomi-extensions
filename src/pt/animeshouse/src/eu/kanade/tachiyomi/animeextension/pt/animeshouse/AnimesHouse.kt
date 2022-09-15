@@ -10,6 +10,7 @@ import eu.kanade.tachiyomi.animeextension.pt.animeshouse.extractors.GenericExtra
 import eu.kanade.tachiyomi.animeextension.pt.animeshouse.extractors.JsUnpacker
 import eu.kanade.tachiyomi.animeextension.pt.animeshouse.extractors.McpExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animeshouse.extractors.MpFourDooExtractor
+import eu.kanade.tachiyomi.animeextension.pt.animeshouse.extractors.RedplayBypasser
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -119,7 +120,11 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .execute()
             .asJsoup()
         val iframe = doc.selectFirst("iframe")
-        return iframe.attr("src")
+        return iframe.attr("src").let {
+            if (it.startsWith("/redplay"))
+                RedplayBypasser(client, headers).fromUrl(baseUrl + it)
+            else it
+        }
     }
 
     override fun videoListParse(response: Response): List<Video> {
@@ -128,7 +133,9 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         players.forEach { player ->
             val url = getPlayerUrl(player)
-            videoList.addAll(getPlayerVideos(url))
+            val videos = runCatching { getPlayerVideos(url) }
+                .getOrNull() ?: emptyList<Video>()
+            videoList.addAll(videos)
         }
         return videoList
     }
@@ -143,7 +150,7 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "embed.php?" in url ->
                 EmbedExtractor(headers).getVideoList(url, iframeBody)
             "edifier" in url ->
-                EdifierExtractor(client, headers).getVideoList(url, iframeBody)
+                EdifierExtractor(client, headers).getVideoList(url)
             "mp4doo" in url ->
                 MpFourDooExtractor(headers).getVideoList(unpackedBody)
             "clp-new" in url || "gcloud" in url ->
@@ -241,7 +248,7 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.genre = sheader.select("div.data > div.sgeneros > a")
             .joinToString(", ") { it.text() }
         val info = doc.selectFirst("div#info")
-        var description = info.selectFirst("p").text() + "\n"
+        var description = info.selectFirst("p")?.let { it.text() + "\n" } ?: ""
         info.getInfo("Título")?.let { description += "$it" }
         info.getInfo("Ano")?.let { description += "$it" }
         info.getInfo("Temporadas")?.let { description += "$it" }

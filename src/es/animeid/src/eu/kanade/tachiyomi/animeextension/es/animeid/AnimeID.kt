@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.es.animeid
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.animeid.extractors.StreamTapeExtractor
@@ -130,9 +129,7 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             var jsonString = script.attr("data")
             val jsonUnescape = unescapeJava(jsonString)!!.replace("\\", "")
             val url = jsonUnescape!!.substringAfter("src=\"").substringBefore("\"").replace("\\\\", "\\")
-            Log.i("bruh url", url)
             val quality = getDomainName(url)
-            Log.i("bruh  domain", quality.toString())
             if (quality == "streamtape") {
                 val video = StreamTapeExtractor(client).videoFromUrl(url, "Streamtape")
                 if (video != null) {
@@ -185,21 +182,24 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "Streamtape")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality == quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
+        return try {
+            val videoSorted = this.sortedWith(
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+            ).toTypedArray()
+            val userPreferredQuality = preferences.getString("preferred_quality", "StreamTape")
+            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
+            if (preferredIdx != -1) {
+                videoSorted.drop(preferredIdx + 1)
+                videoSorted[0] = videoSorted[preferredIdx]
             }
-            return newList
+            videoSorted.toList()
+        } catch (e: Exception) {
+            this
         }
-        return this
+    }
+
+    private fun getNumberFromString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -211,7 +211,6 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             genreFilter.state != 0 -> GET("$baseUrl/genero/${genreFilter.toUriPart()}?pag=$page&sort=newest")
             else -> GET("$baseUrl/series?sort=newest&pag=$page")
         }
-        Log.i("genero", request.url.toString())
         return request
     }
 

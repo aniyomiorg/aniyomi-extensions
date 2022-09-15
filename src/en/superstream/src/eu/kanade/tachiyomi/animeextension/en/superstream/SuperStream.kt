@@ -12,11 +12,14 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.util.Date
 
 @ExperimentalSerializationApi
@@ -30,7 +33,9 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val supportsLatest = false
 
-    private val superStreamAPI = SuperStreamAPI()
+    private val json: Json by injectLazy()
+
+    private val superStreamAPI = SuperStreamAPI(json)
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -56,22 +61,22 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
             mov.id?.let {
                 episodes.add(
                     SEpisode.create().apply {
-                        url = LinkData(mov.id, mov.boxType ?: 1, 0, 1).toJson()
+                        url = LinkData(mov.id, mov.box_type ?: 1, 0, 1).toJson()
                         name = "Movie"
-                        date_upload = getDateTime(mov.updateTime)
+                        date_upload = getDateTime(mov.update_time)
                     }
                 )
             }
         }
         series?.mapNotNull { ser ->
             ser.id?.let {
-                if (ser.sourceFile!! == 1) {
+                if (ser.source_file!! == 1) {
                     episodes.add(
                         SEpisode.create().apply {
                             url = LinkData(ser.tid ?: ser.id, 2, ser.season, ser.episode).toJson()
                             episode_number = ser.episode?.toFloat() ?: 0F
                             name = "Season ${ser.season} Ep ${ser.episode}: ${ser.title}"
-                            date_upload = getDateTime(ser.updateTime)
+                            date_upload = getDateTime(ser.update_time)
                         }
                     )
                 }
@@ -209,9 +214,8 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
         screen.addPreference(videoQualityPref)
     }
 
-    private fun Any.toJson(): String {
-        if (this is String) return this
-        return superStreamAPI.mapper.writeValueAsString(this)
+    private fun LinkData.toJson(): String {
+        return json.encodeToString(this)
     }
 
     private fun getDateTime(s: Int?): Long {

@@ -24,7 +24,6 @@ import org.jsoup.select.Elements
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.io.IOException
 import java.lang.Exception
 
 open class Pelisflix(override val name: String, override val baseUrl: String) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -154,21 +153,24 @@ open class Pelisflix(override val name: String, override val baseUrl: String) : 
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "LAT Nupload")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality == quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
+        return try {
+            val videoSorted = this.sortedWith(
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+            ).toTypedArray()
+            val userPreferredQuality = preferences.getString("preferred_quality", "LAT Nupload")
+            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
+            if (preferredIdx != -1) {
+                videoSorted.drop(preferredIdx + 1)
+                videoSorted[0] = videoSorted[preferredIdx]
             }
-            return newList
+            videoSorted.toList()
+        } catch (e: Exception) {
+            this
         }
-        return this
+    }
+
+    private fun getNumberFromString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -227,13 +229,13 @@ open class Pelisflix(override val name: String, override val baseUrl: String) : 
                 .substringBefore("Recuerda ")
                 .substringBefore("Director:")
                 .trim()
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             document.selectFirst("article.TPost header div.TPMvCn div.Description p:nth-child(1)").text().removeSurrounding("\"").trim()
         }
 
         var title = try {
             document.selectFirst("article.TPost header.Container div.TPMvCn h1.Title").text().removePrefix("Serie").trim()
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             document.selectFirst("article.TPost header.Container div.TPMvCn a h1.Title").text().removePrefix("Serie").trim()
         }
 

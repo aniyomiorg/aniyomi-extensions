@@ -10,7 +10,6 @@ import okhttp3.Headers
 import okhttp3.OkHttpClient
 
 class StreamSBExtractor(private val client: OkHttpClient) {
-
     private val hexArray = "0123456789ABCDEF".toCharArray()
 
     private fun bytesToHex(bytes: ByteArray): String {
@@ -24,25 +23,31 @@ class StreamSBExtractor(private val client: OkHttpClient) {
         return String(hexChars)
     }
 
-    fun videosFromUrl(url: String, headers: Headers): List<Video> {
-        val id = url.substringAfter("embed-").substringBefore(".html").substringAfter("/e/")
-        val bytes = id.toByteArray()
-        val bytesToHex = bytesToHex(bytes)
-        val master =
-            "https://embedsb.com/sources43/566d337678566f743674494a7c7c${bytesToHex}7c7c346b6767586d6934774855537c7c73747265616d7362/6565417268755339773461447c7c346133383438333436313335376136323337373433383634376337633465366534393338373136643732373736343735373237613763376334363733353737303533366236333463353333363534366137633763373337343732363536313664373336327c7c6b586c3163614468645a47617c7c73747265616d7362"
-        val json = Json.decodeFromString<JsonObject>(
-            client.newCall(GET(master, headers))
-                .execute().body!!.string()
-        )
-        val masterUrl = json["stream_data"]!!.jsonObject["file"].toString().trim('"')
-        val masterPlaylist = client.newCall(GET(masterUrl, headers)).execute().body!!.string()
+    fun videosFromUrl(url: String, headers: Headers, prefix: String = ""): List<Video> {
         val videoList = mutableListOf<Video>()
-        masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
-            val quality = "StreamSB:" + it.substringAfter("RESOLUTION=").substringAfter("x")
-                .substringBefore(",") + "p"
-            val videoUrl = it.substringAfter("\n").substringBefore("\n")
-            videoList.add(Video(videoUrl, quality, videoUrl, headers = headers))
+        return try {
+            val sbUrl = url.substringBefore("/e/")
+            val id = url.substringAfter("/e/").substringBefore(".html")
+            val bytes = id.toByteArray()
+            val bytesToHex = bytesToHex(bytes)
+            val master =
+                "$sbUrl/sources43/416f794d637048744d4565577c7c${bytesToHex}7c7c776e6c7a365964385a484b767c7c73747265616d7362/656d5a62394f713230524a667c7c373635353537333734623561373634613330353134633631376337633339353037343631363934393335363434333730373633363763376337613737353836323434353534363431343633323533376137633763373337343732363536313664373336327c7c59304b7778506d424c4c32767c7c73747265616d7362"
+            val json = Json.decodeFromString<JsonObject>(
+                client.newCall(GET(master, headers))
+                    .execute().body!!.string()
+            )
+            val masterUrl = json["stream_data"]!!.jsonObject["file"].toString().trim('"')
+            val masterPlaylist = client.newCall(GET(masterUrl, headers)).execute().body!!.string()
+
+            masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
+                val quality = prefix + "StreamSB:" + it.substringAfter("RESOLUTION=").substringAfter("x")
+                    .substringBefore(",") + "p"
+                val videoUrl = it.substringAfter("\n").substringBefore("\n")
+                videoList.add(Video(videoUrl, quality, videoUrl, headers = headers))
+            }
+            videoList
+        } catch (e: Exception) {
+            videoList
         }
-        return videoList
     }
 }

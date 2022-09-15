@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.es.hentaijk
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.hentaijk.extractors.FembedExtractor
@@ -75,12 +74,10 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             ?.replace("#pag", "")
         val firstPage = pageNumber.first()?.attr("href")
             ?.replace("#pag", "")
-        Log.i("bruh", "ULTIMA: $lastPage")
 
         if (firstPage != lastPage) {
             var checkLast = 0
             for (i in 1 until lastPage?.toInt()!!) {
-                Log.i("bruh", "aaa")
                 for (j in 1..12) {
                     // Log.i("bruh", (j + checkLast).toString())
                     val episode = SEpisode.create().apply {
@@ -96,7 +93,6 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Jsoup.connect("https://hentaijk.com/ajax/pagination_episodes/$animeId/$lastPage").get()
                 .body().select("body").text().replace("}]", "").split("}").forEach { json ->
                     val number = json.substringAfter("\"number\":\"").substringBefore("\"")
-                    Log.i("bruh", number)
                     val episode = SEpisode.create().apply {
                         episode_number = number.toFloat()
                         name = "Episodio $number"
@@ -111,7 +107,6 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Jsoup.connect("https://hentaijk.com/ajax/pagination_episodes/$animeId/$lastPage").get()
                 .body().select("body").text().replace("}]", "").split("}").forEach { json ->
                     val number = json.substringAfter("\"number\":\"").substringBefore("\"")
-                    Log.i("bruh", number)
                     val episode = SEpisode.create().apply {
                         episode_number = number.toFloat()
                         name = "Episodio $number"
@@ -210,21 +205,24 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "Sabrosio")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality == quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
+        return try {
+            val videoSorted = this.sortedWith(
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+            ).toTypedArray()
+            val userPreferredQuality = preferences.getString("preferred_quality", "Sabrosio")
+            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
+            if (preferredIdx != -1) {
+                videoSorted.drop(preferredIdx + 1)
+                videoSorted[0] = videoSorted[preferredIdx]
             }
-            return newList
+            videoSorted.toList()
+        } catch (e: Exception) {
+            this
         }
-        return this
+    }
+
+    private fun getNumberFromString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -262,7 +260,7 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val animeList = mutableListOf<SAnime>()
         val document = jsonLine.asJsoup()
         val hasNextPage = document.select("section.contenido.spad div.container div.navigation a.nav-next").any()
-        var isSearchLayer = document.select(".col-lg-2.col-md-6.col-sm-6").any()
+        val isSearchLayer = document.select(".col-lg-2.col-md-6.col-sm-6").any()
         val isFilterLayer = document.select(".card.mb-3.custom_item2").any()
         if (isSearchLayer) {
             document.select(".col-lg-2.col-md-6.col-sm-6").forEach { animeData ->
@@ -288,7 +286,6 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 animeList.add(anime)
             }
         }
-        Log.i("bruh parseSearchJson", hasNextPage.toString())
         return AnimesPage(animeList, hasNextPage)
     }
 
@@ -443,11 +440,16 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val qualities = arrayOf(
+            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", // Fembed
+            "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", // Okru
+            "Xtreme S", "HentaiJk", "Nozomi", "Desu" // video servers without resolution
+        )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("Sabrosio", "Desu", "Xtreme S", "Fembed:480p", "Fembed:720p", "Fembed:1080p", "Okru: full", "Okru: sd", "Okru: low", "Okru: lowest", "Okru: mobile")
-            entryValues = arrayOf("Sabrosio", "Desu", "Xtreme S", "Fembed:480p", "Fembed:720p", "Fembed:1080p", "Okru: full", "Okru: sd", "Okru: low", "Okru: lowest", "Okru: mobile")
+            entries = qualities
+            entryValues = qualities
             setDefaultValue("Sabrosio")
             summary = "%s"
 

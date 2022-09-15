@@ -7,17 +7,21 @@ import okhttp3.OkHttpClient
 
 class SolidFilesExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String, prefix: String = ""): List<Video> {
-        val document = client.newCall(GET(url)).execute().asJsoup()
         val videoList = mutableListOf<Video>()
-        document.select("script").forEach { script ->
-            if (script.data().contains("\"downloadUrl\":")) {
-                val data = script.data().substringAfter("\"downloadUrl\":").substringBefore(",")
-                val url = data.replace("\"", "")
-                val videoUrl = url
-                val quality = prefix + "SolidFiles"
-                videoList.add(Video(videoUrl, quality, videoUrl))
+        return try {
+            val document = client.newCall(GET(url)).execute().asJsoup()
+            document.select("script").forEach { script ->
+                if (script.data().contains("\"downloadUrl\":")) {
+                    val data = script.data().substringAfter("\"downloadUrl\":").substringBefore(",")
+                    val url = data.replace("\"", "")
+                    val videoUrl = url
+                    val quality = prefix + "SolidFiles"
+                    videoList.add(Video(videoUrl, quality, videoUrl))
+                }
             }
+            videoList
+        } catch (e: Exception) {
+            videoList
         }
-        return videoList
     }
 }

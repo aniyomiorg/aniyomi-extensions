@@ -59,10 +59,10 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.thumbnail_url = document.selectFirst("header div.Image figure img").attr("src").trim().replace("//", "https://")
-        anime.title = document.selectFirst("header div.asia-post-header div h1.Title").text()
+        anime.title = document.selectFirst("header div.asia-post-header h1.Title").text()
         anime.description = document.selectFirst("header div.asia-post-main div.Description p:nth-child(2)").text().removeSurrounding("\"")
-        anime.genre = document.select("div.asia-post-header div:nth-child(2) p.Info span.tags a").joinToString { it.text() }
-        val year = document.select("div.asia-post-header div:nth-child(2) p.Info span.Date a").text().toInt()
+        anime.genre = document.select("div.asia-post-main p.Info span.tags a").joinToString { it.text() }
+        val year = document.select("header div.asia-post-main p.Info span.Date a").text().toInt()
         val currentYear = Calendar.getInstance().get(Calendar.YEAR)
         anime.status = when {
             (year < currentYear) -> SAnime.COMPLETED
@@ -80,13 +80,13 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-        val epNum = getNumberFromEpsString(element.select("div.flex-grow-1 p span").text())
+        val epNum = getNumberFromEpsString(element.select("div.flex-grow-1 p").text())
         episode.setUrlWithoutDomain(element.attr("href"))
         episode.episode_number = when {
             (epNum.isNotEmpty()) -> epNum.toFloat()
             else -> 1F
         }
-        episode.name = element.select("div.flex-grow-1 p span").text().trim()
+        episode.name = element.select("div.flex-grow-1 p").text().trim()
         return episode
     }
 
@@ -98,9 +98,10 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
         document.select("script").forEach { script ->
-            if (script.data().contains("var videosJap = [")) {
+            if (script.data().contains("var videosJap = [") || script.data().contains("var videosCor = [")) {
                 val content = script.data()
-                if (content.contains("sbfull")) {
+                val sbDomains = arrayOf("sbfull", "sbplay", "cloudemb", "sbplay", "embedsb", "pelistop", "streamsb", "sbplay", "sbspeed")
+                if (sbDomains.any { s -> content.contains(s) }) {
                     val url = content.substringAfter(",['SB','").substringBefore("',0,0]")
                     val headers = headers.newBuilder()
                         .set("Referer", url)
@@ -136,21 +137,24 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "Fembed:1080p")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality == quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
+        return try {
+            val videoSorted = this.sortedWith(
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+            ).toTypedArray()
+            val userPreferredQuality = preferences.getString("preferred_quality", "Fembed:1080p")
+            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
+            if (preferredIdx != -1) {
+                videoSorted.drop(preferredIdx + 1)
+                videoSorted[0] = videoSorted[preferredIdx]
             }
-            return newList
+            videoSorted.toList()
+        } catch (e: Exception) {
+            this
         }
-        return this
+    }
+
+    private fun getNumberFromString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -218,11 +222,16 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesSelector() = popularAnimeSelector()
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val qualities = arrayOf(
+            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", // Fembed
+            "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", // Okru
+            "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p" // StreamSB
+        )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("Fembed:480p", "Fembed:720p", "Stape", "hd", "sd", "low", "lowest", "mobile")
-            entryValues = arrayOf("Fembed:480p", "Fembed:720p", "Stape", "hd", "sd", "low", "lowest", "mobile")
+            entries = qualities
+            entryValues = qualities
             setDefaultValue("Fembed:1080p")
             summary = "%s"
 

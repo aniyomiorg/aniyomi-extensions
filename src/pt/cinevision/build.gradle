@@ -1,0 +1,13 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'CineVision'
+    pkgNameSuffix = 'pt.cinevision'
+    extClass = '.CineVision'
+    extVersionCode = 2
+    libVersion = '13'
+    containsNsfw = true
+}
+
+apply from: "$rootDir/common.gradle"

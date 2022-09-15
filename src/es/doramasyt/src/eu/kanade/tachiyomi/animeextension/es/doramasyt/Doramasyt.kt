@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.animeextension.es.doramasyt.extractors.FembedExtracto
 import eu.kanade.tachiyomi.animeextension.es.doramasyt.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.es.doramasyt.extractors.SolidFilesExtractor
 import eu.kanade.tachiyomi.animeextension.es.doramasyt.extractors.StreamTapeExtractor
+import eu.kanade.tachiyomi.animeextension.es.doramasyt.extractors.UqloadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -91,25 +92,32 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val server = players.text()
             val urlEncoded = players.attr("data-player")
             val byte = android.util.Base64.decode(urlEncoded, android.util.Base64.DEFAULT)
-            val url = String(byte, charset("UTF-8")).replace("https://doramasyt.com/reproductor?url=", "")
-            Log.i("bruh server", url)
-            if (server == "fembed") {
+            val url = String(byte, charset("UTF-8")).substringAfter("?url=")
+            if (server.contains("fembed")) {
                 val videos = FembedExtractor().videosFromUrl(url)
                 videoList.addAll(videos)
             }
-            if (server == "streamtape") {
-                val video = StreamTapeExtractor(client).videoFromUrl(url, "Streamtape")
+            if (server.contains("streamtape")) {
+                val video = StreamTapeExtractor(client).videoFromUrl(url)
                 if (video != null) {
                     videoList.add(video)
                 }
             }
-            if (server == "ok") {
+            if (server.contains("ok")) {
                 val videos = OkruExtractor(client).videosFromUrl(url)
                 videoList.addAll(videos)
             }
-            if (server == "zeus") {
+            if (server.contains("zeus")) {
                 val videos = SolidFilesExtractor(client).videosFromUrl(url)
                 videoList.addAll(videos)
+            }
+            if (server.contains("uqload")) {
+                val headers = headers.newBuilder().add("referer", "https://uqload.com/").build()
+                UqloadExtractor(client).videoFromUrl(url, headers, "Uqload").map { videoList.add(it) }
+            }
+            if (server.contains("upload")) {
+                val headers = headers.newBuilder().add("referer", "https://upload.com/").build()
+                UqloadExtractor(client).videoFromUrl(url, headers, "Upload").map { videoList.add(it) }
             }
         }
         return videoList
@@ -122,21 +130,24 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "fembed")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality == quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
+        return try {
+            val videoSorted = this.sortedWith(
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+            ).toTypedArray()
+            val userPreferredQuality = preferences.getString("preferred_quality", "Fembed:720p")
+            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
+            if (preferredIdx != -1) {
+                videoSorted.drop(preferredIdx + 1)
+                videoSorted[0] = videoSorted[preferredIdx]
             }
-            return newList
+            videoSorted.toList()
+        } catch (e: Exception) {
+            this
         }
-        return this
+    }
+
+    private fun getNumberFromString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -148,7 +159,6 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             genreFilter.state != 0 -> GET("$baseUrl/doramas?categoria=false&genero=${genreFilter.toUriPart()}&fecha=false&letra=false&p=$page")
             else -> GET("$baseUrl/doramas/?p=$page")
         }
-        // GET("$baseUrl/buscar?q=$query&p=$page")
     }
 
     override fun searchAnimeFromElement(element: Element): SAnime {
@@ -267,11 +277,16 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val qualities = arrayOf(
+            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", // Fembed
+            "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
+            "Uqload", "Upload", "SolidFiles", "StreamTape", // video servers without resolution
+        )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("Fembed:480p", "Fembed:720p", "Fembed:1080p", "Streamtape", "SolidFiles", "Okru: mobile", "Okru: lowest", "Okru: low", "Okru: sd", "Okru: hd")
-            entryValues = arrayOf("Fembed:480p", "Fembed:720p", "Fembed:1080p", "Streamtape", "SolidFiles", "Okru: mobile", "Okru: lowest", "Okru: low", "Okru: sd", "Okru: hd")
+            entries = qualities
+            entryValues = qualities
             setDefaultValue("Fembed:720p")
             summary = "%s"
 
