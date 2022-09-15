@@ -42,7 +42,7 @@ import uy.kohesive.injekt.injectLazy
 
 class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "AniWorld"
+    override val name = "AniWorld (experimental)"
 
     override val baseUrl = "https://aniworld.to"
 
