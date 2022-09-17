@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'AsiaLiveAction'
+    pkgNameSuffix = 'es.asialiveaction'
+    extClass = '.AsiaLiveAction'
+    extVersionCode = 6
+    libVersion = '13'
+}
+
+apply from: "$rootDir/common.gradle"

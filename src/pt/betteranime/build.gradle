@@ -6,12 +6,18 @@ ext {
     extName = 'Better Anime'
     pkgNameSuffix = 'pt.betteranime'
     extClass = '.BetterAnime'
-    extVersionCode = 1
-    libVersion = '12'
+    extVersionCode = 3
+    libVersion = '13'
 }
 
 dependencies {
     compileOnly 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2'
+}
+
+android {
+    kotlinOptions {
+        freeCompilerArgs += "-Xopt-in=kotlinx.serialization.ExperimentalSerializationApi"
+    }
 }
 
 apply from: "$rootDir/common.gradle"

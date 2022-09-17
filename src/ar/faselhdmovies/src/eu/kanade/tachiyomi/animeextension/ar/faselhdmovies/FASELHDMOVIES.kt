@@ -28,7 +28,7 @@ class FASELHDMOVIES : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "فاصل اعلاني افلام بس"
 
-    override val baseUrl = "https://www.faselhd.pro"
+    override val baseUrl = "https://www.faselhd.club"
 
     override val lang = "ar"
 
@@ -42,7 +42,7 @@ class FASELHDMOVIES : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun headersBuilder(): Headers.Builder {
         return super.headersBuilder()
-            .add("Referer", "https://www.faselhd.top/")
+            .add("Referer", "https://www.faselhd.club/")
     }
 
     // Popular Anime
@@ -75,27 +75,20 @@ class FASELHDMOVIES : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Video urls
 
+    override fun videoListSelector() = throw UnsupportedOperationException("Not used.")
+
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val iframe = document.selectFirst("iframe").attr("src")
-        val referer = response.request.url.toString()
-        val refererHeaders = Headers.headersOf("referer", referer)
-        val iframeResponse = client.newCall(GET(iframe, refererHeaders))
-            .execute().asJsoup()
-        return videosFromElement(iframeResponse.selectFirst(videoListSelector()), refererHeaders)
-    }
-
-    override fun videoListSelector() = "button.hd_btn:contains(auto)"
-
-    private fun videosFromElement(element: Element, headers: Headers): List<Video> {
-        // val masterUrl = element.data().substringAfter("setup({\"file\":\"").substringBefore("\"").replace("\\/", "/")
-        val masterUrl = element.attr("data-url")
-        val masterPlaylist = client.newCall(GET(masterUrl, headers)).execute().body!!.string()
+        val getSources = "master.m3u8"
+        val referer = Headers.headersOf("Referer", "$baseUrl/")
+        val iframe = document.selectFirst("iframe").attr("src").substringBefore("&img")
+        val webViewIncpec = client.newBuilder().addInterceptor(GetSourcesInterceptor(getSources, client)).build()
+        val lol = webViewIncpec.newCall(GET(iframe, referer)).execute().body!!.string()
         val videoList = mutableListOf<Video>()
-        masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
+        lol.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
             val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
             val videoUrl = it.substringAfter("\n").substringBefore("\n").replace("https", "http")
-            videoList.add(Video(videoUrl, quality, videoUrl, null, headers))
+            videoList.add(Video(videoUrl, quality, videoUrl, headers = referer))
         }
         return videoList
     }

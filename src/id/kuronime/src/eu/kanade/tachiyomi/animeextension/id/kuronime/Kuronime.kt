@@ -22,7 +22,7 @@ import java.lang.Exception
 import java.util.Locale
 
 class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
-    override val baseUrl: String = "https://kuronime.org"
+    override val baseUrl: String = "https://45.12.2.2"
     override val lang: String = "id"
     override val name: String = "Kuronime"
     override val supportsLatest: Boolean = true
@@ -61,7 +61,6 @@ class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> 1F
         }
         episode.name = element.select("span.lchx").text()
-        episode.date_upload = System.currentTimeMillis()
 
         return episode
     }
@@ -138,7 +137,7 @@ class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 else -> "ZippyShare - Unknown Resolution"
             }
         }
-        return Video(url, quality, url, null)
+        return Video(url, quality, url)
     }
 
     override fun videoListSelector(): String = throw Exception("not used")

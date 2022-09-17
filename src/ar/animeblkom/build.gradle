@@ -5,8 +5,8 @@ ext {
     extName = 'أنمي بالكوم'
     pkgNameSuffix = 'ar.animeblkom'
     extClass = '.AnimeBlkom'
-    extVersionCode = 5
-    libVersion = '12'
+    extVersionCode = 7
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

@@ -6,8 +6,8 @@ ext {
     extName = 'Anime Shitai'
     pkgNameSuffix = 'de.animeshitai'
     extClass = '.AnimeShitai'
-    extVersionCode = 1
-    libVersion = '12'
+    extVersionCode = 4
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

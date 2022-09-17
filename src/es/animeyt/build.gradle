@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Animeyt'
+    pkgNameSuffix = 'es.animeyt'
+    extClass = '.Animeyt'
+    extVersionCode = 5
+    libVersion = '13'
+}
+
+apply from: "$rootDir/common.gradle"

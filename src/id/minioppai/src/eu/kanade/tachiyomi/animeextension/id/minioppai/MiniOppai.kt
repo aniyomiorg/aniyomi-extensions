@@ -62,7 +62,6 @@ class MiniOppai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> 1F
         }
         episode.name = element.select("span.lchx").text()
-        episode.date_upload = System.currentTimeMillis()
 
         return episode
     }
@@ -140,7 +139,7 @@ class MiniOppai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 else -> "ZippyShare - Unknown Resolution"
             }
         }
-        return Video(url, quality, url, null)
+        return Video(url, quality, url)
     }
 
     override fun videoListSelector(): String = throw Exception("not used")

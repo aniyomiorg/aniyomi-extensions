@@ -5,8 +5,8 @@ ext {
     extName = 'AsianLoad'
     pkgNameSuffix = 'en.asianload'
     extClass = '.AsianLoad'
-    extVersionCode = 11
-    libVersion = '12'
+    extVersionCode = 16
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

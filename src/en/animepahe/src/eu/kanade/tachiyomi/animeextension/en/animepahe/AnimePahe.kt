@@ -49,29 +49,9 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val lang = "en"
 
-    // Create bypass object
-    private val ddgbypass = DdosGuardBypass("https://animepahe.com/")
-
     override val supportsLatest = false
 
     private val json: Json by injectLazy()
-
-    override fun headersBuilder(): Headers.Builder {
-        try {
-            // Bypass...
-            // Only required once. Then you can browse any page on the domain.
-            if (!ddgbypass.isBypassed) {
-                ddgbypass.bypass()
-            }
-            // Set Cookie header
-            if (ddgbypass.isBypassed) {
-                return super.headersBuilder().add("cookie", ddgbypass.cookiesAsString)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return super.headersBuilder()
-    }
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -96,7 +76,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         val anime = SAnime.create()
         val animeId = response.request.url.toString().substringAfterLast("?anime_id=")
         anime.setUrlWithoutDomain("$baseUrl/anime/?anime_id=$animeId")
-        anime.title = jsoup.selectFirst("div.title-wrapper h1").text()
+        anime.title = jsoup.selectFirst("div.title-wrapper > h1 > span").text()
         anime.author = jsoup.select("div.col-sm-4.anime-info p:contains(Studio:)")
             .firstOrNull()?.text()?.replace("Studio: ", "")
         anime.status = parseStatus(jsoup.selectFirst("div.col-sm-4.anime-info p:contains(Status:) a").text())
@@ -241,12 +221,12 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         return if (preferences.getBoolean("preferred_link_type", false)) {
             val videoUrl = KwikExtractor(client).getHlsStreamUrl(kwikUrl, referer = baseUrl)
             Video(
-                videoUrl, quality, videoUrl, null,
-                Headers.headersOf("referer", "https://kwik.cx")
+                videoUrl, quality, videoUrl,
+                headers = Headers.headersOf("referer", "https://kwik.cx")
             )
         } else {
             val videoUrl = KwikExtractor(client).getStreamUrlFromKwik(paheUrl)
-            Video(videoUrl, quality, videoUrl, null)
+            Video(videoUrl, quality, videoUrl)
         }
     }
 

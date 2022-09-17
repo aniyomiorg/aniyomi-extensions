@@ -5,8 +5,8 @@ ext {
     extName = 'Kuronime'
     pkgNameSuffix = 'id.kuronime'
     extClass = '.Kuronime'
-    extVersionCode = 1
-    libVersion = '12'
+    extVersionCode = 4
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

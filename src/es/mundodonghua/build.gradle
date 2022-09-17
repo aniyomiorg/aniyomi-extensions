@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'MundoDonghua'
+    pkgNameSuffix = 'es.mundodonghua'
+    extClass = '.MundoDonghua'
+    extVersionCode = 6
+    libVersion = '13'
+}
+
+apply from: "$rootDir/common.gradle"

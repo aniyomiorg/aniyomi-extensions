@@ -5,8 +5,8 @@ ext {
     extName = 'AnimeWorld (experimental)'
     pkgNameSuffix = 'hi.animeWorld'
     extClass = '.AnimeWorld'
-    extVersionCode = 5
-    libVersion = '12'
+    extVersionCode = 10
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

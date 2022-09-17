@@ -5,8 +5,8 @@ ext {
     extName = 'NeoNime'
     pkgNameSuffix = 'id.neonime'
     extClass = '.NeoNime'
-    extVersionCode = 5
-    libVersion = '12'
+    extVersionCode = 7
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

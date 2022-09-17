@@ -85,17 +85,28 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videosFromElement(document)
     }
 
-    override fun videoListSelector() = "center a[href*=dood], center a[href*=streamtape], center a[href*=animeworld.biz]"
+    override fun videoListSelector() = "center a[href*=dood], center a[href*=streamtape], center a[href*=animeworld.biz], center a[href*=streamingaw.online][id=alternativeDownloadLink]"
 
     private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
+        // afaik this element appears when videos are taken down, in this case instead of
+        // displaying Videolist empty show the element's text
+        val copyrightError = document.select("div.alert.alert-primary:contains(Copyright)")
+        if (copyrightError.hasText()) throw Exception(copyrightError.text())
         val elements = document.select(videoListSelector())
         for (element in elements) {
             val url = element.attr("href")
             val location = element.ownerDocument().location()
             val videoHeaders = Headers.headersOf("Referer", location)
             when {
-                url.contains("animeworld.biz") -> {
+                url.contains("animeworld.biz") || url.contains("sbembed.com") || url.contains("sbembed1.com") || url.contains("sbplay.org") ||
+                    url.contains("sbvideo.net") || url.contains("streamsb.net") || url.contains("sbplay.one") ||
+                    url.contains("cloudemb.com") || url.contains("playersb.com") || url.contains("tubesb.com") ||
+                    url.contains("sbplay1.com") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
+                    url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
+                    url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
+                    url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com")
+                -> {
                     val headers = headers.newBuilder()
                         .set("Referer", url)
                         .set("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
@@ -104,6 +115,11 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         .build()
                     val videos = StreamSBExtractor(client).videosFromUrl(url.replace("/d/", "/e/"), headers)
                     videoList.addAll(videos)
+                }
+                url.contains("streamingaw") -> {
+                    videoList.add(
+                        Video(url, "AnimeWorld Server", url)
+                    )
                 }
                 url.contains("dood") -> {
                     val video = DoodExtractor(client).videoFromUrl(url.replace("/d/", "/e/"))

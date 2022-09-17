@@ -5,8 +5,9 @@ ext {
     extName = 'Jkhentai'
     pkgNameSuffix = 'es.jkhentai'
     extClass = '.Jkhentai'
-    extVersionCode = 2
-    libVersion = '12'
+    extVersionCode = 8
+    libVersion = '13'
+    containsNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"

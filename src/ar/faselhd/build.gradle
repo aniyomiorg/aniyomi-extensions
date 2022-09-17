@@ -5,8 +5,8 @@ ext {
     extName = 'فاصل اعلاني'
     pkgNameSuffix = 'ar.faselhd'
     extClass = '.FASELHD'
-    extVersionCode = 5
-    libVersion = '12'
+    extVersionCode = 10
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

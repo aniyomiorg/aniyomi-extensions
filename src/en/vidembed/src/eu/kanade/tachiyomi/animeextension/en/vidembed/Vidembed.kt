@@ -75,7 +75,6 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         episode.episode_number = epNo
         episode.name = if (ep == epName) epName else "Episode $ep"
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 
@@ -103,7 +102,7 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 url.contains("https://dood") -> {
                     val newQuality = "Doodstream mirror"
                     val video = try {
-                        Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
+                        Video(url, newQuality, doodUrlParse(url), headers = videoHeaders)
                     } catch (e: Exception) {
                         null
                     }
@@ -112,8 +111,10 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 url.contains("sbembed.com") || url.contains("sbembed1.com") || url.contains("sbplay.org") ||
                     url.contains("sbvideo.net") || url.contains("streamsb.net") || url.contains("sbplay.one") ||
                     url.contains("cloudemb.com") || url.contains("playersb.com") || url.contains("tubesb.com") ||
-                    url.contains("sbplay1") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
-                    url.contains("sbplay2") || url.contains("japopav.tv") || url.contains("viewsb.com")
+                    url.contains("sbplay1.com") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
+                    url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
+                    url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
+                    url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com")
                 -> {
                     val newUrl = url.replace("/d/", "/e/")
                     val headers = headers.newBuilder()
@@ -133,7 +134,7 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         else -> quality
                     }
                     val video =
-                        Video(url, parsedQuality, videoUrlParse(url, location), null, videoHeaders)
+                        Video(url, parsedQuality, videoUrlParse(url, location), headers = videoHeaders)
                     videoList.add(video)
                 }
             }

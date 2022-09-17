@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'KickAssAnime'
+    pkgNameSuffix = 'en.kickassanime'
+    extClass = '.KickAssAnime'
+    extVersionCode = 8
+    libVersion = '13'
+}
+
+apply from: "$rootDir/common.gradle"

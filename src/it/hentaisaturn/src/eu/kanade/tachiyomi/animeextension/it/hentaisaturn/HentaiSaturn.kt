@@ -73,7 +73,6 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             episode.episode_number = epNumber.toFloat()
         }
         episode.name = epText
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 
@@ -116,8 +115,7 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 Video(
                     link,
                     qualities[i],
-                    link,
-                    null
+                    link
                 )
             }
         } else {
@@ -126,8 +124,7 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     url,
                     "Qualità predefinita",
                     url,
-                    null,
-                    Headers.headersOf("Referer", referer)
+                    headers = Headers.headersOf("Referer", referer)
                 )
             )
         }

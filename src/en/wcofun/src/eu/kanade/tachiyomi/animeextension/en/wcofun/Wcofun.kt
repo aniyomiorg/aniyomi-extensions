@@ -90,7 +90,6 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         episodeName = if (season == epName) episodeName else "Season $season"
         episode.episode_number = epNo + (seasonNo * 100)
         episode.name = episodeName
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 
@@ -138,13 +137,13 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         hd?.let {
             if (it.isNotEmpty()) {
                 val videoUrl = "$server/getvid?evid=$it"
-                videoList.add(Video(videoUrl, "HD", videoUrl, null))
+                videoList.add(Video(videoUrl, "HD", videoUrl))
             }
         }
         sd?.let {
             if (it.isNotEmpty()) {
                 val videoUrl = "$server/getvid?evid=$it"
-                videoList.add(Video(videoUrl, "SD", videoUrl, null))
+                videoList.add(Video(videoUrl, "SD", videoUrl))
             }
         }
         return videoList

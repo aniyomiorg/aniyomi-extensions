@@ -5,8 +5,8 @@ ext {
     extName = 'WIT ANIME'
     pkgNameSuffix = 'ar.witanime'
     extClass = '.WitAnime'
-    extVersionCode = 12
-    libVersion = '12'
+    extVersionCode = 19
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

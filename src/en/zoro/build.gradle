@@ -5,8 +5,8 @@ ext {
     extName = 'zoro.to (experimental)'
     pkgNameSuffix = 'en.zoro'
     extClass = '.Zoro'
-    extVersionCode = 3
-    libVersion = '12'
+    extVersionCode = 9
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

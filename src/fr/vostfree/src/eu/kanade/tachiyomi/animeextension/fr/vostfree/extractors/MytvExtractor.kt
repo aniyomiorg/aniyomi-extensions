@@ -15,9 +15,9 @@ class MytvExtractor(private val client: OkHttpClient) {
                 val videoUrl = videosString.substringAfter("\"v=").substringBefore("\\u0026tp=video").replace("%26", "&").replace("%3a", ":").replace("%2f", "/").replace("%3f", "?").replace("%3d", "=")
                 if (!videoUrl.contains("https:")) {
                     val videoUrl = "https:$videoUrl"
-                    videoList.add(Video(videoUrl, "Stream", videoUrl, null))
+                    videoList.add(Video(videoUrl, "Stream", videoUrl))
                 } else {
-                    videoList.add(Video(videoUrl, "Mytv", videoUrl, null))
+                    videoList.add(Video(videoUrl, "Mytv", videoUrl))
                 }
             }
         }

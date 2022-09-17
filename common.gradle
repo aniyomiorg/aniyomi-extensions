@@ -2,13 +2,6 @@ apply plugin: 'org.jmailen.kotlinter'
 
 android {
     compileSdkVersion AndroidConfig.compileSdk
-    buildToolsVersion AndroidConfig.buildTools
-
-    buildTypes {
-        release {
-            minifyEnabled false
-        }
-    }
 
     sourceSets {
         main {
@@ -29,7 +22,7 @@ android {
         targetSdkVersion AndroidConfig.targetSdk
         applicationIdSuffix pkgNameSuffix
         versionCode extVersionCode
-        versionName "$libVersion.$extVersionCode"
+        versionName project.ext.properties.getOrDefault("libVersion", "13") + ".$extVersionCode"
         setProperty("archivesBaseName", "aniyomi-$pkgNameSuffix-v$versionName")
         manifestPlaceholders = [
                 appName : "Aniyomi: $extName",
@@ -37,6 +30,22 @@ android {
                 extFactory: project.ext.properties.getOrDefault("extFactory", ""),
                 nsfw: project.ext.properties.getOrDefault("containsNsfw", false) ? 1 : 0,
         ]
+    }
+
+    signingConfigs {
+        release {
+            storeFile rootProject.file("signingkey.jks")
+            storePassword System.getenv("KEY_STORE_PASSWORD")
+            keyAlias System.getenv("ALIAS")
+            keyPassword System.getenv("KEY_PASSWORD")
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+        }
     }
 
     dependenciesInfo {
@@ -58,6 +67,7 @@ android {
 
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_1_8.toString()
+        freeCompilerArgs += "-Xopt-in=kotlinx.serialization.ExperimentalSerializationApi"
     }
 }
 
@@ -66,9 +76,9 @@ repositories {
 }
 
 dependencies {
-    implementation project(":core")
+    implementation(project(":core"))
+    compileOnly(libs.bundles.common)
 }
-apply from: "$rootDir/common-dependencies.gradle"
 
 preBuild.dependsOn(lintKotlin)
 lintKotlin.dependsOn(formatKotlin)

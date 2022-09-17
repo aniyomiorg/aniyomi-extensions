@@ -4,8 +4,8 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.pt.anitube.extractors.AnitubeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
-import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -13,6 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
@@ -21,6 +22,7 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -28,6 +30,7 @@ import java.lang.Exception
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
+
 class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Anitube"
@@ -57,10 +60,9 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime: SAnime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        anime.title = element.selectFirst("img").attr("title")
-        anime.thumbnail_url = element.selectFirst("img")
-            .attr("src")
-            .replace("https://www.anitube.in", baseUrl) // Fix images
+        val img = element.selectFirst("img")
+        anime.title = img.attr("title")
+        anime.thumbnail_url = img.attr("src")
         return anime
     }
 
@@ -113,25 +115,7 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // Video links
-    override fun videoListParse(response: Response): List<Video> {
-        val doc: Document = response.asJsoup()
-        val hasFHD: Boolean = doc.selectFirst("div.abaItem:contains(FULLHD)") != null
-        val serverUrl: String = doc.selectFirst("meta[itemprop=contentURL]").attr("content")
-        val type: String = serverUrl.substringAfter("cz/").substringBefore("/")
-        val qualities = listOfNotNull("SD", "HD", if (hasFHD) "FULLHD" else null)
-        val paths = when (type) {
-            "appsd" -> mutableListOf("mobilesd", "mobilehd")
-            else -> mutableListOf("sdr2", "hdr2")
-        }
-        paths.add("fullhdr2")
-
-        return qualities.mapIndexed { index, quality ->
-            val path = paths[index]
-            val url = serverUrl.replace(type, path)
-            Video(url, quality, url, null)
-        }.reversed()
-    }
-
+    override fun videoListParse(response: Response) = AnitubeExtractor.getVideoList(response)
     override fun videoListSelector() = throw Exception("not used")
     override fun videoFromElement(element: Element) = throw Exception("not used")
     override fun videoUrlParse(document: Document) = throw Exception("not used")
@@ -144,12 +128,23 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeParse(response: Response): AnimesPage = popularAnimeParse(response)
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        val params = AnitubeFilters.getSearchParameters(filters)
+        return client.newCall(searchAnimeRequest(page, query, params))
+            .asObservableSuccess()
+            .map { response ->
+                searchAnimeParse(response)
+            }
+    }
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = throw Exception("not used")
+
+    private fun searchAnimeRequest(page: Int, query: String, filters: AnitubeFilters.FilterSearchParams): Request {
         return if (query.isBlank()) {
-            val year = filters.asUriPart<YearFilter>()
-            val season = filters.asUriPart<SeasonFilter>()
-            val genre = filters.asUriPart<GenreFilter>()
-            val char = filters.asUriPart<CharacterFilter>()
+            val season = filters.season
+            val genre = filters.genre
+            val year = filters.year
+            val char = filters.initialChar
             when {
                 !season.isBlank() -> GET("$baseUrl/temporada/$season/$year")
                 !genre.isBlank() -> GET("$baseUrl/genero/$genre/page/$page/${char.replace("todos", "")}")
@@ -167,7 +162,7 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         anime.title = doc.selectFirst("div.anime_container_titulo").text()
         anime.thumbnail_url = content.selectFirst("img").attr("src")
-        anime.genre = infos.getInfo("Gêneros")?.split(" ")?.joinToString(", ")
+        anime.genre = infos.getInfo("Gêneros")
         anime.author = infos.getInfo("Autor")
         anime.artist = infos.getInfo("Estúdio")
         anime.status = parseStatus(infos.getInfo("Status"))
@@ -210,13 +205,12 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Settings
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val values = arrayOf("SD", "HD", "FULLHD")
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Qualidade preferida"
-            entries = values
-            entryValues = values
-            setDefaultValue("FULLHD")
+            entries = QUALITIES
+            entryValues = QUALITIES
+            setDefaultValue(QUALITIES.last())
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -229,112 +223,15 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // Filters
-    override fun getFilterList(): AnimeFilterList = AnimeFilterList(
-        AnimeFilter.Header(FILTER_IGNORE_MESSAGE),
-        GenreFilter(),
-        CharacterFilter(),
-        AnimeFilter.Header(FILTER_SEASON_MESSAGE),
-        SeasonFilter(),
-        YearFilter(),
-    )
-
-    private class SeasonFilter() : UriPartFilter(
-        "Temporada",
-        arrayOf(
-            Pair("Qualquer uma", ""),
-            Pair("Inverno", "inverno"),
-            Pair("Primavera", "primavera"),
-            Pair("Verão", "verao"),
-            Pair("Outono", "outono")
-        )
-    )
-
-    private class YearFilter() : UriPartFilter(
-        "Ano",
-        (2022 downTo 1979).map {
-            Pair(it.toString(), it.toString())
-        }.toTypedArray()
-    )
-
-    private class CharacterFilter() : UriPartFilter(
-        "Inicia com",
-        arrayOf(
-            Pair("Qualquer letra", "todos")
-        ) + ('A'..'Z').map { Pair(it.toString(), it.toString()) }.toTypedArray()
-    )
-
-    private class GenreFilter() : UriPartFilter(
-        "Gênero",
-        arrayOf(
-            Pair("Qualquer um", ""),
-            Pair("Ação", "acao"),
-            Pair("Artes marciais", "artes-marciais"),
-            Pair("Aventura", "aventura"),
-            Pair("CGI", "cgi"),
-            Pair("Comédia", "comedia"),
-            Pair("Demencia", "demencia"),
-            Pair("Demônios", "demonios"),
-            Pair("Drama", "drama"),
-            Pair("Ecchi", "ecchi"),
-            Pair("Escolar", "escolar"),
-            Pair("Espaço", "espaco"),
-            Pair("Esporte", "esporte"),
-            Pair("Fantasia", "fantasia"),
-            Pair("Ficção Científica", "ficcao-cientifica"),
-            Pair("Gore", "gore"),
-            Pair("Gourmet", "gourmet"),
-            Pair("Harém", "harem"),
-            Pair("Harém Reverso", "harem-reverso"),
-            Pair("Hentai", "hentai"),
-            Pair("Histórico", "historico"),
-            Pair("Idol", "idol"),
-            Pair("Isekai", "isekai"),
-            Pair("Jogos", "jogos"),
-            Pair("Josei", "josei"),
-            Pair("Kodomo", "kodomo"),
-            Pair("Live Action", "live-action"),
-            Pair("Magia", "magia"),
-            Pair("Mahou Shoujo", "mahou-shoujo"),
-            Pair("Mecha", "mecha"),
-            Pair("Militar", "militar"),
-            Pair("Mistério", "misterio"),
-            Pair("Mundo Virtual", "mundo-virtual"),
-            Pair("Musical", "musical"),
-            Pair("Paródia", "parodia"),
-            Pair("Policial", "policial"),
-            Pair("Pós-Apocalíptico", "pos-apocaliptico"),
-            Pair("Romance", "romance"),
-            Pair("Samurai", "samurai"),
-            Pair("Sci-Fi", "sci-fi"),
-            Pair("Seinen", "seinen"),
-            Pair("Shoujo", "shoujo"),
-            Pair("Shoujo-ai", "shoujo-ai"),
-            Pair("Shounen", "shounen"),
-            Pair("Shounen-ai", "shounen-ai"),
-            Pair("Slice of life", "slice-of-life"),
-            Pair("Sobrenatural", "sobrenatural"),
-            Pair("Superpoder", "superpoder"),
-            Pair("Suspense", "suspense"),
-            Pair("Terror", "terror"),
-            Pair("Thriller", "thriller"),
-            Pair("Tokusatsu", "tokusatsu"),
-            Pair("Tragédia", "tragedia"),
-            Pair("Vampiros", "vampiros"),
-            Pair("Vida Escolar", "vida-escolar"),
-            Pair("Yaoi", "yaoi"),
-            Pair("Yuri", "yuri")
-        )
-    )
-    private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
-        AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
-        fun toUriPart() = vals[state].second
-    }
+    override fun getFilterList(): AnimeFilterList = AnitubeFilters.filterList
 
     // New functions
     private fun getRealDoc(document: Document): Document {
         val menu = document.selectFirst("div.controles_ep > a[href] > i.spr.listaEP")
         if (menu != null) {
-            val req = client.newCall(GET(baseUrl + menu.parent().attr("href"))).execute()
+            val parent = menu.parent()
+            val parentPath = parent.attr("href")
+            val req = client.newCall(GET(baseUrl + parentPath)).execute()
             return req.asJsoup()
         } else {
             return document
@@ -362,12 +259,6 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return currentPage != lastPage
     }
 
-    private inline fun <reified R> AnimeFilterList.asUriPart(): String {
-        return this.filterIsInstance<R>().joinToString("") {
-            (it as UriPartFilter).toUriPart()
-        }
-    }
-
     private fun String.toPageNum(): Int = try {
         this.substringAfter("page/")
             .substringAfter("page=")
@@ -378,8 +269,12 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun Element.getInfo(key: String): String? {
         val elementB: Element? = this.selectFirst("b:contains($key)")
         val parent = elementB?.parent()
-        val text = parent?.text()
-            ?.replace(elementB.html(), "")?.trim()
+        val elementsA = parent?.select("a")
+        val text = if (elementsA?.size == 0) {
+            parent.text()?.replace(elementB.html(), "")?.trim()
+        } else {
+            elementsA?.joinToString(", ") { it.text() }
+        }
         if (text == "") return null
         return text
     }
@@ -412,8 +307,7 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     companion object {
         private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
+        private val QUALITIES = arrayOf("SD", "HD", "FULLHD")
         private val DATE_FORMATTER by lazy { SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH) }
-        private val FILTER_IGNORE_MESSAGE = "Nota: Os filtros abaixo são IGNORADOS durante a busca."
-        private val FILTER_SEASON_MESSAGE = "Nota: o filtro de temporada IGNORA o filtro de gênero/letra."
     }
 }

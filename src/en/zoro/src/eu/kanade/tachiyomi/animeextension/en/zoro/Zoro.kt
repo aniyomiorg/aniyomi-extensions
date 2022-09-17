@@ -8,9 +8,16 @@ import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
+import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -20,6 +27,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 
 class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -33,6 +41,8 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
+
+    private val json: Json by injectLazy()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -72,7 +82,6 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             episode.episode_number = a.attr("data-number").toFloat()
             episode.name = "Episode ${a.attr("data-number")}: ${a.attr("title")}"
             episode.url = a.attr("href")
-            episode.date_upload = System.currentTimeMillis()
             episodeList.add(episode)
         }
         return episodeList.reversed()
@@ -113,13 +122,31 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val source = client.newCall(GET(getSourcesLink)).execute().body!!.string()
         if (!source.contains("{\"sources\":[{\"file\":\"")) return null
-        val masterUrl = source.substringAfter("{\"sources\":[{\"file\":\"").substringBefore("\"")
+        val json = json.decodeFromString<JsonObject>(source)
+        val masterUrl = json["sources"]!!.jsonArray[0].jsonObject["file"]!!.jsonPrimitive.content
+        val subs2 = mutableListOf<Track>()
+        json["tracks"]?.jsonArray
+            ?.filter { it.jsonObject["kind"]!!.jsonPrimitive.content == "captions" }
+            ?.map { track ->
+                val trackUrl = track.jsonObject["file"]!!.jsonPrimitive.content
+                val lang = track.jsonObject["label"]!!.jsonPrimitive.content
+                try {
+                    subs2.add(Track(trackUrl, lang))
+                } catch (e: Error) {}
+            } ?: emptyList()
+        val subs = subLangOrder(subs2)
         val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
         val videoList = mutableListOf<Video>()
         masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
             val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p - $subDub"
             val videoUrl = masterUrl.substringBeforeLast("/") + "/" + it.substringAfter("\n").substringBefore("\n")
-            videoList.add(Video(videoUrl, quality, videoUrl, null))
+            videoList.add(
+                try {
+                    Video(videoUrl, quality, videoUrl, subtitleTracks = subs)
+                } catch (e: Error) {
+                    Video(videoUrl, quality, videoUrl)
+                }
+            )
         }
         return videoList
     }
@@ -146,6 +173,24 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             return newList
         }
         return this
+    }
+
+    private fun subLangOrder(tracks: List<Track>): List<Track> {
+        val language = preferences.getString("preferred_subLang", null)
+        if (language != null) {
+            val newList = mutableListOf<Track>()
+            var preferred = 0
+            for (track in tracks) {
+                if (track.lang == language) {
+                    newList.add(preferred, track)
+                    preferred++
+                } else {
+                    newList.add(track)
+                }
+            }
+            return newList
+        }
+        return tracks
     }
 
     override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
@@ -198,6 +243,22 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val subLangPref = ListPreference(screen.context).apply {
+            key = "preferred_subLang"
+            title = "Preferred sub language"
+            entries = arrayOf("English", "Spanish", "Portuguese", "French", "German", "Italian", "Japanese", "Russian")
+            entryValues = arrayOf("English", "Spanish", "Portuguese", "French", "German", "Italian", "Japanese", "Russian")
+            setDefaultValue("English")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
         screen.addPreference(videoQualityPref)
+        screen.addPreference(subLangPref)
     }
 }

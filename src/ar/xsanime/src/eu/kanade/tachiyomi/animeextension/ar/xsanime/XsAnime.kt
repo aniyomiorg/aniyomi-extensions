@@ -49,7 +49,7 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.title = element.attr("title")
-        anime.thumbnail_url = element.select("div.itemtype_anime_poster img").first().attr("abs:src")
+        anime.thumbnail_url = element.select("div.itemtype_anime_poster img").first().attr("data-src")
         return anime
     }
 
@@ -67,7 +67,6 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             (epNum.isNotEmpty()) -> epNum.toFloat()
             else -> 1F
         }
-        episode.date_upload = System.currentTimeMillis()
 
         return episode
     }
@@ -93,7 +92,7 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoFromElement(element: Element): Video {
         element.attr("src")
-        return Video(element.attr("src"), "Default: If you want to change the quality go to extension settings", element.attr("src"), null)
+        return Video(element.attr("src"), "Default: If you want to change the quality go to extension settings", element.attr("src"))
     }
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
@@ -104,7 +103,7 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.title = element.attr("title")
-        anime.thumbnail_url = element.select("div.itemtype_anime_poster img").first().attr("abs:src")
+        anime.thumbnail_url = element.select("div.itemtype_anime_poster img").first().attr("data-src")
         return anime
     }
 

@@ -90,7 +90,6 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> 1F
         }
         episode.name = element.ownerDocument().select("div.List--Seasons--Episodes a.selected").text() + " : " + element.text()
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 
@@ -125,13 +124,13 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             for (source in sources) {
                 val src = source.substringAfter("src: \"").substringBefore("\"")
                 val quality = source.substringBefore("'") // .substringAfter("format: '")
-                val video = Video(src, quality, src, null)
+                val video = Video(src, quality, src)
                 videoList.add(video)
             }
             return videoList
         }
         val sourceTag = element.ownerDocument().select("source").firstOrNull()!!
-        return listOf(Video(sourceTag.attr("src"), "Default", sourceTag.attr("src"), null))
+        return listOf(Video(sourceTag.attr("src"), "Default", sourceTag.attr("src")))
     }
 
     override fun List<Video>.sort(): List<Video> {

@@ -5,8 +5,8 @@ ext {
     extName = 'Vidembed'
     pkgNameSuffix = 'en.vidembed'
     extClass = '.Vidembed'
-    extVersionCode = 10
-    libVersion = '12'
+    extVersionCode = 15
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

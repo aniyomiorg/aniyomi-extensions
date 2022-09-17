@@ -6,7 +6,6 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.goyabu.GYFilters.applyFilterParams
 import eu.kanade.tachiyomi.animeextension.pt.goyabu.extractors.PlayerOneExtractor
-import eu.kanade.tachiyomi.animeextension.pt.goyabu.extractors.PlayerTwoExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -15,6 +14,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -28,6 +28,9 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -56,7 +59,10 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         .add("Referer", baseUrl)
 
     // ============================== Popular ===============================   
-    override fun popularAnimeSelector(): String = "div.item > div.anime-episode"
+    private fun popularAnimeContainerSelector(): String = "div.index-size > div.episodes-container"
+
+    override fun popularAnimeSelector(): String = "div.anime-episode"
+
     override fun popularAnimeRequest(page: Int): Request = GET(baseUrl)
 
     override fun popularAnimeFromElement(element: Element): SAnime {
@@ -71,7 +77,7 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
-        val content = document.select("div.episodes-container").get(2)
+        val content = document.selectFirst(popularAnimeContainerSelector())
         val animes = content.select(popularAnimeSelector()).map { element ->
             popularAnimeFromElement(element)
         }
@@ -79,7 +85,7 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector(): String = "div.episodes-container > div.anime-episode"
+    override fun episodeListSelector(): String = "div.episodes-container > div.row > a"
 
     private fun getAllEps(response: Response): List<SEpisode> {
         val epList = mutableListOf<SEpisode>()
@@ -100,17 +106,20 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        return getAllEps(response).reversed()
+        return getAllEps(response)
     }
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-
-        episode.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
-        val epName = element.selectFirst("h3").text().substringAfter("– ")
-        episode.name = epName
+        val info_div = element.selectFirst("div.chaps-infs")
+        episode.setUrlWithoutDomain(element.attr("href"))
+        val epName = info_div.ownText()
+        episode.name = epName.substringAfter("– ")
+        episode.date_upload = info_div.selectFirst("small").ownText().toDate()
         episode.episode_number = try {
-            epName.substringAfter(" ").substringBefore(" ").toFloat()
+            epName.substringAfter("#")
+                .substringBefore(" ")
+                .toFloat()
         } catch (e: NumberFormatException) { 0F }
         return episode
     }
@@ -119,16 +128,19 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document: Document = response.asJsoup()
         val html: String = document.html()
-        val videoList = PlayerOneExtractor()
-            .videoListFromHtml(html)
-            .toMutableList()
-        val iframe = document.selectFirst("div#tab-2 > iframe")
-        if (iframe != null) {
-            val playerUrl = iframe.attr("src")
-            val video = PlayerTwoExtractor(client).videoFromPlayerUrl(playerUrl)
-            if (video != null)
-                videoList.add(video)
+        val videoList = mutableListOf<Video>()
+        val extractor = PlayerOneExtractor()
+        val kanraElement = document.selectFirst("script:containsData(kanra.dev)")
+        if (kanraElement != null) {
+            val kanraUrl = kanraElement.html()
+                .substringAfter("src='")
+                .substringBefore("'")
+            val kanraVideos = extractor.videoListFromKanraUrl(kanraUrl, client)
+            videoList.addAll(kanraVideos)
         }
+        val extracted = extractor.videoListFromHtml(html)
+        videoList.addAll(extracted)
+
         return videoList
     }
 
@@ -153,7 +165,22 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeParse(response: Response) = throw Exception("not used")
 
+    private fun searchAnimeBySlugParse(response: Response, slug: String): AnimesPage {
+        val details = animeDetailsParse(response)
+        details.url = "/assistir/$slug"
+        return AnimesPage(listOf(details), false)
+    }
+
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        if (query.startsWith(GYConstants.PREFIX_SEARCH_SLUG)) {
+            val slug = query.removePrefix(GYConstants.PREFIX_SEARCH_SLUG)
+            return client.newCall(GET("$baseUrl/assistir/$slug"))
+                .asObservableSuccess()
+                .map { response ->
+                    searchAnimeBySlugParse(response, slug)
+                }
+        }
+        // else
         val params = GYFilters.getSearchParameters(filters)
         return Observable.just(searchAnimeRequest(page, query, params))
     }
@@ -218,22 +245,6 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Settings ============================== 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-
-        val videoPlayerPref = ListPreference(screen.context).apply {
-            key = GYConstants.PREFERRED_PLAYER
-            title = "Player preferido"
-            entries = GYConstants.PLAYER_NAMES
-            entryValues = GYConstants.PLAYER_NAMES
-            setDefaultValue(GYConstants.PLAYER_NAMES.first())
-            summary = "%s"
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-
         val videoQualityPref = ListPreference(screen.context).apply {
             key = GYConstants.PREFERRED_QUALITY
             title = "Qualidade preferida"
@@ -248,7 +259,6 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
-        screen.addPreference(videoPlayerPref)
         screen.addPreference(videoQualityPref)
     }
 
@@ -268,10 +278,10 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun Element.getInfo(item: String, cut: Boolean = true): String {
         val text = this.selectFirst("div.anime-info-right div:contains($item)").text()
-        if (cut)
-            return text.substringAfter(": ")
-        else
-            return text.substringAfter(" ")
+        return when {
+            cut -> text.substringAfter(": ")
+            else -> text.substringAfter(" ")
+        }
     }
 
     private fun parseStatus(statusString: String?): Int {
@@ -282,24 +292,35 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
+    private fun String.toDate(): Long {
+        return try {
+            DATE_FORMATTER.parse(this)?.time ?: 0L
+        } catch (e: ParseException) {
+            0L
+        }
+    }
+
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(GYConstants.PREFERRED_QUALITY, null)
-        val player = preferences.getString(GYConstants.PREFERRED_PLAYER, null)
-        val newList = mutableListOf<Video>()
-        var preferred = 0
-        for (video in this) {
-            when {
-                quality != null && video.quality.contains(quality) -> {
+        if (quality != null) {
+            val newList = mutableListOf<Video>()
+            var preferred = 0
+            for (video in this) {
+                if (video.quality.equals(quality)) {
                     newList.add(preferred, video)
                     preferred++
+                } else {
+                    newList.add(video)
                 }
-                player != null && video.quality.contains(player) -> {
-                    newList.add(preferred, video)
-                    preferred++
-                }
-                else -> newList.add(video)
             }
+            return newList
         }
-        return newList
+        return this
+    }
+
+    companion object {
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("dd/MM/yy", Locale.ENGLISH)
+        }
     }
 }

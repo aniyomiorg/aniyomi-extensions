@@ -1,0 +1,17 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Onepace'
+    pkgNameSuffix = 'all.onepace'
+    extClass = '.OnepaceFactory'
+    extVersionCode = 8
+    libVersion = '13'
+    containsNsfw = false
+}
+
+dependencies {
+    compileOnly libs.bundles.coroutines
+}
+
+apply from: "$rootDir/common.gradle"

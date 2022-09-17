@@ -11,10 +11,16 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
+import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -25,13 +31,12 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 
 class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Sflix"
 
-    override val baseUrl = "https://sflix.to"
+    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://sflix.to")!! }
 
     override val lang = "en"
 
@@ -46,7 +51,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
     override fun headersBuilder(): Headers.Builder {
         return super.headersBuilder()
-            .add("Referer", "https://sflix.to/")
+            .add("Referer", "$baseUrl/")
     }
 
     override fun popularAnimeSelector(): String = "div.film_list-wrap div.flw-item div.film-poster"
@@ -74,7 +79,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val id = infoElement.attr("data-id")
         val dataType = infoElement.attr("data-type") // Tv = 2 or movie = 1
         if (dataType == "2") {
-            val seasonUrl = "https://sflix.to/ajax/v2/tv/seasons/$id"
+            val seasonUrl = "$baseUrl/ajax/v2/tv/seasons/$id"
             val seasonsHtml = client.newCall(
                 GET(
                     seasonUrl,
@@ -87,7 +92,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 episodeList.addAll(seasonEpList)
             }
         } else {
-            val movieUrl = "https://sflix.to/ajax/movie/episodes/$id"
+            val movieUrl = "$baseUrl/ajax/movie/episodes/$id"
             val episode = SEpisode.create()
             episode.name = document.select("h2.heading-name").text()
             episode.episode_number = 1F
@@ -102,7 +107,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun parseEpisodesFromSeries(element: Element): List<SEpisode> {
         val seasonId = element.attr("data-id")
         val seasonName = element.text()
-        val episodesUrl = "https://sflix.to/ajax/v2/season/episodes/$seasonId"
+        val episodesUrl = "$baseUrl/ajax/v2/season/episodes/$seasonId"
         val episodesHtml = client.newCall(
             GET(
                 episodesUrl,
@@ -118,7 +123,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val epNum = element.select("div.episode-number").text()
         val epName = element.select("h3.film-name a").text()
         episode.name = "$seasonName $epNum $epName"
-        episode.setUrlWithoutDomain("https://sflix.to/ajax/v2/episode/servers/$episodeId")
+        episode.setUrlWithoutDomain("$baseUrl/ajax/v2/episode/servers/$episodeId")
         return episode
     }
 
@@ -137,8 +142,8 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val newHeaders = Headers.headersOf("Referer", referer)
 
         // get embed id
-        val getVidID = document.selectFirst("a").attr("data-id")
-        val getVidApi = client.newCall(GET("https://dopebox.to/ajax/get_link/" + getVidID)).execute().asJsoup()
+        val getVidID = document.selectFirst("a:contains(Vidcloud)").attr("data-id")
+        val getVidApi = client.newCall(GET("$baseUrl/ajax/get_link/" + getVidID)).execute().asJsoup()
 
         // streamrapid URL
         val getVideoEmbed = getVidApi.text().substringAfter("link\":\"").substringBefore("\"")
@@ -146,7 +151,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val callVideolink = client.newCall(GET(getVideoEmbed, refererHeaders)).execute().asJsoup()
         val uri = Uri.parse(getVideoEmbed)
         val domain = (Base64.encodeToString((uri.scheme + "://" + uri.host + ":443").encodeToByteArray(), Base64.NO_PADDING) + ".").replace("\n", "")
-        val soup = Jsoup.connect(getVideoEmbed).referrer("https://dopebox.to/").get().toString().replace("\n", "")
+        val soup = Jsoup.connect(getVideoEmbed).referrer("$baseUrl/").get().toString().replace("\n", "")
 
         val key = soup.substringAfter("var recaptchaSiteKey = '").substringBefore("',")
         val number = soup.substringAfter("recaptchaNumber = '").substringBefore("';")
@@ -158,29 +163,53 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .post().toString().replace("\n", "").substringAfter("rresp\",\"").substringBefore("\"")
 
         val jsonLink = "https://rabbitstream.net/ajax/embed-4/getSources?id=$videoEmbedUrlId&_token=$token&_number=$number&sId=test"
-        val reloadHeaderss = headers.newBuilder()
+        /*val reloadHeaderss = headers.newBuilder()
             .set("X-Requested-With", "XMLHttpRequest")
             .build()
         val iframeResponse = client.newCall(GET(jsonLink, reloadHeaderss))
             .execute().asJsoup()
-
-        return videosFromElement(iframeResponse)
+        */
+        return videosFromElement(jsonLink)
     }
 
-    private fun videosFromElement(element: Element): List<Video> {
-        val test = element.text()
-        val masterUrl = element.text().substringAfter("file\":\"").substringBefore("\",\"type")
-        if (test.contains("playlist.m3u8")) {
+    private fun videosFromElement(url: String): List<Video> {
+        val reloadHeaderss = headers.newBuilder()
+            .set("X-Requested-With", "XMLHttpRequest")
+            .build()
+        val json = Json.decodeFromString<JsonObject>(Jsoup.connect(url).header("X-Requested-With", "XMLHttpRequest").ignoreContentType(true).execute().body())
+        val masterUrl = json["sources"]!!.jsonArray[0].jsonObject["file"].toString().trim('"')
+        val subsList = mutableListOf<Track>()
+        json["tracks"]!!.jsonArray.forEach {
+            val subLang = it.jsonObject["label"].toString().substringAfter("\"").substringBefore("\"") // .trim('"')
+            val subUrl = it.jsonObject["file"].toString().trim('"')
+            try {
+                subsList.add(Track(subUrl, subLang))
+            } catch (e: Error) {}
+        }
+        val prefSubsList = subLangOrder(subsList)
+        if (masterUrl.contains("playlist.m3u8")) {
             val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
             val videoList = mutableListOf<Video>()
             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
                 val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p"
                 val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                videoList.add(Video(videoUrl, quality, videoUrl, null))
+                videoList.add(
+                    try {
+                        Video(videoUrl, quality, videoUrl, subtitleTracks = prefSubsList)
+                    } catch (e: Error) {
+                        Video(videoUrl, quality, videoUrl)
+                    }
+                )
             }
             return videoList
-        } else if (test.contains("index.m3u8")) {
-            return listOf(Video(masterUrl, "Default", masterUrl, null))
+        } else if (masterUrl.contains("index.m3u8")) {
+            return listOf(
+                try {
+                    Video(masterUrl, "Default", masterUrl, subtitleTracks = prefSubsList)
+                } catch (e: Error) {
+                    Video(masterUrl, "Default", masterUrl)
+                }
+            )
         } else {
             throw Exception("never give up and try again :)")
         }
@@ -204,6 +233,24 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this
     }
 
+    private fun subLangOrder(tracks: List<Track>): List<Track> {
+        val language = preferences.getString("preferred_subLang", null)
+        if (language != null) {
+            val newList = mutableListOf<Track>()
+            var preferred = 0
+            for (track in tracks) {
+                if (track.lang.contains(language)) {
+                    newList.add(preferred, track)
+                    preferred++
+                } else {
+                    newList.add(track)
+                }
+            }
+            return newList
+        }
+        return tracks
+    }
+    
     override fun videoListSelector() = throw Exception("not used")
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
@@ -278,6 +325,21 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // Preferences
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val domainPref = ListPreference(screen.context).apply {
+            key = "preferred_domain"
+            title = "Preferred domain (requires app restart)"
+            entries = arrayOf("sflix.to", "sflix.se")
+            entryValues = arrayOf("https://sflix.to", "https://sflix.se")
+            setDefaultValue("https://sflix.to")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
@@ -293,7 +355,24 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val subLangPref = ListPreference(screen.context).apply {
+            key = "preferred_subLang"
+            title = "Preferred sub language"
+            entries = arrayOf("Arabic", "English", "French", "German", "Hungarian", "Italian", "Japanese", "Portuguese", "Romanian", "Russian", "Spanish")
+            entryValues = arrayOf("Arabic", "English", "French", "German", "Hungarian", "Italian", "Japanese", "Portuguese", "Romanian", "Russian", "Spanish")
+            setDefaultValue("English")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
+        screen.addPreference(subLangPref)
     }
 
     // Filter

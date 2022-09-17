@@ -1,0 +1,13 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Hentaijk'
+    pkgNameSuffix = 'es.hentaijk'
+    extClass = '.Hentaijk'
+    extVersionCode = 6
+    libVersion = '13'
+    containsNsfw = true
+}
+
+apply from: "$rootDir/common.gradle"

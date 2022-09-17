@@ -106,7 +106,6 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val epNo = it.select("span.num-epi").text()
             episode.name = "$epNo : ${it.select("h2.entry-title").text()}"
             episode.episode_number = epNo.substringAfter("x").toFloat()
-            episode.date_upload = System.currentTimeMillis()
             episodeList.add(episode)
         }
         return episodeList
@@ -124,7 +123,6 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         episode.episode_number = epNo
         episode.name = if (ep == epName) epName else "Episode $ep"
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 
@@ -157,7 +155,15 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         val url = iframeElm.attr("data-src")
         when {
-            url.contains("embedsb") || url.contains("cloudemb") -> {
+            url.contains("embedsb") || url.contains("cloudemb") || url.contains("sbembed.com") ||
+                url.contains("sbembed1.com") || url.contains("sbplay.org") ||
+                url.contains("sbvideo.net") || url.contains("streamsb.net") || url.contains("sbplay.one") ||
+                url.contains("cloudemb.com") || url.contains("playersb.com") || url.contains("tubesb.com") ||
+                url.contains("sbplay1.com") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
+                url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
+                url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
+                url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com")
+            -> {
                 val newheaders = headers.newBuilder()
                     .set("Referer", url)
                     .set("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")

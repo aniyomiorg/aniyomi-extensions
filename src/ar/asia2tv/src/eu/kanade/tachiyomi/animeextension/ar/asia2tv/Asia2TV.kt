@@ -69,7 +69,6 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("href"))
         episode.name = element.attr("href").substringAfterLast("-").substringBeforeLast("/") + " : الحلقة"
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 
@@ -98,12 +97,12 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             when {
                 url.contains("https://dood") -> {
                     val newQuality = "Doodstream mirror"
-                    val video = Video(url, newQuality, doodUrlParse(url), null, videoHeaders)
+                    val video = Video(url, newQuality, doodUrlParse(url), headers = videoHeaders)
                     videoList.add(video)
                 }
                 url.contains("https://streamtape") -> {
                     val newQuality = "StreamTape mirror"
-                    val video = Video(url, newQuality, streamTapeParse(url), null, videoHeaders)
+                    val video = Video(url, newQuality, streamTapeParse(url), headers = videoHeaders)
                     videoList.add(video)
                 }
                 url.contains("https://www.fembed.com") -> {
@@ -113,7 +112,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     for (source in sources) {
                         val src = source.substringAfter("\"file\":\"").substringBefore("\"").replace("\\/", "/")
                         val quality = source.substringAfter("\"label\":\"").substringBefore("\"")
-                        val video = Video(url, quality, src, null)
+                        val video = Video(url, quality, src)
                         videoList.add(video)
                     }
                 }
@@ -173,8 +172,8 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         for (source in sources) {
             val src = source.substringAfter("\"file\":\"").substringBefore("\"")
             val quality = source.substringBefore("\"") // .substringAfter("format: '")
-            //val videos = Video(src, quality, src, null)
-            return Video(url, quality, src, null)
+            //val videos = Video(src, quality, src)
+            return Video(url, quality, src)
         }
          return Video(url, quality, )
     }*/
@@ -213,7 +212,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val url = if (query.isNotBlank()) {
-            "$baseUrl/page/$page/?s=l$query"
+            "$baseUrl/page/$page/?s=$query"
         } else {
             (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
                 when (filter) {

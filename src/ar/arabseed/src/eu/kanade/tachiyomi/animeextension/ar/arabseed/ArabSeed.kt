@@ -12,8 +12,9 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers
+import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -28,7 +29,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "عرب سيد"
 
-    override val baseUrl = "https://eg1.arabseed.ink"
+    override val baseUrl = "https://m.arabseed.sbs"
 
     override val lang = "ar"
 
@@ -49,6 +50,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.title = element.select("div.BlockName > h4").text()
+        anime.thumbnail_url = element.select("div.Poster img").attr("data-src")
         return anime
     }
 
@@ -61,30 +63,72 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("href"))
         episode.name = element.ownerDocument().select("div.InfoPartOne a h1.Title").text().replace(" مترجم", "").replace("فيلم ", "")
-
         return episode
     }
 
-    // Video Links
+    // Video urls
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val srcVid = preferences.getString("preferred_quality", "سيرفر عرب سيد - 720p")!!
-        val iframe = document.select("li:contains($srcVid) noscript iframe").attr("src")
-        val referer = response.request.url.encodedPath
-        val newHeaders = Headers.headersOf("referer", baseUrl + referer)
-        val iframeResponse = client.newCall(GET(iframe, newHeaders))
-            .execute().asJsoup()
-        return iframeResponse.select(videoListSelector()).map { videoFromElement(it) }
+        return videosFromElement(document)
     }
 
-    override fun videoListSelector() = "source" // , video"
+    override fun videoListSelector() = "div.containerServers ul li" // ul#playeroptionsul
 
-    override fun videoFromElement(element: Element): Video {
-        return Video(element.attr("src").replace("https", "http"), "Default: If you want to change the quality go to extension settings", element.attr("src").replace("https", "http"), null)
+    private fun videosFromElement(document: Document): List<Video> {
+        val videoList = mutableListOf<Video>()
+        val elements = document.select(videoListSelector())
+        for (element in elements) {
+            val location = element.ownerDocument().location()
+            val videoHeaders = headers.newBuilder()
+                .set("Referer", "https://m.arabseed.sbs/")
+                .set("X-Requested-With", "XMLHttpRequest")
+                .build()
+            // Headers.headersOf("Referer", location)
+            val dataPost = element.attr("data-post")
+            val dataServer = element.attr("data-server")
+            val dataQu = element.attr("data-qu")
+            val pageData = FormBody.Builder()
+                .add("post_id", dataPost)
+                .add("server", dataServer)
+                .add("qu", dataQu)
+                .build()
+            val ajax1 = "https://m.arabseed.sbs/wp-content/themes/Elshaikh2021/Ajaxat/Single/Server.php"
+            val ajax = client.newCall(POST(ajax1, videoHeaders, pageData)).execute().asJsoup()
+            val embedUrl = ajax.select("iframe").attr("src")
+            when {
+                embedUrl.contains("seeeed") -> {
+                    val iframeResponse = client.newCall(GET(embedUrl)).execute().asJsoup()
+                    val videoUrl = iframeResponse.select("source").attr("src")
+                    val video = Video(embedUrl, dataQu + "p", videoUrl.replace("https", "http"))
+                    videoList.add(video)
+                }
+            }
+        }
+        return videoList
     }
+
+    override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
+
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString("preferred_quality", null)
+        if (quality != null) {
+            val newList = mutableListOf<Video>()
+            var preferred = 0
+            for (video in this) {
+                if (video.quality.contains(quality)) {
+                    newList.add(preferred, video)
+                    preferred++
+                } else {
+                    newList.add(video)
+                }
+            }
+            return newList
+        }
+        return this
+    }
 
     // Search
 
@@ -124,7 +168,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.select("div.Poster img").first().attr("src")
+        anime.thumbnail_url = document.select("div.Poster img").first().attr("data-src")
         anime.title = document.select("div.InfoPartOne a h1.Title").text().replace(" مترجم", "").replace("فيلم ", "")
         anime.genre = document.select("div.MetaTermsInfo  > li:contains(النوع) > a").joinToString(", ") { it.text() }
         anime.description = document.select("div.StoryLine p").text()
@@ -176,7 +220,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             key = "preferred_quality"
             title = "Preferred Quality"
             entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("سيرفر عرب سيد - 1080p", "سيرفر عرب سيد - 720p", "سيرفر عرب سيد - 480p", "سيرفر عرب سيد - 360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
             setDefaultValue("سيرفر عرب سيد - 720p")
             summary = "%s"
 

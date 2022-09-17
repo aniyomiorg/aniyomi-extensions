@@ -103,7 +103,14 @@ class AnimeLek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val location = element.ownerDocument().location()
             val videoHeaders = Headers.headersOf("Referer", location)
             when {
-                url.contains("viewsb") -> {
+                url.contains("sbembed.com") || url.contains("sbembed1.com") || url.contains("sbplay.org") ||
+                    url.contains("sbvideo.net") || url.contains("streamsb.net") || url.contains("sbplay.one") ||
+                    url.contains("cloudemb.com") || url.contains("playersb.com") || url.contains("tubesb.com") ||
+                    url.contains("sbplay1.com") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
+                    url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
+                    url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
+                    url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com")
+                -> {
                     val headers = headers.newBuilder()
                         .set("Referer", url)
                         .set("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")

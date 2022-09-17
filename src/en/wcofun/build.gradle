@@ -5,8 +5,8 @@ ext {
     extName = 'Wcofun'
     pkgNameSuffix = 'en.wcofun'
     extClass = '.Wcofun'
-    extVersionCode = 3
-    libVersion = '12'
+    extVersionCode = 5
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

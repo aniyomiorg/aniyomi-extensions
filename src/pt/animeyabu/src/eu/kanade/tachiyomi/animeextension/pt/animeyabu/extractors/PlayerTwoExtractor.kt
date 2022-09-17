@@ -20,6 +20,6 @@ class PlayerTwoExtractor(private val client: OkHttpClient) {
         }
         val quality = "$PREFIX (${match.groupValues[1]})"
         val videoUrl = match.groupValues[2]
-        return Video(videoUrl, quality, videoUrl, null)
+        return Video(videoUrl, quality, videoUrl)
     }
 }

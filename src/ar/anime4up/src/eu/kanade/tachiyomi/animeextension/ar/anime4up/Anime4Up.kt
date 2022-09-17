@@ -81,7 +81,6 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> 1F
         }
         episode.name = element.select("div.episodes-card-container div.episodes-card div.ehover6 h3 a").text()
-        episode.date_upload = System.currentTimeMillis()
 
         return episode
     }
@@ -94,7 +93,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val iframe = document.selectFirst("iframe").attr("src")
+        val iframe = document.select("iframe").attr("src")
         if (iframe.contains("http")) {
             val referer = response.request.url.encodedPath
             val newHeaders = Headers.headersOf("referer", baseUrl + referer)
@@ -110,18 +109,18 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val submit = document.select("input[name=submit]").attr("value")
             // POST data
             val body = FormBody.Builder()
-                .add("ur", "$ur")
-                .add("wl", "$wl")
                 .add("dl", "$dl")
                 .add("moshahda", "$moshahda")
                 .add("submit", "$submit")
+                .add("ur", "$ur")
+                .add("wl", "$wl")
                 .build()
             // Call POST
             val referer = response.request.url.encodedPath
-            val newHeaders = Headers.headersOf("referer", baseUrl + referer)
+            val newHeaders = Headers.headersOf("referer", "$postUrl")
             val ifram1 = client.newCall(POST(postUrl, newHeaders, body)).execute().asJsoup()
-            val iframe = ifram1.select("li.active").attr("data-server")
-            val iframeResponse = client.newCall(GET(iframe, newHeaders))
+            val iframe2 = ifram1.select("li[data-i=moshahda] a").attr("data-ep-url")
+            val iframeResponse = client.newCall(GET(iframe2, newHeaders))
                 .execute().asJsoup()
             return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
         }
@@ -140,7 +139,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
                 val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
                 val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                videoList.add(Video(videoUrl, quality, videoUrl, null))
+                videoList.add(Video(videoUrl, quality, videoUrl))
             }
             return videoList
         }

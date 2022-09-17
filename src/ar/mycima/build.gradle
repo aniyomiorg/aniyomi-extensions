@@ -5,8 +5,8 @@ ext {
     extName = 'MY CIMA'
     pkgNameSuffix = 'ar.mycima'
     extClass = '.MyCima'
-    extVersionCode = 13
-    libVersion = '12'
+    extVersionCode = 15
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

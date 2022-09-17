@@ -6,8 +6,8 @@ ext {
     extName = 'Aniflix'
     pkgNameSuffix = 'de.aniflix'
     extClass = '.Aniflix'
-    extVersionCode = 8
-    libVersion = '12'
+    extVersionCode = 17
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

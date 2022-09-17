@@ -5,8 +5,8 @@ ext {
     extName = 'Pelisplushd'
     pkgNameSuffix = 'es.pelisplushd'
     extClass = '.Pelisplushd'
-    extVersionCode = 7
-    libVersion = '12'
+    extVersionCode = 18
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

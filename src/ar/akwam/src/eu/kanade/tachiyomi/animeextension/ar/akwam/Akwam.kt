@@ -28,7 +28,7 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "أكوام"
 
-    override val baseUrl = "https://akwam.us"
+    override val baseUrl = "https://akwam.im"
 
     override val lang = "ar"
 
@@ -64,7 +64,6 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("value"))
         episode.name = element.ownerDocument().select("picture > img.img-fluid").attr("alt")
-        episode.date_upload = System.currentTimeMillis()
         return episode
     }
 
@@ -72,7 +71,7 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val iframe = "https://akwam.us/watch" + document.select("a.link-show").attr("href").substringAfter("watch") + "/" + document.ownerDocument().select("input#page_id").attr("value")
+        val iframe = "https://akwam.im/watch" + document.select("a.link-show").attr("href").substringAfter("watch") + "/" + document.ownerDocument().select("input#page_id").attr("value")
         val referer = response.request.url.toString()
         val refererHeaders = Headers.headersOf("referer", referer)
         val iframeResponse = client.newCall(GET(iframe, refererHeaders))
@@ -83,7 +82,7 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector() = "source"
 
     override fun videoFromElement(element: Element): Video {
-        return Video(element.attr("src").replace("https", "http"), element.attr("size") + "p", element.attr("src").replace("https", "http"), null)
+        return Video(element.attr("src").replace("https", "http"), element.attr("size") + "p", element.attr("src").replace("https", "http"))
     }
 
     override fun List<Video>.sort(): List<Video> {
@@ -153,7 +152,8 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         // anime.thumbnail_url = document.select("div.container div div a picture > img.img-fluid").attr("data-src")
         anime.title = document.select("picture > img.img-fluid").attr("alt")
-        anime.genre = document.select("div.font-size-16.d-flex.align-items-center.mt-3 a.badge").joinToString(", ") { it.text() }
+        anime.genre = document.select("div.font-size-16.d-flex.align-items-center.mt-3 a.badge, span.badge-info, span:contains(جودة الفيلم), span:contains(انتاج)").joinToString(", ") { it.text().replace("جودة الفيلم : ", "") }
+        anime.author = document.select("span:contains(انتاج)").text().replace("انتاج : ", "")
         anime.description = document.select("div.widget:contains(قصة )").text()
         anime.status = SAnime.COMPLETED
         return anime

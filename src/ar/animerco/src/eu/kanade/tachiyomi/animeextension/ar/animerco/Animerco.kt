@@ -61,7 +61,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("div.data a").attr("href"))
-        anime.thumbnail_url = "https:" + element.select("div.poster img").attr("data-lazy-src")
+        anime.thumbnail_url = "http" + element.select("div.poster img").attr("data-lazy-src")
         anime.title = element.select("div.data a").text()
         return anime
     }
@@ -85,7 +85,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     // headers = Headers.headersOf("Referer", document.location())
                 )
             ).execute().asJsoup()
-            val seasonsElements = seasonsHtml.select("span.se-t a")
+            val seasonsElements = seasonsHtml.select("div.seasontitle a")
             seasonsElements.forEach {
                 val seasonEpList = parseEpisodesFromSeries(it)
                 episodeList.addAll(seasonEpList)
@@ -93,7 +93,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } else {
             val movieUrl = seriesLink
             val episode = SEpisode.create()
-            episode.name = document.select("div.TPMvCn h1.Title").text()
+            episode.name = document.select("div.data h1").text()
             episode.episode_number = 1F
             episode.setUrlWithoutDomain(movieUrl)
             episodeList.add(episode)
@@ -104,10 +104,10 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
 
     private fun parseEpisodesFromSeries(element: Element): List<SEpisode> {
-        val seasonId = element.attr("abs:href")
-        // val seasonName = element.text()
+        // val seasonId = element.attr("abs:href")
+        val seasonName = element.text()
         // Log.i("seasonname", seasonName)
-        val episodesUrl = seasonId
+        val episodesUrl = element.attr("abs:href")
         val episodesHtml = client.newCall(
             GET(
                 episodesUrl,
@@ -187,7 +187,9 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     embedUrl.contains("sbvideo.net") || embedUrl.contains("streamsb.net") || embedUrl.contains("sbplay.one") ||
                     embedUrl.contains("cloudemb.com") || embedUrl.contains("playersb.com") || embedUrl.contains("tubesb.com") ||
                     embedUrl.contains("sbplay1.com") || embedUrl.contains("embedsb.com") || embedUrl.contains("watchsb.com") ||
-                    embedUrl.contains("sbplay2.com") || embedUrl.contains("japopav.tv") || embedUrl.contains("viewsb.com")
+                    embedUrl.contains("sbplay2.com") || embedUrl.contains("japopav.tv") || embedUrl.contains("viewsb.com") ||
+                    embedUrl.contains("sbfast") || embedUrl.contains("sbfull.com") || embedUrl.contains("javplaya.com") ||
+                    embedUrl.contains("ssbstream.net") || embedUrl.contains("p1ayerjavseen.com") || embedUrl.contains("sbthe.com")
                 -> {
                     val headers = headers.newBuilder()
                         .set("Referer", embedUrl)
@@ -321,7 +323,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = "https:" + document.select("div.poster img").attr("data-lazy-src")
+        anime.thumbnail_url = document.select("div.poster img").attr("data-lazy-src")
         anime.title = document.select("div.data h1").text()
         anime.genre = document.select("div.sgeneros a").joinToString(", ") { it.text() }
         anime.description = document.select("div[itemprop=description] p").text()

@@ -1,0 +1,18 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Anime Srbija'
+    pkgNameSuffix = 'sr.animesrbija'
+    extClass = '.AnimeSrbija'
+    extVersionCode = 3
+    isNsfw = false
+    libVersion = '13'
+}
+dependencies {
+    compileOnly 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2'
+    compileOnly 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2'
+}
+
+
+apply from: "$rootDir/common.gradle"

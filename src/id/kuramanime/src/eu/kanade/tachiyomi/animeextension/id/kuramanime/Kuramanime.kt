@@ -65,7 +65,6 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> 1F
         }
         episode.name = element.text()
-        episode.date_upload = System.currentTimeMillis()
 
         return episode
     }
@@ -147,7 +146,7 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 else -> "Default"
             }
         }
-        return Video(url, quality, url, null)
+        return Video(url, quality, url)
     }
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
