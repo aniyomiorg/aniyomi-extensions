@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'AnimeTitans'
+    pkgNameSuffix = 'ar.animetitans'
+    extClass = '.AnimeTitans'
+    extVersionCode = 32
+    libVersion = '13'
+}
+
+apply from: "$rootDir/common.gradle"

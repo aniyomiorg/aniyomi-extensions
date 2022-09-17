@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.it.animeworld.extractors
+package eu.kanade.tachiyomi.animeextension.ar.animetitans.extractors
 
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
@@ -30,6 +30,7 @@ class StreamSBExtractor(private val client: OkHttpClient) {
         val bytes = id.toByteArray()
         val bytesToHex = bytesToHex(bytes)
         val master = "$sbUrl/sources48/625a364258615242766475327c7c${bytesToHex}7c7c4761574550654f7461566d347c7c73747265616d7362"
+        // val master = "$sbUrl/sources48/${bytesToHex("||$id||||streamsb".toByteArray())}/"
         val json = Json.decodeFromString<JsonObject>(
             client.newCall(GET(master, headers))
                 .execute().body!!.string()
@@ -38,8 +39,7 @@ class StreamSBExtractor(private val client: OkHttpClient) {
         val masterPlaylist = client.newCall(GET(masterUrl, headers)).execute().body!!.string()
         val videoList = mutableListOf<Video>()
         masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
-            val quality = "StreamSB:" + it.substringAfter("RESOLUTION=").substringAfter("x")
-                .substringBefore(",") + "p"
+            val quality = "StreamSB:" + it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
             val videoUrl = it.substringAfter("\n").substringBefore("\n")
             videoList.add(Video(videoUrl, quality, videoUrl, headers = headers))
         }

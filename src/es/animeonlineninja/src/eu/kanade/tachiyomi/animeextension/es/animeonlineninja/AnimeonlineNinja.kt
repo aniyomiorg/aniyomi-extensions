@@ -158,7 +158,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"
                         )
                         .set("Accept-Language", "es-MX,es-419;q=0.9,es;q=0.8,en;q=0.7")
-                        .set("watchsb", "streamsb")
+                        .set("watchsb", "sbstream")
                         .set("authority", "embedsb.com")
                         .build()
 

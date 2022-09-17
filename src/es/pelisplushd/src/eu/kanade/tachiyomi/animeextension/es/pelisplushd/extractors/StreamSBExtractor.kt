@@ -30,8 +30,7 @@ class StreamSBExtractor(private val client: OkHttpClient) {
             val id = url.substringAfter("/e/").substringBefore(".html")
             val bytes = id.toByteArray()
             val bytesToHex = bytesToHex(bytes)
-            val master =
-                "$sbUrl/sources43/416f794d637048744d4565577c7c${bytesToHex}7c7c776e6c7a365964385a484b767c7c73747265616d7362/656d5a62394f713230524a667c7c373635353537333734623561373634613330353134633631376337633339353037343631363934393335363434333730373633363763376337613737353836323434353534363431343633323533376137633763373337343732363536313664373336327c7c59304b7778506d424c4c32767c7c73747265616d7362"
+            val master = "$sbUrl/sources48/625a364258615242766475327c7c${bytesToHex}7c7c4761574550654f7461566d347c7c73747265616d7362"
             val json = Json.decodeFromString<JsonObject>(
                 client.newCall(GET(master, headers))
                     .execute().body!!.string()
