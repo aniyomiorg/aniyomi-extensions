@@ -469,7 +469,7 @@ class AnimeTitans : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             StatusFilter(),
             TypeFilter(),
             OrderByFilter(),
-            AnimeFilter.Header("exclusion is not available in this source"),
+            AnimeFilter.Header("Genre exclusion is not available for all sources"),
             GenreListFilter(getGenreList()),
             SeasonListFilter(getSeasonList()),
             StudioListFilter(getStudioList()),
