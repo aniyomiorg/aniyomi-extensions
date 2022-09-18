@@ -6,5 +6,5 @@ object AOXConstants {
     const val PREFIX_SEARCH = "slug:"
     const val PREFERRED_QUALITY = "preferred_quality"
     const val DEFAULT_QUALITY = "720p"
-    val QUALITY_LIST = arrayOf("360p", "720p")
+    val QUALITY_LIST = arrayOf("480p", "720p", "1080p")
 }

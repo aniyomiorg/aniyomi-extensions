@@ -117,7 +117,9 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val resolutions = document.select("ul#playeroptionsul > li:not(#player-option-trailer)")
             .map {
                 val player = it.selectFirst("span.title").text()
-                val expectedQuality = it.selectFirst("span.resol").text()
+                val expectedQuality = it.selectFirst("span.resol")
+                    .text()
+                    .replace("HD", "720p")
                 "$player - $expectedQuality"
             }
         val videoList = mutableListOf<Video>()
