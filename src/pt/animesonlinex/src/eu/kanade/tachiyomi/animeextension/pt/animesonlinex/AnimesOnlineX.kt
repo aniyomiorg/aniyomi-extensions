@@ -236,16 +236,17 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val sheader = doc.selectFirst("div.sheader")
         val img = sheader.selectFirst("div.poster > img")
         anime.thumbnail_url = img.attr("src")
-        anime.title = sheader.selectFirst("div.data > h1").text()
+        val name = sheader.selectFirst("div.data > h1").text()
+        anime.title = name
         val status = sheader.selectFirst("div.alert")?.text()
         anime.status = parseStatus(status)
         anime.genre = sheader.select("div.data > div.sgeneros > a")
             .joinToString(", ") { it.text() }
         val info = doc.selectFirst("div#info")
         var description = info.select("div.wp-content > p")
-            .map { it.text() }
-            .filterNot { "Animes Online" in it }
-            .joinToString("\n") + "\n"
+            .joinToString("\n") { it.text() }
+            .substringBefore("Assistir $name") + "\n"
+
         status?.let { description += "\n$it" }
         info.getInfo("Título")?.let { description += "$it" }
         info.getInfo("Ano")?.let { description += "$it" }
