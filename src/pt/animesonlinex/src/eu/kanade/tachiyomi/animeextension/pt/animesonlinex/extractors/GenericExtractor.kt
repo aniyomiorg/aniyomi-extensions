@@ -11,11 +11,22 @@ class GenericExtractor(
 ) {
 
     fun getVideoList(url: String, qualityStr: String): List<Video> {
-        val response = client.newCall(GET(url, headers)).execute()
+        val resHeaders = headers.newBuilder()
+            .set("Referer", "https://guianoticiario.net/")
+            .build()
+        val response = client.newCall(GET(url, resHeaders)).execute()
         val body = response.body!!.string()
         val item = if ("/firestream/" in url) "play_url" else "file"
         val REGEX_URL = Regex("${item}\":\"(.*?)\"")
         val videoUrl = REGEX_URL.find(body)!!.groupValues.get(1)
-        return listOf(Video(videoUrl, qualityStr, videoUrl, headers))
+        val videoHeaders = when {
+            "anicdn" in url -> {
+                headers.newBuilder()
+                    .set("Referer", "https://anicdn.org/")
+                    .build()
+            }
+            else -> headers
+        }
+        return listOf(Video(videoUrl, qualityStr, videoUrl, videoHeaders))
     }
 }

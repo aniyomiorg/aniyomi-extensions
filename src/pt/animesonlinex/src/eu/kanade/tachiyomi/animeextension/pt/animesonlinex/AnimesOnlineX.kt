@@ -122,7 +122,10 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         urls.forEachIndexed { index, it ->
             val url = GuiaNoticiarioBypasser(client, headers).fromUrl(it)
-            videoList.addAll(getPlayerVideos(url, resolutions.get(index)))
+            val videos = runCatching { getPlayerVideos(url, resolutions.get(index)) }
+                .getOrNull() ?: emptyList<Video>()
+
+            videoList.addAll(videos)
         }
         return videoList
     }
