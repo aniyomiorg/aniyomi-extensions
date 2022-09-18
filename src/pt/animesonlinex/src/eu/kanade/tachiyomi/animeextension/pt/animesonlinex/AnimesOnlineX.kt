@@ -96,11 +96,14 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         val origName = element.selectFirst("div.numerando").text()
 
-        episode.episode_number = origName.substring(origName.indexOf("-") + 1)
+        episode.episode_number = origName.substringAfter("- ")
+            .replace("-", "")
             .toFloat() + if ("Dub" in origName) 0.5F else 0F
         episode.name = "Temp " + origName.replace(" - ", ": Ep ")
         episode.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
-        episode.date_upload = element.selectFirst("span.date")?.text()?.toDate() ?: 0L
+        episode.date_upload = element.selectFirst("span.date")
+            ?.text()
+            ?.toDate() ?: 0L
         return episode
     }
 
@@ -222,12 +225,15 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val img = sheader.selectFirst("div.poster > img")
         anime.thumbnail_url = img.attr("src")
         anime.title = sheader.selectFirst("div.data > h1").text()
-        val status = sheader.selectFirst("div.alert")
-        anime.status = parseStatus(status?.text())
+        val status = sheader.selectFirst("div.alert")?.text()
+        anime.status = parseStatus(status)
         anime.genre = sheader.select("div.data > div.sgeneros > a")
             .joinToString(", ") { it.text() }
         val info = doc.selectFirst("div#info")
-        var description = info.selectFirst("p").text() + "\n"
+        var description = info.select("div.wp-content > p")
+            .map { it.text() }
+            .filterNot { "Animes Online" in it }
+            .joinToString("\n") + "\n"
         status?.let { description += "\n$it" }
         info.getInfo("Título")?.let { description += "$it" }
         info.getInfo("Ano")?.let { description += "$it" }
