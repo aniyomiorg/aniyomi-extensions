@@ -7,6 +7,7 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.animesonlinex.extractors.GenericExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesonlinex.extractors.GuiaNoticiarioBypasser
+import eu.kanade.tachiyomi.animeextension.pt.animesonlinex.extractors.QualitiesExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -113,7 +114,7 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val urls = document.select("div.source-box:not(#source-player-trailer) div.pframe a")
             .map { it.attr("href") }
-        val resolutions = document.select("ul#playeroptionsul > li")
+        val resolutions = document.select("ul#playeroptionsul > li:not(#player-option-trailer)")
             .map {
                 val player = it.selectFirst("span.title").text()
                 val expectedQuality = it.selectFirst("span.resol").text()
@@ -135,9 +136,15 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return when {
             "/vplayer/?source" in url || "embed.redecine.org" in url -> {
                 val videoUrl = url.getParam("source") ?: url.getParam("url")!!
-                listOf(Video(videoUrl, qualityStr, videoUrl))
+                if (".m3u8" in videoUrl) {
+                    QualitiesExtractor(client, headers)
+                        .getVideoList(videoUrl, qualityStr)
+                } else {
+                    listOf(Video(videoUrl, qualityStr, videoUrl, headers))
+                }
             }
-            "/firestream/?" in url || "doramasonline.org" in url || "anicdn.org" in url ->
+            "/firestream/?" in url || "doramasonline.org" in url ||
+                "anicdn.org" in url || "animeshd.org" in url ->
                 GenericExtractor(client, headers).getVideoList(url, qualityStr)
             else -> emptyList<Video>()
         }
