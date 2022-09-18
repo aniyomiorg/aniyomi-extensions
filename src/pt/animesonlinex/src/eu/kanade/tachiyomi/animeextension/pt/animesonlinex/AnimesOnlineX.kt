@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.net.Uri
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.pt.animesonlinex.extractors.GenericExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesonlinex.extractors.GuiaNoticiarioBypasser
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -109,8 +110,12 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val urls = document.select("div.source-box:not(#source-player-trailer) div.pframe a")
             .map { it.attr("href") }
-        val resolutions = document.select("ul#playeroptionsul > li > span.resol")
-            .map { it.text() }
+        val resolutions = document.select("ul#playeroptionsul > li")
+            .map {
+                val player = it.selectFirst("span.title").text()
+                val expectedQuality = it.selectFirst("span.resol").text()
+                "$player - $expectedQuality"
+            }
         val videoList = mutableListOf<Video>()
         urls.forEachIndexed { index, it ->
             val url = GuiaNoticiarioBypasser(client, headers).fromUrl(it)
@@ -119,13 +124,15 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoList
     }
 
-    private fun getPlayerVideos(url: String, quality: String): List<Video> {
+    private fun getPlayerVideos(url: String, qualityStr: String): List<Video> {
 
         return when {
-            "/vplayer/?source" in url -> {
-                val videoUrl = Uri.parse(url).getQueryParameter("source")!!
-                listOf(Video(videoUrl, "VPlayer", videoUrl))
+            "/vplayer/?source" in url || "embed.redecine.org" in url -> {
+                val videoUrl = url.getParam("source") ?: url.getParam("url")!!
+                listOf(Video(videoUrl, qualityStr, videoUrl))
             }
+            "/firestream/?" in url || "doramasonline.org" in url || "anicdn.org" in url ->
+                GenericExtractor(client, headers).getVideoList(url, qualityStr)
             else -> emptyList<Video>()
         }
     }
@@ -291,6 +298,10 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun String.toDate(): Long {
         return runCatching { DATE_FORMATTER.parse(trim())?.time }
             .getOrNull() ?: 0L
+    }
+
+    private fun String.getParam(param: String): String? {
+        return Uri.parse(this).getQueryParameter(param)
     }
 
     override fun List<Video>.sort(): List<Video> {

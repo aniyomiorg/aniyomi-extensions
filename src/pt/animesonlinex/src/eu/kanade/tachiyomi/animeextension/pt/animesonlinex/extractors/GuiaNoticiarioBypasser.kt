@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesonlinex.extractors
 
-import android.util.Log
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
