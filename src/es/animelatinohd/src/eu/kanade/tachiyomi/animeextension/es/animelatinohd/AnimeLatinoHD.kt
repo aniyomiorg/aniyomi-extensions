@@ -168,7 +168,7 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                     "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0"
                                 )
                                 .set("Accept-Language", "en-US,en;q=0.5")
-                                .set("watchsb", "streamsb")
+                                .set("watchsb", "sbstream")
                                 .build()
                             val videos = StreamSBExtractor(client).videosFromUrl(url, headers, language)
                             videoList.addAll(videos)
