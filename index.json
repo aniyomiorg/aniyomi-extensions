@@ -792,6 +792,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: AnimesOnlineX",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesonlinex",
+    "apk": "aniyomi-pt.animesonlinex-v13.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: AnimesVision",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesvision",
     "apk": "aniyomi-pt.animesvision-v13.7.apk",
