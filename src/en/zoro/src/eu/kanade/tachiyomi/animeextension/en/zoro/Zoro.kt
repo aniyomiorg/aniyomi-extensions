@@ -50,6 +50,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    // ============================== Popular ===============================
     override fun popularAnimeSelector(): String = "div.flw-item"
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/most-popular?page=$page")
@@ -65,6 +66,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeNextPageSelector(): String = "li.page-item a[title=Next]"
 
+    // ============================== Episodes ==============================
     override fun episodeListSelector() = "ul#episode_page li a"
 
     override fun episodeListRequest(anime: SAnime): Request {
@@ -91,6 +93,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element) = throw Exception("not used")
 
+    // ============================ Video Links =============================
     override fun videoListRequest(episode: SEpisode): Request {
         val id = episode.url.substringAfterLast("?ep=")
         val referer = Headers.headersOf("Referer", baseUrl + episode.url)
@@ -196,6 +199,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return tracks
     }
 
+    // =============================== Search =============================== 
     override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
     override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
@@ -204,24 +208,25 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = GET("$baseUrl/search?keyword=$query&page=$page")
 
+    // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.title = document.select("div.anisc-detail h2").attr("data-jname")
-        anime.description = document.select("div.anisc-info > div.item-title > div.text").text()
-        anime.author = document.select("div.item-title:contains(Studios:) a").text()
-        anime.status = parseStatus(document.select("div.item-title:contains(Status:) span.name").text())
-        anime.genre = document.select("div.item-title:contains(Genres:) a").joinToString { it.text() }
+        val info = document.selectFirst("div.anisc-info")
+        anime.thumbnail_url = document.selectFirst("div.anisc-poster img").attr("src")
+        anime.title = document.selectFirst("div.anisc-detail h2").attr("data-jname")
+        anime.author = info.getInfo("Studios:")
+        anime.status = parseStatus(info.getInfo("Status:"))
+        anime.genre = info.getInfo("Genres:", isList = true)
+        var description = (info.getInfo("Overview:") + "\n") ?: ""
+        info.getInfo("Aired:", full = true)?.let { description += it }
+        info.getInfo("Premiered:", full = true)?.let { description += it }
+        info.getInfo("Synonyms:", full = true)?.let { description += it }
+        info.getInfo("Japanese:", full = true)?.let { description += it }
+        anime.description = description
         return anime
     }
 
-    private fun parseStatus(statusString: String): Int {
-        return when (statusString) {
-            "Currently Airing" -> SAnime.ONGOING
-            "Finished Airing" -> SAnime.COMPLETED
-            else -> SAnime.UNKNOWN
-        }
-    }
-
+    // =============================== Latest ===============================
     override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
 
     override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
@@ -230,6 +235,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesSelector(): String = popularAnimeSelector()
 
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
 
         val videoQualityPref = ListPreference(screen.context).apply {
@@ -282,6 +288,31 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         screen.addPreference(videoQualityPref)
         screen.addPreference(epTypePref)
         screen.addPreference(subLangPref)
+    }
+
+    // ============================= Utilities ==============================
+
+    private fun parseStatus(statusString: String?): Int {
+        return when (statusString) {
+            "Currently Airing" -> SAnime.ONGOING
+            "Finished Airing" -> SAnime.COMPLETED
+            else -> SAnime.UNKNOWN
+        }
+    }
+
+    private fun Element.getInfo(
+        tag: String,
+        isList: Boolean = false,
+        full: Boolean = false
+    ): String? {
+        if (isList) {
+            val elements = select("div.item-list:contains($tag) > a")
+            return elements.joinToString(", ") { it.text() }
+        }
+        val targetElement = selectFirst("div.item-title:contains($tag)")
+            ?: return null
+        val value = targetElement.selectFirst("*.name, *.text")!!.text()
+        return if (full) "\n$tag $value" else value
     }
 
     companion object {
