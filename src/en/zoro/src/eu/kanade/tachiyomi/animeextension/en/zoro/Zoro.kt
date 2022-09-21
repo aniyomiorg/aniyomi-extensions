@@ -57,9 +57,9 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.thumbnail_url = element.select("div.film-poster > img").attr("data-src")
-        anime.setUrlWithoutDomain(baseUrl + element.select("div.film-detail a").attr("href"))
+        anime.setUrlWithoutDomain(element.select("div.film-detail a").attr("href"))
         anime.title = element.select("div.film-detail a").attr("data-jname")
-        anime.description = element.select("div.film-detail div.description").firstOrNull()?.text()
+        anime.description = element.selectFirst("div.film-detail div.description")?.text()
         return anime
     }
 
@@ -74,17 +74,17 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val data = response.body!!.string().substringAfter("\"html\":\"").substringBefore("<script>")
+        val data = response.body!!.string()
+            .substringAfter("\"html\":\"")
+            .substringBefore("<script>")
         val unescapedData = JSONUtil.unescape(data)
-        val episodeList = mutableListOf<SEpisode>()
         val document = Jsoup.parse(unescapedData)
-        val aList = document.select("a.ep-item")
-        for (a in aList) {
-            val episode = SEpisode.create()
-            episode.episode_number = a.attr("data-number").toFloat()
-            episode.name = "Episode ${a.attr("data-number")}: ${a.attr("title")}"
-            episode.url = a.attr("href")
-            episodeList.add(episode)
+        val episodeList = document.select("a.ep-item").map {
+            SEpisode.create().apply {
+                episode_number = it.attr("data-number").toFloat()
+                name = "Episode ${it.attr("data-number")}: ${it.attr("title")}"
+                url = it.attr("href")
+            }
         }
         return episodeList.reversed()
     }
