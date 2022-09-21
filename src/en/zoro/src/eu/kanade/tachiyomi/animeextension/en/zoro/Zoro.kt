@@ -4,6 +4,8 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.en.zoro.extractors.ZoroExtractor
+import eu.kanade.tachiyomi.animeextension.en.zoro.utils.JSONUtil
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -118,9 +120,8 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun getVideosFromServer(response: Response, subDub: String): List<Video>? {
         val body = response.body!!.string()
         val url = body.substringAfter("\"link\":\"").substringBefore("\"") + "&autoPlay=1&oa=0"
-        val getSourcesLink = ZoroExtractor(client).getSourcesLink(url) ?: return null
 
-        val source = client.newCall(GET(getSourcesLink)).execute().body!!.string()
+        val source = ZoroExtractor(client).getSourcesJson(url) ?: return null
         if (!source.contains("{\"sources\":[{\"file\":\"")) return null
         val json = json.decodeFromString<JsonObject>(source)
         val masterUrl = json["sources"]!!.jsonArray[0].jsonObject["file"]!!.jsonPrimitive.content

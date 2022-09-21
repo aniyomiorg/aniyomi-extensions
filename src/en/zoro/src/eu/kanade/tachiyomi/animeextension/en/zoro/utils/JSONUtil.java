@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.en.zoro;
+package eu.kanade.tachiyomi.animeextension.en.zoro.utils;
 
 public class JSONUtil {
     public static String escape(String input) {
