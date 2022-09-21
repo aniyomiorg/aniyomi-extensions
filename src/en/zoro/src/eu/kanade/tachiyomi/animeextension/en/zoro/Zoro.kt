@@ -111,10 +111,12 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (server.text() == "StreamSB" || server.text() == "Streamtape") continue
             val id = server.attr("data-id")
             val subDub = server.attr("data-type")
-            val videos = getVideosFromServer(
-                client.newCall(GET("$baseUrl/ajax/v2/episode/sources?id=$id", episodeReferer)).execute(),
-                subDub
-            )
+            val videos = runCatching {
+                getVideosFromServer(
+                    client.newCall(GET("$baseUrl/ajax/v2/episode/sources?id=$id", episodeReferer)).execute(),
+                    subDub
+                )
+            }.getOrNull()
             if (videos != null) videoList.addAll(videos)
         }
         return videoList
