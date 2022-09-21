@@ -158,26 +158,28 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
-    override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", null)
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
+    private fun List<Video>.sortIfContains(item: String): List<Video> {
+        val newList = mutableListOf<Video>()
+        var preferred = 0
+        for (video in this) {
+            if (item in video.quality) {
+                newList.add(preferred, video)
+            } else {
+                newList.add(video)
             }
-            return newList
         }
-        return this
+        return newList
+    }
+
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, "720p")!!
+        val type = preferences.getString(PREF_TYPE_KEY, "dub")!!
+        val newList = this.sortIfContains(type).reversed().sortIfContains(quality)
+        return newList
     }
 
     private fun subLangOrder(tracks: List<Track>): List<Track> {
-        val language = preferences.getString("preferred_subLang", null)
+        val language = preferences.getString(PREF_SUB_KEY, null)
         if (language != null) {
             val newList = mutableListOf<Track>()
             var preferred = 0
@@ -229,11 +231,28 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesSelector(): String = popularAnimeSelector()
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("sub", "dub")
-            entryValues = arrayOf("sub", "dub")
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES
+            setDefaultValue("720p")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
+        val epTypePref = ListPreference(screen.context).apply {
+            key = PREF_TYPE_KEY
+            title = PREF_TYPE_TITLE
+            entries = PREF_TYPE_ENTRIES
+            entryValues = PREF_TYPE_ENTRIES
             setDefaultValue("dub")
             summary = "%s"
 
@@ -244,11 +263,12 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+
         val subLangPref = ListPreference(screen.context).apply {
-            key = "preferred_subLang"
-            title = "Preferred sub language"
-            entries = arrayOf("English", "Spanish", "Portuguese", "French", "German", "Italian", "Japanese", "Russian")
-            entryValues = arrayOf("English", "Spanish", "Portuguese", "French", "German", "Italian", "Japanese", "Russian")
+            key = PREF_SUB_KEY
+            title = PREF_SUB_TITLE
+            entries = PREF_SUB_ENTRIES
+            entryValues = PREF_SUB_ENTRIES
             setDefaultValue("English")
             summary = "%s"
 
@@ -260,6 +280,25 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         screen.addPreference(videoQualityPref)
+        screen.addPreference(epTypePref)
         screen.addPreference(subLangPref)
+    }
+
+    companion object {
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred video quality"
+        private val PREF_QUALITY_ENTRIES = arrayOf("360p", "720p", "1080p")
+
+        private const val PREF_TYPE_KEY = "preferred_type"
+        private const val PREF_TYPE_TITLE = "Preferred episode type/mode"
+        private val PREF_TYPE_ENTRIES = arrayOf("sub", "dub")
+
+        private const val PREF_SUB_KEY = "preferred_subLang"
+        private const val PREF_SUB_TITLE = "Preferred sub language"
+        private val PREF_SUB_ENTRIES = arrayOf(
+            "English", "Spanish", "Portuguese", "French",
+            "German", "Italian", "Japanese", "Russian"
+        )
     }
 }
