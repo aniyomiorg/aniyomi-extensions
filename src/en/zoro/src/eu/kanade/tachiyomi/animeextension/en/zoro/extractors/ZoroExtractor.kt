@@ -15,9 +15,8 @@ class ZoroExtractor(private val client: OkHttpClient) {
     fun getSourcesJson(url: String): String? {
         val js = client.newCall(GET(JS_URL)).execute().body!!.string()
         val id = url.substringAfter("/embed-6/", "")
-            .substringBefore("?z=", "").ifEmpty { return null }
+            .substringBefore("?", "").ifEmpty { return null }
         val srcRes = client.newCall(GET(SOURCES_URL + id)).execute().body!!.string()
-
         if ("\"encrypted\":false" in srcRes) return srcRes
         val encrypted = srcRes.substringAfter("sources\":\"").substringBefore("\"")
         val decrypted = Decryptor.decrypt(encrypted, js) ?: return null
