@@ -4,6 +4,11 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.ar.movizland.extractors.DoodExtractor
+import eu.kanade.tachiyomi.animeextension.ar.movizland.extractors.LinkboxExtractor
+import eu.kanade.tachiyomi.animeextension.ar.movizland.extractors.MoshahdaExtractor
+import eu.kanade.tachiyomi.animeextension.ar.movizland.extractors.StreamTapeExtractor
+import eu.kanade.tachiyomi.animeextension.ar.movizland.extractors.UQLoadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -185,13 +190,29 @@ class Movizland : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // Video links
 
     override fun videoListParse(response: Response): List<Video> {
+        val videos = mutableListOf<Video>()
         val document = response.asJsoup()
-        val iframe = document.select("code#EmbedScmain").select("iframe").attr("data-srcout")
-        val referer = response.request.url.toString()
-        val refererHeaders = Headers.headersOf("referer", referer)
-        val iframeResponse = client.newCall(GET(iframe, refererHeaders))
-            .execute().asJsoup()
-        return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
+        for (server in document.select("div.ServersEmbeds ul code iframe")) {
+            val link = server.attr("data-srcout")
+            if (link.contains("moshahda")) {
+                val refererHeaders = Headers.headersOf("referer", response.request.url.toString())
+                val videosFromURL = MoshahdaExtractor(client).videosFromUrl(link, refererHeaders)
+                videos.addAll(videosFromURL)
+            } else if (link.contains("linkbox")) {
+                val videosFromURL = LinkboxExtractor(client).videosFromUrl(link)
+                videos.addAll(videosFromURL)
+            } else if (link.contains("dood")) {
+                val videosFromURL = DoodExtractor(client).videoFromUrl(link.replace("/d/", "/e/"))
+                if (videosFromURL != null) videos.add(videosFromURL)
+            } else if (link.contains("uqload")) {
+                val videosFromURL = UQLoadExtractor(client).videoFromUrl(link, "Uqload: 720p")
+                if (videosFromURL != null) videos.add(videosFromURL)
+            } else if (link.contains("streamtape")) {
+                val videosFromURL = StreamTapeExtractor(client).videoFromUrl(link)
+                if (videosFromURL != null) videos.add(videosFromURL)
+            }
+        }
+        return videos
     }
 
     override fun videoListSelector() = "body"
@@ -199,14 +220,14 @@ class Movizland : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun videosFromElement(element: Element): List<Video> {
         val videoList = mutableListOf<Video>()
         val qualityMap = mapOf("l" to "240p", "n" to "360p", "h" to "480p", "x" to "720p", "o" to "1080p")
-        element.select("script[type='text/javascript']")
-            .firstOrNull { it.data().contains("jwplayer(\"vplayer\").setup({") }
         val data = element.data().substringAfter(", file: \"").substringBefore("\"}],")
-        val sources = data.split(",l,n,h,x,o,.urlset/master")
-        val qualities = listOf("l", "n", "h", "x", "o")
-        for (q in qualities) {
-            val src = sources[0] + q + "/index-v1-a1" + sources[1]
-            val video = qualityMap[q]?.let { Video(src, it, src) }
+        val url = Regex("(.*)_,(.*),\\.urlset/master(.*)").find(data)
+        val sources = url!!.groupValues[2].split(",")
+        for (quality in sources) {
+            val src = url.groupValues[1] + "_" + quality + "/index-v1-a1" + url.groupValues[3]
+            val video = qualityMap[quality]?.let {
+                Video(src, it, src)
+            }
             if (video != null) {
                 videoList.add(video)
             }
@@ -255,8 +276,8 @@ class Movizland : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         var newQuery = query
-        if(Regex("(.*)\\(").containsMatchIn(query))
-            newQuery = Regex("(.*)\\(").find(query)!!.groupValues[1].replace("(","")
+        if (Regex("(.*)\\(").containsMatchIn(query))
+            newQuery = Regex("(.*)\\(").find(query)!!.groupValues[1].replace("(", "")
         val url = if (query.isNotBlank()) {
             "$baseUrl/page/$page/?s=$newQuery"
         } else {

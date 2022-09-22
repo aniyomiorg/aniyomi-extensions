@@ -33,7 +33,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "شاهد فور يو"
 
-    override val baseUrl = "https://shahed4u.team/"
+    override val baseUrl = "https://shahed4u.team"
 
     override val lang = "ar"
 
@@ -106,7 +106,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val document = response.asJsoup()
             val url = response.request.url.toString()
             if (url.contains("assemblies")) {
-                for (movie in document.select(popularAnimeSelector())) {
+                for (movie in document.select(searchAnimeSelector())) {
                     addEpisodeNew(
                         movie.select("a.fullClick").attr("href") + "watch/",
                         "assembly",
@@ -118,7 +118,8 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (document.select("div.seasons--episodes").isNullOrEmpty()) {
                 // Movies
                 addEpisodeNew(url, "movie")
-            } else {
+            }
+            else {
                 // Series
                 // look for what is wrong
                 for (season in document.select(seasonsNextPageSelector())) {
@@ -173,7 +174,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val requestBody = FormBody.Builder().add("id", v_id).add("i", i).build()
             val iframe = client.newCall(
                 POST(
-                    "https://shahed4u.team/wp-content/themes/Shahid4u-WP_HOME/Ajaxat/Single/Server.php",
+                    "$baseUrl/wp-content/themes/Shahid4u-WP_HOME/Ajaxat/Single/Server.php",
                     refererHeaders,
                     requestBody
                 )
