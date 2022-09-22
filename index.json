@@ -137,10 +137,10 @@
   {
     "name": "Aniyomi: موفيزلاند",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.movizland",
-    "apk": "aniyomi-ar.movizland-v13.3.apk",
+    "apk": "aniyomi-ar.movizland-v13.4.apk",
     "lang": "ar",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0
   },
   {
@@ -164,10 +164,10 @@
   {
     "name": "Aniyomi: شاهد فور يو",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.shahid4u",
-    "apk": "aniyomi-ar.shahid4u-v13.2.apk",
+    "apk": "aniyomi-ar.shahid4u-v13.3.apk",
     "lang": "ar",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0
   },
   {
