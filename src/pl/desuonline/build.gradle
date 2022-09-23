@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'desu-online'
+    pkgNameSuffix = 'pl.desuonline'
+    extClass = '.DesuOnline'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+apply from: "$rootDir/common.gradle"
