@@ -109,21 +109,21 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
-    override fun List<Video>.sort(): List<Video> {
-        return try {
-            val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
-            ).toTypedArray()
-            val userPreferredQuality = preferences.getString("preferred_quality", "Nozomi")
-            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
-            if (preferredIdx != -1) {
-                videoSorted.drop(preferredIdx + 1)
-                videoSorted[0] = videoSorted[preferredIdx]
+    private fun List<Video>.sortIfContains(item: String): List<Video> {
+        val newList = mutableListOf<Video>()
+        for (video in this) {
+            if (item in video.quality) {
+                newList.add(0, video)
+            } else {
+                newList.add(video)
             }
-            videoSorted.toList()
-        } catch (e: Exception) {
-            this
         }
+        return newList
+    }
+
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString("preferred_quality", "Nozomi")!!
+        return sortIfContains(quality)
     }
 
     private fun getNumberFromString(epsStr: String): String {
