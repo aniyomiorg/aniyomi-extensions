@@ -605,10 +605,10 @@
   {
     "name": "Aniyomi: Jkanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.jkanime",
-    "apk": "aniyomi-es.jkanime-v13.7.apk",
+    "apk": "aniyomi-es.jkanime-v13.8.apk",
     "lang": "es",
-    "code": 7,
-    "version": "13.7",
+    "code": 8,
+    "version": "13.8",
     "nsfw": 0
   },
   {
@@ -772,6 +772,15 @@
     "code": 5,
     "version": "13.5",
     "nsfw": 1
+  },
+  {
+    "name": "Aniyomi: desu-online",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pl.desuonline",
+    "apk": "aniyomi-pl.desuonline-v13.1.apk",
+    "lang": "pl",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0
   },
   {
     "name": "Aniyomi: Anime Fire",
