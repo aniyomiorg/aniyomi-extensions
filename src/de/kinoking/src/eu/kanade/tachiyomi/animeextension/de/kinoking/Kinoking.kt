@@ -47,7 +47,11 @@ class Kinoking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "#featured-titles article.item"
 
-    override fun popularAnimeRequest(page: Int): Request = GET(baseUrl, headers = Headers.headersOf("if-modified-since", ""))
+    override fun popularAnimeRequest(page: Int): Request {
+        val interceptor = client.newBuilder().addInterceptor(CloudflareInterceptor()).build()
+        val headers = interceptor.newCall(GET(baseUrl)).execute().request.headers
+        return GET(baseUrl, headers = headers)
+    }
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
