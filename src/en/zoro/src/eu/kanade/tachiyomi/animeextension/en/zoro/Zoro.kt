@@ -14,6 +14,10 @@ import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -106,27 +110,29 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val data = body.substringAfter("\"html\":\"").substringBefore("<script>")
         val unescapedData = JSONUtil.unescape(data)
         val serversHtml = Jsoup.parse(unescapedData)
-        val videoList = mutableListOf<Video>()
-        for (server in serversHtml.select("div.server-item")) {
-            if (server.text() == "StreamSB" || server.text() == "Streamtape") continue
-            val id = server.attr("data-id")
-            val subDub = server.attr("data-type")
-            val videos = runCatching {
-                getVideosFromServer(
-                    client.newCall(GET("$baseUrl/ajax/v2/episode/sources?id=$id", episodeReferer)).execute(),
-                    subDub
-                )
-            }.getOrNull()
-            if (videos != null) videoList.addAll(videos)
-        }
+        val ignoredServers = listOf("StreamSB", "StreamTape")
+        val extractor = ZoroExtractor(client)
+        val videoList = serversHtml.select("div.server-item")
+            .filterNot { it.text() in ignoredServers }
+            .parallelMap { server ->
+                val id = server.attr("data-id")
+                val subDub = server.attr("data-type")
+                val url = "$baseUrl/ajax/v2/episode/sources?id=$id"
+                val reqBody = client.newCall(GET(url, episodeReferer)).execute()
+                    .body!!.string()
+                val sourceUrl = reqBody.substringAfter("\"link\":\"")
+                    .substringBefore("\"") + "&autoPlay=1&oa=0"
+                runCatching {
+                    val source = extractor.getSourcesJson(sourceUrl)
+                    source?.let { getVideosFromServer(it, subDub) }
+                }.getOrNull()
+            }
+            .filterNotNull()
+            .flatten()
         return videoList
     }
 
-    private fun getVideosFromServer(response: Response, subDub: String): List<Video>? {
-        val body = response.body!!.string()
-        val url = body.substringAfter("\"link\":\"").substringBefore("\"") + "&autoPlay=1&oa=0"
-
-        val source = ZoroExtractor(client).getSourcesJson(url) ?: return null
+    private fun getVideosFromServer(source: String, subDub: String): List<Video>? {
         if (!source.contains("{\"sources\":[{\"file\":\"")) return null
         val json = json.decodeFromString<JsonObject>(source)
         val masterUrl = json["sources"]!!.jsonArray[0].jsonObject["file"]!!.jsonPrimitive.content
@@ -316,6 +322,11 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val value = targetElement.selectFirst("*.name, *.text")!!.text()
         return if (full) "\n$tag $value" else value
     }
+
+    fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 
     companion object {
 
