@@ -96,7 +96,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (type == "assembly")
                 episode.name = title.replace("فيلم", "").trim()
             else if (type == "movie")
-                episode.name = "شاهد"
+                episode.name = "مشاهدة"
             else
                 episode.name = title
 
@@ -118,8 +118,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (document.select("div.seasons--episodes").isNullOrEmpty()) {
                 // Movies
                 addEpisodeNew(url, "movie")
-            }
-            else {
+            } else {
                 // Series
                 // look for what is wrong
                 for (season in document.select(seasonsNextPageSelector())) {
@@ -210,12 +209,12 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val scriptSelect = document.select("script:containsData(eval)").first().data()
         val serverPrefix = scriptSelect.substringAfter("|net|cdn|amzn|").substringBefore("|rewind|icon|")
         val sourceServer = "https://$serverPrefix.e-amzn-cdn.net"
-        val qualities = scriptSelect.substringAfter("|image|").substringBefore("|sources|").split("|")
-        for (quality in qualities) {
-            if (qualities.indexOf(quality) % 2 == 0) {
-                val id = qualities[qualities.indexOf(quality) + 1]
+        val qualities = scriptSelect.substringAfter("|image|").substringBefore("|sources|").replace("||", "|").split("|")
+        qualities.forEachIndexed { i, q ->
+            if (i % 2 == 0) {
+                val id = qualities[i + 1]
                 val src = "$sourceServer/$id/v.mp4"
-                val video = Video(src, "Main: $quality", src)
+                val video = Video(src, "Main: $q", src)
                 videoList.add(video)
             }
         }
