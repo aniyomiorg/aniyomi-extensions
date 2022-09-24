@@ -59,13 +59,11 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/most-popular?page=$page")
 
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.thumbnail_url = element.select("div.film-poster > img").attr("data-src")
-        anime.setUrlWithoutDomain(element.select("div.film-detail a").attr("href"))
-        anime.title = element.select("div.film-detail a").attr("data-jname")
-        anime.description = element.selectFirst("div.film-detail div.description")?.text()
-        return anime
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        thumbnail_url = element.selectFirst("div.film-poster > img").attr("data-src")
+        val filmDetail = element.selectFirst("div.film-detail a")
+        setUrlWithoutDomain(filmDetail.attr("href"))
+        title = filmDetail.attr("data-jname")
     }
 
     override fun popularAnimeNextPageSelector(): String = "li.page-item a[title=Next]"
@@ -147,18 +145,20 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 } catch (e: Error) {}
             } ?: emptyList()
         val subs = subLangOrder(subs2)
-        val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
-        val videoList = mutableListOf<Video>()
-        masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
-            val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p - $subDub"
-            val videoUrl = masterUrl.substringBeforeLast("/") + "/" + it.substringAfter("\n").substringBefore("\n")
-            videoList.add(
-                try {
-                    Video(videoUrl, quality, videoUrl, subtitleTracks = subs)
-                } catch (e: Error) {
-                    Video(videoUrl, quality, videoUrl)
-                }
-            )
+        val prefix = "#EXT-X-STREAM-INF:"
+        val playlist = client.newCall(GET(masterUrl)).execute()
+            .body!!.string()
+        val videoList = playlist.substringAfter(prefix).split(prefix).map {
+            val quality = it.substringAfter("RESOLUTION=")
+                .substringAfter("x")
+                .substringBefore(",") + "p - $subDub"
+            val videoUrl = masterUrl.substringBeforeLast("/") + "/" +
+                it.substringAfter("\n").substringBefore("\n")
+            try {
+                Video(videoUrl, quality, videoUrl, subtitleTracks = subs)
+            } catch (e: Error) {
+                Video(videoUrl, quality, videoUrl)
+            }
         }
         return videoList
     }
@@ -175,6 +175,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         for (video in this) {
             if (item in video.quality) {
                 newList.add(preferred, video)
+                preferred++
             } else {
                 newList.add(video)
             }
@@ -185,7 +186,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, "720p")!!
         val type = preferences.getString(PREF_TYPE_KEY, "dub")!!
-        val newList = this.sortIfContains(type).reversed().sortIfContains(quality)
+        val newList = this.sortIfContains(type).sortIfContains(quality)
         return newList
     }
 
