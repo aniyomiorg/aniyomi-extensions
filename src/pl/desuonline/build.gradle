@@ -2,10 +2,10 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    extName = 'Jkanime'
-    pkgNameSuffix = 'es.jkanime'
-    extClass = '.Jkanime'
-    extVersionCode = 8
+    extName = 'desu-online'
+    pkgNameSuffix = 'pl.desuonline'
+    extClass = '.DesuOnline'
+    extVersionCode = 1
     libVersion = '13'
 }
 
