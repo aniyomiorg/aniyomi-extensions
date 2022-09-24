@@ -209,7 +209,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val scriptSelect = document.select("script:containsData(eval)").first().data()
         val serverPrefix = scriptSelect.substringAfter("|net|cdn|amzn|").substringBefore("|rewind|icon|")
         val sourceServer = "https://$serverPrefix.e-amzn-cdn.net"
-        val qualities = scriptSelect.substringAfter("|image|").substringBefore("|sources|").replace("||", "|").split("|")
+        val qualities = scriptSelect.substringAfter("|image|").substringBefore("|sources|").split("|")
         qualities.forEachIndexed { i, q ->
             if (i % 2 == 0) {
                 val id = qualities[i + 1]
