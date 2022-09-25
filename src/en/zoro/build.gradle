@@ -5,8 +5,12 @@ ext {
     extName = 'zoro.to (experimental)'
     pkgNameSuffix = 'en.zoro'
     extClass = '.Zoro'
-    extVersionCode = 10
+    extVersionCode = 11
     libVersion = '13'
+}
+
+dependencies {
+    compileOnly libs.bundles.coroutines
 }
 
 apply from: "$rootDir/common.gradle"

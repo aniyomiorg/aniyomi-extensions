@@ -8,12 +8,18 @@ import eu.kanade.tachiyomi.animeextension.en.zoro.extractors.ZoroExtractor
 import eu.kanade.tachiyomi.animeextension.en.zoro.utils.JSONUtil
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -21,12 +27,15 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -55,13 +64,11 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/most-popular?page=$page")
 
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.thumbnail_url = element.select("div.film-poster > img").attr("data-src")
-        anime.setUrlWithoutDomain(element.select("div.film-detail a").attr("href"))
-        anime.title = element.select("div.film-detail a").attr("data-jname")
-        anime.description = element.selectFirst("div.film-detail div.description")?.text()
-        return anime
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        thumbnail_url = element.selectFirst("div.film-poster > img").attr("data-src")
+        val filmDetail = element.selectFirst("div.film-detail a")
+        setUrlWithoutDomain(filmDetail.attr("href"))
+        title = filmDetail.attr("data-jname")
     }
 
     override fun popularAnimeNextPageSelector(): String = "li.page-item a[title=Next]"
@@ -106,27 +113,29 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val data = body.substringAfter("\"html\":\"").substringBefore("<script>")
         val unescapedData = JSONUtil.unescape(data)
         val serversHtml = Jsoup.parse(unescapedData)
-        val videoList = mutableListOf<Video>()
-        for (server in serversHtml.select("div.server-item")) {
-            if (server.text() == "StreamSB" || server.text() == "Streamtape") continue
-            val id = server.attr("data-id")
-            val subDub = server.attr("data-type")
-            val videos = runCatching {
-                getVideosFromServer(
-                    client.newCall(GET("$baseUrl/ajax/v2/episode/sources?id=$id", episodeReferer)).execute(),
-                    subDub
-                )
-            }.getOrNull()
-            if (videos != null) videoList.addAll(videos)
-        }
+        val ignoredServers = listOf("StreamSB", "StreamTape")
+        val extractor = ZoroExtractor(client)
+        val videoList = serversHtml.select("div.server-item")
+            .filterNot { it.text() in ignoredServers }
+            .parallelMap { server ->
+                val id = server.attr("data-id")
+                val subDub = server.attr("data-type")
+                val url = "$baseUrl/ajax/v2/episode/sources?id=$id"
+                val reqBody = client.newCall(GET(url, episodeReferer)).execute()
+                    .body!!.string()
+                val sourceUrl = reqBody.substringAfter("\"link\":\"")
+                    .substringBefore("\"") + "&autoPlay=1&oa=0"
+                runCatching {
+                    val source = extractor.getSourcesJson(sourceUrl)
+                    source?.let { getVideosFromServer(it, subDub) }
+                }.getOrNull()
+            }
+            .filterNotNull()
+            .flatten()
         return videoList
     }
 
-    private fun getVideosFromServer(response: Response, subDub: String): List<Video>? {
-        val body = response.body!!.string()
-        val url = body.substringAfter("\"link\":\"").substringBefore("\"") + "&autoPlay=1&oa=0"
-
-        val source = ZoroExtractor(client).getSourcesJson(url) ?: return null
+    private fun getVideosFromServer(source: String, subDub: String): List<Video>? {
         if (!source.contains("{\"sources\":[{\"file\":\"")) return null
         val json = json.decodeFromString<JsonObject>(source)
         val masterUrl = json["sources"]!!.jsonArray[0].jsonObject["file"]!!.jsonPrimitive.content
@@ -141,18 +150,20 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 } catch (e: Error) {}
             } ?: emptyList()
         val subs = subLangOrder(subs2)
-        val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
-        val videoList = mutableListOf<Video>()
-        masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
-            val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p - $subDub"
-            val videoUrl = masterUrl.substringBeforeLast("/") + "/" + it.substringAfter("\n").substringBefore("\n")
-            videoList.add(
-                try {
-                    Video(videoUrl, quality, videoUrl, subtitleTracks = subs)
-                } catch (e: Error) {
-                    Video(videoUrl, quality, videoUrl)
-                }
-            )
+        val prefix = "#EXT-X-STREAM-INF:"
+        val playlist = client.newCall(GET(masterUrl)).execute()
+            .body!!.string()
+        val videoList = playlist.substringAfter(prefix).split(prefix).map {
+            val quality = it.substringAfter("RESOLUTION=")
+                .substringAfter("x")
+                .substringBefore(",") + "p - $subDub"
+            val videoUrl = masterUrl.substringBeforeLast("/") + "/" +
+                it.substringAfter("\n").substringBefore("\n")
+            try {
+                Video(videoUrl, quality, videoUrl, subtitleTracks = subs)
+            } catch (e: Error) {
+                Video(videoUrl, quality, videoUrl)
+            }
         }
         return videoList
     }
@@ -169,6 +180,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         for (video in this) {
             if (item in video.quality) {
                 newList.add(preferred, video)
+                preferred++
             } else {
                 newList.add(video)
             }
@@ -179,7 +191,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, "720p")!!
         val type = preferences.getString(PREF_TYPE_KEY, "dub")!!
-        val newList = this.sortIfContains(type).reversed().sortIfContains(quality)
+        val newList = this.sortIfContains(type).sortIfContains(quality)
         return newList
     }
 
@@ -208,7 +220,53 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = GET("$baseUrl/search?keyword=$query&page=$page")
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        return if (query.startsWith(PREFIX_SEARCH)) {
+            val slug = query.removePrefix(PREFIX_SEARCH)
+            client.newCall(GET("$baseUrl/$slug"))
+                .asObservableSuccess()
+                .map { response ->
+                    searchAnimeBySlugParse(response, slug)
+                }
+        } else {
+            val params = ZoroFilters.getSearchParameters(filters)
+            client.newCall(searchAnimeRequest(page, query, params))
+                .asObservableSuccess()
+                .map { response ->
+                    searchAnimeParse(response)
+                }
+        }
+    }
+
+    private fun searchAnimeBySlugParse(response: Response, slug: String): AnimesPage {
+        val details = animeDetailsParse(response)
+        details.url = "/$slug"
+        return AnimesPage(listOf(details), false)
+    }
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
+
+    private fun searchAnimeRequest(page: Int, query: String, filters: ZoroFilters.FilterSearchParams): Request {
+        val url = "$baseUrl/search?".toHttpUrlOrNull()!!.newBuilder()
+            .addQueryParameter("page", page.toString())
+            .addQueryParameter("keyword", query)
+            .addIfNotBlank("type", filters.type)
+            .addIfNotBlank("status", filters.status)
+            .addIfNotBlank("rated", filters.rated)
+            .addIfNotBlank("score", filters.score)
+            .addIfNotBlank("season", filters.season)
+            .addIfNotBlank("language", filters.language)
+            .addIfNotBlank("sort", filters.sort)
+            .addIfNotBlank("sy", filters.start_year)
+            .addIfNotBlank("sm", filters.start_month)
+            .addIfNotBlank("ey", filters.end_year)
+            .addIfNotBlank("em", filters.end_month)
+            .addIfNotBlank("genres", filters.genres)
+
+        return GET(url.build().toString())
+    }
+
+    override fun getFilterList(): AnimeFilterList = ZoroFilters.filterList
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
@@ -317,8 +375,21 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return if (full) "\n$tag $value" else value
     }
 
-    companion object {
+    private fun HttpUrl.Builder.addIfNotBlank(query: String, value: String):
+        HttpUrl.Builder {
+        if (value.isNotBlank()) {
+            addQueryParameter(query, value)
+        }
+        return this
+    }
 
+    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
+
+    companion object {
+        const val PREFIX_SEARCH = "slug:"
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred video quality"
         private val PREF_QUALITY_ENTRIES = arrayOf("360p", "720p", "1080p")
