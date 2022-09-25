@@ -8,12 +8,14 @@ import eu.kanade.tachiyomi.animeextension.en.zoro.extractors.ZoroExtractor
 import eu.kanade.tachiyomi.animeextension.en.zoro.utils.JSONUtil
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -25,12 +27,15 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -215,7 +220,38 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = GET("$baseUrl/search?keyword=$query&page=$page")
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        val params = ZoroFilters.getSearchParameters(filters)
+        return client.newCall(searchAnimeRequest(page, query, params))
+            .asObservableSuccess()
+            .map { response ->
+                searchAnimeParse(response)
+            }
+    }
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
+
+    private fun searchAnimeRequest(page: Int, query: String, filters: ZoroFilters.FilterSearchParams): Request {
+        val url = "$baseUrl/search?".toHttpUrlOrNull()!!.newBuilder()
+            .addQueryParameter("page", page.toString())
+            .addQueryParameter("keyword", query)
+            .addIfNotBlank("type", filters.type)
+            .addIfNotBlank("status", filters.status)
+            .addIfNotBlank("rated", filters.rated)
+            .addIfNotBlank("score", filters.score)
+            .addIfNotBlank("season", filters.season)
+            .addIfNotBlank("language", filters.language)
+            .addIfNotBlank("sort", filters.sort)
+            .addIfNotBlank("sy", filters.start_year)
+            .addIfNotBlank("sm", filters.start_month)
+            .addIfNotBlank("ey", filters.end_year)
+            .addIfNotBlank("em", filters.end_month)
+            .addIfNotBlank("genres", filters.genres)
+
+        return GET(url.build().toString())
+    }
+
+    override fun getFilterList(): AnimeFilterList = ZoroFilters.filterList
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
@@ -324,7 +360,15 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return if (full) "\n$tag $value" else value
     }
 
-    fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+    private fun HttpUrl.Builder.addIfNotBlank(query: String, value: String):
+        HttpUrl.Builder {
+        if (value.isNotBlank()) {
+            addQueryParameter(query, value)
+        }
+        return this
+    }
+
+    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
         runBlocking {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
