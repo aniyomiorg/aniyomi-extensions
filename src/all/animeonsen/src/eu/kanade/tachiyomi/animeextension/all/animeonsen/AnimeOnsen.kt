@@ -1,10 +1,15 @@
 package eu.kanade.tachiyomi.animeextension.all.animeonsen
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.all.animeonsen.dto.AnimeDetails
 import eu.kanade.tachiyomi.animeextension.all.animeonsen.dto.AnimeListItem
 import eu.kanade.tachiyomi.animeextension.all.animeonsen.dto.AnimeListResponse
 import eu.kanade.tachiyomi.animeextension.all.animeonsen.dto.SearchResponse
 import eu.kanade.tachiyomi.animeextension.all.animeonsen.dto.VideoData
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -24,9 +29,11 @@ import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import kotlin.Exception
 
-class AnimeOnsen : AnimeHttpSource() {
+class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "AnimeOnsen"
 
@@ -44,6 +51,10 @@ class AnimeOnsen : AnimeHttpSource() {
         network.client.newBuilder()
             .addInterceptor(AOAPIInterceptor(cfClient))
             .build()
+    }
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
     private val json = Json {
@@ -72,7 +83,7 @@ class AnimeOnsen : AnimeHttpSource() {
         val contentId = response.request.url.toString().substringBeforeLast("/episodes")
             .substringAfterLast("/")
         val responseJson = json.decodeFromString<JsonObject>(response.body!!.string())
-        return responseJson.keys.toList().sortedDescending().map { epNum ->
+        return responseJson.keys.map { epNum ->
             SEpisode.create().apply {
                 url = "$contentId/video/$epNum"
                 episode_number = epNum.toFloat()
@@ -80,7 +91,7 @@ class AnimeOnsen : AnimeHttpSource() {
                     responseJson[epNum]!!.jsonObject["contentTitle_episode_en"]!!.jsonPrimitive.content
                 name = "Episode $epNum: $episodeName"
             }
-        }
+        }.sortedByDescending { it.episode_number }
     }
 
     override fun episodeListRequest(anime: SAnime): Request {
@@ -97,7 +108,7 @@ class AnimeOnsen : AnimeHttpSource() {
             "user-agent", AO_USER_AGENT,
         )
         val video = try {
-            val subtitles = videoData.uri.subtitles.keys.map {
+            val subtitles = videoData.uri.subtitles.keys.toList().sortSubs().map {
                 val lang = subtitleLangs[it]!!.jsonPrimitive.content
                 val url = videoData.uri.subtitles[it]!!.jsonPrimitive.content
                 Track(url, lang)
@@ -155,6 +166,26 @@ class AnimeOnsen : AnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int) = throw Exception("not used")
     override fun latestUpdatesParse(response: Response) = throw Exception("not used")
 
+    // ============================== Settings ==============================
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val subLangPref = ListPreference(screen.context).apply {
+            key = PREF_SUB_KEY
+            title = PREF_SUB_TITLE
+            entries = PREF_SUB_ENTRIES
+            entryValues = PREF_SUB_VALUES
+            setDefaultValue("en-US")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(subLangPref)
+    }
+
     // ============================= Utilities ==============================
 
     private fun parseStatus(statusString: String?): Int {
@@ -169,6 +200,33 @@ class AnimeOnsen : AnimeHttpSource() {
         title = content_title ?: content_title_en!!
         thumbnail_url = "https://api.animeonsen.xyz/v4/image/210x300/$content_id"
     }
+
+    private fun List<String>.sortSubs(): List<String> {
+        val language = preferences.getString(PREF_SUB_KEY, "en-US")
+        val newList = mutableListOf<String>()
+        var preferred = 0
+        for (key in this) {
+            if (key == language) {
+                newList.add(preferred, key)
+                preferred++
+            } else {
+                newList.add(key)
+            }
+        }
+        return newList
+    }
 }
 
 const val AO_USER_AGENT = "Aniyomi/app (mobile)"
+private const val PREF_SUB_KEY = "preferred_subLang"
+private const val PREF_SUB_TITLE = "Preferred sub language"
+private val PREF_SUB_ENTRIES = arrayOf(
+    "العربية", "Deutsch", "English", "Español (Spain)",
+    "Español (Latin)", "Français", "Italiano",
+    "Português (Brasil)", "Русский"
+)
+private val PREF_SUB_VALUES = arrayOf(
+    "ar-ME", "de-DE", "en-US", "es-ES",
+    "es-LA", "fr-FR", "it-IT",
+    "pt-BR", "ru-RU"
+)
