@@ -24,6 +24,7 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
+import java.util.Locale
 
 class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -73,15 +74,14 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-        val epNum = element.select("div.season_m a span.c").text().removePrefix("Episode ")
-        val date = SimpleDateFormat("MMM. dd, yyyy").parse(element.select("div.data > span").text())
+        val date = SimpleDateFormat("MMM. dd, yyyy", Locale.US).parse(element.select("div.data > span").text())
+        val epNumPattern = Regex("Episode (\\d+\\.?\\d*)")
+        val epNumMatch = epNumPattern.find(element.select("div.season_m a span.c").text())
+
         episode.setUrlWithoutDomain(element.select("div.season_m a").attr("href"))
         episode.name = element.select("div.data h3").text()
-        episode.date_upload = date.time
-        episode.episode_number = when {
-            (epNum.isNotEmpty()) -> epNum.toFloat()
-            else -> 1F
-        }
+        episode.date_upload = runCatching { date?.time }.getOrNull() ?: 0L
+        episode.episode_number = runCatching { epNumMatch?.groups?.get(1)!!.value.toFloat() }.getOrNull() ?: 1F
 
         return episode
     }
