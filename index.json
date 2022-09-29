@@ -407,10 +407,10 @@
   {
     "name": "Aniyomi: HentaiMama",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.hentaimama",
-    "apk": "aniyomi-en.hentaimama-v13.4.apk",
+    "apk": "aniyomi-en.hentaimama-v13.5.apk",
     "lang": "en",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 1
   },
   {
