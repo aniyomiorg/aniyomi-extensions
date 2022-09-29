@@ -73,15 +73,16 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-        val epNum = element.select("div.season_m a span.c").text().removePrefix("Episode ")
+        val epNumPattern = Regex("Episode (\\d+\\.?\\d*)")
+        val epNumMatch = epNumPattern.find(element.select("div.season_m a span.c").text())
+        episode.episode_number = when {
+            (epNumMatch != null) -> epNumMatch.groups[1]!!.value.toFloat()
+            else -> 1F
+        }
         val date = SimpleDateFormat("MMM. dd, yyyy").parse(element.select("div.data > span").text())
         episode.setUrlWithoutDomain(element.select("div.season_m a").attr("href"))
         episode.name = element.select("div.data h3").text()
         episode.date_upload = date.time
-        episode.episode_number = when {
-            (epNum.isNotEmpty()) -> epNum.toFloat()
-            else -> 1F
-        }
 
         return episode
     }
