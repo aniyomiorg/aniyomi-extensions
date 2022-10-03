@@ -80,7 +80,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             (epsNum.isNotEmpty()) -> epsNum.toFloat()
             else -> 1F
         }
-        episode.name = element.select("span > a").text().replace(".+?(?=Episode)|\sSubtitle.+".toRegex(), "")
+        episode.name = element.select("span > a").text().replace(".+?(?=Episode)|\\sSubtitle.+".toRegex(), "")
         episode.date_upload = reconstructDate(element.select("span.zeebr").text())
 
         return episode
