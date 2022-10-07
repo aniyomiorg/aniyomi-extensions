@@ -36,7 +36,7 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Wcofun"
 
-    override val baseUrl = "https://www.wcofun.com/"
+    override val baseUrl = "https://www.wcofun.net"
 
     override val lang = "en"
 
@@ -50,18 +50,23 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun popularAnimeSelector(): String = "div.sidebar-titles li a"
+    override fun popularAnimeSelector(): String = "#sidebar_right2 ul.items li"
 
-    override fun popularAnimeRequest(page: Int): Request = GET(baseUrl)
+    override fun popularAnimeRequest(page: Int): Request {
+        val interceptor = client.newBuilder().addInterceptor(RedirectInterceptor()).build()
+        val headers = interceptor.newCall(GET(baseUrl)).execute().request.headers
+        return GET(baseUrl, headers = headers)
+    }
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.attr("href"))
-        anime.title = element.text()
+        anime.thumbnail_url = "https:" + element.select("div.img a img").attr("src")
+        anime.setUrlWithoutDomain(element.select("div.img a").attr("href"))
+        anime.title = element.select("div.recent-release-episodes a").text()
         return anime
     }
 
-    override fun popularAnimeNextPageSelector(): String = "ul.pagination li:last-child:not(.selected)"
+    override fun popularAnimeNextPageSelector(): String? = null
 
     override fun episodeListSelector() = "div.cat-eps a"
 
@@ -176,13 +181,15 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        anime.title = element.text()
+        anime.thumbnail_url = element.select("img").attr("src")
+        anime.title = element.select("img").attr("alt")
+
         return anime
     }
 
-    override fun searchAnimeNextPageSelector(): String = "ul.pagination-list li:last-child:not(.selected)"
+    override fun searchAnimeNextPageSelector(): String? = null
 
-    override fun searchAnimeSelector(): String = "div#sidebar_right2 li div.recent-release-episodes a, div.ddmcc li a"
+    override fun searchAnimeSelector(): String = "div#sidebar_right2 li div.img a"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters

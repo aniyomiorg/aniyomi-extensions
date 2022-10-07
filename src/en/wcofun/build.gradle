@@ -5,7 +5,7 @@ ext {
     extName = 'Wcofun'
     pkgNameSuffix = 'en.wcofun'
     extClass = '.Wcofun'
-    extVersionCode = 5
+    extVersionCode = 6
     libVersion = '13'
 }
 
