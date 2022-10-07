@@ -22,7 +22,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import okhttp3.Headers
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -36,7 +35,9 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "DopeBox"
 
-    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://dopebox.to")!! }
+    override val baseUrl by lazy {
+        "https://" + preferences.getString("preferred_domain", "dopebox.to")!!
+    }
 
     override val lang = "en"
 
@@ -44,15 +45,12 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    // private val domain = "aHR0cHM6Ly9yYWJiaXRzdHJlYW0ubmV0OjQ0Mw.."
-
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
-    override fun headersBuilder(): Headers.Builder {
-        return super.headersBuilder()
-            .add("Referer", "$baseUrl/")
-    }
+
+    override fun headersBuilder(): Headers.Builder = Headers.Builder()
+        .add("Referer", "$baseUrl/")
 
     override fun popularAnimeSelector(): String = "div.film_list-wrap div.flw-item div.film-poster"
 
@@ -60,9 +58,9 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a").attr("href"))
-        anime.thumbnail_url = element.select("img").attr("data-src")
-        anime.title = element.select("a").attr("title")
+        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
+        anime.thumbnail_url = element.selectFirst("img").attr("data-src")
+        anime.title = element.selectFirst("a").attr("title")
         return anime
     }
 
@@ -108,22 +106,21 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val seasonId = element.attr("data-id")
         val seasonName = element.text()
         val episodesUrl = "$baseUrl/ajax/v2/season/episodes/$seasonId"
-        val episodesHtml = client.newCall(
-            GET(
-                episodesUrl,
-            )
-        ).execute().asJsoup()
+        val episodesHtml = client.newCall(GET(episodesUrl))
+            .execute()
+            .asJsoup()
         val episodeElements = episodesHtml.select("div.eps-item")
         return episodeElements.map { episodeFromElement(it, seasonName) }
     }
 
     private fun episodeFromElement(element: Element, seasonName: String): SEpisode {
         val episodeId = element.attr("data-id")
-        val episode = SEpisode.create()
-        val epNum = element.select("div.episode-number").text()
-        val epName = element.select("h3.film-name a").text()
-        episode.name = "$seasonName $epNum $epName"
-        episode.setUrlWithoutDomain("$baseUrl/ajax/v2/episode/servers/$episodeId")
+        val epNum = element.selectFirst("div.episode-number").text()
+        val epName = element.selectFirst("h3.film-name a").text()
+        val episode = SEpisode.create().apply {
+            name = "$seasonName $epNum $epName"
+            setUrlWithoutDomain("$baseUrl/ajax/v2/episode/servers/$episodeId")
+        }
         return episode
     }
 
@@ -232,7 +229,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         return this
     }
-    
+
     private fun subLangOrder(tracks: List<Track>): List<Track> {
         val language = preferences.getString("preferred_subLang", null)
         if (language != null) {
@@ -250,7 +247,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         return tracks
     }
-    
+
     override fun videoListSelector() = throw Exception("not used")
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
@@ -261,9 +258,9 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a").attr("href"))
-        anime.thumbnail_url = element.select("img").attr("data-src")
-        anime.title = element.select("a").attr("title")
+        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
+        anime.thumbnail_url = element.selectFirst("img").attr("data-src")
+        anime.title = element.selectFirst("a").attr("title")
         return anime
     }
 
@@ -271,43 +268,42 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = "div.film_list-wrap div.flw-item div.film-poster"
 
+    // will be refactored AGAIN when i add all filters
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val url = if (query.isNotBlank()) {
-            "$baseUrl/search/$query?page=$page".replace(" ", "-")
-        } else {
-            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
-                when (filter) {
-                    is GenreList -> {
-                        if (filter.state > 0) {
-                            val GenreN = getGenreList()[filter.state].query
-                            val genreUrl = "$baseUrl/genre/$GenreN".toHttpUrlOrNull()!!.newBuilder()
-                            return GET(genreUrl.toString(), headers)
-                        }
-                    }
-                }
-            }
-            throw Exception("Choose Filter")
+        if (query.isNotBlank()) {
+            val url = "$baseUrl/search/$query?page=$page".replace(" ", "-")
+            return GET(url, headers)
         }
-        return GET(url, headers)
+        val genreList = filters.filterIsInstance<GenreList>().first() as GenreList
+        if (genreList.state > 0) {
+            val genre_slug = getGenreList()[genreList.state].query
+            val genreUrl = "$baseUrl/genre/$genre_slug"
+            return GET(genreUrl, headers)
+        } else {
+            throw Exception("Choose a filter!")
+        }
     }
 
     // Details
 
     override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
-        anime.thumbnail_url = document.select("img.film-poster-img").attr("src")
-        anime.title = document.select("img.film-poster-img").attr("title")
-        anime.genre = document.select("div.row-line:contains(Genre) a").joinToString(", ") { it.text() }
-        anime.description = document.select("div.detail_page-watch div.description").text().replace("Overview:", "")
-        anime.author = document.select("div.row-line:contains(Production) a").joinToString(", ") { it.text() }
-        anime.status = parseStatus(document.select("li.status span.value").text())
+        val anime = SAnime.create().apply {
+            thumbnail_url = document.selectFirst("img.film-poster-img").attr("src")
+            title = document.selectFirst("img.film-poster-img").attr("title")
+            genre = document.select("div.row-line:contains(Genre) a")
+                .joinToString(", ") { it.text() }
+            description = document.selectFirst("div.detail_page-watch div.description")
+                .text().replace("Overview:", "")
+            author = document.select("div.row-line:contains(Production) a")
+                .joinToString(", ") { it.text() }
+            status = parseStatus(document.select("li.status span.value").text())
+        }
         return anime
     }
 
     private fun parseStatus(statusString: String): Int {
         return when (statusString) {
             "Ongoing" -> SAnime.ONGOING
-            "Completed" -> SAnime.COMPLETED
             else -> SAnime.COMPLETED
         }
     }
@@ -326,11 +322,11 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val domainPref = ListPreference(screen.context).apply {
-            key = "preferred_domain"
-            title = "Preferred domain (requires app restart)"
-            entries = arrayOf("dopebox.to", "dopebox.se")
-            entryValues = arrayOf("https://dopebox.to", "https://dopebox.se")
-            setDefaultValue("https://dopebox.to")
+            key = PREF_DOMAIN_KEY
+            title = PREF_DOMAIN_TITLE
+            entries = PREF_DOMAIN_LIST
+            entryValues = PREF_DOMAIN_LIST
+            setDefaultValue("dopebox.to")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -341,11 +337,11 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
-            setDefaultValue("1080")
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_LIST
+            entryValues = PREF_QUALITY_LIST
+            setDefaultValue("1080p")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -356,10 +352,10 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         val subLangPref = ListPreference(screen.context).apply {
-            key = "preferred_subLang"
-            title = "Preferred sub language"
-            entries = arrayOf("Arabic", "English", "French", "German", "Hungarian", "Italian", "Japanese", "Portuguese", "Romanian", "Russian", "Spanish")
-            entryValues = arrayOf("Arabic", "English", "French", "German", "Hungarian", "Italian", "Japanese", "Portuguese", "Romanian", "Russian", "Spanish")
+            key = PREF_SUB_KEY
+            title = PREF_SUB_TITLE
+            entries = PREF_SUB_LANGUAGES
+            entryValues = PREF_SUB_LANGUAGES
             setDefaultValue("English")
             summary = "%s"
 
@@ -419,4 +415,22 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Genre("War & Politics", "war-politics"),
         Genre("Western", "western")
     )
+
+    companion object {
+        private const val PREF_DOMAIN_KEY = "preferred_domain"
+        private const val PREF_DOMAIN_TITLE = "Preferred domain (requires app restart)"
+        private val PREF_DOMAIN_LIST = arrayOf("dopebox.to", "dopebox.se")
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private val PREF_QUALITY_LIST = arrayOf("1080p", "720p", "480p", "360p")
+
+        private const val PREF_SUB_KEY = "preferred_subLang"
+        private const val PREF_SUB_TITLE = "Preferred sub language"
+        private val PREF_SUB_LANGUAGES = arrayOf(
+            "Arabic", "English", "French", "German", "Hungarian",
+            "Italian", "Japanese", "Portuguese", "Romanian", "Russian",
+            "Spanish"
+        )
+    }
 }
