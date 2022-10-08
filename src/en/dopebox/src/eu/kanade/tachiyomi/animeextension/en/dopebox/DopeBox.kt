@@ -57,7 +57,10 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "div.film_list-wrap div.flw-item div.film-poster"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/movie?page=$page")
+    override fun popularAnimeRequest(page: Int): Request {
+        val type = preferences.getString(PREF_POPULAR_KEY, "movie")!!
+        return GET("$baseUrl/$type?page=$page")
+    }
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -394,11 +397,27 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val popularType = ListPreference(screen.context).apply {
+            key = PREF_POPULAR_KEY
+            title = PREF_POPULAR_TITLE
+            entries = PREF_POPULAR_ENTRIES
+            entryValues = PREF_POPULAR_VALUES
+            setDefaultValue("Movies")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
 
         screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
         screen.addPreference(subLangPref)
         screen.addPreference(latestType)
+        screen.addPreference(popularType)
     }
 
     companion object {
@@ -421,5 +440,10 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_LATEST_KEY = "preferred_latest_page"
         private const val PREF_LATEST_TITLE = "Preferred latest page"
         private val PREF_LATEST_PAGES = arrayOf("Movies", "TV Shows")
+
+        private const val PREF_POPULAR_KEY = "preferred_popular_page"
+        private const val PREF_POPULAR_TITLE = "Preferred popular page"
+        private val PREF_POPULAR_ENTRIES = PREF_LATEST_PAGES
+        private val PREF_POPULAR_VALUES = arrayOf("movie", "tv-show")
     }
 }
