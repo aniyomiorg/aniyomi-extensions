@@ -63,7 +63,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         .add("Referer", "$baseUrl/")
 
     // ============================== Popular ===============================
-    
+
     override fun popularAnimeSelector(): String = "div.film_list-wrap div.flw-item div.film-poster"
 
     override fun popularAnimeRequest(page: Int): Request {
