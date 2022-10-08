@@ -2,10 +2,10 @@ package eu.kanade.tachiyomi.animeextension.en.dopebox
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.net.Uri
-import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.en.dopebox.extractors.DoodExtractor
+import eu.kanade.tachiyomi.animeextension.en.dopebox.extractors.DopeBoxExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -17,22 +17,27 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 
 class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -52,9 +57,13 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    private val json: Json by injectLazy()
+
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Referer", "$baseUrl/")
 
+    // ============================== Popular ===============================
+    
     override fun popularAnimeSelector(): String = "div.film_list-wrap div.flw-item div.film-poster"
 
     override fun popularAnimeRequest(page: Int): Request {
@@ -72,7 +81,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeNextPageSelector(): String = "ul.pagination li.page-item a[title=next]"
 
-    // episodes
+    // ============================== Episodes ==============================
 
     override fun episodeListSelector() = throw Exception("not used")
 
@@ -134,88 +143,82 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return epsStr.filter { it.isDigit() }
     }
 
-    // Video Extractor
+    // ============================ Video Links =============================
 
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        // referers
-        val referer1 = response.request.url.toString()
-        val refererHeaders = Headers.headersOf("Referer", referer1)
-        val referer = response.request.url.encodedPath
-        val newHeaders = Headers.headersOf("Referer", referer)
-
-        // get embed id
-        val getVidID = document.selectFirst("a:contains(Vidcloud)").attr("data-id")
-        val getVidApi = client.newCall(GET("$baseUrl/ajax/get_link/" + getVidID)).execute().asJsoup()
-
-        // streamrapid URL
-        val getVideoEmbed = getVidApi.text().substringAfter("link\":\"").substringBefore("\"")
-        val videoEmbedUrlId = getVideoEmbed.substringAfterLast("/").substringBefore("?")
-        val callVideolink = client.newCall(GET(getVideoEmbed, refererHeaders)).execute().asJsoup()
-        val uri = Uri.parse(getVideoEmbed)
-        val domain = (Base64.encodeToString((uri.scheme + "://" + uri.host + ":443").encodeToByteArray(), Base64.NO_PADDING) + ".").replace("\n", "")
-        val soup = Jsoup.connect(getVideoEmbed).referrer("$baseUrl/").get().toString().replace("\n", "")
-
-        val key = soup.substringAfter("var recaptchaSiteKey = '").substringBefore("',")
-        val number = soup.substringAfter("recaptchaNumber = '").substringBefore("';")
-
-        val vToken = Jsoup.connect("https://www.google.com/recaptcha/api.js?render=$key").referrer("https://rabbitstream.net/").get().toString().replace("\n", "").substringAfter("/releases/").substringBefore("/recaptcha")
-        val recapToken = Jsoup.connect("https://www.google.com/recaptcha/api2/anchor?ar=1&hl=en&size=invisible&cb=kr60249sk&k=$key&co=$domain&v=$vToken").get().selectFirst("#recaptcha-token")?.attr("value")
-        val token = Jsoup.connect("https://www.google.com/recaptcha/api2/reload?k=$key").ignoreContentType(true)
-            .data("v", vToken).data("k", key).data("c", recapToken).data("co", domain).data("sa", "").data("reason", "q")
-            .post().toString().replace("\n", "").substringAfter("rresp\",\"").substringBefore("\"")
-
-        val jsonLink = "https://rabbitstream.net/ajax/embed-4/getSources?id=$videoEmbedUrlId&_token=$token&_number=$number&sId=test"
-        /*val reloadHeaderss = headers.newBuilder()
-            .set("X-Requested-With", "XMLHttpRequest")
-            .build()
-        val iframeResponse = client.newCall(GET(jsonLink, reloadHeaderss))
-            .execute().asJsoup()
-        */
-        return videosFromElement(jsonLink)
+        val doc = response.asJsoup()
+        val episodeReferer = Headers.headersOf("Referer", response.request.header("referer")!!)
+        val extractor = DopeBoxExtractor(client)
+        val videoList = doc.select("ul.fss-list a.btn-play")
+            .parallelMap { server ->
+                val name = server.selectFirst("span").text()
+                val id = server.attr("data-id")
+                val url = "$baseUrl/ajax/sources/$id"
+                val reqBody = client.newCall(GET(url, episodeReferer)).execute()
+                    .body!!.string()
+                val sourceUrl = reqBody.substringAfter("\"link\":\"")
+                    .substringBefore("\"")
+                runCatching {
+                    when {
+                        "DoodStream" in name ->
+                            DoodExtractor(client).videoFromUrl(sourceUrl)?.let {
+                                listOf(it)
+                            }
+                        "Vidcloud" in name || "UpCloud" in name -> {
+                            val source = extractor.getSourcesJson(sourceUrl)
+                            source?.let { getVideosFromServer(it, name) }
+                        }
+                        else -> null
+                    }
+                }.getOrNull()
+            }
+            .filterNotNull()
+            .flatten()
+        return videoList
     }
 
-    private fun videosFromElement(url: String): List<Video> {
-        val reloadHeaderss = headers.newBuilder()
-            .set("X-Requested-With", "XMLHttpRequest")
-            .build()
-        val json = Json.decodeFromString<JsonObject>(Jsoup.connect(url).header("X-Requested-With", "XMLHttpRequest").ignoreContentType(true).execute().body())
-        val masterUrl = json["sources"]!!.jsonArray[0].jsonObject["file"].toString().trim('"')
-        val subsList = mutableListOf<Track>()
-        json["tracks"]!!.jsonArray.forEach {
-            val subLang = it.jsonObject["label"].toString().substringAfter("\"").substringBefore("\"")
-            val subUrl = it.jsonObject["file"].toString().trim('"')
-            try {
-                subsList.add(Track(subUrl, subLang))
-            } catch (e: Error) {}
-        }
-        val prefSubsList = subLangOrder(subsList)
+    private fun getVideosFromServer(source: String, name: String): List<Video>? {
+        if (!source.contains("{\"sources\":[{\"file\":\"")) return null
+        val json = json.decodeFromString<JsonObject>(source)
+        val masterUrl = json["sources"]!!.jsonArray[0].jsonObject["file"]!!.jsonPrimitive.content
+        val subs2 = mutableListOf<Track>()
+        json["tracks"]?.jsonArray
+            ?.filter { it.jsonObject["kind"]!!.jsonPrimitive.content == "captions" }
+            ?.map { track ->
+                val trackUrl = track.jsonObject["file"]!!.jsonPrimitive.content
+                val lang = track.jsonObject["label"]!!.jsonPrimitive.content
+                try {
+                    subs2.add(Track(trackUrl, lang))
+                } catch (e: Error) {}
+            } ?: emptyList()
+        val subs = subLangOrder(subs2)
         if (masterUrl.contains("playlist.m3u8")) {
-            val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
-            val videoList = mutableListOf<Video>()
-            masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
-                val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p"
+            val prefix = "#EXT-X-STREAM-INF:"
+            val playlist = client.newCall(GET(masterUrl)).execute()
+                .body!!.string()
+            val videoList = playlist.substringAfter(prefix).split(prefix).map {
+                val quality = "$name - " + it.substringAfter("RESOLUTION=")
+                    .substringAfter("x")
+                    .substringBefore("\n")
+                    .substringBefore(",") + "p"
                 val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                videoList.add(
-                    try {
-                        Video(videoUrl, quality, videoUrl, subtitleTracks = prefSubsList)
-                    } catch (e: Error) {
-                        Video(videoUrl, quality, videoUrl)
-                    }
-                )
+                try {
+                    Video(videoUrl, quality, videoUrl, subtitleTracks = subs)
+                } catch (e: Error) {
+                    Video(videoUrl, quality, videoUrl)
+                }
             }
             return videoList
-        } else if (masterUrl.contains("index.m3u8")) {
-            return listOf(
-                try {
-                    Video(masterUrl, "Default", masterUrl, subtitleTracks = prefSubsList)
-                } catch (e: Error) {
-                    Video(masterUrl, "Default", masterUrl)
-                }
-            )
-        } else {
-            throw Exception("never give up and try again :)")
         }
+
+        val defaultVideoList = listOf(
+            try {
+                Video(masterUrl, "$name - Default", masterUrl, subtitleTracks = subs)
+            } catch (e: Error) {
+                Video(masterUrl, "$name - Default", masterUrl)
+            }
+        )
+        return defaultVideoList
     }
 
     override fun List<Video>.sort(): List<Video> {
@@ -260,7 +263,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
-    // Search
+    // =============================== Search ===============================
 
     override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
@@ -298,8 +301,8 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun getFilterList(): AnimeFilterList = DopeBoxFilters.filterList
-    // Details
 
+    // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create().apply {
             thumbnail_url = document.selectFirst("img.film-poster-img").attr("src")
@@ -322,7 +325,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    // Latest
+    // =============================== Latest ===============================
 
     override fun latestUpdatesNextPageSelector(): String? = null
 
@@ -334,7 +337,8 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val sectionLabel = preferences.getString(PREF_LATEST_KEY, "Movies")!!
         return "section.block_area:has(h2.cat-heading:contains($sectionLabel)) div.film-poster"
     }
-    // Preferences
+
+    // ============================== Settings ==============================
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val domainPref = ListPreference(screen.context).apply {
@@ -419,6 +423,12 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         screen.addPreference(latestType)
         screen.addPreference(popularType)
     }
+
+    // ============================= Utilities ==============================
+    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 
     companion object {
         private const val PREF_DOMAIN_KEY = "preferred_domain"
