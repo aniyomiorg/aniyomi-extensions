@@ -39,12 +39,12 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val name = "DopeBox"
 
     override val baseUrl by lazy {
-        "https://" + preferences.getString("preferred_domain", "dopebox.to")!!
+        "https://" + preferences.getString(PREF_DOMAIN_KEY, "dopebox.to")!!
     }
 
     override val lang = "en"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -216,7 +216,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", null)
+        val quality = preferences.getString(PREF_QUALITY_KEY, null)
         if (quality != null) {
             val newList = mutableListOf<Video>()
             var preferred = 0
@@ -234,7 +234,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun subLangOrder(tracks: List<Track>): List<Track> {
-        val language = preferences.getString("preferred_subLang", null)
+        val language = preferences.getString(PREF_SUB_KEY, null)
         if (language != null) {
             val newList = mutableListOf<Track>()
             var preferred = 0
@@ -321,14 +321,16 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Latest
 
-    override fun latestUpdatesNextPageSelector(): String? = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector(): String? = null
 
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/home/")
 
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
-
+    override fun latestUpdatesSelector(): String {
+        val sectionLabel = preferences.getString(PREF_LATEST_KEY, "Movies")!!
+        return "section.block_area:has(h2.cat-heading:contains($sectionLabel)) div.film-poster"
+    }
     // Preferences
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -377,9 +379,26 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val latestType = ListPreference(screen.context).apply {
+            key = PREF_LATEST_KEY
+            title = PREF_LATEST_TITLE
+            entries = PREF_LATEST_PAGES
+            entryValues = PREF_LATEST_PAGES
+            setDefaultValue("Movies")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
         screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
         screen.addPreference(subLangPref)
+        screen.addPreference(latestType)
     }
 
     companion object {
@@ -398,5 +417,9 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "Italian", "Japanese", "Portuguese", "Romanian", "Russian",
             "Spanish"
         )
+
+        private const val PREF_LATEST_KEY = "preferred_latest_page"
+        private const val PREF_LATEST_TITLE = "Preferred latest page"
+        private val PREF_LATEST_PAGES = arrayOf("Movies", "TV Shows")
     }
 }
