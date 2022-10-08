@@ -7,14 +7,15 @@ import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
-import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -22,12 +23,14 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -256,34 +259,42 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Search
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
-        anime.thumbnail_url = element.selectFirst("img").attr("data-src")
-        anime.title = element.selectFirst("a").attr("title")
-        return anime
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
+
+    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
+
+    override fun searchAnimeSelector(): String = popularAnimeSelector()
+
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        val params = DopeBoxFilters.getSearchParameters(filters)
+        return client.newCall(searchAnimeRequest(page, query, params))
+            .asObservableSuccess()
+            .map { response ->
+                searchAnimeParse(response)
+            }
     }
 
-    override fun searchAnimeNextPageSelector(): String = "ul.pagination li.page-item a[title=next]"
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
 
-    override fun searchAnimeSelector(): String = "div.film_list-wrap div.flw-item div.film-poster"
-
-    // will be refactored AGAIN when i add all filters
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        if (query.isNotBlank()) {
-            val url = "$baseUrl/search/$query?page=$page".replace(" ", "-")
-            return GET(url, headers)
-        }
-        val genreList = filters.filterIsInstance<GenreList>().first() as GenreList
-        if (genreList.state > 0) {
-            val genre_slug = getGenreList()[genreList.state].query
-            val genreUrl = "$baseUrl/genre/$genre_slug"
-            return GET(genreUrl, headers)
+    private fun searchAnimeRequest(page: Int, query: String, filters: DopeBoxFilters.FilterSearchParams): Request {
+        val url = if (query.isNotBlank()) {
+            "$baseUrl/search/$query?page=$page"
         } else {
-            throw Exception("Choose a filter!")
+            "$baseUrl/filter?".toHttpUrlOrNull()!!.newBuilder()
+                .addQueryParameter("page", page.toString())
+                .addQueryParameter("type", filters.type)
+                .addQueryParameter("quality", filters.quality)
+                .addQueryParameter("release_year", filters.releaseYear)
+                .addQueryParameter("genre", filters.genres)
+                .addQueryParameter("country", filters.countries)
+                .build()
+                .toString()
         }
+
+        return GET(url, headers)
     }
 
+    override fun getFilterList(): AnimeFilterList = DopeBoxFilters.filterList
     // Details
 
     override fun animeDetailsParse(document: Document): SAnime {
@@ -370,51 +381,6 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         screen.addPreference(videoQualityPref)
         screen.addPreference(subLangPref)
     }
-
-    // Filter
-
-    override fun getFilterList() = AnimeFilterList(
-        AnimeFilter.Header("Ignored If Using Text Search"),
-        GenreList(genresName),
-    )
-
-    private class GenreList(genres: Array<String>) : AnimeFilter.Select<String>("Genre", genres)
-    private data class Genre(val name: String, val query: String)
-    private val genresName = getGenreList().map {
-        it.name
-    }.toTypedArray()
-
-    private fun getGenreList() = listOf(
-        Genre("CHOOSE", ""),
-        Genre("Action", "action"),
-        Genre("Action & Adventure", "action-adventure"),
-        Genre("Adventure", "adventure"),
-        Genre("Animation", "animation"),
-        Genre("Biography", "biography"),
-        Genre("Comedy", "comedy"),
-        Genre("Crime", "crime"),
-        Genre("Documentary", "documentary"),
-        Genre("Drama", "drama"),
-        Genre("Family", "family"),
-        Genre("Fantasy", "fantasy"),
-        Genre("History", "history"),
-        Genre("Horror", "horror"),
-        Genre("Kids", "kids"),
-        Genre("Music", "music"),
-        Genre("Mystery", "mystery"),
-        Genre("News", "news"),
-        Genre("Reality", "reality"),
-        Genre("Romance", "romance"),
-        Genre("Sci-Fi & Fantasy", "sci-fi-fantasy"),
-        Genre("Science Fiction", "science-fiction"),
-        Genre("Soap", "soap"),
-        Genre("Talk", "talk"),
-        Genre("Thriller", "thriller"),
-        Genre("TV Movie", "tv-movie"),
-        Genre("War", "war"),
-        Genre("War & Politics", "war-politics"),
-        Genre("Western", "western")
-    )
 
     companion object {
         private const val PREF_DOMAIN_KEY = "preferred_domain"
