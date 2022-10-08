@@ -284,7 +284,8 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun searchAnimeRequest(page: Int, query: String, filters: DopeBoxFilters.FilterSearchParams): Request {
         val url = if (query.isNotBlank()) {
-            "$baseUrl/search/$query?page=$page"
+            val fixedQuery = query.replace(" ", "-")
+            "$baseUrl/search/$fixedQuery?page=$page"
         } else {
             "$baseUrl/filter?".toHttpUrlOrNull()!!.newBuilder()
                 .addQueryParameter("page", page.toString())
