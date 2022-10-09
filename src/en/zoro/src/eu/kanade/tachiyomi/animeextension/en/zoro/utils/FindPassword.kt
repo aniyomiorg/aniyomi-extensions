@@ -1,16 +1,17 @@
 package eu.kanade.tachiyomi.animeextension.en.zoro.utils
 
 import app.cash.quickjs.QuickJs
-
 object FindPassword {
 
     fun getPassword(js: String): String {
         val passVar = js.substringAfter("CryptoJS[")
-            .substringBefore(");")
+            .substringBefore("JSON")
+            .substringBeforeLast(")")
             .substringAfterLast(",")
+            .trim()
 
         val passValue = js.substringAfter("const $passVar=", "").substringBefore(";", "")
-        if (!passValue.isEmpty()) {
+        if (passValue.isNotBlank()) {
             if (passValue.startsWith("'"))
                 return passValue.trim('\'')
             return getPasswordFromJS(js, "(" + passValue.substringAfter("("))
@@ -26,29 +27,33 @@ object FindPassword {
     }
 
     private fun getPasswordFromJS(js: String, getKeyArgs: String): String {
-        var script = js.substringBefore(",(!function") + ")"
-
-        val decoderFunName = script.substringBefore(";(func").substringAfterLast("=")
+        var script = "(function" + js.substringBefore(",(!function")
+            .substringAfter("(function") + ")"
+        val decoderFunName = script.substringAfter("=").substringBefore(",")
         val decoderFunPrefix = "function " + decoderFunName
-        var decoderFunBody = decoderFunPrefix + js.substringAfter(decoderFunPrefix)
-        val decoderFunSuffix = ",$decoderFunName("
-        val decoderFunCall = decoderFunSuffix + decoderFunBody
-            .substringAfter(decoderFunSuffix)
-            .substringBefore(");}") + ");}"
-        decoderFunBody = decoderFunBody.substringBefore(decoderFunCall) + decoderFunCall
-        // if it doesnt have the comically big list at the top, it must be
-        // inside of a function.
-        if ("=[" !in script.substring(0, 20)) {
-            val superArrName = decoderFunBody.substringAfter("=").substringBefore(";")
-            val superArrPrefix = "function " + superArrName
-            val superArrSuffix = "return " + superArrName + ";}"
-            val superArrBody = superArrPrefix + js.substringAfter(superArrPrefix)
-                .substringBefore(superArrSuffix) + superArrSuffix
-            script += "\n" + superArrBody + "\n"
-        }
+        var decoderFunBody = js.substringAfter(decoderFunPrefix)
+        val decoderFunSuffix = decoderFunName + decoderFunBody.substringBefore("{") + ";}"
+        decoderFunBody = (
+            decoderFunPrefix +
+                decoderFunBody.substringBefore(decoderFunSuffix) +
+                decoderFunSuffix
+            )
 
-        script += "\n" + decoderFunBody
-        script += "\n$decoderFunName$getKeyArgs"
+        if ("=[" !in js.substring(0, 20)) {
+            val superArrayName = decoderFunBody.substringAfter("=")
+                .substringBefore(";")
+            val superArrayPrefix = "function " + superArrayName
+            val superArraySuffix = "return " + superArrayName + ";}"
+            val superArrayBody = (
+                superArrayPrefix +
+                    js.substringAfter(superArrayPrefix)
+                        .substringBefore(superArraySuffix) +
+                    superArraySuffix
+                )
+            script += "\n\n" + superArrayBody
+        }
+        script += "\n\n" + decoderFunBody
+        script += "\n\n" + decoderFunName + getKeyArgs
         val qjs = QuickJs.create()
         // this part can be really slow, like 5s or even more >:(
         val result = qjs.evaluate(script).toString()

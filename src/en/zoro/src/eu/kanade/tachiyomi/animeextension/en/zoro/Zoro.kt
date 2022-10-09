@@ -4,6 +4,8 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.en.zoro.extractors.StreamSBExtractor
+import eu.kanade.tachiyomi.animeextension.en.zoro.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animeextension.en.zoro.extractors.ZoroExtractor
 import eu.kanade.tachiyomi.animeextension.en.zoro.utils.JSONUtil
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -113,21 +115,34 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val data = body.substringAfter("\"html\":\"").substringBefore("<script>")
         val unescapedData = JSONUtil.unescape(data)
         val serversHtml = Jsoup.parse(unescapedData)
-        val ignoredServers = listOf("StreamSB", "StreamTape")
         val extractor = ZoroExtractor(client)
         val videoList = serversHtml.select("div.server-item")
-            .filterNot { it.text() in ignoredServers }
             .parallelMap { server ->
+                val name = server.text()
                 val id = server.attr("data-id")
                 val subDub = server.attr("data-type")
                 val url = "$baseUrl/ajax/v2/episode/sources?id=$id"
                 val reqBody = client.newCall(GET(url, episodeReferer)).execute()
                     .body!!.string()
                 val sourceUrl = reqBody.substringAfter("\"link\":\"")
-                    .substringBefore("\"") + "&autoPlay=1&oa=0"
+                    .substringBefore("\"")
                 runCatching {
-                    val source = extractor.getSourcesJson(sourceUrl)
-                    source?.let { getVideosFromServer(it, subDub) }
+                    when {
+                        "Vidstreaming" in name || "Vidcloud" in name -> {
+                            val source = extractor.getSourcesJson(sourceUrl)
+                            source?.let { getVideosFromServer(it, subDub, name) }
+                        }
+                        "StreamSB" in name -> {
+                            val newHeaders = Headers.headersOf("watchsb", "sbstream")
+                            StreamSBExtractor(client)
+                                .videosFromUrl(sourceUrl, newHeaders, subDub)
+                        }
+                        "Streamtape" in name ->
+                            StreamTapeExtractor(client)
+                                .videoFromUrl(sourceUrl, subDub)
+                                ?.let { listOf(it) }
+                        else -> null
+                    }
                 }.getOrNull()
             }
             .filterNotNull()
@@ -135,7 +150,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoList
     }
 
-    private fun getVideosFromServer(source: String, subDub: String): List<Video>? {
+    private fun getVideosFromServer(source: String, subDub: String, name: String): List<Video>? {
         if (!source.contains("{\"sources\":[{\"file\":\"")) return null
         val json = json.decodeFromString<JsonObject>(source)
         val masterUrl = json["sources"]!!.jsonArray[0].jsonObject["file"]!!.jsonPrimitive.content
@@ -154,7 +169,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val playlist = client.newCall(GET(masterUrl)).execute()
             .body!!.string()
         val videoList = playlist.substringAfter(prefix).split(prefix).map {
-            val quality = it.substringAfter("RESOLUTION=")
+            val quality = name + " - " + it.substringAfter("RESOLUTION=")
                 .substringAfter("x")
                 .substringBefore(",") + "p - $subDub"
             val videoUrl = masterUrl.substringBeforeLast("/") + "/" +
@@ -277,7 +292,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.author = info.getInfo("Studios:")
         anime.status = parseStatus(info.getInfo("Status:"))
         anime.genre = info.getInfo("Genres:", isList = true)
-        var description = (info.getInfo("Overview:") + "\n") ?: ""
+        var description = info.getInfo("Overview:")?.let { it + "\n" } ?: ""
         info.getInfo("Aired:", full = true)?.let { description += it }
         info.getInfo("Premiered:", full = true)?.let { description += it }
         info.getInfo("Synonyms:", full = true)?.let { description += it }

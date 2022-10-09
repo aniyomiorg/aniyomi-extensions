@@ -5,7 +5,7 @@ ext {
     extName = 'zoro.to (experimental)'
     pkgNameSuffix = 'en.zoro'
     extClass = '.Zoro'
-    extVersionCode = 11
+    extVersionCode = 12
     libVersion = '13'
 }
 
