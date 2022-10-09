@@ -353,10 +353,10 @@
   {
     "name": "Aniyomi: DopeBox",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.dopebox",
-    "apk": "aniyomi-en.dopebox-v13.10.apk",
+    "apk": "aniyomi-en.dopebox-v13.11.apk",
     "lang": "en",
-    "code": 10,
-    "version": "13.10",
+    "code": 11,
+    "version": "13.11",
     "nsfw": 0
   },
   {
@@ -443,10 +443,10 @@
   {
     "name": "Aniyomi: Sflix",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.sflix",
-    "apk": "aniyomi-en.sflix-v13.9.apk",
+    "apk": "aniyomi-en.sflix-v13.10.apk",
     "lang": "en",
-    "code": 9,
-    "version": "13.9",
+    "code": 10,
+    "version": "13.10",
     "nsfw": 0
   },
   {
