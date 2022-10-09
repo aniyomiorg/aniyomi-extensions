@@ -277,7 +277,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.author = info.getInfo("Studios:")
         anime.status = parseStatus(info.getInfo("Status:"))
         anime.genre = info.getInfo("Genres:", isList = true)
-        var description = (info.getInfo("Overview:") + "\n") ?: ""
+        var description = info.getInfo("Overview:")?.let { it + "\n" } ?: ""
         info.getInfo("Aired:", full = true)?.let { description += it }
         info.getInfo("Premiered:", full = true)?.let { description += it }
         info.getInfo("Synonyms:", full = true)?.let { description += it }
