@@ -209,10 +209,10 @@
   {
     "name": "Aniyomi: Anime24",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.anime24",
-    "apk": "aniyomi-de.anime24-v13.1.apk",
+    "apk": "aniyomi-de.anime24-v13.2.apk",
     "lang": "de",
-    "code": 1,
-    "version": "13.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 0
   },
   {
@@ -641,10 +641,10 @@
   {
     "name": "Aniyomi: Pelisflix",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.pelisflix",
-    "apk": "aniyomi-es.pelisflix-v13.4.apk",
+    "apk": "aniyomi-es.pelisflix-v13.5.apk",
     "lang": "es",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 0
   },
   {
