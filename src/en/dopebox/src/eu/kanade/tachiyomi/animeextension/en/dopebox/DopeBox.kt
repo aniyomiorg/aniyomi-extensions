@@ -432,7 +432,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
 
     companion object {
-        private const val PREF_DOMAIN_KEY = "preferred_domain"
+        private const val PREF_DOMAIN_KEY = "preferred_domain_new"
         private const val PREF_DOMAIN_TITLE = "Preferred domain (requires app restart)"
         private val PREF_DOMAIN_LIST = arrayOf("dopebox.to", "dopebox.se")
 
