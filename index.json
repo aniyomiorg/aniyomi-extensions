@@ -209,10 +209,10 @@
   {
     "name": "Aniyomi: Anime24",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.anime24",
-    "apk": "aniyomi-de.anime24-v13.2.apk",
+    "apk": "aniyomi-de.anime24-v13.3.apk",
     "lang": "de",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0
   },
   {
