@@ -5,8 +5,12 @@ ext {
     extName = 'Sflix'
     pkgNameSuffix = 'en.sflix'
     extClass = '.SFlix'
-    extVersionCode = 9
+    extVersionCode = 10
     libVersion = '13'
+}
+
+dependencies {
+    compileOnly libs.bundles.coroutines
 }
 
 apply from: "$rootDir/common.gradle"
