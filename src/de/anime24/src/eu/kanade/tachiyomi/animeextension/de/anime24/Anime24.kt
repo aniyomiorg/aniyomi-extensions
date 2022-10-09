@@ -62,9 +62,17 @@ class Anime24 : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
-        val episodeElement = document.select("div.eplister ul")
-        val episode = parseEpisodesFromSeries(episodeElement)
-        episodeList.addAll(episode)
+        if (!document.select("div.eplister ul li a div.epl-num").text().contains("Movie")) {
+            val episodeElement = document.select("div.eplister ul")
+            val episode = parseEpisodesFromSeries(episodeElement)
+            episodeList.addAll(episode)
+        } else {
+            val episode = SEpisode.create()
+            episode.name = document.select("div.infox h1").text()
+            episode.episode_number = 1F
+            episode.setUrlWithoutDomain(document.select("div.eplister ul li a").attr("href"))
+            episodeList.add(episode)
+        }
         return episodeList
     }
 
@@ -91,19 +99,36 @@ class Anime24 : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
-        val link = document.select("#pembed iframe[data-lazy-src]").attr("data-lazy-src")
+        val linklazy = document.select("#pembed iframe[data-lazy-src]").attr("data-lazy-src")
         val hosterSelection = preferences.getStringSet("hoster_selection", setOf("stape", "voe"))
         when {
-            link.contains("https://streamtape") || link.contains("https://adblockeronstape") && hosterSelection?.contains("stape") == true -> {
+            linklazy.contains("https://streamtape") || linklazy.contains("https://adblockeronstape") && hosterSelection?.contains("stape") == true -> {
                 val quality = "Streamtape"
-                val video = StreamTapeExtractor(client).videoFromUrl(link, quality)
+                val video = StreamTapeExtractor(client).videoFromUrl(linklazy, quality)
                 if (video != null) {
                     videoList.add(video)
                 }
             }
-            link.contains("https://voe.sx") && hosterSelection?.contains("voe") == true -> {
+            linklazy.contains("https://voe.sx") && hosterSelection?.contains("voe") == true -> {
                 val quality = "Voe"
-                val video = VoeExtractor(client).videoFromUrl(link, quality)
+                val video = VoeExtractor(client).videoFromUrl(linklazy, quality)
+                if (video != null) {
+                    videoList.add(video)
+                }
+            }
+        }
+        val linksrc = document.select("#pembed iframe").attr("src")
+        when {
+            linksrc.contains("https://streamtape") || linksrc.contains("https://adblockeronstape") && hosterSelection?.contains("stape") == true -> {
+                val quality = "Streamtape"
+                val video = StreamTapeExtractor(client).videoFromUrl(linksrc, quality)
+                if (video != null) {
+                    videoList.add(video)
+                }
+            }
+            linksrc.contains("https://voe.sx") && hosterSelection?.contains("voe") == true -> {
+                val quality = "Voe"
+                val video = VoeExtractor(client).videoFromUrl(linksrc, quality)
                 if (video != null) {
                     videoList.add(video)
                 }
