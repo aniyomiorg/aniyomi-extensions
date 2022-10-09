@@ -9,4 +9,8 @@ ext {
     libVersion = '13'
 }
 
+dependencies {
+    compileOnly libs.bundles.coroutines
+}
+
 apply from: "$rootDir/common.gradle"
