@@ -228,7 +228,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return tracks
     }
 
-    // =============================== Search =============================== 
+    // =============================== Search ===============================
     override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
     override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
@@ -287,12 +287,16 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         val info = document.selectFirst("div.anisc-info")
+        val detail = document.selectFirst("div.anisc-detail")
         anime.thumbnail_url = document.selectFirst("div.anisc-poster img").attr("src")
-        anime.title = document.selectFirst("div.anisc-detail h2").attr("data-jname")
+        anime.title = detail.selectFirst("h2").attr("data-jname")
         anime.author = info.getInfo("Studios:")
         anime.status = parseStatus(info.getInfo("Status:"))
         anime.genre = info.getInfo("Genres:", isList = true)
         var description = info.getInfo("Overview:")?.let { it + "\n" } ?: ""
+        detail.select("div.film-stats div.tick-dub")?.let {
+            description += "\nLanguage: " + it.joinToString(", ") { lang -> lang.text() }
+        }
         info.getInfo("Aired:", full = true)?.let { description += it }
         info.getInfo("Premiered:", full = true)?.let { description += it }
         info.getInfo("Synonyms:", full = true)?.let { description += it }
