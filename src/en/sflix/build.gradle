@@ -11,6 +11,7 @@ ext {
 
 dependencies {
     compileOnly libs.bundles.coroutines
+    implementation(project(':lib-dood-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

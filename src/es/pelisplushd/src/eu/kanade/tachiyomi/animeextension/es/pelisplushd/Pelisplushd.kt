@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.DoodExtractor
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamTapeExtractor
@@ -216,7 +216,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             "doodstream" -> {
                 val url2 = url.replace("https://doodstream.com/e/", "https://dood.to/e/")
-                val video = DoodExtractor(client).videoFromUrl(url2, "DoodStream")
+                val video = DoodExtractor(client).videoFromUrl(url2, "DoodStream", false)
                 if (video != null) {
                     videoList.add(video)
                 }

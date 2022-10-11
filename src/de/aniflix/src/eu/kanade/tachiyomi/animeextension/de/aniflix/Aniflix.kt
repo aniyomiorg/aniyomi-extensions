@@ -10,7 +10,7 @@ import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.AnimeDto
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.Episode
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.Release
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.Season
-import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.DoodExtractor
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.StreamlareExtractor
 import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.VoeExtractor
@@ -198,7 +198,7 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
             val hosterSelection = preferences.getStringSet("hoster_selection", setOf("dood", "stape", "voe", "slare"))
             when {
                 link.contains("https://dood") && hosterSelection?.contains("dood") == true -> {
-                    val video = try { DoodExtractor(client).videoFromUrl(link, quality) } catch (e: Exception) { null }
+                    val video = try { DoodExtractor(client).videoFromUrl(link, quality, false) } catch (e: Exception) { null }
                     if (video != null) {
                         videoList.add(video)
                     }

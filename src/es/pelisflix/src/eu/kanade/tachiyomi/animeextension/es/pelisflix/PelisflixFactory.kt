@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.pelisflix.extractors.DoodExtractor
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisflix.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisflix.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animesource.AnimeSource
@@ -60,7 +60,7 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
                 }
             }
             if (serverUrl.contains("doodstream")) {
-                val video = DoodExtractor(client).videoFromUrl(serverUrl.replace("https://doodstream.com", "https://dood.wf"), lang + "DoodStream")
+                val video = DoodExtractor(client).videoFromUrl(serverUrl.replace("https://doodstream.com", "https://dood.wf"), lang + "DoodStream", false)
                 if (video != null) videoList.add(video)
             }
             if (serverUrl.contains("streamtape")) {
