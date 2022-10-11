@@ -5,8 +5,12 @@ ext {
     extName = 'AnimeLatinoHD'
     pkgNameSuffix = 'es.animelatinohd'
     extClass = '.AnimeLatinoHD'
-    extVersionCode = 7
+    extVersionCode = 8
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-dood-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

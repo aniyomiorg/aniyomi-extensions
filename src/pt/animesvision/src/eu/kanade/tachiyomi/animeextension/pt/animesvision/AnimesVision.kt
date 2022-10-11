@@ -8,7 +8,7 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.dto.AVResponseDto
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.dto.PayloadData
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.dto.PayloadItem
-import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.DoodExtractor
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.GlobalVisionExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.VoeExtractor

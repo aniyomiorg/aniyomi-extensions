@@ -6,8 +6,12 @@ ext {
     extName = 'Anime Shitai'
     pkgNameSuffix = 'de.animeshitai'
     extClass = '.AnimeShitai'
-    extVersionCode = 4
+    extVersionCode = 5
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-dood-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

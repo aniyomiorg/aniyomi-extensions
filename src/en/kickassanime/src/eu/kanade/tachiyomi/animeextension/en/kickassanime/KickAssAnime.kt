@@ -6,7 +6,7 @@ import android.net.Uri
 import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.en.kickassanime.extractors.DoodExtractor
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.extractors.GogoCdnExtractor
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource

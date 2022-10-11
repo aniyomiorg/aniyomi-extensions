@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.ar.animelek.extractors.DoodExtractor
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animelek.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animelek.extractors.SharedExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animelek.extractors.StreamSBExtractor

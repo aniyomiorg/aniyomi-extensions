@@ -6,8 +6,12 @@ ext {
     extName = 'StreamCloud'
     pkgNameSuffix = 'de.streamcloud'
     extClass = '.StreamCloud'
-    extVersionCode = 1
+    extVersionCode = 2
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-dood-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

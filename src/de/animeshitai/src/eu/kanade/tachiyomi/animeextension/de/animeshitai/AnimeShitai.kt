@@ -7,7 +7,7 @@ import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.de.animeshitai.ASFilters.applyFilterParams
-import eu.kanade.tachiyomi.animeextension.de.animeshitai.extractors.DoodExtractor
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.de.animeshitai.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animeextension.de.animeshitai.model.ASAnime
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource

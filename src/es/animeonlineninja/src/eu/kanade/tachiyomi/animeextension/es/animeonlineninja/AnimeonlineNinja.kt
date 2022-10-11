@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.DoodExtractor
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.JsUnpacker
 import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.StreamSBExtractor
@@ -147,7 +147,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 StreamTapeExtractor(client).videoFromUrl(serverUrl, "$lang StreamTape")?.let { it1 -> videos.add(it1) }
             }
             serverUrl.contains("dood") && lang.contains(langSelect) -> {
-                DoodExtractor(client).videoFromUrl(serverUrl, "$lang DoodStream")?.let { it1 -> videos.add(it1) }
+                DoodExtractor(client).videoFromUrl(serverUrl, "$lang DoodStream", false)?.let { it1 -> videos.add(it1) }
             }
             serverUrl.contains("sb") && lang.contains(langSelect) -> {
                 try {

@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.de.animetoast.extractors.DoodExtractor
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.de.animetoast.extractors.VoeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -126,7 +126,7 @@ class AnimeToast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     when {
                         link.contains("https://dood") && hosterSelection?.contains("dood") == true -> {
                             val quality = "DoodStream"
-                            val video = DoodExtractor(client).videoFromUrl(link, quality)
+                            val video = DoodExtractor(client).videoFromUrl(link, quality, false)
                             if (video != null) {
                                 videoList.add(video)
                             }

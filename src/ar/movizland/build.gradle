@@ -5,8 +5,12 @@ ext {
     extName = 'موفيزلاند'
     pkgNameSuffix = 'ar.movizland'
     extClass = '.Movizland'
-    extVersionCode = 4
+    extVersionCode = 5
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-dood-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"
