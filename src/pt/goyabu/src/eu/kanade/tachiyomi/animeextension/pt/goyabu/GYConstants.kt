@@ -6,5 +6,4 @@ object GYConstants {
     const val PREFERRED_QUALITY = "preferred_quality"
     const val PREFIX_SEARCH_SLUG = "slug:"
     val QUALITY_LIST = arrayOf("SD", "HD")
-    val PLAYER_REGEX = Regex("""label: "(\w+)",.*file: "(.*?)"""")
 }

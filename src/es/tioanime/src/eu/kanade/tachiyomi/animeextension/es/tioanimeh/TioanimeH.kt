@@ -4,9 +4,9 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.tioanimeh.extractors.fembedExtractor
-import eu.kanade.tachiyomi.animeextension.es.tioanimeh.extractors.okruExtractor
-import eu.kanade.tachiyomi.animeextension.es.tioanimeh.extractors.yourUploadExtractor
+import eu.kanade.tachiyomi.animeextension.es.tioanimeh.extractors.FembedExtractor
+import eu.kanade.tachiyomi.animeextension.es.tioanimeh.extractors.OkruExtractor
+import eu.kanade.tachiyomi.animeextension.es.tioanimeh.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -86,17 +86,14 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
             val serverUrl = servers[1].replace("\\/", "/")
             when (serverName.lowercase()) {
                 "fembed" -> {
-                    val videos = fembedExtractor().videosFromUrl(serverUrl)
-                    videoList.addAll(videos)
+                    FembedExtractor().videosFromUrl(serverUrl).map { vid -> videoList.add(vid) }
                 }
                 "okru" -> {
-                    val videos = okruExtractor(client).videosFromUrl(serverUrl)
-                    videoList.addAll(videos)
+                    OkruExtractor(client).videosFromUrl(serverUrl).map { vid -> videoList.add(vid) }
                 }
                 "yourupload" -> {
                     val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
-                    val video = yourUploadExtractor(client).videofromurl(serverUrl, headers = headers)
-                    videoList.add(video)
+                    YourUploadExtractor(client).videoFromUrl(serverUrl, headers = headers).map { vid -> videoList.add(vid) }
                 }
             }
         }
@@ -111,21 +108,24 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "Fembed: 720p")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality == quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
+        return try {
+            val videoSorted = this.sortedWith(
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+            ).toTypedArray()
+            val userPreferredQuality = preferences.getString("preferred_quality", "Fembed:720p")
+            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
+            if (preferredIdx != -1) {
+                videoSorted.drop(preferredIdx + 1)
+                videoSorted[0] = videoSorted[preferredIdx]
             }
-            return newList
+            videoSorted.toList()
+        } catch (e: Exception) {
+            this
         }
-        return this
+    }
+
+    private fun getNumberFromString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -211,11 +211,16 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val qualities = arrayOf(
+            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
+            "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
+            "YourUpload" // video servers without resolution
+        )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("Fembed:480p", "Fembed:720p", "Fembed:1080p", "SolidFiles", "Okru: full", "Okru: sd", "Okru: low", "Okru: lowest", "Okru: mobile")
-            entryValues = arrayOf("Fembed:480p", "Fembed:720p", "Fembed:1080p", "SolidFiles", "Okru: full", "Okru: sd", "Okru: low", "Okru: lowest", "Okru: mobile")
+            entries = qualities
+            entryValues = qualities
             setDefaultValue("Fembed:720p")
             summary = "%s"
 

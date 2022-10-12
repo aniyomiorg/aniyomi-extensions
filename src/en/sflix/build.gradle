@@ -5,8 +5,13 @@ ext {
     extName = 'Sflix'
     pkgNameSuffix = 'en.sflix'
     extClass = '.SFlix'
-    extVersionCode = 8
+    extVersionCode = 12
     libVersion = '13'
+}
+
+dependencies {
+    compileOnly libs.bundles.coroutines
+    implementation(project(':lib-dood-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

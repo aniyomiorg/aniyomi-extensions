@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.jkhentai.extractors.StreamTapeExtractor
+import eu.kanade.tachiyomi.animeextension.es.jkhentai.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -91,6 +92,11 @@ class Jkhentai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         videoList.add(video)
                     }
                 }
+                if (server == "Upload") {
+                    val url = it.select("div.player-content iframe").attr("src")
+                    val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
+                    YourUploadExtractor(client).videoFromUrl(url, headers = headers).map { vid -> videoList.add(vid) }
+                }
             }
         }
         return videoList
@@ -103,21 +109,24 @@ class Jkhentai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "StreamTape")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality == quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
+        return try {
+            val videoSorted = this.sortedWith(
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+            ).toTypedArray()
+            val userPreferredQuality = preferences.getString("preferred_quality", "StreamTape")
+            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
+            if (preferredIdx != -1) {
+                videoSorted.drop(preferredIdx + 1)
+                videoSorted[0] = videoSorted[preferredIdx]
             }
-            return newList
+            videoSorted.toList()
+        } catch (e: Exception) {
+            this
         }
-        return this
+    }
+
+    private fun getNumberFromString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -219,8 +228,8 @@ class Jkhentai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("StreamTape")
-            entryValues = arrayOf("StreamTape")
+            entries = arrayOf("StreamTape", "YourUpload")
+            entryValues = arrayOf("StreamTape", "YourUpload")
             setDefaultValue("StreamTape")
             summary = "%s"
 

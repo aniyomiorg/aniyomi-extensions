@@ -29,6 +29,19 @@ jobs:
       - name: Clone repo
         uses: actions/checkout@v3
 
+      - name: Find lib changes
+        id: modified-libs
+        uses: tj-actions/changed-files@v32
+        with:
+          files: lib/**
+          files_ignore: lib/**.md
+          files_separator: " "
+        # This step is going to commit, but this will not trigger another workflow.
+      - name: Bump extensions that uses a modified lib
+        if: steps.modified-libs.outputs.any_changed == 'true'
+        run: |
+          ./.github/scripts/bump-versions.sh ${{ steps.modified-libs.outputs.all_changed_files }}
+
       - name: Validate Gradle Wrapper
         uses: gradle/wrapper-validation-action@v1
 

@@ -1,0 +1,16 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'شاهد فور يو'
+    pkgNameSuffix = 'ar.shahid4u'
+    extClass = '.Shahid4U'
+    extVersionCode = 6
+    libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-dood-extractor'))
+}
+
+apply from: "$rootDir/common.gradle"

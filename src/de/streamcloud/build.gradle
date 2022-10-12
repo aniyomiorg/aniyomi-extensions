@@ -1,0 +1,17 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'StreamCloud'
+    pkgNameSuffix = 'de.streamcloud'
+    extClass = '.StreamCloud'
+    extVersionCode = 3
+    libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-dood-extractor'))
+}
+
+apply from: "$rootDir/common.gradle"

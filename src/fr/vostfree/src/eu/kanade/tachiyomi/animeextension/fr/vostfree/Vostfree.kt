@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.fr.vostfree.extractors.DoodExtractor
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.fr.vostfree.extractors.MytvExtractor
 import eu.kanade.tachiyomi.animeextension.fr.vostfree.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.fr.vostfree.extractors.VudeoExtractor
@@ -64,7 +64,7 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> {
         val episodes = mutableListOf<SEpisode>()
         val jsoup = response.asJsoup()
-        jsoup.select("select.new_player_selector option").forEach { it ->
+        jsoup.select("select.new_player_selector option").forEachIndexed { index, it ->
             val epNum = it.text().replace("Episode", "").drop(2)
 
             if (it.text() == "Film") {
@@ -79,7 +79,7 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     episode_number = epNum.toFloat()
                     name = "Épisode $epNum"
                 }
-                episode.setUrlWithoutDomain("?episode:${epNum.toInt() - 1}/${response.request.url}")
+                episode.setUrlWithoutDomain("?episode:$index/${response.request.url}")
                 episodes.add(episode)
             }
         }
@@ -121,7 +121,7 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (server.lowercase() == "doodstream") {
                 val playerId = it.attr("id")
                 val url = document.select("div#player-tabs div.tab-blocks div.tab-content div div#content_$playerId").text()
-                val video = DoodExtractor(client).videoFromUrl(url, "DoodStream")
+                val video = DoodExtractor(client).videoFromUrl(url, "DoodStream", false)
                 if (video != null) {
                     videoList.add(video)
                 }

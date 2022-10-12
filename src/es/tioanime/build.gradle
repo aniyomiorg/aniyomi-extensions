@@ -5,7 +5,7 @@ ext {
     extName = 'TioanimeH'
     pkgNameSuffix = 'es.tioanimeh'
     extClass = '.TioanimeHFactory'
-    extVersionCode = 5
+    extVersionCode = 8
     libVersion = '13'
 }
 

@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.DoodExtractor
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamTapeExtractor
@@ -32,7 +32,7 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.lang.Exception
+import kotlin.Exception
 
 class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -62,7 +62,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             element.select("a").attr("href")
         )
         anime.title = element.select("a div.listing-content p").text()
-        anime.thumbnail_url = element.select("a img").attr("src")
+        anime.thumbnail_url = element.select("a img").attr("src").replace("/w154/", "/w200/")
         return anime
     }
 
@@ -153,7 +153,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     .set("Referer", url)
                     .set("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
                     .set("Accept-Language", "en-US,en;q=0.5")
-                    .set("watchsb", "streamsb")
+                    .set("watchsb", "sbstream")
                     .build()
                 val video = try { StreamSBExtractor(client).videosFromUrl(url, headers) } catch (e: Exception) { null }
                 if (video != null) {
@@ -171,36 +171,52 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             }
             "uwu" -> {
-                if (!url.contains("disable")) {
-                    val body = client.newCall(GET(url)).execute().asJsoup()
-                    if (body.select("script:containsData(var shareId)").toString().isNotBlank()) {
-                        val shareId = body.selectFirst("script:containsData(var shareId)").data().substringAfter("shareId = \"").substringBefore("\"")
-                        val amazonApiJson = client.newCall(GET("https://www.amazon.com/drive/v1/shares/$shareId?resourceVersion=V2&ContentType=JSON&asset=ALL")).execute().asJsoup()
-                        val epId = amazonApiJson.toString().substringAfter("\"id\":\"").substringBefore("\"")
-                        val amazonApi = client.newCall(GET("https://www.amazon.com/drive/v1/nodes/$epId/children?resourceVersion=V2&ContentType=JSON&limit=200&sort=%5B%22kind+DESC%22%2C+%22modifiedDate+DESC%22%5D&asset=ALL&tempLink=true&shareId=$shareId")).execute().asJsoup()
-                        val videoUrl = amazonApi.toString().substringAfter("\"FOLDER\":").substringAfter("tempLink\":\"").substringBefore("\"")
-                        videoList.add(Video(videoUrl, "uwu", videoUrl))
+                try {
+                    if (!url.contains("disable")) {
+                        val body = client.newCall(GET(url)).execute().asJsoup()
+                        if (body.select("script:containsData(var shareId)").toString()
+                            .isNotBlank()
+                        ) {
+                            val shareId =
+                                body.selectFirst("script:containsData(var shareId)").data()
+                                    .substringAfter("shareId = \"").substringBefore("\"")
+                            val amazonApiJson =
+                                client.newCall(GET("https://www.amazon.com/drive/v1/shares/$shareId?resourceVersion=V2&ContentType=JSON&asset=ALL"))
+                                    .execute().asJsoup()
+                            val epId = amazonApiJson.toString().substringAfter("\"id\":\"")
+                                .substringBefore("\"")
+                            val amazonApi =
+                                client.newCall(GET("https://www.amazon.com/drive/v1/nodes/$epId/children?resourceVersion=V2&ContentType=JSON&limit=200&sort=%5B%22kind+DESC%22%2C+%22modifiedDate+DESC%22%5D&asset=ALL&tempLink=true&shareId=$shareId"))
+                                    .execute().asJsoup()
+                            val videoUrl = amazonApi.toString().substringAfter("\"FOLDER\":")
+                                .substringAfter("tempLink\":\"").substringBefore("\"")
+                            videoList.add(Video(videoUrl, "Amazon", videoUrl))
+                        }
                     }
-                }
+                } catch (e: Exception) {}
             }
             "voex" -> {
-                val body = client.newCall(GET(url)).execute().asJsoup()
-                val data1 = body.selectFirst("script:containsData(const sources = {)").data()
-                val video = data1.substringAfter("hls\": \"").substringBefore("\"")
-                videoList.add(Video(video, "Voex", video))
+                try {
+                    val body = client.newCall(GET(url)).execute().asJsoup()
+                    val data1 = body.selectFirst("script:containsData(const sources = {)").data()
+                    val video = data1.substringAfter("hls\": \"").substringBefore("\"")
+                    videoList.add(Video(video, "Voex", video))
+                } catch (e: Exception) {}
             }
             "streamlare" -> {
-                val id = url.substringAfter("/e/").substringBefore("?poster")
-                val videoUrlResponse = client.newCall(POST("https://slwatch.co/api/video/stream/get?id=$id")).execute().asJsoup()
-                json.decodeFromString<JsonObject>(videoUrlResponse.select("body").text())["result"]?.jsonObject?.forEach { quality ->
-                    val resolution = quality.toString().substringAfter("\"label\":\"").substringBefore("\"")
-                    val videoUrl = quality.toString().substringAfter("\"file\":\"").substringBefore("\"")
-                    videoList.add(Video(videoUrl, "Streamlare:$resolution", videoUrl))
-                }
+                try {
+                    val id = url.substringAfter("/e/").substringBefore("?poster")
+                    val videoUrlResponse = client.newCall(POST("https://slwatch.co/api/video/stream/get?id=$id")).execute().asJsoup()
+                    json.decodeFromString<JsonObject>(videoUrlResponse.select("body").text())["result"]?.jsonObject?.forEach { quality ->
+                        val resolution = quality.toString().substringAfter("\"label\":\"").substringBefore("\"")
+                        val videoUrl = quality.toString().substringAfter("\"file\":\"").substringBefore("\"")
+                        videoList.add(Video(videoUrl, "Streamlare:$resolution", videoUrl))
+                    }
+                } catch (e: Exception) {}
             }
             "doodstream" -> {
                 val url2 = url.replace("https://doodstream.com/e/", "https://dood.to/e/")
-                val video = DoodExtractor(client).videoFromUrl(url2, "DoodStream")
+                val video = DoodExtractor(client).videoFromUrl(url2, "DoodStream", false)
                 if (video != null) {
                     videoList.add(video)
                 }
@@ -221,21 +237,24 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "StreamTape")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality == quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
+        return try {
+            val videoSorted = this.sortedWith(
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+            ).toTypedArray()
+            val userPreferredQuality = preferences.getString("preferred_quality", "Voex")
+            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
+            if (preferredIdx != -1) {
+                videoSorted.drop(preferredIdx + 1)
+                videoSorted[0] = videoSorted[preferredIdx]
             }
-            return newList
+            videoSorted.toList()
+        } catch (e: Exception) {
+            this
         }
-        return this
+    }
+
+    private fun getNumberFromString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -259,6 +278,8 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.selectFirst("h1.m-b-5").text()
+        anime.thumbnail_url = document.selectFirst("div.card-body div.row div.col-sm-3 img.img-fluid")
+            .attr("src").replace("/w154/", "/w500/")
         anime.description = document.selectFirst("div.col-sm-4 div.text-large").ownText()
         anime.genre = document.select("div.p-v-20.p-h-15.text-center a span").joinToString { it.text() }
         anime.status = SAnime.COMPLETED
@@ -313,12 +334,18 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val qualities = arrayOf(
+            "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
+            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
+            "Streamlare:1080p", "Streamlare:720p", "Streamlare:480p", "Streamlare:360p", "Streamlare:240p", // Streamlare
+            "StreamTape", "Amazon", "Voex", "DoodStream", "YourUpload"
+        )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("StreamSB:360p", "StreamSB:720p", "StreamSB:1080p", "Fembed:480p", "Fembed:720p", "Fembed:1080p", "DoodStream")
-            entryValues = arrayOf("StreamSB:360p", "StreamSB:720p", "StreamSB:1080p", "Fembed:480p", "Fembed:720p", "Fembed:1080p", "DoodStream")
-            setDefaultValue("DoodStream")
+            entries = qualities
+            entryValues = qualities
+            setDefaultValue("Voex")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->

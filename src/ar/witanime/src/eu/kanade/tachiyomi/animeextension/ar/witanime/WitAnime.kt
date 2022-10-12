@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.DoodExtractor
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.SoraPlayExtractor
 import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.StreamSBExtractor
@@ -115,7 +115,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         .set("Referer", server)
                         .set("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
                         .set("Accept-Language", "en-US,en;q=0.5")
-                        .set("watchsb", "streamsb")
+                        .set("watchsb", "sbstream")
                         .build()
                     val videos = StreamSBExtractor(client).videosFromUrl(server, headers)
                     videoList.addAll(videos)

@@ -5,8 +5,12 @@ ext {
     extName = 'KickAssAnime'
     pkgNameSuffix = 'en.kickassanime'
     extClass = '.KickAssAnime'
-    extVersionCode = 3
+    extVersionCode = 11
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-dood-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

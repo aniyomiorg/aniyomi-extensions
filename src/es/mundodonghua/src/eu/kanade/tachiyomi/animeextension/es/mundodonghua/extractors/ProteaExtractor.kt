@@ -11,11 +11,10 @@ import okhttp3.Headers
 import org.jsoup.Connection
 import org.jsoup.Jsoup
 import uy.kohesive.injekt.injectLazy
-import java.io.IOException
 
 class ProteaExtractor() {
     private val json: Json by injectLazy()
-    fun videosFromUrl(url: String, qualityPrefix: String = "Protea", headers: Headers, baseUrl: String): List<Video> {
+    fun videosFromUrl(url: String, qualityPrefix: String = "Protea", headers: Headers): List<Video> {
         val videoList = mutableListOf<Video>()
         try {
             val document = Jsoup.connect(url).headers(headers.toMap()).ignoreContentType(true).method(Connection.Method.POST).execute()
@@ -45,19 +44,8 @@ class ProteaExtractor() {
                     videoList.add(Video("https://$urlVideo", quality, "https://$urlVideo", headers = newHeaders))
                 }
             }
-        } catch (e: IOException) {
+        } catch (e: Exception) {
         }
         return videoList
-    }
-
-    private fun fixUrl(url: String, baseUrl: String,): String {
-        if (url.startsWith("http")) return url
-        if (url.isEmpty()) return ""
-        val startsWithNoHttp = url.startsWith("//")
-        if (startsWithNoHttp) return "https:$url"
-        else {
-            if (url.startsWith('/')) return baseUrl + url
-            return "$baseUrl/$url"
-        }
     }
 }

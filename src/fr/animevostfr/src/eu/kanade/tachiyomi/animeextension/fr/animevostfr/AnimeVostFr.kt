@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.fr.animevostfr
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -13,18 +14,20 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
 class AnimeVostFr : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "animevostfr"
+    override val name = "AnimeVostFr"
 
     override val baseUrl = "https://animevostfr.tv"
 
@@ -129,7 +132,7 @@ class AnimeVostFr : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return if (type == "MOVIE") {
             return listOf(
                 SEpisode.create().apply {
-                    url = response.request.url.toString()
+                    url = response.request.url.toString() + "?server=download"
                     name = "Movie"
                 }
             )
@@ -145,29 +148,57 @@ class AnimeVostFr : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .substringAfterLast("-episode-")
             .substringBefore("-")
         return SEpisode.create().apply {
-            setUrlWithoutDomain(element.attr("href"))
+            setUrlWithoutDomain(element.attr("href") + "?server=download")
             name = "Épisode $number"
             episode_number = number.toFloat()
         }
     }
 
-    override fun videoListParse(response: Response): List<Video> {
-        throw Exception("idk")
+    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+        val response = client.newCall(GET(episode.url)).execute()
+        val parsedResponse = response.asJsoup()
+        if (parsedResponse.select("title").text().contains("Warning"))
+            throw Exception(parsedResponse.select("body").text())
+        val epId = parsedResponse.select("link[rel=shortlink]").attr("href")
+            .substringAfter("?p=")
+        Log.i("bruh", "ID: $epId \nLink: $")
+        val xhr = Headers.headersOf("x-requested-with", "XMLHttpRequest")
+        val epLink = client.newCall(GET("$baseUrl/ajax-get-link-stream/?server=download&filmId=$epId", xhr))
+            .execute().body!!.string()
+        val playlistInterceptor = CloudFlareInterceptor()
+        val cfClient = client.newBuilder().addInterceptor(playlistInterceptor).build()
+        val headers = Headers.headersOf(
+            "referer", "$baseUrl/",
+            "user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"
+        )
+        val playlistResponse = cfClient.newCall(GET(epLink, headers)).execute().body!!.string()
+        val headersVideo = Headers.headersOf(
+            "referer", epLink,
+            "user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"
+        )
+        val playlist = mutableListOf<Video>()
+        playlistResponse.substringAfter("#EXT-X-STREAM-INF:")
+            .split("#EXT-X-STREAM-INF:").map {
+                val quality = it.substringAfter("RESOLUTION=").split(",")[0].split("\n")[0].substringAfter("x") + "p"
+                val videoUrl = it.substringAfter("\n").substringBefore("\n")
+                playlist.add(Video(videoUrl, quality, videoUrl, headers = headersVideo))
+            }
+        return Observable.just(playlist.sort())
     }
 
-    override fun videoListSelector() = TODO("idk pls help")
+    override fun videoListSelector() = throw Exception("not used")
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "1080")
+        val quality = preferences.getString("preferred_quality", "720")
         if (quality != null) {
             val newList = mutableListOf<Video>()
             var preferred = 0
             for (video in this) {
-                if (video.quality == quality) {
+                if (video.quality.contains(quality)) {
                     newList.add(preferred, video)
                     preferred++
                 } else {
@@ -314,9 +345,9 @@ class AnimeVostFr : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Qualité préférée"
-            entries = arrayOf("1080p", "720p", "360p")
-            entryValues = arrayOf("1080", "720", "360")
-            setDefaultValue("1080")
+            entries = arrayOf("720p", "360p")
+            entryValues = arrayOf("720", "360")
+            setDefaultValue("720")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
