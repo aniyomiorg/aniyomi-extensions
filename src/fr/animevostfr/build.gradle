@@ -3,7 +3,7 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlinx-serialization'
 
 ext {
-    extName = 'Anime Vost Fr'
+    extName = 'AnimeVostFr'
     pkgNameSuffix = 'fr.animevostfr'
     extClass = '.AnimeVostFr'
     extVersionCode = 1
