@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.en.sflix.extractors.SFlixExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -14,6 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
@@ -44,7 +44,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val name = "SFlix"
 
     override val baseUrl by lazy {
-        "https://" + preferences.getString(PREF_DOMAIN_KEY, "dopebox.to")!!
+        "https://" + preferences.getString(PREF_DOMAIN_KEY, "sflix.to")!!
     }
 
     override val lang = "en"
@@ -347,7 +347,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title = PREF_DOMAIN_TITLE
             entries = PREF_DOMAIN_LIST
             entryValues = PREF_DOMAIN_LIST
-            setDefaultValue("dopebox.to")
+            setDefaultValue("sflix.to")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -407,7 +407,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title = PREF_POPULAR_TITLE
             entries = PREF_POPULAR_ENTRIES
             entryValues = PREF_POPULAR_VALUES
-            setDefaultValue("Movies")
+            setDefaultValue("movie")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -452,7 +452,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_LATEST_TITLE = "Preferred latest page"
         private val PREF_LATEST_PAGES = arrayOf("Movies", "TV Shows")
 
-        private const val PREF_POPULAR_KEY = "preferred_popular_page"
+        private const val PREF_POPULAR_KEY = "preferred_popular_page_new"
         private const val PREF_POPULAR_TITLE = "Preferred popular page"
         private val PREF_POPULAR_ENTRIES = PREF_LATEST_PAGES
         private val PREF_POPULAR_VALUES = arrayOf("movie", "tv-show")
