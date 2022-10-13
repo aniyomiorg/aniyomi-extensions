@@ -207,6 +207,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: Aniking",
+    "pkg": "eu.kanade.tachiyomi.animeextension.de.aniking",
+    "apk": "aniyomi-de.aniking-v13.1.apk",
+    "lang": "de",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: Anime24",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.anime24",
     "apk": "aniyomi-de.anime24-v13.3.apk",
