@@ -407,7 +407,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title = PREF_POPULAR_TITLE
             entries = PREF_POPULAR_ENTRIES
             entryValues = PREF_POPULAR_VALUES
-            setDefaultValue("Movies")
+            setDefaultValue("movie")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -452,7 +452,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_LATEST_TITLE = "Preferred latest page"
         private val PREF_LATEST_PAGES = arrayOf("Movies", "TV Shows")
 
-        private const val PREF_POPULAR_KEY = "preferred_popular_page"
+        private const val PREF_POPULAR_KEY = "preferred_popular_page_new"
         private const val PREF_POPULAR_TITLE = "Preferred popular page"
         private val PREF_POPULAR_ENTRIES = PREF_LATEST_PAGES
         private val PREF_POPULAR_VALUES = arrayOf("movie", "tv-show")
