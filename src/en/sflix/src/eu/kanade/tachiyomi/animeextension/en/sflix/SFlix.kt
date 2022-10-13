@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.en.sflix.extractors.SFlixExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -14,6 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
@@ -44,7 +44,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val name = "SFlix"
 
     override val baseUrl by lazy {
-        "https://" + preferences.getString(PREF_DOMAIN_KEY, "dopebox.to")!!
+        "https://" + preferences.getString(PREF_DOMAIN_KEY, "sflix.to")!!
     }
 
     override val lang = "en"
@@ -347,7 +347,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title = PREF_DOMAIN_TITLE
             entries = PREF_DOMAIN_LIST
             entryValues = PREF_DOMAIN_LIST
-            setDefaultValue("dopebox.to")
+            setDefaultValue("sflix.to")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
