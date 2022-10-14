@@ -159,12 +159,12 @@ class Anifreakz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val preferred_sub = preferences.getString("preferred_sub", null)
-        if (preferred_sub != null) {
+        val subPreference = preferences.getString("preferred_sub", null)
+        if (subPreference != null) {
             val newList = mutableListOf<Video>()
             var preferred = 0
             for (video in this) {
-                if (video.quality.contains(preferred_sub)) {
+                if (video.quality.contains(subPreference)) {
                     newList.add(preferred, video)
                     preferred++
                 } else {
