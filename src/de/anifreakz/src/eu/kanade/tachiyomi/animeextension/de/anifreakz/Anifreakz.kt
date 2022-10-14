@@ -159,12 +159,12 @@ class Anifreakz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val hoster = preferences.getString("preferred_hoster", null)
-        if (hoster != null) {
+        val preferred_sub = preferences.getString("preferred_sub", null)
+        if (preferred_sub != null) {
             val newList = mutableListOf<Video>()
             var preferred = 0
             for (video in this) {
-                if (video.quality.contains(hoster)) {
+                if (video.quality.contains(preferred_sub)) {
                     newList.add(preferred, video)
                     preferred++
                 } else {
@@ -243,5 +243,21 @@ class Anifreakz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // Preferences
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val subPref = ListPreference(screen.context).apply {
+            key = "preferred_sub"
+            title = "Standardmäßig Sub oder Dub?"
+            entries = arrayOf("Sub", "Dub")
+            entryValues = arrayOf("SUB", "DUB")
+            setDefaultValue("SUB")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(subPref)
     }
 }
