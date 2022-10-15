@@ -21,7 +21,13 @@ data class PayloadData(
 
 @Serializable
 data class AVResponseDto(
+    val effects: AVResponseEffects? = null,
     val serverMemo: AVResponseMemo? = null
+)
+
+@Serializable
+data class AVResponseEffects(
+    val html: String? = null
 )
 
 @Serializable

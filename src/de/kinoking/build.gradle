@@ -6,8 +6,12 @@ ext {
     extName = 'Kinoking'
     pkgNameSuffix = 'de.kinoking'
     extClass = '.Kinoking'
-    extVersionCode = 2
+    extVersionCode = 5
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-dood-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

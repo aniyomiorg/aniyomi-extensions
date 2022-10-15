@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.DoodExtractor
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.StreamSBExtractor
@@ -137,7 +137,7 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         if (video != null) videoList.add(video)
                     }
                     if (quality == "Doodstream") {
-                        val video = DoodExtractor(client).videoFromUrl(url, "DoodStream")
+                        val video = DoodExtractor(client).videoFromUrl(url, "DoodStream", false)
                         if (video != null) videoList.add(video)
                     }
                     if (quality == "Okru") {

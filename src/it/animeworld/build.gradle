@@ -5,8 +5,12 @@ ext {
     extName = 'ANIMEWORLD.tv'
     pkgNameSuffix = 'it.animeworld'
     extClass = '.ANIMEWORLD'
-    extVersionCode = 12
+    extVersionCode = 14
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-dood-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

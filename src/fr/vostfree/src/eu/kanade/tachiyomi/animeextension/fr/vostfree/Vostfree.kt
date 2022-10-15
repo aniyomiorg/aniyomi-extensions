@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.fr.vostfree.extractors.DoodExtractor
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.fr.vostfree.extractors.MytvExtractor
 import eu.kanade.tachiyomi.animeextension.fr.vostfree.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.fr.vostfree.extractors.VudeoExtractor
@@ -121,7 +121,7 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (server.lowercase() == "doodstream") {
                 val playerId = it.attr("id")
                 val url = document.select("div#player-tabs div.tab-blocks div.tab-content div div#content_$playerId").text()
-                val video = DoodExtractor(client).videoFromUrl(url, "DoodStream")
+                val video = DoodExtractor(client).videoFromUrl(url, "DoodStream", false)
                 if (video != null) {
                     videoList.add(video)
                 }

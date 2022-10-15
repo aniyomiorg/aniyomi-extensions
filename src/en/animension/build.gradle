@@ -5,8 +5,12 @@ ext {
     extName = 'Animension'
     pkgNameSuffix = 'en.animension'
     extClass = '.Animension'
-    extVersionCode = 4
+    extVersionCode = 6
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-dood-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

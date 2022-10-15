@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.de.kinoking.extractors.DoodExtractor
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.de.kinoking.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.de.kinoking.extractors.VoeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -47,7 +47,11 @@ class Kinoking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "#featured-titles article.item"
 
-    override fun popularAnimeRequest(page: Int): Request = GET(baseUrl, headers = Headers.headersOf("if-modified-since", ""))
+    override fun popularAnimeRequest(page: Int): Request {
+        val interceptor = client.newBuilder().addInterceptor(CloudflareInterceptor()).build()
+        val headers = interceptor.newCall(GET(baseUrl)).execute().request.headers
+        return GET(baseUrl, headers = headers)
+    }
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -130,7 +134,8 @@ class Kinoking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
                 link.contains("https://dood.") || link.contains("https://doodstream.") && hosterSelection?.contains("dood") == true -> {
                     val quality = "Doodstream"
-                    val video = DoodExtractor(client).videoFromUrl(link, quality)
+                    val redirect = !link.contains("https://doodstream")
+                    val video = DoodExtractor(client).videoFromUrl(link, quality, redirect)
                     if (video != null) {
                         videoList.add(video)
                     }

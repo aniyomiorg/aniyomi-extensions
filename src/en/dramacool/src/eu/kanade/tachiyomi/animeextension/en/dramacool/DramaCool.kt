@@ -6,7 +6,7 @@ import android.widget.Toast
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.AppInfo
-import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.DoodExtractor
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.StreamTapeExtractor

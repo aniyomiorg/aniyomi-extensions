@@ -29,7 +29,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "OtakuDesu"
 
-    override val baseUrl = "https://otakudesu.watch"
+    override val baseUrl = "https://otakudesu.video"
 
     override val lang = "id"
 
@@ -80,7 +80,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             (epsNum.isNotEmpty()) -> epsNum.toFloat()
             else -> 1F
         }
-        episode.name = element.select("span > a").text()
+        episode.name = element.select("span > a").text().replace(".+?(?=Episode)|\\sSubtitle.+".toRegex(), "")
         episode.date_upload = reconstructDate(element.select("span.zeebr").text())
 
         return episode
@@ -145,7 +145,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> element.select("div.thumb > a > div.thumbz > img").first().attr("src")
         }
         anime.title = when (ui) {
-            "search" -> element.select("h2 > a").text()
+            "search" -> element.select("h2 > a").text().replace(" Subtitle Indonesia", "")
             "genres" -> element.select(".col-anime-title > a").text()
             else -> element.select("div.thumb > a > div.thumbz > h2").text()
         }
