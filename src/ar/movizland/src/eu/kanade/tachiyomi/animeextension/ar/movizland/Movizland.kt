@@ -35,7 +35,7 @@ class Movizland : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "موفيزلاند"
 
-    override val baseUrl = "https://new.movizland.cyou/"
+    override val baseUrl = "https://watch.movizland.cyou"
 
     override val lang = "ar"
 
@@ -290,6 +290,7 @@ class Movizland : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             return GET(catUrl, headers)
                         }
                     }
+                    else -> {}
                 }
             }
             throw Exception("اختر قسم")
