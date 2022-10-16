@@ -206,19 +206,25 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
-        val scriptSelect = document.select("script:containsData(eval)").first().data()
-        val serverPrefix = scriptSelect.substringAfter("|net|cdn|amzn|").substringBefore("|rewind|icon|")
-        val sourceServer = "https://$serverPrefix.e-amzn-cdn.net"
-        val qualities = scriptSelect.substringAfter("|image|").substringBefore("|sources|").replace("||", "|").split("|")
-        qualities.forEachIndexed { i, q ->
-            if (i % 2 == 0) {
-                val id = qualities[i + 1]
-                val src = "$sourceServer/$id/v.mp4"
-                val video = Video(src, "Main: $q", src)
-                videoList.add(video)
+        return try {
+            val scriptSelect = document.select("script:containsData(eval)").first().data()
+            val serverPrefix =
+                scriptSelect.substringAfter("|net|cdn|amzn|").substringBefore("|rewind|icon|")
+            val sourceServer = "https://$serverPrefix.e-amzn-cdn.net"
+            val qualities = scriptSelect.substringAfter("|image|").substringBefore("|sources|")
+                .replace("||", "|").split("|")
+            qualities.forEachIndexed { i, q ->
+                if (i % 2 == 0) {
+                    val id = qualities[i + 1]
+                    val src = "$sourceServer/$id/v.mp4"
+                    val video = Video(src, "Main: $q", src)
+                    videoList.add(video)
+                }
             }
+            videoList
+        } catch (e: Exception) {
+            videoList
         }
-        return videoList
     }
 
     override fun List<Video>.sort(): List<Video> {
@@ -276,6 +282,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             return GET(catUrl, headers)
                         }
                     }
+                    else -> {}
                 }
             }
             return GET(url, headers)

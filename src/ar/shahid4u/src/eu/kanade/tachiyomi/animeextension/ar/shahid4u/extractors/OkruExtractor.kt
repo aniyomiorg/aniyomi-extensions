@@ -4,40 +4,36 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
-import java.lang.Exception
 
 class OkruExtractor(private val client: OkHttpClient) {
-    fun videosFromUrl(url: String): List<Video> {
-        val document = client.newCall(GET(url)).execute().asJsoup()
-        if (document == null) {
-            throw Exception("Not used")
-        } else {
-            val videoList = mutableListOf<Video>()
-            val qualityMap = mapOf(
-                "Okru: mobile" to "Okru: 140p",
-                "Okru: lowest" to "Okru: 240p",
-                "Okru: low" to "Okru: 360p",
-                "Okru: sd" to "Okru: 480p",
-                "Okru: hd" to "Okru: 720p",
-                "Okru: fhd" to "Okru: 1080p"
+    fun videosFromUrl(url: String, qualityPrefix: String = ""): List<Video> {
+        val videoList = mutableListOf<Video>()
+        return try {
+            val document = client.newCall(GET(url)).execute().asJsoup()
+            val qualities = listOf(
+                Pair("full", "1080p"),
+                Pair("hd", "720p"),
+                Pair("sd", "480p"),
+                Pair("low", "360p"),
+                Pair("lowest", "240p"),
+                Pair("mobile", "144p")
             )
             val videosString = document.select("div[data-options]").attr("data-options")
                 .substringAfter("\\\"videos\\\":[{\\\"name\\\":\\\"")
                 .substringBefore("]")
-            videosString.split("{\\\"name\\\":\\\"").reversed().forEach { it1 ->
-                val videoUrl = it1.substringAfter("url\\\":\\\"")
+            videosString.split("{\\\"name\\\":\\\"").reversed().forEach {
+                val videoUrl = it.substringAfter("url\\\":\\\"")
                     .substringBefore("\\\"")
                     .replace("\\\\u0026", "&")
-                val videoQuality = "Okru: " + it1.substringBefore("\\\"")
+                val quality = try { qualities.find { q -> q.first == it.substringBefore("\\\"") }?.second } catch (e: Exception) { it.substringBefore("\\\"") }
+                val videoQuality = qualityPrefix + "Okru:" + quality
                 if (videoUrl.startsWith("https://")) {
-                    val video = qualityMap[videoQuality]?.let { Video(videoUrl, it, videoUrl) }
-                    if (video != null)
-                        videoList.add(video)
-                    else
-                        videoList.add(Video(videoUrl, videoQuality, videoUrl))
+                    videoList.add(Video(videoUrl, videoQuality, videoUrl, headers = null))
                 }
             }
-            return videoList
+            videoList
+        } catch (e: Exception) {
+            videoList
         }
     }
 }
