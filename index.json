@@ -92,10 +92,10 @@
   {
     "name": "Aniyomi: asia2tv",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.asia2tv",
-    "apk": "aniyomi-ar.asia2tv-v13.6.apk",
+    "apk": "aniyomi-ar.asia2tv-v13.7.apk",
     "lang": "ar",
-    "code": 6,
-    "version": "13.6",
+    "code": 7,
+    "version": "13.7",
     "nsfw": 0
   },
   {
