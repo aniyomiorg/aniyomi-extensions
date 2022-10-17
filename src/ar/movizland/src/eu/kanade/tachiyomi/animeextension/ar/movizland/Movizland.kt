@@ -158,7 +158,7 @@ class Movizland : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val seasonData = season.select("a").attr("data-term")
                     val refererHeaders = Headers.headersOf("referer", url, "x-requested-with", "XMLHttpRequest")
                     val requestBody = FormBody.Builder().add("season", seasonData).build()
-                    val getEpisodes = client.newCall(POST("${baseUrl}wp-content/themes/Moviezland2022/EpisodesList.php", refererHeaders, requestBody)).execute().asJsoup()
+                    val getEpisodes = client.newCall(POST("${baseUrl}/wp-content/themes/Moviezland2022/EpisodesList.php", refererHeaders, requestBody)).execute().asJsoup()
                     for (episode in getEpisodes.select("div.EpisodeItem").reversed()) {
                         addEpisodeNew(episode.select("a").attr("href"), "series", season.select("a").text() + " " + episode.select("a").text())
                     }
