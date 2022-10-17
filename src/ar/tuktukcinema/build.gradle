@@ -1,0 +1,16 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'تك تك سينما'
+    pkgNameSuffix = 'ar.tuktukcinema'
+    extClass = '.Tuktukcinema'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-dood-extractor'))
+}
+
+apply from: "$rootDir/common.gradle"
