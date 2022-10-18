@@ -5,9 +5,7 @@ import android.content.SharedPreferences
 import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.FembedExtractor
-import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -17,6 +15,8 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
@@ -149,16 +149,9 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         when (server.lowercase()) {
             "sbfast" -> {
-                val headers = headers.newBuilder()
-                    .set("Referer", url)
-                    .set("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
-                    .set("Accept-Language", "en-US,en;q=0.5")
-                    .set("watchsb", "sbstream")
-                    .build()
-                val video = try { StreamSBExtractor(client).videosFromUrl(url, headers) } catch (e: Exception) { null }
-                if (video != null) {
-                    videoList.addAll(video)
-                }
+                runCatching {
+                    StreamSBExtractor(client).videosFromUrl(url, headers)
+                }.getOrNull()?.let { videoList.addAll(it) }
             }
             "plusto" -> {
                 val videos = FembedExtractor().videosFromUrl(url)
