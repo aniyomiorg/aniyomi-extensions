@@ -8,7 +8,6 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.animetitans.extractors.AnimeTitansExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animetitans.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animetitans.extractors.SharedExtractor
-import eu.kanade.tachiyomi.animeextension.ar.animetitans.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animetitans.extractors.VidBomExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -18,6 +17,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.HttpUrl
@@ -133,16 +133,7 @@ class AnimeTitans : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     embedUrl.contains("vidmovie.xyz") || embedUrl.contains("sbspeed.com") || embedUrl.contains("streamsss.net") ||
                     embedUrl.contains("sblanh.com")
                 -> {
-                    val headers = headers.newBuilder()
-                        // .set("Referer", embedUrl)
-                        .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36")
-                        .set("Accept", "application/json, text/plain, */*")
-                        .set("Accept-Language", "en-US,en;q=0.5")
-                        .set("watchsb", "sbstream")
-                        .build()
-                    Log.i("animetitansstreamsb", "$embedUrl")
                     val videos = StreamSBExtractor(client).videosFromUrl(embedUrl, headers)
-                    Log.i("animetitansstreamsb", "$videos")
                     videoList.addAll(videos)
                 }
                 embedUrl.contains("fembed") ||

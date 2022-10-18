@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.en.zoro.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.en.zoro.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animeextension.en.zoro.extractors.ZoroExtractor
 import eu.kanade.tachiyomi.animeextension.en.zoro.utils.JSONUtil
@@ -16,6 +15,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import kotlinx.coroutines.Dispatchers
@@ -133,9 +133,8 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             source?.let { getVideosFromServer(it, subDub, name) }
                         }
                         "StreamSB" in name -> {
-                            val newHeaders = Headers.headersOf("watchsb", "sbstream")
                             StreamSBExtractor(client)
-                                .videosFromUrl(sourceUrl, newHeaders, subDub)
+                                .videosFromUrl(sourceUrl, headers, suffix = "- $subDub")
                         }
                         "Streamtape" in name ->
                             StreamTapeExtractor(client)
@@ -261,7 +260,11 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
 
-    private fun searchAnimeRequest(page: Int, query: String, filters: ZoroFilters.FilterSearchParams): Request {
+    private fun searchAnimeRequest(
+        page: Int,
+        query: String,
+        filters: ZoroFilters.FilterSearchParams
+    ): Request {
         val url = "$baseUrl/search?".toHttpUrlOrNull()!!.newBuilder()
             .addQueryParameter("page", page.toString())
             .addQueryParameter("keyword", query)
