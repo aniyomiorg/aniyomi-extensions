@@ -4,10 +4,8 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.JsUnpacker
-import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.UploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -18,6 +16,8 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
@@ -151,19 +151,8 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             serverUrl.contains("sb") && lang.contains(langSelect) -> {
                 try {
-                    val headers = headers.newBuilder()
-                        .set("referer", serverUrl)
-                        .set(
-                            "User-Agent",
-                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"
-                        )
-                        .set("Accept-Language", "es-MX,es-419;q=0.9,es;q=0.8,en;q=0.7")
-                        .set("watchsb", "sbstream")
-                        .set("authority", "embedsb.com")
-                        .build()
-
-                    val video = StreamSBExtractor(client).videosFromUrl(serverUrl, headers)
-                    videos.addAll(video.map { Video(it.url, "$lang ${it.quality}", it.url) })
+                    val video = StreamSBExtractor(client).videosFromUrl(serverUrl, headers, lang)
+                    videos.addAll(video)
                 } catch (e: Exception) { }
             }
             serverUrl.contains("mixdrop") && lang.contains(langSelect) -> {
