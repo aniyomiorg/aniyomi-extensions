@@ -6,7 +6,6 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.animefenix.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.animefenix.extractors.Mp4uploadExtractor
-import eu.kanade.tachiyomi.animeextension.es.animefenix.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.es.animefenix.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -15,6 +14,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -104,7 +104,8 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
             when {
                 realUrl.contains("ok.ru") -> {
-                    OkruExtractor(client).videosFromUrl(realUrl).map { videoList.add(it) }
+                    val okruVideos = OkruExtractor(client).videosFromUrl(realUrl)
+                    videoList.addAll(okruVideos)
                 }
                 realUrl.contains("fembed") -> {
                     FembedExtractor().videosFromUrl(realUrl).map { videoList.add(it) }
