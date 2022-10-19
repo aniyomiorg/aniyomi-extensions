@@ -57,14 +57,43 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector(): String = "ul.pagination li.page-item a[rel=next]"
 
     // episodes
+    override fun episodeListSelector() = "div.bg-primary2 h2 a"
 
-    override fun episodeListSelector() = "input#reportInputUrl"
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val episodes = mutableListOf<SEpisode>()
+        fun addEpisodes(document: Document) {
+            if (document.select(episodeListSelector()).isNullOrEmpty()) {
+                // add movie
+                document.select("input#reportInputUrl").map { episodes.add(episodeFromElement(it)) }
+            } else {
+                document.select(episodeListSelector()).map { episodes.add(episodesFromElement(it)) }
+            }
+        }
+        addEpisodes(response.asJsoup())
+        return episodes
+    }
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("value"))
-        episode.name = element.ownerDocument().select("picture > img.img-fluid").attr("alt")
+        episode.name = "مشاهدة"
         return episode
+    }
+
+    private fun episodesFromElement(element: Element): SEpisode {
+        val episode = SEpisode.create()
+        val epNum = getNumberFromEpsString(element.text())
+        episode.setUrlWithoutDomain(element.attr("href"))
+        episode.name = element.text()
+        episode.episode_number = when {
+            (epNum.isNotEmpty()) -> epNum.toFloat()
+            else -> 1F
+        }
+        return episode
+    }
+
+    private fun getNumberFromEpsString(epsStr: String): String {
+        return epsStr.filter { it.isDigit() }
     }
 
     // Video links
@@ -128,20 +157,24 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     is RatingFilter -> url.addQueryParameter("rating", filter.toUriPart())
                     is FormatFilter -> url.addQueryParameter("formats", filter.toUriPart())
                     is QualityFilter -> url.addQueryParameter("quality", filter.toUriPart())
+                    else -> {}
                 }
             }
             url.toString()
         } else {
-            val url = "$baseUrl/movies?page=$page".toHttpUrlOrNull()!!.newBuilder()
+            val url = "$baseUrl/search?page=$page".toHttpUrlOrNull()!!.newBuilder()
+            var type = "movies"
             filters.forEach { filter ->
                 when (filter) {
+                    is TypeFilter -> type = filter.toUriPart().toString()
                     is SectionSFilter -> url.addQueryParameter("section", filter.toUriPart())
                     is CategorySFilter -> url.addQueryParameter("category", filter.toUriPart())
                     is RatingSFilter -> url.addQueryParameter("rating", filter.toUriPart())
                     // is LanguageSFilter -> url.addQueryParameter("quality", filter.toUriPart())
+                    else -> {}
                 }
             }
-            url.toString()
+            url.toString().replace("search", type)
         }
         return GET(url, headers)
     }
@@ -161,7 +194,7 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Latest
 
-    override fun latestUpdatesNextPageSelector(): String? = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
 
     override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
 
@@ -172,14 +205,15 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // Filters
 
     override fun getFilterList() = AnimeFilterList(
-        AnimeFilter.Header("this is search Filters"),
+        AnimeFilter.Header("فلترات البحث"),
         AnimeFilter.Separator(),
         SectionFilter(getSectionFilter()),
         RatingFilter(getRatingFilter()),
         FormatFilter(getFormatFilter()),
         QualityFilter(getQualityFilter()),
-        AnimeFilter.Header("this is Movies Filters"),
+        AnimeFilter.Header("تصفح الموقع (تعمل فقط لو كان البحث فارغ)"),
         AnimeFilter.Separator(),
+        TypeFilter(getTypeFilter()),
         SectionSFilter(getSectionSFilter()),
         CategorySFilter(getCategorySFilter()),
         RatingSFilter(getRatingSFilter()),
@@ -189,14 +223,18 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private class RatingFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("التقيم", vals)
     private class FormatFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("الجودة", vals)
     private class QualityFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("الدقة", vals)
-
-    private class SectionSFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("الأقسام", vals)
+    private class TypeFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("النوع", vals)
+    private class SectionSFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("القسم", vals)
     private class CategorySFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("التصنيف", vals)
     private class RatingSFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("التقييم", vals)
-
+    private fun getTypeFilter(): Array<Pair<String?, String>> = arrayOf(
+        Pair("movies", "افلام"),
+        Pair("series", "مسلسلات")
+    )
     private fun getSectionFilter(): Array<Pair<String?, String>> = arrayOf(
-        Pair("0", "القسم"),
+        Pair("0", "الكل"),
         Pair("movie", "افلام"),
+        Pair("series", "مسلسلات"),
         Pair("show", "تلفزيون")
     )
 
