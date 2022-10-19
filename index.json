@@ -146,10 +146,10 @@
   {
     "name": "Aniyomi: MY CIMA",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.mycima",
-    "apk": "aniyomi-ar.mycima-v13.16.apk",
+    "apk": "aniyomi-ar.mycima-v13.17.apk",
     "lang": "ar",
-    "code": 16,
-    "version": "13.16",
+    "code": 17,
+    "version": "13.17",
     "nsfw": 0
   },
   {
