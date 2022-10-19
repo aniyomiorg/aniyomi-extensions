@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.doramasyt.extractors.FembedExtractor
-import eu.kanade.tachiyomi.animeextension.es.doramasyt.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.es.doramasyt.extractors.SolidFilesExtractor
 import eu.kanade.tachiyomi.animeextension.es.doramasyt.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animeextension.es.doramasyt.extractors.UqloadExtractor
@@ -17,6 +16,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
