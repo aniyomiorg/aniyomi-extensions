@@ -205,13 +205,13 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // Filters
 
     override fun getFilterList() = AnimeFilterList(
-        AnimeFilter.Header("this is search Filters"),
+        AnimeFilter.Header("فلترات البحث"),
         AnimeFilter.Separator(),
         SectionFilter(getSectionFilter()),
         RatingFilter(getRatingFilter()),
         FormatFilter(getFormatFilter()),
         QualityFilter(getQualityFilter()),
-        AnimeFilter.Header("this is Filters"),
+        AnimeFilter.Header("تصفح الموقع (تعمل فقط لو كان البحث فارغ)"),
         AnimeFilter.Separator(),
         TypeFilter(getTypeFilter()),
         SectionSFilter(getSectionSFilter()),
