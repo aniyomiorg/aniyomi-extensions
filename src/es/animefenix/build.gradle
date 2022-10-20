@@ -9,4 +9,10 @@ ext {
     libVersion = '13'
 }
 
+dependencies {
+    implementation(project(':lib-okru-extractor'))
+    implementation(project(':lib-streamsb-extractor'))
+}
+
+
 apply from: "$rootDir/common.gradle"

@@ -4,10 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.FembedExtractor
-import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.OkruExtractor
-import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -17,6 +14,9 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
@@ -116,17 +116,9 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val quality = json!!["title"]!!.jsonPrimitive!!.content
                     var url = json!!["code"]!!.jsonPrimitive!!.content
                     if (quality == "SB") {
-                        val headers = headers.newBuilder()
-                            .set("referer", url)
-                            .set(
-                                "User-Agent",
-                                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"
-                            )
-                            .set("Accept-Language", "es-MX,es-419;q=0.9,es;q=0.8,en;q=0.7")
-                            .set("watchsb", "sbstream")
-                            .set("authority", "embedsb.com")
-                            .build()
-                        StreamSBExtractor(client).videosFromUrl(url, headers).map { videoList.add(it) }
+                        videoList.addAll(
+                            StreamSBExtractor(client).videosFromUrl(url, headers)
+                        )
                     }
                     if (quality == "Fembed") {
                         FembedExtractor().videosFromUrl(url).map { videoList.add(it) }

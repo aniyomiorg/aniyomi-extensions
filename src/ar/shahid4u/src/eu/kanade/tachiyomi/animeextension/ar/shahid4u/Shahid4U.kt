@@ -4,8 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.animeextension.ar.shahid4u.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.ar.shahid4u.extractors.UQLoadExtractor
 import eu.kanade.tachiyomi.animeextension.ar.shahid4u.extractors.VidBomExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -15,6 +13,8 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
@@ -206,19 +206,25 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
-        val scriptSelect = document.select("script:containsData(eval)").first().data()
-        val serverPrefix = scriptSelect.substringAfter("|net|cdn|amzn|").substringBefore("|rewind|icon|")
-        val sourceServer = "https://$serverPrefix.e-amzn-cdn.net"
-        val qualities = scriptSelect.substringAfter("|image|").substringBefore("|sources|").replace("||", "|").split("|")
-        qualities.forEachIndexed { i, q ->
-            if (i % 2 == 0) {
-                val id = qualities[i + 1]
-                val src = "$sourceServer/$id/v.mp4"
-                val video = Video(src, "Main: $q", src)
-                videoList.add(video)
+        return try {
+            val scriptSelect = document.select("script:containsData(eval)").first().data()
+            val serverPrefix =
+                scriptSelect.substringAfter("|net|cdn|amzn|").substringBefore("|rewind|icon|")
+            val sourceServer = "https://$serverPrefix.e-amzn-cdn.net"
+            val qualities = scriptSelect.substringAfter("|image|").substringBefore("|sources|")
+                .replace("||", "|").split("|")
+            qualities.forEachIndexed { i, q ->
+                if (i % 2 == 0) {
+                    val id = qualities[i + 1]
+                    val src = "$sourceServer/$id/v.mp4"
+                    val video = Video(src, "Main: $q", src)
+                    videoList.add(video)
+                }
             }
+            videoList
+        } catch (e: Exception) {
+            videoList
         }
-        return videoList
     }
 
     override fun List<Video>.sort(): List<Video> {
@@ -276,6 +282,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             return GET(catUrl, headers)
                         }
                     }
+                    else -> {}
                 }
             }
             return GET(url, headers)

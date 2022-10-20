@@ -39,9 +39,11 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    // Popular Anime
+    // ============================== popular ==============================
 
     override fun popularAnimeSelector(): String = "div.Grid--MycimaPosts div.GridItem div.Thumb--GridItem"
+
+    override fun popularAnimeNextPageSelector(): String = "ul.page-numbers li a.next"
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/seriestv/top/?page_number=$page")
 
@@ -57,9 +59,9 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun popularAnimeNextPageSelector(): String = "ul.page-numbers li a.next"
+    // ============================== episodes ==============================
 
-    // Episodes
+    override fun episodeListSelector() = "div.Episodes--Seasons--Episodes a"
 
     private fun seasonsNextPageSelector(seasonNumber: Int) = "div.List--Seasons--Episodes > a:nth-child($seasonNumber)"
 
@@ -68,36 +70,49 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         var seasonNumber = 1
         fun addEpisodes(document: Document) {
-            document.select(episodeListSelector()).map { episodes.add(episodeFromElement(it)) }
-            document.select(seasonsNextPageSelector(seasonNumber)).firstOrNull()?.let {
-                seasonNumber++
-                addEpisodes(client.newCall(GET(it.attr("abs:href"), headers)).execute().asJsoup())
+            if (document.select(episodeListSelector()).isNullOrEmpty()) {
+                if (!document.select("mycima singlerelated.hasdivider ${popularAnimeSelector()}").isNullOrEmpty()) {
+                    document.select("mycima singlerelated.hasdivider ${popularAnimeSelector()}").map { episodes.add(newEpisodeFromElement(it, "mSeries")) }
+                } else
+                    episodes.add(newEpisodeFromElement(document.select("div.Poster--Single-begin > a").first(), "movie"))
+            } else {
+                document.select(episodeListSelector()).map { episodes.add(newEpisodeFromElement(it)) }
+                document.select(seasonsNextPageSelector(seasonNumber)).firstOrNull()?.let {
+                    seasonNumber++
+                    addEpisodes(
+                        client.newCall(GET(it.attr("abs:href"), headers)).execute().asJsoup()
+                    )
+                }
             }
         }
-
         addEpisodes(response.asJsoup())
         return episodes
     }
 
-    override fun episodeListSelector() = "div.Episodes--Seasons--Episodes a"
-
-    override fun episodeFromElement(element: Element): SEpisode {
+    private fun newEpisodeFromElement(element: Element, type: String = "series"): SEpisode {
         val episode = SEpisode.create()
         val epNum = getNumberFromEpsString(element.text())
-        episode.setUrlWithoutDomain(element.attr("abs:href"))
-        episode.episode_number = when {
-            (epNum.isNotEmpty()) -> epNum.toFloat()
-            else -> 1F
+        episode.setUrlWithoutDomain(if (type == "mSeries") element.select("a").attr("href") else element.attr("abs:href"))
+        if (type == "series")
+            episode.episode_number = when {
+                (epNum.isNotEmpty()) -> epNum.toFloat()
+                else -> 1F
+            }
+        episode.name = when (type) {
+            "movie" -> "مشاهدة"
+            "mSeries" -> element.select("a").attr("title")
+            else -> element.ownerDocument().select("div.List--Seasons--Episodes a.selected").text() + element.text()
         }
-        episode.name = element.ownerDocument().select("div.List--Seasons--Episodes a.selected").text() + " : " + element.text()
         return episode
     }
+
+    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
 
     private fun getNumberFromEpsString(epsStr: String): String {
         return epsStr.filter { it.isDigit() }
     }
 
-    // Video urls
+    // ============================== video urls ==============================
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
@@ -120,7 +135,6 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val scriptV = element.select("script:containsData(source)")
             val data = element.data().substringAfter("sources: [").substringBefore("],")
             val sources = data.split("format: '").drop(1)
-            val videoList = mutableListOf<Video>()
             for (source in sources) {
                 val src = source.substringAfter("src: \"").substringBefore("\"")
                 val quality = source.substringBefore("'") // .substringAfter("format: '")
@@ -155,12 +169,12 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
-    // search
+    // ============================== search ==============================
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("a").attr("href"))
-        anime.title = element.select("a > strong.hasyear").text()
+        anime.title = element.select("a > strong").text()
         anime.thumbnail_url = element.select("a > span.BG--GridItem").attr("data-lazy-style").substringAfter("-image:url(").substringBefore(");")
         return anime
     }
@@ -170,26 +184,36 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeSelector(): String = "div.Grid--MycimaPosts div.GridItem div.Thumb--GridItem"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val url = if (query.isBlank()) {
-            "$baseUrl/search/+/list/anime"
+        if (query.isNotBlank()) {
+            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
+                when (filter) {
+                    is SearchCategoryList -> {
+                        val catQ = getSearchCategoryList()[filter.state].query
+                        val catUrl = "$baseUrl/search/$query/$catQ$page"
+                        return GET(catUrl, headers)
+                    }
+                    else -> {}
+                }
+            }
         } else {
             (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
                 when (filter) {
                     is CategoryList -> {
                         if (filter.state > 0) {
-                            val catQ = getCategoryList()[filter.state].name
-                            val catUrl = "$baseUrl/search/$query/list/$catQ/?page_number=$page"
+                            val catQ = getCategoryList()[filter.state].query
+                            val catUrl = "$baseUrl/category/$catQ/page/$page"
                             return GET(catUrl, headers)
                         }
                     }
+                    else -> {}
                 }
             }
             throw Exception("Choose a Filters")
         }
-        return GET(url, headers)
+        return GET(baseUrl, headers)
     }
 
-    // Details
+    // ============================== details ==============================
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
@@ -209,39 +233,66 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    // Latest
+    // ============================== latest ==============================
+
+    override fun latestUpdatesSelector(): String = "div.Grid--MycimaPosts div.GridItem div.Thumb--GridItem"
 
     override fun latestUpdatesNextPageSelector(): String = "ul.page-numbers li a.next"
 
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("a").attr("href"))
-        anime.title = element.select("a > strong.hasyear").text()
+        anime.title = element.select("a > strong").text()
         anime.thumbnail_url = element.select("a > span").attr("data-lazy-style").substringAfter("-image:url(").substringBefore(");")
         return anime
     }
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/page/$page")
 
-    override fun latestUpdatesSelector(): String = "div.Grid--MycimaPosts div.GridItem div.Thumb--GridItem"
-
-    // Filters
+    // ============================== filters ==============================
 
     override fun getFilterList() = AnimeFilterList(
-        CategoryList(categoriesName),
+        AnimeFilter.Header("فلترات البحث"),
+        SearchCategoryList(searchCategoryNames),
+        AnimeFilter.Separator(),
+        AnimeFilter.Header("اقسام الموقع (تعمل فقط اذا كان البحث فارغ)"),
+        CategoryList(categoryNames)
     )
 
-    private class CategoryList(categories: Array<String>) : AnimeFilter.Select<String>("الأقسام", categories)
-    private data class CatUnit(val name: String)
-    private val categoriesName = getCategoryList().map {
+    private class SearchCategoryList(categories: Array<String>) : AnimeFilter.Select<String>("بحث عن", categories)
+    private class CategoryList(categories: Array<String>) : AnimeFilter.Select<String>("اختر قسم", categories)
+    private data class CatUnit(val name: String, val query: String)
+    private val searchCategoryNames = getSearchCategoryList().map {
+        it.name
+    }.toTypedArray()
+    private val categoryNames = getCategoryList().map {
         it.name
     }.toTypedArray()
 
+    private fun getSearchCategoryList() = listOf(
+        CatUnit("فيلم", "/page/"),
+        CatUnit("مسلسل", "list/series/?page_number="),
+        CatUnit("انمى", "list/anime/?page_number="),
+        CatUnit("برنامج", "list/tv/?page_number=")
+    )
     private fun getCategoryList() = listOf(
-        CatUnit("اختر"),
-        CatUnit("anime"),
-        CatUnit("series"),
-        CatUnit("tv")
+        CatUnit("اختر", ""),
+        CatUnit("جميع الافلام", "افلام"),
+        CatUnit("افلام اجنبى", "افلام/10-movies-english-افلام-اجنبي/"),
+        CatUnit("افلام عربى", "افلام/6-arabic-movies-افلام-عربي/"),
+        CatUnit("افلام هندى", "افلام/افلام-هندي-indian-movies/"),
+        CatUnit("افلام تركى", "افلام/افلام-تركى-turkish-films/"),
+        CatUnit("افلام وثائقية", "افلام/افلام-وثائقية-documentary-films/"),
+        CatUnit("افلام انمي", "افلام-كرتون/"),
+        CatUnit("سلاسل افلام", "افلام/10-movies-english-افلام-اجنبي/سلاسل-الافلام-الكاملة-full-pack/"),
+        CatUnit("مسلسلات", "مسلسلات"),
+        CatUnit("مسلسلات اجنبى", "مسلسلات/5-series-english-مسلسلات-اجنبي/"),
+        CatUnit("مسلسلات عربى", "مسلسلات/13-مسلسلات-عربيه-arabic-series/"),
+        CatUnit("مسلسلات هندى", "مسلسلات/9-series-indian-مسلسلات-هندية/"),
+        CatUnit("مسلسلات اسيوى", "مسلسلات/مسلسلات-اسيوية/"),
+        CatUnit("مسلسلات تركى", "مسلسلات/8-مسلسلات-تركية-turkish-series/"),
+        CatUnit("مسلسلات وثائقية", "مسلسلات/مسلسلات-وثائقية-documentary-series/"),
+        CatUnit("مسلسلات انمي", "مسلسلات-كرتون/"),
     )
 
     // preferred quality settings

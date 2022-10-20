@@ -10,6 +10,8 @@ ext {
 }
 
 dependencies {
+    implementation(project(':lib-okru-extractor'))
+    implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
 }
 

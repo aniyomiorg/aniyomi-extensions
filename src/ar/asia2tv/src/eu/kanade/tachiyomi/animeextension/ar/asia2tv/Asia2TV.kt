@@ -4,6 +4,8 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.ar.asia2tv.extractors.FembedExtractor
+import eu.kanade.tachiyomi.animeextension.ar.asia2tv.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -11,10 +13,10 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -41,9 +43,11 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    // Popular Anime
+    // ========================== popular =======================
 
     override fun popularAnimeSelector(): String = "div.postmovie-photo a[title]"
+
+    override fun popularAnimeNextPageSelector(): String = "div.nav-links a.next"
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/category/asian-drama/page/$page/") // page/$page
 
@@ -55,15 +59,13 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun popularAnimeNextPageSelector(): String = "div.nav-links a.next"
+    // ========================== episodes =======================
 
-    // Episodes
+    override fun episodeListSelector() = "div.loop-episode a"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         return super.episodeListParse(response).reversed()
     }
-
-    override fun episodeListSelector() = "div.loop-episode a"
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
@@ -72,7 +74,9 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episode
     }
 
-    // Video urls
+    // ========================== video urls =======================
+
+    override fun videoListSelector() = "ul.server-list-menu li"
 
     override fun videoListRequest(episode: SEpisode): Request {
         val document = client.newCall(GET(baseUrl + episode.url)).execute().asJsoup()
@@ -82,40 +86,26 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        return videosFromElement(document)
-    }
-
-    override fun videoListSelector() = "ul.server-list-menu li[data-server*=https://dood], ul.server-list-menu li[data-server*=https://streamtape], ul.server-list-menu li[data-server*=https://www.fembed.com]"
-
-    private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
-        val elements = document.select(videoListSelector())
-        for (element in elements) {
-            val url = element.attr("data-server")
-            val location = element.ownerDocument().location()
-            val videoHeaders = Headers.headersOf("Referer", location)
-            when {
-                url.contains("https://dood") -> {
-                    val newQuality = "Doodstream mirror"
-                    val video = Video(url, newQuality, doodUrlParse(url), headers = videoHeaders)
-                    videoList.add(video)
-                }
-                url.contains("https://streamtape") -> {
-                    val newQuality = "StreamTape mirror"
-                    val video = Video(url, newQuality, streamTapeParse(url), headers = videoHeaders)
-                    videoList.add(video)
-                }
-                url.contains("https://www.fembed.com") -> {
-                    val apiCall = client.newCall(POST(url.replace("https://www.fembed.com/v", "http://diasfem.com/api/source"))).execute().body!!.string()
-                    val data = apiCall.substringAfter("\"data\":[").substringBefore("],")
-                    val sources = data.split("\"file\":\"").drop(1)
-                    for (source in sources) {
-                        val src = source.substringAfter("\"file\":\"").substringBefore("\"").replace("\\/", "/")
-                        val quality = source.substringAfter("\"label\":\"").substringBefore("\"")
-                        val video = Video(url, quality, src)
-                        videoList.add(video)
-                    }
-                }
+        document.select(videoListSelector()).forEach {
+            val url = it.attr("data-server")
+            if (url.contains("dood")) {
+                val videosFromURL = DoodExtractor(client).videoFromUrl(url)
+                if (videosFromURL != null) videoList.add(videosFromURL)
+            } else if (url.contains("fembed")) {
+                val videosFromURL = FembedExtractor(client).videosFromUrl(url)
+                videoList.addAll(videosFromURL)
+            } else if (url.contains("ok")) {
+                val videosFromURL = OkruExtractor(client).videosFromUrl(url)
+                videoList.addAll(videosFromURL)
+            } else if (url.contains("streamtape")) {
+                val videosFromURL = StreamTapeExtractor(client).videoFromUrl(url)
+                if (videosFromURL != null) videoList.add(videosFromURL)
+            } else if (url.contains("yodbox")) {
+                val html = client.newCall(GET(url)).execute().asJsoup()
+                val videoFromURL = html.select("source").attr("src")
+                if (videoFromURL.isNotEmpty())
+                    videoList.add(Video(videoFromURL, "Yodbox: mirror", videoFromURL))
             }
         }
         return videoList
@@ -123,60 +113,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoFromElement(element: Element): Video = throw Exception("not used")
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
-
-    private fun doodUrlParse(url: String): String? {
-        val response = client.newCall(GET(url.replace("/d/", "/e/"))).execute()
-        val content = response.body!!.string()
-        if (!content.contains("'/pass_md5/")) return null
-        val md5 = content.substringAfter("'/pass_md5/").substringBefore("',")
-        val token = md5.substringAfterLast("/")
-        val doodTld = url.substringAfter("https://dood.").substringBefore("/")
-        val randomString = getRandomString()
-        val expiry = System.currentTimeMillis()
-        val videoUrlStart = client.newCall(
-            GET(
-                "https://dood.$doodTld/pass_md5/$md5",
-                Headers.headersOf("referer", url)
-            )
-        ).execute().body!!.string()
-        return "$videoUrlStart$randomString?token=$token&expiry=$expiry"
-    }
-
-    private fun getRandomString(length: Int = 10): String {
-        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
-        return (1..length)
-            .map { allowedChars.random() }
-            .joinToString("")
-    }
-
-    private fun streamTapeParse(url: String): String? {
-        val document = client.newCall(GET(url)).execute().asJsoup()
-        val script = document.select("script:containsData(document.getElementById('robotlink'))")
-            .firstOrNull()?.data()?.substringAfter("document.getElementById('robotlink').innerHTML = '")
-            ?: return null
-        val videoUrl = "https:" + script.substringBefore("'") +
-            script.substringAfter("+ ('xcd").substringBefore("'")
-        return "$videoUrl"
-    }
-
-    /*private fun fembedUrlParse(url: String, quality: String): Video {
-        // val noRedirectClient = client.newBuilder().followRedirects(false).build()
-        // val refererHeader = Headers.headersOf("Referer", url)
-
-        val apiCall = client.newCall(POST(url.replace("https://www.fembed.com/v", "http://diasfem.com/api/source"))).execute().body!!.string()
-        Log.i("lol", "$apiCall")
-        val data = apiCall.substringAfter("\"data\":[").substringBefore("],")
-        val sources = data.split("\"file\":\"").drop(1)
-        val videoList = mutableListOf<Video>()
-        for (source in sources) {
-            val src = source.substringAfter("\"file\":\"").substringBefore("\"")
-            val quality = source.substringBefore("\"") // .substringAfter("format: '")
-            //val videos = Video(src, quality, src)
-            return Video(url, quality, src)
-        }
-         return Video(url, quality, )
-    }*/
+    override fun videoUrlParse(document: Document): String = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", null)
@@ -196,7 +133,11 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this
     }
 
-    // search
+    // ========================== search =======================
+
+    override fun searchAnimeSelector(): String = "div.postmovie-photo a[title]"
+
+    override fun searchAnimeNextPageSelector(): String = "div.nav-links a.next"
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -205,10 +146,6 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.title = element.attr("title")
         return anime
     }
-
-    override fun searchAnimeNextPageSelector(): String = "div.nav-links a.next"
-
-    override fun searchAnimeSelector(): String = "div.postmovie-photo a[title]"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val url = if (query.isNotBlank()) {
@@ -230,6 +167,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             return GET(statusUrl.toString(), headers)
                         }
                     }
+                    else -> {}
                 }
             }
             throw Exception("اختر فلتر")
@@ -237,7 +175,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return GET(url, headers)
     }
 
-    // Details
+    // ========================== details =======================
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
@@ -249,7 +187,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    // Latest
+    // ========================== latest =======================
 
     override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
 
@@ -259,7 +197,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesSelector(): String = throw Exception("Not used")
 
-    // Filter
+    // ========================== filters =======================
 
     override fun getFilterList() = AnimeFilterList(
         AnimeFilter.Header("الفلترات مش هتشتغل لو بتبحث او وهي فاضيه"),

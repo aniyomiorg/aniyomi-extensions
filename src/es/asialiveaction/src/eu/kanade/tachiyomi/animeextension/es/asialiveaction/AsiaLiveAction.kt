@@ -5,8 +5,6 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.asialiveaction.extractors.FembedExtractor
-import eu.kanade.tachiyomi.animeextension.es.asialiveaction.extractors.OkruExtractor
-import eu.kanade.tachiyomi.animeextension.es.asialiveaction.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -14,6 +12,8 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
@@ -103,15 +103,6 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val sbDomains = arrayOf("sbfull", "sbplay", "cloudemb", "sbplay", "embedsb", "pelistop", "streamsb", "sbplay", "sbspeed")
                 if (sbDomains.any { s -> content.contains(s) }) {
                     val url = content.substringAfter(",['SB','").substringBefore("',0,0]")
-                    val headers = headers.newBuilder()
-                        .set("Referer", url)
-                        .set(
-                            "User-Agent",
-                            "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0"
-                        )
-                        .set("Accept-Language", "en-US,en;q=0.5")
-                        .set("watchsb", "sbstream")
-                        .build()
                     val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
                     videoList.addAll(videos)
                 }
