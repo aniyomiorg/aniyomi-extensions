@@ -1,0 +1,16 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Cuevana'
+    pkgNameSuffix = 'es.cuevana'
+    extClass = '.Cuevana'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-dood-extractor'))
+}
+
+apply from: "$rootDir/common.gradle"
