@@ -11,6 +11,7 @@ ext {
 }
 
 dependencies {
+    implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-dood-extractor'))
 }
 
