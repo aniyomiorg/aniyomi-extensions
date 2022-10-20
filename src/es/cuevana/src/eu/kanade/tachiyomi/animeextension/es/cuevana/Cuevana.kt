@@ -6,9 +6,6 @@ import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.cuevana.extractors.FembedExtractor
-import eu.kanade.tachiyomi.animeextension.es.cuevana.extractors.StreamSBExtractor
-import eu.kanade.tachiyomi.animeextension.es.cuevana.extractors.StreamTapeExtractor
-import eu.kanade.tachiyomi.animeextension.es.cuevana.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -16,17 +13,14 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonObject
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -40,7 +34,7 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Cuevana"
 
-    override val baseUrl = "https://h2.cuevana3.me"
+    override val baseUrl = "https://n2.cuevana3.me"
 
     override val lang = "es"
 
@@ -109,7 +103,6 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-
         document.select("div.TPlayer.embed_div iframe").map {
             val iframe = urlServerSolver(it.attr("data-src"))
             // //api.cuevana3.me/fembed/?h=aUJjeGt5eWFpaGV5Szc2RGQ0OVdvb1F5bkhSU0RsZTR2VzVXZGQyTm1UMHY3RzZ2YkY1eHhSaXVwOW1veFdHakNmZHprQWhpRFBiM24zSEZqSFB1Q2c9PQ
@@ -146,6 +139,44 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                 }
             }
+            if (iframe.contains("tomatomatela")) {
+                val tomatoRegex = Regex("(\\/\\/apialfa.tomatomatela.com\\/ir\\/player.php\\?h=[a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+)")
+                tomatoRegex.findAll(iframe).map { tomreg -> tomreg.value }.toList().map { tom ->
+                    val tomkey = tom.replace("//apialfa.tomatomatela.com/ir/player.php?h=", "")
+                    val clientGoTo = OkHttpClient().newBuilder().build()
+                    val mediaType = "application/x-www-form-urlencoded".toMediaType()
+                    val body: RequestBody = "url=$tomkey".toRequestBody(mediaType)
+                    val request = Request.Builder()
+                        .url("https://apialfa.tomatomatela.com/ir/rd.php")
+                        .method("POST", body)
+                        .addHeader("Host", "apialfa.tomatomatela.com")
+                        .addHeader("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
+                        .addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+                        .addHeader("Accept-Language", "en-US,en;q=0.5")
+                        .addHeader("Content-Type", "application/x-www-form-urlencoded")
+                        .addHeader("Origin", "null")
+                        .addHeader("DNT", "1")
+                        .addHeader("Connection", "keep-alive")
+                        .addHeader("Upgrade-Insecure-Requests", "1")
+                        .addHeader("Sec-Fetch-Dest", "iframe")
+                        .addHeader("Sec-Fetch-Mode", "navigate")
+                        .addHeader("Sec-Fetch-Site", "same-origin")
+                        .build()
+                    val responseGoto = clientGoTo.newCall(request).execute()
+                    val locations = responseGoto!!.networkResponse.toString()
+                    fetchUrls(locations).map { loc ->
+                        if (loc.contains("goto_ddh.php")) {
+                            val goToRegex = Regex("(\\/\\/api.cuevana3.me\\/ir\\/goto_ddh.php\\?h=[a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+)")
+                            goToRegex.findAll(loc).map { goreg ->
+                                goreg.value.replace("//api.cuevana3.me/ir/goto_ddh.php?h=", "")
+                            }.toList().map { gotolink ->
+                                Log.i("toma1 gotolink", gotolink)
+                                //https://github.com/Jacekun/CloudStream-3XXX/blob/javdev/app/src/main/java/com/lagradost/cloudstream3/movieproviders/CuevanaProvider.kt
+                            }
+                        }
+                    }
+                }
+            }
         }
         return videoList
     }
@@ -156,91 +187,6 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (text.isNullOrEmpty()) return listOf()
         val linkRegex = Regex("""(https?://(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*))""")
         return linkRegex.findAll(text).map { it.value.trim().removeSurrounding("\"") }.toList()
-    }
-
-    private fun serverVideoResolver(url: String, server: String): List<Video> {
-        val videoList = mutableListOf<Video>()
-        when (server.lowercase()) {
-            "sbfast" -> {
-                val headers = headers.newBuilder()
-                    .set("Referer", url)
-                    .set("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
-                    .set("Accept-Language", "en-US,en;q=0.5")
-                    .set("watchsb", "sbstream")
-                    .build()
-                val video = try { StreamSBExtractor(client).videosFromUrl(url, headers) } catch (e: Exception) { null }
-                if (video != null) {
-                    videoList.addAll(video)
-                }
-            }
-            "fembed" -> {
-                val videos = FembedExtractor().videosFromUrl(url)
-                videoList.addAll(videos)
-            }
-            "stp" -> {
-                val videos = StreamTapeExtractor(client).videoFromUrl(url, "StreamTape")
-                if (videos != null) {
-                    videoList.add(videos)
-                }
-            }
-            "uwu" -> {
-                try {
-                    if (!url.contains("disable")) {
-                        val body = client.newCall(GET(url)).execute().asJsoup()
-                        if (body.select("script:containsData(var shareId)").toString()
-                            .isNotBlank()
-                        ) {
-                            val shareId =
-                                body.selectFirst("script:containsData(var shareId)").data()
-                                    .substringAfter("shareId = \"").substringBefore("\"")
-                            val amazonApiJson =
-                                client.newCall(GET("https://www.amazon.com/drive/v1/shares/$shareId?resourceVersion=V2&ContentType=JSON&asset=ALL"))
-                                    .execute().asJsoup()
-                            val epId = amazonApiJson.toString().substringAfter("\"id\":\"")
-                                .substringBefore("\"")
-                            val amazonApi =
-                                client.newCall(GET("https://www.amazon.com/drive/v1/nodes/$epId/children?resourceVersion=V2&ContentType=JSON&limit=200&sort=%5B%22kind+DESC%22%2C+%22modifiedDate+DESC%22%5D&asset=ALL&tempLink=true&shareId=$shareId"))
-                                    .execute().asJsoup()
-                            val videoUrl = amazonApi.toString().substringAfter("\"FOLDER\":")
-                                .substringAfter("tempLink\":\"").substringBefore("\"")
-                            videoList.add(Video(videoUrl, "Amazon", videoUrl))
-                        }
-                    }
-                } catch (e: Exception) {}
-            }
-            "voex" -> {
-                try {
-                    val body = client.newCall(GET(url)).execute().asJsoup()
-                    val data1 = body.selectFirst("script:containsData(const sources = {)").data()
-                    val video = data1.substringAfter("hls\": \"").substringBefore("\"")
-                    videoList.add(Video(video, "Voex", video))
-                } catch (e: Exception) {}
-            }
-            "streamlare" -> {
-                try {
-                    val id = url.substringAfter("/e/").substringBefore("?poster")
-                    val videoUrlResponse = client.newCall(POST("https://slwatch.co/api/video/stream/get?id=$id")).execute().asJsoup()
-                    json.decodeFromString<JsonObject>(videoUrlResponse.select("body").text())["result"]?.jsonObject?.forEach { quality ->
-                        val resolution = quality.toString().substringAfter("\"label\":\"").substringBefore("\"")
-                        val videoUrl = quality.toString().substringAfter("\"file\":\"").substringBefore("\"")
-                        videoList.add(Video(videoUrl, "Streamlare:$resolution", videoUrl))
-                    }
-                } catch (e: Exception) {}
-            }
-            "doodstream" -> {
-                val url2 = url.replace("https://doodstream.com/e/", "https://dood.to/e/")
-                val video = DoodExtractor(client).videoFromUrl(url2, "DoodStream", false)
-                if (video != null) {
-                    videoList.add(video)
-                }
-            }
-            "upload" -> {
-                val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
-                val videos = YourUploadExtractor(client).videoFromUrl(url, headers = headers)
-                if (videos.isNotEmpty()) videoList.addAll(videos)
-            }
-        }
-        return videoList
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -275,8 +221,8 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
 
         return when {
-            query.isNotBlank() -> GET("$baseUrl/search?s=$query&page=$page", headers)
-            genreFilter.state != 0 -> GET("$baseUrl/${genreFilter.toUriPart()}/page/$page")
+            query.isNotBlank() -> GET("$baseUrl/page/$page?s=$query", headers)
+            genreFilter.state != 0 -> GET("$baseUrl/category/${genreFilter.toUriPart()}/page/$page")
             else -> popularAnimeRequest(page)
         }
     }
@@ -316,28 +262,23 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         "Tipos",
         arrayOf(
             Pair("<selecionar>", ""),
-            Pair("Peliculas", "peliculas"),
-            Pair("Series", "serie"),
-            Pair("Doramas", "generos/dorama"),
-            Pair("Animes", "animes"),
-            Pair("Acción", "generos/accion"),
-            Pair("Animación", "generos/animacion"),
-            Pair("Aventura", "generos/aventura"),
-            Pair("Ciencia Ficción", "generos/ciencia-ficcion"),
-            Pair("Comedia", "generos/comedia"),
-            Pair("Crimen", "generos/crimen"),
-            Pair("Documental", "generos/documental"),
-            Pair("Drama", "generos/drama"),
-            Pair("Fantasía", "generos/fantasia"),
-            Pair("Foreign", "generos/foreign"),
-            Pair("Guerra", "generos/guerra"),
-            Pair("Historia", "generos/historia"),
-            Pair("Misterio", "generos/misterio"),
-            Pair("Pelicula de Televisión", "generos/pelicula-de-la-television"),
-            Pair("Romance", "generos/romance"),
-            Pair("Suspense", "generos/suspense"),
-            Pair("Terror", "generos/terror"),
-            Pair("Western", "generos/western")
+            Pair("Acción", "accion"),
+            Pair("Animación", "animacion"),
+            Pair("Aventura", "aventura"),
+            Pair("Bélico Guerra", "belico-guerra"),
+            Pair("Biográfia", "biografia"),
+            Pair("Ciencia Ficción", "ciencia-ficcion"),
+            Pair("Comedia", "comedia"),
+            Pair("Crimen", "crimen"),
+            Pair("Documentales", "documentales"),
+            Pair("Drama", "drama"),
+            Pair("Familiar", "familiar"),
+            Pair("Fantasía", "fantasia"),
+            Pair("Misterio", "misterio"),
+            Pair("Musical", "musical"),
+            Pair("Romance", "romance"),
+            Pair("Terror", "terror"),
+            Pair("Thriller", "thriller")
         )
     )
 
