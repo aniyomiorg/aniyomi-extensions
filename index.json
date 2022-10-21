@@ -594,6 +594,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: Cuevana",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.cuevana",
+    "apk": "aniyomi-es.cuevana-v13.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: Doramasyt",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.doramasyt",
     "apk": "aniyomi-es.doramasyt-v13.5.apk",
