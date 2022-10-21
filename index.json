@@ -101,19 +101,10 @@
   {
     "name": "Aniyomi: فاصل اعلاني",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.faselhd",
-    "apk": "aniyomi-ar.faselhd-v13.10.apk",
+    "apk": "aniyomi-ar.faselhd-v13.11.apk",
     "lang": "ar",
-    "code": 10,
-    "version": "13.10",
-    "nsfw": 0
-  },
-  {
-    "name": "Aniyomi: فاصل اعلاني افلام بس",
-    "pkg": "eu.kanade.tachiyomi.animeextension.ar.faselhdmovies",
-    "apk": "aniyomi-ar.faselhdmovies-v13.7.apk",
-    "lang": "ar",
-    "code": 7,
-    "version": "13.7",
+    "code": 11,
+    "version": "13.11",
     "nsfw": 0
   },
   {
