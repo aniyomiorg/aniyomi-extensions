@@ -4,10 +4,8 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.ar.movizland.extractors.LinkboxExtractor
 import eu.kanade.tachiyomi.animeextension.ar.movizland.extractors.MoshahdaExtractor
-import eu.kanade.tachiyomi.animeextension.ar.movizland.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animeextension.ar.movizland.extractors.UQLoadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -16,6 +14,8 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
@@ -158,7 +158,7 @@ class Movizland : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val seasonData = season.select("a").attr("data-term")
                     val refererHeaders = Headers.headersOf("referer", url, "x-requested-with", "XMLHttpRequest")
                     val requestBody = FormBody.Builder().add("season", seasonData).build()
-                    val getEpisodes = client.newCall(POST("${baseUrl}/wp-content/themes/Moviezland2022/EpisodesList.php", refererHeaders, requestBody)).execute().asJsoup()
+                    val getEpisodes = client.newCall(POST("$baseUrl/wp-content/themes/Moviezland2022/EpisodesList.php", refererHeaders, requestBody)).execute().asJsoup()
                     for (episode in getEpisodes.select("div.EpisodeItem").reversed()) {
                         addEpisodeNew(episode.select("a").attr("href"), "series", season.select("a").text() + " " + episode.select("a").text())
                     }
@@ -208,7 +208,7 @@ class Movizland : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val videosFromURL = UQLoadExtractor(client).videoFromUrl(link, "Uqload: 720p")
                 if (videosFromURL != null) videos.add(videosFromURL)
             } else if (link.contains("streamtape")) {
-                val videosFromURL = StreamTapeExtractor(client).videoFromUrl(link)
+                val videosFromURL = StreamTapeExtractor(client).videoFromUrl(link, "StreamTape: 1080p")
                 if (videosFromURL != null) videos.add(videosFromURL)
             }
         }

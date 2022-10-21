@@ -7,7 +7,6 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.MpforuploadExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.SharedExtractor
-import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.UQLoadExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.VidBomExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -18,6 +17,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup

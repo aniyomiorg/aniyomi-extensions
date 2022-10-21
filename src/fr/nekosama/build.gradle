@@ -11,4 +11,9 @@ ext {
     containsNsfw = false
 }
 
+dependencies {
+    implementation(project(':lib-streamtape-extractor'))
+}
+
+
 apply from: "$rootDir/common.gradle"
