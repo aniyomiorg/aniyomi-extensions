@@ -2,10 +2,10 @@ package eu.kanade.tachiyomi.animeextension.es.cuevana
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.cuevana.extractors.FembedExtractor
+import eu.kanade.tachiyomi.animeextension.es.cuevana.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -13,14 +13,19 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -104,8 +109,19 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
         document.select("div.TPlayer.embed_div iframe").map {
+            val langPrefix = try {
+                val optLanguage = it.parent().attr("id")
+                val languageTag = document.selectFirst("li[data-tplayernv=$optLanguage]").closest(".open_submenu").selectFirst("div:first-child").text()
+                if (languageTag.lowercase().contains("latino"))
+                    "[LAT]"
+                else if (languageTag.lowercase().contains("españa"))
+                    "[CAST]"
+                else if (languageTag.lowercase().contains("subtitulado"))
+                    "[SUB]"
+                else
+                    ""
+            } catch (e: Exception) { "" }
             val iframe = urlServerSolver(it.attr("data-src"))
-            // //api.cuevana3.me/fembed/?h=aUJjeGt5eWFpaGV5Szc2RGQ0OVdvb1F5bkhSU0RsZTR2VzVXZGQyTm1UMHY3RzZ2YkY1eHhSaXVwOW1veFdHakNmZHprQWhpRFBiM24zSEZqSFB1Q2c9PQ
             if (iframe.contains("api.cuevana3.me/fembed/")) {
                 val femRegex = Regex("(https.\\/\\/api\\.cuevana3\\.me\\/fembed\\/\\?h=[a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+)")
                 femRegex.findAll(iframe).map { femreg -> femreg.value }.toList().map { fem ->
@@ -129,54 +145,130 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val jsonData = client.newCall(POST("https://api.cuevana3.me/fembed/api.php", headers = headers, requestBody)).execute()
                     if (jsonData.isSuccessful) {
                         val body = jsonData.asJsoup().body().toString()
-                        Log.i("bruh body", body)
                         val url = body.substringAfter("\"url\":\"").substringBefore("\",").replace("\\", "")
-                        Log.i("bruh url", url)
-                        if (url.contains("fembed")) {
-                            val videos = FembedExtractor().videosFromUrl(url)
-                            videoList.addAll(videos)
-                        }
+                        loadExtractor(url, langPrefix).map { video -> videoList.add(video) }
                     }
                 }
             }
             if (iframe.contains("tomatomatela")) {
-                val tomatoRegex = Regex("(\\/\\/apialfa.tomatomatela.com\\/ir\\/player.php\\?h=[a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+)")
-                tomatoRegex.findAll(iframe).map { tomreg -> tomreg.value }.toList().map { tom ->
-                    val tomkey = tom.replace("//apialfa.tomatomatela.com/ir/player.php?h=", "")
-                    val clientGoTo = OkHttpClient().newBuilder().build()
-                    val mediaType = "application/x-www-form-urlencoded".toMediaType()
-                    val body: RequestBody = "url=$tomkey".toRequestBody(mediaType)
-                    val request = Request.Builder()
-                        .url("https://apialfa.tomatomatela.com/ir/rd.php")
-                        .method("POST", body)
-                        .addHeader("Host", "apialfa.tomatomatela.com")
-                        .addHeader("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
-                        .addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
-                        .addHeader("Accept-Language", "en-US,en;q=0.5")
-                        .addHeader("Content-Type", "application/x-www-form-urlencoded")
-                        .addHeader("Origin", "null")
-                        .addHeader("DNT", "1")
-                        .addHeader("Connection", "keep-alive")
-                        .addHeader("Upgrade-Insecure-Requests", "1")
-                        .addHeader("Sec-Fetch-Dest", "iframe")
-                        .addHeader("Sec-Fetch-Mode", "navigate")
-                        .addHeader("Sec-Fetch-Site", "same-origin")
-                        .build()
-                    val responseGoto = clientGoTo.newCall(request).execute()
-                    val locations = responseGoto!!.networkResponse.toString()
-                    fetchUrls(locations).map { loc ->
-                        if (loc.contains("goto_ddh.php")) {
-                            val goToRegex = Regex("(\\/\\/api.cuevana3.me\\/ir\\/goto_ddh.php\\?h=[a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+)")
-                            goToRegex.findAll(loc).map { goreg ->
-                                goreg.value.replace("//api.cuevana3.me/ir/goto_ddh.php?h=", "")
-                            }.toList().map { gotolink ->
-                                Log.i("toma1 gotolink", gotolink)
-                                //https://github.com/Jacekun/CloudStream-3XXX/blob/javdev/app/src/main/java/com/lagradost/cloudstream3/movieproviders/CuevanaProvider.kt
+                try {
+                    val tomatoRegex = Regex("(\\/\\/apialfa.tomatomatela.com\\/ir\\/player.php\\?h=[a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+)")
+                    tomatoRegex.findAll(iframe).map { tomreg -> tomreg.value }.toList().map { tom ->
+                        val tomkey = tom.replace("//apialfa.tomatomatela.com/ir/player.php?h=", "")
+                        val clientGoTo = OkHttpClient().newBuilder().build()
+                        val mediaType = "application/x-www-form-urlencoded".toMediaType()
+                        val bodyGoTo = "url=$tomkey".toRequestBody(mediaType)
+                        val requestGoTo = Request.Builder()
+                            .url("https://apialfa.tomatomatela.com/ir/rd.php")
+                            .method("POST", bodyGoTo)
+                            .addHeader("Host", "apialfa.tomatomatela.com")
+                            .addHeader("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
+                            .addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+                            .addHeader("Accept-Language", "en-US,en;q=0.5")
+                            .addHeader("Content-Type", "application/x-www-form-urlencoded")
+                            .addHeader("Origin", "null")
+                            .addHeader("DNT", "1")
+                            .addHeader("Connection", "keep-alive")
+                            .addHeader("Upgrade-Insecure-Requests", "1")
+                            .addHeader("Sec-Fetch-Dest", "iframe")
+                            .addHeader("Sec-Fetch-Mode", "navigate")
+                            .addHeader("Sec-Fetch-Site", "same-origin")
+                            .build()
+                        val responseGoto = clientGoTo.newCall(requestGoTo).execute()
+                        val locations = responseGoto!!.networkResponse.toString()
+                        fetchUrls(locations).map { loc ->
+                            if (loc.contains("goto_ddh.php")) {
+                                val goToRegex = Regex("(\\/\\/api.cuevana3.me\\/ir\\/goto_ddh.php\\?h=[a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+)")
+                                goToRegex.findAll(loc).map { goreg ->
+                                    goreg.value.replace("//api.cuevana3.me/ir/goto_ddh.php?h=", "")
+                                }.toList().map { gotolink ->
+                                    // https://github.com/Jacekun/CloudStream-3XXX/blob/javdev/app/src/main/java/com/lagradost/cloudstream3/movieproviders/CuevanaProvider.kt
+                                    val clientDdh = OkHttpClient().newBuilder().build()
+                                    val mediaType = "application/x-www-form-urlencoded".toMediaType()
+                                    val bodyDdh = "url=$gotolink".toRequestBody(mediaType)
+                                    val requestDdh = Request.Builder()
+                                        .url("https://api.cuevana3.me/ir/redirect_ddh.php")
+                                        .method("POST", bodyDdh)
+                                        .addHeader("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0")
+                                        .addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
+                                        .addHeader("Accept-Language", "es-MX,es-419;q=0.9,es;q=0.8,en;q=0.7")
+                                        .addHeader("cache-control", "max-age=0")
+                                        .addHeader("Content-Type", "application/x-www-form-urlencoded")
+                                        .addHeader("Origin", "null")
+                                        .addHeader("DNT", "1")
+                                        .addHeader("Connection", "keep-alive")
+                                        .addHeader("Upgrade-Insecure-Requests", "1")
+                                        .addHeader("Sec-Fetch-Dest", "document")
+                                        .addHeader("Sec-Fetch-Mode", "navigate")
+                                        .addHeader("Sec-Fetch-Site", "same-origin")
+                                        .addHeader("sec-fetch-user", "?1")
+                                        .addHeader("sec-ch-ua", "\"Chromium\";v=\"106\", \"Google Chrome\";v=\"106\", \"Not;A=Brand\";v=\"99\"")
+                                        .addHeader("sec-ch-ua-mobile", "?0")
+                                        .addHeader("sec-ch-ua-platform", "\"Windows\"")
+                                        .addHeader("authority", "api.cuevana3.me")
+                                        .build()
+                                    val responseDdh = clientDdh.newCall(requestDdh).execute()
+                                    val locationsDdh = responseDdh!!.networkResponse.toString()
+                                    fetchUrls(locationsDdh).map { golink ->
+                                        loadExtractor(golink, langPrefix).map { video -> videoList.add(video) }
+                                    }
+                                }
                             }
                         }
                     }
-                }
+                } catch (e: Exception) { }
             }
+        }
+        return videoList
+    }
+
+    private fun loadExtractor(url: String, prefix: String = ""): List<Video> {
+        val videoList = mutableListOf<Video>()
+        val normalizeUrl = url.lowercase()
+        if (normalizeUrl.contains("fembed")) {
+            val videos = FembedExtractor().videosFromUrl(url, "$prefix ")
+            videoList.addAll(videos)
+        }
+        if (normalizeUrl.contains("tomatomatela")) {
+            try {
+                var mainUrl = url.substringBefore("/embed.html#").substringAfter("https://")
+                var headers = headers.newBuilder()
+                    .set("authority", mainUrl)
+                    .set("accept", "application/json, text/javascript, */*; q=0.01")
+                    .set("accept-language", "es-MX,es-419;q=0.9,es;q=0.8,en;q=0.7")
+                    .set("sec-ch-ua", "\"Chromium\";v=\"106\", \"Google Chrome\";v=\"106\", \"Not;A=Brand\";v=\"99\"")
+                    .set("sec-ch-ua-mobile", "?0")
+                    .set("sec-ch-ua-platform", "Windows")
+                    .set("sec-fetch-dest", "empty")
+                    .set("sec-fetch-mode", "cors")
+                    .set("sec-fetch-site", "same-origin")
+                    .set("x-requested-with", "XMLHttpRequest")
+                    .build()
+                val token = url.substringAfter("/embed.html#")
+                val urlRequest = "https://$mainUrl/details.php?v=$token"
+                val response = client.newCall(GET(urlRequest, headers = headers)).execute().asJsoup()
+                var bodyText = response.select("body").text()
+                var json = json.decodeFromString<JsonObject>(bodyText)
+                var status = json["status"]!!.jsonPrimitive!!.content
+                var file = json["file"]!!.jsonPrimitive!!.content
+                if (status == "200") { videoList.add(Video(file, "$prefix Tomatomatela", file, headers = null)) }
+            } catch (e: Exception) { }
+        }
+        if (normalizeUrl.contains("yourupload")) {
+            val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
+            val videos = YourUploadExtractor(client).videoFromUrl(url, headers = headers)
+            videos.map { videoList.add(it) }
+        }
+        if (normalizeUrl.contains("doodstream") || normalizeUrl.contains("dood.")) {
+            DoodExtractor(client).videoFromUrl(url, "$prefix DoodStream", false)
+        }
+        if (normalizeUrl.contains("sbstream")) {
+            runCatching {
+                StreamSBExtractor(client).videosFromUrl(url, headers, prefix = prefix)
+            }.getOrNull()?.let { videoList.addAll(it) }
+        }
+        if (normalizeUrl.contains("okru")) {
+            OkruExtractor(client).videosFromUrl(url, prefix, true)
         }
         return videoList
     }
