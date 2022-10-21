@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.en.zoro.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animeextension.en.zoro.extractors.ZoroExtractor
 import eu.kanade.tachiyomi.animeextension.en.zoro.utils.JSONUtil
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -16,6 +15,7 @@ import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import kotlinx.coroutines.Dispatchers
@@ -138,7 +138,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         }
                         "Streamtape" in name ->
                             StreamTapeExtractor(client)
-                                .videoFromUrl(sourceUrl, subDub)
+                                .videoFromUrl(sourceUrl, "StreamTape - $subDub")
                                 ?.let { listOf(it) }
                         else -> null
                     }

@@ -10,6 +10,7 @@ ext {
 }
 
 dependencies {
+    implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-streamsb-extractor'))
     compileOnly libs.bundles.coroutines
 }

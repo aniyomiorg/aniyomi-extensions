@@ -10,4 +10,10 @@ ext {
     libVersion = '13'
 }
 
+dependencies {
+    implementation(project(':lib-voe-extractor'))
+    implementation(project(':lib-streamtape-extractor'))
+}
+
+
 apply from: "$rootDir/common.gradle"
