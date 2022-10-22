@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto.AnimeDto
 import eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto.EpisodeDataDto
 import eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto.MinimalEpisodeDto
@@ -29,7 +30,6 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
-import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -80,7 +80,7 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
         val seasonsList: SeasonListDto = getSeasonList(anime)
 
-        val showOnly = preferences.getString(CONF_SHOW_ONLY, null) ?: ""
+        val showOnly = preferences.getString(PREF_SHOW_ONLY_KEY, null) ?: ""
         val dub_item = ANIME_TYPES_VALUES.elementAt(1)
         val sub_item = ANIME_TYPES_VALUES.last()
         var filteredSeasons = seasonsList.seasons.filter {
@@ -118,9 +118,9 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         return episodesData.episodes.map {
             val episode = SEpisode.create()
             episode.name = "Temp $seasonNumber ($format) EP ${it.ep_number}: ${it.name}"
-            episode.episode_number = try {
+            episode.episode_number = runCatching {
                 it.ep_number.toFloat()
-            } catch (e: NumberFormatException) { 0F }
+            }.getOrNull() ?: 0F
             episode.url = it.id.toString()
             episode.date_upload = it.release_date.toDate()
             episode
@@ -129,15 +129,26 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    override fun videoListRequest(episode: SEpisode): Request =
-        GET("$API_URL/episodios/${episode.url}/m3u8/mp4/")
+    override fun videoListRequest(episode: SEpisode): Request {
+        val url = "$API_URL/episodios/${episode.url}/m3u8"
+        val usePlaylist = preferences.getBoolean(PREF_USE_PLAYLIST_KEY, true)
+        return if (usePlaylist) GET(url) else GET("$url/mp4/")
+    }
 
     override fun videoListParse(response: Response): List<Video> {
+
         val episodeObject = response.parseAs<MinimalEpisodeDto>()
-        return episodeObject.streams!!.map {
-            val quality = "${it.quality.last()}p"
-            Video(it.url, quality, it.url)
-        }.toList()
+        val usePlaylist = preferences.getBoolean(PREF_USE_PLAYLIST_KEY, true)
+        return if (usePlaylist) {
+            client.newCall(GET(episodeObject.url))
+                .execute()
+                .toVideoList()
+        } else {
+            episodeObject.streams?.map {
+                val quality = "${it.quality.last()}p"
+                Video(it.url, quality, it.url)
+            } ?: emptyList<Video>()
+        }
     }
 
     // =============================== Search ===============================
@@ -219,7 +230,7 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
         val parsedData = response.parseAs<List<MinimalEpisodeDto>>()
-        val animes = parsedData.map(::getAnimeFromEpisode).toList()
+        val animes = parsedData.map(::getAnimeFromEpisode)
         return AnimesPage(animes, false)
     }
 
@@ -234,25 +245,11 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = CONF_PREFERRED_QUALITY
-            title = "Qualidade preferida"
-            entries = QUALITY_LIST
-            entryValues = QUALITY_LIST
-            setDefaultValue(QUALITY_LIST.last())
-            summary = "%s"
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-        val showOnlyPref = ListPreference(screen.context).apply {
-            key = CONF_SHOW_ONLY
-            title = "Mostrar apenas episódios:"
-            entries = ANIME_TYPES
-            entryValues = ANIME_TYPES_VALUES
-            setDefaultValue(ANIME_TYPES_VALUES.first())
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_VALUES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue("720p")
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -262,8 +259,35 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
+        val showOnlyPref = ListPreference(screen.context).apply {
+            key = PREF_SHOW_ONLY_KEY
+            title = PREF_SHOW_ONLY_TITLE
+            entries = ANIME_TYPES_ENTRIES
+            entryValues = ANIME_TYPES_VALUES
+            setDefaultValue("")
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
+        val usePlaylistPref = SwitchPreferenceCompat(screen.context).apply {
+            key = PREF_USE_PLAYLIST_KEY
+            title = PREF_USE_PLAYLIST_TITLE
+            setDefaultValue(true)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val checkValue = newValue as Boolean
+                preferences.edit().putBoolean(key, checkValue).commit()
+            }
+        }
+
         screen.addPreference(videoQualityPref)
         screen.addPreference(showOnlyPref)
+        screen.addPreference(usePlaylistPref)
     }
 
     // ============================= Utilities ==============================
@@ -273,18 +297,29 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         return json.decodeFromString(responseBody)
     }
 
-    private fun String.toDate(): Long {
-        return try {
-            DATE_FORMATTER.parse(this)?.time ?: 0L
-        } catch (e: ParseException) {
-            0L
+    private fun Response.toVideoList(): List<Video> {
+        val responseBody = body?.string().orEmpty()
+        val separator = "#EXT-X-STREAM-INF:"
+        return responseBody.substringAfter(separator).split(separator).map {
+            val quality = it.substringAfter("RESOLUTION=")
+                .substringAfter("x")
+                .substringBefore("\n")
+                .substringBefore(",") + "p"
+            val videoUrl = it.substringAfter("\n").substringBefore("\n")
+            Video(videoUrl, quality, videoUrl)
         }
+    }
+
+    private fun String.toDate(): Long {
+        return runCatching {
+            DATE_FORMATTER.parse(this)?.time ?: 0L
+        }.getOrNull() ?: 0L
     }
 
     private fun String.getId(): String = this.substringAfterLast("/")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(CONF_PREFERRED_QUALITY, null)
+        val quality = preferences.getString(PREF_QUALITY_KEY, null)
         if (quality != null) {
             val newList = mutableListOf<Video>()
             var preferred = 0
@@ -302,22 +337,27 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     companion object {
-        private const val API_URL = "https://api.puray.moe"
-        private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
-        private const val CONF_PREFERRED_QUALITY = "preferred_quality"
-        private const val CONF_SHOW_ONLY = "show_only"
-
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
         }
 
-        private val QUALITY_LIST = arrayOf(
+        private const val API_URL = "https://api.puray.moe"
+        private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Qualidade preferida"
+        private val PREF_QUALITY_VALUES = arrayOf(
             "240p", "360p",
             "480p", "720p", "1080p"
         )
 
-        private val ANIME_TYPES = arrayOf("Todos", "Dublados", "Legendados")
+        private const val PREF_SHOW_ONLY_KEY = "show_only"
+        private const val PREF_SHOW_ONLY_TITLE = "Mostrar apenas episódios:"
+        private val ANIME_TYPES_ENTRIES = arrayOf("Todos", "Dublados", "Legendados")
         private val ANIME_TYPES_VALUES = arrayOf("", "dub", "sub")
+
+        private const val PREF_USE_PLAYLIST_KEY = "use_m3u8_playlist"
+        private const val PREF_USE_PLAYLIST_TITLE = "Usar/Ativar playlist M3U8(HLS)"
 
         const val PREFIX_SEARCH = "id:"
     }
