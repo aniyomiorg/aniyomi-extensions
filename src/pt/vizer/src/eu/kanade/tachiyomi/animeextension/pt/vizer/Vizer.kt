@@ -10,6 +10,7 @@ import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.SearchItemDto
 import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.SearchResultDto
 import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.VideoDto
 import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.VideoLanguagesDto
+import eu.kanade.tachiyomi.animeextension.pt.vizer.extractors.MixDropExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -158,14 +159,10 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
         val langPrefix = if (videoObj.lang == "1") "SUB" else "DUB"
         val videoList = players.iterator().mapNotNull loop@{ (name, status) ->
             if (status == "0") return@loop null
+            val url = getPlayerUrl(videoObj.id, name)
             when {
-                name != "" -> listOf(
-                    Video(
-                        "https://teste.com",
-                        "$langPrefix $name",
-                        "https://teste.com"
-                    )
-                )
+                name == "mixdrop" ->
+                    MixDropExtractor(client).videoFromUrl(url, langPrefix)?.let(::listOf)
                 else -> null
             }
         }.flatten()
@@ -269,6 +266,12 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
+
+    private fun getPlayerUrl(id: String, name: String): String {
+        val req = GET("$baseUrl/embed/getPlay.php?id=$id&sv=$name")
+        val body = client.newCall(req).execute().body?.string().orEmpty()
+        return body.substringAfter("location.href=\"").substringBefore("\";")
+    }
 
     private fun apiRequest(body: String): Request {
         val reqBody = body.toRequestBody("application/x-www-form-urlencoded".toMediaType())
