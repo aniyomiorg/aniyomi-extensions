@@ -18,6 +18,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
+import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -168,6 +169,11 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
                 name == "streamtape" ->
                     StreamTapeExtractor(client)
                         .videoFromUrl(url, "StreamTape($langPrefix)")?.let(::listOf)
+                name == "fembed" ->
+                    runCatching {
+                        FembedExtractor(client)
+                            .videosFromUrl(url, langPrefix)
+                    }.getOrNull()
                 else -> null
             }
         }.flatten()
