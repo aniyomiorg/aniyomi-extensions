@@ -6,14 +6,10 @@ import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
 
 class SharedExtractor(private val client: OkHttpClient) {
-    fun videosFromUrl(url: String): Video {
+    fun videosFromUrl(url: String, quality: String = "mirror"): Video? {
         val document = client.newCall(GET(url)).execute().asJsoup()
-        /*val videoList = mutableListOf<Video>()
-        val src = document.select("source > src")
-        val video = Video(src, "4Shared", src)
-        videoList.add(video)
-        return videoList*/
-        // val vidSource = 4Shared.select("source")
-        return Video(document.attr("source > src"), "4Shared", document.attr("source > src"))
+        return document.select("source").firstOrNull()?.let {
+            Video(it.attr("src"), "4Shared: $quality", it.attr("src"))
+        }
     }
 }
