@@ -8,6 +8,7 @@ ext {
     extClass = '.Vizer'
     extVersionCode = 1
     libVersion = '13'
+    containsNsfw = true
 }
 
 dependencies {
@@ -15,4 +16,5 @@ dependencies {
     implementation(project(':lib-streamtape-extractor'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
+
 apply from: "$rootDir/common.gradle"
