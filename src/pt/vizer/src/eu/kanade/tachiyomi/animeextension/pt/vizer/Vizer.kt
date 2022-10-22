@@ -18,6 +18,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -162,7 +163,11 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
             val url = getPlayerUrl(videoObj.id, name)
             when {
                 name == "mixdrop" ->
-                    MixDropExtractor(client).videoFromUrl(url, langPrefix)?.let(::listOf)
+                    MixDropExtractor(client)
+                        .videoFromUrl(url, langPrefix)?.let(::listOf)
+                name == "streamtape" ->
+                    StreamTapeExtractor(client)
+                        .videoFromUrl(url, "StreamTape($langPrefix)")?.let(::listOf)
                 else -> null
             }
         }.flatten()
