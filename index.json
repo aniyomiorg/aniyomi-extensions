@@ -936,6 +936,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: Vizer.tv",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.vizer",
+    "apk": "aniyomi-pt.vizer-v13.1.apk",
+    "lang": "pt",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 1
+  },
+  {
     "name": "Aniyomi: Animevost",
     "pkg": "eu.kanade.tachiyomi.animeextension.ru.animevost",
     "apk": "aniyomi-ru.animevost-v13.6.apk",
