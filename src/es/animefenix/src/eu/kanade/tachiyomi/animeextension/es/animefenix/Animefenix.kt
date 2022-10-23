@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.animefenix.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.animefenix.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -13,6 +12,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
@@ -108,7 +108,8 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     videoList.addAll(okruVideos)
                 }
                 realUrl.contains("fembed") -> {
-                    FembedExtractor().videosFromUrl(realUrl).map { videoList.add(it) }
+                    val fbedVideos = FembedExtractor(client).videosFromUrl(realUrl)
+                    videoList.addAll(fbedVideos)
                 }
                 realUrl.contains("/stream/amz.php?") -> {
                     val video = amazonExtractor(baseUrl + realUrl.substringAfter(".."))

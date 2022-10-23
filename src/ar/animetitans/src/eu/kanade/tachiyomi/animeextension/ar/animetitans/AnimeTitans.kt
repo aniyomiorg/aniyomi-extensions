@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.animetitans.extractors.AnimeTitansExtractor
-import eu.kanade.tachiyomi.animeextension.ar.animetitans.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animetitans.extractors.SharedExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animetitans.extractors.VidBomExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -17,6 +16,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup

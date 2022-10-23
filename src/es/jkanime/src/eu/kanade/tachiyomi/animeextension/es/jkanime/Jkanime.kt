@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.jkanime.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.jkanime.extractors.JkanimeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -14,6 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -95,7 +95,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .replace("/jk.php?u=", "$baseUrl/")
 
             when {
-                "embedsito" in url -> FembedExtractor().videosFromUrl(url).forEach { videos.add(it) }
+                "embedsito" in url -> FembedExtractor(client).videosFromUrl(url).forEach { videos.add(it) }
                 "ok" in url -> OkruExtractor(client).videosFromUrl(url).forEach { videos.add(it) }
                 "stream/jkmedia" in url -> videos.add(Video(url, "Xtreme S", url))
                 "um2.php" in url -> JkanimeExtractor(client).getNozomiFromUrl(baseUrl + url).let { videos.add(it) }

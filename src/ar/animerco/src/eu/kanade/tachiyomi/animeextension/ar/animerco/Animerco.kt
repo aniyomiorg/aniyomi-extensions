@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.MpforuploadExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.SharedExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.UQLoadExtractor
@@ -16,6 +15,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -225,6 +225,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                 -> {
                     val fUrl = embedUrl.replace("\\/", "/")
+                        .replace("https://www.fembed.com", "https://suzihaza.com")
                     val videos = FembedExtractor(client).videosFromUrl(embedUrl)
                     videoList.addAll(videos)
                 }

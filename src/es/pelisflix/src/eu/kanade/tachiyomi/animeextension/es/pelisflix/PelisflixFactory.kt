@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.pelisflix.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animesource.AnimeSource
 import eu.kanade.tachiyomi.animesource.AnimeSourceFactory
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -13,6 +12,7 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -55,9 +55,9 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
         fetchUrls(urlResponse).map { serverUrl ->
             Log.i("bruh url", serverUrl)
             if (serverUrl.contains("fembed") || serverUrl.contains("vanfem")) {
-                FembedExtractor().videosFromUrl(serverUrl, lang)!!.map { video ->
-                    videoList.add(video)
-                }
+                videoList.addAll(
+                    FembedExtractor(client).videosFromUrl(serverUrl, lang)
+                )
             }
             if (serverUrl.contains("doodstream")) {
                 val video = DoodExtractor(client).videoFromUrl(serverUrl.replace("https://doodstream.com", "https://dood.wf"), lang + "DoodStream", false)

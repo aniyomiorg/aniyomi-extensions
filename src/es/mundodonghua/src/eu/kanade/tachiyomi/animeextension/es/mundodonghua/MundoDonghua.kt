@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.mundodonghua.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.mundodonghua.extractors.JsUnpacker
 import eu.kanade.tachiyomi.animeextension.es.mundodonghua.extractors.ProteaExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -14,6 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
@@ -113,7 +113,9 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     fetchUrls(unpack!!.first()).map { url ->
                         if (url.contains("diasfem")) {
                             var serverUrl = url.replace("diasfem", "embedsito")
-                            FembedExtractor().videosFromUrl(serverUrl).map { vid -> videoList.add(vid) }
+                            videoList.addAll(
+                                FembedExtractor(client).videosFromUrl(serverUrl)
+                            )
                         }
                     }
                     if (unpack!!.first()!!.contains("protea_tab")) {
