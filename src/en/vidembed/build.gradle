@@ -5,7 +5,7 @@ ext {
     extName = 'Vidembed'
     pkgNameSuffix = 'en.vidembed'
     extClass = '.Vidembed'
-    extVersionCode = 16
+    extVersionCode = 17
     libVersion = '13'
 }
 

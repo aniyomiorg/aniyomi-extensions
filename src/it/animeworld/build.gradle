@@ -5,7 +5,7 @@ ext {
     extName = 'ANIMEWORLD.tv'
     pkgNameSuffix = 'it.animeworld'
     extClass = '.ANIMEWORLD'
-    extVersionCode = 14
+    extVersionCode = 15
     libVersion = '13'
 }
 
