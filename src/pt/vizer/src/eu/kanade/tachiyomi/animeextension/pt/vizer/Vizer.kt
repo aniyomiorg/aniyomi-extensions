@@ -170,10 +170,8 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
                     StreamTapeExtractor(client)
                         .videoFromUrl(url, "StreamTape($langPrefix)")?.let(::listOf)
                 name == "fembed" ->
-                    runCatching {
-                        FembedExtractor(client)
-                            .videosFromUrl(url, langPrefix)
-                    }.getOrNull()
+                    FembedExtractor(client)
+                        .videosFromUrl(url, langPrefix)
                 else -> null
             }
         }.flatten()
