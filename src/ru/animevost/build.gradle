@@ -1,12 +1,11 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
 
 ext {
     extName = 'Animevost'
     pkgNameSuffix = 'ru.animevost'
     extClass = '.Animevost'
-    extVersionCode = 6
+    extVersionCode = 7
     libVersion = '13'
 }
 
