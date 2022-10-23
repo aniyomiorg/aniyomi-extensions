@@ -35,7 +35,7 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AnimesOnlineX"
 
-    override val baseUrl = "https://animesonlinex.cc"
+    override val baseUrl = "https://animesonlinex.co"
 
     override val lang = "pt-BR"
 
