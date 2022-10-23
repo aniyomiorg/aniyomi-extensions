@@ -4,8 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.ru.animevost.dto.AnimeDetailsDto
-import eu.kanade.tachiyomi.animeextension.ru.animevost.dto.Data
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -13,12 +11,8 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
 import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -26,13 +20,19 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
-import kotlin.math.roundToInt
 
-class AnimevostSource(override val name: String, override val baseUrl: String, private val baseApiUrl: String) :
+data class AnimeDescription(
+    val year: String? = null,
+    val type: String? = null,
+    val rating: Int? = null,
+    val votes: Int? = null,
+    val description: String? = null,
+)
+
+class AnimevostSource(override val name: String, override val baseUrl: String) :
     ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private enum class SortBy(val by: String) {
         RATING("rating"),
@@ -45,11 +45,6 @@ class AnimevostSource(override val name: String, override val baseUrl: String, p
     private enum class SortDirection(val direction: String) {
         ASC("asc"),
         DESC("desc"),
-    }
-
-    private val json = Json {
-        isLenient = true
-        ignoreUnknownKeys = true
     }
 
     private val preferences: SharedPreferences by lazy {
@@ -97,43 +92,37 @@ class AnimevostSource(override val name: String, override val baseUrl: String, p
         return POST(url.toString(), headers, body.build())
     }
 
-    private fun parseAnimeIdFromUrl(url: String): String = url.split("/").last().split("-").first()
-
     // Anime details
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        val animeId = parseAnimeIdFromUrl(anime.url)
+    override fun animeDetailsParse(document: Document): SAnime {
+        val anime = SAnime.create()
 
-        return client.newCall(GET("$baseApiUrl/animevost/api/v0.2/GetInfo/$animeId"))
-            .asObservableSuccess()
-            .map { response ->
-                animeDetailsParse(response).apply { initialized = true }
-            }
-    }
+        val animeContent = document.select(".shortstory > .shortstoryContent td:first-of-type")
+        anime.thumbnail_url = "$baseUrl/${animeContent.select("img:first-of-type").attr("src")}"
+        anime.genre = animeContent.select("p:nth-of-type(2)").text().replace("Жанр: ", "")
+        anime.author = animeContent.select("p:nth-of-type(5) a").text()
+        val description = animeContent.select("p:nth-of-type(6) > span").text()
 
-    override fun animeDetailsParse(response: Response): SAnime {
-        val animeData = json.decodeFromString(AnimeDetailsDto.serializer(), response.body!!.string()).data?.first()
-        val anime = SAnime.create().apply {
-            title = animeData?.title!!
+        val year = animeContent.select("p:nth-of-type(1)").text().replace("Год выхода: ", "")
+        val rating = animeContent.select(".current-rating").text().toInt()
+        val type = animeContent.select("p:nth-of-type(3)").text().replace("Тип: ", "")
+        val votes = animeContent.select("div:nth-of-type(2) span span").text().toInt()
 
-            if (animeData.preview != null) {
-                thumbnail_url = "$baseUrl/" + animeData.preview
-            }
+        anime.title = document.select(".shortstory > .shortstoryHead h1").text()
 
-            author = animeData.director
-            description = formatDescription(animeData)
-
-            if (animeData.timer != null) {
-                status = if (animeData.timer > 0) SAnime.ONGOING else SAnime.COMPLETED
-            }
-
-            genre = animeData.genre
-        }
-
+        anime.description = formatDescription(
+            AnimeDescription(
+                year,
+                type,
+                rating,
+                votes,
+                description
+            )
+        )
         return anime
     }
 
-    private fun formatDescription(animeData: Data): String {
+    private fun formatDescription(animeData: AnimeDescription): String {
         var description = ""
 
         if (animeData.year != null) {
@@ -141,9 +130,9 @@ class AnimevostSource(override val name: String, override val baseUrl: String, p
         }
 
         if (animeData.rating != null && animeData.votes != null) {
-            val rating = (animeData.rating.toDouble() / animeData.votes.toDouble()).roundToInt()
+            val rating = 5 * animeData.rating / 100
 
-            description += "Рейтинг: ${"★".repeat(rating)}${"☆".repeat((5 - rating).coerceAtLeast(0))} (Голосов: ${animeData.votes})\n"
+            description += "Рейтинг: ${"★".repeat(rating)}${"☆".repeat(Math.max(5 - rating, 0))} (Голосов: ${animeData.votes})\n"
         }
 
         if (animeData.type != null) {
@@ -159,38 +148,29 @@ class AnimevostSource(override val name: String, override val baseUrl: String, p
         return description
     }
 
-    override fun animeDetailsParse(document: Document) = throw Exception("not used")
-
     // Episode
 
     override fun episodeFromElement(element: Element) = throw Exception("not used")
 
     override fun episodeListSelector() = throw Exception("not used")
 
-    override fun episodeListRequest(anime: SAnime): Request {
-        val animeId = parseAnimeIdFromUrl(anime.url)
-
-        return GET("$baseApiUrl/animevost/api/v0.2/GetInfo/$animeId")
-    }
-
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val animeData = json.decodeFromString(AnimeDetailsDto.serializer(), response.body!!.string()).data?.first()
+        val animePage = response.asJsoup()
+        var episodeScript = animePage.select(".shortstoryContent > script:nth-of-type(2)").html()
+        episodeScript = episodeScript.substring(episodeScript.indexOf("var data = {") + 12)
+        val episodes = episodeScript.substring(0, episodeScript.indexOf(",};")).replace("\"", "").split(",")
 
         val episodeList = mutableListOf<SEpisode>()
 
-        if (animeData?.series != null) {
-            val series = Json.parseToJsonElement(animeData.series.replace("'", "\"")).jsonObject.toMap()
-
-            series.entries.forEachIndexed { index, entry ->
-                episodeList.add(
-                    SEpisode.create().apply {
-                        val id = entry.value.toString().replace("\"", "")
-                        name = entry.key
-                        episode_number = index.toFloat()
-                        url = "/frame5.php?play=$id&old=1"
-                    }
-                )
-            }
+        episodes.forEachIndexed { index, entry ->
+            episodeList.add(
+                SEpisode.create().apply {
+                    val id = entry.split(":")[1]
+                    name = entry.split(":")[0]
+                    episode_number = index.toFloat()
+                    url = "/frame5.php?play=$id&old=1"
+                }
+            )
         }
 
         return episodeList.reversed()
