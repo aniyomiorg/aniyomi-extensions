@@ -839,10 +839,10 @@
   {
     "name": "Aniyomi: AnimesOnlineX",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesonlinex",
-    "apk": "aniyomi-pt.animesonlinex-v13.1.apk",
+    "apk": "aniyomi-pt.animesonlinex-v13.2.apk",
     "lang": "pt",
-    "code": 1,
-    "version": "13.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 0
   },
   {
