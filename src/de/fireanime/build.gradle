@@ -6,7 +6,7 @@ ext {
     extName = 'FireAnime'
     pkgNameSuffix = 'de.fireanime'
     extClass = '.FireAnime'
-    extVersionCode = 8
+    extVersionCode = 7
     libVersion = '13'
     containsNsfw = true
 }
