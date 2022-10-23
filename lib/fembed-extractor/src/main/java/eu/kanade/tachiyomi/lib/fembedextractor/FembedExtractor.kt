@@ -9,8 +9,9 @@ import okhttp3.OkHttpClient
 class FembedExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String, prefix: String = ""): List<Video> {
         val videoApi = url.replace("/v/", "/api/source/")
-        val body = client.newCall(POST(videoApi)).execute()
-            .body?.string().orEmpty()
+        val body = runCatching {
+            client.newCall(POST(videoApi)).execute().body?.string().orEmpty()
+        }.getOrNull() ?: return emptyList<Video>()
 
         val jsonResponse = Json { ignoreUnknownKeys = true }
             .decodeFromString<FembedResponse>(body)
