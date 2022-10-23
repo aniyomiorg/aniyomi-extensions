@@ -5,8 +5,13 @@ ext {
     extName = 'موفيزلاند'
     pkgNameSuffix = 'ar.movizland'
     extClass = '.Movizland'
-    extVersionCode = 2
+    extVersionCode = 8
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-streamtape-extractor'))
+    implementation(project(':lib-dood-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

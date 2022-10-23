@@ -4,9 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.fr.vostfree.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.fr.vostfree.extractors.MytvExtractor
-import eu.kanade.tachiyomi.animeextension.fr.vostfree.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.fr.vostfree.extractors.VudeoExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -16,6 +14,8 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
@@ -115,13 +115,13 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (server.lowercase() == "ok") {
                 val playerId = it.attr("id")
                 val url = "https://ok.ru/videoembed/" + document.select("div#player-tabs div.tab-blocks div.tab-content div div#content_$playerId").text()
-                val video = OkruExtractor(client).videosFromUrl(url)
+                val video = OkruExtractor(client).videosFromUrl(url, "", false)
                 videoList.addAll(video)
             }
             if (server.lowercase() == "doodstream") {
                 val playerId = it.attr("id")
                 val url = document.select("div#player-tabs div.tab-blocks div.tab-content div div#content_$playerId").text()
-                val video = DoodExtractor(client).videoFromUrl(url, "DoodStream")
+                val video = DoodExtractor(client).videoFromUrl(url, "DoodStream", false)
                 if (video != null) {
                     videoList.add(video)
                 }

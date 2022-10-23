@@ -9,22 +9,19 @@ import okhttp3.OkHttpClient
 class SoraPlayExtractor(private val client: OkHttpClient) {
 
     fun videosFromUrl(url: String, newHeaders: Headers): List<Video> {
-        val witAnime = "https://witanime.com/"
-
         val document = client.newCall(GET(url, newHeaders)).execute().asJsoup()
 
         // val videoList = mutableListOf<Video>()
         /*val script = element.select("script")
             .firstOrNull { it.data().contains("sources:") }*/
 
-        val scriptV = document.select("script:containsData(sources)")
         val data = document.data().substringAfter("sources: [").substringBefore("],")
         val sources = data.split("\"file\":\"").drop(1)
         val videoList = mutableListOf<Video>()
         for (source in sources) {
             val src = source.substringBefore("\"")
-            val quality = "soraplay: " + source.substringAfter("\"label\":\"").substringBefore("\"") // .substringAfter("format: '")
-            val video = Video(src, quality, src)
+            val quality = "Soraplay: " + source.substringAfter("\"label\":\"").substringBefore("\"") // .substringAfter("format: '")
+            val video = Video(src, quality, src, headers = newHeaders)
             videoList.add(video)
         }
         return videoList

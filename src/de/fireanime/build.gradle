@@ -6,9 +6,13 @@ ext {
     extName = 'FireAnime'
     pkgNameSuffix = 'de.fireanime'
     extClass = '.FireAnime'
-    extVersionCode = 5
+    extVersionCode = 7
     libVersion = '13'
     containsNsfw = true
+}
+
+dependencies {
+    implementation(project(':lib-dood-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

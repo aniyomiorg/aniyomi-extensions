@@ -5,15 +5,15 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.de.kinoking.extractors.DoodExtractor
-import eu.kanade.tachiyomi.animeextension.de.kinoking.extractors.StreamSBExtractor
-import eu.kanade.tachiyomi.animeextension.de.kinoking.extractors.VoeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
+import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
@@ -47,7 +47,11 @@ class Kinoking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "#featured-titles article.item"
 
-    override fun popularAnimeRequest(page: Int): Request = GET(baseUrl, headers = Headers.headersOf("if-modified-since", ""))
+    override fun popularAnimeRequest(page: Int): Request {
+        val interceptor = client.newBuilder().addInterceptor(CloudflareInterceptor()).build()
+        val headers = interceptor.newCall(GET(baseUrl)).execute().request.headers
+        return GET(baseUrl, headers = headers)
+    }
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -120,7 +124,7 @@ class Kinoking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 link.contains("https://watchsb") || link.contains("https://viewsb") && hosterSelection?.contains("watchsb") == true -> {
                     if (it.select("span.flag img").attr("data-src").contains("/en.")) {
                         val lang = "Englisch"
-                        val video = StreamSBExtractor(client).videosFromUrl(link, headers, lang)
+                        val video = StreamSBExtractor(client).videosFromUrl(link, headers, suffix = lang)
                         videoList.addAll(video)
                     } else {
                         val lang = "Deutsch"
@@ -130,7 +134,8 @@ class Kinoking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
                 link.contains("https://dood.") || link.contains("https://doodstream.") && hosterSelection?.contains("dood") == true -> {
                     val quality = "Doodstream"
-                    val video = DoodExtractor(client).videoFromUrl(link, quality)
+                    val redirect = !link.contains("https://doodstream")
+                    val video = DoodExtractor(client).videoFromUrl(link, quality, redirect)
                     if (video != null) {
                         videoList.add(video)
                     }

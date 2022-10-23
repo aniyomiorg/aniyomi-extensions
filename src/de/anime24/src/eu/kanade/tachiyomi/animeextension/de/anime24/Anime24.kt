@@ -5,14 +5,14 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.de.anime24.extractors.StreamTapeExtractor
-import eu.kanade.tachiyomi.animeextension.de.anime24.extractors.VoeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
@@ -62,9 +62,17 @@ class Anime24 : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
-        val episodeElement = document.select("div.eplister ul")
-        val episode = parseEpisodesFromSeries(episodeElement)
-        episodeList.addAll(episode)
+        if (!document.select("div.eplister ul li a div.epl-num").text().contains("Movie")) {
+            val episodeElement = document.select("div.eplister ul")
+            val episode = parseEpisodesFromSeries(episodeElement)
+            episodeList.addAll(episode)
+        } else {
+            val episode = SEpisode.create()
+            episode.name = document.select("div.infox h1").text()
+            episode.episode_number = 1F
+            episode.setUrlWithoutDomain(document.select("div.eplister ul li a").attr("href"))
+            episodeList.add(episode)
+        }
         return episodeList
     }
 
@@ -78,7 +86,7 @@ class Anime24 : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         episode.episode_number = element.select("a div.epl-num").text().toFloat()
         val folge = element.select("a div.epl-num").text()
         episode.name = "Folge $folge : " + element.select("a div.epl-title").text()
-        episode.setUrlWithoutDomain(element.select("a").attr("href").replace("dub", "sub"))
+        episode.setUrlWithoutDomain(element.select("a").attr("href"))
         return episode
     }
 
@@ -91,38 +99,36 @@ class Anime24 : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
-        val link = document.select("#pembed iframe").attr("src")
+        val linklazy = document.select("#pembed iframe[data-lazy-src]").attr("data-lazy-src")
         val hosterSelection = preferences.getStringSet("hoster_selection", setOf("stape", "voe"))
         when {
-            link.contains("https://streamtape") || link.contains("https://adblockeronstape") && hosterSelection?.contains("stape") == true -> {
-                val quality = "Streamtape, Sub"
-                val video = StreamTapeExtractor(client).videoFromUrl(link, quality)
+            linklazy.contains("https://streamtape") || linklazy.contains("https://adblockeronstape") && hosterSelection?.contains("stape") == true -> {
+                val quality = "Streamtape"
+                val video = StreamTapeExtractor(client).videoFromUrl(linklazy, quality)
                 if (video != null) {
                     videoList.add(video)
                 }
             }
-            link.contains("https://voe.sx") && hosterSelection?.contains("voe") == true -> {
-                val quality = "Voe, Sub"
-                val video = VoeExtractor(client).videoFromUrl(link, quality)
+            linklazy.contains("https://voe.sx") && hosterSelection?.contains("voe") == true -> {
+                val quality = "Voe"
+                val video = VoeExtractor(client).videoFromUrl(linklazy, quality)
                 if (video != null) {
                     videoList.add(video)
                 }
             }
         }
-        val duburl = document.select("link[rel=canonical]").attr("href").replace("sub", "dub")
-        val dubdoc = client.newCall(GET(duburl)).execute().asJsoup()
-        val dublink = dubdoc.select("#pembed iframe").attr("src")
+        val linksrc = document.select("#pembed iframe").attr("src")
         when {
-            dublink.contains("https://streamtape") || dublink.contains("https://adblockeronstape") && hosterSelection?.contains("stape") == true -> {
-                val quality = "Streamtape, Dub"
-                val video = StreamTapeExtractor(client).videoFromUrl(dublink, quality)
+            linksrc.contains("https://streamtape") || linksrc.contains("https://adblockeronstape") && hosterSelection?.contains("stape") == true -> {
+                val quality = "Streamtape"
+                val video = StreamTapeExtractor(client).videoFromUrl(linksrc, quality)
                 if (video != null) {
                     videoList.add(video)
                 }
             }
-            dublink.contains("https://voe.sx") && hosterSelection?.contains("voe") == true -> {
-                val quality = "Voe, Dub"
-                val video = VoeExtractor(client).videoFromUrl(dublink, quality)
+            linksrc.contains("https://voe.sx") && hosterSelection?.contains("voe") == true -> {
+                val quality = "Voe"
+                val video = VoeExtractor(client).videoFromUrl(linksrc, quality)
                 if (video != null) {
                     videoList.add(video)
                 }
@@ -133,33 +139,20 @@ class Anime24 : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun List<Video>.sort(): List<Video> {
         val hoster = preferences.getString("preferred_hoster", null)
-        val subPreference = preferences.getString("preferred_sub", "Sub")!!
-        val hosterList = mutableListOf<Video>()
-        val otherList = mutableListOf<Video>()
         if (hoster != null) {
+            val newList = mutableListOf<Video>()
+            var preferred = 0
             for (video in this) {
-                if (video.url.contains(hoster)) {
-                    hosterList.add(video)
+                if (video.quality.contains(hoster)) {
+                    newList.add(preferred, video)
+                    preferred++
                 } else {
-                    otherList.add(video)
+                    newList.add(video)
                 }
             }
-        } else otherList += this
-        val newList = mutableListOf<Video>()
-        var preferred = 0
-        for (video in hosterList) {
-            if (video.quality.contains(subPreference)) {
-                newList.add(preferred, video)
-                preferred++
-            } else newList.add(video)
+            return newList
         }
-        for (video in otherList) {
-            if (video.quality.contains(subPreference)) {
-                newList.add(preferred, video)
-                preferred++
-            } else newList.add(video)
-        }
-        return newList
+        return this
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -236,22 +229,6 @@ class Anime24 : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
             }
         }
-        val subPref = ListPreference(screen.context).apply {
-            key = "preferred_sub"
-            title = "Standardmäßig Sub oder Dub?"
-            entries = arrayOf("Sub", "Dub")
-            entryValues = arrayOf("Sub", "Dub")
-            setDefaultValue("Sub")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-        screen.addPreference(subPref)
         screen.addPreference(hosterPref)
         screen.addPreference(subSelection)
     }

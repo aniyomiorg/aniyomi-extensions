@@ -5,8 +5,15 @@ ext {
     extName = 'AnimeLek'
     pkgNameSuffix = 'ar.animelek'
     extClass = '.AnimeLek'
-    extVersionCode = 9
+    extVersionCode = 12
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-streamtape-extractor'))
+    implementation(project(':lib-okru-extractor'))
+    implementation(project(':lib-streamsb-extractor'))
+    implementation(project(':lib-dood-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

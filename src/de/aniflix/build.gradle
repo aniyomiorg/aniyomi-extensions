@@ -6,8 +6,14 @@ ext {
     extName = 'Aniflix'
     pkgNameSuffix = 'de.aniflix'
     extClass = '.Aniflix'
-    extVersionCode = 17
+    extVersionCode = 19
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-voe-extractor'))
+    implementation(project(':lib-streamtape-extractor'))
+    implementation(project(':lib-dood-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

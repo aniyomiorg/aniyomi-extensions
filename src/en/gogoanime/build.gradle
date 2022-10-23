@@ -5,8 +5,13 @@ ext {
     extName = 'Gogoanime'
     pkgNameSuffix = 'en.gogoanime'
     extClass = '.GogoAnime'
-    extVersionCode = 47
+    extVersionCode = 50
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-streamsb-extractor'))
+    implementation(project(':lib-dood-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

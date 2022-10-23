@@ -10,10 +10,7 @@ import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.AnimeDto
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.Episode
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.Release
 import eu.kanade.tachiyomi.animeextension.de.aniflix.dto.Season
-import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.DoodExtractor
-import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.StreamlareExtractor
-import eu.kanade.tachiyomi.animeextension.de.aniflix.extractors.VoeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -21,6 +18,9 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -198,7 +198,7 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
             val hosterSelection = preferences.getStringSet("hoster_selection", setOf("dood", "stape", "voe", "slare"))
             when {
                 link.contains("https://dood") && hosterSelection?.contains("dood") == true -> {
-                    val video = try { DoodExtractor(client).videoFromUrl(link, quality) } catch (e: Exception) { null }
+                    val video = try { DoodExtractor(client).videoFromUrl(link, quality, false) } catch (e: Exception) { null }
                     if (video != null) {
                         videoList.add(video)
                     }

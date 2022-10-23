@@ -5,8 +5,14 @@ ext {
     extName = 'DramaCool'
     pkgNameSuffix = 'en.dramacool'
     extClass = '.DramaCool'
-    extVersionCode = 22
+    extVersionCode = 24
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-streamtape-extractor'))
+    implementation(project(':lib-streamsb-extractor'))
+    implementation(project(':lib-dood-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

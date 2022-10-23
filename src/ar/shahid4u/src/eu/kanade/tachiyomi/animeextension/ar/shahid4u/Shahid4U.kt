@@ -4,6 +4,8 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.ar.shahid4u.extractors.UQLoadExtractor
+import eu.kanade.tachiyomi.animeextension.ar.shahid4u.extractors.VidBomExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -11,6 +13,8 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
@@ -29,7 +33,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "شاهد فور يو"
 
-    override val baseUrl = "https://shahed4u.mx/"
+    override val baseUrl = "https://shahed4u.team"
 
     override val lang = "ar"
 
@@ -45,7 +49,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "div.glide-slides div.media-block"
 
-    override fun popularAnimeRequest(page: Int): Request = GET(if (page == 1)" $baseUrl/home2/" else "$baseUrl")
+    override fun popularAnimeRequest(page: Int): Request = GET(if (page == 1)" $baseUrl/home2/" else baseUrl)
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -55,15 +59,25 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    private fun titleEdit(title: String): String {
-        return if (title.contains("فيلم"))
-            Regex("فيلم(.*?)مترجم").find(title)!!.groupValues[1] + "(فيلم)"
-        else if (title.contains("مسلسل"))
-            Regex(if (title.contains("الموسم"))"مسلسل(.*?)الموسم" else "مسلسل(.*?)الحلقة").find(title)!!.groupValues[1] + "(مسلسل)"
-        else if (title.contains("انمي"))
-            Regex(if (title.contains("الموسم"))"انمي(.*?)الموسم" else "انمي(.*?)الحلقة").find(title)!!.groupValues[1] + "(انمى)"
+    private fun titleEdit(title: String, details: Boolean = false): String {
+        return if (Regex("فيلم (.*?) مترجم").containsMatchIn(title))
+            Regex("فيلم (.*?) مترجم").find(title)!!.groupValues[1] + " (فيلم)" // افلام اجنبيه مترجمه
+        else if (Regex("فيلم (.*?) مدبلج").containsMatchIn(title))
+            Regex("فيلم (.*?) مدبلج").find(title)!!.groupValues[1] + " (مدبلج)(فيلم)" // افلام اجنبيه مدبلجه
+        else if (Regex("فيلم ([^a-zA-Z]+) ([0-9]+)").containsMatchIn(title)) // افلام عربى
+            Regex("فيلم ([^a-zA-Z]+) ([0-9]+)").find(title)!!.groupValues[1] + " (فيلم)"
+        else if (title.contains("مسلسل")) {
+            if (title.contains("الموسم") and details) {
+                val newTitle = Regex("مسلسل (.*?) الموسم (.*?) الحلقة ([0-9]+)").find(title)
+                return "${newTitle!!.groupValues[1]} (م.${newTitle.groupValues[2]})(${newTitle.groupValues[3]}ح)"
+            } else if (title.contains("الحلقة") and details) {
+                val newTitle = Regex("مسلسل (.*?) الحلقة ([0-9]+)").find(title)
+                return "${newTitle!!.groupValues[1]} (${newTitle.groupValues[2]}ح)"
+            } else Regex(if (title.contains("الموسم")) "مسلسل (.*?) الموسم" else "مسلسل (.*?) الحلقة").find(title)!!.groupValues[1] + " (مسلسل)"
+        } else if (title.contains("انمي"))
+            return Regex(if (title.contains("الموسم"))"انمي (.*?) الموسم" else "انمي (.*?) الحلقة").find(title)!!.groupValues[1] + " (انمى)"
         else if (title.contains("برنامج"))
-            Regex(if (title.contains("الموسم"))"برنامج(.*?)الموسم" else "برنامج(.*?)الحلقة").find(title)!!.groupValues[1] + "(برنامج)"
+            Regex(if (title.contains("الموسم"))"برنامج (.*?) الموسم" else "برنامج (.*?) الحلقة").find(title)!!.groupValues[1] + " (برنامج)"
         else
             title
     }
@@ -76,28 +90,47 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val episodes = mutableListOf<SEpisode>()
-        fun addEpisode(document: Document, season: String) {
-            document.select(episodeListSelector()).map { episodes.add(episodeFromElement(it, season)) }
+        fun addEpisodeNew(url: String, type: String, title: String = "") {
+            val episode = SEpisode.create()
+            episode.setUrlWithoutDomain(url)
+            if (type == "assembly")
+                episode.name = title.replace("فيلم", "").trim()
+            else if (type == "movie")
+                episode.name = "مشاهدة"
+            else
+                episode.name = title
+
+            episodes.add(episode)
         }
-        fun addEpisodes(document: Document, url: String) {
+        fun addEpisodes(response: Response) {
+            val document = response.asJsoup()
+            val url = response.request.url.toString()
             if (url.contains("assemblies")) {
-                for (movie in document.select(popularAnimeSelector())) {
-                    addEpisode(client.newCall(GET(movie.select("a.fullClick").attr("href") + "watch/", headers)).execute().asJsoup(), "assembly")
+                for (movie in document.select(searchAnimeSelector())) {
+                    addEpisodeNew(
+                        movie.select("a.fullClick").attr("href") + "watch/",
+                        "assembly",
+                        movie.select("h3").text()
+                    )
                 }
                 return
             }
             if (document.select("div.seasons--episodes").isNullOrEmpty()) {
                 // Movies
-                addEpisode(document, "0")
+                addEpisodeNew(url, "movie")
             } else {
                 // Series
                 // look for what is wrong
                 for (season in document.select(seasonsNextPageSelector())) {
-                    val seasonNum = season.text().replace("الموسم ", "")
-                    if (season.attr("class").contains("active")) {
+                    val seasonNum = season.text()
+                    if (season.hasClass("active")) {
                         // get episodes from page
                         for (episode in document.select("ul.episodes-list li a")) {
-                            addEpisode(client.newCall(GET(episode.attr("href"), headers)).execute().asJsoup(), seasonNum)
+                            addEpisodeNew(
+                                episode.attr("href"),
+                                "series",
+                                seasonNum + " " + episode.text()
+                            )
                         }
                     } else {
                         // send request to get episodes
@@ -106,13 +139,17 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         val requestBody = FormBody.Builder().add("season", seasonData).build()
                         val getEpisodes = client.newCall(POST("$baseUrl/wp-content/themes/Shahid4u-WP_HOME/Ajaxat/Single/Episodes.php", refererHeaders, requestBody)).execute().asJsoup()
                         for (episode in getEpisodes.select("li a")) {
-                            addEpisode(client.newCall(GET(episode.attr("href"), headers)).execute().asJsoup(), seasonNum)
+                            addEpisodeNew(
+                                episode.attr("href"),
+                                "series",
+                                seasonNum + " " + episode.text()
+                            )
                         }
                     }
                 }
             }
         }
-        addEpisodes(response.asJsoup(), response.request.url.toString())
+        addEpisodes(response)
         return episodes
     }
 
@@ -120,41 +157,47 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
 
-    private fun episodeFromElement(element: Element, season: String): SEpisode {
-        val episode = SEpisode.create()
-        episode.setUrlWithoutDomain(element.attr("href"))
-        episode.name = element.ownerDocument().select("meta[property=og:title]").attr("content")
-        if (season != "assembly")
-            if (episode.name.contains("فيلم"))
-                episode.name = "watch"
-            else
-                episode.name = "S" + season + ".E" + episode.name.replace("[^0-9]".toRegex(), "").trim()
-        return episode
-    }
     // Video links
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videos = mutableListOf<Video>()
         val servers = document.select(videoListSelector())
+        fun getUrl(v_id: String, i: String): String {
+            val refererHeaders = Headers.headersOf(
+                "referer", response.request.url.toString(),
+                "x-requested-with", "XMLHttpRequest",
+                "Content-Type", "application/x-www-form-urlencoded; charset=UTF-8",
+                "user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36 Edg/105.0.1343.42"
+            )
+            val requestBody = FormBody.Builder().add("id", v_id).add("i", i).build()
+            val iframe = client.newCall(
+                POST(
+                    "$baseUrl/wp-content/themes/Shahid4u-WP_HOME/Ajaxat/Single/Server.php",
+                    refererHeaders,
+                    requestBody
+                )
+            ).execute().asJsoup()
+            return iframe.select("iframe").attr("src")
+        }
         for (server in servers) {
             if (server.hasClass("active")) {
                 // special server
                 val videosFromURL = videosFromElement(client.newCall(GET(document.select("input[name=fserver]").`val`(), headers)).execute().asJsoup())
                 videos.addAll(videosFromURL)
-            } /* else if (server.text().contains("ok")) {
-                val refererHeaders = Headers.headersOf(
-                    "referer", response.request.url.toString(),
-                    "x-requested-with", "XMLHttpRequest",
-                    "Content-Length", "13",
-                    "Content-Type", "application/x-www-form-urlencoded; charset=UTF-8",
-                    "Connection", "keep-alive"
-                )
-                val requestBody = FormBody.Builder().add("i", server.attr("data-i")).add("id", server.attr("data-id")).build()
-                val iframe = client.newCall(POST("$baseUrl/wp-content/themes/Shahid4u-WP_HOME/Ajaxat/Single/Server.php", refererHeaders, requestBody)).execute().asJsoup()
-                val videosFromURL = OkruExtractor(client).videosFromUrl(iframe.select("iframe").attr("href"))
+            } else if (server.text().contains("ok")) {
+                val videosFromURL = OkruExtractor(client).videosFromUrl(getUrl(server.attr("data-id"), server.attr("data-i")))
                 videos.addAll(videosFromURL)
-            }*/
+            } else if (server.text().contains("vidbom", ignoreCase = true) or server.text().contains("Vidshare", ignoreCase = true)) {
+                val videosFromURL = VidBomExtractor(client).videosFromUrl(getUrl(server.attr("data-id"), server.attr("data-i")))
+                videos.addAll(videosFromURL)
+            } else if (server.text().contains("dood", ignoreCase = true)) {
+                val videosFromURL = DoodExtractor(client).videoFromUrl(getUrl(server.attr("data-id"), server.attr("data-i")))
+                if (videosFromURL != null) videos.add(videosFromURL)
+            } else if (server.text().contains("uqload", ignoreCase = true)) {
+                val videosFromURL = UQLoadExtractor(client).videoFromUrl(getUrl(server.attr("data-id"), server.attr("data-i")), "Uqload: 720p")
+                if (videosFromURL != null) videos.add(videosFromURL)
+            }
         }
         return videos
     }
@@ -163,19 +206,25 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
-        val scriptSelect = document.select("script:containsData(eval)").first().data()
-        val serverPrefix = scriptSelect.substringAfter("|net|cdn|amzn|").substringBefore("|rewind|icon|")
-        val sourceServer = "https://$serverPrefix.e-amzn-cdn.net"
-        val qualities = scriptSelect.substringAfter("|image|").substringBefore("|sources|").split("|")
-        for (quality in qualities) {
-            if (qualities.indexOf(quality) % 2 == 0) {
-                val id = qualities[qualities.indexOf(quality) + 1]
-                val src = "$sourceServer/$id/v.mp4"
-                val video = Video(src, "Main: $quality", src)
-                videoList.add(video)
+        return try {
+            val scriptSelect = document.select("script:containsData(eval)").first().data()
+            val serverPrefix =
+                scriptSelect.substringAfter("|net|cdn|amzn|").substringBefore("|rewind|icon|")
+            val sourceServer = "https://$serverPrefix.e-amzn-cdn.net"
+            val qualities = scriptSelect.substringAfter("|image|").substringBefore("|sources|")
+                .replace("||", "|").split("|")
+            qualities.forEachIndexed { i, q ->
+                if (i % 2 == 0) {
+                    val id = qualities[i + 1]
+                    val src = "$sourceServer/$id/v.mp4"
+                    val video = Video(src, "Main: $q", src)
+                    videoList.add(video)
+                }
             }
+            videoList
+        } catch (e: Exception) {
+            videoList
         }
-        return videoList
     }
 
     override fun List<Video>.sort(): List<Video> {
@@ -205,7 +254,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         var link = element.select("a.fullClick").attr("href")
-        anime.title = titleEdit(element.select("h3").text()).trim()
+        anime.title = titleEdit(element.select("h3").text(), details = true).trim()
         if (link.contains("assemblies"))
             anime.thumbnail_url = element.select("a.image img").attr("data-src")
         else
@@ -233,6 +282,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             return GET(catUrl, headers)
                         }
                     }
+                    else -> {}
                 }
             }
             return GET(url, headers)

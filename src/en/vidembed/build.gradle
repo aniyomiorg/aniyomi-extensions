@@ -5,8 +5,13 @@ ext {
     extName = 'Vidembed'
     pkgNameSuffix = 'en.vidembed'
     extClass = '.Vidembed'
-    extVersionCode = 15
+    extVersionCode = 16
     libVersion = '13'
 }
+
+dependencies {
+    implementation(project(':lib-streamsb-extractor'))
+}
+
 
 apply from: "$rootDir/common.gradle"

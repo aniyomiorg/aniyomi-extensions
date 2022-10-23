@@ -5,13 +5,13 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.de.streamcloud.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
@@ -115,7 +115,7 @@ class StreamCloud : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 li.text().contains("doodstream.com") && hosterSelection?.contains("dood") == true -> {
                     val quality = "Doodstream"
                     val link = "https:" + li.attr("data-link")
-                    val video = DoodExtractor(client).videoFromUrl(link, quality)
+                    val video = DoodExtractor(client).videoFromUrl(link, quality, false)
                     if (video != null) {
                         videoList.add(video)
                     }

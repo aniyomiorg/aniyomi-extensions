@@ -1,0 +1,17 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'AnimeOwl'
+    pkgNameSuffix = 'en.animeowl'
+    extClass = '.AnimeOwl'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib-streamsb-extractor'))
+}
+
+apply from: "$rootDir/common.gradle"

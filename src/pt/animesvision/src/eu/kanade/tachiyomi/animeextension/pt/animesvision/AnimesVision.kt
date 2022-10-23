@@ -3,15 +3,12 @@ package eu.kanade.tachiyomi.animeextension.pt.animesvision
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
-import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.dto.AVResponseDto
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.dto.PayloadData
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.dto.PayloadItem
-import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.GlobalVisionExtractor
-import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.StreamTapeExtractor
-import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.VoeExtractor
+import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.VisionExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -19,6 +16,9 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -130,7 +130,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videosFromEpisode(document)
     }
 
-    private fun getPlayersUrl(doc: Document, players: String): List<String> {
+    private fun videosFromEpisode(doc: Document): List<Video> {
         val wireDiv: Element = doc.selectFirst("div[wire:id]")
         val initialData: String = wireDiv.attr("wire:initial-data")!!.dropLast(1)
         val wireToken: String = doc.html()
@@ -144,21 +144,13 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .add("content-type", "application/json")
             .build()
 
-        val hosts_ids = mutableListOf<Int>()
+        val players = doc.select("div.server-item > a.btn")
 
-        val ignoredHosts = preferences.getStringSet(IGNORED_HOSTS, null)
-        val ignoreDO = ignoredHosts?.contains(HOSTS_NAMES.elementAt(0)) ?: false
-        val ignoreST = ignoredHosts?.contains(HOSTS_NAMES.elementAt(1)) ?: false
-        val ignoreVO = ignoredHosts?.contains(HOSTS_NAMES.elementAt(2)) ?: false
-
-        if (!ignoreST && "Streamtape" in players)
-            hosts_ids.add(5)
-        if (!ignoreVO && "Voe CDN" in players)
-            hosts_ids.add(7)
-        if (!ignoreDO && "DOOD" in players)
-            hosts_ids.add(8)
-
-        return hosts_ids.mapNotNull { id ->
+        return players.mapNotNull {
+            val id = it.attr("wire:click")
+                .substringAfter("(")
+                .substringBefore(")")
+                .toInt()
             val updateItem = PayloadItem(PayloadData(listOf(id)))
             val updateString = json.encodeToString(updateItem)
             val body = "$initialData, \"updates\": [$updateString]}"
@@ -167,32 +159,25 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val response = client.newCall(POST(url, headers, reqBody)).execute()
             val responseBody = response.body?.string().orEmpty()
             val resJson = json.decodeFromString<AVResponseDto>(responseBody)
-            resJson.serverMemo?.data?.framePlay
-        }
+            (resJson.serverMemo?.data?.framePlay ?: resJson.effects?.html)
+                ?.let(::parsePlayerData)
+        }.flatten()
     }
 
-    private fun videosFromEpisode(doc: Document): List<Video> {
-        val players = doc.select("div.server-item > a.btn")
-            .joinToString(", ") {
-                it.text()
-            }
-        val videoList = GlobalVisionExtractor()
-            .videoListFromHtml(doc.html())
-            .toMutableList()
-
-        getPlayersUrl(doc, players).forEach {
-            val video = when {
-                "streamtape" in it ->
-                    StreamTapeExtractor(client).videoFromUrl(it)
-                "dood" in it ->
-                    DoodExtractor(client).videoFromUrl(it)
-                "voe.sx" in it ->
-                    VoeExtractor(client).videoFromUrl(it)
-                else -> null
-            }
-            if (video != null)
-                videoList.add(video)
-        }
+    private fun parsePlayerData(data: String): List<Video>? {
+        val videoList = when {
+            "streamtape" in data ->
+                StreamTapeExtractor(client).videoFromUrl(data)?.let(::listOf)
+            "dood" in data ->
+                DoodExtractor(client).videoFromUrl(data)?.let(::listOf)
+            "voe.sx" in data ->
+                VoeExtractor(client).videoFromUrl(data)?.let(::listOf)
+            "<div" in data ->
+                if ("const playerGlobalVideo" in data)
+                    GlobalVisionExtractor().videoListFromHtml(data)
+                else VisionExtractor().videoFromHtml(data)?.let(::listOf)
+            else -> null
+        } as List<Video>?
         return videoList
     }
 
@@ -318,21 +303,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
-        val ignoredHosts = MultiSelectListPreference(screen.context).apply {
-            key = IGNORED_HOSTS
-            title = "Hosts ignorados ao carregar"
-            entries = HOSTS_NAMES
-            entryValues = HOSTS_NAMES
-            setDefaultValue(emptySet<String>())
-            setOnPreferenceChangeListener { _, newValue ->
-                preferences.edit()
-                    .putStringSet(key, newValue as Set<String>)
-                    .commit()
-            }
-        }
-
         screen.addPreference(videoQualityPref)
-        screen.addPreference(ignoredHosts)
     }
 
     override fun getFilterList(): AnimeFilterList = AVFilters.filterList
@@ -399,8 +370,6 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     companion object {
         private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
         private const val PREFERRED_QUALITY = "preferred_quality"
-        private const val IGNORED_HOSTS = "ignored_hosts"
-        private val HOSTS_NAMES = arrayOf("DoodStream", "StreamTape", "VoeCDN")
         private val QUALITY_LIST = arrayOf("480p", "720p", "1080p", "4K")
         const val PREFIX_SEARCH = "path:"
     }

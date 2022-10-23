@@ -2,17 +2,18 @@ package eu.kanade.tachiyomi.animeextension.es.pelisflix
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.pelisflix.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisflix.extractors.FembedExtractor
-import eu.kanade.tachiyomi.animeextension.es.pelisflix.extractors.StreamTapeExtractor
 import eu.kanade.tachiyomi.animesource.AnimeSource
 import eu.kanade.tachiyomi.animesource.AnimeSourceFactory
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.MediaType.Companion.toMediaType
@@ -29,7 +30,7 @@ class PelisflixFactory : AnimeSourceFactory {
     override fun createSources(): List<AnimeSource> = listOf(PelisflixClass(), SeriesflixClass())
 }
 
-class PelisflixClass : Pelisflix("Pelisflix", "https://pelisflix.app")
+class PelisflixClass : Pelisflix("Pelisflix", "https://pelisflix.gratis")
 
 class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/ver-series-online/page/$page")
@@ -52,17 +53,18 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
     private fun loadVideoSources(urlResponse: String, lang: String): List<Video> {
         val videoList = mutableListOf<Video>()
         fetchUrls(urlResponse).map { serverUrl ->
+            Log.i("bruh url", serverUrl)
             if (serverUrl.contains("fembed") || serverUrl.contains("vanfem")) {
                 FembedExtractor().videosFromUrl(serverUrl, lang)!!.map { video ->
                     videoList.add(video)
                 }
             }
             if (serverUrl.contains("doodstream")) {
-                val video = DoodExtractor(client).videoFromUrl(serverUrl.replace("https://doodstream.com", "https://dood.wf"), lang)
+                val video = DoodExtractor(client).videoFromUrl(serverUrl.replace("https://doodstream.com", "https://dood.wf"), lang + "DoodStream", false)
                 if (video != null) videoList.add(video)
             }
             if (serverUrl.contains("streamtape")) {
-                val video = StreamTapeExtractor(client).videoFromUrl(serverUrl, "$lang StreamTape")
+                val video = StreamTapeExtractor(client).videoFromUrl(serverUrl, lang + "StreamTape")
                 if (video != null) videoList.add(video)
             }
         }
@@ -83,8 +85,9 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
             val serverID = serverList.attr("data-key")
             val type = if (response.request.url.toString().contains("movies")) 1 else 2
             val url = "$baseUrl/?trembed=$serverID&trid=$movieID&trtype=$type"
-            val langTag = serverList.selectFirst("p.AAIco-language").text().uppercase()
-            val lang = if (langTag.contains("LATINO")) "LAT" else if (langTag.contains("CASTELLANO")) "CAST" else "SUB"
+            val langTag = serverList.selectFirst("p.AAIco-language").text().substring(3).uppercase()
+
+            val lang = if (langTag.contains("LATINO")) "[LAT]" else if (langTag.contains("CASTELLANO")) "[CAST]" else "[SUB]"
             var request = client.newCall(GET(url)).execute()
             if (request.isSuccessful) {
                 val serverLinks = request.asJsoup()
@@ -184,7 +187,7 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
             val videoSorted = this.sortedWith(
                 compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
             ).toTypedArray()
-            val userPreferredQuality = preferences.getString("preferred_quality", "Fembed:1080p")
+            val userPreferredQuality = preferences.getString("preferred_quality", "[LAT]Fembed:720p")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
             if (preferredIdx != -1) {
                 videoSorted.drop(preferredIdx + 1)
@@ -202,15 +205,17 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
-            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", // Fembed
-            "DoodStream", "StreamTape" // video servers without resolution
+            "[LAT]Fembed:1080p", "[LAT]Fembed:720p", "[LAT]Fembed:480p", "[LAT]Fembed:360p", // Fembed
+            "[CAST]Fembed:1080p", "[CAST]Fembed:720p", "[CAST]Fembed:480p", "[CAST]Fembed:360p", // Fembed
+            "[SUB]Fembed:1080p", "[SUB]Fembed:720p", "[SUB]Fembed:480p", "[SUB]Fembed:360p", // Fembed
+            "[LAT]DoodStream", "[CAST]DoodStream", "[SUB]DoodStream", "[LAT]StreamTape", "[CAST]StreamTape", "[SUB]StreamTape" // video servers without resolution
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
             entries = qualities
             entryValues = qualities
-            setDefaultValue("Fembed:1080p")
+            setDefaultValue("[LAT]Fembed:720p")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->

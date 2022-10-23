@@ -6,8 +6,14 @@ ext {
     extName = 'Kinoking'
     pkgNameSuffix = 'de.kinoking'
     extClass = '.Kinoking'
-    extVersionCode = 1
+    extVersionCode = 5
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-voe-extractor'))
+    implementation(project(':lib-streamsb-extractor'))
+    implementation(project(':lib-dood-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

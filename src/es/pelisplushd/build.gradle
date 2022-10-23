@@ -5,8 +5,14 @@ ext {
     extName = 'Pelisplushd'
     pkgNameSuffix = 'es.pelisplushd'
     extClass = '.Pelisplushd'
-    extVersionCode = 18
+    extVersionCode = 21
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-streamtape-extractor'))
+    implementation(project(':lib-streamsb-extractor'))
+    implementation(project(':lib-dood-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

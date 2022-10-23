@@ -5,8 +5,15 @@ ext {
     extName = 'WIT ANIME'
     pkgNameSuffix = 'ar.witanime'
     extClass = '.WitAnime'
-    extVersionCode = 19
+    extVersionCode = 24
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-streamsb-extractor'))
+    implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib-okru-extractor'))
+    implementation(project(':lib-fembed-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

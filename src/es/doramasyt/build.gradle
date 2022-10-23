@@ -9,4 +9,10 @@ ext {
     libVersion = '13'
 }
 
+dependencies {
+    implementation(project(':lib-streamtape-extractor'))
+    implementation(project(':lib-okru-extractor'))
+}
+
+
 apply from: "$rootDir/common.gradle"

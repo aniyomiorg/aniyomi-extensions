@@ -104,13 +104,17 @@ open class Pelisflix(override val name: String, override val baseUrl: String) : 
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
         document.select("div.TPost.A.D div.Container div.optns-bx div.drpdn button.bstd").forEach { serverList ->
-            val langTag = serverList.selectFirst("span").text()
-            val lang = if (langTag.contains("LATINO")) "LAT" else if (langTag.contains("CASTELLANO")) "CAST" else "SUB"
             serverList.select("ul.optnslst li div[data-url]").forEach {
+                val langTag = it.selectFirst("span:nth-child(2)")
+                    .text().substringBefore("HD")
+                    .substringBefore("SD")
+                    .trim()
+                val langVideo = if (langTag.contains("LATINO")) "LAT" else if (langTag.contains("CASTELLANO")) "CAST" else "SUB"
                 val encryptedUrl = it.attr("data-url")
                 val url = String(Base64.decode(encryptedUrl, Base64.DEFAULT))
-                if (url.contains("nupload")) {
-                    nuploadExtractor(lang, url)!!.forEach { video -> videoList.add(video) }
+                val nuploadDomains = arrayOf("nuuuppp", "nupload")
+                if (nuploadDomains.any { x -> url.contains(x) } && !url.contains("/iframe/")) {
+                    nuploadExtractor(langVideo, url).map { video -> videoList.add(video) }
                 }
             }
         }
@@ -151,27 +155,6 @@ open class Pelisflix(override val name: String, override val baseUrl: String) : 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
-
-    override fun List<Video>.sort(): List<Video> {
-        return try {
-            val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
-            ).toTypedArray()
-            val userPreferredQuality = preferences.getString("preferred_quality", "LAT Nupload")
-            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
-            if (preferredIdx != -1) {
-                videoSorted.drop(preferredIdx + 1)
-                videoSorted[0] = videoSorted[preferredIdx]
-            }
-            videoSorted.toList()
-        } catch (e: Exception) {
-            this
-        }
-    }
-
-    private fun getNumberFromString(epsStr: String): String {
-        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
-    }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
@@ -247,7 +230,7 @@ open class Pelisflix(override val name: String, override val baseUrl: String) : 
     }
 
     private fun externalOrInternalImg(url: String): String {
-        return if (url.contains("https")) url else "$baseUrl/$url"
+        return if (url.contains("https")) url else if (url.startsWith("//")) "https:$url" else "$baseUrl/$url"
     }
 
     private fun parseStatus(statusString: String): Int {

@@ -14,7 +14,7 @@ import eu.kanade.tachiyomi.animeextension.de.fireanime.dto.EpisodeListingWrapper
 import eu.kanade.tachiyomi.animeextension.de.fireanime.dto.EpisodeSourcesDto
 import eu.kanade.tachiyomi.animeextension.de.fireanime.dto.HosterSourceDto
 import eu.kanade.tachiyomi.animeextension.de.fireanime.dto.VideoLinkDto
-import eu.kanade.tachiyomi.animeextension.de.fireanime.extractors.DoodExtractor
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.de.fireanime.extractors.FireCdnExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -214,7 +214,7 @@ class FireAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 }
                 isSource(FAConstants.NAME_DOOD) -> {
                     val video = try {
-                        DoodExtractor(client).videoFromUrl(link, quality)
+                        DoodExtractor(client).videoFromUrl(link, quality, false)
                     } catch (e: Exception) {
                         null
                     }

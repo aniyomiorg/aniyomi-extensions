@@ -7,7 +7,6 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.pifansubs.extractors.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.animeextension.pt.pifansubs.extractors.JMVStreamExtractor
-import eu.kanade.tachiyomi.animeextension.pt.pifansubs.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -15,6 +14,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
@@ -128,7 +128,7 @@ class PiFansubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "gdriveplayer." in url ->
                 GdrivePlayerExtractor(client).getVideoList(url)
             "sbspeed.com" in url ->
-                StreamSBExtractor(client).videosFromUrl(url, headersBuilder().build())
+                StreamSBExtractor(client).videosFromUrl(url, headers)
             "/jwplayer/?source" in url -> {
                 val videoUrl = Uri.parse(url).getQueryParameter("source")!!
                 listOf(Video(videoUrl, "JWPlayer", videoUrl))
