@@ -71,7 +71,7 @@ class Movizland : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title
     }
 
-    override fun popularAnimeSelector(): String = "div.BlocksInner div.BlocksUI div.BlockItem, div.BoxOfficeOtherSide div.BlocksUI div.BlockItem"
+    override fun popularAnimeSelector(): String = "div.BlockItem"
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/page/$page/")
 
