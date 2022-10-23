@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -14,6 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
@@ -121,11 +121,13 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         )
                     }
                     if (quality == "Fembed") {
-                        FembedExtractor().videosFromUrl(url).map { videoList.add(it) }
+                        videoList.addAll(
+                            FembedExtractor(client).videosFromUrl(url)
+                        )
                     }
                     if (quality == "Stape") {
                         val url1 = json!!["url"]!!.jsonPrimitive!!.content
-                        val video = StreamTapeExtractor(client).videoFromUrl(url1, "StreamTape")
+                        val video = StreamTapeExtractor(client).videoFromUrl(url1)
                         if (video != null) videoList.add(video)
                     }
                     if (quality == "Doodstream") {

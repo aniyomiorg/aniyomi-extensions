@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.hentaila.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -13,6 +12,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -101,7 +101,7 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val nameServer = server[0]
 
             if (nameServer.lowercase() == "fembed") {
-                val videos = FembedExtractor().videosFromUrl(urlServer)
+                val videos = FembedExtractor(client).videosFromUrl(urlServer)
                 videoList.addAll(videos)
             }
             if (nameServer.lowercase() == "arc") {

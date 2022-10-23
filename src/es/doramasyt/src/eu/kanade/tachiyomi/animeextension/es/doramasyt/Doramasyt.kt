@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.doramasyt.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.doramasyt.extractors.SolidFilesExtractor
 import eu.kanade.tachiyomi.animeextension.es.doramasyt.extractors.UqloadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -15,6 +14,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -94,7 +94,7 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val byte = android.util.Base64.decode(urlEncoded, android.util.Base64.DEFAULT)
             val url = String(byte, charset("UTF-8")).substringAfter("?url=")
             if (server.contains("fembed")) {
-                val videos = FembedExtractor().videosFromUrl(url)
+                val videos = FembedExtractor(client).videosFromUrl(url)
                 videoList.addAll(videos)
             }
             if (server.contains("streamtape")) {

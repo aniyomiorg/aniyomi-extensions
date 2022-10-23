@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.SolidFilesExtractor
 import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.UploadExtractor
@@ -16,6 +15,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -88,7 +88,7 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val urlBase64 = it.select("a").attr("data-player")
             val url = Base64.decode(urlBase64, Base64.DEFAULT).toString(Charsets.UTF_8).substringAfter("=")
             when {
-                url.contains("fembed") -> videoList.addAll(FembedExtractor().videosFromUrl(url))
+                url.contains("fembed") -> videoList.addAll(FembedExtractor(client).videosFromUrl(url))
                 url.contains("ok") -> if (!url.contains("streamcherry")) videoList.addAll(OkruExtractor(client).videosFromUrl(url))
                 url.contains("solidfiles") -> videoList.addAll(SolidFilesExtractor(client).videosFromUrl(url))
                 url.contains("uqload") -> {

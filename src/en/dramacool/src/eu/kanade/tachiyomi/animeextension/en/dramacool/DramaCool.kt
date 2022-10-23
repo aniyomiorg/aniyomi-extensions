@@ -6,7 +6,6 @@ import android.widget.Toast
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.AppInfo
-import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -15,6 +14,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -121,12 +121,9 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                 }
 
-                url.contains("fembed")
-                -> {
-                    val videos = FembedExtractor().videosFromUrl(url)
-                    if (videos != null) {
-                        videoList.addAll(videos)
-                    }
+                url.contains("fembed") -> {
+                    val videos = FembedExtractor(client).videosFromUrl(url)
+                    videoList.addAll(videos)
                 }
 
                 url.contains("streamtape") -> {
