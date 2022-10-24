@@ -199,7 +199,7 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             }
         }
-        return Observable.just(videoList)
+        return Observable.just(videoList.sort())
     }
 
     override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
