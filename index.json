@@ -119,10 +119,10 @@
   {
     "name": "Aniyomi: موفيزلاند",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.movizland",
-    "apk": "aniyomi-ar.movizland-v13.8.apk",
+    "apk": "aniyomi-ar.movizland-v13.9.apk",
     "lang": "ar",
-    "code": 8,
-    "version": "13.8",
+    "code": 9,
+    "version": "13.9",
     "nsfw": 0
   },
   {
@@ -335,10 +335,10 @@
   {
     "name": "Aniyomi: AnimeOwl",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.animeowl",
-    "apk": "aniyomi-en.animeowl-v13.1.apk",
+    "apk": "aniyomi-en.animeowl-v13.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "13.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 0
   },
   {
