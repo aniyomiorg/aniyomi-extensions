@@ -56,10 +56,10 @@
   {
     "name": "Aniyomi: Animerco",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.animerco",
-    "apk": "aniyomi-ar.animerco-v13.14.apk",
+    "apk": "aniyomi-ar.animerco-v13.16.apk",
     "lang": "ar",
-    "code": 14,
-    "version": "13.14",
+    "code": 16,
+    "version": "13.16",
     "nsfw": 0
   },
   {
