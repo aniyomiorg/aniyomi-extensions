@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.net.Uri
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.pt.pifansubs.extractors.AdoroDoramasExtractor
 import eu.kanade.tachiyomi.animeextension.pt.pifansubs.extractors.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.animeextension.pt.pifansubs.extractors.JMVStreamExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -120,13 +121,16 @@ class PiFansubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun getPlayerVideos(url: String): List<Video> {
+        val streamsbDomains = listOf("sbspeed", "sbanh", "streamsb", "sbfull")
         return when {
             "player.jmvstream" in url ->
-                JMVStreamExtractor(client).getVideoList(url)
+                JMVStreamExtractor(client).videosFromUrl(url)
             "gdriveplayer." in url ->
-                GdrivePlayerExtractor(client).getVideoList(url)
-            "sbspeed.com" in url ->
+                GdrivePlayerExtractor(client).videosFromUrl(url)
+            streamsbDomains.any { it in url } ->
                 StreamSBExtractor(client).videosFromUrl(url, headers)
+            "adorodoramas.com" in url ->
+                AdoroDoramasExtractor(client).videosFromUrl(url)
             "/jwplayer/?source" in url -> {
                 val videoUrl = Uri.parse(url).getQueryParameter("source")!!
                 listOf(Video(videoUrl, "JWPlayer", videoUrl))

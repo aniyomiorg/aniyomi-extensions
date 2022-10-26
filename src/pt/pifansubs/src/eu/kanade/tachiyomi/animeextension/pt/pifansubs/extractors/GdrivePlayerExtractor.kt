@@ -17,7 +17,7 @@ import javax.crypto.spec.SecretKeySpec
 
 class GdrivePlayerExtractor(private val client: OkHttpClient) {
 
-    fun getVideoList(url: String): List<Video> {
+    fun videosFromUrl(url: String): List<Video> {
         val body = client.newCall(GET(url.replace(".me", ".to"))).execute()
             .body!!.string()
         val eval = JsUnpacker.unpackAndCombine(body)!!.replace("\\", "")
