@@ -35,7 +35,7 @@ class PiFansubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Pi Fansubs"
 
-    override val baseUrl = "https://pifansubs.com"
+    override val baseUrl = "https://pifansubs.org"
 
     override val lang = "pt-BR"
 
@@ -109,16 +109,14 @@ class PiFansubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val players = document.select("div.source-box:not(#source-player-trailer) iframe")
-        val videoList = mutableListOf<Video>()
-        players.forEach { player ->
+        return players.flatMap { player ->
             val url = player.attr("data-src").ifEmpty { player.attr("src") }.let {
                 if (!it.startsWith("http"))
                     "https:" + it
                 else it
             }
-            videoList.addAll(getPlayerVideos(url))
+            getPlayerVideos(url)
         }
-        return videoList
     }
 
     private fun getPlayerVideos(url: String): List<Video> {
@@ -220,12 +218,12 @@ class PiFansubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val doc = getRealDoc(document)
         val sheader = doc.selectFirst("div.sheader")
         val img = sheader.selectFirst("div.poster > img")
-        anime.thumbnail_url = img.attr("abs:data-src")
+        anime.thumbnail_url = img.attr("data-src")
         anime.title = sheader.selectFirst("div.data > h1").text()
         anime.genre = sheader.select("div.data > div.sgeneros > a")
             .joinToString(", ") { it.text() }
         val info = doc.selectFirst("div#info")
-        var description = info.selectFirst("p").text() + "\n"
+        var description = info.select("p").joinToString("\n\n") + "\n"
         info.getInfo("Título")?.let { description += "$it" }
         info.getInfo("Ano")?.let { description += "$it" }
         info.getInfo("Temporadas")?.let { description += "$it" }
@@ -280,9 +278,11 @@ class PiFansubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun Element.getInfo(substring: String): String? {
         val target = this.selectFirst("div.custom_fields:contains($substring)")
             ?: return null
-        val key = target.selectFirst("b").text()
-        val value = target.selectFirst("span").text()
-        return "\n$key: $value"
+        return runCatching {
+            val key = target.selectFirst("b").text()
+            val value = target.selectFirst("span").text()
+            "\n$key: $value"
+        }.getOrNull()
     }
 
     private fun String.toDate(): Long {
