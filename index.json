@@ -497,10 +497,10 @@
   {
     "name": "Aniyomi: Vidembed",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.vidembed",
-    "apk": "aniyomi-en.vidembed-v13.16.apk",
+    "apk": "aniyomi-en.vidembed-v13.17.apk",
     "lang": "en",
-    "code": 16,
-    "version": "13.16",
+    "code": 17,
+    "version": "13.17",
     "nsfw": 0
   },
   {
