@@ -9,7 +9,7 @@ class JMVStreamExtractor(private val client: OkHttpClient) {
     private val REGEX_PLAYLIST = Regex("src\":\"(\\S+?)\"")
     private val PLAYER_NAME = "JMVStream"
 
-    fun getVideoList(iframeUrl: String): List<Video> {
+    fun videosFromUrl(iframeUrl: String): List<Video> {
         val iframeBody = client.newCall(GET(iframeUrl)).execute()
             .body!!.string()
         val playlistUrl = REGEX_PLAYLIST.find(iframeBody)!!.groupValues.get(1)
