@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.pt.pifansubs.extractors
 
-import android.util.Log
 import dev.datlag.jsunpacker.JsUnpacker
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
@@ -16,7 +15,6 @@ class AdoroDoramasExtractor(private val client: OkHttpClient) {
         val unpacked = JsUnpacker.unpackAndCombine(body)
             ?.replace("\\", "")
             ?: return emptyList<Video>()
-        Log.i(PLAYER_NAME, unpacked)
         val listStr = unpacked.substringAfter("sources:[").substringBefore("]")
         return listStr.split("}").filter { it.isNotBlank() }.map {
             val quality = it.substringAfter("label':'").substringBefore("'")
