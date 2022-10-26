@@ -5,15 +5,23 @@ import android.content.SharedPreferences
 import android.net.Uri
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.en.vidembed.extractors.MixDropExtractor
+import eu.kanade.tachiyomi.animeextension.en.vidembed.extractors.XstreamcdnExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -35,6 +43,10 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val supportsLatest = false
 
     override val client: OkHttpClient = network.cloudflareClient
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+    }
 
     private val downloadLink = "https://vidembed.io/download?id="
 
@@ -91,52 +103,58 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun videosFromElement(document: Document): List<Video> {
-        val videoList = mutableListOf<Video>()
         val elements = document.select(videoListSelector())
-        for (element in elements) {
-            val quality = element.text().substringAfter("Download (").replace("P - mp4)", "p")
-            val url = element.attr("href")
+
+        val videoList = elements.parallelMap { element ->
+            val serverName = element.text()
+            val quality = serverName.substringAfter("Download (").replace("P - mp4)", "p")
+            val url = element.attr("href").replace("/d/", "/e/").replace("/f/", "/e/")
             val location = element.ownerDocument().location()
             val videoHeaders = Headers.headersOf("Referer", location)
-            when {
-                url.contains("https://dood") -> {
-                    val newQuality = "Doodstream mirror"
-                    val video = try {
-                        Video(url, newQuality, doodUrlParse(url), headers = videoHeaders)
-                    } catch (e: Exception) {
-                        null
+            runCatching {
+                when {
+                    serverName.contains("Xstreamcdn") -> {
+                        XstreamcdnExtractor(client, json).videosFromUrl(url)
                     }
-                    if (video != null) videoList.add(video)
-                }
-                url.contains("sbembed.com") || url.contains("sbembed1.com") || url.contains("sbplay.org") ||
-                    url.contains("sbvideo.net") || url.contains("streamsb.net") || url.contains("sbplay.one") ||
-                    url.contains("cloudemb.com") || url.contains("playersb.com") || url.contains("tubesb.com") ||
-                    url.contains("sbplay1.com") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
-                    url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
-                    url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
-                    url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com")
-                -> {
-                    val newUrl = url.replace("/d/", "/e/")
-                    val videos = StreamSBExtractor(client).videosFromUrl(newUrl, headers)
-                    videoList.addAll(videos)
-                }
-                else -> {
-                    val parsedQuality = when (quality) {
-                        "FullHDp" -> "1080p"
-                        "HDp" -> "720p"
-                        "SDp" -> "360p"
-                        else -> quality
+                    serverName.contains("DoodStream") -> {
+                        DoodExtractor(client).videosFromUrl(url)
                     }
-                    val video =
-                        Video(url, parsedQuality, videoUrlParse(url, location), headers = videoHeaders)
-                    videoList.add(video)
+                    serverName.contains("StreamSB") -> {
+                        StreamSBExtractor(client).videosFromUrl(url, headers)
+                    }
+                    serverName.contains("Mixdrop") -> {
+                        MixDropExtractor(client).videoFromUrl(url)
+                    }
+                    else -> {
+                        val parsedQuality = when (quality) {
+                            "FullHDp" -> "1080p"
+                            "HDp" -> "720p"
+                            "SDp" -> "360p"
+                            "" -> "Watch"
+                            else -> quality
+                        }
+                        try {
+                            Video(
+                                url,
+                                parsedQuality,
+                                videoUrlParse(url, location),
+                                headers = videoHeaders
+                            ).let {
+                                listOf(it)
+                            }
+                        } catch (_: Exception) {
+                            null
+                        }
+                    }
                 }
-            }
+            }.getOrNull()
         }
+            .filterNotNull()
+            .flatten()
         return videoList
     }
 
-    override fun videoListSelector() = "div.mirror_link a[download], div.mirror_link a[href*=https://dood],div.mirror_link a[href*=https://sbplay]"
+    override fun videoListSelector() = "div.mirror_link > div > a"
 
     override fun videoFromElement(element: Element): Video = throw Exception("not used")
 
@@ -149,31 +167,6 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoUrl = response.header("location")
         response.close()
         return videoUrl ?: url
-    }
-
-    private fun doodUrlParse(url: String): String? {
-        val response = client.newCall(GET(url.replace("/d/", "/e/"))).execute()
-        val content = response.body!!.string()
-        if (!content.contains("'/pass_md5/")) return null
-        val md5 = content.substringAfter("'/pass_md5/").substringBefore("',")
-        val token = md5.substringAfterLast("/")
-        val doodTld = url.substringAfter("https://dood.").substringBefore("/")
-        val randomString = getRandomString()
-        val expiry = System.currentTimeMillis()
-        val videoUrlStart = client.newCall(
-            GET(
-                "https://dood.$doodTld/pass_md5/$md5",
-                Headers.headersOf("referer", url)
-            )
-        ).execute().body!!.string()
-        return "$videoUrlStart$randomString?token=$token&expiry=$expiry"
-    }
-
-    private fun getRandomString(length: Int = 10): String {
-        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
-        return (1..length)
-            .map { allowedChars.random() }
-            .joinToString("")
     }
 
     override fun List<Video>.sort(): List<Video> {
@@ -247,4 +240,10 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         screen.addPreference(videoQualityPref)
     }
+
+    // From Dopebox
+    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 }
