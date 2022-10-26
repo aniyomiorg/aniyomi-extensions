@@ -19,9 +19,7 @@ import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -61,7 +59,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("div.data a").attr("href"))
-        anime.thumbnail_url = "http" + element.select("div.poster img").attr("data-lazy-src")
+        anime.thumbnail_url = element.select("div.poster img").attr("src")
         anime.title = element.select("div.data a").text()
         return anime
     }
@@ -78,7 +76,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val seriesLink1 = document.select("ol[itemscope] li:last-child a").attr("href")
         val seriesLink = document.select("input[name=red]").attr("value")
         val type = document.select("div.dtsingle").attr("itemtype").substringAfterLast("/")
-        if (type.contains("TVSeries")) {
+        if (type.contains("Series")) {
             val seasonsHtml = client.newCall(
                 GET(
                     seriesLink
@@ -149,7 +147,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videosFromElement(document)
     }
 
-    override fun videoListSelector() = "li.dooplay_player_option" // ul#playeroptionsul
+    override fun videoListSelector() = "div.pframe" // ul#playeroptionsul
 
     private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
@@ -157,30 +155,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         for (element in elements) {
             val location = element.ownerDocument().location()
             val videoHeaders = Headers.headersOf("Referer", location)
-            val qualityy = element.text()
-            val post = element.attr("data-post")
-            val num = element.attr("data-nume")
-            val type = element.attr("data-type")
-            val pageData = FormBody.Builder()
-                .add("action", "doo_player_ajax")
-                .add("nume", num)
-                .add("post", post)
-                .add("type", type)
-                .build()
-            val url = "https://animerco.com/wp-json/dooplayer/v1/post/$post?type=$type&source=$num"
-            val ajax1 = "https://animerco.com/wp-admin/admin-ajax.php"
-            // val json = Json.decodeFromString<JsonObject>(Jsoup.connect(url).header("X-Requested-With", "XMLHttpRequest").ignoreContentType(true).execute().body())
-            /*val json = Json.decodeFromString<JsonObject>(
-                client.newCall(GET(url))
-                    .execute().body!!.string()
-            )*/
-            // val json =
-            val ajax = client.newCall(POST(ajax1, videoHeaders, pageData)).execute().asJsoup()
-            // client.newCall(GET(url)).execute().body!!.string()
-
-            val embedUrlT = ajax.text().substringAfter("embed_url\":\"").substringBefore("\"")
-            val embedUrl = embedUrlT.replace("\\/", "/")
-            // json!!.jsonArray[0].jsonObject["embed_url"].toString().trim('"')
+            val embedUrl = element.select("iframe").attr("src")
 
             when {
                 embedUrl.contains("sbembed.com") || embedUrl.contains("sbembed1.com") || embedUrl.contains("sbplay.org") ||
@@ -225,8 +200,8 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                 -> {
                     val fUrl = embedUrl.replace("\\/", "/")
-                        .replace("https://www.fembed.com", "https://suzihaza.com")
-                    val videos = FembedExtractor(client).videosFromUrl(embedUrl)
+                        .replace("https://www.fembed.com", "https://vanfem.com")
+                    val videos = FembedExtractor(client).videosFromUrl(fUrl)
                     videoList.addAll(videos)
                 }
                 embedUrl.contains("streamtape") -> {
@@ -236,18 +211,21 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                 }
                 embedUrl.contains("4shared") -> {
+                    val qualityy = "4shared"
                     val video = SharedExtractor(client).videoFromUrl(embedUrl, qualityy)
                     if (video != null) {
                         videoList.add(video)
                     }
                 }
                 embedUrl.contains("4shared") -> {
+                    val qualityy = "4shared"
                     val video = MpforuploadExtractor(client).videoFromUrl(embedUrl, qualityy)
                     if (video != null) {
                         videoList.add(video)
                     }
                 }
                 embedUrl.contains("uqload") -> {
+                    val qualityy = "uqload"
                     val video = UQLoadExtractor(client).videoFromUrl(embedUrl, qualityy)
                     if (video != null) {
                         videoList.add(video)
@@ -303,7 +281,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        anime.thumbnail_url = "https:" + element.select("img").attr("data-lazy-src")
+        anime.thumbnail_url = element.select("img").attr("src")
         anime.title = element.select("img").attr("alt")
         return anime
     }
@@ -318,7 +296,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.select("div.poster img").attr("data-lazy-src")
+        anime.thumbnail_url = document.select("div.poster img").attr("src")
         anime.title = document.select("div.data h1").text()
         anime.genre = document.select("div.sgeneros a").joinToString(", ") { it.text() }
         anime.description = document.select("div[itemprop=description] p").text()
