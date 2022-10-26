@@ -1,16 +1,20 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
 
 ext {
     extName = 'Vidembed'
     pkgNameSuffix = 'en.vidembed'
     extClass = '.Vidembed'
-    extVersionCode = 16
+    extVersionCode = 17
     libVersion = '13'
 }
 
 dependencies {
+    compileOnly libs.bundles.coroutines
     implementation(project(':lib-streamsb-extractor'))
+    implementation(project(':lib-dood-extractor'))
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
 
 
