@@ -437,8 +437,8 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val domainPref = ListPreference(screen.context).apply {
             key = "preferred_domain"
             title = "Domain in uso (riavvio dell'app richiesto)"
-            entries = arrayOf("animesaturn.cc", "animesaturn.io")
-            entryValues = arrayOf("https://animesaturn.cc", "https://animesaturn.io")
+            entries = arrayOf("animesaturn.cc", "animesaturn.io", "animesaturn.in")
+            entryValues = arrayOf("https://animesaturn.cc", "https://animesaturn.io", "https://animesaturn.in")
             setDefaultValue("https://animesaturn.cc")
             summary = "%s"
 
