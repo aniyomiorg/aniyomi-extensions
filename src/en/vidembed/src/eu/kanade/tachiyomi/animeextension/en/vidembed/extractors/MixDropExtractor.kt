@@ -5,6 +5,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
+import okhttp3.Headers
 
 //From Vizer Extension
 class MixDropExtractor(private val client: OkHttpClient) {
@@ -21,6 +22,7 @@ class MixDropExtractor(private val client: OkHttpClient) {
                 "$it($lang)"
             } else it
         }
-        return listOf(Video(url, quality, videoUrl))
+        val referer = Headers.headersOf("Referer", "https://mixdrop.co/")
+        return listOf(Video(url, quality, videoUrl, headers = referer))
     }
 }
