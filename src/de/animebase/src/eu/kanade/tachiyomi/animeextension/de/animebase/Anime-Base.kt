@@ -73,7 +73,7 @@ class `Anime-Base` : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             } else {
                 "data-dubbed=\"0\""
             }
-            }], div.tab-content table#angebotTabelle tbody tr.episodetoggleclass-Specials button[data-dubbed=\"0\"]"
+            }][data-hoster=\"1\"], div.tab-content table#angebotTabelle tbody tr.episodetoggleclass-Specials button[data-dubbed=\"0\"][data-hoster=\"1\"]"
         )
         episodeElement.forEach {
             val episode = episodeFromElement(it)
@@ -91,23 +91,23 @@ class `Anime-Base` : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (element.attr("data-special").contains("2")) {
                 episode.episode_number = 1F
                 episode.name = "Film $epnum"
-                episode.setUrlWithoutDomain("/episode/$id/$epnum/0/$host/2")
+                episode.setUrlWithoutDomain("/episode/$id/$epnum/1/$host/2")
             }
         } else {
-            if (element.attr("data-special").contains("2")) {
+            if (element.select("button[data-hoster=\"1\"]").attr("data-special").contains("2")) {
                 episode.episode_number = 1F
                 episode.name = "Film ${epnum.toInt() - 1}"
                 episode.setUrlWithoutDomain("/episode/$id/$epnum/0/$host/2")
             } else {
-                episode.episode_number = element.select("button[data-hoster=\"1\"]").attr("data-folge").toFloat()
                 val season = element.attr("class")
                     .substringAfter("-").substringBefore(" ger")
+                    .replace("<span title=\"", "").replace("<span class=\"label label-danger\">Filler!</span>", "").replace("&nbsp;", "")
                 episode.name = "Staffel $season Folge $epnum : " + element.select("td.openEpisodeEmbed").toString()
                     .substringAfter("\">").substringBefore("<!")
-                    .replace("<span title=\"", "").replace("<span class=\"label label-danger\">Filler!</span>", "").replace("&nbsp;", "")
+                episode.episode_number = element.select("button[data-hoster=\"1\"]").attr("data-folge").toFloat()
                 episode.setUrlWithoutDomain("/episode/$id/$epnum/0/$host/0")
             }
-            if (element.attr("data-special").contains("1")) {
+            if (element.select("button[data-hoster=\"1\"]").attr("data-special").contains("1")) {
                 episode.episode_number = 1F
                 episode.name = "Special ${epnum.toInt() - 1}"
                 episode.setUrlWithoutDomain("/episode/$id/$epnum/0/$host/1")
@@ -251,9 +251,13 @@ class `Anime-Base` : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.attr("href"))
-        anime.thumbnail_url = element.select("div.thumbnail img").attr("src")
-        anime.title = element.select("div.caption h3").text()
+        if (!element.text().contains("PainterCrowe")) {
+            anime.setUrlWithoutDomain(element.attr("href"))
+            anime.thumbnail_url = element.select("div.thumbnail img").attr("src")
+            anime.title = element.select("div.caption h3").text()
+        } else {
+            throw Exception("Keine Ergebnisse gefunden")
+        }
         return anime
     }
 
