@@ -101,9 +101,9 @@ class `Anime-Base` : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             } else {
                 val season = element.attr("class")
                     .substringAfter("-").substringBefore(" ger")
-                    .replace("<span title=\"", "").replace("<span class=\"label label-danger\">Filler!</span>", "").replace("&nbsp;", "")
                 episode.name = "Staffel $season Folge $epnum : " + element.select("td.openEpisodeEmbed").toString()
                     .substringAfter("\">").substringBefore("<!")
+                    .replace("<span title=\"", "").replace("<span class=\"label label-danger\">Filler!</span>", "").replace("&nbsp;", "")
                 episode.episode_number = element.select("button[data-hoster=\"1\"]").attr("data-folge").toFloat()
                 episode.setUrlWithoutDomain("/episode/$id/$epnum/0/$host/0")
             }
