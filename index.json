@@ -216,6 +216,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: Anime-Base",
+    "pkg": "eu.kanade.tachiyomi.animeextension.de.animebase",
+    "apk": "aniyomi-de.animebase-v13.1.apk",
+    "lang": "de",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: Anime Shitai",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.animeshitai",
     "apk": "aniyomi-de.animeshitai-v13.6.apk",
