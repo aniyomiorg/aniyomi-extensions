@@ -36,7 +36,7 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "CineVision"
 
-    override val baseUrl = "https://cinevisionv5.online"
+    override val baseUrl = "https://cinevision.app"
 
     override val lang = "pt-BR"
 
