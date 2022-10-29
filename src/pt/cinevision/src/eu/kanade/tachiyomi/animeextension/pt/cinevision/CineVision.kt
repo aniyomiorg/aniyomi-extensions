@@ -309,6 +309,7 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         for (video in this) {
             if (item in video.quality) {
                 newList.add(preferred, video)
+                preferred++
             } else {
                 newList.add(video)
             }
@@ -319,7 +320,7 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREFERRED_QUALITY, DEFAULT_QUALITY)!!
         val language = preferences.getString(PREFERRED_LANGUAGE, DEFAULT_LANGUAGE)!!
-        val newList = this.sortIfContains(language).reversed().sortIfContains(quality)
+        val newList = sortIfContains(language).sortIfContains(quality)
         return newList
     }
 
@@ -329,7 +330,7 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
 
         const val PREFIX_SEARCH = "slug:"
-        
+
         private const val PREFERRED_QUALITY = "preferred_quality"
         private const val DEFAULT_QUALITY = "720p"
         private val QUALITY_LIST = arrayOf("480p", "720p")
