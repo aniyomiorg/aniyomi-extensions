@@ -5,7 +5,7 @@ ext {
     extName = 'CineVision'
     pkgNameSuffix = 'pt.cinevision'
     extClass = '.CineVision'
-    extVersionCode = 2
+    extVersionCode = 3
     libVersion = '13'
     containsNsfw = true
 }
