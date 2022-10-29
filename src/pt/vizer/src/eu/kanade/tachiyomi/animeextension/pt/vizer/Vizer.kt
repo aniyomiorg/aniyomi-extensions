@@ -322,6 +322,27 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
         return POST("$API_URL/publicFunctions.php", newHeaders, body = reqBody)
     }
 
+    private fun List<Video>.sortIfContains(item: String): List<Video> {
+        val newList = mutableListOf<Video>()
+        var preferred = 0
+        for (video in this) {
+            if (item in video.quality) {
+                newList.add(preferred, video)
+                preferred++
+            } else {
+                newList.add(video)
+            }
+        }
+        return newList
+    }
+
+    override fun List<Video>.sort(): List<Video> {
+        val player = preferences.getString(PREF_PLAYER_KEY, "MixDrop")!!
+        val language = preferences.getString(PREF_LANGUAGE_KEY, "LEG")!!
+        val newList = this.sortIfContains(language).sortIfContains(player)
+        return newList
+    }
+
     private inline fun <reified T> Response.parseAs(): T {
         val responseBody = body?.string().orEmpty()
         return json.decodeFromString(responseBody)
