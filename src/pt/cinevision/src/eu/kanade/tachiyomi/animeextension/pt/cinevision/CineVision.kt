@@ -36,7 +36,7 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "CineVision"
 
-    override val baseUrl = "https://cinevisionv5.online"
+    override val baseUrl = "https://cinevision.app"
 
     override val lang = "pt-BR"
 
@@ -166,8 +166,8 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        return if (query.startsWith(CVConstants.PREFIX_SEARCH)) {
-            val slug = query.removePrefix(CVConstants.PREFIX_SEARCH)
+        return if (query.startsWith(PREFIX_SEARCH)) {
+            val slug = query.removePrefix(PREFIX_SEARCH)
             client.newCall(GET("$baseUrl/serie/$slug", headers))
                 .asObservableSuccess()
                 .map { response ->
@@ -244,11 +244,11 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Settings ============================== 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = CVConstants.PREFERRED_QUALITY
+            key = PREFERRED_QUALITY
             title = "Qualidade preferida"
-            entries = CVConstants.QUALITY_LIST
-            entryValues = CVConstants.QUALITY_LIST
-            setDefaultValue(CVConstants.DEFAULT_QUALITY)
+            entries = QUALITY_LIST
+            entryValues = QUALITY_LIST
+            setDefaultValue(DEFAULT_QUALITY)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -258,11 +258,11 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         val languagePref = ListPreference(screen.context).apply {
-            key = CVConstants.PREFERRED_LANGUAGE
+            key = PREFERRED_LANGUAGE
             title = "Tipo/Língua preferida"
-            entries = CVConstants.LANGUAGE_LIST
-            entryValues = CVConstants.LANGUAGE_LIST
-            setDefaultValue(CVConstants.DEFAULT_LANGUAGE)
+            entries = LANGUAGE_LIST
+            entryValues = LANGUAGE_LIST
+            setDefaultValue(DEFAULT_LANGUAGE)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -309,6 +309,7 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         for (video in this) {
             if (item in video.quality) {
                 newList.add(preferred, video)
+                preferred++
             } else {
                 newList.add(video)
             }
@@ -317,9 +318,9 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(CVConstants.PREFERRED_QUALITY, CVConstants.DEFAULT_QUALITY)!!
-        val language = preferences.getString(CVConstants.PREFERRED_LANGUAGE, CVConstants.DEFAULT_LANGUAGE)!!
-        val newList = this.sortIfContains(language).reversed().sortIfContains(quality)
+        val quality = preferences.getString(PREFERRED_QUALITY, DEFAULT_QUALITY)!!
+        val language = preferences.getString(PREFERRED_LANGUAGE, DEFAULT_LANGUAGE)!!
+        val newList = sortIfContains(language).sortIfContains(quality)
         return newList
     }
 
@@ -327,5 +328,15 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("MMMM. dd, yyyy", Locale.ENGLISH)
         }
+
+        const val PREFIX_SEARCH = "slug:"
+
+        private const val PREFERRED_QUALITY = "preferred_quality"
+        private const val DEFAULT_QUALITY = "720p"
+        private val QUALITY_LIST = arrayOf("480p", "720p")
+
+        private const val PREFERRED_LANGUAGE = "preferred_language"
+        private const val DEFAULT_LANGUAGE = "Legendado"
+        private val LANGUAGE_LIST = arrayOf("Legendado", "Dublado")
     }
 }

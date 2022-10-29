@@ -20,7 +20,7 @@ class CVUrlActivity : Activity() {
         val pathSegments = intent?.data?.pathSegments
         if (pathSegments != null && pathSegments.size > 1) {
             val slug = pathSegments[1]
-            val searchQuery = CVConstants.PREFIX_SEARCH + slug
+            val searchQuery = CineVision.PREFIX_SEARCH + slug
             val mainIntent = Intent().apply {
                 action = "eu.kanade.tachiyomi.ANIMESEARCH"
                 putExtra("query", searchQuery)
