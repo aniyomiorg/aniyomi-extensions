@@ -158,7 +158,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
         val players = client.newCall(apiRequest("getVideoPlayers=${videoObj.id}"))
             .execute()
             .parseAs<PlayersDto>()
-        val langPrefix = if (videoObj.lang == "1") "SUB" else "DUB"
+        val langPrefix = if (videoObj.lang == "1") "LEG" else "DUB"
         val videoList = players.iterator().mapNotNull loop@{ (name, status) ->
             if (status == "0") return@loop null
             val url = getPlayerUrl(videoObj.id, name)
@@ -271,7 +271,40 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+
+        val preferredPlayer = ListPreference(screen.context).apply {
+            key = PREF_PLAYER_KEY
+            title = PREF_PLAYER_TITLE
+            entries = PREF_PLAYER_ARRAY
+            entryValues = PREF_PLAYER_ARRAY
+            setDefaultValue("MixDrop")
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
+        val preferredLanguage = ListPreference(screen.context).apply {
+            key = PREF_LANGUAGE_KEY
+            title = PREF_LANGUAGE_TITLE
+            entries = PREF_LANGUAGE_ENTRIES
+            entryValues = PREF_LANGUAGE_VALUES
+            setDefaultValue("LEG")
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
         screen.addPreference(popularPage)
+        screen.addPreference(preferredPlayer)
+        screen.addPreference(preferredLanguage)
     }
 
     // ============================= Utilities ==============================
@@ -303,6 +336,17 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
         private val PREF_POPULAR_PAGE_VALUES = arrayOf(
             "anime", "movie", "serie"
         )
+
+        private const val PREF_PLAYER_KEY = "pref_player"
+        private const val PREF_PLAYER_TITLE = "Player/Server favorito"
+        private val PREF_PLAYER_ARRAY = arrayOf(
+            "MixDrop", "StreamTape", "Fembed"
+        )
+
+        private const val PREF_LANGUAGE_KEY = "pref_language"
+        private const val PREF_LANGUAGE_TITLE = "Língua/tipo preferido"
+        private val PREF_LANGUAGE_ENTRIES = arrayOf("Legendado", "Dublado")
+        private val PREF_LANGUAGE_VALUES = arrayOf("LEG", "DUB")
 
         const val PREFIX_SEARCH = "path:"
     }
