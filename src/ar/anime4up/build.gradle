@@ -9,4 +9,10 @@ ext {
     libVersion = '13'
 }
 
+dependencies {
+    implementation(project(':lib-fembed-extractor'))
+    implementation(project(':lib-streamsb-extractor'))
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
+}
+
 apply from: "$rootDir/common.gradle"

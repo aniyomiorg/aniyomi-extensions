@@ -5,13 +5,14 @@ ext {
     extName = 'AnimeTitans'
     pkgNameSuffix = 'ar.animetitans'
     extClass = '.AnimeTitans'
-    extVersionCode = 1
+    extVersionCode = 2
     libVersion = '13'
 }
 
 dependencies {
     implementation(project(':lib-fembed-extractor'))
     implementation(project(':lib-streamsb-extractor'))
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
 
 

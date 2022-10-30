@@ -6,8 +6,10 @@ import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.animetitans.extractors.AnimeTitansExtractor
+import eu.kanade.tachiyomi.animeextension.ar.animetitans.extractors.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animetitans.extractors.SharedExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animetitans.extractors.VidBomExtractor
+import eu.kanade.tachiyomi.animeextension.ar.animetitans.extractors.VidYardExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -111,12 +113,26 @@ class AnimeTitans : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val embedUrl = decoded.substringAfter("src=\"").substringBefore("\"")
             Log.i("embedUrl", "$embedUrl")
             when {
+                embedUrl.contains("vidyard")
+                -> {
+                    val headers = headers.newBuilder()
+                        .set("Referer", "https://play.vidyard.com")
+                        .set("Accept-Encoding", "gzip, deflate, br")
+                        .set("Accept-Language", "en-US,en;q=0.5")
+                        .set("TE", "trailers")
+                        .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
+                        .build()
+                    val id = embedUrl.substringAfter("com/").substringBefore("?")
+                    val vidUrl = "https://play.vidyard.com/player/" + id + ".json"
+                    val videos = VidYardExtractor(client).videosFromUrl(vidUrl, headers)
+                    videoList.addAll(videos)
+                }
                 embedUrl.contains("animetitans.net")
                 -> {
                     val headers = headers.newBuilder()
-                        .set("Referer", "$baseUrl/")
+                        .set("Referer", "https://animetitans.net/")
                         .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36")
-                        .set("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
+                        .set("Accept", "*/*")
                         .set("Accept-Language", "en-US,en;q=0.5")
                         .set("Accept-Encoding", "gzip, deflate, br")
                         .build()
@@ -134,6 +150,12 @@ class AnimeTitans : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     embedUrl.contains("sblanh.com")
                 -> {
                     val videos = StreamSBExtractor(client).videosFromUrl(embedUrl, headers)
+                    videoList.addAll(videos)
+                }
+                embedUrl.contains("drive.google")
+                -> {
+                    val embedUrlG = "https://gdriveplayer.to/embed2.php?link=" + embedUrl
+                    val videos = GdrivePlayerExtractor(client).videosFromUrl(embedUrlG)
                     videoList.addAll(videos)
                 }
                 embedUrl.contains("fembed") ||
