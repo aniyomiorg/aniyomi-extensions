@@ -5,8 +5,14 @@ ext {
     extName = 'Anime4up'
     pkgNameSuffix = 'ar.anime4up'
     extClass = '.Anime4Up'
-    extVersionCode = 31
+    extVersionCode = 32
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-fembed-extractor'))
+    implementation(project(':lib-streamsb-extractor'))
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
 
 apply from: "$rootDir/common.gradle"

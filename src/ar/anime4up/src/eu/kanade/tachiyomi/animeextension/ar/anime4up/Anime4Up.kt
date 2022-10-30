@@ -2,8 +2,14 @@ package eu.kanade.tachiyomi.animeextension.ar.anime4up
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.ar.anime4up.extractors.GdrivePlayerExtractor
+import eu.kanade.tachiyomi.animeextension.ar.anime4up.extractors.MoshahdaExtractor
+import eu.kanade.tachiyomi.animeextension.ar.anime4up.extractors.SharedExtractor
+import eu.kanade.tachiyomi.animeextension.ar.anime4up.extractors.VidBomExtractor
+import eu.kanade.tachiyomi.animeextension.ar.anime4up.extractors.VidYardExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -11,6 +17,8 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
+import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
@@ -30,7 +38,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Anime4Up"
 
-    override val baseUrl = "https://anime4up.vip"
+    override val baseUrl = "https://wc.anime4up.vip"
 
     override val lang = "ar"
 
@@ -44,7 +52,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun headersBuilder(): Headers.Builder {
         return super.headersBuilder()
-            .add("Referer", "https://anime4up.vip/") // https://s12.gemzawy.com https://moshahda.net
+            .add("Referer", "https://wc.anime4up.vip/") // https://s12.gemzawy.com https://moshahda.net
     }
 
     // Popular
@@ -118,30 +126,110 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             // Call POST
             val referer = response.request.url.encodedPath
             val newHeaders = Headers.headersOf("referer", "$postUrl")
-            val ifram1 = client.newCall(POST(postUrl, newHeaders, body)).execute().asJsoup()
-            val iframe2 = ifram1.select("li[data-i=moshahda] a").attr("data-ep-url")
+            val iframeResponse = client.newCall(POST(postUrl, newHeaders, body)).execute().asJsoup()
+            /*val iframe2 = iframe.select("li[data-i=moshahda] a").attr("data-ep-url")
             val iframeResponse = client.newCall(GET(iframe2, newHeaders))
-                .execute().asJsoup()
-            return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
+                .execute().asJsoup()*/
+            return videosFromElement(iframeResponse)
         }
     }
 
-    override fun videoListSelector() = "script:containsData(m3u8)"
+    // override fun videoListSelector() = "script:containsData(m3u8)"
+    override fun videoListSelector() = "li[data-i] a"
 
     private fun videosFromElement(element: Element): List<Video> {
-        val data = element.data().substringAfter("sources: [").substringBefore("],")
-        val sources = data.split("file: \"").drop(1)
         val videoList = mutableListOf<Video>()
-        for (source in sources) {
-            val masterUrl = source.substringBefore("\"}")
-            val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
-            val videoList = mutableListOf<Video>()
-            masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
-                val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
-                val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                videoList.add(Video(videoUrl, quality, videoUrl))
+        val elements = element.select(videoListSelector())
+        for (element in elements) {
+            val location = element.ownerDocument().location()
+            val embedUrl = element.attr("data-ep-url")
+            val qualityy = element.text()
+            Log.i("embedUrl", "$embedUrl")
+            when {
+                embedUrl.contains("moshahda")
+                -> {
+                    val headers = headers.newBuilder()
+                        .set("referer", "https://gamertak.com/Watch1.php")
+                        .build()
+                    val videos = MoshahdaExtractor(client).videosFromUrl(embedUrl, headers)
+                    videoList.addAll(videos)
+                }
+                embedUrl.contains("drive.google")
+                -> {
+                    val embedUrlG = "https://gdriveplayer.to/embed2.php?link=" + embedUrl
+                    val videos = GdrivePlayerExtractor(client).videosFromUrl(embedUrlG)
+                    videoList.addAll(videos)
+                }
+                embedUrl.contains("vidyard")
+                -> {
+                    val headers = headers.newBuilder()
+                        .set("Referer", "https://play.vidyard.com")
+                        .set("Accept-Encoding", "gzip, deflate, br")
+                        .set("Accept-Language", "en-US,en;q=0.5")
+                        .set("TE", "trailers")
+                        .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
+                        .build()
+                    val id = embedUrl.substringAfter("com/").substringBefore("?")
+                    val vidUrl = "https://play.vidyard.com/player/" + id + ".json"
+                    val videos = VidYardExtractor(client).videosFromUrl(vidUrl, headers)
+                    videoList.addAll(videos)
+                }
+                embedUrl.contains("sbembed.com") || embedUrl.contains("sbembed1.com") || embedUrl.contains("sbplay.org") ||
+                    embedUrl.contains("sbvideo.net") || embedUrl.contains("streamsb.net") || embedUrl.contains("sbplay.one") ||
+                    embedUrl.contains("cloudemb.com") || embedUrl.contains("playersb.com") || embedUrl.contains("tubesb.com") ||
+                    embedUrl.contains("sbplay1.com") || embedUrl.contains("embedsb.com") || embedUrl.contains("watchsb.com") ||
+                    embedUrl.contains("sbplay2.com") || embedUrl.contains("japopav.tv") || embedUrl.contains("viewsb.com") ||
+                    embedUrl.contains("sbfast") || embedUrl.contains("sbfull.com") || embedUrl.contains("javplaya.com") ||
+                    embedUrl.contains("ssbstream.net") || embedUrl.contains("p1ayerjavseen.com") || embedUrl.contains("sbthe.com") ||
+                    embedUrl.contains("vidmovie.xyz") || embedUrl.contains("sbspeed.com") || embedUrl.contains("streamsss.net") ||
+                    embedUrl.contains("sblanh.com") || embedUrl.contains("tvmshow.com") || embedUrl.contains("sbanh.com") ||
+                    embedUrl.contains("streamovies.xyz")
+                -> {
+                    val videos = StreamSBExtractor(client).videosFromUrl(embedUrl, headers)
+                    videoList.addAll(videos)
+                }
+                embedUrl.contains("fembed") ||
+                    embedUrl.contains("anime789.com") || embedUrl.contains("24hd.club") || embedUrl.contains("fembad.org") ||
+                    embedUrl.contains("vcdn.io") || embedUrl.contains("sharinglink.club") || embedUrl.contains("moviemaniac.org") ||
+                    embedUrl.contains("votrefiles.club") || embedUrl.contains("femoload.xyz") || embedUrl.contains("albavido.xyz") ||
+                    embedUrl.contains("feurl.com") || embedUrl.contains("dailyplanet.pw") || embedUrl.contains("ncdnstm.com") ||
+                    embedUrl.contains("jplayer.net") || embedUrl.contains("xstreamcdn.com") || embedUrl.contains("fembed-hd.com") ||
+                    embedUrl.contains("gcloud.live") || embedUrl.contains("vcdnplay.com") || embedUrl.contains("superplayxyz.club") ||
+                    embedUrl.contains("vidohd.com") || embedUrl.contains("vidsource.me") || embedUrl.contains("cinegrabber.com") ||
+                    embedUrl.contains("votrefile.xyz") || embedUrl.contains("zidiplay.com") || embedUrl.contains("ndrama.xyz") ||
+                    embedUrl.contains("fcdn.stream") || embedUrl.contains("mediashore.org") || embedUrl.contains("suzihaza.com") ||
+                    embedUrl.contains("there.to") || embedUrl.contains("femax20.com") || embedUrl.contains("javstream.top") ||
+                    embedUrl.contains("viplayer.cc") || embedUrl.contains("sexhd.co") || embedUrl.contains("fembed.net") ||
+                    embedUrl.contains("mrdhan.com") || embedUrl.contains("votrefilms.xyz") || // embedUrl.contains("") ||
+                    embedUrl.contains("embedsito.com") || embedUrl.contains("dutrag.com") || // embedUrl.contains("") ||
+                    embedUrl.contains("youvideos.ru") || embedUrl.contains("streamm4u.club") || // embedUrl.contains("") ||
+                    embedUrl.contains("moviepl.xyz") || embedUrl.contains("asianclub.tv") || // embedUrl.contains("") ||
+                    embedUrl.contains("vidcloud.fun") || embedUrl.contains("fplayer.info") || // embedUrl.contains("") ||
+                    embedUrl.contains("diasfem.com") || embedUrl.contains("javpoll.com") || embedUrl.contains("reeoov.tube") ||
+                    embedUrl.contains("suzihaza.com") || embedUrl.contains("ezsubz.com") || embedUrl.contains("vidsrc.xyz") ||
+                    embedUrl.contains("diampokusy.com") || embedUrl.contains("diampokusy.com") || embedUrl.contains("i18n.pw") ||
+                    embedUrl.contains("vanfem.com") || embedUrl.contains("fembed9hd.com") || embedUrl.contains("votrefilms.xyz") || embedUrl.contains("watchjavnow.xyz")
+                -> {
+                    val videos = FembedExtractor(client).videosFromUrl(embedUrl)
+                    videoList.addAll(videos)
+                }
+                embedUrl.contains("4shared") -> {
+                    val video = SharedExtractor(client).videoFromUrl(embedUrl, qualityy)
+                    if (video != null) {
+                        videoList.add(video)
+                    }
+                }
+                embedUrl.contains("vidbom") ||
+                    embedUrl.contains("vidbem") || embedUrl.contains("vidbm") || embedUrl.contains("vedpom") ||
+                    embedUrl.contains("vedbom") || embedUrl.contains("vedbam") || embedUrl.contains("vadbom") ||
+                    embedUrl.contains("vidbam") || embedUrl.contains("vadbam") || embedUrl.contains("myviid") ||
+                    embedUrl.contains("myvid") || embedUrl.contains("vidshare") || embedUrl.contains("vedsharr") ||
+                    embedUrl.contains("vedshar") || embedUrl.contains("vedshare") || embedUrl.contains("vadshar") || embedUrl.contains("vidshar")
+                -> {
+                    val videos = VidBomExtractor(client).videosFromUrl(embedUrl)
+                    videoList.addAll(videos)
+                }
             }
-            return videoList
         }
         return videoList
     }
