@@ -28,6 +28,8 @@ jobs:
 
       - name: Clone repo
         uses: actions/checkout@v3
+        with:
+          ref: master
 
       - name: Find lib changes
         id: modified-libs
@@ -91,6 +93,8 @@ jobs:
   #  steps:
   #    - name: Checkout master branch
   #      uses: actions/checkout@v3
+  #      with:
+  #        ref: master
 
   #    - name: Set up JDK
   #      uses: actions/setup-java@v3
@@ -140,6 +144,8 @@ jobs:
     steps:
       - name: Checkout master branch
         uses: actions/checkout@v3
+        with:
+          ref: master
 
       - name: Set up JDK
         uses: actions/setup-java@v3
