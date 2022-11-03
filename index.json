@@ -182,10 +182,10 @@
   {
     "name": "Aniyomi: Aniflix",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.aniflix",
-    "apk": "aniyomi-de.aniflix-v13.19.apk",
+    "apk": "aniyomi-de.aniflix-v13.20.apk",
     "lang": "de",
-    "code": 19,
-    "version": "13.19",
+    "code": 20,
+    "version": "13.20",
     "nsfw": 0
   },
   {
@@ -209,10 +209,10 @@
   {
     "name": "Aniyomi: Anime24",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.anime24",
-    "apk": "aniyomi-de.anime24-v13.3.apk",
+    "apk": "aniyomi-de.anime24-v13.4.apk",
     "lang": "de",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0
   },
   {
@@ -236,19 +236,19 @@
   {
     "name": "Aniyomi: AnimeToast",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.animetoast",
-    "apk": "aniyomi-de.animetoast-v13.3.apk",
+    "apk": "aniyomi-de.animetoast-v13.4.apk",
     "lang": "de",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: AniWorld (experimental)",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.aniworld",
-    "apk": "aniyomi-de.aniworld-v13.8.apk",
+    "apk": "aniyomi-de.aniworld-v13.9.apk",
     "lang": "de",
-    "code": 8,
-    "version": "13.8",
+    "code": 9,
+    "version": "13.9",
     "nsfw": 0
   },
   {
@@ -263,10 +263,10 @@
   {
     "name": "Aniyomi: FilmPalast",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.filmpalast",
-    "apk": "aniyomi-de.filmpalast-v13.5.apk",
+    "apk": "aniyomi-de.filmpalast-v13.6.apk",
     "lang": "de",
-    "code": 5,
-    "version": "13.5",
+    "code": 6,
+    "version": "13.6",
     "nsfw": 0
   },
   {
@@ -281,28 +281,28 @@
   {
     "name": "Aniyomi: Kinoking",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.kinoking",
-    "apk": "aniyomi-de.kinoking-v13.5.apk",
+    "apk": "aniyomi-de.kinoking-v13.6.apk",
     "lang": "de",
-    "code": 5,
-    "version": "13.5",
+    "code": 6,
+    "version": "13.6",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: Moviedream",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.moviedream",
-    "apk": "aniyomi-de.moviedream-v13.1.apk",
+    "apk": "aniyomi-de.moviedream-v13.2.apk",
     "lang": "de",
-    "code": 1,
-    "version": "13.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 0
   },
   {
     "name": "Aniyomi: Serienstream",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.serienstream",
-    "apk": "aniyomi-de.serienstream-v13.3.apk",
+    "apk": "aniyomi-de.serienstream-v13.4.apk",
     "lang": "de",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0
   },
   {
@@ -794,10 +794,10 @@
   {
     "name": "Aniyomi: Anime Saturn",
     "pkg": "eu.kanade.tachiyomi.animeextension.it.animesaturn",
-    "apk": "aniyomi-it.animesaturn-v13.6.apk",
+    "apk": "aniyomi-it.animesaturn-v13.7.apk",
     "lang": "it",
-    "code": 6,
-    "version": "13.6",
+    "code": 7,
+    "version": "13.7",
     "nsfw": 0
   },
   {
@@ -857,10 +857,10 @@
   {
     "name": "Aniyomi: AnimesVision",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesvision",
-    "apk": "aniyomi-pt.animesvision-v13.10.apk",
+    "apk": "aniyomi-pt.animesvision-v13.11.apk",
     "lang": "pt",
-    "code": 10,
-    "version": "13.10",
+    "code": 11,
+    "version": "13.11",
     "nsfw": 0
   },
   {
