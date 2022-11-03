@@ -438,8 +438,8 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             key = "preferred_domain"
             title = "Domain in uso (riavvio dell'app richiesto)"
             entries = arrayOf("animesaturn.cc", "animesaturn.io")
-            entryValues = arrayOf("https://animesaturn.cc", "https://animesaturn.io")
-            setDefaultValue("https://animesaturn.cc")
+            entryValues = arrayOf("https://animesaturn.cc", "https://animesaturn.io", "https://animesaturn.in")
+            setDefaultValue("https://animesaturn.in")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
