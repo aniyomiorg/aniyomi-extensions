@@ -69,7 +69,7 @@ class CookieInterceptor(private val baseUrl: String) : Interceptor {
                         newRequest = GET(baseUrl, request.requestHeaders.toHeaders())
                         latch.countDown()
                     }
-                    if (request.url.toString().contains("favicon.png") && request.url.toString().contains("anime-base")) {
+                    if (request.url.toString().contains("favicon.ico") && request.url.toString().contains("anime-base")) {
                         newRequest = GET(baseUrl, request.requestHeaders.toHeaders())
                         latch.countDown()
                     }

@@ -67,13 +67,13 @@ class `Anime-Base` : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
         val episodeElement = document.select(
-            "div.tab-content table#angebotTabelle tbody tr.episodetoggleclass-gersub, div.tab-content table#angebotTabelle tbody tr.episodetoggleclass-Filme button[${
-            if (document.select("div.tab-content table#angebotTabelle tbody tr.episodetoggleclass-Filme button[data-dubbed=\"0\"]").isNullOrEmpty()){
+            "div.tab-content #gersub div.panel, div.tab-content #filme div.panel button[${
+            if (document.select("div.tab-content #filme div.panel button[data-dubbed=\"0\"]").isNullOrEmpty()){
                 "data-dubbed=\"1\""
             } else {
                 "data-dubbed=\"0\""
             }
-            }][data-hoster=\"1\"], div.tab-content table#angebotTabelle tbody tr.episodetoggleclass-Specials button[data-dubbed=\"0\"][data-hoster=\"1\"]"
+            }][data-hoster=\"1\"], div.tab-content #specials div.panel button[data-dubbed=\"0\"][data-hoster=\"1\"]"
         )
         episodeElement.forEach {
             val episode = episodeFromElement(it)
@@ -99,10 +99,10 @@ class `Anime-Base` : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 episode.name = "Film ${epnum.toInt() - 1}"
                 episode.setUrlWithoutDomain("/episode/$id/$epnum/0/$host/2")
             } else {
-                val season = element.attr("class")
-                    .substringAfter("-").substringBefore(" ger")
-                episode.name = "Staffel $season Folge $epnum : " + element.select("td.openEpisodeEmbed").toString()
-                    .substringAfter("\">").substringBefore("<!")
+                val season = element.select("button[data-hoster=\"1\"]").attr("data-embedcontainer")
+                    .substringAfter("-").substringBefore("-")
+                episode.name = "Staffel $season Folge $epnum : " + element.select("h3.panel-title").text()
+                    .substringAfter(": ")
                     .replace("<span title=\"", "").replace("<span class=\"label label-danger\">Filler!</span>", "").replace("&nbsp;", "")
                 episode.episode_number = element.select("button[data-hoster=\"1\"]").attr("data-folge").toFloat()
                 episode.setUrlWithoutDomain("/episode/$id/$epnum/0/$host/0")
