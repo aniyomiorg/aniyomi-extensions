@@ -161,7 +161,7 @@ class Movie4k : ConfigurableAnimeSource, AnimeHttpSource() {
                             }
                         }
 
-                        link.contains("//streamcrypt.net") || link.contains("https://streamz") && hosterSelection?.contains("streamz") == true -> {
+                        link.contains("//streamcrypt.net") || link.contains("//streamz") && hosterSelection?.contains("streamz") == true -> {
                             if (!link.contains("https:")) {
                                 if (link.contains("//streamcrypt.net")) {
                                     val url = "https:$link"
