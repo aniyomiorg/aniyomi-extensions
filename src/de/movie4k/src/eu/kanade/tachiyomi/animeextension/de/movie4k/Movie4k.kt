@@ -122,10 +122,6 @@ class Movie4k : ConfigurableAnimeSource, AnimeHttpSource() {
         return episodeList.asReversed()
     }
 
-    override fun latestUpdatesParse(response: Response): AnimesPage {
-        TODO("Not yet implemented")
-    }
-
     // Video Extractor
 
     override fun videoListRequest(episode: SEpisode): Request {
@@ -418,6 +414,8 @@ class Movie4k : ConfigurableAnimeSource, AnimeHttpSource() {
     // Latest
 
     override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+
+    override fun latestUpdatesParse(response: Response): AnimesPage = throw Exception("not Used")
 
     // Preferences
 
