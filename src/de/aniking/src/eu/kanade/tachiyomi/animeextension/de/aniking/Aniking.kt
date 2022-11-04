@@ -65,7 +65,16 @@ class Aniking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // episodes
 
     override fun episodeListRequest(anime: SAnime): Request {
-        return GET("$baseUrl${anime.url}", headers = Headers.headersOf("if-modified-since", ""))
+        val interceptor = client.newBuilder().addInterceptor(CloudflareInterceptor()).build()
+        val headers = interceptor.newCall(
+            GET(
+                "$baseUrl${anime.url}",
+                headers =
+                Headers.headersOf("user-agent", "Mozilla/5.0 (Linux; Android 12; SM-T870 Build/SP2A.220305.013; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/106.0.5249.126 Safari/537.36")
+            )
+        )
+            .execute().request.headers
+        return GET("$baseUrl${anime.url}", headers = headers)
     }
 
     override fun episodeListSelector() = throw Exception("not used")
@@ -267,6 +276,19 @@ class Aniking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // Details
+
+    override fun animeDetailsRequest(anime: SAnime): Request {
+        val interceptor = client.newBuilder().addInterceptor(CloudflareInterceptor()).build()
+        val headers = interceptor.newCall(
+            GET(
+                "$baseUrl${anime.url}",
+                headers =
+                Headers.headersOf("user-agent", "Mozilla/5.0 (Linux; Android 12; SM-T870 Build/SP2A.220305.013; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/106.0.5249.126 Safari/537.36")
+            )
+        )
+            .execute().request.headers
+        return GET("$baseUrl${anime.url}", headers = headers)
+    }
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()

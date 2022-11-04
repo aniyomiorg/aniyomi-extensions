@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.de.aniking
+package eu.kanade.tachiyomi.animeextension.de.animebase
 
 import android.annotation.SuppressLint
 import android.app.Application
@@ -18,7 +18,7 @@ import uy.kohesive.injekt.api.get
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-class CloudflareInterceptor() : Interceptor {
+class CookieInterceptor(private val baseUrl: String) : Interceptor {
 
     private val context = Injekt.get<Application>()
     private val handler by lazy { Handler(Looper.getMainLooper()) }
@@ -53,7 +53,8 @@ class CloudflareInterceptor() : Interceptor {
                 databaseEnabled = true
                 useWideViewPort = false
                 loadWithOverviewMode = false
-                userAgentString = "Mozilla/5.0 (Linux; Android 12; SM-T870 Build/SP2A.220305.013; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/106.0.5249.126 Safari/537.36"
+                userAgentString = request.header("User-Agent")
+                    ?: "\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36 Edg/88.0.705.63\""
             }
 
             webview.webViewClient = object : WebViewClient() {
@@ -61,7 +62,22 @@ class CloudflareInterceptor() : Interceptor {
                     view: WebView,
                     request: WebResourceRequest,
                 ): WebResourceResponse? {
-                    if (request.url.toString().contains("wp-content/themes/moviewp")) {
+                    handler.post {
+                        webView?.clearHistory()
+                    }
+                    if (request.url.toString().contains("/?d=1") && request.url.toString().contains("anime-base")) {
+                        newRequest = GET(baseUrl, request.requestHeaders.toHeaders())
+                        latch.countDown()
+                    }
+                    if (request.url.toString().contains("favicon.png") && request.url.toString().contains("anime-base")) {
+                        newRequest = GET(baseUrl, request.requestHeaders.toHeaders())
+                        latch.countDown()
+                    }
+                    if (request.url.toString().contains("/search") || request.url.toString().contains("/search?d=1")) {
+                        newRequest = GET(request.url.toString(), request.requestHeaders.toHeaders())
+                        latch.countDown()
+                    }
+                    if (request.url.toString().contains("/favorites") || request.url.toString().contains("/favorites?d=1")) {
                         newRequest = GET(request.url.toString(), request.requestHeaders.toHeaders())
                         latch.countDown()
                     }
