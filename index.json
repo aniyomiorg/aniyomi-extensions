@@ -200,10 +200,10 @@
   {
     "name": "Aniyomi: Aniking",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.aniking",
-    "apk": "aniyomi-de.aniking-v13.1.apk",
+    "apk": "aniyomi-de.aniking-v13.2.apk",
     "lang": "de",
-    "code": 1,
-    "version": "13.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 0
   },
   {
@@ -222,15 +222,6 @@
     "lang": "de",
     "code": 2,
     "version": "13.2",
-    "nsfw": 0
-  },
-  {
-    "name": "Aniyomi: Anime Shitai",
-    "pkg": "eu.kanade.tachiyomi.animeextension.de.animeshitai",
-    "apk": "aniyomi-de.animeshitai-v13.6.apk",
-    "lang": "de",
-    "code": 6,
-    "version": "13.6",
     "nsfw": 0
   },
   {
@@ -288,6 +279,15 @@
     "nsfw": 0
   },
   {
+    "name": "Aniyomi: Movie4k",
+    "pkg": "eu.kanade.tachiyomi.animeextension.de.movie4k",
+    "apk": "aniyomi-de.movie4k-v13.1.apk",
+    "lang": "de",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0
+  },
+  {
     "name": "Aniyomi: Moviedream",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.moviedream",
     "apk": "aniyomi-de.moviedream-v13.2.apk",
@@ -312,15 +312,6 @@
     "lang": "de",
     "code": 3,
     "version": "13.3",
-    "nsfw": 0
-  },
-  {
-    "name": "Aniyomi: xCine",
-    "pkg": "eu.kanade.tachiyomi.animeextension.de.xcine",
-    "apk": "aniyomi-de.xcine-v13.4.apk",
-    "lang": "de",
-    "code": 4,
-    "version": "13.4",
     "nsfw": 0
   },
   {
