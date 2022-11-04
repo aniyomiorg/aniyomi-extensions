@@ -53,8 +53,7 @@ class CloudflareInterceptor() : Interceptor {
                 databaseEnabled = true
                 useWideViewPort = false
                 loadWithOverviewMode = false
-                userAgentString = request.header("User-Agent")
-                    ?: "\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36 Edg/88.0.705.63\""
+                userAgentString = "Mozilla/5.0 (Linux; Android 12; SM-T870 Build/SP2A.220305.013; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/106.0.5249.126 Safari/537.36"
             }
 
             webview.webViewClient = object : WebViewClient() {
@@ -62,7 +61,7 @@ class CloudflareInterceptor() : Interceptor {
                     view: WebView,
                     request: WebResourceRequest,
                 ): WebResourceResponse? {
-                    if (request.url.toString().contains("https://aniking.cc")) {
+                    if (request.url.toString().contains("wp-content/themes/moviewp")) {
                         newRequest = GET(request.url.toString(), request.requestHeaders.toHeaders())
                         latch.countDown()
                     }
