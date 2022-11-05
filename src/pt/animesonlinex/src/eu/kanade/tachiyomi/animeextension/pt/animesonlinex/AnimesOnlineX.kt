@@ -3,8 +3,11 @@ package eu.kanade.tachiyomi.animeextension.pt.animesonlinex
 import android.app.Application
 import android.content.SharedPreferences
 import android.net.Uri
+import android.widget.Toast
+import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.animeextension.pt.animesonlinex.extractors.GenericExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesonlinex.extractors.GuiaNoticiarioBypasser
 import eu.kanade.tachiyomi.animeextension.pt.animesonlinex.extractors.QualitiesExtractor
@@ -35,8 +38,9 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AnimesOnlineX"
 
-    override val baseUrl = "https://animesonlinex.co"
-
+    override val baseUrl by lazy {
+        preferences.getString(PREF_BASE_URL_KEY, PREF_BASE_URL_DEFAULT)!!
+    }
     override val lang = "pt-BR"
 
     override val supportsLatest = true
@@ -280,6 +284,31 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
+        val baseUrlPref = EditTextPreference(screen.context).apply {
+            key = PREF_BASE_URL_KEY
+            title = PREF_BASE_URL_TITLE
+            summary = PREF_BASE_URL_SUMMARY
+            setDefaultValue(PREF_BASE_URL_DEFAULT)
+            dialogTitle = PREF_BASE_URL_TITLE
+            dialogMessage = "Padrão: $PREF_BASE_URL_DEFAULT"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                runCatching {
+                    val res = preferences.edit()
+                        .putString(key, newValue as String)
+                        .commit()
+                    Toast.makeText(
+                        screen.context,
+                        RESTART_ANIYOMI,
+                        Toast.LENGTH_LONG
+                    ).show()
+                    res
+                }.getOrNull() ?: false
+            }
+        }
+
+        screen.addPreference(baseUrlPref)
+
         screen.addPreference(videoQualityPref)
     }
 
@@ -347,5 +376,12 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_QUALITY_TITLE = "Qualidade preferida"
         private const val PREF_QUALITY_DEFAULT = "720p"
         private val PREF_QUALITY_LIST = arrayOf("480p", "720p", "1080p")
+
+        private val PREF_BASE_URL_KEY = "base_url_${AppInfo.getVersionName()}"
+        private const val PREF_BASE_URL_TITLE = "URL atual do site"
+        private const val PREF_BASE_URL_SUMMARY = "Para uso temporário, essa configuração será apagada ao atualizar a extensão"
+        private const val PREF_BASE_URL_DEFAULT = "https://animesonlinex.cx"
+
+        private const val RESTART_ANIYOMI = "Reinicie o Aniyomi pra aplicar as configurações"
     }
 }
