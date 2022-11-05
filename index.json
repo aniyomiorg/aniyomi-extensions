@@ -200,10 +200,10 @@
   {
     "name": "Aniyomi: Aniking",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.aniking",
-    "apk": "aniyomi-de.aniking-v13.2.apk",
+    "apk": "aniyomi-de.aniking-v13.3.apk",
     "lang": "de",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0
   },
   {
@@ -281,10 +281,10 @@
   {
     "name": "Aniyomi: Movie4k",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.movie4k",
-    "apk": "aniyomi-de.movie4k-v13.1.apk",
+    "apk": "aniyomi-de.movie4k-v13.2.apk",
     "lang": "de",
-    "code": 1,
-    "version": "13.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 0
   },
   {
@@ -839,10 +839,10 @@
   {
     "name": "Aniyomi: AnimesOnlineX",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesonlinex",
-    "apk": "aniyomi-pt.animesonlinex-v13.2.apk",
+    "apk": "aniyomi-pt.animesonlinex-v13.3.apk",
     "lang": "pt",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0
   },
   {
