@@ -15,7 +15,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="animesonlinex.cc"
+                    android:host="animesonlinex.cx"
                     android:pathPattern="/animes/..*"
                     android:scheme="https" />
             </intent-filter>
