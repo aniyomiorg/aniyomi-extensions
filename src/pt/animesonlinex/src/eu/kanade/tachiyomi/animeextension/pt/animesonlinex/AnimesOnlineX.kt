@@ -45,8 +45,6 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Referer", baseUrl)
-        .add("Accept-Language", AOXConstants.ACCEPT_LANGUAGE)
-        .add("User-Agent", AOXConstants.USER_AGENT)
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -185,8 +183,8 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        return if (query.startsWith(AOXConstants.PREFIX_SEARCH)) {
-            val slug = query.removePrefix(AOXConstants.PREFIX_SEARCH)
+        return if (query.startsWith(PREFIX_SEARCH)) {
+            val slug = query.removePrefix(PREFIX_SEARCH)
             client.newCall(GET("$baseUrl/animes/$slug", headers))
                 .asObservableSuccess()
                 .map { response ->
@@ -265,14 +263,14 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/episodio/page/$page", headers)
 
-    // ============================== Settings ============================== 
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = AOXConstants.PREFERRED_QUALITY
-            title = "Qualidade preferida"
-            entries = AOXConstants.QUALITY_LIST
-            entryValues = AOXConstants.QUALITY_LIST
-            setDefaultValue(AOXConstants.DEFAULT_QUALITY)
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_LIST
+            entryValues = PREF_QUALITY_LIST
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -324,7 +322,7 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(AOXConstants.PREFERRED_QUALITY, AOXConstants.DEFAULT_QUALITY)!!
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
         val newList = mutableListOf<Video>()
         var preferred = 0
         for (video in this) {
@@ -342,5 +340,12 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy", Locale.ENGLISH)
         }
+
+        const val PREFIX_SEARCH = "slug:"
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Qualidade preferida"
+        private const val PREF_QUALITY_DEFAULT = "720p"
+        private val PREF_QUALITY_LIST = arrayOf("480p", "720p", "1080p")
     }
 }
