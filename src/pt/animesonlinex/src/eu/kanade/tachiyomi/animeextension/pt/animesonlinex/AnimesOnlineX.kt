@@ -3,8 +3,11 @@ package eu.kanade.tachiyomi.animeextension.pt.animesonlinex
 import android.app.Application
 import android.content.SharedPreferences
 import android.net.Uri
+import android.widget.Toast
+import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.animeextension.pt.animesonlinex.extractors.GenericExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesonlinex.extractors.GuiaNoticiarioBypasser
 import eu.kanade.tachiyomi.animeextension.pt.animesonlinex.extractors.QualitiesExtractor
@@ -35,8 +38,9 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AnimesOnlineX"
 
-    override val baseUrl = "https://animesonlinex.co"
-
+    override val baseUrl by lazy {
+        preferences.getString(PREF_BASE_URL_KEY, PREF_BASE_URL_DEFAULT)!!
+    }
     override val lang = "pt-BR"
 
     override val supportsLatest = true
@@ -45,8 +49,6 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Referer", baseUrl)
-        .add("Accept-Language", AOXConstants.ACCEPT_LANGUAGE)
-        .add("User-Agent", AOXConstants.USER_AGENT)
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -185,8 +187,8 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        return if (query.startsWith(AOXConstants.PREFIX_SEARCH)) {
-            val slug = query.removePrefix(AOXConstants.PREFIX_SEARCH)
+        return if (query.startsWith(PREFIX_SEARCH)) {
+            val slug = query.removePrefix(PREFIX_SEARCH)
             client.newCall(GET("$baseUrl/animes/$slug", headers))
                 .asObservableSuccess()
                 .map { response ->
@@ -265,14 +267,14 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/episodio/page/$page", headers)
 
-    // ============================== Settings ============================== 
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = AOXConstants.PREFERRED_QUALITY
-            title = "Qualidade preferida"
-            entries = AOXConstants.QUALITY_LIST
-            entryValues = AOXConstants.QUALITY_LIST
-            setDefaultValue(AOXConstants.DEFAULT_QUALITY)
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_LIST
+            entryValues = PREF_QUALITY_LIST
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -281,6 +283,31 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+
+        val baseUrlPref = EditTextPreference(screen.context).apply {
+            key = PREF_BASE_URL_KEY
+            title = PREF_BASE_URL_TITLE
+            summary = PREF_BASE_URL_SUMMARY
+            setDefaultValue(PREF_BASE_URL_DEFAULT)
+            dialogTitle = PREF_BASE_URL_TITLE
+            dialogMessage = "Padrão: $PREF_BASE_URL_DEFAULT"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                runCatching {
+                    val res = preferences.edit()
+                        .putString(key, newValue as String)
+                        .commit()
+                    Toast.makeText(
+                        screen.context,
+                        RESTART_ANIYOMI,
+                        Toast.LENGTH_LONG
+                    ).show()
+                    res
+                }.getOrNull() ?: false
+            }
+        }
+
+        screen.addPreference(baseUrlPref)
 
         screen.addPreference(videoQualityPref)
     }
@@ -324,7 +351,7 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(AOXConstants.PREFERRED_QUALITY, AOXConstants.DEFAULT_QUALITY)!!
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
         val newList = mutableListOf<Video>()
         var preferred = 0
         for (video in this) {
@@ -342,5 +369,19 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy", Locale.ENGLISH)
         }
+
+        const val PREFIX_SEARCH = "slug:"
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Qualidade preferida"
+        private const val PREF_QUALITY_DEFAULT = "720p"
+        private val PREF_QUALITY_LIST = arrayOf("480p", "720p", "1080p")
+
+        private val PREF_BASE_URL_KEY = "base_url_${AppInfo.getVersionName()}"
+        private const val PREF_BASE_URL_TITLE = "URL atual do site"
+        private const val PREF_BASE_URL_SUMMARY = "Para uso temporário, essa configuração será apagada ao atualizar a extensão"
+        private const val PREF_BASE_URL_DEFAULT = "https://animesonlinex.cx"
+
+        private const val RESTART_ANIYOMI = "Reinicie o Aniyomi pra aplicar as configurações"
     }
 }

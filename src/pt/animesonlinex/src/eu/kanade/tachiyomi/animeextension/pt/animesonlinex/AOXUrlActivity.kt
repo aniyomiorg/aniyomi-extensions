@@ -20,7 +20,7 @@ class AOXUrlActivity : Activity() {
         val pathSegments = intent?.data?.pathSegments
         if (pathSegments != null && pathSegments.size > 1) {
             val slug = pathSegments[1]
-            val searchQuery = AOXConstants.PREFIX_SEARCH + slug
+            val searchQuery = AnimesOnlineX.PREFIX_SEARCH + slug
             val mainIntent = Intent().apply {
                 action = "eu.kanade.tachiyomi.ANIMESEARCH"
                 putExtra("query", searchQuery)
