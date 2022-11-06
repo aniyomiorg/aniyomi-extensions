@@ -9,6 +9,8 @@
         <meta-data android:name="tachiyomi.animeextension.class" android:value="${extClass}" />
         <meta-data android:name="tachiyomi.animeextension.factory" android:value="${extFactory}" />
         <meta-data android:name="tachiyomi.animeextension.nsfw" android:value="${nsfw}" />
+        <meta-data android:name="tachiyomi.animeextension.hasReadme" android:value="${hasReadme}" />
+        <meta-data android:name="tachiyomi.animeextension.hasChangelog" android:value="${hasChangelog}" />
 
     </application>
 
