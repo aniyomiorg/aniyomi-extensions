@@ -5,7 +5,7 @@ apply plugin: 'kotlinx-serialization'
 ext {
     extName = 'Anime-Base'
     pkgNameSuffix = 'de.animebase'
-    extClass = '.Anime-Base'
+    extClass = '.AnimeBase'
     extVersionCode = 2
     libVersion = '13'
 }
