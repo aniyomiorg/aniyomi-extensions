@@ -207,6 +207,9 @@ jobs:
         run: |
           cd master
           ./.github/scripts/move-apks.sh
+          INSPECTOR_LINK="$(curl -s "https://api.github.com/repos/jmir1/aniyomi-extensions-inspector/releases/latest" | jq -r '.assets[0].browser_download_url')"
+          curl -L "$INSPECTOR_LINK" -o ./Inspector.jar
+          java -jar ./Inspector.jar "apk" "output.json" "tmp"
           ./.github/scripts/create-repo.sh
 
       - name: Checkout repo branch
