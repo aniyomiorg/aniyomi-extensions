@@ -1171,21 +1171,21 @@
     ]
   },
   {
-    "name": "Aniyomi: Vidembed",
+    "name": "Aniyomi: Membed",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.vidembed",
-    "apk": "aniyomi-en.vidembed-v13.18.apk",
+    "apk": "aniyomi-en.vidembed-v13.19.apk",
     "lang": "en",
-    "code": 18,
-    "version": "13.18",
+    "code": 19,
+    "version": "13.19",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
     "sources": [
       {
-        "name": "Vidembed",
+        "name": "Membed",
         "lang": "en",
         "id": "8093842542096095331",
-        "baseUrl": "https://vidembed.io",
+        "baseUrl": "https://membed.net",
         "versionId": 1,
         "hasCloudflare": 1
       }
