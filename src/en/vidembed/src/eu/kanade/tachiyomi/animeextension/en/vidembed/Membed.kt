@@ -32,11 +32,11 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
 
-class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+class Membed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "Vidembed"
+    override val name = "Membed"
 
-    override val baseUrl = "https://vidembed.io"
+    override val baseUrl = "https://membed.net"
 
     override val lang = "en"
 
@@ -44,11 +44,13 @@ class Vidembed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
+    override val id: Long = 8093842542096095331
+
     private val json = Json {
         ignoreUnknownKeys = true
     }
 
-    private val downloadLink = "https://vidembed.io/download?id="
+    private val downloadLink = "https://membed.net/download?id="
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)

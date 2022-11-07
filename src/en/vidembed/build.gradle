@@ -3,10 +3,10 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlinx-serialization'
 
 ext {
-    extName = 'Vidembed'
+    extName = 'Membed'
     pkgNameSuffix = 'en.vidembed'
-    extClass = '.Vidembed'
-    extVersionCode = 18
+    extClass = '.Membed'
+    extVersionCode = 19
     libVersion = '13'
 }
 
