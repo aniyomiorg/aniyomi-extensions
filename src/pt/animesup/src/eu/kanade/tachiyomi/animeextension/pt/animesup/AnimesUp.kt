@@ -135,7 +135,7 @@ class AnimesUp : ParsedAnimeHttpSource() {
         val document = response.asJsoup()
 
         val animes = when {
-            "/generos/" in url -> {
+            "/genero/" in url -> {
                 document.select(latestUpdatesSelector()).map { element ->
                     popularAnimeFromElement(element)
                 }
@@ -160,7 +160,8 @@ class AnimesUp : ParsedAnimeHttpSource() {
                     searchAnimeBySlugParse(response, slug)
                 }
         } else {
-            client.newCall(searchAnimeRequest(page, query, filters))
+            val params = AnimesUpFilters.getSearchParameters(filters)
+            client.newCall(searchAnimeRequest(page, query, params))
                 .asObservableSuccess()
                 .map { response ->
                     searchAnimeParse(response)
@@ -168,7 +169,21 @@ class AnimesUp : ParsedAnimeHttpSource() {
         }
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/page/$page/?s=$query")
+    override fun getFilterList(): AnimeFilterList = AnimesUpFilters.filterList
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = throw Exception("not used")
+
+    private fun searchAnimeRequest(page: Int, query: String, filters: AnimesUpFilters.FilterSearchParams): Request {
+        return when {
+            query.isBlank() -> {
+                val genre = filters.genre
+                var url = "$baseUrl/genero/$genre/"
+                if (page > 1) url += "page/$page"
+                GET(url, headers)
+            }
+            else -> GET("$baseUrl/page/$page/?s=$query", headers)
+        }
+    }
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
