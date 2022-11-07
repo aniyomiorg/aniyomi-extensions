@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesup
 
 import android.net.Uri
+import eu.kanade.tachiyomi.animeextension.pt.animesup.extractors.AnimesUpExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -98,9 +99,17 @@ class AnimesUp : ParsedAnimeHttpSource() {
             .mapIndexed { index, it ->
                 val quality = it.selectFirst("span:not(.loader)").text()
 
-                // this does not work, its just to make a base for now
                 val videoUrl = urls.get(index)!!
-                Video(videoUrl, quality, videoUrl)
+                when {
+                    videoUrl.contains("/Player/Play") -> {
+                        val newHeaders = Headers.headersOf(
+                            "referer", response.request.url.toString()
+                        )
+                        AnimesUpExtractor(client)
+                            .videoFromUrl(videoUrl, quality, newHeaders)
+                    }
+                    else -> Video(videoUrl, quality, videoUrl)
+                }
             }
         return resolutions
     }
