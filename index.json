@@ -2006,6 +2006,27 @@
     ]
   },
   {
+    "name": "Aniyomi: AnimesUP",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesup",
+    "apk": "aniyomi-pt.animesup-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimesUp",
+        "lang": "pt-BR",
+        "id": "3726267765371591423",
+        "baseUrl": "https://animesup.biz",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: AnimesVision",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesvision",
     "apk": "aniyomi-pt.animesvision-v13.11.apk",
