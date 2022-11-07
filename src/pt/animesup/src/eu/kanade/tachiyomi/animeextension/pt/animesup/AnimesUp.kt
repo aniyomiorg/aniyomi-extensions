@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.pt.animesup
 
 import android.net.Uri
 import eu.kanade.tachiyomi.animeextension.pt.animesup.extractors.AnimesUpExtractor
+import eu.kanade.tachiyomi.animeextension.pt.animesup.extractors.LegacyFunExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -108,8 +109,12 @@ class AnimesUp : ParsedAnimeHttpSource() {
                         AnimesUpExtractor(client)
                             .videoFromUrl(videoUrl, quality, newHeaders)
                     }
-                    else -> Video(videoUrl, quality, videoUrl)
-                }
+                    videoUrl.contains("blog.legacy") -> {
+                        LegacyFunExtractor(client)
+                            .videoFromUrl("https:" + videoUrl, quality)
+                    }
+                    else -> null
+                } ?: Video(videoUrl, quality, videoUrl)
             }
         return resolutions
     }
