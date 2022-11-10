@@ -109,7 +109,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val url = response.request.url.toString()
         val season = element.attr("data-season")
         val ep = element.attr("data-episode")
-        episode.name = "Saison $season Episode $ep : " + element.select("p.mb-0.fs-14").text()
+        episode.name = "Saison $season Épisode $ep : " + element.select("p.mb-0.fs-14").text()
         episode.episode_number = element.attr("data-episode").toFloat()
         episode.setUrlWithoutDomain("$url?saison=$season&episode=$ep")
         return episode
@@ -315,7 +315,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val hosterPref = ListPreference(screen.context).apply {
             key = "preferred_hoster"
-            title = "Standard-Hoster"
+            title = "Hébergeur standard"
             entries = arrayOf("Voe", "StreamSB", "Dood")
             entryValues = arrayOf("https://voe.sx", "https://playersb.com", "https://dood")
             setDefaultValue("https://voe.sx")
@@ -330,7 +330,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         val subSelection = MultiSelectListPreference(screen.context).apply {
             key = "hoster_selection"
-            title = "Hoster auswählen"
+            title = "Sélectionnez l'hôte"
             entries = arrayOf("Voe", "StreamSB", "Dood")
             entryValues = arrayOf("voe", "streamsb", "dood")
             setDefaultValue(setOf("voe", "streamsb", "dood"))
