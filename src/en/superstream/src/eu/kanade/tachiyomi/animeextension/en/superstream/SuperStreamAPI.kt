@@ -866,10 +866,7 @@ class SuperStreamAPI(val json: Json) {
     private val appId = base64Decode("Y29tLnRkby5zaG93Ym94")
 
     fun getMainPage(page: Int): AnimesPage {
-        val json = queryApi(
-            """{"childmode":"$hideNsfw","app_version":"11.5","appid":"$appId","module":"Home_list_type_v2","channel":"Website","page":"$page","lang":"en","type":"all","pagelimit":"10","expired_date":"${getExpiryDate()}","platform":"android"}
-            """.trimIndent()
-        ).body!!.string()
+        val json = sendQuery(page)
         val animes = mutableListOf<SAnime>()
 
         // Cut off the first row (featured)
@@ -886,6 +883,31 @@ class SuperStreamAPI(val json: Json) {
                 }
             }
         return AnimesPage(animes, animes.isNotEmpty())
+    }
+
+    fun getLatest(page: Int): AnimesPage {
+        val json = sendQuery(page)
+        val animes = mutableListOf<SAnime>()
+
+        parseJson<DataJSON>(json).data.let { it.filter { item -> item.type == "newupload" || item.type == "newupdate" } }
+            .mapNotNull {
+                it.list.mapNotNull second@{ post ->
+                    animes.add(
+                        SAnime.create().apply {
+                            url = LoadData(post.id ?: return@mapNotNull null, post.box_type).toJson()
+                            thumbnail_url = post.poster ?: post.poster_2
+                            title = post.title ?: return@second null
+                        }
+                    )
+                }
+            }
+        return AnimesPage(animes, animes.isNotEmpty())
+    }
+
+    private fun sendQuery(page: Int): String {
+        return queryApi(
+            """{"childmode":"$hideNsfw","app_version":"11.5","appid":"$appId","module":"Home_list_type_v2","channel":"Website","page":"$page","lang":"en","type":"all","pagelimit":"20","expired_date":"${getExpiryDate()}","platform":"android"}""".trimIndent()
+        ).body!!.string()
     }
 
     private fun Data.toSearchResponse(): SAnime? {
@@ -989,9 +1011,9 @@ class SuperStreamAPI(val json: Json) {
                     }
                 }
             }
-        } catch (e: Error) {}
+        } catch (_: Error) {}
 
-        linkData.data!!.list.forEach {
+        linkData.data.list.forEach {
             if (it.path.isNullOrBlank().not()) {
                 val videoUrl = it.path?.replace("\\/", "") ?: ""
                 try {

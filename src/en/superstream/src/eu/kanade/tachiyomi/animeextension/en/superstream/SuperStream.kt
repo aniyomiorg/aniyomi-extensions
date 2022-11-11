@@ -31,7 +31,7 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val lang = "en"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     private val json: Json by injectLazy()
 
@@ -86,6 +86,11 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response) = throw Exception("not used")
+
+    override fun fetchLatestUpdates(page: Int): Observable<AnimesPage> {
+        val animes = superStreamAPI.getLatest(page)
+        return Observable.just(animes)
+    }
 
     override fun latestUpdatesParse(response: Response) = throw Exception("not used")
 
@@ -143,7 +148,8 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
             }
             ani.description = movie.description
             ani.status = SAnime.COMPLETED
-            ani.author = movie.writer!!.substringBefore("\n")
+            ani.author = movie.writer!!.substringBefore("\n").split(",").distinct().joinToString { it }
+            ani.artist = movie.director!!.substringBefore("\n").split(",").distinct().joinToString { it }
 
             val releasedDate = "Released: "
             movie.released?.let { date ->
@@ -162,7 +168,8 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
                 }
                 ani.description = it.description
                 ani.status = SAnime.UNKNOWN
-                ani.author = it.writer!!.substringBefore("\n")
+                ani.author = it.writer!!.substringBefore("\n").split(",").distinct().joinToString()
+                ani.artist = it.director!!.substringBefore("\n").split(",").distinct().joinToString()
 
                 val releasedDate = "Released: "
                 it.released?.let { date ->
