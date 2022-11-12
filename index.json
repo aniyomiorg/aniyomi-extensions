@@ -1528,6 +1528,27 @@
     ]
   },
   {
+    "name": "Aniyomi: LegionAnime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.legionanime",
+    "apk": "aniyomi-es.legionanime-v13.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "LegionAnime",
+        "lang": "es",
+        "id": "508651506167756898",
+        "baseUrl": "https://legionanime.club/api",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: MonosChinos",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.monoschinos",
     "apk": "aniyomi-es.monoschinos-v13.16.apk",
