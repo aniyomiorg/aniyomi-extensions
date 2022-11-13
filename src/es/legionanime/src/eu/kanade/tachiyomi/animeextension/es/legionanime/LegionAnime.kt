@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.es.legionanime
 
 import android.app.Application
 import android.content.SharedPreferences
+import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.JkanimeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -85,7 +86,6 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 name = "Episodio " + it.jsonObject["name"]!!.jsonPrimitive.content
                 url = "$baseUrl/v2/episode_links/${it.jsonObject["id"]!!.jsonPrimitive.content}"
                 date_upload = parseDate(it.jsonObject["release_date"]!!.jsonPrimitive.content)
-                episode_number = it.jsonObject["name"]!!.jsonPrimitive.content.toFloat()
             }
         }
     }
@@ -277,7 +277,46 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        TODO("Not yet implemented")
+        val qualities = arrayOf(
+            "FHD-EMBED Fembed:1080p", "FHD-EMBED Fembed:720p", "FHD-EMBED Fembed:480p", "FHD-EMBED Fembed:360p", "FHD-EMBED Fembed:240p", // Fembed
+            "FHD-ALT Fembed:1080p", "FHD-ALT Fembed:720p", "FHD-ALT Fembed:480p", "FHD-ALT Fembed:360p", "FHD-ALT Fembed:240p", // Fembed-ALT
+            "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", // Okru
+            "StreamSB:360p", "StreamSB:480p", "StreamSB:720p", "StreamSB:1080p", // StreamSB
+            "Xtreme S", "Nozomi", "Desu", "F1S-TAPE", "F1NIX" // video servers without resolution
+        )
+        val videoQualityPref = ListPreference(screen.context).apply {
+            key = "preferred_quality"
+            title = "Preferred quality"
+            entries = qualities
+            entryValues = qualities
+            setDefaultValue("Desu")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(videoQualityPref)
+    }
+
+    private fun List<Video>.sortIfContains(item: String): List<Video> {
+        val newList = mutableListOf<Video>()
+        for (video in this) {
+            if (item in video.quality) {
+                newList.add(0, video)
+            } else {
+                newList.add(video)
+            }
+        }
+        return newList
+    }
+
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString("preferred_quality", "desu")!!
+        return sortIfContains(quality)
     }
 
     private fun parseDate(dateStr: String): Long {
