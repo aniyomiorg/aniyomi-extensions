@@ -33,6 +33,8 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -57,13 +59,13 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val jsonResponse = json.decodeFromString<JsonObject>(document.body().text())["response"]!!.jsonObject
         val anime = jsonResponse["anime"]!!.jsonObject
-        val studioId = anime["studios"]!!
-        val studio = studiosMap.filter { it.value == studioId.jsonPrimitive.content.toInt() }.keys.firstOrNull()
+        val studioId = anime["studios"]!!.jsonPrimitive.content.split(",")
+        val studio = studioId.map { id -> studiosMap.filter { it.value == id.toInt() }.keys.first() }
         return SAnime.create().apply {
             title = anime["name"]!!.jsonPrimitive.content
             description = anime["synopsis"]!!.jsonPrimitive.content
             genre = anime["genres"]!!.jsonPrimitive.content
-            author = studio
+            author = studio.joinToString { it.toString() }
             status = when (anime["status"]!!.jsonPrimitive.content) {
                 "En emisión" -> SAnime.ONGOING
                 "Finalizado" -> SAnime.COMPLETED
@@ -80,8 +82,10 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return episodes.map {
             SEpisode.create().apply {
-                name = it.jsonObject["name"]!!.jsonPrimitive.content
+                name = "Episodio " + it.jsonObject["name"]!!.jsonPrimitive.content
                 url = "$baseUrl/v2/episode_links/${it.jsonObject["id"]!!.jsonPrimitive.content}"
+                date_upload = parseDate(it.jsonObject["release_date"]!!.jsonPrimitive.content)
+                episode_number = it.jsonObject["name"]!!.jsonPrimitive.content.toFloat()
             }
         }
     }
@@ -129,31 +133,27 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val body = FormBody.Builder().add("apyki", apyki).build()
-        val genreFilter = (filters.find { it is TagFilter } as TagFilter).state
-        val excludeGenreFilter = (filters.find { it is ExcludeTagFilter } as ExcludeTagFilter).state
-        val studioFilter = (filters.find { it is StudioFilter } as StudioFilter).state
-        val stateFilter = (filters.find { it is StateFilter } as StateFilter)
 
-        val genre = if (genreFilter.isNotEmpty()) {
-            genreFilter.filter { it.state }.map { genres[it.name] }.joinToString("%2C") { it.toString() }
-        } else {
-            ""
-        }
-        val excludeGenre = if (genreFilter.isNotEmpty()) {
+        val genreFilter = ((filters.find { it is TagFilter }) as? TagFilter)?.state ?: emptyList()
+        val excludeGenreFilter = (filters.find { it is ExcludeTagFilter } as? ExcludeTagFilter)?.state ?: emptyList()
+        val studioFilter = (filters.find { it is StudioFilter } as? StudioFilter)?.state ?: emptyList()
+        val stateFilter = (filters.find { it is StateFilter } as? StateFilter) ?: StateFilter()
+
+        val genre = try {
+            if (genreFilter.isNotEmpty()) {
+                genreFilter.filter { it.state }.map { genres[it.name] }.joinToString("%2C") { it.toString() }
+            } else ""
+        } catch (e: Exception) { "" }
+
+        val excludeGenre = if (excludeGenreFilter.isNotEmpty()) {
             excludeGenreFilter.filter { it.state }.map { genres[it.name] }.joinToString("%2C") { it.toString() }
-        } else {
-            ""
-        }
+        } else ""
+
         val studio = if (studioFilter.isNotEmpty()) {
             studioFilter.filter { it.state }.map { studiosMap[it.name] }.joinToString("%2C") { it.toString() }
-        } else {
-            "0"
-        }
-        val status = if (stateFilter.state != 0) {
-            stateFilter.toUriPart()
-        } else {
-            ""
-        }
+        } else 0
+
+        val status = if (stateFilter.state != 0) stateFilter.toUriPart() else ""
 
         val url = "$baseUrl/v2/directories?studio=$studio&not_genre=$excludeGenre&year=&orderBy=4&language=&type=&duration=&search=$query&letter=0&limit=24&genre=$genre&season=&page=${(page - 1) * 24}&status=$status"
 
@@ -163,7 +163,26 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         )
     }
 
-    override fun searchAnimeParse(response: Response): AnimesPage = popularAnimeParse(response)
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        val responseJson = json.decodeFromString<JsonObject>(response.asJsoup().body().text())
+        try {
+            val animeArray = responseJson["response"]!!.jsonArray
+            return AnimesPage(
+                animeArray.map {
+                    val animeDetail = it.jsonObject
+                    val animeId = animeDetail["id"]!!.jsonPrimitive.content
+                    SAnime.create().apply {
+                        title = animeDetail["nombre"]!!.jsonPrimitive.content
+                        url = "$baseUrl/v1/episodes/$animeId"
+                        thumbnail_url = aip.random() + animeDetail["img_url"]!!.jsonPrimitive.content
+                    }
+                },
+                false
+            )
+        } catch (e: Exception) {
+            return AnimesPage(emptyList(), false)
+        }
+    }
 
     override fun videoListParse(response: Response): List<Video> {
         val jsonResponse = json.decodeFromString<JsonObject>(response.asJsoup().body().text())
@@ -259,6 +278,16 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         TODO("Not yet implemented")
+    }
+
+    private fun parseDate(dateStr: String): Long {
+        return runCatching { DATE_FORMATTER.parse(dateStr)?.time }
+            .getOrNull() ?: 0L
+    }
+    companion object {
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("dd-MM-yyyy", Locale.ENGLISH)
+        }
     }
 
     /* --Unused stuff-- */
