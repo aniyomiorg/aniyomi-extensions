@@ -2,10 +2,10 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    extName = 'تك تك سينما'
+    extName = 'توك توك سينما'
     pkgNameSuffix = 'ar.tuktukcinema'
     extClass = '.Tuktukcinema'
-    extVersionCode = 1
+    extVersionCode = 2
     libVersion = '13'
 }
 
