@@ -331,7 +331,7 @@ class Movizland : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } else if (title.contains("انمي"))
             Regex(if (title.contains("الموسم"))"انمي(.*)الموسم" else "انمي(.*)الحلقة").find(title)!!.groupValues[1] + if (details) " (انمى)" else ""
         else if (title.contains("برنامج"))
-            Regex(if (title.contains("الموسم"))"برنامج(.*)الموسم" else "برنامج(.*)حلقة").find(title)!!.groupValues[1].replace(" ال", "") + if (details) " (برنامج)" else ""
+            Regex(if (title.contains("الموسم"))"برنامج(.*)الموسم" else "برنامج(.*)حلقة").find(title)!!.groupValues[1].removeSurrounding(" ال") + if (details) " (برنامج)" else ""
         else
             title
         return finalTitle.trim()
