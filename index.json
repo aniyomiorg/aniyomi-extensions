@@ -291,10 +291,10 @@
   {
     "name": "Aniyomi: موفيزلاند",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.movizland",
-    "apk": "aniyomi-ar.movizland-v13.9.apk",
+    "apk": "aniyomi-ar.movizland-v13.10.apk",
     "lang": "ar",
-    "code": 9,
-    "version": "13.9",
+    "code": 10,
+    "version": "13.10",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -303,7 +303,7 @@
         "name": "موفيزلاند",
         "lang": "ar",
         "id": "7623510893043031300",
-        "baseUrl": "https://watch.movizland.cyou",
+        "baseUrl": "https://movizland.icu",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -352,20 +352,20 @@
     ]
   },
   {
-    "name": "Aniyomi: تك تك سينما",
+    "name": "Aniyomi: توك توك سينما",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.tuktukcinema",
-    "apk": "aniyomi-ar.tuktukcinema-v13.1.apk",
+    "apk": "aniyomi-ar.tuktukcinema-v13.2.apk",
     "lang": "ar",
-    "code": 1,
-    "version": "13.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
     "sources": [
       {
-        "name": "تك تك سينما",
+        "name": "توك توك سينما",
         "lang": "ar",
-        "id": "7292342020313846533",
+        "id": "7363299109912773155",
         "baseUrl": "https://w.tuktukcinema.net",
         "versionId": 1,
         "hasCloudflare": 1
