@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animeextension.de.movie4k.extractors.StreamZExtractor
 import eu.kanade.tachiyomi.animeextension.de.movie4k.extractors.VidozaExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -31,7 +32,6 @@ import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import kotlin.Exception
 
 class Movie4k : ConfigurableAnimeSource, AnimeHttpSource() {
 
@@ -95,7 +95,7 @@ class Movie4k : ConfigurableAnimeSource, AnimeHttpSource() {
         return parseEpisodePage(responseString)
     }
 
-    private fun parseEpisodePage(jsonLine: String?): MutableList<SEpisode> {
+    private fun parseEpisodePage(jsonLine: String?): List<SEpisode> {
         val jsonData = jsonLine ?: return mutableListOf()
         val jObject = json.decodeFromString<JsonObject>(jsonData)
         val episodeList = mutableListOf<SEpisode>()
@@ -112,14 +112,15 @@ class Movie4k : ConfigurableAnimeSource, AnimeHttpSource() {
                 episodeList.add(episode)
             }
         } else {
-            val episode = SEpisode.create()
-            episode.episode_number = 1F
-            episode.name = jObject["title"]!!.jsonPrimitive.content
-            val id = jObject["_id"]!!.jsonPrimitive.content
-            episode.setUrlWithoutDomain("$apiUrl/data/watch/?_id=$id")
+            val episode = SEpisode.create().apply {
+                episode_number = 1F
+                name = "Film"
+                val id = jObject["_id"]!!.jsonPrimitive.content
+                setUrlWithoutDomain("$apiUrl/data/watch/?_id=$id")
+            }
             episodeList.add(episode)
         }
-        return episodeList.asReversed()
+        return episodeList.reversed()
     }
 
     // Video Extractor
@@ -130,10 +131,15 @@ class Movie4k : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        return videosFromElement(response)
+        val limit = if (preferences.getBoolean("limit_qualities", true)) {
+            15
+        } else {
+            null
+        }
+        return videosFromElement(response, limit)
     }
 
-    private fun videosFromElement(response: Response): List<Video> {
+    private fun videosFromElement(response: Response, limit: Int?): List<Video> {
         val jsonData = response.body!!.string()
         val jObject = json.decodeFromString<JsonObject>(jsonData)
         val array = jObject["streams"]!!.jsonArray
@@ -141,6 +147,7 @@ class Movie4k : ConfigurableAnimeSource, AnimeHttpSource() {
         val hosterSelection = preferences.getStringSet("hoster_selection", setOf("voe", "stape", "streamz", "vidoza"))
         if (jObject["tv"]!!.jsonPrimitive.int == 1) {
             for (item in array) {
+                if (limit != null && videoList.size > limit) break
                 if (item.jsonObject["e"]!!.jsonPrimitive.content == response.request.header("e").toString()) {
                     val link = item.jsonObject["stream"]!!.jsonPrimitive.content
                     when {
@@ -237,6 +244,7 @@ class Movie4k : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         } else {
             for (item in array) {
+                if (limit != null && videoList.size > limit) break
                 val link = item.jsonObject["stream"]!!.jsonPrimitive.content
                 when {
                     link.contains("//streamtape") && hosterSelection?.contains("stape") == true -> {
@@ -446,7 +454,16 @@ class Movie4k : ConfigurableAnimeSource, AnimeHttpSource() {
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
             }
         }
+        val limitQualities = SwitchPreferenceCompat(screen.context).apply {
+            key = "limit_qualities"
+            title = "Anzahl der Videos auf 15 begrenzen"
+            setDefaultValue(true)
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putBoolean(key, newValue as Boolean).commit()
+            }
+        }
         screen.addPreference(hosterPref)
         screen.addPreference(subSelection)
+        screen.addPreference(limitQualities)
     }
 }
