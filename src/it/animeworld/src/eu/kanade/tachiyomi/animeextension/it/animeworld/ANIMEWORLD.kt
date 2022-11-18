@@ -177,10 +177,11 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.thumbnail_url = document.select("div.thumb img").first().attr("src")
         anime.title = document.select("div.c1 h2.title").text()
-        anime.genre = document.select("dd:has(a[href*=language]) a, dd:has(a[href*=genre]) a").joinToString(", ") { it.text() }
+        val dl = document.select("div.info dl")
+        anime.genre = dl.select("dd:has(a[href*=language]) a, dd:has(a[href*=genre]) a").joinToString(", ") { it.text() }
         anime.description = document.select("div.desc").text()
-        anime.author = document.select("dd:has(a[href*=studio]) a").joinToString(", ") { it.text() }
-        anime.status = parseStatus(document.select("dd:has(a[href*=status]) a").text().replace("Status: ", ""))
+        anime.author = dl.select("dd:has(a[href*=studio]) a").joinToString(", ") { it.text() }
+        anime.status = parseStatus(dl.select("dd:has(a[href*=status]) a").text().replace("Status: ", ""))
         return anime
     }
 
