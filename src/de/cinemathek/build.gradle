@@ -5,8 +5,12 @@ ext {
     extName = 'Cinemathek'
     pkgNameSuffix = 'de.cinemathek'
     extClass = '.Cinemathek'
-    extVersionCode = 1
+    extVersionCode = 2
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-streamsb-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"
