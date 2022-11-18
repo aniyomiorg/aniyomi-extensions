@@ -3,7 +3,9 @@ package eu.kanade.tachiyomi.animeextension.de.cinemathek
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
+import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.de.cinemathek.extractors.FilemoonExtractor
 import eu.kanade.tachiyomi.animeextension.de.cinemathek.extractors.StreamlareExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -11,6 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
@@ -65,9 +68,9 @@ class Cinemathek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
         val episode = SEpisode.create()
-        episode.name = document.select("div.data > h1").text()
         episode.episode_number = 1F
         episode.setUrlWithoutDomain(document.select("link[rel=canonical]").attr("href"))
+        episode.name = document.select("div.poster img").attr("alt")
         episodeList.add(episode)
         return episodeList.reversed()
     }
@@ -84,20 +87,34 @@ class Cinemathek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun videosFromElement(document: Document): List<Video> {
-        val id = document.select("#player-option-1").attr("data-post")
-        val ajax = client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", body = "action=doo_player_ajax&post=$id&nume=1&type=movie".toRequestBody("application/x-www-form-urlencoded".toMediaType()))).execute().body!!.string()
         val videoList = mutableListOf<Video>()
-        val url = ajax.substringAfter("embed_url\":\"").substringBefore("\",").replace("\\", "")
-        when {
-            url.contains("https://streamlare.com") -> {
-                videoList.addAll(StreamlareExtractor(client).videosFromUrl(url))
+        val player = document.select("ul#playeroptionsul li")
+        val hosterSelection = preferences.getStringSet("hoster_selection", setOf("slare", "streamsb", "fmoon"))
+        player.forEach {
+            val id = it.attr("data-post")
+            val nume = it.attr("data-nume")
+            val ajax = client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", body = "action=doo_player_ajax&post=$id&nume=$nume&type=movie".toRequestBody("application/x-www-form-urlencoded".toMediaType()))).execute().body!!.string()
+            val url = ajax.substringAfter("embed_url\":\"").substringBefore("\",").replace("\\", "")
+            when {
+                url.contains("https://streamlare.com") && hosterSelection?.contains("slare") == true -> {
+                    videoList.addAll(StreamlareExtractor(client).videosFromUrl(url))
+                }
+                url.contains("https://streamsb") && hosterSelection?.contains("streamsb") == true -> {
+                    videoList.addAll(StreamSBExtractor(client).videosFromUrl(url, headers = headers, common = false))
+                }
+                url.contains("https://filemoon") && hosterSelection?.contains("fmoon") == true -> {
+                    val videos = FilemoonExtractor(client).videoFromUrl(url)
+                    if (videos != null) {
+                        videoList.addAll(videos)
+                    }
+                }
             }
         }
         return videoList
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val hoster = preferences.getString("preferred_quality", null)
+        val hoster = preferences.getString("preferred_hoster", null)
         val quality = preferences.getString("preferred_quality", "1080")!!
         val hosterList = mutableListOf<Video>()
         val otherList = mutableListOf<Video>()
@@ -175,6 +192,32 @@ class Cinemathek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // settings
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val hosterPref = ListPreference(screen.context).apply {
+            key = "preferred_hoster"
+            title = "Standard-Hoster"
+            entries = arrayOf("Streamlare", "StreamSB", "Filemoon")
+            entryValues = arrayOf("https://streamlare", "https://viewsb.com", "https://filemoon")
+            setDefaultValue("https://viewsb.com")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        val subSelection = MultiSelectListPreference(screen.context).apply {
+            key = "hoster_selection"
+            title = "Hoster auswählen"
+            entries = arrayOf("Streamlare", "StreamSB", "Filemoon")
+            entryValues = arrayOf("slare", "streamsb", "fmoon")
+            setDefaultValue(setOf("slare", "streamsb", "fmoon"))
+
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
@@ -190,6 +233,8 @@ class Cinemathek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        screen.addPreference(hosterPref)
+        screen.addPreference(subSelection)
         screen.addPreference(videoQualityPref)
     }
 }
