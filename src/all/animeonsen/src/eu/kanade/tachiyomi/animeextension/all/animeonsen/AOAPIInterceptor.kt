@@ -17,27 +17,31 @@ class AOAPIInterceptor(client: OkHttpClient) : Interceptor {
     private val token: String
 
     init {
-        val body = """
-            {
-                "client_id": "f296be26-28b5-4358-b5a1-6259575e23b7",
-                "client_secret": "349038c4157d0480784753841217270c3c5b35f4281eaee029de21cb04084235",
-                "grant_type": "client_credentials"
-            }
-        """.trimIndent().toRequestBody("application/json".toMediaType())
+        token = try {
+            val body = """
+                {
+                    "client_id": "f296be26-28b5-4358-b5a1-6259575e23b7",
+                    "client_secret": "349038c4157d0480784753841217270c3c5b35f4281eaee029de21cb04084235",
+                    "grant_type": "client_credentials"
+                }
+            """.trimIndent().toRequestBody("application/json".toMediaType())
 
-        val headers = Headers.headersOf("user-agent", AO_USER_AGENT)
+            val headers = Headers.headersOf("user-agent", AO_USER_AGENT)
 
-        val tokenResponse = client.newCall(
-            POST(
-                "https://auth.animeonsen.xyz/oauth/token",
-                headers,
-                body,
-            )
-        ).execute().body!!.string()
+            val tokenResponse = client.newCall(
+                POST(
+                    "https://auth.animeonsen.xyz/oauth/token",
+                    headers,
+                    body,
+                )
+            ).execute().body!!.string()
 
-        val tokenObject = Json.decodeFromString<JsonObject>(tokenResponse)
+            val tokenObject = Json.decodeFromString<JsonObject>(tokenResponse)
 
-        token = tokenObject["access_token"]!!.jsonPrimitive.content
+            tokenObject["access_token"]!!.jsonPrimitive.content
+        } catch(_: Throwable) {
+            ""
+        }
     }
 
     override fun intercept(chain: Interceptor.Chain): Response {
