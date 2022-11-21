@@ -63,6 +63,13 @@ data class EpisodeDto(
 )
 
 @Serializable
+data class EpisodeVideoDto(
+    val streams: List<VideoDto>? = null,
+    @SerialName("legenda")
+    val subUrl: String? = null
+)
+
+@Serializable
 data class MinimalEpisodeDto(
     @SerialName("temporada")
     val season: MinimalSeasonDto? = null,
