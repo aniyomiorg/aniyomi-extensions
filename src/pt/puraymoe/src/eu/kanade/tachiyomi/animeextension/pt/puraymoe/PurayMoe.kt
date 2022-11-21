@@ -7,21 +7,29 @@ import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto.AnimeDto
 import eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto.EpisodeDataDto
+import eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto.EpisodeVideoDto
 import eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto.MinimalEpisodeDto
 import eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto.SearchDto
 import eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto.SeasonInfoDto
 import eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto.SeasonListDto
+import eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto.VideoDto
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
+import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.serializer
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -43,7 +51,7 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client: OkHttpClient = network.client
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -129,25 +137,50 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    override fun videoListRequest(episode: SEpisode): Request {
-        val url = "$API_URL/episodios/${episode.url}/m3u8"
-        val usePlaylist = preferences.getBoolean(PREF_USE_PLAYLIST_KEY, true)
-        return if (usePlaylist) GET(url) else GET("$url/mp4/")
-    }
+    override fun videoListRequest(episode: SEpisode) =
+        GET("$baseUrl/watch/${episode.url}")
 
     override fun videoListParse(response: Response): List<Video> {
+        val nextData = response.asJsoup()
+            .selectFirst("script#__NEXT_DATA__")
+            .data()
+            .let { json.decodeFromString<JsonObject>(it) }
 
-        val episodeObject = response.parseAs<MinimalEpisodeDto>()
+        val episode = nextData.get("props")
+            ?.jsonObject
+            ?.get("pageProps")?.jsonObject
+            ?.get("episode")?.jsonObject
+            ?.let {
+                json.decodeFromJsonElement(EpisodeVideoDto.serializer(), it)
+            }
+
+        return episode?.streams?.toVideoList(episode.subUrl)
+            ?: getVideosFromAPI(response.request.url.toString().getId())
+    }
+
+    private fun getVideosFromAPI(episodeId: String): List<Video> {
+        val url = "$API_URL/episodios/$episodeId/m3u8"
         val usePlaylist = preferences.getBoolean(PREF_USE_PLAYLIST_KEY, true)
+        val request = if (usePlaylist) GET(url) else GET("$url/mp4/")
+        val episodeObject = runCatching {
+            val response = client.newCall(request).execute()
+            response.parseAs<MinimalEpisodeDto>()
+        }.getOrNull() ?: return run {
+            // Lets try again, sometimes the source simply doesnt send all data
+            // needed in the json (script#__NEXT_DATA__)
+            // and makes videoListParse use this function by mistake.
+            // As this function is (correctly) used in almost all cases,
+            // we only retry here, because there is a higher chance that
+            // the source will not return the data but the API call will work
+            val newRequest = GET("$baseUrl/watch/$episodeId")
+            videoListParse(client.newCall(newRequest).execute())
+        }
         return if (usePlaylist) {
             client.newCall(GET(episodeObject.url))
                 .execute()
                 .toVideoList()
         } else {
-            episodeObject.streams?.map {
-                val quality = "${it.quality.last()}p"
-                Video(it.url, quality, it.url)
-            } ?: emptyList<Video>()
+            episodeObject.streams?.toVideoList() ?: emptyList<Video>()
         }
     }
 
@@ -295,6 +328,14 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
     private inline fun <reified T> Response.parseAs(): T {
         val responseBody = body?.string().orEmpty()
         return json.decodeFromString(responseBody)
+    }
+
+    private fun List<VideoDto>.toVideoList(subUrl: String? = null): List<Video> {
+        val subs = subUrl?.let { listOf(Track(it, "pt-br")) } ?: emptyList()
+        return map {
+            val quality = "${it.quality.last()}p"
+            Video(it.url, quality, it.url, subtitleTracks = subs)
+        }
     }
 
     private fun Response.toVideoList(): List<Video> {
