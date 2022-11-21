@@ -1066,6 +1066,27 @@
     ]
   },
   {
+    "name": "Aniyomi: PutLocker",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.putlocker",
+    "apk": "aniyomi-en.putlocker-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "PutLocker",
+        "lang": "en",
+        "id": "2129864039842084686",
+        "baseUrl": "https://putlocker.vip",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Rule34Video",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.rule34video",
     "apk": "aniyomi-en.rule34video-v13.3.apk",
@@ -2260,10 +2281,10 @@
   {
     "name": "Aniyomi: Puray.moe",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.puraymoe",
-    "apk": "aniyomi-pt.puraymoe-v13.4.apk",
+    "apk": "aniyomi-pt.puraymoe-v13.5.apk",
     "lang": "pt-BR",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2274,7 +2295,7 @@
         "id": "2196130263076310215",
         "baseUrl": "https://puray.moe",
         "versionId": 1,
-        "hasCloudflare": 1
+        "hasCloudflare": 0
       }
     ]
   },
