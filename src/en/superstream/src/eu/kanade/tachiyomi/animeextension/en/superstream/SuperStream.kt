@@ -129,7 +129,7 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
         filters: AnimeFilterList
     ): Observable<AnimesPage> {
         val searchResult = superStreamAPI.search(page, query)
-        return Observable.just(AnimesPage(searchResult, page < 8))
+        return Observable.just(AnimesPage(searchResult, searchResult.size == 20))
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = throw Exception("not used")

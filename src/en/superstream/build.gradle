@@ -6,7 +6,7 @@ ext {
     extName = 'SuperStream'
     pkgNameSuffix = 'en.superstream'
     extClass = '.SuperStream'
-    extVersionCode = 4
+    extVersionCode = 5
     libVersion = '13'
 }
 

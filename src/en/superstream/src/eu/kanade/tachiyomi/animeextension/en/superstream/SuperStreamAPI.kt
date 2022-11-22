@@ -700,6 +700,7 @@ import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
+import java.util.concurrent.TimeUnit
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
@@ -823,7 +824,7 @@ class SuperStreamAPI(val json: Json) {
                 key
             )
             }","encrypt_data":"$encryptedQuery"}"""
-        val base64Body = String(Base64.encode(newBody.toByteArray(), Base64.DEFAULT))
+        val base64Body = String(Base64.encode(newBody.toByteArray(), Base64.NO_WRAP))
 
         val formData: RequestBody = FormBody.Builder()
             .add("data", base64Body)
@@ -1091,6 +1092,7 @@ private fun configureToIgnoreCertificate(): OkHttpClient {
         return OkHttpClient.Builder()
             .sslSocketFactory(sslSocketFactory, trustAllCerts[0] as X509TrustManager)
             .hostnameVerifier { _, _ -> true }
+            .readTimeout(70, TimeUnit.SECONDS)
             .build()
     } catch (e: Exception) {
         throw Exception("Exception while configuring IgnoreSslCertificate: $e")
