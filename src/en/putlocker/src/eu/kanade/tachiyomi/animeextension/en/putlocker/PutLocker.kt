@@ -109,13 +109,14 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } ?: SAnime.COMPLETED
 
         var description = descElement.select("div.desc").text()?.let { it + "\n" }
-        document.select("div.mvic-info > div.mvici-right p:contains(Quality)").text().let {
+        val extraDescription = document.select("div.mvic-info > div.mvici-right")
+        extraDescription.select("p:contains(Quality)").text().let {
             description += if (it.isNotBlank()) "\n$it" else ""
         }
-        document.select("div.mvic-info > div.mvici-right p:contains(Release)").text().let {
+        extraDescription.select("p:contains(Release)").text().let {
             description += if (it.isNotBlank()) "\n$it" else ""
         }
-        document.select("div.mvic-info > div.mvici-right p:contains(IMDb)").text().let {
+        extraDescription.select("p:contains(IMDb)").text().let {
             description += if (it.isNotBlank()) "\n$it" else ""
         }
         anime.description = description
@@ -135,34 +136,30 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val parsedHtml = Jsoup.parse(JSONUtil.unescape(html))
         val rawEpisodes = parsedHtml.select("div[id^=sv]").mapNotNull { server ->
             val linkElement = server.select("div.les-content > a")
-            val dataId = linkElement.attr("data-id")!!
-            val ep = dataId.substringAfter("_").substringBefore("_").toInt()
-            val title = if (ep == 0) {
-                "Movie"
-            } else {
-                val epWithNumber = linkElement.text()
-                "Episode $ep: " + linkElement.attr("title").substringAfter(epWithNumber)
-                    .replace("-", "").trim()
+            linkElement.map { epLinkElement ->
+                val dataId = epLinkElement.attr("data-id")!!
+                val ep = dataId.substringAfter("_").substringBefore("_").toInt()
+                val title = if (ep == 0) {
+                    "Movie"
+                } else {
+                    "Episode $ep: " + epLinkElement.attr("title").substringAfter("Episode $ep")
+                        .replace("-", "").trim()
+                }
+                Pair(title, dataId)
             }
-            Pair(title, dataId)
-        }
+        }.flatten()
 
-        val episodes = mutableListOf<SEpisode>()
-        rawEpisodes.groupBy { it.second.substringAfter("_").substringBefore("_").toInt() }
-            .map { group ->
-                val title = group.value.first().first
-                episodes.add(
-                    SEpisode.create().apply {
-                        url = EpLinks(
-                            ep_num = group.key,
-                            ids = group.value.map { it.second }
-                        ).toJson()
-                        name = title
-                        episode_number = group.key.toFloat()
-                    }
-                )
+        return rawEpisodes.groupBy { it.second.substringAfter("_").substringBefore("_").toInt() }
+            .mapNotNull { group ->
+                SEpisode.create().apply {
+                    url = EpLinks(
+                        ep_num = group.key,
+                        ids = group.value.map { it.second }
+                    ).toJson()
+                    name = group.value.first().first
+                    episode_number = group.key.toFloat()
+                }
             }
-        return episodes
     }
 
     override fun episodeListSelector(): String = throw Exception("Not Used")
