@@ -1,8 +1,13 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesup
 
+import android.app.Application
+import android.content.SharedPreferences
 import android.net.Uri
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.animesup.extractors.AnimesUpExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesup.extractors.LegacyFunExtractor
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -19,10 +24,11 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
 
-class AnimesUp : ParsedAnimeHttpSource() {
+class AnimesUp : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AnimesUp"
 
@@ -36,6 +42,10 @@ class AnimesUp : ParsedAnimeHttpSource() {
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Referer", baseUrl)
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     // ============================== Popular ===============================
     override fun popularAnimeSelector(): String = "article.w_item_b > a"
@@ -230,6 +240,26 @@ class AnimesUp : ParsedAnimeHttpSource() {
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/episodios/page/$page", headers)
 
+    // ============================== Settings ==============================
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val videoQualityPref = ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
+        screen.addPreference(videoQualityPref)
+    }
+
     // ============================= Utilities ==============================
     private val animeMenuSelector = "div.pag_episodes div.item a[href] i.icon-bars"
 
@@ -263,7 +293,28 @@ class AnimesUp : ParsedAnimeHttpSource() {
         return Uri.parse(this).getQueryParameter(param)
     }
 
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val newList = mutableListOf<Video>()
+        var preferred = 0
+        for (video in this) {
+            if (quality == video.quality.substringAfterLast(" ")) {
+                newList.add(preferred, video)
+                preferred++
+            } else {
+                newList.add(video)
+            }
+        }
+        return newList
+    }
+
     companion object {
         const val PREFIX_SEARCH = "slug:"
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Qualidade preferida"
+        private const val PREF_QUALITY_DEFAULT = "HD"
+        private val PREF_QUALITY_ENTRIES = arrayOf("SD", "HD", "FULL HD")
+        private val PREF_QUALITY_VALUES = arrayOf("SD", "HD", "FHD")
     }
 }
