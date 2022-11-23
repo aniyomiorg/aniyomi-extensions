@@ -2092,10 +2092,10 @@
   {
     "name": "Aniyomi: AnimesVision",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesvision",
-    "apk": "aniyomi-pt.animesvision-v13.11.apk",
+    "apk": "aniyomi-pt.animesvision-v13.12.apk",
     "lang": "pt-BR",
-    "code": 11,
-    "version": "13.11",
+    "code": 12,
+    "version": "13.12",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
