@@ -63,7 +63,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         .add("Referer", baseUrl)
         .add("Accept-Language", ACCEPT_LANGUAGE)
 
-    // ============================== Popular ===============================   
+    // ============================== Popular ===============================
     private fun nextPageSelector(): String = "ul.pagination li.page-item:contains(›):not(.disabled)"
     override fun popularAnimeSelector(): String = "div#anime-trending div.item > a.film-poster"
     override fun popularAnimeRequest(page: Int): Request = GET(baseUrl)
@@ -146,7 +146,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val players = doc.select("div.server-item > a.btn")
 
-        return players.mapNotNull {
+        val videos = players.mapNotNull {
             val id = it.attr("wire:click")
                 .substringAfter("(")
                 .substringBefore(")")
@@ -161,7 +161,12 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val resJson = json.decodeFromString<AVResponseDto>(responseBody)
             (resJson.serverMemo?.data?.framePlay ?: resJson.effects?.html)
                 ?.let(::parsePlayerData)
-        }.flatten()
+        }.flatten().toMutableList()
+
+        if ("/filmes/" in doc.location())
+            parsePlayerData(doc.outerHtml())?.let { videos.addAll(it) }
+
+        return videos
     }
 
     private fun parsePlayerData(data: String): List<Video>? {
@@ -286,7 +291,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/lancamentos?page=$page")
 
-    // ============================== Settings ============================== 
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREFERRED_QUALITY
