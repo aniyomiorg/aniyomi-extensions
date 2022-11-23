@@ -354,10 +354,10 @@
   {
     "name": "Aniyomi: توك توك سينما",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.tuktukcinema",
-    "apk": "aniyomi-ar.tuktukcinema-v13.2.apk",
+    "apk": "aniyomi-ar.tuktukcinema-v13.3.apk",
     "lang": "ar",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
