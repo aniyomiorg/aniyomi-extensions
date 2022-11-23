@@ -15,11 +15,8 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -85,61 +82,39 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title
     }
 
-    override fun popularAnimeNextPageSelector(): String = "div.paginate ul.page-numbers li.active + li a"
+    override fun popularAnimeNextPageSelector(): String = "div.pagination ul.page-numbers li a.next"
 
     // ============================ episodes ===============================
 
-    private fun seasonsNextPageSelector() = "div.seasons--toggler ul li"
+    private fun seasonsNextPageSelector() = "section.allseasonss div.Block--Item"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val episodes = mutableListOf<SEpisode>()
-        fun addEpisodeNew(url: String, type: String, title: String = "") {
+        fun addEpisodeNew(url: String, title: String) {
             val episode = SEpisode.create()
             episode.setUrlWithoutDomain(url)
-            if (type == "movie")
-                episode.name = "مشاهدة"
-            else
-                episode.name = title
-
+            episode.name = title
             episodes.add(episode)
         }
         fun addEpisodes(response: Response) {
             val document = response.asJsoup()
             val url = response.request.url.toString()
-            if (document.select("div.episodes--side--list").isNullOrEmpty()) {
-                // Movies
-                addEpisodeNew(url, "movie")
-            } else {
-                // Series
-                // look for what is wrong
-                document.select(seasonsNextPageSelector()).forEach { season ->
-                    val seasonNum = season.text()
-                    if (season.hasClass("active")) {
-                        // get episodes from page
-                        document.select("div.episodes--list--side a").forEach { ep ->
+            if (document.select(seasonsNextPageSelector()).isNullOrEmpty())
+                addEpisodeNew(url, "مشاهدة")
+            else
+                document.select(seasonsNextPageSelector()).reversed().forEach { season ->
+                    val seasonNum = season.select("h3").text()
+                    (
+                        if (seasonNum == document.selectFirst("div#mpbreadcrumbs a span:contains(الموسم)").text())
+                            document else client.newCall(GET(season.selectFirst("a").attr("href"))).execute().asJsoup()
+                        )
+                        .select("section.allepcont a").forEach { episode ->
                             addEpisodeNew(
-                                ep.attr("href"),
-                                "series",
-                                seasonNum + " : الحلقة " + ep.select("em").text()
+                                episode.attr("href") + "watch/",
+                                seasonNum + " : الحلقة " + episode.select("div.epnum").text().filter { it.isDigit() }
                             )
                         }
-                    } else {
-                        // send request to get episodes
-                        val seasonData = season.attr("data-season")
-                        val postId = season.attr("data-id")
-                        val refererHeaders = Headers.headersOf("referer", response.request.url.toString(), "x-requested-with", "XMLHttpRequest")
-                        val requestBody = FormBody.Builder().add("season", seasonData).add("post_id", postId).build()
-                        val getEpisodes = client.newCall(POST("$baseUrl/wp-content/themes/Elshaikh/Inc/Ajax/Single/Episodes.php", refererHeaders, requestBody)).execute().asJsoup()
-                        getEpisodes.select("li a").forEach { ep ->
-                            addEpisodeNew(
-                                ep.attr("href"),
-                                "series",
-                                seasonNum + " : الحلقة " + ep.select("em").text()
-                            )
-                        }
-                    }
                 }
-            }
         }
         addEpisodes(response)
         return episodes
@@ -162,10 +137,10 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val refererHeaders = Headers.headersOf("referer", response.request.url.toString())
                 val videosFromURL = MoshahdaExtractor(client).videosFromUrl(link, refererHeaders)
                 videos.addAll(videosFromURL)
-            } else if (link.contains("ok")) {
+            } /*else if (link.contains("ok")) {
                 val videosFromURL = OkruExtractor(client).videosFromUrl(link)
                 videos.addAll(videosFromURL)
-            } else if (server.text().contains("vidbom", ignoreCase = true) or server.text().contains("vidshare", ignoreCase = true)) {
+            }*/ else if (server.text().contains("vidbom", ignoreCase = true) or server.text().contains("vidshare", ignoreCase = true)) {
                 val videosFromURL = VidBomExtractor(client).videosFromUrl(link)
                 videos.addAll(videosFromURL)
             } else if (server.text().contains("dood", ignoreCase = true)) {
@@ -205,7 +180,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = "div.Block--Item"
 
-    override fun searchAnimeNextPageSelector(): String = "div.paginate ul.page-numbers li a.next"
+    override fun searchAnimeNextPageSelector(): String = "div.pagination ul.page-numbers li a.next"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val url = if (query.isNotBlank()) {
@@ -232,10 +207,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.title = titleEdit(element.select("h3").text(), true).trim()
-        if (element.ownerDocument().location().contains("?s="))
-            anime.thumbnail_url = element.select("img").attr("src")
-        else
-            anime.thumbnail_url = element.select("img").attr("data-src")
+        anime.thumbnail_url = element.select("img").attr(if (element.ownerDocument().location().contains("?s="))"src" else "data-src")
         anime.setUrlWithoutDomain(element.select("a").attr("href") + "watch/")
         return anime
     }
@@ -257,7 +229,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesSelector(): String = "div.Block--Item"
 
-    override fun latestUpdatesNextPageSelector(): String = "div.paginate ul.page-numbers li a.next"
+    override fun latestUpdatesNextPageSelector(): String = "div.pagination ul.page-numbers li a.next"
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/recent/page/$page/")
 
