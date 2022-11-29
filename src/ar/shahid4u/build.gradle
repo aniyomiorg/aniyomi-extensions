@@ -5,13 +5,12 @@ ext {
     extName = 'شاهد فور يو'
     pkgNameSuffix = 'ar.shahid4u'
     extClass = '.Shahid4U'
-    extVersionCode = 7
+    extVersionCode = 8
     libVersion = '13'
 }
 
 dependencies {
-    implementation(project(':lib-okru-extractor'))
-    implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib-url-resovler'))
 }
 
 apply from: "$rootDir/common.gradle"

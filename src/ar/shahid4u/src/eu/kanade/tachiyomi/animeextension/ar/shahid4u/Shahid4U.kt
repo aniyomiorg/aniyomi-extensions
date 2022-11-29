@@ -4,8 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.ar.shahid4u.extractors.UQLoadExtractor
-import eu.kanade.tachiyomi.animeextension.ar.shahid4u.extractors.VidBomExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -13,8 +11,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.urlresolver.UrlResolver
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
@@ -162,7 +159,6 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videos = mutableListOf<Video>()
-        val servers = document.select(videoListSelector())
         fun getUrl(v_id: String, i: String): String {
             val refererHeaders = Headers.headersOf(
                 "referer", response.request.url.toString(),
@@ -180,24 +176,8 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             ).execute().asJsoup()
             return iframe.select("iframe").attr("src")
         }
-        for (server in servers) {
-            if (server.hasClass("active")) {
-                // special server
-                val videosFromURL = videosFromElement(client.newCall(GET(document.select("input[name=fserver]").`val`(), headers)).execute().asJsoup())
-                videos.addAll(videosFromURL)
-            } else if (server.text().contains("ok")) {
-                val videosFromURL = OkruExtractor(client).videosFromUrl(getUrl(server.attr("data-id"), server.attr("data-i")))
-                videos.addAll(videosFromURL)
-            } else if (server.text().contains("vidbom", ignoreCase = true) or server.text().contains("Vidshare", ignoreCase = true)) {
-                val videosFromURL = VidBomExtractor(client).videosFromUrl(getUrl(server.attr("data-id"), server.attr("data-i")))
-                videos.addAll(videosFromURL)
-            } else if (server.text().contains("dood", ignoreCase = true)) {
-                val videosFromURL = DoodExtractor(client).videoFromUrl(getUrl(server.attr("data-id"), server.attr("data-i")))
-                if (videosFromURL != null) videos.add(videosFromURL)
-            } else if (server.text().contains("uqload", ignoreCase = true)) {
-                val videosFromURL = UQLoadExtractor(client).videoFromUrl(getUrl(server.attr("data-id"), server.attr("data-i")), "Uqload: 720p")
-                if (videosFromURL != null) videos.add(videosFromURL)
-            }
+        document.select(videoListSelector()).forEach {
+            videos.addAll(UrlResolver(client).resolve(getUrl(it.attr("data-id"), it.attr("data-i")), headers))
         }
         return videos
     }
