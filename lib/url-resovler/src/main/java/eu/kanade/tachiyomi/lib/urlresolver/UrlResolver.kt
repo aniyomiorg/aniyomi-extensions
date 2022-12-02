@@ -1,12 +1,12 @@
 package eu.kanade.tachiyomi.lib.urlresolver
 
 import eu.kanade.tachiyomi.animesource.model.Video
-import eu.kanade.tachiyomi.lib.urlresolver.extractors.Dood
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.urlresolver.extractors.Multi
-import eu.kanade.tachiyomi.lib.urlresolver.extractors.Okru
-import eu.kanade.tachiyomi.lib.urlresolver.extractors.StreamTape
-import eu.kanade.tachiyomi.lib.urlresolver.extractors.StreamSB
-import eu.kanade.tachiyomi.lib.urlresolver.extractors.Fembed
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
+import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.urlresolver.extractors.Linkbox
 import okhttp3.Headers
 import okhttp3.OkHttpClient
@@ -23,13 +23,14 @@ class UrlResolver(private val client: OkHttpClient) {
             if (urlRegex.containsMatchIn(url)) {
                 val match = urlRegex.find(url)!!.groupValues
                 val newUrl = it.url.replace("{host}", match[1]).replace("{media_id}", match[2])
+                // val document = runCatching { client.newCall(GET(url)).execute().asJsoup()}.getOrNull() ?: return emptyList()
                 videoList.addAll(
                     when (it.name) {
-                        "dood" -> Dood(client).extract(newUrl)
-                        "fembed" -> Fembed(client).extract(newUrl)
-                        "okru" -> Okru(client).extract(newUrl)
-                        "streamsb" -> StreamSB(client).extract(newUrl, headers)
-                        "streamtape" -> StreamTape(client).extract(newUrl)
+                        "dood" -> DoodExtractor(client).videosFromUrl(newUrl)
+                        "fembed" -> FembedExtractor(client).videosFromUrl(newUrl)
+                        "okru" -> OkruExtractor(client).videosFromUrl(newUrl)
+                        "streamsb" -> StreamSBExtractor(client).videosFromUrl(newUrl, headers)
+                        "streamtape" -> StreamTapeExtractor(client).videoFromUrl(newUrl)?.let {v -> listOf(v)} ?: emptyList()
                         "multi" -> Multi(client).extract(newUrl, match[1].substringBefore("."))
                         "linkbox" -> Linkbox(client).extract(newUrl)
                         else -> { emptyList() }
