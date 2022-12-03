@@ -6,7 +6,6 @@ import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
-import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -31,6 +30,7 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
+import java.net.URI
 
 class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -118,19 +118,27 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val iframeLink = Jsoup.parse(html).select("div.pcat-jwplayer iframe")
             .attr("src")
+
+        val iframeDomain = "https://" + URI(iframeLink).host
+
         val playerHtml = client.newCall(
             GET(
-                url = baseUrl + iframeLink,
+                url = iframeLink,
                 headers = Headers.headersOf("Referer", document.location())
             )
         ).execute().body!!.string()
 
         val getVideoLink = playerHtml.substringAfter("\$.getJSON(\"").substringBefore("\"")
+
+        val head = Headers.Builder()
+        head.add("x-requested-with", "XMLHttpRequest")
+        head.add("Referer", (iframeDomain + getVideoLink))
+
         val videoJson = json.decodeFromString<JsonObject>(
             client.newCall(
                 GET(
-                    url = baseUrl + getVideoLink,
-                    headers = Headers.headersOf("x-requested-with", "XMLHttpRequest")
+                    url = (iframeDomain + getVideoLink),
+                    headers = head.build()
                 )
             ).execute().body!!.string()
         )
@@ -138,6 +146,7 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val server = videoJson["server"]!!.jsonPrimitive.content
         val hd = videoJson["hd"]?.jsonPrimitive?.content
         val sd = videoJson["enc"]?.jsonPrimitive?.content
+        val fhd = videoJson["fhd"]?.jsonPrimitive?.content
         val videoList = mutableListOf<Video>()
         hd?.let {
             if (it.isNotEmpty()) {
@@ -149,6 +158,13 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (it.isNotEmpty()) {
                 val videoUrl = "$server/getvid?evid=$it"
                 videoList.add(Video(videoUrl, "SD", videoUrl))
+            }
+        }
+
+        fhd?.let {
+            if (it.isNotEmpty()) {
+                val videoUrl = "$server/getvid?evid=$it"
+                videoList.add(Video(videoUrl, "FHD", videoUrl))
             }
         }
         return videoList
