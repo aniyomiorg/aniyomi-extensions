@@ -47,13 +47,17 @@ class DopeBoxExtractor(private val client: OkHttpClient) {
         )
             .execute()
             .body!!.string()
+
+        val key = newClient.newCall(GET("https://raw.githubusercontent.com/consumet/rapidclown/rabbitstream/key.txt"))
+            .execute()
+            .body!!.string()
         // encrypted data will start with "U2Fsd..." because they put
         // "Salted__" at the start of encrypted data, thanks openssl
         // if its not encrypted, then return it
         if ("\"sources\":\"U2FsdGVk" !in srcRes) return srcRes
         if (!srcRes.contains("{\"sources\":")) return null
         val encrypted = srcRes.substringAfter("sources\":\"").substringBefore("\"")
-        val decrypted = Decryptor.decrypt(encrypted, cachedJs) ?: return null
+        val decrypted = Decryptor.decrypt(encrypted, key) ?: return null
         val end = srcRes.replace("\"$encrypted\"", decrypted)
         return end
     }
