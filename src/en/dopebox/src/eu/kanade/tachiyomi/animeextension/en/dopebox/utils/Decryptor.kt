@@ -9,11 +9,11 @@ import javax.crypto.spec.SecretKeySpec
 
 object Decryptor {
 
-    fun decrypt(encodedData: String, js: String): String? {
+    fun decrypt(encodedData: String, remoteKey: String): String? {
         val saltedData = Base64.decode(encodedData, Base64.DEFAULT)
         val salt = saltedData.copyOfRange(8, 16)
         val ciphertext = saltedData.copyOfRange(16, saltedData.size)
-        val password = FindPassword.getPassword(js).toByteArray()
+        val password = remoteKey.toByteArray()
         val (key, iv) = GenerateKeyAndIv(password, salt) ?: return null
         val keySpec = SecretKeySpec(key, "AES")
         val ivSpec = IvParameterSpec(iv)
