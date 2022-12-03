@@ -36,10 +36,15 @@ class ZoroExtractor(private val client: OkHttpClient) {
         val srcRes = newClient.newCall(GET(SOURCES_URL + id, cache = cacheControl))
             .execute()
             .body!!.string()
+
+        val key = newClient.newCall(GET("https://raw.githubusercontent.com/consumet/rapidclown/main/key.txt"))
+            .execute()
+            .body!!.string()
+
         if ("\"encrypted\":false" in srcRes) return srcRes
         if (!srcRes.contains("{\"sources\":")) return null
         val encrypted = srcRes.substringAfter("sources\":\"").substringBefore("\"")
-        val decrypted = Decryptor.decrypt(encrypted, cachedJs) ?: return null
+        val decrypted = Decryptor.decrypt(encrypted, key) ?: return null
         val end = srcRes.replace("\"$encrypted\"", decrypted)
         return end
     }
