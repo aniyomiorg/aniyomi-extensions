@@ -380,7 +380,7 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private val PREF_BASE_URL_KEY = "base_url_${AppInfo.getVersionName()}"
         private const val PREF_BASE_URL_TITLE = "URL atual do site"
         private const val PREF_BASE_URL_SUMMARY = "Para uso temporário, essa configuração será apagada ao atualizar a extensão"
-        private const val PREF_BASE_URL_DEFAULT = "https://animesonlinex.cx"
+        private const val PREF_BASE_URL_DEFAULT = "https://animesonlinex.nz"
 
         private const val RESTART_ANIYOMI = "Reinicie o Aniyomi pra aplicar as configurações"
     }
