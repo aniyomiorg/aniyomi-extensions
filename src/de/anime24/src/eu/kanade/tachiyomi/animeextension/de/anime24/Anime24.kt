@@ -20,7 +20,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import org.jsoup.select.Elements
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import kotlin.Exception
@@ -33,7 +32,7 @@ class Anime24 : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "de"
 
-    override val supportsLatest = true
+    override val supportsLatest = false
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -41,19 +40,19 @@ class Anime24 : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun popularAnimeSelector(): String = "article.bs"
+    override fun popularAnimeSelector(): String = "div#blog-entries article"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/anime/?page=$page&status=&type=&order=popular")
+    override fun popularAnimeRequest(page: Int): Request = GET(baseUrl)
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a.tip").attr("href"))
-        anime.thumbnail_url = element.select("div.limit img").attr("src")
-        anime.title = element.select("div.limit img").attr("title")
+        anime.setUrlWithoutDomain(element.select("div.post-thumbnail a").attr("href"))
+        anime.thumbnail_url = element.select("div.post-thumbnail a img ").attr("data-lazy-src")
+        anime.title = element.select("div.blog-entry-content h2.entry-title a").text()
         return anime
     }
 
-    override fun popularAnimeNextPageSelector(): String = "a.r"
+    override fun popularAnimeNextPageSelector(): String = "div.nav-links a.next"
 
     // episodes
 
@@ -62,73 +61,50 @@ class Anime24 : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
-        if (!document.select("div.eplister ul li a div.epl-num").text().contains("Movie")) {
-            val episodeElement = document.select("div.eplister ul")
-            val episode = parseEpisodesFromSeries(episodeElement)
-            episodeList.addAll(episode)
-        } else {
-            val episode = SEpisode.create()
-            episode.name = document.select("div.infox h1").text()
-            episode.episode_number = 1F
-            episode.setUrlWithoutDomain(document.select("div.eplister ul li a").attr("href"))
+        val episodeElement = document.select("div.entry-content div.su-spoiler")
+        episodeElement.forEach {
+            val episode = episodeFromElement(it)
             episodeList.add(episode)
         }
-        return episodeList
-    }
 
-    private fun parseEpisodesFromSeries(element: Elements): List<SEpisode> {
-        val episodeElements = element.select("li")
-        return episodeElements.map { episodeFromElement(it) }
+        return episodeList
     }
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-        episode.episode_number = element.select("a div.epl-num").text().toFloat()
-        val folge = element.select("a div.epl-num").text()
-        episode.name = "Folge $folge : " + element.select("a div.epl-title").text()
-        episode.setUrlWithoutDomain(element.select("a").attr("href"))
+        episode.episode_number = element.select("div.su-spoiler-title").text()
+            .substringAfter("Episode ").substringBefore(" ").toFloat()
+        episode.name = element.select("div.su-spoiler-title").text()
+        episode.url = (element.select("div.su-spoiler-content center iframe").attr("data-lazy-src"))
         return episode
     }
 
     // Video Extractor
 
-    override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        return videosFromElement(document)
+    override fun videoListRequest(episode: SEpisode): Request {
+        val url = episode.url.replace(baseUrl, "")
+        return GET(url)
     }
 
-    private fun videosFromElement(document: Document): List<Video> {
+    override fun videoListParse(response: Response): List<Video> {
+        val url = response.request.url.toString()
+        return videosFromElement(url)
+    }
+
+    private fun videosFromElement(url: String): List<Video> {
         val videoList = mutableListOf<Video>()
-        val linklazy = document.select("#pembed iframe[data-lazy-src]").attr("data-lazy-src")
         val hosterSelection = preferences.getStringSet("hoster_selection", setOf("stape", "voe"))
         when {
-            linklazy.contains("https://streamtape") || linklazy.contains("https://adblockeronstape") && hosterSelection?.contains("stape") == true -> {
+            url.contains("https://streamtape") || url.contains("https://adblockeronstape") && hosterSelection?.contains("stape") == true -> {
                 val quality = "Streamtape"
-                val video = StreamTapeExtractor(client).videoFromUrl(linklazy, quality)
+                val video = StreamTapeExtractor(client).videoFromUrl(url, quality)
                 if (video != null) {
                     videoList.add(video)
                 }
             }
-            linklazy.contains("https://voe.sx") && hosterSelection?.contains("voe") == true -> {
+            url.contains("https://voe.sx") || url.contains("https://20demidistance9elongations.com") && hosterSelection?.contains("voe") == true -> {
                 val quality = "Voe"
-                val video = VoeExtractor(client).videoFromUrl(linklazy, quality)
-                if (video != null) {
-                    videoList.add(video)
-                }
-            }
-        }
-        val linksrc = document.select("#pembed iframe").attr("src")
-        when {
-            linksrc.contains("https://streamtape") || linksrc.contains("https://adblockeronstape") && hosterSelection?.contains("stape") == true -> {
-                val quality = "Streamtape"
-                val video = StreamTapeExtractor(client).videoFromUrl(linksrc, quality)
-                if (video != null) {
-                    videoList.add(video)
-                }
-            }
-            linksrc.contains("https://voe.sx") && hosterSelection?.contains("voe") == true -> {
-                val quality = "Voe"
-                val video = VoeExtractor(client).videoFromUrl(linksrc, quality)
+                val video = VoeExtractor(client).videoFromUrl(url, quality)
                 if (video != null) {
                     videoList.add(video)
                 }
@@ -165,15 +141,15 @@ class Anime24 : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a.tip").attr("href"))
-        anime.thumbnail_url = element.select("div.limit img").attr("src")
-        anime.title = element.select("div.limit img").attr("title")
+        anime.setUrlWithoutDomain(element.select("div.post-thumbnail a").attr("href"))
+        anime.thumbnail_url = element.select("div.post-thumbnail a img ").attr("src")
+        anime.title = element.select("div.blog-entry-content h2.entry-title a").text()
         return anime
     }
 
-    override fun searchAnimeNextPageSelector(): String = "a.next"
+    override fun searchAnimeNextPageSelector(): String = "div.nav-links a.next"
 
-    override fun searchAnimeSelector(): String = "article.bs"
+    override fun searchAnimeSelector(): String = "div#blog-entries article"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/page/$page/?s=$query")
 
@@ -181,11 +157,10 @@ class Anime24 : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.select("div.thumb img").attr("data-lazy-src")
-        anime.title = document.select("div.infox h1").text()
-        anime.genre = document.select("div.genxed a").joinToString(", ") { it.text() }
-        anime.description = document.select("div.entry-content p").text()
-        anime.author = document.select("span.split a").joinToString(", ") { it.text() }
+        anime.thumbnail_url = document.select("div.su-column-inner img").attr("data-lazy-src")
+        anime.title = document.select("header.entry-header h1.entry-title").text()
+        anime.description = document.select("div.su-column-inner p").toString()
+            .substringAfter("<br>").substringBefore("</p>")
         anime.status = SAnime.COMPLETED
         return anime
     }
