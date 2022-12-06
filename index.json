@@ -1131,10 +1131,10 @@
   {
     "name": "Aniyomi: SuperStream",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.superstream",
-    "apk": "aniyomi-en.superstream-v13.5.apk",
+    "apk": "aniyomi-en.superstream-v13.6.apk",
     "lang": "en",
-    "code": 5,
-    "version": "13.5",
+    "code": 6,
+    "version": "13.6",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
