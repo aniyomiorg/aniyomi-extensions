@@ -689,7 +689,6 @@ import eu.kanade.tachiyomi.network.POST
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.OkHttpClient
@@ -813,7 +812,7 @@ class SuperStreamAPI(val json: Json) {
         }
     }
 
-    private fun queryApi(query: String): Response {
+    private fun queryApi(query: String, altApi: Boolean = false): Response {
         val encryptedQuery = CipherUtils.encrypt(query, key, iv)!!
         val appKeyHash = CipherUtils.md5(appKey)!!
         val newBody =
@@ -835,7 +834,8 @@ class SuperStreamAPI(val json: Json) {
             .add("medium", "Website&token$token")
             .build()
         try {
-            return client.newCall(POST(apiUrl, headers = headers, body = formData)).execute()
+            val url = if (altApi) secondApiUrl else apiUrl
+            return client.newCall(POST(url, headers = headers, body = formData)).execute()
         } catch (e: Exception) {
             throw Exception("Query Failed $e")
         }
@@ -863,6 +863,9 @@ class SuperStreamAPI(val json: Json) {
     private val key = base64Decode("MTIzZDZjZWRmNjI2ZHk1NDIzM2FhMXc2")
     private val ip = base64Decode("aHR0cHM6Ly8xNTIuMzIuMTQ5LjE2MA==")
     val apiUrl = "$ip${base64Decode("L2FwaS9hcGlfY2xpZW50L2luZGV4Lw==")}"
+    // Thanks @Blatzar and his dream from cloudstream for the secondurl
+    private val secondApiUrl =
+        base64Decode("aHR0cHM6Ly9tYnBhcGkuc2hlZ3UubmV0L2FwaS9hcGlfY2xpZW50L2luZGV4Lw==")
     private val appKey = base64Decode("bW92aWVib3g=")
     private val appId = base64Decode("Y29tLnRkby5zaG93Ym94")
 
@@ -933,7 +936,7 @@ class SuperStreamAPI(val json: Json) {
         val apiQuery =
             // Originally 8 pagelimit
             """{"childmode":"$hideNsfw","app_version":"11.5","appid":"$appId","module":"Search3","channel":"Website","page":"$page","lang":"en","type":"all","keyword":"$query","pagelimit":"20","expired_date":"${getExpiryDate()}","platform":"android"}"""
-        val searchResponse = parseJson<MainData>(queryApi(apiQuery).body!!.string()).data.mapNotNull {
+        val searchResponse = parseJson<MainData>(queryApi(apiQuery, true).body!!.string()).data.mapNotNull {
             it.toSearchResponse()
         }
         return searchResponse
@@ -1006,7 +1009,7 @@ class SuperStreamAPI(val json: Json) {
                         subsList.add(
                             Track(
                                 sub.file_path,
-                                (sub.language ?: sub.lang ?: "Sub") + " ${index + 1} (${sub.point!!.jsonPrimitive.content})"
+                                (sub.language ?: sub.lang ?: "Sub") + " ${index + 1} (${sub.point!!})"
                             )
                         )
                     }
