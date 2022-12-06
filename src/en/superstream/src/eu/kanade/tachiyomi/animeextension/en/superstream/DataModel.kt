@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.superstream
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
 
 @Serializable
 data class LinkData(
@@ -267,7 +266,7 @@ data class Subtitles(
     val lang: String? = null,
     val language: String? = null,
     val delay: Int? = null,
-    val point: JsonElement? = null,
+    val point: String? = null,
     val order: Int? = null,
     val admin_order: Int? = null,
     val myselect: Int? = null,
