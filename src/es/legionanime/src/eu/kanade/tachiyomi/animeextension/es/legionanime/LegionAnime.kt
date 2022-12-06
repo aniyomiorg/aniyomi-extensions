@@ -5,6 +5,8 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.JkanimeExtractor
+import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.YourUploadExtractor
+import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.ZippyExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -190,12 +192,12 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val players = responseArray["players"]!!.jsonArray
         val videoList = mutableListOf<Video>()
         players.forEach {
+            val server = it.jsonObject["option"]!!.jsonPrimitive.content
             val url = if (it.jsonObject["name"]!!.jsonPrimitive.content.startsWith("F-")) {
                 it.jsonObject["name"]!!.jsonPrimitive.content.substringAfter("-")
             } else {
                 it.jsonObject["name"]!!.jsonPrimitive.content.substringAfter("-").reversed()
             }
-            val server = it.jsonObject["option"]!!.jsonPrimitive.content
             when {
                 url.contains("streamtape") -> {
                     val video = StreamTapeExtractor(client).videoFromUrl(url, server)
@@ -204,7 +206,10 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                 }
                 (url.contains("fembed") || url.contains("vanfem")) -> {
-                    videoList.addAll(FembedExtractor(client).videosFromUrl(url, server))
+                    val newUrl = url.replace("fembed", "embedsito").replace("vanfem", "embedsito")
+                    try {
+                        videoList.addAll(FembedExtractor(client).videosFromUrl(newUrl, server))
+                    } catch (_: Exception) {}
                 }
                 url.contains("sb") -> {
                     val video = StreamSBExtractor(client).videosFromUrl(url, headers)
@@ -214,10 +219,22 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     videoList.add(JkanimeExtractor(client).getDesuFromUrl(url))
                 }
                 url.contains("/stream/amz.php?") -> {
-                    val video = amazonExtractor(url)
-                    if (video.isNotBlank()) {
-                        videoList.add(Video(video, server, video))
-                    }
+                    try {
+                        val video = amazonExtractor(url)
+                        if (video.isNotBlank()) {
+                            videoList.add(Video(video, server, video))
+                        }
+                    } catch (_: Exception) {}
+                }
+                url.contains("yourupload") -> {
+                    val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
+                    videoList.addAll(YourUploadExtractor(client).videoFromUrl(url, headers))
+                }
+                url.contains("zippyshare") -> {
+                    val hostUrl = url.substringBefore("/v/")
+                    val videoUrlD = ZippyExtractor().getVideoUrl(url, json)
+                    val videoUrl = hostUrl + videoUrlD
+                    videoList.add(Video(videoUrl, server, videoUrl))
                 }
             }
         }
@@ -225,7 +242,7 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun amazonExtractor(url: String): String {
-        val document = client.newCall(GET(url)).execute().asJsoup()
+        val document = client.newCall(GET(url.replace(".com", ".tv"))).execute().asJsoup()
         val videoURl = document.selectFirst("script:containsData(sources: [)").data()
             .substringAfter("[{\"file\":\"")
             .substringBefore("\",").replace("\\", "")
