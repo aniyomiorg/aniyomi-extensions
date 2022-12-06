@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.legionanime.onepace
+package eu.kanade.tachiyomi.animeextension.es.legionanime.extractors
 
 import app.cash.quickjs.QuickJs
 import kotlinx.serialization.decodeFromString
