@@ -85,7 +85,7 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =============================== Search ===============================
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val re = Regex("[^A-Za-z0-9]")
+        val re = Regex("[^A-Za-z0-9 ]")
         val cleanQuery = re.replace(query, "").replace(" ", "+").lowercase()
         return GET("$baseUrl/movie/search/$cleanQuery/$page/")
     }
