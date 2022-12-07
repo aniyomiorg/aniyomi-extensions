@@ -689,6 +689,7 @@ import eu.kanade.tachiyomi.network.POST
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.OkHttpClient
@@ -1009,7 +1010,7 @@ class SuperStreamAPI(val json: Json) {
                         subsList.add(
                             Track(
                                 sub.file_path,
-                                (sub.language ?: sub.lang ?: "Sub") + " ${index + 1} (${sub.point!!})"
+                                (sub.language ?: sub.lang ?: "Sub") + " ${index + 1} (${sub.point!!.jsonPrimitive.content})"
                             )
                         )
                     }
