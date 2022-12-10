@@ -39,7 +39,7 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "all"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -68,39 +68,12 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime = throw Exception("not used")
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        // TODO: Sort items by name since API sorts by season name
-        
-        val items = Json.decodeFromString<JsonObject>(response.body!!.string())["Items"]!!
+        val (animesList, hasNextPage) = AnimeParse(response)
 
-        val animesList = mutableListOf<SAnime>()
+        // Currently sorts by name, TODO: change to "CommunityRating" and get that working with seasons
+        animesList.sortBy { it.title }
 
-        for (item in 0 until items.jsonArray.size) {
-            val anime = SAnime.create()
-            val jsonObj = JsonObject(items.jsonArray[item].jsonObject)
-
-            val seasonId = jsonObj["Id"]!!.jsonPrimitive.content
-            var seriesId = jsonObj["SeriesId"]!!.jsonPrimitive.content
-
-            anime.setUrlWithoutDomain("/Shows/$seriesId/Episodes?api_key=$apiKey&SeasonId=$seasonId")
-
-            // Virtual if show doesn't have any sub-folders, i.e. no seasons
-            if (jsonObj["LocationType"]!!.jsonPrimitive.content == "Virtual") {
-                anime.title = jsonObj["SeriesName"]!!.jsonPrimitive.content
-                anime.thumbnail_url = "$baseUrl/Items/$seriesId/Images/Primary?api_key=$apiKey"
-            } else {
-                anime.title = jsonObj["SeriesName"]!!.jsonPrimitive.content + " " + jsonObj["Name"]!!.jsonPrimitive.content
-                anime.thumbnail_url = "$baseUrl/Items/$seasonId/Images/Primary?api_key=$apiKey"
-            }
-
-            // If season doesn't have image, fallback to series image
-            if (jsonObj["ImageTags"].toString() == "{}") {
-                anime.thumbnail_url = "$baseUrl/Items/$seriesId/Images/Primary?api_key=$apiKey"
-            }
-
-            animesList.add(anime)
-        }
-
-        return AnimesPage(animesList, false)
+        return AnimesPage(animesList, hasNextPage)
     }
 
     override fun popularAnimeNextPageSelector(): String = throw Exception("not used")
@@ -211,7 +184,14 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+    override fun latestUpdatesRequest(page: Int): Request {
+        return GET("$baseUrl/Users/$userId/Items?api_key=$apiKey&SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Season&Recursive=true&ImageTypeLimit=1&EnableImageTypes=Primary%252CBackdrop%252CBanner%252CThumb&StartIndex=0&Limit=100&ParentId=b434bd24836c87d7ed200dcf350c0a2a")
+    }
+
+    override fun latestUpdatesParse(response: Response): AnimesPage {
+        val (animesList, hasNextPage) = AnimeParse(response)
+        return AnimesPage(animesList, hasNextPage)
+    }
 
     override fun latestUpdatesSelector(): String = throw Exception("Not used")
 
@@ -295,5 +275,41 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             }
         }
+    }
+
+    // utils
+
+    private fun AnimeParse(response: Response): Pair<MutableList<SAnime>, Boolean> {
+        val items = Json.decodeFromString<JsonObject>(response.body!!.string())["Items"]!!
+
+        val animesList = mutableListOf<SAnime>()
+
+        for (item in 0 until items.jsonArray.size) {
+            val anime = SAnime.create()
+            val jsonObj = JsonObject(items.jsonArray[item].jsonObject)
+
+            val seasonId = jsonObj["Id"]!!.jsonPrimitive.content
+            var seriesId = jsonObj["SeriesId"]!!.jsonPrimitive.content
+
+            anime.setUrlWithoutDomain("/Shows/$seriesId/Episodes?api_key=$apiKey&SeasonId=$seasonId")
+
+            // Virtual if show doesn't have any sub-folders, i.e. no seasons
+            if (jsonObj["LocationType"]!!.jsonPrimitive.content == "Virtual") {
+                anime.title = jsonObj["SeriesName"]!!.jsonPrimitive.content
+                anime.thumbnail_url = "$baseUrl/Items/$seriesId/Images/Primary?api_key=$apiKey"
+            } else {
+                anime.title = jsonObj["SeriesName"]!!.jsonPrimitive.content + " " + jsonObj["Name"]!!.jsonPrimitive.content
+                anime.thumbnail_url = "$baseUrl/Items/$seasonId/Images/Primary?api_key=$apiKey"
+            }
+
+            // If season doesn't have image, fallback to series image
+            if (jsonObj["ImageTags"].toString() == "{}") {
+                anime.thumbnail_url = "$baseUrl/Items/$seriesId/Images/Primary?api_key=$apiKey"
+            }
+
+            animesList.add(anime)
+        }
+
+        return Pair(animesList, false)
     }
 }
