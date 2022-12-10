@@ -163,13 +163,18 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsRequest(anime: SAnime): Request {
         val id = anime.url.split("/").toTypedArray()[2]
-
-        return GET("$baseUrl/Users/$userId/Items/$id?api_key=$apiKey")
+        return GET("$baseUrl/Users/$userId/Items/$id?api_key=$apiKey&fields=%5B%27DateCreated%27%2C+%27Studios%27%5D")
     }
 
     override fun animeDetailsParse(document: Document): SAnime {
         val item = Json.decodeFromString<JsonObject>(document.text())
+
         val anime = SAnime.create()
+
+        val studiosArr = item["Studios"]?.jsonArray
+        if (studiosArr != null) {
+            anime.author = studiosArr[0].jsonObject["Name"]!!.jsonPrimitive.content
+        }
 
         anime.description = item["Overview"]!!.jsonPrimitive.content
         anime.title = item["OriginalTitle"]!!.jsonPrimitive.content
