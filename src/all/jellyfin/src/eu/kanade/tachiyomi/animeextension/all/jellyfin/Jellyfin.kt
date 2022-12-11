@@ -6,6 +6,7 @@ import android.text.InputType
 import android.util.Log
 import android.widget.Toast
 import androidx.preference.EditTextPreference
+import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -13,6 +14,7 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
+import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
@@ -20,6 +22,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.float
+import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -51,7 +54,12 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val apiKey = JFConstants.getPrefApiKey(preferences)
 
     // TODO: dont hardcode this
-    private val userId = "d40091e38ffe426a9dedc7aa1297d0fa"
+    // d40091e38ffe426a9dedc7aa1297d0fa
+
+    private val userId = "9db271c2c4a74fcd8320f8fa32d63e85"
+
+    // b434bd24836c87d7ed200dcf350c0a2a
+    private val parentId = "bc3a7d1d3dac1f10e170387270df67fa"
 
     private fun log(obj: Any, name: String, inObj: Any) {
         Log.i("JF_$name", "INPUT: ${inObj::class} - $inObj \n${obj::class} - $obj")
@@ -62,7 +70,8 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeSelector(): String = throw Exception("not used")
 
     override fun popularAnimeRequest(page: Int): Request {
-        return GET("$baseUrl/Users/$userId/Items?api_key=$apiKey&SortBy=SortName&SortOrder=Ascending&IncludeItemTypes=Season&Recursive=true&ImageTypeLimit=1&EnableImageTypes=Primary%252CBackdrop%252CBanner%252CThumb&StartIndex=0&Limit=100&ParentId=b434bd24836c87d7ed200dcf350c0a2a")
+        Log.i("JELLYFINURL", "$baseUrl/Users/$userId/Items?api_key=$apiKey&SortBy=SortName&SortOrder=Ascending&IncludeItemTypes=Season&Recursive=true&ImageTypeLimit=1&EnableImageTypes=Primary%252CBackdrop%252CBanner%252CThumb&StartIndex=0&Limit=100&ParentId=$parentId")
+        return GET("$baseUrl/Users/$userId/Items?api_key=$apiKey&SortBy=SortName&SortOrder=Ascending&IncludeItemTypes=Season&Recursive=true&ImageTypeLimit=1&EnableImageTypes=Primary%252CBackdrop%252CBanner%252CThumb&StartIndex=0&Limit=100&ParentId=$parentId")
     }
 
     override fun popularAnimeFromElement(element: Element): SAnime = throw Exception("not used")
@@ -113,13 +122,77 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // Video urls
 
     override fun videoListParse(response: Response): List<Video> {
-        val item = response.body?.let { Json.decodeFromString<JsonObject>(it.string()) }
-
-        val url = "$baseUrl/Videos/${item?.get("Id")!!.jsonPrimitive.content}/stream?static=True&api_key=$apiKey"
-
         val videoList = mutableListOf<Video>()
+        val item = response.body?.let { Json.decodeFromString<JsonObject>(it.string()) }
+        val id = item?.get("Id")!!.jsonPrimitive.content
+
+        val sessionResponse = client.newCall(
+            GET(
+                "$baseUrl/Items/$id/PlaybackInfo?userId=$userId&api_key=$apiKey"
+            )
+        ).execute()
+        val sessionJson = sessionResponse.body?.let { Json.decodeFromString<JsonObject>(it.string()) }
+        val sessionId = sessionJson?.get("PlaySessionId")!!.jsonPrimitive.content
+        val mediaStreams = sessionJson?.get("MediaSources")!!.jsonArray[0].jsonObject["MediaStreams"]?.jsonArray
+
+        val subtitleList = mutableListOf<Track>()
+
+        val prefSub = preferences.getString(JFConstants.PREF_SUB_KEY, "eng")
+        val prefAudio = preferences.getString(JFConstants.PREF_AUDIO_KEY, "jpn")
+
+        var audioIndex = 1
+        var width = 1920
+        var height = 1080
+
+        // Get subtitle streams and audio index
+        if (mediaStreams != null) {
+            for (media in mediaStreams) {
+                if (media.jsonObject["Type"]!!.jsonPrimitive.content == "Subtitle") {
+                    val subUrl = "$baseUrl/Videos/$id/$id/Subtitles/${media.jsonObject["Index"]!!.jsonPrimitive.int}/0/Stream.${media.jsonObject["Codec"]!!.jsonPrimitive.content}?api_key=$apiKey"
+                    // TODO: add ttf files in media attachment (if possible)
+
+                    if (media.jsonObject["Language"]!!.jsonPrimitive.content == prefSub) {
+                        subtitleList.add(
+                            0, Track(subUrl, "${media.jsonObject["DisplayTitle"]!!.jsonPrimitive.content}")
+                        )
+                    } else {
+                        subtitleList.add(
+                            Track(subUrl, "${media.jsonObject["DisplayTitle"]!!.jsonPrimitive.content}")
+                        )
+                    }
+                }
+
+                if (media.jsonObject["Type"]!!.jsonPrimitive.content == "Audio") {
+                    if (media.jsonObject["Language"]!!.jsonPrimitive.content == prefAudio) {
+                        audioIndex = media.jsonObject["Index"]!!.jsonPrimitive.int
+                    }
+                }
+
+                if (media.jsonObject["Type"]!!.jsonPrimitive.content == "Video") {
+                    width = media.jsonObject["Width"]!!.jsonPrimitive.int
+                    height = media.jsonObject["Height"]!!.jsonPrimitive.int
+                }
+            }
+        }
+
+        // Loop over qualities
+        for (quality in JFConstants.QUALITIES_LIST) {
+            if (width < quality[0] as Int && height < quality[1] as Int) {
+                val url = "$baseUrl/Videos/$id/stream?static=True&api_key=$apiKey"
+                Log.i("JELLYFINSTREAMURL", url)
+                videoList.add(Video(url, "Best", url))
+
+                return videoList.reversed()
+            } else {
+                val url = "$baseUrl/videos/$id/main.m3u8?VideoCodec=h264&AudioCodec=aac,mp3&AudioStreamIndex=$audioIndex&${quality[2]}&PlaySessionId=$sessionId&api_key=$apiKey&TranscodingMaxAudioChannels=6&RequireAvc=false&Tag=27d6b71bb94bfec39b606555e84c6bfe&SegmentContainer=ts&MinSegments=1&BreakOnNonKeyFrames=True&h264-profile=high,main,baseline,constrainedbaseline&h264-level=51&h264-deinterlace=true&TranscodeReasons=VideoCodecNotSupported,AudioCodecNotSupported,ContainerBitrateExceedsLimit"
+                videoList.add(Video(url, quality[3] as String, url, subtitleTracks = subtitleList))
+            }
+        }
+
+        val url = "$baseUrl/Videos/$id/stream?static=True&api_key=$apiKey"
         videoList.add(Video(url, "Best", url))
-        return videoList
+
+        return videoList.reversed()
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -253,6 +326,38 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 JFConstants.HOSTURL_TITLE, JFConstants.HOSTURL_DEFAULT, baseUrl, false, ""
             )
         )
+        val subLangPref = ListPreference(screen.context).apply {
+            key = JFConstants.PREF_SUB_KEY
+            title = JFConstants.PREF_SUB_TITLE
+            entries = JFConstants.PREF_ENTRIES
+            entryValues = JFConstants.PREF_VALUES
+            setDefaultValue("eng")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(subLangPref)
+        val audioLangPref = ListPreference(screen.context).apply {
+            key = JFConstants.PREF_AUDIO_KEY
+            title = JFConstants.PREF_AUDIO_TITLE
+            entries = JFConstants.PREF_ENTRIES
+            entryValues = JFConstants.PREF_VALUES
+            setDefaultValue("jpn")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(audioLangPref)
     }
 
     private fun PreferenceScreen.editTextPreference(title: String, default: String, value: String, isPassword: Boolean = false, placeholder: String): EditTextPreference {
