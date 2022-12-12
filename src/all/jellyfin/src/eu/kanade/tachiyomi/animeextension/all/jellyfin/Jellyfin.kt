@@ -18,7 +18,6 @@ import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -31,14 +30,12 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
-
-@Serializable
-data class JsonResp(val Items: JsonObject, val TotalRecordCount: Int, val StartIndex: Int)
 
 class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -107,12 +104,12 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             episode.setUrlWithoutDomain("/Users/$userId/Items/$id?api_key=$apiKey")
             episodeList.add(episode)
         } else {
-            val items = json!!.jsonArray
+            val items = json?.get("Items")!!
 
-            for (item in 0 until items.size) {
+            for (item in 0 until items.jsonArray.size) {
 
                 val episode = SEpisode.create()
-                val jsonObj = JsonObject(items[item].jsonObject)
+                val jsonObj = JsonObject(items.jsonArray[item].jsonObject)
 
                 val id = jsonObj["Id"]!!.jsonPrimitive.content
 
@@ -325,7 +322,7 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             anime.author = studiosArr[0].jsonObject["Name"]!!.jsonPrimitive.content
         }
 
-        anime.description = item["Overview"]!!.jsonPrimitive.content
+        anime.description = Jsoup.parse(item["Overview"]!!.jsonPrimitive.content.replace("<br>", "br2n")).text().replace("br2n", "\n")
         anime.title = item["OriginalTitle"]!!.jsonPrimitive.content
         anime.genre = item["Genres"]?.jsonArray?.joinToString(", ")
         anime.status = if (item["Status"]?.jsonPrimitive?.content == "Ended") SAnime.COMPLETED else SAnime.COMPLETED
