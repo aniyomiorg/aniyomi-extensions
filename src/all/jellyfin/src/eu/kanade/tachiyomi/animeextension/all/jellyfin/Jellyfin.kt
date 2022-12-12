@@ -18,7 +18,6 @@ import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -34,7 +33,6 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -63,14 +61,6 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // Popular Anime
-
-    override fun fetchPopularAnime(page: Int): Observable<AnimesPage> {
-        return client.newCall(popularAnimeRequest(page))
-            .asObservableSuccess()
-            .map { response ->
-                popularAnimeParse(response)
-            }
-    }
 
     override fun popularAnimeSelector(): String = throw Exception("not used")
 
@@ -276,24 +266,37 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
-    // search - not implemented yet
+    // search
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("article a").attr("href"))
-        anime.title = element.select("h2.Title").text()
-        anime.thumbnail_url = "https:" + element.select("div.Image figure img").attr("data-src")
-        return anime
+    override fun searchAnimeFromElement(element: Element): SAnime = throw Exception("not used")
+
+    override fun searchAnimeNextPageSelector(): String = throw Exception("not used")
+
+    override fun searchAnimeSelector(): String = throw Exception("not used")
+
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        val (animesList, hasNextPage) = AnimeParse(response)
+
+        // Currently sorts by name
+        animesList.sortBy { it.title }
+
+        return AnimesPage(animesList, hasNextPage)
     }
-
-    override fun searchAnimeNextPageSelector(): String = "div.nav-links a:last-child"
-
-    override fun searchAnimeSelector(): String = "ul.MovieList li"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         return if (query.isNotBlank()) {
-            GET("$baseUrl/page/$page?s=$query", headers)
+            val searchResponse = client.newCall(
+                GET("$baseUrl/Users/$userId/Items?api_key=$apiKey&searchTerm=$query&Limit=2&Recursive=true&IncludeItemTypes=Series,Movie")
+            ).execute()
+            val yep = searchResponse.body!!.string()
+            Log.i("SearchJson", yep)
+            val firstItem = searchResponse.body?.let { Json.decodeFromString<JsonObject>(yep) }?.get("Items")!!.jsonArray[0]
+            val id = firstItem.jsonObject["Id"]!!.jsonPrimitive.content
+            Log.i("SearchID", id)
+            Log.i("SearchUrl", "$baseUrl/Users/$userId/Items?api_key=$apiKey&SortBy=SortName&SortOrder=Ascending&includeItemTypes=Season,Movie&Recursive=true&ImageTypeLimit=1&EnableImageTypes=Primary%252CBackdrop%252CBanner%252CThumb&StartIndex=0&Limit=100&ParentId=$id")
+            GET("$baseUrl/Users/$userId/Items?api_key=$apiKey&SortBy=SortName&SortOrder=Ascending&includeItemTypes=Season,Movie&Recursive=true&ImageTypeLimit=1&EnableImageTypes=Primary%252CBackdrop%252CBanner%252CThumb&StartIndex=0&Limit=100&ParentId=$id")
         } else {
+            // TODO: Filters
             val url = "$baseUrl/category/".toHttpUrlOrNull()!!.newBuilder()
             filters.forEach { filter ->
                 when (filter) {
