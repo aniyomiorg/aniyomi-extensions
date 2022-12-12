@@ -18,6 +18,7 @@ import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -33,9 +34,9 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 
 class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -55,13 +56,21 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val apiKey = JFConstants.getPrefApiKey(preferences)
 
     // TODO: dont hardcode this
-    private val userId = "9db271c2c4a74fcd8320f8fa32d63e85"
+    private val userId = "d40091e38ffe426a9dedc7aa1297d0fa"
 
     private fun log(obj: Any, name: String, inObj: Any) {
         Log.i("JF_$name", "INPUT: ${inObj::class} - $inObj \n${obj::class} - $obj")
     }
 
     // Popular Anime
+
+    override fun fetchPopularAnime(page: Int): Observable<AnimesPage> {
+        return client.newCall(popularAnimeRequest(page))
+            .asObservableSuccess()
+            .map { response ->
+                popularAnimeParse(response)
+            }
+    }
 
     override fun popularAnimeSelector(): String = throw Exception("not used")
 
@@ -435,40 +444,40 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val mediaLibPref = ListPreference(screen.context).apply {
             key = "library_pref"
             title = "Media Library"
-            entries = arrayOf("Anime Movies", "Anime Series")
-            entryValues = arrayOf("abebc196cc1b8bbf6f8bb5ca7b5ad6f1", "b434bd24836c87d7ed200dcf350c0a2a")
-            setDefaultValue("b434bd24836c87d7ed200dcf350c0a2a")
             summary = "%s"
 
-            // TODO: Make this work
-            /*
             if (apiKey == "" || userId == "" || baseUrl == "") {
                 this.setEnabled(false)
                 this.title = "Please Set Host url, API key, and User first"
             } else {
                 this.setEnabled(true)
                 this.title = title
-
             }
 
-            val mediaLibsResponse = client.newCall(
-               GET("$baseUrl/Users/$userId/Items?api_key=$apiKey")
-            ).execute()
-            val mediaJson = mediaLibsResponse.body?.let { Json.decodeFromString<JsonObject>(it.string()) }?.get("Items")?.jsonArray
+            Thread {
+                try {
+                    val mediaLibsResponse = client.newCall(
+                        GET("$baseUrl/Users/$userId/Items?api_key=$apiKey")
+                    ).execute()
+                    val mediaJson = mediaLibsResponse.body?.let { Json.decodeFromString<JsonObject>(it.string()) }?.get("Items")?.jsonArray
 
-                        val entriesArray = mutableListOf<String>()
-            val entriesValueArray = mutableListOf<String>()
+                    val entriesArray = mutableListOf<String>()
+                    val entriesValueArray = mutableListOf<String>()
 
-            if (mediaJson != null) {
-                for (media in mediaJson) {
-                    entriesArray.add(media.jsonObject["Name"]!!.jsonPrimitive.content)
-                    entriesValueArray.add(media.jsonObject["Id"]!!.jsonPrimitive.content)
+                    if (mediaJson != null) {
+                        for (media in mediaJson) {
+                            entriesArray.add(media.jsonObject["Name"]!!.jsonPrimitive.content)
+                            entriesValueArray.add(media.jsonObject["Id"]!!.jsonPrimitive.content)
+                        }
+                    }
+
+                    entries = entriesArray.toTypedArray()
+                    entryValues = entriesValueArray.toTypedArray()
+                } catch (ex: Exception) {
+                    entries = emptyArray()
+                    entryValues = emptyArray()
                 }
-            }
-
-            entries = entriesArray.toTypedArray()
-            entryValues = entriesValueArray.toTypedArray()
-            */
+            }.start()
 
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
