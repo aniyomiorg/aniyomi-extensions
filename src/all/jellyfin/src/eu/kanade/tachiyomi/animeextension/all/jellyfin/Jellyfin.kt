@@ -21,6 +21,7 @@ import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.float
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
@@ -288,12 +289,16 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val searchResponse = client.newCall(
                 GET("$baseUrl/Users/$userId/Items?api_key=$apiKey&searchTerm=$query&Limit=2&Recursive=true&IncludeItemTypes=Series,Movie")
             ).execute()
-            val yep = searchResponse.body!!.string()
-            Log.i("SearchJson", yep)
-            val firstItem = searchResponse.body?.let { Json.decodeFromString<JsonObject>(yep) }?.get("Items")!!.jsonArray[0]
+
+            val jsonArr = searchResponse.body?.let { Json.decodeFromString<JsonObject>(it.string()) }?.get("Items")
+
+            if (jsonArr == buildJsonArray { }) {
+                return GET("$baseUrl/Users/$userId/Items?api_key=$apiKey&SortBy=SortName&SortOrder=Ascending&includeItemTypes=Season,Movie&Recursive=true&ImageTypeLimit=1&EnableImageTypes=Primary%252CBackdrop%252CBanner%252CThumb&StartIndex=0&Limit=100&ParentId=$userId")
+            }
+
+            val firstItem = jsonArr!!.jsonArray[0]
             val id = firstItem.jsonObject["Id"]!!.jsonPrimitive.content
-            Log.i("SearchID", id)
-            Log.i("SearchUrl", "$baseUrl/Users/$userId/Items?api_key=$apiKey&SortBy=SortName&SortOrder=Ascending&includeItemTypes=Season,Movie&Recursive=true&ImageTypeLimit=1&EnableImageTypes=Primary%252CBackdrop%252CBanner%252CThumb&StartIndex=0&Limit=100&ParentId=$id")
+
             GET("$baseUrl/Users/$userId/Items?api_key=$apiKey&SortBy=SortName&SortOrder=Ascending&includeItemTypes=Season,Movie&Recursive=true&ImageTypeLimit=1&EnableImageTypes=Primary%252CBackdrop%252CBanner%252CThumb&StartIndex=0&Limit=100&ParentId=$id")
         } else {
             // TODO: Filters
