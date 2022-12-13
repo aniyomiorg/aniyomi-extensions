@@ -200,7 +200,6 @@ class `Anime-Loads` : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                     } else {
                                         val links = maxdoc.substringAfter("\"content\":[").substringBefore("</body>").split("{\"links\":")
                                         links.forEach {
-                                            Log.i("MaxDoc", "Link: $it")
                                             if (it.contains("link")) {
                                                 val hoster = it.substringAfter("\"hoster\":\"").substringBefore("\",\"")
                                                 val linkpart = it.substringAfter("\"link\":\"").substringBefore("\"}]")
