@@ -18,6 +18,7 @@ import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -302,6 +303,7 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             GET("$baseUrl/Users/$userId/Items?api_key=$apiKey&SortBy=SortName&SortOrder=Ascending&includeItemTypes=Season,Movie&Recursive=true&ImageTypeLimit=1&EnableImageTypes=Primary%252CBackdrop%252CBanner%252CThumb&StartIndex=0&Limit=100&ParentId=$id")
         } else {
             // TODO: Filters
+            Log.i("AnimeFilters", filters.toString())
             val url = "$baseUrl/category/".toHttpUrlOrNull()!!.newBuilder()
             filters.forEach { filter ->
                 when (filter) {
@@ -320,12 +322,15 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsRequest(anime: SAnime): Request {
         val infoArr = anime.url.split("/").toTypedArray()
 
+        Log.i("AnimeDetInfo", infoArr.toString())
+
         val id = if (infoArr[1] == "Users") {
             infoArr[4].split("?").toTypedArray()[0]
         } else {
             infoArr[2]
         }
 
+        Log.i("AnimeDetUrl", "$baseUrl/Users/$userId/Items/$id?api_key=$apiKey&fields=%5B%27DateCreated%27%2C+%27Studios%27%5D")
         return GET("$baseUrl/Users/$userId/Items/$id?api_key=$apiKey&fields=%5B%27DateCreated%27%2C+%27Studios%27%5D")
     }
 
@@ -334,15 +339,35 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val anime = SAnime.create()
 
-        val studiosArr = item["Studios"]?.jsonArray
-        if (studiosArr != null) {
-            anime.author = studiosArr[0].jsonObject["Name"]!!.jsonPrimitive.content
+        anime.author = if (item["Studios"]!!.jsonArray.isEmpty()) {
+            ""
+        } else {
+            item["Studios"]!!.jsonArray[0].jsonObject["Name"]!!.jsonPrimitive.content
         }
 
-        anime.description = Jsoup.parse(item["Overview"]!!.jsonPrimitive.content.replace("<br>", "br2n")).text().replace("br2n", "\n")
-        anime.title = item["OriginalTitle"]!!.jsonPrimitive.content
-        anime.genre = item["Genres"]?.jsonArray?.joinToString(", ")
-        anime.status = if (item["Status"]?.jsonPrimitive?.content == "Ended") SAnime.COMPLETED else SAnime.COMPLETED
+        anime.description = item["Overview"]?.let {
+            Jsoup.parse(it.jsonPrimitive.content.replace("<br>", "br2n")).text().replace("br2n", "\n")
+        } ?: ""
+
+        anime.title = item["OriginalTitle"]?.let { it!!.jsonPrimitive.content } ?: item["Name"]!!.jsonPrimitive.content
+
+        if (item["Genres"]!!.jsonArray.isEmpty()) {
+            anime.genre = ""
+        } else {
+            val genres = mutableListOf<String>()
+
+            for (genre in 0 until item["Genres"]?.jsonArray?.size!!) {
+                genres.add(
+                    item["Genres"]?.jsonArray!![genre]?.jsonPrimitive?.content
+                )
+            }
+            anime.genre = genres.joinToString(separator = ", ")
+        }
+
+        anime.status = item["Status"]?.let {
+            if (it.jsonPrimitive.content == "Ended") SAnime.COMPLETED else SAnime.COMPLETED
+        } ?: SAnime.UNKNOWN
+
         return anime
     }
 
@@ -366,40 +391,76 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Filters - not implemented yet
 
-    override fun getFilterList() = AnimeFilterList(
-        AnimeFilter.Header("NOTE: Ignored if using text search!"),
-        AnimeFilter.Separator(),
-        GenreFilter(getGenreList())
-    )
+    override fun getFilterList(): AnimeFilterList {
+        return runBlocking {
+            AnimeFilterList(
+                AnimeFilter.Header("NOTE: Ignored if using text search!"),
+                AnimeFilter.Separator(),
+                GenreFilter(getGenreList())
+            )
+        }
+    }
 
-    private class GenreFilter(vals: Array<Pair<String, String>>) : UriPartFilter("Genres", vals)
+    private class GenreFilter(vals: List<Pair<String, String>>) : UriPartFilter("Genres", vals)
 
-    private fun getGenreList() = arrayOf(
-        Pair("Action & Adventure", "action-adventure"),
-        Pair("Adventure", "aventure"),
-        Pair("Animation", "animation"),
-        Pair("Comedy", "comedy"),
-        Pair("Crime", "crime"),
-        Pair("Disney", "disney"),
-        Pair("Drama", "drama"),
-        Pair("Family", "family"),
-        Pair("Fantasy", "fantasy"),
-        Pair("History", "fistory"),
-        Pair("Horror", "horror"),
-        Pair("Kids", "kids"),
-        Pair("Music", "music"),
-        Pair("Mystery", "mystery"),
-        Pair("Reality", "reality"),
-        Pair("Romance", "romance"),
-        Pair("Sci-Fi & Fantasy", "sci-fi-fantasy"),
-        Pair("Science Fiction", "science-fiction"),
-        Pair("Thriller", "thriller"),
-        Pair("War", "war"),
-        Pair("War & Politics", "war-politics"),
-        Pair("Western", "western")
-    )
+    private fun getGenreList(): List<Pair<String, String>> {
+        /*
+        val genreArray = mutableListOf<Pair<String, String>>()
 
-    open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :
+        val genresResponse = client.newCall(
+            GET("$baseUrl/Genres?api_key=$apiKey", cache = CacheControl.FORCE_NETWORK)
+        ).execute()
+
+        val jsonArr = genresResponse.body?.let { Json.decodeFromString<JsonObject>(it.string()) }?.get("Items")
+
+        Log.i("GenreJsonArr", jsonArr.toString())
+
+        if (jsonArr != buildJsonArray { }) {
+            for (item in 0 until jsonArr!!.jsonArray.size) {
+                val jsonObj = JsonObject(jsonArr!!.jsonArray[item].jsonObject)
+
+                Log.i("GenreJsonObj", jsonObj.toString())
+
+                genreArray.add(
+                    Pair(
+                        jsonObj["Name"]!!.jsonPrimitive.content,
+                        jsonObj["Id"]!!.jsonPrimitive.content
+                    )
+                )
+            }
+        }
+
+        Log.i("GenreArrayFirstT", genreArray[0].first)
+        return genreArray
+
+         */
+        return listOf(
+            Pair("Action & Adventure", "action-adventure"),
+            Pair("Adventure", "aventure"),
+            Pair("Animation", "animation"),
+            Pair("Comedy", "comedy"),
+            Pair("Crime", "crime"),
+            Pair("Disney", "disney"),
+            Pair("Drama", "drama"),
+            Pair("Family", "family"),
+            Pair("Fantasy", "fantasy"),
+            Pair("History", "fistory"),
+            Pair("Horror", "horror"),
+            Pair("Kids", "kids"),
+            Pair("Music", "music"),
+            Pair("Mystery", "mystery"),
+            Pair("Reality", "reality"),
+            Pair("Romance", "romance"),
+            Pair("Sci-Fi & Fantasy", "sci-fi-fantasy"),
+            Pair("Science Fiction", "science-fiction"),
+            Pair("Thriller", "thriller"),
+            Pair("War", "war"),
+            Pair("War & Politics", "war-politics"),
+            Pair("Western", "western")
+        )
+    }
+
+    open class UriPartFilter(displayName: String, private val vals: List<Pair<String, String>>) :
         AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
     }
