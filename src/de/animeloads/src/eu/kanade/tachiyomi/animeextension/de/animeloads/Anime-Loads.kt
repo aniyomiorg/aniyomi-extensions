@@ -31,7 +31,7 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import kotlin.Exception
 
-class `Anime-Loads` : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Anime-Loads (experimental)"
 
@@ -120,131 +120,130 @@ class `Anime-Loads` : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         val hosterSelection = preferences.getStringSet("hoster_selection", setOf("dood", "voe", "stape"))
         val element = document.select("div#streams$id")
-            val enc = element.attr("data-enc")
-            val capfiles = client.newCall(
-                POST(
-                    "$baseUrl/files/captcha",
-                    body = "cID=0&rT=1".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
+        val enc = element.attr("data-enc")
+        val capfiles = client.newCall(
+            POST(
+                "$baseUrl/files/captcha",
+                body = "cID=0&rT=1".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
+                headers = Headers.headersOf(
+                    "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#streams$id", ""), "Accept", "application/json, text/javascript, */*; q=0.01", "cache-control", "max-age=15"
+                )
+            )
+        ).execute().asJsoup()
+        val hashes = capfiles.toString().substringAfter("[").substringBefore("]").split(",")
+        val hashlist = mutableListOf<String>()
+        val pnglist = mutableListOf<String>()
+        var max = "1"
+        var min = "99999"
+        hashes.forEach {
+            val hash = it.replace("<body>", "")
+                .replace("[", "")
+                .replace("\"", "").replace("]", "")
+                .replace("</body>", "").replace("%20", "")
+            val png = client.newCall(
+                GET(
+                    "$baseUrl/files/captcha?cid=0&hash=$hash",
                     headers = Headers.headersOf(
-                        "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#streams$id", ""), "Accept", "application/json, text/javascript, */*; q=0.01", "cache-control", "max-age=15"
+                        "Referer", url.replace("#streams$id", ""),
+                        "Accept", "image/avif,image/webp,*/*", "cache-control", "max-age=15"
                     )
                 )
-            ).execute().asJsoup()
-            val hashes = capfiles.toString().substringAfter("[").substringBefore("]").split(",")
-            val hashlist = mutableListOf<String>()
-            val pnglist = mutableListOf<String>()
-            var max = "1"
-            var min = "99999"
-            hashes.forEach {
-                val hash = it.replace("<body>", "")
-                    .replace("[", "")
-                    .replace("\"", "").replace("]", "")
-                    .replace("</body>", "").replace("%20", "")
-                val png = client.newCall(
-                    GET(
-                        "$baseUrl/files/captcha?cid=0&hash=$hash",
-                        headers = Headers.headersOf(
-                            "Referer", url.replace("#streams$id", ""),
-                            "Accept", "image/avif,image/webp,*/*", "cache-control", "max-age=15"
-                        )
-                    )
-                ).execute().body?.byteString()
-                val size = png.toString()
-                    .substringAfter("[size=").substringBefore(" hex")
-                pnglist.add("$size | $hash")
-                hashlist.add(size)
-                for (num in hashlist) {
-                    if (max < num) {
-                        max = num
-                    }
-                }
-                for (num in hashlist) {
-                    if (min > num) {
-                        min = num
-                    }
+            ).execute().body?.byteString()
+            val size = png.toString()
+                .substringAfter("[size=").substringBefore(" hex")
+            pnglist.add("$size | $hash")
+            hashlist.add(size)
+            for (num in hashlist) {
+                if (max < num) {
+                    max = num
                 }
             }
-            var int = 0
-            pnglist.forEach { diffit ->
-                if (int == 0) {
-                    if (diffit.substringBefore(" |").toInt() != max.toInt() && diffit.substringBefore(" |").toInt() != min.toInt()) {
-                        int = 1
-                        val hash = diffit.substringBefore(" |").toInt()
-                        val diffmax = max.toInt() - hash
-                        val diffmin = hash - min.toInt()
-                        if (diffmax > diffmin) {
-                            pnglist.forEach { itmax ->
-                                if (max.toInt() == itmax.substringBefore(" |").toInt()) {
-                                    val maxhash = itmax.substringAfter("| ")
-                                    network.cloudflareClient.newCall(
-                                        POST(
-                                            "$baseUrl/files/captcha",
-                                            body = "cID=0&pC=$maxhash&rT=2".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
-                                            headers = Headers.headersOf(
-                                                "Origin", baseUrl, "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#streams$id", ""), "Accept", "*/*", "cache-control", "max-age=15"
-                                            )
+            for (num in hashlist) {
+                if (min > num) {
+                    min = num
+                }
+            }
+        }
+        var int = 0
+        pnglist.forEach { diffit ->
+            if (int == 0) {
+                if (diffit.substringBefore(" |").toInt() != max.toInt() && diffit.substringBefore(" |").toInt() != min.toInt()) {
+                    int = 1
+                    val hash = diffit.substringBefore(" |").toInt()
+                    val diffmax = max.toInt() - hash
+                    val diffmin = hash - min.toInt()
+                    if (diffmax > diffmin) {
+                        pnglist.forEach { itmax ->
+                            if (max.toInt() == itmax.substringBefore(" |").toInt()) {
+                                val maxhash = itmax.substringAfter("| ")
+                                network.cloudflareClient.newCall(
+                                    POST(
+                                        "$baseUrl/files/captcha",
+                                        body = "cID=0&pC=$maxhash&rT=2".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
+                                        headers = Headers.headersOf(
+                                            "Origin", baseUrl, "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#streams$id", ""), "Accept", "*/*", "cache-control", "max-age=15"
                                         )
-                                    ).execute()
-                                    val maxdoc = client.newCall(
-                                        POST(
-                                            "$baseUrl/ajax/captcha",
-                                            body = "enc=${enc.replace("=", "%3D")}&response=captcha&captcha-idhf=0&captcha-hf=$maxhash".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
-                                            headers = Headers.headersOf(
-                                                "Origin", baseUrl, "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#streams$id", ""),
-                                                "Accept", "application/json, text/javascript, */*; q=0.01", "cache-control", "max-age=15"
-                                            )
+                                    )
+                                ).execute()
+                                val maxdoc = client.newCall(
+                                    POST(
+                                        "$baseUrl/ajax/captcha",
+                                        body = "enc=${enc.replace("=", "%3D")}&response=captcha&captcha-idhf=0&captcha-hf=$maxhash".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
+                                        headers = Headers.headersOf(
+                                            "Origin", baseUrl, "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#streams$id", ""),
+                                            "Accept", "application/json, text/javascript, */*; q=0.01", "cache-control", "max-age=15"
                                         )
-                                    ).execute().asJsoup().toString()
-                                    if (maxdoc.substringAfter("\"code\":\"").substringBefore("\",").contains("error")) {
-                                        throw Exception("Captcha bypass failed! Clear Cookies & Webview data. Or wait some time.")
-                                    } else {
-                                        val links = maxdoc.substringAfter("\"content\":[").substringBefore("</body>").split("{\"links\":")
-                                        links.forEach {
-                                            if (it.contains("link")) {
-                                                val hoster = it.substringAfter("\"hoster\":\"").substringBefore("\",\"")
-                                                val linkpart = it.substringAfter("\"link\":\"").substringBefore("\"}]")
-                                                val leaveurl = client.newCall(GET("$baseUrl/leave/$linkpart")).execute().request.url.toString()
-                                                val neexurl = client.newCall(GET(leaveurl)).execute().request.url.toString()
-                                                val neexdoc = client.newCall(GET(leaveurl)).execute().asJsoup()
-                                                val nextlink = neexdoc.select("div#continue a").attr("href")
-                                                val anipart = nextlink.substringAfter("$baseUrl/leave/")
-                                                Thread.sleep(10000)
-                                                client.newCall(GET(nextlink, headers = Headers.headersOf("referer", neexurl))).execute().asJsoup()
-                                                when {
-                                                    hoster.contains("voesx") && hosterSelection?.contains("voe") == true -> {
-                                                        val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
-                                                        val video = try {
-                                                            VoeExtractor(client).videoFromUrl(link)
-                                                        } catch (e: Exception) {
-                                                            null
-                                                        }
-                                                        if (video != null) {
-                                                            videoList.add(video)
-                                                        }
+                                    )
+                                ).execute().asJsoup().toString()
+                                if (maxdoc.substringAfter("\"code\":\"").substringBefore("\",").contains("error")) {
+                                    throw Exception("Captcha bypass failed! Clear Cookies & Webview data. Or wait some time.")
+                                } else {
+                                    val links = maxdoc.substringAfter("\"content\":[").substringBefore("</body>").split("{\"links\":")
+                                    links.forEach {
+                                        if (it.contains("link")) {
+                                            val hoster = it.substringAfter("\"hoster\":\"").substringBefore("\",\"")
+                                            val linkpart = it.substringAfter("\"link\":\"").substringBefore("\"}]")
+                                            val leaveurl = client.newCall(GET("$baseUrl/leave/$linkpart")).execute().request.url.toString()
+                                            val neexurl = client.newCall(GET(leaveurl)).execute().request.url.toString()
+                                            val neexdoc = client.newCall(GET(leaveurl)).execute().asJsoup()
+                                            val nextlink = neexdoc.select("div#continue a").attr("href")
+                                            val anipart = nextlink.substringAfter("$baseUrl/leave/")
+                                            Thread.sleep(10000)
+                                            client.newCall(GET(nextlink, headers = Headers.headersOf("referer", neexurl))).execute().asJsoup()
+                                            when {
+                                                hoster.contains("voesx") && hosterSelection?.contains("voe") == true -> {
+                                                    val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
+                                                    val video = try {
+                                                        VoeExtractor(client).videoFromUrl(link)
+                                                    } catch (e: Exception) {
+                                                        null
                                                     }
-
-                                                    hoster.contains("streamtapecom") && hosterSelection?.contains("stape") == true -> {
-                                                        val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
-                                                        val video = try {
-                                                            StreamTapeExtractor(client).videoFromUrl(link)
-                                                        } catch (e: Exception) {
-                                                            null
-                                                        }
-                                                        if (video != null) {
-                                                            videoList.add(video)
-                                                        }
+                                                    if (video != null) {
+                                                        videoList.add(video)
                                                     }
+                                                }
 
-                                                    hoster.contains("doodstream") && hosterSelection?.contains("dood") == true -> {
-                                                        val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
-                                                        val video = try {
-                                                            DoodExtractor(client).videoFromUrl(link)
-                                                        } catch (e: Exception) {
-                                                            null
-                                                        }
-                                                        if (video != null) {
-                                                            videoList.add(video)
-                                                        }
+                                                hoster.contains("streamtapecom") && hosterSelection?.contains("stape") == true -> {
+                                                    val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
+                                                    val video = try {
+                                                        StreamTapeExtractor(client).videoFromUrl(link)
+                                                    } catch (e: Exception) {
+                                                        null
+                                                    }
+                                                    if (video != null) {
+                                                        videoList.add(video)
+                                                    }
+                                                }
+
+                                                hoster.contains("doodstream") && hosterSelection?.contains("dood") == true -> {
+                                                    val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
+                                                    val video = try {
+                                                        DoodExtractor(client).videoFromUrl(link)
+                                                    } catch (e: Exception) {
+                                                        null
+                                                    }
+                                                    if (video != null) {
+                                                        videoList.add(video)
                                                     }
                                                 }
                                             }
@@ -252,79 +251,79 @@ class `Anime-Loads` : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                     }
                                 }
                             }
-                        } else {
-                            pnglist.forEach { itmin ->
-                                if (min.toInt() == itmin.substringBefore(" |").toInt()) {
-                                    val minhash = itmin.substringAfter("| ")
-                                    network.cloudflareClient.newCall(
-                                        POST(
-                                            "$baseUrl/files/captcha",
-                                            body = "cID=0&pC=$minhash&rT=2".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
-                                            headers = Headers.headersOf(
-                                                "Origin", baseUrl, "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#streams$id", ""), "Accept", "*/*"
-                                            )
+                        }
+                    } else {
+                        pnglist.forEach { itmin ->
+                            if (min.toInt() == itmin.substringBefore(" |").toInt()) {
+                                val minhash = itmin.substringAfter("| ")
+                                network.cloudflareClient.newCall(
+                                    POST(
+                                        "$baseUrl/files/captcha",
+                                        body = "cID=0&pC=$minhash&rT=2".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
+                                        headers = Headers.headersOf(
+                                            "Origin", baseUrl, "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#streams$id", ""), "Accept", "*/*"
                                         )
-                                    ).execute()
-                                    val mindoc = client.newCall(
-                                        POST(
-                                            "$baseUrl/ajax/captcha",
-                                            body = "enc=${enc.replace("=", "%3D")}&response=captcha&captcha-idhf=0&captcha-hf=$minhash".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
-                                            headers = Headers.headersOf(
-                                                "Origin", baseUrl, "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#streams$id", ""),
-                                                "Accept", "application/json, text/javascript, */*; q=0.01"
-                                            )
+                                    )
+                                ).execute()
+                                val mindoc = client.newCall(
+                                    POST(
+                                        "$baseUrl/ajax/captcha",
+                                        body = "enc=${enc.replace("=", "%3D")}&response=captcha&captcha-idhf=0&captcha-hf=$minhash".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
+                                        headers = Headers.headersOf(
+                                            "Origin", baseUrl, "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#streams$id", ""),
+                                            "Accept", "application/json, text/javascript, */*; q=0.01"
                                         )
-                                    ).execute().asJsoup().toString()
-                                    if (mindoc.substringAfter("\"code\":\"").substringBefore("\",").contains("error")) {
-                                        throw Exception("Captcha bypass failed! Clear Cookies & Webview data. Or wait some time.")
-                                    } else {
-                                        val links = mindoc.substringAfter("\"content\":[").substringBefore("</body>").split("{\"links\":")
-                                        links.forEach {
-                                            if (it.contains("link")) {
-                                                val hoster = it.substringAfter("\"hoster\":\"").substringBefore("\",\"")
-                                                val linkpart = it.substringAfter("\"link\":\"").substringBefore("\"}]")
-                                                val leaveurl = client.newCall(GET("$baseUrl/leave/$linkpart")).execute().request.url.toString()
-                                                val neexurl = client.newCall(GET(leaveurl)).execute().request.url.toString()
-                                                val neexdoc = client.newCall(GET(leaveurl)).execute().asJsoup()
-                                                val nextlink = neexdoc.select("div#continue a").attr("href")
-                                                val anipart = nextlink.substringAfter("$baseUrl/leave/")
-                                                Thread.sleep(10000)
-                                                client.newCall(GET(nextlink, headers = Headers.headersOf("referer", neexurl))).execute().asJsoup()
-                                                when {
-                                                    hoster.contains("voesx") && hosterSelection?.contains("voe") == true -> {
-                                                        val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
-                                                        val video = try {
-                                                            VoeExtractor(client).videoFromUrl(link)
-                                                        } catch (e: Exception) {
-                                                            null
-                                                        }
-                                                        if (video != null) {
-                                                            videoList.add(video)
-                                                        }
+                                    )
+                                ).execute().asJsoup().toString()
+                                if (mindoc.substringAfter("\"code\":\"").substringBefore("\",").contains("error")) {
+                                    throw Exception("Captcha bypass failed! Clear Cookies & Webview data. Or wait some time.")
+                                } else {
+                                    val links = mindoc.substringAfter("\"content\":[").substringBefore("</body>").split("{\"links\":")
+                                    links.forEach {
+                                        if (it.contains("link")) {
+                                            val hoster = it.substringAfter("\"hoster\":\"").substringBefore("\",\"")
+                                            val linkpart = it.substringAfter("\"link\":\"").substringBefore("\"}]")
+                                            val leaveurl = client.newCall(GET("$baseUrl/leave/$linkpart")).execute().request.url.toString()
+                                            val neexurl = client.newCall(GET(leaveurl)).execute().request.url.toString()
+                                            val neexdoc = client.newCall(GET(leaveurl)).execute().asJsoup()
+                                            val nextlink = neexdoc.select("div#continue a").attr("href")
+                                            val anipart = nextlink.substringAfter("$baseUrl/leave/")
+                                            Thread.sleep(10000)
+                                            client.newCall(GET(nextlink, headers = Headers.headersOf("referer", neexurl))).execute().asJsoup()
+                                            when {
+                                                hoster.contains("voesx") && hosterSelection?.contains("voe") == true -> {
+                                                    val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
+                                                    val video = try {
+                                                        VoeExtractor(client).videoFromUrl(link)
+                                                    } catch (e: Exception) {
+                                                        null
                                                     }
-
-                                                    hoster.contains("streamtapecom") && hosterSelection?.contains("stape") == true -> {
-                                                        val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
-                                                        val video = try {
-                                                            StreamTapeExtractor(client).videoFromUrl(link)
-                                                        } catch (e: Exception) {
-                                                            null
-                                                        }
-                                                        if (video != null) {
-                                                            videoList.add(video)
-                                                        }
+                                                    if (video != null) {
+                                                        videoList.add(video)
                                                     }
+                                                }
 
-                                                    hoster.contains("doodstream") && hosterSelection?.contains("dood") == true -> {
-                                                        val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
-                                                        val video = try {
-                                                            DoodExtractor(client).videoFromUrl(link)
-                                                        } catch (e: Exception) {
-                                                            null
-                                                        }
-                                                        if (video != null) {
-                                                            videoList.add(video)
-                                                        }
+                                                hoster.contains("streamtapecom") && hosterSelection?.contains("stape") == true -> {
+                                                    val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
+                                                    val video = try {
+                                                        StreamTapeExtractor(client).videoFromUrl(link)
+                                                    } catch (e: Exception) {
+                                                        null
+                                                    }
+                                                    if (video != null) {
+                                                        videoList.add(video)
+                                                    }
+                                                }
+
+                                                hoster.contains("doodstream") && hosterSelection?.contains("dood") == true -> {
+                                                    val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
+                                                    val video = try {
+                                                        DoodExtractor(client).videoFromUrl(link)
+                                                    } catch (e: Exception) {
+                                                        null
+                                                    }
+                                                    if (video != null) {
+                                                        videoList.add(video)
                                                     }
                                                 }
                                             }
@@ -336,6 +335,7 @@ class `Anime-Loads` : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                 }
             }
+        }
         return videoList.reversed()
     }
 
