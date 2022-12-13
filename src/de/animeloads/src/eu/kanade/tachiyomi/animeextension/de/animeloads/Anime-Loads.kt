@@ -31,7 +31,7 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import kotlin.Exception
 
-class `Anime-Loads` : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Anime-Loads (experimental)"
 
