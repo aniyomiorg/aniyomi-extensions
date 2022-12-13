@@ -297,7 +297,7 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
             val jsonArr = searchResponse.body?.let { Json.decodeFromString<JsonObject>(it.string()) }?.get("Items")
 
             if (jsonArr == buildJsonArray { }) {
-                return GET("$baseUrl/Users/$userId/Items?api_key=$apiKey&SortBy=SortName&SortOrder=Ascending&includeItemTypes=Season,Movie&Recursive=true&ImageTypeLimit=1&EnableImageTypes=Primary%252CBackdrop%252CBanner%252CThumb&StartIndex=0&Limit=100&ParentId=$userId")
+                throw Exception("No results found")
             }
 
             val firstItem = jsonArr!!.jsonArray[0]
