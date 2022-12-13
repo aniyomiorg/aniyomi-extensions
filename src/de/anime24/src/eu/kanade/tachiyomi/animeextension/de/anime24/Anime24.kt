@@ -42,7 +42,7 @@ class Anime24 : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "div#blog-entries article"
 
-    override fun popularAnimeRequest(page: Int): Request = GET(baseUrl)
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/page/$page")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -102,7 +102,7 @@ class Anime24 : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     videoList.add(video)
                 }
             }
-            url.contains("https://voe.sx") || url.contains("https://20demidistance9elongations.com") && hosterSelection?.contains("voe") == true -> {
+            url.contains("https://voe.sx") || url.contains("https://20demidistance9elongations.com") || url.contains("https://telyn610zoanthropy.com") && hosterSelection?.contains("voe") == true -> {
                 val quality = "Voe"
                 val video = VoeExtractor(client).videoFromUrl(url, quality)
                 if (video != null) {
