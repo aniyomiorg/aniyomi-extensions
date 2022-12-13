@@ -274,8 +274,32 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
 
                 return videoList.reversed()
             } else {
-                val url = "$baseUrl/videos/$id/main.m3u8?VideoCodec=h264&AudioCodec=aac,mp3&AudioStreamIndex=$audioIndex&${quality[2]}&PlaySessionId=$sessionId&api_key=$apiKey&TranscodingMaxAudioChannels=6&RequireAvc=false&Tag=27d6b71bb94bfec39b606555e84c6bfe&SegmentContainer=ts&MinSegments=1&BreakOnNonKeyFrames=True&h264-profile=high,main,baseline,constrainedbaseline&h264-level=51&h264-deinterlace=true&TranscodeReasons=VideoCodecNotSupported,AudioCodecNotSupported,ContainerBitrateExceedsLimit"
-                videoList.add(Video(url, quality[3] as String, url, subtitleTracks = subtitleList))
+                val url = "$baseUrl/videos/$id/main.m3u8".toHttpUrlOrNull()!!.newBuilder()
+
+                url.addQueryParameter("api_key", apiKey)
+                url.addQueryParameter("VideoCodec", "h264")
+                url.addQueryParameter("AudioCodec", "aac,mp3")
+                url.addQueryParameter("AudioStreamIndex", audioIndex.toString())
+                url.addQueryParameter("VideoCodec", "h264")
+                url.addQueryParameter("VideoCodec", "h264")
+                url.addQueryParameter(
+                    (quality[2] as Array<*>)[0].toString(), (quality[2] as Array<*>)[1].toString()
+                )
+                url.addQueryParameter(
+                    (quality[2] as Array<*>)[2].toString(), (quality[2] as Array<*>)[3].toString()
+                )
+                url.addQueryParameter("PlaySessionId", sessionId)
+                url.addQueryParameter("TranscodingMaxAudioChannels", "6")
+                url.addQueryParameter("RequireAvc", "false")
+                url.addQueryParameter("SegmentContainer", "ts")
+                url.addQueryParameter("MinSegments", "1")
+                url.addQueryParameter("BreakOnNonKeyFrames", "true")
+                url.addQueryParameter("h264-profile", "high,main,baseline,constrainedbaseline")
+                url.addQueryParameter("h264-level", "51")
+                url.addQueryParameter("h264-deinterlace", "true")
+                url.addQueryParameter("TranscodeReasons", "VideoCodecNotSupported,AudioCodecNotSupported,ContainerBitrateExceedsLimit")
+
+                videoList.add(Video(url.toString(), quality[3] as String, url.toString(), subtitleTracks = subtitleList))
             }
         }
 
