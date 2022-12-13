@@ -11,6 +11,8 @@ object JFConstants {
     const val PASSWORD_KEY = "password"
     const val HOSTURL_TITLE = "Host URL"
     const val HOSTURL_KEY = "host_url"
+    const val MEDIALIB_KEY = "library_pref"
+    const val MEDIALIB_TITLE = "Select Media Library"
 
     const val HOSTURL_DEFAULT = "http://127.0.0.1:8096"
 
@@ -34,15 +36,6 @@ object JFConstants {
     const val PREF_AUDIO_TITLE = "Preferred audio language"
     const val PREF_SUB_KEY = "preferred_subLang"
     const val PREF_SUB_TITLE = "Preferred sub language"
-
-    val DEFAULT_PARAMS = arrayOf(
-        Pair("StartIndex", "0"),
-        Pair("Limit", "100"),
-        Pair("Recursive", "true"),
-        Pair("SortBy", "SortName"),
-        Pair("includeItemTypes", "Movie,Series,Season"),
-        Pair("ImageTypeLimit", "1")
-    )
 
     val QUALITIES_LIST = arrayOf(
         arrayOf(480, 360, "VideoBitrate=292000&AudioBitrate=128000", "360p - 420 kbps"),

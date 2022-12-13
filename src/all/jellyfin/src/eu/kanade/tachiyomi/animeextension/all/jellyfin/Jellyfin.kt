@@ -9,7 +9,6 @@ import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
-import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -71,20 +70,29 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
-    private fun log(obj: Any, name: String, inObj: Any) {
-        Log.i("JF_$name", "INPUT: ${inObj::class} - $inObj \n${obj::class} - $obj")
-    }
-
     // Popular Anime
 
     override fun popularAnimeRequest(page: Int): Request {
-        val parentId = preferences.getString("library_pref", "")
+        val parentId = preferences.getString(JFConstants.MEDIALIB_KEY, "")
         if (parentId.isNullOrEmpty()) {
             throw Exception("Select library in the extension settings.")
         }
         val startIndex = (page - 1) * 20
-        val url = "$baseUrl/Users/$userId/Items?api_key=$apiKey&SortBy=SortName&SortOrder=Ascending&includeItemTypes=Season,Movie&Recursive=true&ImageTypeLimit=1&EnableImageTypes=Primary%252CBackdrop%252CBanner%252CThumb&StartIndex=$startIndex&Limit=20&ParentId=$parentId"
-        return GET(url)
+
+        val url = "$baseUrl/Users/$userId/Items".toHttpUrlOrNull()!!.newBuilder()
+
+        url.addQueryParameter("api_key", apiKey)
+        url.addQueryParameter("StartIndex", startIndex.toString())
+        url.addQueryParameter("Limit", "20")
+        url.addQueryParameter("Recursive", "true")
+        url.addQueryParameter("SortBy", "SortName")
+        url.addQueryParameter("SortOrder", "Ascending")
+        url.addQueryParameter("includeItemTypes", "Movie,Series,Season")
+        url.addQueryParameter("ImageTypeLimit", "1")
+        url.addQueryParameter("ParentId", parentId)
+        url.addQueryParameter("EnableImageTypes", "Primary")
+
+        return GET(url.toString())
     }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
@@ -290,11 +298,23 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         return if (query.isNotBlank()) {
+            val searchUrl = "$baseUrl/Users/$userId/Items".toHttpUrlOrNull()!!.newBuilder()
+
+            searchUrl.addQueryParameter("api_key", apiKey)
+            searchUrl.addQueryParameter("searchTerm", query)
+            searchUrl.addQueryParameter("Limit", "2")
+            searchUrl.addQueryParameter("Recursive", "true")
+            searchUrl.addQueryParameter("SortBy", "SortName")
+            searchUrl.addQueryParameter("SortOrder", "Ascending")
+            searchUrl.addQueryParameter("includeItemTypes", "Movie,Series,Season")
+
             val searchResponse = client.newCall(
-                GET("$baseUrl/Users/$userId/Items?api_key=$apiKey&searchTerm=$query&Limit=2&Recursive=true&IncludeItemTypes=Series,Movie")
+                GET(searchUrl.toString())
             ).execute()
 
-            val jsonArr = searchResponse.body?.let { Json.decodeFromString<JsonObject>(it.string()) }?.get("Items")
+            val jsonArr = searchResponse.body?.let {
+                Json.decodeFromString<JsonObject>(it.string())
+            }?.get("Items")
 
             if (jsonArr == buildJsonArray { }) {
                 throw Exception("No results found")
@@ -303,25 +323,24 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
             val firstItem = jsonArr!!.jsonArray[0]
             val id = firstItem.jsonObject["Id"]!!.jsonPrimitive.content
 
-            GET("$baseUrl/Users/$userId/Items?api_key=$apiKey&SortBy=SortName&SortOrder=Ascending&includeItemTypes=Season,Movie&Recursive=true&ImageTypeLimit=1&EnableImageTypes=Primary%252CBackdrop%252CBanner%252CThumb&StartIndex=0&Limit=100&ParentId=$id")
-        } else {
-            // TODO: Filters
-
             val url = "$baseUrl/Users/$userId/Items".toHttpUrlOrNull()!!.newBuilder()
-            filters.forEach { filter ->
-                when (filter) {
-                    is GenreFilter -> url.addQueryParameter("GenreIds", filter.toUriPart())
-                    else -> {}
-                }
-            }
 
-            for (paramPair in JFConstants.DEFAULT_PARAMS) {
-                url.addEncodedQueryParameter(paramPair.first, paramPair.second)
-            }
-            url.addEncodedQueryParameter("api_key", apiKey)
-            url.addEncodedQueryParameter("SortOrder", "Ascending")
+            val startIndex = (page - 1) * 20
+
+            url.addQueryParameter("api_key", apiKey)
+            url.addQueryParameter("StartIndex", startIndex.toString())
+            url.addQueryParameter("Limit", "20")
+            url.addQueryParameter("Recursive", "true")
+            url.addQueryParameter("SortBy", "SortName")
+            url.addQueryParameter("SortOrder", "Ascending")
+            url.addQueryParameter("includeItemTypes", "Movie,Series,Season")
+            url.addQueryParameter("ImageTypeLimit", "1")
+            url.addQueryParameter("EnableImageTypes", "Primary")
+            url.addQueryParameter("ParentId", id)
 
             GET(url.toString())
+        } else {
+            throw Exception("No results found")
         }
     }
 
@@ -336,7 +355,12 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
             infoArr[2]
         }
 
-        return GET("$baseUrl/Users/$userId/Items/$id?api_key=$apiKey&fields=%5B%27DateCreated%27%2C+%27Studios%27%5D")
+        val url = "$baseUrl/Users/$userId/Items/$id".toHttpUrlOrNull()!!.newBuilder()
+
+        url.addQueryParameter("api_key", apiKey)
+        url.addQueryParameter("fields", "Studios")
+
+        return GET(url.toString())
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
@@ -353,8 +377,6 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
         anime.description = item["Overview"]?.let {
             Jsoup.parse(it.jsonPrimitive.content.replace("<br>", "br2n")).text().replace("br2n", "\n")
         } ?: ""
-
-        // anime.title = item["OriginalTitle"]?.jsonPrimitive?.content ?: item["Name"]!!.jsonPrimitive.content
 
         if (item["Genres"]!!.jsonArray.isEmpty()) {
             anime.genre = ""
@@ -379,13 +401,27 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
     // Latest
 
     override fun latestUpdatesRequest(page: Int): Request {
-        val parentId = preferences.getString("library_pref", "")
+        val parentId = preferences.getString(JFConstants.MEDIALIB_KEY, "")
         if (parentId.isNullOrEmpty()) {
             throw Exception("Select library in the extension settings.")
         }
 
         val startIndex = (page - 1) * 20
-        return GET("$baseUrl/Users/$userId/Items?api_key=$apiKey&SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Season,Movie&Recursive=true&ImageTypeLimit=1&EnableImageTypes=Primary%252CBackdrop%252CBanner%252CThumb&StartIndex=$startIndex&Limit=20&ParentId=$parentId")
+
+        val url = "$baseUrl/Users/$userId/Items".toHttpUrlOrNull()!!.newBuilder()
+
+        url.addQueryParameter("api_key", apiKey)
+        url.addQueryParameter("StartIndex", startIndex.toString())
+        url.addQueryParameter("Limit", "20")
+        url.addQueryParameter("Recursive", "true")
+        url.addQueryParameter("SortBy", "DateCreated")
+        url.addQueryParameter("SortOrder", "Descending")
+        url.addQueryParameter("includeItemTypes", "Movie,Series,Season")
+        url.addQueryParameter("ImageTypeLimit", "1")
+        url.addQueryParameter("ParentId", parentId)
+        url.addQueryParameter("EnableImageTypes", "Primary")
+
+        return GET(url.toString())
     }
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
@@ -393,75 +429,7 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
         return AnimesPage(animesList, hasNextPage)
     }
 
-    // Filters - not implemented yet
-
-    /*
-    override fun getFilterList(): AnimeFilterList {
-        AnimeFilterList(
-            AnimeFilter.Header("NOTE: Ignored if using text search!"),
-            AnimeFilter.Separator(),
-            GenreFilter(getGenreList())
-        )
-    }
-    */
-
-    private class GenreFilter(vals: List<Pair<String, String>>) : UriPartFilter("Genres", vals)
-
-    private fun getGenreList(): List<Pair<String, String>> {
-        /*
-        val genreArray = mutableListOf<Pair<String, String>>()
-
-        val genresResponse = client.newCall(
-            GET("$baseUrl/Genres?api_key=$apiKey", cache = CacheControl.FORCE_NETWORK)
-        ).execute()
-
-        val jsonArr = genresResponse.body?.let { Json.decodeFromString<JsonObject>(it.string()) }?.get("Items")
-
-        Log.i("GenreJsonArr", jsonArr.toString())
-
-        if (jsonArr != buildJsonArray { }) {
-            for (item in 0 until jsonArr!!.jsonArray.size) {
-                val jsonObj = JsonObject(jsonArr!!.jsonArray[item].jsonObject)
-
-                Log.i("GenreJsonObj", jsonObj.toString())
-
-                genreArray.add(
-                    Pair(
-                        jsonObj["Name"]!!.jsonPrimitive.content,
-                        jsonObj["Id"]!!.jsonPrimitive.content
-                    )
-                )
-            }
-        }
-
-        Log.i("GenreArrayFirstT", genreArray[0].first)
-        return genreArray
-         */
-
-        return listOf(
-            Pair("Action", "ce06903d834d2c3417e0889dd4049f3b"),
-            Pair("Adventure", "51cec9645b896084d12b259acd05ccb1"),
-            Pair("Anime", "f89b4d4d7733020ed2721d8fec37f26c"),
-            Pair("Comedy", "08d31605d366d63a7a924f944b4417f1"),
-            Pair("Drama", "090eac6e9de4fe1fbc194e5b96691277"),
-            Pair("Ecchi", "d7b8e7321af8c279341caeced90a1bb1"),
-            Pair("Fantasy", "a30dcc65be22eb3c21c03f7c1c7a57d1"),
-            Pair("Horror", "8b9bd9a3eddad02f2b759b4938fdd0b8"),
-            Pair("Mahou Shoujo", "f36fb684438bbf8c5b80c7ecea1b932f"),
-            Pair("Mystery", "d3a0ead52489743e5a68704142092c71"),
-            Pair("Psychological", "13fcb116f8048f20769597c91946932f"),
-            Pair("Romance", "1ffc72e19987e5fa4047c6a6870646cf"),
-            Pair("Sci-Fi", "d3bf560475125eed829c435f3d8329e3"),
-            Pair("Slice of Life", "345780dc39f3b1fa11e4776c97a79ad5"),
-            Pair("Supernatural", "68c458f4829f530c664a01e748e010ae"),
-            Pair("Thriller", "4936f5b1a6f84f0b0aa2657368a5b364")
-        )
-    }
-
-    open class UriPartFilter(displayName: String, private val vals: List<Pair<String, String>>) :
-        AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
-        fun toUriPart() = vals[state].second
-    }
+    // Filters - not used
 
     // settings
 
@@ -514,8 +482,8 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
         }
         screen.addPreference(audioLangPref)
         val mediaLibPref = ListPreference(screen.context).apply {
-            key = "library_pref"
-            title = "Media Library"
+            key = JFConstants.MEDIALIB_KEY
+            title = JFConstants.MEDIALIB_TITLE
             summary = "%s"
 
             if (apiKey == "" || userId == "" || baseUrl == "") {
