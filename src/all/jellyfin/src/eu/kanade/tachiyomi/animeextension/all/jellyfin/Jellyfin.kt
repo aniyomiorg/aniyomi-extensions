@@ -138,7 +138,7 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 } else {
                     episode.episode_number = jsonObj["IndexNumber"]!!.jsonPrimitive.float
                 }
-                episode.name = "${episode.episode_number} ${jsonObj["Name"]!!.jsonPrimitive.content}"
+                episode.name = jsonObj["Name"]!!.jsonPrimitive.content
 
                 episode.setUrlWithoutDomain("/Users/$userId/Items/$id?api_key=$apiKey")
                 episodeList.add(episode)
@@ -233,13 +233,16 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     if (lang != null) {
                         if (lang.jsonPrimitive.content == prefSub) {
                             subtitleList.add(
-                                0, Track(subUrl,
+                                0,
+                                Track(
+                                    subUrl,
                                     media.jsonObject["DisplayTitle"]!!.jsonPrimitive.content
                                 )
                             )
                         } else {
                             subtitleList.add(
-                                Track(subUrl,
+                                Track(
+                                    subUrl,
                                     media.jsonObject["DisplayTitle"]!!.jsonPrimitive.content
                                 )
                             )
@@ -351,15 +354,12 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsRequest(anime: SAnime): Request {
         val infoArr = anime.url.split("/").toTypedArray()
 
-        Log.i("AnimeDetInfo", infoArr.toString())
-
         val id = if (infoArr[1] == "Users") {
             infoArr[4].split("?").toTypedArray()[0]
         } else {
             infoArr[2]
         }
 
-        Log.i("AnimeDetUrl", "$baseUrl/Users/$userId/Items/$id?api_key=$apiKey&fields=%5B%27DateCreated%27%2C+%27Studios%27%5D")
         return GET("$baseUrl/Users/$userId/Items/$id?api_key=$apiKey&fields=%5B%27DateCreated%27%2C+%27Studios%27%5D")
     }
 
@@ -378,7 +378,7 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Jsoup.parse(it.jsonPrimitive.content.replace("<br>", "br2n")).text().replace("br2n", "\n")
         } ?: ""
 
-        anime.title = item["OriginalTitle"]?.jsonPrimitive?.content ?: item["Name"]!!.jsonPrimitive.content
+        // anime.title = item["OriginalTitle"]?.jsonPrimitive?.content ?: item["Name"]!!.jsonPrimitive.content
 
         if (item["Genres"]!!.jsonArray.isEmpty()) {
             anime.genre = ""
