@@ -3,17 +3,31 @@ package eu.kanade.tachiyomi.animeextension.all.jellyfin
 import android.content.SharedPreferences
 
 object JFConstants {
-    const val APIKEY_TITLE = "API Key"
+    const val APIKEY_KEY = "api_key"
+    const val USERID_KEY = "user_id"
+    const val USERNAME_TITLE = "Username"
+    const val USERNAME_KEY = "username"
+    const val PASSWORD_TITLE = "Password"
+    const val PASSWORD_KEY = "password"
     const val HOSTURL_TITLE = "Host URL"
+    const val HOSTURL_KEY = "host_url"
 
-    const val APIKEY_DEFAULT = ""
     const val HOSTURL_DEFAULT = "http://127.0.0.1:8096"
 
-    fun getPrefApiKey(preferences: SharedPreferences): String = preferences.getString(
-        APIKEY_TITLE, APIKEY_DEFAULT
-    )!!
+    fun getPrefApiKey(preferences: SharedPreferences): String? = preferences.getString(
+        APIKEY_KEY, null
+    )
+    fun getPrefUserId(preferences: SharedPreferences): String? = preferences.getString(
+        USERID_KEY, null
+    )
     fun getPrefHostUrl(preferences: SharedPreferences): String = preferences.getString(
-        HOSTURL_TITLE, HOSTURL_DEFAULT
+        HOSTURL_KEY, HOSTURL_DEFAULT
+    )!!
+    fun getPrefUsername(preferences: SharedPreferences): String = preferences.getString(
+        USERNAME_KEY, ""
+    )!!
+    fun getPrefPassword(preferences: SharedPreferences): String = preferences.getString(
+        PASSWORD_KEY, ""
     )!!
 
     const val PREF_AUDIO_KEY = "preferred_audioLang"
