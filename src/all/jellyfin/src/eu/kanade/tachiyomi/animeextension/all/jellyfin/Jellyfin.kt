@@ -52,10 +52,26 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override val baseUrl = JFConstants.getPrefHostUrl(preferences)
-    private val apiKey = JFConstants.getPrefApiKey(preferences)
 
-    // TODO: dont hardcode this
-    private val userId = "d40091e38ffe426a9dedc7aa1297d0fa"
+    private val username = JFConstants.getPrefUsername(preferences)
+    private val password = JFConstants.getPrefPassword(preferences)
+    private val apiKey: String
+    private val userId: String
+
+    init {
+        val key = JFConstants.getPrefApiKey(preferences)
+        val uid = JFConstants.getPrefUserId(preferences)
+        if (key == null || uid == null) {
+            val (newKey, newUid) = JellyfinAuthenticator(preferences, baseUrl, client)
+                .login(username, password)
+            Log.e("bruh", "$newKey, $newUid")
+            apiKey = newKey ?: ""
+            userId = newUid ?: ""
+        } else {
+            apiKey = key
+            userId = uid
+        }
+    }
 
     private fun log(obj: Any, name: String, inObj: Any) {
         Log.i("JF_$name", "INPUT: ${inObj::class} - $inObj \n${obj::class} - $obj")
@@ -67,14 +83,18 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeRequest(page: Int): Request {
         val parentId = preferences.getString("library_pref", "")
-        val url = "$baseUrl/Users/$userId/Items?api_key=$apiKey&SortBy=SortName&SortOrder=Ascending&includeItemTypes=Season,Movie&Recursive=true&ImageTypeLimit=1&EnableImageTypes=Primary%252CBackdrop%252CBanner%252CThumb&StartIndex=0&Limit=100&ParentId=$parentId"
+        if (parentId.isNullOrEmpty()) {
+            throw Exception("Select library in the extension settings.")
+        }
+        val startIndex = (page - 1) * 20
+        val url = "$baseUrl/Users/$userId/Items?api_key=$apiKey&SortBy=SortName&SortOrder=Ascending&includeItemTypes=Season,Movie&Recursive=true&ImageTypeLimit=1&EnableImageTypes=Primary%252CBackdrop%252CBanner%252CThumb&StartIndex=$startIndex&Limit=20&ParentId=$parentId"
         return GET(url)
     }
 
     override fun popularAnimeFromElement(element: Element): SAnime = throw Exception("not used")
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val (animesList, hasNextPage) = AnimeParse(response)
+        val (animesList, hasNextPage) = animeParse(response)
 
         // Currently sorts by name
         animesList.sortBy { it.title }
@@ -104,7 +124,7 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             episode.setUrlWithoutDomain("/Users/$userId/Items/$id?api_key=$apiKey")
             episodeList.add(episode)
         } else {
-            val items = json?.get("Items")!!
+            val items = json["Items"]!!
 
             for (item in 0 until items.jsonArray.size) {
 
@@ -130,8 +150,8 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
 
-    private fun AnimeParse(response: Response): Pair<MutableList<SAnime>, Boolean> {
-        val items = response.body?.let { Json.decodeFromString<JsonObject>(it.string()) }?.get("Items")!!
+    private fun animeParse(response: Response): Pair<MutableList<SAnime>, Boolean> {
+        val items = response.body?.let { Json.decodeFromString<JsonObject>(it.string()) }?.get("Items")
 
         val animesList = mutableListOf<SAnime>()
 
@@ -142,7 +162,7 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                 if (jsonObj["Type"]!!.jsonPrimitive.content == "Season") {
                     val seasonId = jsonObj["Id"]!!.jsonPrimitive.content
-                    var seriesId = jsonObj["SeriesId"]!!.jsonPrimitive.content
+                    val seriesId = jsonObj["SeriesId"]!!.jsonPrimitive.content
 
                     anime.setUrlWithoutDomain("/Shows/$seriesId/Episodes?api_key=$apiKey&SeasonId=$seasonId")
 
@@ -174,7 +194,8 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
-        return Pair(animesList, false)
+        val hasNextPage = animesList.size >= 20
+        return Pair(animesList, hasNextPage)
     }
 
     // Video urls
@@ -191,7 +212,7 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ).execute()
         val sessionJson = sessionResponse.body?.let { Json.decodeFromString<JsonObject>(it.string()) }
         val sessionId = sessionJson?.get("PlaySessionId")!!.jsonPrimitive.content
-        val mediaStreams = sessionJson?.get("MediaSources")!!.jsonArray[0].jsonObject["MediaStreams"]?.jsonArray
+        val mediaStreams = sessionJson["MediaSources"]!!.jsonArray[0].jsonObject["MediaStreams"]?.jsonArray
 
         val subtitleList = mutableListOf<Track>()
 
@@ -212,16 +233,20 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     if (lang != null) {
                         if (lang.jsonPrimitive.content == prefSub) {
                             subtitleList.add(
-                                0, Track(subUrl, "${media.jsonObject["DisplayTitle"]!!.jsonPrimitive.content}")
+                                0, Track(subUrl,
+                                    media.jsonObject["DisplayTitle"]!!.jsonPrimitive.content
+                                )
                             )
                         } else {
                             subtitleList.add(
-                                Track(subUrl, "${media.jsonObject["DisplayTitle"]!!.jsonPrimitive.content}")
+                                Track(subUrl,
+                                    media.jsonObject["DisplayTitle"]!!.jsonPrimitive.content
+                                )
                             )
                         }
                     } else {
                         subtitleList.add(
-                            Track(subUrl, "${media.jsonObject["DisplayTitle"]!!.jsonPrimitive.content}")
+                            Track(subUrl, media.jsonObject["DisplayTitle"]!!.jsonPrimitive.content)
                         )
                     }
                 }
@@ -276,7 +301,7 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeSelector(): String = throw Exception("not used")
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val (animesList, hasNextPage) = AnimeParse(response)
+        val (animesList, hasNextPage) = animeParse(response)
 
         // Currently sorts by name
         animesList.sortBy { it.title }
@@ -353,7 +378,7 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Jsoup.parse(it.jsonPrimitive.content.replace("<br>", "br2n")).text().replace("br2n", "\n")
         } ?: ""
 
-        anime.title = item["OriginalTitle"]?.let { it!!.jsonPrimitive.content } ?: item["Name"]!!.jsonPrimitive.content
+        anime.title = item["OriginalTitle"]?.jsonPrimitive?.content ?: item["Name"]!!.jsonPrimitive.content
 
         if (item["Genres"]!!.jsonArray.isEmpty()) {
             anime.genre = ""
@@ -362,7 +387,7 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
             for (genre in 0 until item["Genres"]?.jsonArray?.size!!) {
                 genres.add(
-                    item["Genres"]?.jsonArray!![genre]?.jsonPrimitive?.content
+                    item["Genres"]?.jsonArray!![genre].jsonPrimitive.content
                 )
             }
             anime.genre = genres.joinToString(separator = ", ")
@@ -383,11 +408,16 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesRequest(page: Int): Request {
         val parentId = preferences.getString("library_pref", "")
-        return GET("$baseUrl/Users/$userId/Items?api_key=$apiKey&SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Season,Movie&Recursive=true&ImageTypeLimit=1&EnableImageTypes=Primary%252CBackdrop%252CBanner%252CThumb&StartIndex=0&Limit=100&ParentId=$parentId")
+        if (parentId.isNullOrEmpty()) {
+            throw Exception("Select library in the extension settings.")
+        }
+
+        val startIndex = (page - 1) * 20
+        return GET("$baseUrl/Users/$userId/Items?api_key=$apiKey&SortBy=DateCreated&SortOrder=Descending&IncludeItemTypes=Season,Movie&Recursive=true&ImageTypeLimit=1&EnableImageTypes=Primary%252CBackdrop%252CBanner%252CThumb&StartIndex=$startIndex&Limit=20&ParentId=$parentId")
     }
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
-        val (animesList, hasNextPage) = AnimeParse(response)
+        val (animesList, hasNextPage) = animeParse(response)
         return AnimesPage(animesList, hasNextPage)
     }
 
@@ -468,12 +498,17 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         screen.addPreference(
             screen.editTextPreference(
-                JFConstants.APIKEY_TITLE, JFConstants.APIKEY_DEFAULT, apiKey, true, ""
+                JFConstants.HOSTURL_KEY, JFConstants.HOSTURL_TITLE, JFConstants.HOSTURL_DEFAULT, baseUrl, false, ""
             )
         )
         screen.addPreference(
             screen.editTextPreference(
-                JFConstants.HOSTURL_TITLE, JFConstants.HOSTURL_DEFAULT, baseUrl, false, ""
+                JFConstants.USERNAME_KEY, JFConstants.USERNAME_TITLE, "", username, false, ""
+            )
+        )
+        screen.addPreference(
+            screen.editTextPreference(
+                JFConstants.PASSWORD_KEY, JFConstants.PASSWORD_TITLE, "", password, true, ""
             )
         )
         val subLangPref = ListPreference(screen.context).apply {
@@ -556,9 +591,9 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         screen.addPreference(mediaLibPref)
     }
 
-    private fun PreferenceScreen.editTextPreference(title: String, default: String, value: String, isPassword: Boolean = false, placeholder: String): EditTextPreference {
+    private fun PreferenceScreen.editTextPreference(key: String, title: String, default: String, value: String, isPassword: Boolean = false, placeholder: String): EditTextPreference {
         return EditTextPreference(context).apply {
-            key = title
+            this.key = key
             this.title = title
             summary = value.ifEmpty { placeholder }
             this.setDefaultValue(default)
