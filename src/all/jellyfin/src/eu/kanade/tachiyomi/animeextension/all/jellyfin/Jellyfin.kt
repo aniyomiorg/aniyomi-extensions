@@ -18,7 +18,6 @@ import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -303,17 +302,22 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             GET("$baseUrl/Users/$userId/Items?api_key=$apiKey&SortBy=SortName&SortOrder=Ascending&includeItemTypes=Season,Movie&Recursive=true&ImageTypeLimit=1&EnableImageTypes=Primary%252CBackdrop%252CBanner%252CThumb&StartIndex=0&Limit=100&ParentId=$id")
         } else {
             // TODO: Filters
-            Log.i("AnimeFilters", filters.toString())
-            val url = "$baseUrl/category/".toHttpUrlOrNull()!!.newBuilder()
+
+            val url = "$baseUrl/Users/$userId/Items".toHttpUrlOrNull()!!.newBuilder()
             filters.forEach { filter ->
                 when (filter) {
-                    is GenreFilter -> url.addPathSegment(filter.toUriPart())
+                    is GenreFilter -> url.addQueryParameter("GenreIds", filter.toUriPart())
                     else -> {}
                 }
             }
-            url.addPathSegment("page")
-            url.addPathSegment("$page")
-            GET(url.toString(), headers)
+
+            for (paramPair in JFConstants.DEFAULT_PARAMS) {
+                url.addEncodedQueryParameter(paramPair.first, paramPair.second)
+            }
+            url.addEncodedQueryParameter("api_key", apiKey)
+            url.addEncodedQueryParameter("SortOrder", "Ascending")
+
+            GET(url.toString())
         }
     }
 
@@ -391,15 +395,15 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Filters - not implemented yet
 
+    /*
     override fun getFilterList(): AnimeFilterList {
-        return runBlocking {
-            AnimeFilterList(
-                AnimeFilter.Header("NOTE: Ignored if using text search!"),
-                AnimeFilter.Separator(),
-                GenreFilter(getGenreList())
-            )
-        }
+        AnimeFilterList(
+            AnimeFilter.Header("NOTE: Ignored if using text search!"),
+            AnimeFilter.Separator(),
+            GenreFilter(getGenreList())
+        )
     }
+    */
 
     private class GenreFilter(vals: List<Pair<String, String>>) : UriPartFilter("Genres", vals)
 
@@ -432,31 +436,25 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         Log.i("GenreArrayFirstT", genreArray[0].first)
         return genreArray
-
          */
+
         return listOf(
-            Pair("Action & Adventure", "action-adventure"),
-            Pair("Adventure", "aventure"),
-            Pair("Animation", "animation"),
-            Pair("Comedy", "comedy"),
-            Pair("Crime", "crime"),
-            Pair("Disney", "disney"),
-            Pair("Drama", "drama"),
-            Pair("Family", "family"),
-            Pair("Fantasy", "fantasy"),
-            Pair("History", "fistory"),
-            Pair("Horror", "horror"),
-            Pair("Kids", "kids"),
-            Pair("Music", "music"),
-            Pair("Mystery", "mystery"),
-            Pair("Reality", "reality"),
-            Pair("Romance", "romance"),
-            Pair("Sci-Fi & Fantasy", "sci-fi-fantasy"),
-            Pair("Science Fiction", "science-fiction"),
-            Pair("Thriller", "thriller"),
-            Pair("War", "war"),
-            Pair("War & Politics", "war-politics"),
-            Pair("Western", "western")
+            Pair("Action", "ce06903d834d2c3417e0889dd4049f3b"),
+            Pair("Adventure", "51cec9645b896084d12b259acd05ccb1"),
+            Pair("Anime", "f89b4d4d7733020ed2721d8fec37f26c"),
+            Pair("Comedy", "08d31605d366d63a7a924f944b4417f1"),
+            Pair("Drama", "090eac6e9de4fe1fbc194e5b96691277"),
+            Pair("Ecchi", "d7b8e7321af8c279341caeced90a1bb1"),
+            Pair("Fantasy", "a30dcc65be22eb3c21c03f7c1c7a57d1"),
+            Pair("Horror", "8b9bd9a3eddad02f2b759b4938fdd0b8"),
+            Pair("Mahou Shoujo", "f36fb684438bbf8c5b80c7ecea1b932f"),
+            Pair("Mystery", "d3a0ead52489743e5a68704142092c71"),
+            Pair("Psychological", "13fcb116f8048f20769597c91946932f"),
+            Pair("Romance", "1ffc72e19987e5fa4047c6a6870646cf"),
+            Pair("Sci-Fi", "d3bf560475125eed829c435f3d8329e3"),
+            Pair("Slice of Life", "345780dc39f3b1fa11e4776c97a79ad5"),
+            Pair("Supernatural", "68c458f4829f530c664a01e748e010ae"),
+            Pair("Thriller", "4936f5b1a6f84f0b0aa2657368a5b364")
         )
     }
 

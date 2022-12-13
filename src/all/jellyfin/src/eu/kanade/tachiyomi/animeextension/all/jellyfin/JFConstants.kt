@@ -21,6 +21,15 @@ object JFConstants {
     const val PREF_SUB_KEY = "preferred_subLang"
     const val PREF_SUB_TITLE = "Preferred sub language"
 
+    val DEFAULT_PARAMS = arrayOf(
+        Pair("StartIndex", "0"),
+        Pair("Limit", "100"),
+        Pair("Recursive", "true"),
+        Pair("SortBy", "SortName"),
+        Pair("includeItemTypes", "Movie,Series,Season"),
+        Pair("ImageTypeLimit", "1")
+    )
+
     val QUALITIES_LIST = arrayOf(
         arrayOf(480, 360, "VideoBitrate=292000&AudioBitrate=128000", "360p - 420 kbps"),
         arrayOf(854, 480, "VideoBitrate=528000&AudioBitrate=192000", "480p - 720 kbps"),
@@ -33,7 +42,9 @@ object JFConstants {
         arrayOf(1920, 1080, "VideoBitrate=14808000&AudioBitrate=192000", "1080p - 15 Mbps"),
         arrayOf(1920, 1080, "VideoBitrate=19808000&AudioBitrate=192000", "1080p - 20 Mbps"),
         arrayOf(1920, 1080, "VideoBitrate=39808000&AudioBitrate=192000", "1080p - 40 Mbps"),
-        arrayOf(1920, 1080, "VideoBitrate=59808000&AudioBitrate=192000", "1080p - 60 Mbps")
+        arrayOf(1920, 1080, "VideoBitrate=59808000&AudioBitrate=192000", "1080p - 60 Mbps"),
+        arrayOf(3840, 2160, "VideoBitrate=80000000&AudioBitrate=192000", "4K - 80 Mbps"),
+        arrayOf(3840, 2160, "VideoBitrate=120000000&AudioBitrate=192000", "4K - 120 Mbps")
     )
 
     val PREF_VALUES = arrayOf(
