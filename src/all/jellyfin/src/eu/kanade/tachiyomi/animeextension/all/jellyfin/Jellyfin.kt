@@ -16,7 +16,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
-import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -32,12 +32,10 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
-class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "Jellyfin"
 
@@ -79,8 +77,6 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Popular Anime
 
-    override fun popularAnimeSelector(): String = throw Exception("not used")
-
     override fun popularAnimeRequest(page: Int): Request {
         val parentId = preferences.getString("library_pref", "")
         if (parentId.isNullOrEmpty()) {
@@ -91,8 +87,6 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return GET(url)
     }
 
-    override fun popularAnimeFromElement(element: Element): SAnime = throw Exception("not used")
-
     override fun popularAnimeParse(response: Response): AnimesPage {
         val (animesList, hasNextPage) = animeParse(response)
 
@@ -102,11 +96,7 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return AnimesPage(animesList, hasNextPage)
     }
 
-    override fun popularAnimeNextPageSelector(): String = throw Exception("not used")
-
     // Episodes
-
-    override fun episodeListSelector() = throw Exception("not used")
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val json = response.body?.let { Json.decodeFromString<JsonObject>(it.string()) }
@@ -147,8 +137,6 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return episodeList.reversed()
     }
-
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
 
     private fun animeParse(response: Response): Pair<MutableList<SAnime>, Boolean> {
         val items = response.body?.let { Json.decodeFromString<JsonObject>(it.string()) }?.get("Items")
@@ -289,19 +277,7 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoList.reversed()
     }
 
-    override fun videoListSelector() = throw Exception("not used")
-
-    override fun videoFromElement(element: Element) = throw Exception("not used")
-
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
-
     // search
-
-    override fun searchAnimeFromElement(element: Element): SAnime = throw Exception("not used")
-
-    override fun searchAnimeNextPageSelector(): String = throw Exception("not used")
-
-    override fun searchAnimeSelector(): String = throw Exception("not used")
 
     override fun searchAnimeParse(response: Response): AnimesPage {
         val (animesList, hasNextPage) = animeParse(response)
@@ -363,8 +339,8 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return GET("$baseUrl/Users/$userId/Items/$id?api_key=$apiKey&fields=%5B%27DateCreated%27%2C+%27Studios%27%5D")
     }
 
-    override fun animeDetailsParse(document: Document): SAnime {
-        val item = Json.decodeFromString<JsonObject>(document.text())
+    override fun animeDetailsParse(response: Response): SAnime {
+        val item = response.body?.let { Json.decodeFromString<JsonObject>(it.string()) }!!.jsonObject
 
         val anime = SAnime.create()
 
@@ -402,10 +378,6 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Latest
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
-
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
-
     override fun latestUpdatesRequest(page: Int): Request {
         val parentId = preferences.getString("library_pref", "")
         if (parentId.isNullOrEmpty()) {
@@ -420,8 +392,6 @@ class Jellyfin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val (animesList, hasNextPage) = animeParse(response)
         return AnimesPage(animesList, hasNextPage)
     }
-
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
 
     // Filters - not implemented yet
 
