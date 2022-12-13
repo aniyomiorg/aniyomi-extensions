@@ -541,6 +541,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Anime-Loads (experimental)",
+    "pkg": "eu.kanade.tachiyomi.animeextension.de.animeloads",
+    "apk": "aniyomi-de.animeloads-v13.1.apk",
+    "lang": "de",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Anime-Loads (experimental)",
+        "lang": "de",
+        "id": "6551558560964672385",
+        "baseUrl": "https://www.anime-loads.org",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: AnimeToast",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.animetoast",
     "apk": "aniyomi-de.animetoast-v13.4.apk",
