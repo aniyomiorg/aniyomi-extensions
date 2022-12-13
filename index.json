@@ -501,10 +501,10 @@
   {
     "name": "Aniyomi: Anime24",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.anime24",
-    "apk": "aniyomi-de.anime24-v13.5.apk",
+    "apk": "aniyomi-de.anime24-v13.6.apk",
     "lang": "de",
-    "code": 5,
-    "version": "13.5",
+    "code": 6,
+    "version": "13.6",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
