@@ -58,17 +58,15 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
     private var username = JFConstants.getPrefUsername(preferences)
     private var password = JFConstants.getPrefPassword(preferences)
     private var parentId = JFConstants.getPrefParentId(preferences)
-    private var apiKey: String = ""
-    private var userId: String = ""
+    private var apiKey = JFConstants.getPrefApiKey(preferences)
+    private var userId = JFConstants.getPrefUserId(preferences)
 
     init {
         login(false)
     }
 
     private fun login(new: Boolean, context: Context? = null): Boolean? {
-        val key = JFConstants.getPrefApiKey(preferences)
-        val uid = JFConstants.getPrefUserId(preferences)
-        if (key == null || uid == null || new) {
+        if (apiKey == null || userId == null || new) {
             baseUrl = JFConstants.getPrefHostUrl(preferences)
             username = JFConstants.getPrefUsername(preferences)
             password = JFConstants.getPrefPassword(preferences)
@@ -88,9 +86,6 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
                 context?.let { Toast.makeText(it, "Login failed.", Toast.LENGTH_LONG).show() }
                 return false
             }
-        } else {
-            apiKey = key
-            userId = uid
         }
         return true
     }
