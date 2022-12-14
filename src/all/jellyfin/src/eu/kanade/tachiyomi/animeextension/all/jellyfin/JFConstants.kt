@@ -38,20 +38,28 @@ object JFConstants {
     const val PREF_SUB_TITLE = "Preferred sub language"
 
     val QUALITIES_LIST = arrayOf(
-        arrayOf(480, 360, arrayOf("VideoBitrate", "292000", "AudioBitrate", "128000"), "360p - 420 kbps"),
-        arrayOf(854, 480, arrayOf("VideoBitrate", "528000", "AudioBitrate", "192000"), "480p - 720 kbps"),
-        arrayOf(854, 480, arrayOf("VideoBitrate", "1308000", "AudioBitrate", "192000"), "480p - 1.5 Mbps"),
-        arrayOf(854, 480, arrayOf("VideoBitrate", "2808000", "AudioBitrate", "192000"), "480p - 3 Mbps"),
-        arrayOf(1280, 720, arrayOf("VideoBitrate", "3808000", "AudioBitrate", "192000"), "720p - 4 Mbps"),
-        arrayOf(1280, 720, arrayOf("VideoBitrate", "5808000", "AudioBitrate", "192000"), "720p - 6 Mbps"),
-        arrayOf(1280, 720, arrayOf("VideoBitrate", "7808000", "AudioBitrate", "192000"), "720p - 8 Mbps"),
-        arrayOf(1920, 1080, arrayOf("VideoBitrate", "9808000", "AudioBitrate", "192000"), "1080p - 10 Mbps"),
-        arrayOf(1920, 1080, arrayOf("VideoBitrate", "14808000", "AudioBitrate", "192000"), "1080p - 15 Mbps"),
-        arrayOf(1920, 1080, arrayOf("VideoBitrate", "19808000", "AudioBitrate", "192000"), "1080p - 20 Mbps"),
-        arrayOf(1920, 1080, arrayOf("VideoBitrate", "39808000", "AudioBitrate", "192000"), "1080p - 40 Mbps"),
-        arrayOf(1920, 1080, arrayOf("VideoBitrate", "59808000", "AudioBitrate", "192000"), "1080p - 60 Mbps"),
-        arrayOf(3840, 2160, arrayOf("VideoBitrate", "80000000", "AudioBitrate", "192000"), "4K - 80 Mbps"),
-        arrayOf(3840, 2160, arrayOf("VideoBitrate", "120000000", "AudioBitrate", "192000"), "4K - 120 Mbps")
+        Quality(480, 360, 292000, 128000, "360p - 420 kbps"),
+        Quality(854, 480, 528000, 192000, "480p - 720 kbps"),
+        Quality(854, 480, 1308000, 192000, "480p - 1.5 Mbps"),
+        Quality(854, 480, 2808000, 192000, "480p - 3 Mbps"),
+        Quality(1280, 720, 3808000, 192000, "720p - 4 Mbps"),
+        Quality(1280, 720, 5808000, 192000, "720p - 6 Mbps"),
+        Quality(1280, 720, 7808000, 192000, "720p - 8 Mbps"),
+        Quality(1920, 1080, 9808000, 192000, "1080p - 10 Mbps"),
+        Quality(1920, 1080, 14808000, 192000, "1080p - 15 Mbps"),
+        Quality(1920, 1080, 19808000, 192000, "1080p - 20 Mbps"),
+        Quality(1920, 1080, 39808000, 192000, "1080p - 40 Mbps"),
+        Quality(1920, 1080, 59808000, 192000, "1080p - 60 Mbps"),
+        Quality(3840, 2160, 80000000, 192000, "4K - 80 Mbps"),
+        Quality(3840, 2160, 120000000, 192000, "4K - 120 Mbps")
+    )
+
+    data class Quality(
+        val width: Int,
+        val height: Int,
+        val videoBitrate: Int,
+        val audioBitrate: Int,
+        val description: String,
     )
 
     val PREF_VALUES = arrayOf(
