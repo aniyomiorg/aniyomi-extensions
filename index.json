@@ -21,6 +21,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Jellyfin",
+    "pkg": "eu.kanade.tachiyomi.animeextension.all.jellyfin",
+    "apk": "aniyomi-all.jellyfin-v13.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Jellyfin",
+        "lang": "all",
+        "id": "1100359934660540567",
+        "baseUrl": "http://127.0.0.1:8096",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Onepace",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.onepace",
     "apk": "aniyomi-all.onepace-v13.8.apk",
