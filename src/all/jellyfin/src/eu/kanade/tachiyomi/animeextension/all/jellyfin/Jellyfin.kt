@@ -473,38 +473,6 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
                 JFConstants.PASSWORD_KEY, JFConstants.PASSWORD_TITLE, "", password, true, ""
             )
         )
-        val subLangPref = ListPreference(screen.context).apply {
-            key = JFConstants.PREF_SUB_KEY
-            title = JFConstants.PREF_SUB_TITLE
-            entries = JFConstants.PREF_ENTRIES
-            entryValues = JFConstants.PREF_VALUES
-            setDefaultValue("eng")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-        screen.addPreference(subLangPref)
-        val audioLangPref = ListPreference(screen.context).apply {
-            key = JFConstants.PREF_AUDIO_KEY
-            title = JFConstants.PREF_AUDIO_TITLE
-            entries = JFConstants.PREF_ENTRIES
-            entryValues = JFConstants.PREF_VALUES
-            setDefaultValue("jpn")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-        screen.addPreference(audioLangPref)
         val mediaLibPref = ListPreference(screen.context).apply {
             key = JFConstants.MEDIALIB_KEY
             title = JFConstants.MEDIALIB_TITLE
@@ -551,6 +519,38 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
         screen.addPreference(mediaLibPref)
+        val subLangPref = ListPreference(screen.context).apply {
+            key = JFConstants.PREF_SUB_KEY
+            title = JFConstants.PREF_SUB_TITLE
+            entries = JFConstants.PREF_ENTRIES
+            entryValues = JFConstants.PREF_VALUES
+            setDefaultValue("eng")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(subLangPref)
+        val audioLangPref = ListPreference(screen.context).apply {
+            key = JFConstants.PREF_AUDIO_KEY
+            title = JFConstants.PREF_AUDIO_TITLE
+            entries = JFConstants.PREF_ENTRIES
+            entryValues = JFConstants.PREF_VALUES
+            setDefaultValue("jpn")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(audioLangPref)
     }
 
     private fun PreferenceScreen.editTextPreference(key: String, title: String, default: String, value: String, isPassword: Boolean = false, placeholder: String): EditTextPreference {
