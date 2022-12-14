@@ -31,6 +31,9 @@ object JFConstants {
     fun getPrefPassword(preferences: SharedPreferences): String = preferences.getString(
         PASSWORD_KEY, ""
     )!!
+    fun getPrefParentId(preferences: SharedPreferences): String = preferences.getString(
+        MEDIALIB_KEY, ""
+    )!!
 
     const val PREF_AUDIO_KEY = "preferred_audioLang"
     const val PREF_AUDIO_TITLE = "Preferred audio language"

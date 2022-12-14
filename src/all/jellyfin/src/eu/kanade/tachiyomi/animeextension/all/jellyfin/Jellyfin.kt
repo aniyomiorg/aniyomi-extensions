@@ -57,6 +57,7 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private var username = JFConstants.getPrefUsername(preferences)
     private var password = JFConstants.getPrefPassword(preferences)
+    private var parentId = JFConstants.getPrefParentId(preferences)
     private var apiKey: String = ""
     private var userId: String = ""
 
@@ -97,8 +98,7 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
     // Popular Anime (is currently sorted by name instead of e.g. ratings)
 
     override fun popularAnimeRequest(page: Int): Request {
-        val parentId = preferences.getString(JFConstants.MEDIALIB_KEY, "")
-        if (parentId.isNullOrEmpty()) {
+        if (parentId.isEmpty()) {
             throw Exception("Select library in the extension settings.")
         }
         val startIndex = (page - 1) * 20
@@ -355,8 +355,7 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun searchAnimeParse(response: Response) = animeParse(response)
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val parentId = preferences.getString(JFConstants.MEDIALIB_KEY, "")
-        if (parentId.isNullOrEmpty()) {
+        if (parentId.isEmpty()) {
             throw Exception("Select library in the extension settings.")
         }
         if (query.isBlank()) {
@@ -436,8 +435,7 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
     // Latest
 
     override fun latestUpdatesRequest(page: Int): Request {
-        val parentId = preferences.getString(JFConstants.MEDIALIB_KEY, "")
-        if (parentId.isNullOrEmpty()) {
+        if (parentId.isEmpty()) {
             throw Exception("Select library in the extension settings.")
         }
 
@@ -559,6 +557,7 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
                             val selected = newValue as String
                             val index = findIndexOfValue(selected)
                             val entry = entryValues[index] as String
+                            parentId = entry
                             preferences.edit().putString(key, entry).commit()
                         }
                     }
