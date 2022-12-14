@@ -1,0 +1,16 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Jellyfin'
+    pkgNameSuffix = 'all.jellyfin'
+    extClass = '.Jellyfin'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+dependencies {
+    compileOnly libs.bundles.coroutines
+}
+
+apply from: "$rootDir/common.gradle"
