@@ -135,7 +135,7 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
             val id = json["Id"]!!.jsonPrimitive.content
 
             episode.episode_number = 1.0F
-            episode.name = json["Name"]!!.jsonPrimitive.content
+            episode.name = "Movie: " + json["Name"]!!.jsonPrimitive.content
 
             episode.setUrlWithoutDomain("/Users/$userId/Items/$id?api_key=$apiKey")
             episodeList.add(episode)
@@ -264,19 +264,20 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
                     val title = media.jsonObject["DisplayTitle"]!!.jsonPrimitive.content
                     if (lang != null) {
                         if (lang.jsonPrimitive.content == prefSub) {
-                            subtitleList.add(
-                                0,
-                                Track(subUrl, title)
-                            )
+                            try {
+                                subtitleList.add(0, Track(subUrl, title))
+                            } catch (e: Error) {
+                                subIndex = index
+                            }
                         } else {
-                            subtitleList.add(
-                                Track(subUrl, title)
-                            )
+                            try {
+                                subtitleList.add(Track(subUrl, title))
+                            } catch (_: Error) {}
                         }
                     } else {
-                        subtitleList.add(
-                            Track(subUrl, title)
-                        )
+                        try {
+                            subtitleList.add(Track(subUrl, title))
+                        } catch (_: Error) {}
                     }
                 } else if (type == "Subtitle") {
                     if (lang != null) {
@@ -335,7 +336,11 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
                 url.addQueryParameter("h264-deinterlace", "true")
                 url.addQueryParameter("TranscodeReasons", "VideoCodecNotSupported,AudioCodecNotSupported,ContainerBitrateExceedsLimit")
 
-                videoList.add(Video(url.toString(), quality.description, url.toString(), subtitleTracks = subtitleList))
+                try {
+                    videoList.add(Video(url.toString(), quality.description, url.toString(), subtitleTracks = subtitleList))
+                } catch (_: Error) {
+                    videoList.add(Video(url.toString(), quality.description, url.toString()))
+                }
             }
         }
 
@@ -395,7 +400,7 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
-        val item = response.body?.let { Json.decodeFromString<JsonObject>(it.string()) }!!.jsonObject
+        val item = Json.decodeFromString<JsonObject>(response.body!!.string())
 
         val anime = SAnime.create()
 
@@ -421,8 +426,36 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         anime.status = item["Status"]?.let {
-            if (it.jsonPrimitive.content == "Ended") SAnime.COMPLETED else SAnime.COMPLETED
+            if (it.jsonPrimitive.content == "Ended") SAnime.COMPLETED else SAnime.UNKNOWN
         } ?: SAnime.UNKNOWN
+
+        if (item["Type"]!!.jsonPrimitive.content == "Season") {
+            val seasonId = item["Id"]!!.jsonPrimitive.content
+            val seriesId = item["SeriesId"]!!.jsonPrimitive.content
+
+            anime.setUrlWithoutDomain("/Shows/$seriesId/Episodes?api_key=$apiKey&SeasonId=$seasonId")
+
+            // Virtual if show doesn't have any sub-folders, i.e. no seasons
+            if (item["LocationType"]!!.jsonPrimitive.content == "Virtual") {
+                anime.title = item["SeriesName"]!!.jsonPrimitive.content
+                anime.thumbnail_url = "$baseUrl/Items/$seriesId/Images/Primary?api_key=$apiKey"
+            } else {
+                anime.title = item["SeriesName"]!!.jsonPrimitive.content + " " + item["Name"]!!.jsonPrimitive.content
+                anime.thumbnail_url = "$baseUrl/Items/$seasonId/Images/Primary?api_key=$apiKey"
+            }
+
+            // If season doesn't have image, fallback to series image
+            if (item["ImageTags"].toString() == "{}") {
+                anime.thumbnail_url = "$baseUrl/Items/$seriesId/Images/Primary?api_key=$apiKey"
+            }
+        } else if (item["Type"]!!.jsonPrimitive.content == "Movie") {
+            val id = item["Id"]!!.jsonPrimitive.content
+
+            anime.title = item["Name"]!!.jsonPrimitive.content
+            anime.thumbnail_url = "$baseUrl/Items/$id/Images/Primary?api_key=$apiKey"
+
+            anime.setUrlWithoutDomain("/Users/$userId/Items/$id?api_key=$apiKey")
+        }
 
         return anime
     }
