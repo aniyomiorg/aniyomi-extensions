@@ -46,6 +46,7 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val supportsLatest = false
 
     private val json: Json by injectLazy()
+
     override val client: OkHttpClient = network.cloudflareClient
 
     private val preferences: SharedPreferences by lazy {
