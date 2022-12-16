@@ -562,20 +562,20 @@
     ]
   },
   {
-    "name": "Aniyomi: Anime-Loads (experimental)",
+    "name": "Aniyomi: Anime-Loads",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.animeloads",
-    "apk": "aniyomi-de.animeloads-v13.1.apk",
+    "apk": "aniyomi-de.animeloads-v13.2.apk",
     "lang": "de",
-    "code": 1,
-    "version": "13.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
     "sources": [
       {
-        "name": "Anime-Loads (experimental)",
+        "name": "Anime-Loads",
         "lang": "de",
-        "id": "6551558560964672385",
+        "id": "655155856096",
         "baseUrl": "https://www.anime-loads.org",
         "versionId": 1,
         "hasCloudflare": 0
