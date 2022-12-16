@@ -39,7 +39,7 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Cuevana"
 
-    override val baseUrl = "https://n2.cuevana3.me"
+    override val baseUrl = "https://cuevana3.one"
 
     override val lang = "es"
 
@@ -114,7 +114,7 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val languageTag = document.selectFirst("li[data-tplayernv=$optLanguage]").closest(".open_submenu").selectFirst("div:first-child").text()
                 if (languageTag.lowercase().contains("latino"))
                     "[LAT]"
-                else if (languageTag.lowercase().contains("españa"))
+                else if (languageTag.lowercase().contains("castellano"))
                     "[CAST]"
                 else if (languageTag.lowercase().contains("subtitulado"))
                     "[SUB]"
@@ -351,7 +351,7 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     )
 
     private class GenreFilter : UriPartFilter(
-        "Tipos",
+        "Generos",
         arrayOf(
             Pair("<selecionar>", ""),
             Pair("Acción", "accion"),
@@ -366,11 +366,18 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Drama", "drama"),
             Pair("Familiar", "familiar"),
             Pair("Fantasía", "fantasia"),
+            Pair("Historía", "historia"),
+            Pair("Kids", "kids"),
             Pair("Misterio", "misterio"),
             Pair("Musical", "musical"),
+            Pair("Película de TV", "pelicula-de-tv"),
+            Pair("Reality", "reality"),
             Pair("Romance", "romance"),
+            Pair("Sci-Fi & Fantasy", "sci-fi-&-fantasy"),
+            Pair("Soup", "soup"),
+            Pair("Suspense", "suspense"),
             Pair("Terror", "terror"),
-            Pair("Thriller", "thriller")
+            Pair("Western", "western")
         )
     )
 
