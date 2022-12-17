@@ -126,7 +126,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         lang.forEach { langit ->
             Log.i("videosFromElement", "Langit: $langit")
             when {
-                langit.select("a i.flag-de").attr("title").contains("Subtitles: German") || langit.select("a i.flag-de").attr("title").contains("Untertitel: German") && subSelection?.contains("sub") == true -> {
+                langit.select("a i.flag-de").attr("title").contains("Subtitles: German") || langit.select("a i.flag-de").attr("title").contains("Untertitel: Deutsch") && subSelection?.contains("sub") == true -> {
                     val aria = langit.select("a").attr("aria-controls")
                     val id = document.select("#$aria div.episodes").attr("id")
                     val epnum = idep.substringAfter("streams_episodes_1")
@@ -356,7 +356,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         }
                     }
                 }
-                langit.select("a i.flag-de").attr("title").contains("Language: German") || langit.select("a i.flag-de").attr("title").contains("Sprache: German") && subSelection?.contains("dub") == true -> {
+                langit.select("a i.flag-de").attr("title").contains("Language: German") || langit.select("a i.flag-de").attr("title").contains("Sprache: Deutsch") && subSelection?.contains("dub") == true -> {
                     val aria = langit.select("a").attr("aria-controls")
                     val id = document.select("#$aria div.episodes").attr("id")
                     val epnum = idep.substringAfter("streams_episodes_1")
