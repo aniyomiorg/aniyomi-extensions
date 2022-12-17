@@ -564,10 +564,10 @@
   {
     "name": "Aniyomi: Anime-Loads",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.animeloads",
-    "apk": "aniyomi-de.animeloads-v13.3.apk",
+    "apk": "aniyomi-de.animeloads-v13.4.apk",
     "lang": "de",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1467,10 +1467,10 @@
   {
     "name": "Aniyomi: Cuevana",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.cuevana",
-    "apk": "aniyomi-es.cuevana-v13.2.apk",
+    "apk": "aniyomi-es.cuevana-v13.3.apk",
     "lang": "es",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1479,7 +1479,7 @@
         "name": "Cuevana",
         "lang": "es",
         "id": "8503225602749320167",
-        "baseUrl": "https://cuevana3.one",
+        "baseUrl": "https://n2.cuevana3.me",
         "versionId": 1,
         "hasCloudflare": 1
       }
