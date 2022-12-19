@@ -2153,6 +2153,27 @@
     ]
   },
   {
+    "name": "Aniyomi: AnimeTV",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animetv",
+    "apk": "aniyomi-pt.animetv-v12.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimeTV",
+        "lang": "pt-BR",
+        "id": "2719038923991789737",
+        "baseUrl": "https://appanimeplus.tk/play-api.php",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: AnimeYabu!",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animeyabu",
     "apk": "aniyomi-pt.animeyabu-v13.5.apk",
