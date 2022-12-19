@@ -1,0 +1,13 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'AnimeTV'
+    pkgNameSuffix = 'pt.animetv'
+    extClass = '.AnimeTV'
+    extVersionCode = 1
+    libVersion = '12'
+    containsNsfw = false
+}
+
+apply from: "$rootDir/common.gradle"
