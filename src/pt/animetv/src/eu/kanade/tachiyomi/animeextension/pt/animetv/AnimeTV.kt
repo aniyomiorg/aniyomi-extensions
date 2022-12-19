@@ -18,7 +18,7 @@ import okhttp3.Response
 class AnimeTV : AnimeHttpSource() {
     override val name = "AnimeTV"
     override val baseUrl = "https://appanimeplus.tk/play-api.php"
-    override val lang = "pt"
+    override val lang = "pt-BR"
     override val supportsLatest = true
 
     private val cdnUrl = "https://cdn.appanimeplus.tk/img/"
@@ -125,10 +125,10 @@ class AnimeTV : AnimeHttpSource() {
         val hasSD = videoData.jsonObject["locationsd"]!!.jsonPrimitive.content.length > 0
         if (hasSD) {
             val url = videoData.jsonObject["locationsd"]!!.jsonPrimitive.content
-            videos.add(Video(url, "HD", url, null))
+            videos.add(Video(url, "HD", url))
         }
         val url = videoData.jsonObject["location"]!!.jsonPrimitive.content
-        videos.add(Video(url, "SD", url, null))
+        videos.add(Video(url, "SD", url))
         return videos
     }
 
