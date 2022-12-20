@@ -5,7 +5,7 @@ ext {
     extName = 'Pi Fansubs'
     pkgNameSuffix = 'pt.pifansubs'
     extClass = '.PiFansubs'
-    extVersionCode = 5
+    extVersionCode = 6
     libVersion = '13'
     containsNsfw = true
 }
