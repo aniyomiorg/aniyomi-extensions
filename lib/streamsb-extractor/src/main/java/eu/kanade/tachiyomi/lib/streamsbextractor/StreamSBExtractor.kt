@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.lib.streamsbextractor
 
+import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.decodeFromString
@@ -71,6 +72,32 @@ class StreamSBExtractor(private val client: OkHttpClient) {
             }
         } catch (e: Exception) {
             emptyList<Video>()
+        }
+    }
+
+    fun videosFromDecryptedUrl(realUrl: String, headers: Headers, prefix: String = "", suffix: String = ""): List<Video> {
+        return try {
+            val json = Json.decodeFromString<JsonObject>(client.newCall(GET(realUrl, headers)).execute().body!!.string())
+            val masterUrl = json["stream_data"]!!.jsonObject["file"].toString().trim('"')
+            val masterPlaylist = client.newCall(GET(masterUrl, headers)).execute().body!!.string()
+            val separator = "#EXT-X-STREAM-INF"
+            masterPlaylist.substringAfter(separator).split(separator).map {
+                val resolution = it.substringAfter("RESOLUTION=")
+                    .substringBefore("\n")
+                    .substringAfter("x")
+                    .substringBefore(",") + "p"
+                val quality = ("StreamSB:$resolution").let {
+                    if(prefix.isNotBlank()) "$prefix $it"
+                    else it
+                }.let {
+                    if(suffix.isNotBlank()) "$it $suffix"
+                    else it
+                }
+                val videoUrl = it.substringAfter("\n").substringBefore("\n")
+                Video(videoUrl, quality, videoUrl, headers = headers)
+            }
+        } catch (e: Exception) {
+            emptyList()
         }
     }
 }
