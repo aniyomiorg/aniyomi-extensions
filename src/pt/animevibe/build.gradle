@@ -1,0 +1,14 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'AnimeVibe'
+    pkgNameSuffix = 'pt.animevibe'
+    extClass = '.AnimeVibe'
+    extVersionCode = 1
+    libVersion = '13'
+    containsNsfw = false
+}
+
+apply from: "$rootDir/common.gradle"
