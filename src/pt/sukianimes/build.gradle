@@ -1,0 +1,13 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'SukiAnimes'
+    pkgNameSuffix = 'pt.sukianimes'
+    extClass = '.SukiAnimes'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+
+apply from: "$rootDir/common.gradle"
