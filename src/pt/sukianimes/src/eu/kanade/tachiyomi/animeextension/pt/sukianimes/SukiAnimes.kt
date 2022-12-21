@@ -5,6 +5,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -51,21 +52,59 @@ class SukiAnimes : ParsedAnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime = throw Exception("not used")
+    override fun animeDetailsParse(document: Document): SAnime {
+        val doc = getRealDoc(document)
+        return SAnime.create().apply {
+            thumbnail_url = doc.selectFirst("div.animeimgleft > img").attr("src")
+            val section = doc.selectFirst("section.rightnew")
+            val titleSection = section.selectFirst("section.anime_titulo")
+            title = titleSection.selectFirst("h1").text()
+            status = parseStatus(titleSection.selectFirst("div.anime_status"))
+            genre = titleSection.select("div.anime_generos > span")
+                .joinToString(", ") { it.text() }
+
+            var desc = doc.selectFirst("span#sinopse_content").text()
+            desc += "\n\n" + section.select("div.anime_info").joinToString("\n") {
+                val key = it.selectFirst("span.anime_info_title").text()
+                val value = it.selectFirst("span.anime_info_content").text()
+                "$key: $value"
+            }
+            description = desc
+        }
+    }
 
     // =============================== Latest ===============================
     override fun latestUpdatesNextPageSelector() = "div.paginacao > a.next"
     override fun latestUpdatesSelector() = "div.epiItem > div.epiImg > a"
 
     override fun latestUpdatesFromElement(element: Element): SAnime {
-        val anime = SAnime.create().apply {
+        return SAnime.create().apply {
             setUrlWithoutDomain(element.attr("href"))
             title = element.attr("title")
             thumbnail_url = element.selectFirst("img").attr("src")
         }
-        return anime
     }
 
     override fun latestUpdatesRequest(page: Int): Request =
         GET("$baseUrl/lista-de-episodios/page/$page/")
+
+    // ============================= Utilities ==============================
+
+    private fun getRealDoc(doc: Document): Document {
+        val controls = doc.selectFirst("div.episodioControles")
+        if (controls != null) {
+            val newUrl = controls.select("a").get(1)!!.attr("href")
+            val res = client.newCall(GET(newUrl)).execute()
+            return res.asJsoup()
+        } else {
+            return doc
+        }
+    }
+
+    private fun parseStatus(element: Element?): Int {
+        return when (element?.text()?.trim()) {
+            "Em Lançamento" -> SAnime.ONGOING
+            else -> SAnime.COMPLETED
+        }
+    }
 }
