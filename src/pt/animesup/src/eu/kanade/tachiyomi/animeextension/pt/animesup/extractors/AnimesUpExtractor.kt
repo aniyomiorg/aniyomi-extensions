@@ -7,13 +7,19 @@ import okhttp3.OkHttpClient
 
 class AnimesUpExtractor(private val client: OkHttpClient) {
 
-    fun videoFromUrl(url: String, quality: String, headers: Headers): Video {
+    fun videoFromUrl(url: String, quality: String, headers: Headers): Video? {
         val body = client.newCall(GET(url, headers))
             .execute()
             .body?.string()
             .orEmpty()
         val videoUrl = body.substringAfter("file: \"").substringBefore("\",")
         val newHeaders = Headers.headersOf("referer", url)
-        return Video(url, quality, videoUrl, newHeaders)
+        // Temporary(or not) fix: videos from this host are not working
+        // even on the website, returning HTTP 403 Forbidden.
+        return if (videoUrl.startsWith("https://video.wixstatic.com")) {
+            null
+        } else {
+            Video(url, quality, videoUrl, newHeaders)
+        }
     }
 }

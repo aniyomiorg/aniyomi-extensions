@@ -124,8 +124,8 @@ class AnimesUp : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             .videoFromUrl("https:" + videoUrl, quality)
                     }
                     else -> null
-                } ?: Video(videoUrl, quality, videoUrl)
-            }
+                }
+            }.filterNotNull()
         return resolutions
     }
 
