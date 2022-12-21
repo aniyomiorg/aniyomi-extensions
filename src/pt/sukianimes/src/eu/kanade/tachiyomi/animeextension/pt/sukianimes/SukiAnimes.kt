@@ -1,16 +1,25 @@
 package eu.kanade.tachiyomi.animeextension.pt.sukianimes
 
+import eu.kanade.tachiyomi.animeextension.pt.sukianimes.dto.AnimeDto
+import eu.kanade.tachiyomi.animeextension.pt.sukianimes.dto.SearchResultDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 import uy.kohesive.injekt.api.get
 import kotlin.Exception
 
@@ -19,12 +28,18 @@ class SukiAnimes : ParsedAnimeHttpSource() {
     override val name = "SukiAnimes"
 
     override val baseUrl = "https://sukianimes.com"
+    private val API_URL = "$baseUrl/wp-admin/admin-ajax.php"
+    private val NONCE_URL = "$baseUrl/?js_global=1&ver=6.1.1"
 
     override val lang = "pt-BR"
 
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.client
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+    }
 
     // ============================== Popular ===============================
     // This source doesn't have a popular anime page, so we'll grab 
@@ -68,6 +83,7 @@ class SukiAnimes : ParsedAnimeHttpSource() {
             }.getOrDefault(0F)
         }
     }
+
     // ============================ Video Links =============================
     override fun videoListParse(response: Response) = throw Exception("not used")
 
@@ -76,11 +92,69 @@ class SukiAnimes : ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     // =============================== Search ===============================
+    // We'll be using serialization in the search system, 
+    // so those functions won't be used.
     override fun searchAnimeFromElement(element: Element) = throw Exception("not used")
     override fun searchAnimeSelector() = throw Exception("not used")
     override fun searchAnimeNextPageSelector() = throw Exception("not used")
-
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
+
+    override fun getFilterList(): AnimeFilterList = SKFilters.filterList
+
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        val params = if (filters.size > 0) {
+            SKFilters.getSearchParameters(filters)
+        } else {
+            // default implementation, prevents "List is empty" error.
+            SKFilters.FilterSearchParams()
+        }
+        val request = searchAnimeRequest(page, query, params)
+        return client.newCall(request)
+            .asObservableSuccess()
+            .map { searchAnimeParse(it, page) }
+    }
+
+    private fun searchAnimeRequest(page: Int, query: String, filters: SKFilters.FilterSearchParams): Request {
+        val body = FormBody.Builder().apply {
+            val nonceReq = client.newCall(GET(NONCE_URL)).execute()
+            val nonce = nonceReq.body?.string()
+                .orEmpty()
+                .substringAfter("'")
+                .substringBefore("'")
+
+            add("action", "show_animes_ajax")
+            if (filters.adult)
+                add("adulto", "yes")
+            else
+                add("adulto", "no")
+            add("formato", filters.format)
+            add("nome", query)
+            add("paged", "$page")
+            add("search_nonce", nonce)
+            add("status", filters.status)
+            add("tipo", filters.type)
+            filters.genres.forEach { add("generos[]", it) }
+        }.build()
+
+        return POST(API_URL, body = body)
+    }
+
+    private fun searchAnimeParse(response: Response, page: Int): AnimesPage {
+        val searchData = runCatching {
+            response.parseAs<SearchResultDto>()
+        }.getOrDefault(SearchResultDto())
+        val animes = searchData.animes.map(::searchAnimeParseFromObject)
+        val hasNextPage = searchData.pages > 0 && searchData.pages != page
+        return AnimesPage(animes, hasNextPage)
+    }
+
+    private fun searchAnimeParseFromObject(anime: AnimeDto): SAnime {
+        return SAnime.create().apply {
+            setUrlWithoutDomain(anime.permalink)
+            title = anime.title
+            thumbnail_url = anime.thumbnail_url
+        }
+    }
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
@@ -137,5 +211,10 @@ class SukiAnimes : ParsedAnimeHttpSource() {
             "Em Lançamento" -> SAnime.ONGOING
             else -> SAnime.COMPLETED
         }
+    }
+
+    private inline fun <reified T> Response.parseAs(): T {
+        val responseBody = body?.string().orEmpty()
+        return json.decodeFromString(responseBody)
     }
 }
