@@ -27,10 +27,18 @@ class SukiAnimes : ParsedAnimeHttpSource() {
     override val client: OkHttpClient = network.client
 
     // ============================== Popular ===============================
-    override fun popularAnimeSelector() = throw Exception("not used")
-    override fun popularAnimeRequest(page: Int) = throw Exception("not used")
-    override fun popularAnimeFromElement(element: Element) = throw Exception("not used")
-    override fun popularAnimeNextPageSelector() = throw Exception("not used")
+    // This source doesn't have a popular anime page, so we'll grab 
+    // the latest anime additions instead.
+    override fun popularAnimeSelector() = "section.animeslancamentos div.aniItem > a"
+    override fun popularAnimeRequest(page: Int) = GET(baseUrl)
+    override fun popularAnimeNextPageSelector() = null // disable it
+    override fun popularAnimeFromElement(element: Element): SAnime {
+        return SAnime.create().apply {
+            setUrlWithoutDomain(element.attr("href"))
+            title = element.attr("title")
+            thumbnail_url = element.selectFirst("img").attr("src")
+        }
+    }
 
     // ============================== Episodes ==============================
     override fun episodeListSelector(): String = throw Exception("not used")
