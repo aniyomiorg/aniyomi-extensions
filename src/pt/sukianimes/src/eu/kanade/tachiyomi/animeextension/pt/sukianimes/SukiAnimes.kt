@@ -1,25 +1,17 @@
 package eu.kanade.tachiyomi.animeextension.pt.sukianimes
 
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
-import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
-import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
-import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.json.Json
-import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
-import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
+import kotlin.Exception
 
 class SukiAnimes : ParsedAnimeHttpSource() {
 
@@ -62,11 +54,18 @@ class SukiAnimes : ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime = throw Exception("not used")
 
     // =============================== Latest ===============================
-    override fun latestUpdatesNextPageSelector() = throw Exception("not used")
-    override fun latestUpdatesSelector() = throw Exception("not used")
+    override fun latestUpdatesNextPageSelector() = "div.paginacao > a.next"
+    override fun latestUpdatesSelector() = "div.epiItem > div.epiImg > a"
 
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("not used")
+    override fun latestUpdatesFromElement(element: Element): SAnime {
+        val anime = SAnime.create().apply {
+            setUrlWithoutDomain(element.attr("href"))
+            title = element.attr("title")
+            thumbnail_url = element.selectFirst("img").attr("src")
+        }
+        return anime
+    }
 
-    override fun latestUpdatesRequest(page: Int) = throw Exception("not used")
-
+    override fun latestUpdatesRequest(page: Int): Request =
+        GET("$baseUrl/lista-de-episodios/page/$page/")
 }
