@@ -47,9 +47,12 @@ class LegacyFunExtractor(private val client: OkHttpClient) {
             "user-agent", USER_AGENT
         )
         val newDoc = client.newCall(GET(iframeUrl, newHeaders)).execute().asJsoup()
-        val body = newDoc.selectFirst("script:containsData(eval)").data()
-        val unpacked = JsUnpacker.unpackAndCombine(body)
-        return unpacked?.let {
+        val body = newDoc.let { doc ->
+            doc.selectFirst("script:containsData(eval)")?.let {
+                JsUnpacker.unpackAndCombine(it.data())
+            } ?: doc.selectFirst("script:containsData(var player)")?.data()
+        }
+        return body?.let {
             val url = it.substringAfter("file\":")
                 .substringAfter("\"")
                 .substringBefore("\"")
