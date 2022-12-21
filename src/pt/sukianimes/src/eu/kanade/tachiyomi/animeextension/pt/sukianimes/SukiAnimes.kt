@@ -41,10 +41,33 @@ class SukiAnimes : ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector(): String = throw Exception("not used")
-    override fun episodeListParse(response: Response) = throw Exception("not used")
+    override fun episodeListSelector() = "div.ultEpsContainerItem > a"
+    private fun episodeListNextPageSelector() = latestUpdatesNextPageSelector()
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val doc = response.asJsoup()
+        val episodeList = mutableListOf<SEpisode>()
+        val eps = doc.select(episodeListSelector()).map(::episodeFromElement)
+        episodeList.addAll(eps)
+        val nextPageElement = doc.selectFirst(episodeListNextPageSelector())
+        if (nextPageElement != null) {
+            val nextUrl = nextPageElement.attr("href")
+            val res = client.newCall(GET(nextUrl)).execute()
+            episodeList.addAll(episodeListParse(res))
+        }
+        return episodeList
+    }
+
+    override fun episodeFromElement(element: Element): SEpisode {
+        return SEpisode.create().apply {
+            setUrlWithoutDomain(element.attr("href"))
+            val title = element.attr("title")
+            name = title
+            episode_number = runCatching {
+                title.trim().substringAfterLast(" ").toFloat()
+            }.getOrDefault(0F)
+        }
+    }
     // ============================ Video Links =============================
     override fun videoListParse(response: Response) = throw Exception("not used")
 
