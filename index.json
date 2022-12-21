@@ -1593,10 +1593,10 @@
   {
     "name": "Aniyomi: LegionAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.legionanime",
-    "apk": "aniyomi-es.legionanime-v13.5.apk",
+    "apk": "aniyomi-es.legionanime-v13.6.apk",
     "lang": "es",
-    "code": 5,
-    "version": "13.5",
+    "code": 6,
+    "version": "13.6",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2113,10 +2113,10 @@
   {
     "name": "Aniyomi: AnimesUP",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesup",
-    "apk": "aniyomi-pt.animesup-v13.2.apk",
+    "apk": "aniyomi-pt.animesup-v13.3.apk",
     "lang": "pt-BR",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2170,6 +2170,27 @@
         "baseUrl": "https://appanimeplus.tk/play-api.php",
         "versionId": 1,
         "hasCloudflare": 0
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: AnimeVibe",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animevibe",
+    "apk": "aniyomi-pt.animevibe-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimeVibe",
+        "lang": "pt-BR",
+        "id": "3172625051940242525",
+        "baseUrl": "https://animevibe.cc",
+        "versionId": 1,
+        "hasCloudflare": 1
       }
     ]
   },
