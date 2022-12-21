@@ -198,44 +198,50 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             } else {
                 it.jsonObject["name"]!!.jsonPrimitive.content.substringAfter("-").reversed()
             }
-            when {
-                url.contains("streamtape") -> {
-                    val video = StreamTapeExtractor(client).videoFromUrl(url, server)
-                    if (video != null) {
-                        videoList.add(video)
+            try {
+                when {
+                    url.contains("streamtape") -> {
+                        val video = StreamTapeExtractor(client).videoFromUrl(url, server)
+                        if (video != null) {
+                            videoList.add(video)
+                        }
+                    }
+                    (url.contains("fembed") || url.contains("vanfem")) -> {
+                        val newUrl = url.replace("fembed", "embedsito").replace("vanfem", "embedsito")
+                        try {
+                            videoList.addAll(FembedExtractor(client).videosFromUrl(newUrl, server))
+                        } catch (_: Exception) {
+                        }
+                    }
+                    url.contains("sb") -> {
+                        val video = StreamSBExtractor(client).videosFromUrl(url, headers)
+                        videoList.addAll(video)
+                    }
+                    url.contains("jkanime") -> {
+                        videoList.add(JkanimeExtractor(client).getDesuFromUrl(url))
+                    }
+                    url.contains("/stream/amz.php?") -> {
+                        try {
+                            val video = amazonExtractor(url)
+                            if (video.isNotBlank()) {
+                                videoList.add(Video(video, server, video))
+                            }
+                        } catch (_: Exception) {
+                        }
+                    }
+                    url.contains("yourupload") -> {
+                        val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
+                        videoList.addAll(YourUploadExtractor(client).videoFromUrl(url, headers))
+                    }
+                    url.contains("zippyshare") -> {
+                        val hostUrl = url.substringBefore("/v/")
+                        val videoUrlD = ZippyExtractor().getVideoUrl(url, json)
+                        val videoUrl = hostUrl + videoUrlD
+                        videoList.add(Video(videoUrl, server, videoUrl))
                     }
                 }
-                (url.contains("fembed") || url.contains("vanfem")) -> {
-                    val newUrl = url.replace("fembed", "embedsito").replace("vanfem", "embedsito")
-                    try {
-                        videoList.addAll(FembedExtractor(client).videosFromUrl(newUrl, server))
-                    } catch (_: Exception) {}
-                }
-                url.contains("sb") -> {
-                    val video = StreamSBExtractor(client).videosFromUrl(url, headers)
-                    videoList.addAll(video)
-                }
-                url.contains("jkanime") -> {
-                    videoList.add(JkanimeExtractor(client).getDesuFromUrl(url))
-                }
-                url.contains("/stream/amz.php?") -> {
-                    try {
-                        val video = amazonExtractor(url)
-                        if (video.isNotBlank()) {
-                            videoList.add(Video(video, server, video))
-                        }
-                    } catch (_: Exception) {}
-                }
-                url.contains("yourupload") -> {
-                    val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
-                    videoList.addAll(YourUploadExtractor(client).videoFromUrl(url, headers))
-                }
-                url.contains("zippyshare") -> {
-                    val hostUrl = url.substringBefore("/v/")
-                    val videoUrlD = ZippyExtractor().getVideoUrl(url, json)
-                    val videoUrl = hostUrl + videoUrlD
-                    videoList.add(Video(videoUrl, server, videoUrl))
-                }
+            } catch (_: Exception) {
+                // ignore
             }
         }
         return videoList
