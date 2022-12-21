@@ -42,7 +42,7 @@ class SukiAnimes : ParsedAnimeHttpSource() {
     }
 
     // ============================== Popular ===============================
-    // This source doesn't have a popular anime page, so we'll grab 
+    // This source doesn't have a popular anime page, so we'll grab
     // the latest anime additions instead.
     override fun popularAnimeSelector() = "section.animeslancamentos div.aniItem > a"
     override fun popularAnimeRequest(page: Int) = GET(baseUrl)
@@ -92,7 +92,7 @@ class SukiAnimes : ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     // =============================== Search ===============================
-    // We'll be using serialization in the search system, 
+    // We'll be using serialization in the search system,
     // so those functions won't be used.
     override fun searchAnimeFromElement(element: Element) = throw Exception("not used")
     override fun searchAnimeSelector() = throw Exception("not used")
@@ -102,16 +102,28 @@ class SukiAnimes : ParsedAnimeHttpSource() {
     override fun getFilterList(): AnimeFilterList = SKFilters.filterList
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        val params = if (filters.size > 0) {
-            SKFilters.getSearchParameters(filters)
+        return if (query.startsWith(PREFIX_SEARCH)) {
+            val slug = query.removePrefix(PREFIX_SEARCH)
+            client.newCall(GET("$baseUrl/anime/$slug", headers))
+                .asObservableSuccess()
+                .map { searchAnimeBySlugParse(it, slug) }
         } else {
-            // default implementation, prevents "List is empty" error.
-            SKFilters.FilterSearchParams()
+            val params = if (filters.size > 0) {
+                SKFilters.getSearchParameters(filters)
+            } else {
+                // default implementation, prevents "List is empty" error.
+                SKFilters.FilterSearchParams()
+            }
+            client.newCall(searchAnimeRequest(page, query, params))
+                .asObservableSuccess()
+                .map { searchAnimeParse(it, page) }
         }
-        val request = searchAnimeRequest(page, query, params)
-        return client.newCall(request)
-            .asObservableSuccess()
-            .map { searchAnimeParse(it, page) }
+    }
+
+    private fun searchAnimeBySlugParse(response: Response, slug: String): AnimesPage {
+        val details = animeDetailsParse(response)
+        details.url = "/anime/$slug"
+        return AnimesPage(listOf(details), false)
     }
 
     private fun searchAnimeRequest(page: Int, query: String, filters: SKFilters.FilterSearchParams): Request {
@@ -216,5 +228,9 @@ class SukiAnimes : ParsedAnimeHttpSource() {
     private inline fun <reified T> Response.parseAs(): T {
         val responseBody = body?.string().orEmpty()
         return json.decodeFromString(responseBody)
+    }
+
+    companion object {
+        const val PREFIX_SEARCH = "slug:"
     }
 }
