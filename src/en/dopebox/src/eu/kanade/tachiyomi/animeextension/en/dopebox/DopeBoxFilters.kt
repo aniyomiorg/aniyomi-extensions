@@ -72,6 +72,8 @@ object DopeBoxFilters {
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
+        if (filters.isEmpty()) return FilterSearchParams()
+
         return FilterSearchParams(
             filters.asQueryPart<TypeFilter>(),
             filters.asQueryPart<QualityFilter>(),

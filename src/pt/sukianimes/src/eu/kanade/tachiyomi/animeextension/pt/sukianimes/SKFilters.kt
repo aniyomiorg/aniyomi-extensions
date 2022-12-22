@@ -58,6 +58,9 @@ object SKFilters {
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
+
+        if (filters.isEmpty()) return FilterSearchParams()
+
         val genres = filters.getFirst<GenresFilter>().state
             .mapNotNull { genre ->
                 if (genre.state) {
