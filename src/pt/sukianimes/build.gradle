@@ -1,0 +1,14 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'SukiAnimes'
+    pkgNameSuffix = 'pt.sukianimes'
+    extClass = '.SukiAnimes'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+
+apply from: "$rootDir/common.gradle"
