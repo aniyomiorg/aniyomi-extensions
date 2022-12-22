@@ -78,6 +78,8 @@ object ZoroFilters {
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
+        if (filters.isEmpty()) return FilterSearchParams()
+
         val genres: String = filters.filterIsInstance<GenresFilter>()
             .first()
             .state.mapNotNull { format ->
