@@ -61,8 +61,20 @@ class SukiAnimes : ParsedAnimeHttpSource() {
     override fun episodeListSelector() = "div.ultEpsContainerItem > a"
     private fun episodeListNextPageSelector() = latestUpdatesNextPageSelector()
 
+    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+        return client.newCall(episodeListRequest(anime))
+            .asObservableSuccess()
+            .map { response ->
+                val realDoc = getRealDoc(response.asJsoup())
+                episodeListParse(realDoc).reversed()
+            }
+    }
+
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = response.asJsoup()
+        return episodeListParse(response.asJsoup())
+    }
+
+    private fun episodeListParse(doc: Document): List<SEpisode> {
         val episodeList = mutableListOf<SEpisode>()
         val eps = doc.select(episodeListSelector()).map(::episodeFromElement)
         episodeList.addAll(eps)
