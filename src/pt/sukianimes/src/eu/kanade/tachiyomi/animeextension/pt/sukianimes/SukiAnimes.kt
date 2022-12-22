@@ -2,10 +2,12 @@ package eu.kanade.tachiyomi.animeextension.pt.sukianimes
 
 import eu.kanade.tachiyomi.animeextension.pt.sukianimes.dto.AnimeDto
 import eu.kanade.tachiyomi.animeextension.pt.sukianimes.dto.SearchResultDto
+import eu.kanade.tachiyomi.animeextension.pt.sukianimes.extractors.BloggerExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
+import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -85,7 +87,31 @@ class SukiAnimes : ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
-    override fun videoListParse(response: Response) = throw Exception("not used")
+    override fun videoListParse(response: Response): List<Video> {
+        val doc = response.asJsoup()
+
+        val players = doc.select("li.abasPlayers").map {
+            val url = it.attr("data-playerurl")
+            Pair(it.text(), url)
+        }.ifEmpty {
+            val defaultPlayer = doc.selectFirst("div.playerBoxInfra > iframe")
+                ?: doc.selectFirst("video#player")
+            listOf(Pair("Default", defaultPlayer.attr("src")))
+        }
+
+        val videos = players.mapNotNull { (name, url) ->
+            when {
+                url.contains("$baseUrl/player") ->
+                    BloggerExtractor(client).videoFromUrl(url, name, headers)
+
+                // Unfortunately, most of the links are broken.
+                url.contains("fy.v.vrv.co") -> null
+
+                else -> listOf(Video(url, name, url, headers = headers))
+            }
+        }.flatten()
+        return videos
+    }
 
     override fun videoListSelector() = throw Exception("not used")
     override fun videoFromElement(element: Element) = throw Exception("not used")
