@@ -2384,6 +2384,27 @@
     ]
   },
   {
+    "name": "Aniyomi: SukiAnimes",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.sukianimes",
+    "apk": "aniyomi-pt.sukianimes-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "SukiAnimes",
+        "lang": "pt-BR",
+        "id": "8515141728996680917",
+        "baseUrl": "https://sukianimes.com",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Vizer.tv",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.vizer",
     "apk": "aniyomi-pt.vizer-v13.4.apk",
