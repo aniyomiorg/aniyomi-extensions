@@ -146,12 +146,7 @@ class SukiAnimes : ParsedAnimeHttpSource() {
                 .asObservableSuccess()
                 .map { searchAnimeBySlugParse(it, slug) }
         } else {
-            val params = if (filters.size > 0) {
-                SKFilters.getSearchParameters(filters)
-            } else {
-                // default implementation, prevents "List is empty" error.
-                SKFilters.FilterSearchParams()
-            }
+            val params = SKFilters.getSearchParameters(filters)
             client.newCall(searchAnimeRequest(page, query, params))
                 .asObservableSuccess()
                 .map { searchAnimeParse(it, page) }
