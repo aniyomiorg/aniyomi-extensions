@@ -69,6 +69,8 @@ object AVFilters {
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
+        if (filters.isEmpty()) return FilterSearchParams()
+
         val genres: String = filters.filterIsInstance<GenresFilter>()
             .mapNotNull { filter ->
                 filter.state.mapNotNull { format ->
