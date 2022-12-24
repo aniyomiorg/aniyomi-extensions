@@ -1507,6 +1507,27 @@
     ]
   },
   {
+    "name": "Aniyomi: EnNovelas",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.ennovelas",
+    "apk": "aniyomi-es.ennovelas-v13.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "EnNovelas",
+        "lang": "es",
+        "id": "6683521813386506618",
+        "baseUrl": "https://www.ennovelas.com",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Hentaijk",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.hentaijk",
     "apk": "aniyomi-es.hentaijk-v13.7.apk",
