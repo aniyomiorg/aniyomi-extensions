@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.en.kawaiifu
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -124,6 +123,7 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val serverUrl = server.select("ul li").toList()[activeIndex].select("a").attr("href")
             val document = client.newCall(GET(serverUrl)).execute().asJsoup()
             val serverName = server.select("h4").text()
+
             document.select(videoListSelector()).map {
                 videoList.add(
                     Video(
