@@ -1066,6 +1066,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Kawaiifu",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.kawaiifu",
+    "apk": "aniyomi-en.kawaiifu-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Kawaiifu",
+        "lang": "en",
+        "id": "8687457505451844609",
+        "baseUrl": "https://kawaiifu.com",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: KickAssAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.kickassanime",
     "apk": "aniyomi-en.kickassanime-v13.12.apk",
