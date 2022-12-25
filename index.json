@@ -2426,6 +2426,27 @@
     ]
   },
   {
+    "name": "Aniyomi: SubAnimes",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.subanimes",
+    "apk": "aniyomi-pt.subanimes-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "SubAnimes",
+        "lang": "pt-BR",
+        "id": "5033656201243774661",
+        "baseUrl": "https://subanimes.cc",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: SukiAnimes",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.sukianimes",
     "apk": "aniyomi-pt.sukianimes-v13.1.apk",
