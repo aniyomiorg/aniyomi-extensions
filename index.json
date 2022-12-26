@@ -1593,10 +1593,10 @@
   {
     "name": "Aniyomi: Jkanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.jkanime",
-    "apk": "aniyomi-es.jkanime-v13.9.apk",
+    "apk": "aniyomi-es.jkanime-v13.10.apk",
     "lang": "es",
-    "code": 9,
-    "version": "13.9",
+    "code": 10,
+    "version": "13.10",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
