@@ -66,6 +66,20 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val lastEp = client.newCall(GET("$baseUrl/ajax/last_episode/$animeId/")).execute().asJsoup().body().text()
             .substringAfter("number\":\"").substringBefore("\"").toInt()
 
+        // check if episode 0 exists
+        // si no existe le navegador te redirige a https://jkanime.net/404.shtml
+        client.newCall(GET("$episodeLink/0/")).execute().use { resp ->
+            if (!resp.request.url.toString().contains("404.shtml")) {
+                episodes.add(
+                    SEpisode.create().apply {
+                        name = "Episodio 0"
+                        episode_number = 0f
+                        setUrlWithoutDomain("$episodeLink/0/")
+                    }
+                )
+            }
+        }
+
         for (i in 1..lastEp) {
             val episode = SEpisode.create()
             episode.setUrlWithoutDomain("$episodeLink/$i")
