@@ -100,6 +100,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videos = mutableListOf<Video>()
         document.select("div.col-lg-12.rounded.bg-servers.text-white.p-3.mt-2 a").forEach { it ->
             val serverId = it.attr("data-id")
+            val lang = if (it.attr("class").contains("lg_3")) "[LAT]" else ""
             val scriptServers = document.selectFirst("script:containsData(var video = [];)")
             val url = scriptServers.data().substringAfter("video[$serverId] = '<iframe class=\"player_conte\" src=\"")
                 .substringBefore("\"")
@@ -109,11 +110,11 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .replace("/jk.php?u=", "$baseUrl/")
 
             when {
-                "embedsito" in url -> FembedExtractor(client).videosFromUrl(url).forEach { videos.add(it) }
-                "ok" in url -> OkruExtractor(client).videosFromUrl(url).forEach { videos.add(it) }
-                "stream/jkmedia" in url -> videos.add(Video(url, "Xtreme S", url))
-                "um2.php" in url -> JkanimeExtractor(client).getNozomiFromUrl(baseUrl + url).let { videos.add(it) }
-                "um.php" in url -> JkanimeExtractor(client).getDesuFromUrl(baseUrl + url).let { videos.add(it) }
+                "embedsito" in url -> FembedExtractor(client).videosFromUrl(url, lang).forEach { videos.add(it) }
+                "ok" in url -> OkruExtractor(client).videosFromUrl(url, lang).forEach { videos.add(it) }
+                "stream/jkmedia" in url -> videos.add(Video(url, "${lang}Xtreme S", url))
+                "um2.php" in url -> JkanimeExtractor(client).getNozomiFromUrl(baseUrl + url, lang).let { if (it != null) videos.add(it) }
+                "um.php" in url -> JkanimeExtractor(client).getDesuFromUrl(baseUrl + url, lang).let { if (it != null) videos.add(it) }
             }
         }
         return videos

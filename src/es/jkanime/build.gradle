@@ -5,7 +5,7 @@ ext {
     extName = 'Jkanime'
     pkgNameSuffix = 'es.jkanime'
     extClass = '.Jkanime'
-    extVersionCode = 10
+    extVersionCode = 11
     libVersion = '13'
 }
 
