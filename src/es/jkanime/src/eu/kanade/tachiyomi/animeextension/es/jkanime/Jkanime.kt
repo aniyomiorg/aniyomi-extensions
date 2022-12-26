@@ -64,7 +64,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val animeId = pageBody.select("div.anime__details__text div.anime__details__title div#guardar-anime.btn.btn-light.btn-sm.ml-2")
             .attr("data-anime")
         val lastEp = client.newCall(GET("$baseUrl/ajax/last_episode/$animeId/")).execute().asJsoup().body().text()
-            .substringAfter("number\":\"").substringBefore("\"").toInt()
+            .substringAfter("number\":\"").substringBefore("\"").toIntOrNull() ?: 0
 
         // check if episode 0 exists
         // si no existe le navegador te redirige a https://jkanime.net/404.shtml
@@ -100,6 +100,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videos = mutableListOf<Video>()
         document.select("div.col-lg-12.rounded.bg-servers.text-white.p-3.mt-2 a").forEach { it ->
             val serverId = it.attr("data-id")
+            val lang = if (it.attr("class").contains("lg_3")) "[LAT]" else ""
             val scriptServers = document.selectFirst("script:containsData(var video = [];)")
             val url = scriptServers.data().substringAfter("video[$serverId] = '<iframe class=\"player_conte\" src=\"")
                 .substringBefore("\"")
@@ -109,11 +110,11 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .replace("/jk.php?u=", "$baseUrl/")
 
             when {
-                "embedsito" in url -> FembedExtractor(client).videosFromUrl(url).forEach { videos.add(it) }
-                "ok" in url -> OkruExtractor(client).videosFromUrl(url).forEach { videos.add(it) }
-                "stream/jkmedia" in url -> videos.add(Video(url, "Xtreme S", url))
-                "um2.php" in url -> JkanimeExtractor(client).getNozomiFromUrl(baseUrl + url).let { videos.add(it) }
-                "um.php" in url -> JkanimeExtractor(client).getDesuFromUrl(baseUrl + url).let { videos.add(it) }
+                "embedsito" in url -> FembedExtractor(client).videosFromUrl(url, lang).forEach { videos.add(it) }
+                "ok" in url -> OkruExtractor(client).videosFromUrl(url, lang).forEach { videos.add(it) }
+                "stream/jkmedia" in url -> videos.add(Video(url, "${lang}Xtreme S", url))
+                "um2.php" in url -> JkanimeExtractor(client).getNozomiFromUrl(baseUrl + url, lang).let { if (it != null) videos.add(it) }
+                "um.php" in url -> JkanimeExtractor(client).getDesuFromUrl(baseUrl + url, lang).let { if (it != null) videos.add(it) }
             }
         }
         return videos
@@ -140,19 +141,35 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return sortIfContains(quality)
     }
 
-    private fun getNumberFromString(epsStr: String): String {
-        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
-    }
-
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
         val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
+        val typeFilter = filterList.find { it is TypeFilter } as TypeFilter
+        val stateFilter = filterList.find { it is StateFilter } as StateFilter
+        val seasonFilter = filterList.find { it is SeasonFilter } as SeasonFilter
+        val orderByFilter = filterList.find { it is OrderByFilter } as OrderByFilter
+        val sortModifiers = filterList.find { it is SortModifiers } as SortModifiers
+        val tagFilter = filters.find { it is Tags } as Tags
 
-        return when {
-            query.isNotBlank() -> GET("$baseUrl/buscar/$query/$page/?filtro=fecha&tipo=none&estado=none&orden=desc", headers)
-            genreFilter.state != 0 -> GET("$baseUrl/genero/${genreFilter.toUriPart()}/$page")
-            else -> latestUpdatesRequest(page)
+        var url = baseUrl
+        if (query.isNotBlank()) {
+            val types = listOf("TV", "Movie", "Special", "OVA", "ONA")
+            url += "/buscar/$query/$page/"
+            url += if (orderByFilter.state != 0) "?filtro=${orderByFilter.toUriPart()}" else "?filtro=nombre"
+            url += if (typeFilter.state != 0) "&tipo=${ types.first {t -> t.lowercase() == typeFilter.toUriPart()} }" else "&tipo=none"
+            url += if (stateFilter.state != 0) "&estado=${ if (stateFilter.toUriPart() == "emision") "1" else "2" }" else "&estado=none"
+            url += if (sortModifiers.state != 0) "&orden=${sortModifiers.toUriPart()}" else "&orden=none"
+        } else {
+            url += "/directorio/$page/${orderByFilter.toUriPart()}"
+            url += if (genreFilter.state != 0) "/${genreFilter.toUriPart()}" else ""
+            url += if (typeFilter.state != 0) "/${typeFilter.toUriPart() }" else ""
+            url += if (stateFilter.state != 0) "/${stateFilter.toUriPart()}" else ""
+            url += if (tagFilter.state.isNotBlank()) "/${tagFilter.state}" else ""
+            url += if (seasonFilter.state != 0) "/${seasonFilter.toUriPart()}" else ""
+            url += "/${sortModifiers.toUriPart()}"
         }
+
+        return GET(url, headers)
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage {
@@ -229,102 +246,115 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesSelector(): String = "div.card.mb-3.custom_item2"
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
-        AnimeFilter.Header("La busqueda por texto ignora el filtro"),
-        GenreFilter()
+        AnimeFilter.Header("La busqueda por texto no incluye todos los filtros"),
+        GenreFilter(),
+        TypeFilter(),
+        StateFilter(),
+        SeasonFilter(),
+        AnimeFilter.Header("Busqueda por año"),
+        Tags("Año"),
+        AnimeFilter.Header("Filtros de ordenamiento"),
+        OrderByFilter(),
+        SortModifiers()
     )
 
     private class GenreFilter : UriPartFilter(
-        "Generos",
+        "Géneros",
         arrayOf(
-            Pair("<selecionar>", "none"),
-            Pair("Español latino", "latino"),
+            Pair("<Selecionar>", "none"),
+            Pair("Español Latino", "espaol-latino"),
             Pair("Accion", "accion"),
-            Pair("Artes Marciales", "artes-marciales"),
-            Pair("Autos", "autos"),
             Pair("Aventura", "aventura"),
-            Pair("Colegial", "colegial"),
+            Pair("Autos", "autos"),
             Pair("Comedia", "comedia"),
-            Pair("Cosas de la vida", "cosas-de-la-vida"),
             Pair("Dementia", "dementia"),
             Pair("Demonios", "demonios"),
-            Pair("Deportes", "deportes"),
+            Pair("Misterio", "misterio"),
             Pair("Drama", "drama"),
             Pair("Ecchi", "ecchi"),
-            Pair("Fantasia", "fantasa"),
-            Pair("Harem", "harem"),
-            Pair("Historico", "historico"),
-            Pair("Josei", "josei"),
+            Pair("Fantasìa", "fantasa"),
             Pair("Juegos", "juegos"),
-            Pair("Magia", "magia"),
-            Pair("Mecha", "mecha"),
-            Pair("Militar", "militar"),
-            Pair("Misterio", "misterio"),
-            Pair("Musica", "musica"),
-            Pair("Niños", "nios"),
-            Pair("Parodia", "parodia"),
-            Pair("Policial", "policial"),
-            Pair("Psicologico", "psicologico"),
-            Pair("Romance", "romance"),
-            Pair("Samurai", "samurai"),
-            Pair("Sci-fi", "sci-fi"),
-            Pair("Seinen", "seinen"),
-            Pair("Shoujo", "shoujo"),
-            Pair("Shoujo ai", "shoujo-ai"),
-            Pair("Shounen", "shounen"),
-            Pair("Shounen ai", "shounen-ai"),
-            Pair("Sobrenatural", "sobrenatural"),
-            Pair("Space", "space"),
-            Pair("Super poderes", "super-poderes"),
+            Pair("Hentai", "hentai"),
+            Pair("Historico", "historico"),
             Pair("Terror", "terror"),
-            Pair("Thriller", "thriller"),
+            Pair("Magia", "magia"),
+            Pair("Artes Marciales", "artes-marciales"),
+            Pair("Mecha", "mecha"),
+            Pair("Musica", "musica"),
+            Pair("Parodia", "parodia"),
+            Pair("Samurai", "samurai"),
+            Pair("Romance", "romance"),
+            Pair("Colegial", "colegial"),
+            Pair("Sci-Fi", "sci-fi"),
+            Pair("Shoujo Ai", "shoujo-ai"),
+            Pair("Shounen Ai", "shounen-ai"),
+            Pair("Space", "space"),
+            Pair("Deportes", "deportes"),
+            Pair("Super Poderes", "super-poderes"),
             Pair("Vampiros", "vampiros"),
             Pair("Yaoi", "yaoi"),
             Pair("Yuri", "yuri"),
-            Pair("Español latino", "latino"),
-            Pair("Accion", "accion"),
-            Pair("Artes Marciales", "artes-marciales"),
-            Pair("Autos", "autos"),
-            Pair("Aventura", "aventura"),
-            Pair("Colegial", "colegial"),
-            Pair("Comedia", "comedia"),
-            Pair("Cosas de la vida", "cosas-de-la-vida"),
-            Pair("Dementia", "dementia"),
-            Pair("Demonios", "demonios"),
-            Pair("Deportes", "deportes"),
-            Pair("Drama", "drama"),
-            Pair("Ecchi", "ecchi"),
-            Pair("Fantasia", "fantasa"),
             Pair("Harem", "harem"),
-            Pair("Historico", "historico"),
-            Pair("Josei", "josei"),
-            Pair("Juegos", "juegos"),
-            Pair("Magia", "magia"),
-            Pair("Mecha", "mecha"),
+            Pair("Cosas de la vida", "cosas-de-la-vida"),
+            Pair("Sobrenatural", "sobrenatural"),
             Pair("Militar", "militar"),
-            Pair("Misterio", "misterio"),
-            Pair("Musica", "musica"),
-            Pair("Niños", "nios"),
-            Pair("Parodia", "parodia"),
             Pair("Policial", "policial"),
             Pair("Psicologico", "psicologico"),
-            Pair("Romance", "romance"),
-            Pair("Samurai", "samurai"),
-            Pair("Sci-fi", "sci-fi"),
-            Pair("Seinen", "seinen"),
-            Pair("Shoujo", "shoujo"),
-            Pair("Shoujo ai", "shoujo-ai"),
-            Pair("Shounen", "shounen"),
-            Pair("Shounen ai", "shounen-ai"),
-            Pair("Sobrenatural", "sobrenatural"),
-            Pair("Space", "space"),
-            Pair("Super poderes", "super-poderes"),
-            Pair("Terror", "terror"),
             Pair("Thriller", "thriller"),
-            Pair("Vampiros", "vampiros"),
-            Pair("Yaoi", "yaoi"),
-            Pair("Yuri", "yuri")
+            Pair("Isekai", "isekai")
         )
     )
+
+    private class TypeFilter : UriPartFilter(
+        "Tipo",
+        arrayOf(
+            Pair("<Seleccionar>", ""),
+            Pair("Animes", "tv"),
+            Pair("Películas", "peliculas"),
+            Pair("Especiales", "especiales"),
+            Pair("OVAS", "ovas"),
+            Pair("ONAS", "onas")
+        )
+    )
+
+    private class StateFilter : UriPartFilter(
+        "Estado",
+        arrayOf(
+            Pair("<Cualquiera>", ""),
+            Pair("En emisión", "emision"),
+            Pair("Finalizado", "finalizados"),
+            Pair("Por Estrenar", "estrenos")
+        )
+    )
+
+    private class SeasonFilter : UriPartFilter(
+        "Temporada",
+        arrayOf(
+            Pair("<Cualquiera>", ""),
+            Pair("Primavera", "primavera"),
+            Pair("Verano", "verano"),
+            Pair("Otoño", "otoño"),
+            Pair("Invierno", "invierno"),
+        )
+    )
+
+    private class OrderByFilter : UriPartFilter(
+        "Ordenar por",
+        arrayOf(
+            Pair("Por fecha", "fecha"),
+            Pair("Por nombre", "nombre"),
+        )
+    )
+
+    private class SortModifiers : UriPartFilter(
+        "De forma",
+        arrayOf(
+            Pair("Descendente", "desc"),
+            Pair("Ascendente", "asc"),
+        )
+    )
+
+    private class Tags(name: String) : AnimeFilter.Text(name)
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
         AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
