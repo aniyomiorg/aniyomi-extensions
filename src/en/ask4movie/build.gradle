@@ -1,0 +1,17 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'Ask4Movie'
+    pkgNameSuffix = 'en.ask4movie'
+    extClass = '.Ask4Movie'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-fembed-extractor'))
+}
+
+apply from: "$rootDir/common.gradle"
