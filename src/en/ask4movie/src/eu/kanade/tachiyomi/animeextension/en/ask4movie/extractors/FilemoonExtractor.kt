@@ -23,16 +23,19 @@ class FilemoonExtractor(private val client: OkHttpClient) {
 
             val subtitleString = JsUnpacker(jsE).unpack().toString().substringAfter("fetch('").substringBefore("').")
             val subtitleTracks = mutableListOf<Track>()
-            if (subtitleString.isNotEmpty()) {
-                val subResponse = client.newCall(
-                    GET(subtitleString)
-                ).execute()
+            try {
+                if (subtitleString.isNotEmpty()) {
+                    val subResponse = client.newCall(
+                        GET(subtitleString)
+                    ).execute()
 
-                val subtitles = Json.decodeFromString<List<CaptionElement>>(subResponse.body!!.string())
-                for (sub in subtitles) {
-                    subtitleTracks.add(Track(sub.file, sub.label))
+                    val subtitles = Json.decodeFromString<List<CaptionElement>>(subResponse.body!!.string())
+                    for (sub in subtitles) {
+                        subtitleTracks.add(Track(sub.file, sub.label))
+                    }
                 }
-            }
+            } catch(e: Error) {}
+
 
             val masterUrl = JsUnpacker(jsE).unpack().toString().substringAfter("{file:\"").substringBefore("\"}")
             val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
@@ -42,7 +45,12 @@ class FilemoonExtractor(private val client: OkHttpClient) {
                 .forEach {
                     val quality = "Filemoon:" + it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p "
                     val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                    videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subtitleTracks))
+                    try {
+                        videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subtitleTracks))
+                    } catch (e: Error) {
+                        videoList.add(Video(videoUrl, quality, videoUrl))
+                    }
+
                 }
             return videoList
         } catch (e: Exception) {

@@ -604,16 +604,19 @@ class CinegrabberExtractor(private val client: OkHttpClient) {
         val jsonResponse = try { Json { ignoreUnknownKeys = true }.decodeFromString<FembedResponse>(body) } catch (e: Exception) { FembedResponse(false, emptyList()) }
 
         val subtitleList = mutableListOf<Track>()
-        if (!jsonResponse.captions.isNullOrEmpty()) {
-            jsonResponse.captions.forEach {
-                subtitleList.add(
-                    Track(
-                        "https://cinegrabber.com/asset/userdata/$userId/caption/${it.hash}/${it.id}.${it.extension}",
-                        it.language
+        try {
+            if (!jsonResponse.captions.isNullOrEmpty()) {
+                jsonResponse.captions.forEach {
+                    subtitleList.add(
+                        Track(
+                            "https://cinegrabber.com/asset/userdata/$userId/caption/${it.hash}/${it.id}.${it.extension}",
+                            it.language
+                        )
                     )
-                )
+                }
             }
-        }
+        } catch (e: Error) {}
+
 
         return if (jsonResponse.success) {
             jsonResponse.data.map {
@@ -621,7 +624,12 @@ class CinegrabberExtractor(private val client: OkHttpClient) {
                     if (prefix.isNotBlank()) "$prefix $it"
                     else it
                 }
-                Video(it.file, quality, it.file, subtitleTracks = subtitleList)
+                try {
+                    Video(it.file, quality, it.file, subtitleTracks = subtitleList)
+                } catch (e: Error) {
+                    Video(it.file, quality, it.file)
+                }
+
             }
         } else { emptyList<Video>() }
     }
