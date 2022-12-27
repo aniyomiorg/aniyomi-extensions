@@ -919,6 +919,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Ask4Movie",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.ask4movie",
+    "apk": "aniyomi-en.ask4movie-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Ask4Movie",
+        "lang": "en",
+        "id": "7599907565344643468",
+        "baseUrl": "https://ask4movie.mx",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: DopeBox",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.dopebox",
     "apk": "aniyomi-en.dopebox-v13.16.apk",
