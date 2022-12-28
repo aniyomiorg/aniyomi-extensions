@@ -835,15 +835,15 @@ class SuperStreamAPI(val json: Json) {
             .add("medium", "Website&token$token")
             .build()
         try {
-            val url = if (altApi) secondApiUrl else apiUrl
+            val url = if (altApi) secondApiUrl else thirdApiUrl
             return client.newCall(POST(url, headers = headers, body = formData)).execute()
         } catch (e: Exception) {
-            throw Exception("Query Failed $e")
+            throw Exception("Query Failed\n$e")
         }
     }
 
-    private inline fun <reified T : Any> queryApiParsed(query: String): T {
-        return parseJson(queryApi(query).body!!.string())
+    private inline fun <reified T : Any> queryApiParsed(query: String, altApi: Boolean = false): T {
+        return parseJson(queryApi(query, altApi).body!!.string())
     }
 
     private val unixTime: Long
@@ -867,6 +867,7 @@ class SuperStreamAPI(val json: Json) {
     // Thanks @Blatzar and his dream from cloudstream for the secondurl
     private val secondApiUrl =
         base64Decode("aHR0cHM6Ly9tYnBhcGkuc2hlZ3UubmV0L2FwaS9hcGlfY2xpZW50L2luZGV4Lw==")
+    private val thirdApiUrl = base64Decode("aHR0cHM6Ly9zaG93Ym94LnNoZWd1Lm5ldC9hcGkvYXBpX2NsaWVudC9pbmRleC8=")
     private val appKey = base64Decode("bW92aWVib3g=")
     private val appId = base64Decode("Y29tLnRkby5zaG93Ym94")
 
@@ -943,7 +944,7 @@ class SuperStreamAPI(val json: Json) {
         return searchResponse
     }
 
-    fun load(url: String): Pair<MovieData?, Pair<SeriesData?, List<SeriesEpisode>?>> {
+    fun load(url: String, altApi: Boolean = false): Pair<MovieData?, Pair<SeriesData?, List<SeriesEpisode>?>> {
         val loadData = parseJson<LoadData>(url)
         // val module = if(type === "TvType.Movie") "Movie_detail" else "*tv series module*"
 
@@ -952,14 +953,14 @@ class SuperStreamAPI(val json: Json) {
         if (isMovie) { // 1 = Movie
             val apiQuery =
                 """{"childmode":"$hideNsfw","uid":"","app_version":"11.5","appid":"$appId","module":"Movie_detail","channel":"Website","mid":"${loadData.id}","lang":"en","expired_date":"${getExpiryDate()}","platform":"android","oss":"","group":""}"""
-            val data = (queryApiParsed<MovieDataProp>(apiQuery)).data
+            val data = (queryApiParsed<MovieDataProp>(apiQuery, altApi)).data
                 ?: throw RuntimeException("API error")
 
             return Pair(data, Pair(null, null))
         } else { // 2 Series
             val apiQuery =
                 """{"childmode":"$hideNsfw","uid":"","app_version":"11.5","appid":"$appId","module":"TV_detail_1","display_all":"1","channel":"Website","lang":"en","expired_date":"${getExpiryDate()}","platform":"android","tid":"${loadData.id}"}"""
-            val data = (queryApiParsed<SeriesDataProp>(apiQuery)).data
+            val data = (queryApiParsed<SeriesDataProp>(apiQuery, altApi)).data
                 ?: throw RuntimeException("API error")
 
             val episodes = data.season.mapNotNull {
