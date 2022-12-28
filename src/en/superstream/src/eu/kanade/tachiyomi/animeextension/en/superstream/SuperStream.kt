@@ -137,7 +137,7 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun searchAnimeParse(response: Response) = throw Exception("not used")
 
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        val data = superStreamAPI.load(anime.url)
+        val data = superStreamAPI.load(anime.url, true)
         val ani = SAnime.create()
         val (movie, seriesData) = data
         val (detail, _) = seriesData

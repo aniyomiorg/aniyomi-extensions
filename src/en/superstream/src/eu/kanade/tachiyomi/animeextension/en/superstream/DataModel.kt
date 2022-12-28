@@ -170,7 +170,7 @@ data class SeriesData(
     val collect: Int? = null,
     val view: Int? = null,
     val download: Int? = null,
-    val update_time: String? = null,
+    val update_time: JsonElement? = null,
     val released: String? = null,
     val released_timestamp: Int? = null,
     val episode_released: String? = null,
