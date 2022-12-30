@@ -1150,6 +1150,27 @@
     ]
   },
   {
+    "name": "Aniyomi: NollyVerse",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.nollyverse",
+    "apk": "aniyomi-en.nollyverse-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "NollyVerse",
+        "lang": "en",
+        "id": "2737010507830123625",
+        "baseUrl": "https://www.nollyverse.com",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: PutLocker",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.putlocker",
     "apk": "aniyomi-en.putlocker-v13.3.apk",
@@ -1669,6 +1690,27 @@
         "lang": "es",
         "id": "508651506167756898",
         "baseUrl": "https://legionanime.club/api",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: LocoPelis",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.locopelis",
+    "apk": "aniyomi-es.locopelis-v13.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "LocoPelis",
+        "lang": "es",
+        "id": "7685749277599065785",
+        "baseUrl": "https://www.locopelis.com",
         "versionId": 1,
         "hasCloudflare": 1
       }
