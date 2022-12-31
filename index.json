@@ -877,6 +877,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Animerush",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.animerush",
+    "apk": "aniyomi-en.animerush-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Animerush",
+        "lang": "en",
+        "id": "3181577132815280624",
+        "baseUrl": "https://www.animerush.tv",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Animixplay",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.animixplay",
     "apk": "aniyomi-en.animixplay-v13.13.apk",
