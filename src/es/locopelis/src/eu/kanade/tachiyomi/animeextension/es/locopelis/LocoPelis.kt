@@ -126,7 +126,7 @@ class LocoPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 embedUrl.contains("diampokusy.com") || embedUrl.contains("i18n.pw") || embedUrl.contains("vanfem.com") ||
                 embedUrl.contains("fembed9hd.com") || embedUrl.contains("votrefilms.xyz") || embedUrl.contains("watchjavnow.xyz")
             ) {
-                val videos = FembedExtractor(client).videosFromUrl(url)
+                val videos = FembedExtractor(client).videosFromUrl(url, redirect = true)
                 videoList.addAll(videos)
             }
             if (url.lowercase().contains("streamtape")) {
