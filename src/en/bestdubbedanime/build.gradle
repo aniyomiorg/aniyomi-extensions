@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'BestDubbedAnime'
+    pkgNameSuffix = 'en.bestdubbedanime'
+    extClass = '.BestDubbedAnime'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+apply from: "$rootDir/common.gradle"
