@@ -961,6 +961,27 @@
     ]
   },
   {
+    "name": "Aniyomi: BestDubbedAnime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.bestdubbedanime",
+    "apk": "aniyomi-en.bestdubbedanime-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "BestDubbedAnime",
+        "lang": "en",
+        "id": "2378107952091013853",
+        "baseUrl": "https://bestdubbedanime.com",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: DopeBox",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.dopebox",
     "apk": "aniyomi-en.dopebox-v13.16.apk",
