@@ -42,6 +42,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Kamyroll",
+    "pkg": "eu.kanade.tachiyomi.animeextension.all.kamyroll",
+    "apk": "aniyomi-all.kamyroll-v13.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Kamyroll",
+        "lang": "all",
+        "id": "7463514907068706782",
+        "baseUrl": "https://api.kamyroll.tech",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Onepace",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.onepace",
     "apk": "aniyomi-all.onepace-v13.8.apk",
