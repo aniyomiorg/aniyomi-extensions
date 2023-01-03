@@ -1278,10 +1278,10 @@
   {
     "name": "Aniyomi: Rule34Video",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.rule34video",
-    "apk": "aniyomi-en.rule34video-v13.3.apk",
+    "apk": "aniyomi-en.rule34video-v13.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1290,7 +1290,7 @@
         "name": "Rule34Video",
         "lang": "en",
         "id": "9212790518101043860",
-        "baseUrl": "https://rule34video.com/",
+        "baseUrl": "https://rule34video.com",
         "versionId": 1,
         "hasCloudflare": 1
       }
