@@ -1,0 +1,17 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'Kamyroll'
+    pkgNameSuffix = 'all.kamyroll'
+    extClass = '.Kamyroll'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+dependencies {
+    compileOnly libs.bundles.coroutines
+}
+
+apply from: "$rootDir/common.gradle"
