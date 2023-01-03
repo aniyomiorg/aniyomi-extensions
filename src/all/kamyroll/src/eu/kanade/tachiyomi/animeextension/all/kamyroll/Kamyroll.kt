@@ -371,7 +371,7 @@ class Kamyroll : ConfigurableAnimeSource, AnimeHttpSource() {
             title = "Preferred Sub Type"
             entries = arrayOf("Softsub", "Hardsub")
             entryValues = arrayOf("soft", "hard")
-            setDefaultValue("softsub")
+            setDefaultValue("soft")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
