@@ -28,6 +28,7 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -170,10 +171,11 @@ class Kamyroll : ConfigurableAnimeSource, AnimeHttpSource() {
             return rawEpsiodes.groupBy { "${it.season}_${it.episode}" }
                 .mapNotNull { group ->
                     val (season, episode) = group.key.split("_")
+                    val ep = episode.toFloatOrNull() ?: 0F
                     SEpisode.create().apply {
                         url = EpisodeData(group.value.map { it.id }).toJsonString()
-                        name = if (episode.toInt() > 0) "Season $season Ep $episode: " + group.value.first().title else group.value.first().title
-                        episode_number = episode.toFloatOrNull() ?: 0F
+                        name = if (ep > 0) "Season $season Ep ${df.format(ep)}: " + group.value.first().title else group.value.first().title
+                        episode_number = ep
                         date_upload = parseDate(group.value.first().air_date)
                     }
                 }.reversed()
@@ -241,6 +243,8 @@ class Kamyroll : ConfigurableAnimeSource, AnimeHttpSource() {
             .filterNotNull()
             .flatten()
     }
+
+    private val df = DecimalFormat("0.#")
 
     private fun String.getLocale(): String {
         return locale.firstOrNull { it.first == this }?.second ?: ""
