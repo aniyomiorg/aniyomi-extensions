@@ -1192,6 +1192,27 @@
     ]
   },
   {
+    "name": "Aniyomi: KissKH",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.kisskh",
+    "apk": "aniyomi-en.kisskh-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "KissKH",
+        "lang": "en",
+        "id": "2434089544252410046",
+        "baseUrl": "https://kisskh.me",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: 9anime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.nineanime",
     "apk": "aniyomi-en.nineanime-v13.22.apk",
