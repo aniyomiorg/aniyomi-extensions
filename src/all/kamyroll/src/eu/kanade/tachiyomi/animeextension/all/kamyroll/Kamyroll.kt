@@ -204,16 +204,23 @@ class Kamyroll : ConfigurableAnimeSource, AnimeHttpSource() {
         val streams = json.decodeFromString<VideoStreams>(response.body!!.string())
 
         val subsList = mutableListOf<Track>()
+        val subLocale = preferences.getString("preferred_sub", "en-US")!!
+        var subPreferred = 0
         try {
             streams.subtitles.forEach { sub ->
-                subsList.add(
-                    Track(
-                        sub.url,
-                        sub.locale.getLocale()
+                if (sub.locale == subLocale) {
+                    subsList.add(
+                        subPreferred,
+                        Track(sub.url, sub.locale.getLocale())
                     )
-                )
+                    subPreferred++
+                } else {
+                    subsList.add(
+                        Track(sub.url, sub.locale.getLocale())
+                    )
+                }
             }
-        } catch (_: Error) {}
+        } catch (_: Error) { }
 
         return streams.streams.parallelMap { stream ->
             runCatching {
@@ -278,40 +285,20 @@ class Kamyroll : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", null)
-        val dubLocale = preferences.getString("preferred_audio", null)
+        val quality = preferences.getString("preferred_quality", "1080")!!
+        val dubLocale = preferences.getString("preferred_audio", "en-US")!!
+        val subLocale = preferences.getString("preferred_sub", "en-US")!!
+        val subType = preferences.getString("preferred_sub_type", "soft")!!
+        val shouldContainHard = subType == "hard"
 
-        val newDubSortList = mutableListOf<Video>()
-        if (dubLocale != null) {
-            var preferred = 0
-            val dubLang = dubLocale.getLocale()
-            for (video in this) {
-                if (video.quality.contains(dubLang)) {
-                    newDubSortList.add(preferred, video)
-                    preferred++
-                } else {
-                    newDubSortList.add(video)
-                }
-            }
-        } else {
-            newDubSortList.addAll(this)
-        }
-
-        val newList = mutableListOf<Video>()
-        if (quality != null) {
-            var preferred = 0
-            for (video in newDubSortList) {
-                if (video.quality.contains(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-        } else {
-            newList.addAll(newDubSortList)
-        }
-        return newList
+        return this.sortedWith(
+            compareBy(
+                { it.quality.contains(quality) },
+                { it.quality.contains("Aud: ${dubLocale.getLocale()}") },
+                { it.quality.contains("HardSub") == shouldContainHard },
+                { it.quality.contains(subLocale) }
+            )
+        ).reversed()
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -363,9 +350,43 @@ class Kamyroll : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
+        val subLocalePref = ListPreference(screen.context).apply {
+            key = "preferred_sub"
+            title = "Preferred Sub Language"
+            entries = locale.map { it.second }.toTypedArray()
+            entryValues = locale.map { it.first }.toTypedArray()
+            setDefaultValue("en-US")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
+        val subTypePref = ListPreference(screen.context).apply {
+            key = "preferred_sub_type"
+            title = "Preferred Sub Type"
+            entries = arrayOf("Softsub", "Hardsub")
+            entryValues = arrayOf("soft", "hard")
+            setDefaultValue("softsub")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
         screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
         screen.addPreference(audLocalePref)
+        screen.addPreference(subLocalePref)
+        screen.addPreference(subTypePref)
     }
 
     // From Dopebox
