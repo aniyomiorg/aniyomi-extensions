@@ -100,7 +100,7 @@ data class EpisodeList(
             val id: String,
             val title: String,
             val season_number: Int,
-            val sequence_number: Int,
+            val sequence_number: Float,
             val is_subbed: Boolean,
             val is_dubbed: Boolean,
             @SerialName("episode_air_date")
@@ -131,7 +131,7 @@ data class RawEpisode(
     val id: String,
     val title: String,
     val season: Int,
-    val episode: Int,
+    val episode: Float,
     val air_date: String
 )
 
