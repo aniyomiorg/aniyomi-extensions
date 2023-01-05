@@ -17,9 +17,7 @@ data class LinkData(
 
 @Serializable
 data class Images(
-    val thumbnail: ArrayList<Image>?,
-    val poster_tall: ArrayList<Image>?,
-    val poster_wide: ArrayList<Image>?
+    val poster_tall: ArrayList<Image>? = null
 ) {
     @Serializable
     data class Image(
@@ -36,9 +34,9 @@ data class Metadata(
     val is_mature: Boolean,
     val is_subbed: Boolean,
     val maturity_ratings: String,
-    val episode_count: Int?,
-    val is_simulcast: Boolean?,
-    val season_count: Int?
+    val episode_count: Int? = null,
+    val is_simulcast: Boolean? = null,
+    val season_count: Int? = null
 )
 
 @Serializable
@@ -74,8 +72,8 @@ data class SearchResult(
             val media_type: String,
             val title: String,
             val images: Images,
-            val series_metadata: Metadata?,
-            val movie_listing_metadata: Metadata?
+            val series_metadata: Metadata? = null,
+            val movie_listing_metadata: Metadata? = null
         )
     }
 }
@@ -90,10 +88,10 @@ data class EpisodeList(
         @SerialName("__class__")
         val media_class: String,
         val id: String,
-        val type: String?,
-        val is_subbed: Boolean?,
-        val is_dubbed: Boolean?,
-        val episodes: ArrayList<Episode>?
+        val type: String? = null,
+        val is_subbed: Boolean? = null,
+        val is_dubbed: Boolean? = null,
+        val episodes: ArrayList<Episode>? = null
     ) {
         @Serializable
         data class Episode(
@@ -120,10 +118,10 @@ data class MediaResult(
     val is_mature: Boolean,
     val is_subbed: Boolean,
     val is_dubbed: Boolean,
-    val episode_count: Int?,
-    val season_count: Int?,
-    val media_count: Int?,
-    val is_simulcast: Boolean?
+    val episode_count: Int? = null,
+    val season_count: Int? = null,
+    val media_count: Int? = null,
+    val is_simulcast: Boolean? = null
 )
 
 @Serializable
