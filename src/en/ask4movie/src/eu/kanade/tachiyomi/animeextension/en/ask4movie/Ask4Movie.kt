@@ -559,7 +559,6 @@ package eu.kanade.tachiyomi.animeextension.en.ask4movie
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.en.ask4movie.extractors.CinegrabberExtractor
@@ -676,16 +675,10 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // https://github.com/recloudstream/cloudstream-extensions/blob/master/Ask4Movie/src/main/kotlin/com/lagradost/Ask4MovieProvider.kt
     private fun episodeListFromSeason(bodyString: String): List<EpisodeUrl> {
-        val data = Regex("""<script src="data:text\/javascript;base64,([^"']*)""").findAll(bodyString)
-            .lastOrNull()?.groupValues?.getOrNull(1) ?: return emptyList()
+        var soup = Jsoup.parse(bodyString)
+        val iframeUrl = soup.select("div#player-embed:not([class]) iframe").attr("data-src")
 
         val episodeList = mutableListOf<EpisodeUrl>()
-        val decoded = String(Base64.decode(data, Base64.DEFAULT), Charsets.ISO_8859_1)
-        val iframeUrlRegex = Regex("""dir['"],['"]([^"']*)""")
-
-        val iframeEncoded = iframeUrlRegex.find(decoded)?.groupValues?.getOrNull(1) ?: return emptyList()
-        val iframe = String(Base64.decode(iframeEncoded, Base64.DEFAULT), Charsets.ISO_8859_1)
-        val iframeUrl = Jsoup.parse(iframe).select("iframe").attr("src")
 
         // Get Episodes
         val playlistDoc = client.newCall(GET(iframeUrl)).execute().asJsoup()
@@ -729,10 +722,31 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val url = response.request.url.toString()
         return when {
-            "cinegrabber" in url -> {
-                val userId = Regex("""USER_ID.*?(\d+)""").find(response.body!!.string())?.groupValues?.getOrNull(1) ?: ""
-                CinegrabberExtractor(client).videosFromUrl(url, userId).sort()
-            }
+            url.contains("fembed") ||
+                url.contains("anime789.com") || url.contains("24hd.club") || url.contains("fembad.org") ||
+                url.contains("vcdn.io") || url.contains("sharinglink.club") || url.contains("moviemaniac.org") ||
+                url.contains("votrefiles.club") || url.contains("femoload.xyz") || url.contains("albavido.xyz") ||
+                url.contains("feurl.com") || url.contains("dailyplanet.pw") || url.contains("ncdnstm.com") ||
+                url.contains("jplayer.net") || url.contains("xstreamcdn.com") || url.contains("fembed-hd.com") ||
+                url.contains("gcloud.live") || url.contains("vcdnplay.com") || url.contains("superplayxyz.club") ||
+                url.contains("vidohd.com") || url.contains("vidsource.me") || url.contains("cinegrabber.com") ||
+                url.contains("votrefile.xyz") || url.contains("zidiplay.com") || url.contains("ndrama.xyz") ||
+                url.contains("fcdn.stream") || url.contains("mediashore.org") || url.contains("suzihaza.com") ||
+                url.contains("there.to") || url.contains("femax20.com") || url.contains("javstream.top") ||
+                url.contains("viplayer.cc") || url.contains("sexhd.co") || url.contains("fembed.net") ||
+                url.contains("mrdhan.com") || url.contains("votrefilms.xyz") || // url.contains("") ||
+                url.contains("embedsito.com") || url.contains("dutrag.com") || // url.contains("") ||
+                url.contains("youvideos.ru") || url.contains("streamm4u.club") || // url.contains("") ||
+                url.contains("moviepl.xyz") || url.contains("asianclub.tv") || // url.contains("") ||
+                url.contains("vidcloud.fun") || url.contains("fplayer.info") || // url.contains("") ||
+                url.contains("diasfem.com") || url.contains("javpoll.com") || url.contains("reeoov.tube") ||
+                url.contains("suzihaza.com") || url.contains("ezsubz.com") || url.contains("vidsrc.xyz") ||
+                url.contains("diampokusy.com") || url.contains("diampokusy.com") || url.contains("i18n.pw") ||
+                url.contains("vanfem.com") || url.contains("fembed9hd.com") || url.contains("votrefilms.xyz") || url.contains("watchjavnow.xyz") ->
+                {
+                    val userId = Regex("""USER_ID.*?(\d+)""").find(response.body!!.string())?.groupValues?.getOrNull(1) ?: ""
+                    CinegrabberExtractor(client).videosFromUrl(url, userId).sort()
+                }
             "filemoon" in url -> {
                 FilemoonExtractor(client).videoFromUrl(url).sort()
             }

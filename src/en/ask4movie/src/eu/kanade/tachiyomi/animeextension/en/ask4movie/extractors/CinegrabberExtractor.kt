@@ -563,6 +563,7 @@ import eu.kanade.tachiyomi.network.POST
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -609,14 +610,13 @@ class CinegrabberExtractor(private val client: OkHttpClient) {
                 jsonResponse.captions.forEach {
                     subtitleList.add(
                         Track(
-                            "https://cinegrabber.com/asset/userdata/$userId/caption/${it.hash}/${it.id}.${it.extension}",
+                            "https://${url.toHttpUrl().host}/asset/userdata/$userId/caption/${it.hash}/${it.id}.${it.extension}",
                             it.language
                         )
                     )
                 }
             }
         } catch (e: Error) {}
-
 
         return if (jsonResponse.success) {
             jsonResponse.data.map {
@@ -629,7 +629,6 @@ class CinegrabberExtractor(private val client: OkHttpClient) {
                 } catch (e: Error) {
                     Video(it.file, quality, it.file)
                 }
-
             }
         } else { emptyList<Video>() }
     }

@@ -34,8 +34,7 @@ class FilemoonExtractor(private val client: OkHttpClient) {
                         subtitleTracks.add(Track(sub.file, sub.label))
                     }
                 }
-            } catch(e: Error) {}
-
+            } catch (e: Error) {}
 
             val masterUrl = JsUnpacker(jsE).unpack().toString().substringAfter("{file:\"").substringBefore("\"}")
             val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
@@ -50,7 +49,6 @@ class FilemoonExtractor(private val client: OkHttpClient) {
                     } catch (e: Error) {
                         videoList.add(Video(videoUrl, quality, videoUrl))
                     }
-
                 }
             return videoList
         } catch (e: Exception) {
