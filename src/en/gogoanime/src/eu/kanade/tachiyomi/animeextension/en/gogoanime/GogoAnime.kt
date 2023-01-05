@@ -27,8 +27,6 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
-import java.lang.NumberFormatException
-import kotlin.math.abs
 
 @ExperimentalSerializationApi
 class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -108,7 +106,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         document.select("div.anime_muti_link > ul > li.streamsb > a")
             .firstOrNull()?.attr("data-video")
             ?.let { videoList.addAll(StreamSBExtractor(client).videosFromUrl(it, headers)) }
-        return videoList
+        return videoList.sort()
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -118,35 +116,15 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "1080")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                when {
-                    video.quality.contains(quality) -> {
-                        newList.add(preferred, video)
-                        preferred++
-                    }
-                    abs(qualityToInt(video.quality) - quality.toInt()) < 100 -> {
-                        newList.add(preferred, video)
-                    }
-                    else -> {
-                        newList.add(video)
-                    }
-                }
-            }
-            return newList
-        }
-        return this
-    }
+        val quality = preferences.getString("preferred_quality", "1080")!!
+        val server = preferences.getString("preferred_server", "Gogostream")!!
 
-    private fun qualityToInt(quality: String): Int {
-        return try {
-            quality.filter { it.isDigit() }.toInt()
-        } catch (e: NumberFormatException) {
-            -100
-        }
+        return this.sortedWith(
+            compareBy(
+                { it.quality.contains(quality) },
+                { it.quality.contains(server) }
+            )
+        ).reversed()
     }
 
     override fun searchAnimeFromElement(element: Element): SAnime {
@@ -247,8 +225,24 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val videoServerPref = ListPreference(screen.context).apply {
+            key = "preferred_server"
+            title = "Preferred server"
+            entries = arrayOf("Gogostream", "Vidstreaming", "Doodstream", "StreamSB")
+            entryValues = arrayOf("Gogostream", "Vidstreaming", "Doodstream", "StreamSB")
+            setDefaultValue("Gogostream")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
         screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
+        screen.addPreference(videoServerPref)
     }
 
     // Filters
