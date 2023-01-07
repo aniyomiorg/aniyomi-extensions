@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.en.nineanime
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -67,7 +66,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListRequest(anime: SAnime): Request {
         val id = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup().selectFirst("div[data-id]").attr("data-id")
-        val jsVrfInterceptor = client.newBuilder().addInterceptor(JsVrfInterceptor(id)).build()
+        val jsVrfInterceptor = client.newBuilder().addInterceptor(JsVrfInterceptor(id, baseUrl)).build()
         val vrf = jsVrfInterceptor.newCall(GET("$baseUrl/filter")).execute().request.header("url").toString()
         return GET("$baseUrl/ajax/episode/list/$id?vrf=$vrf", headers = Headers.headersOf("url", anime.url))
     }
@@ -88,7 +87,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val ids = element.attr("data-ids")
         val sub = element.attr("data-sub").toInt().toBoolean()
         val dub = element.attr("data-dub").toInt().toBoolean()
-        val jsVrfInterceptor = client.newBuilder().addInterceptor(JsVrfInterceptor(ids)).build()
+        val jsVrfInterceptor = client.newBuilder().addInterceptor(JsVrfInterceptor(ids, baseUrl)).build()
         val vrf = jsVrfInterceptor.newCall(GET("$baseUrl/filter")).execute().request.header("url").toString()
         episode.url = "/ajax/server/list/$ids?vrf=$vrf&epurl=$url/ep-$epNum"
         episode.episode_number = epNum.toFloat()
@@ -147,7 +146,6 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val embedLink = jsInterceptor.newCall(GET("$baseUrl$epurl")).execute().request.header("url").toString()
         val jsVizInterceptor = client.newBuilder().addInterceptor(JsVizInterceptor(embedLink)).build()
         val sourceUrl = jsVizInterceptor.newCall(GET(embedLink, headers = Headers.headersOf("Referer", "$baseUrl/"))).execute().request.header("url").toString()
-        Log.i("extractVideo", sourceUrl)
         val referer = Headers.headersOf("Referer", embedLink)
         val sourceObject = json.decodeFromString<JsonObject>(
             client.newCall(GET(sourceUrl, referer))
@@ -214,9 +212,9 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeSelector(): String = popularAnimeSelector()
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val jsVrfInterceptor = client.newBuilder().addInterceptor(JsVrfInterceptor(query)).build()
+        val jsVrfInterceptor = client.newBuilder().addInterceptor(JsVrfInterceptor(query, baseUrl)).build()
         val vrf = jsVrfInterceptor.newCall(GET("$baseUrl/filter")).execute().request.header("url").toString()
-        return GET("$baseUrl/filter?keyword=$query&vrf=$vrf&page=$page", headers = Headers.headersOf("Referer", "https://9anime.to/"))
+        return GET("$baseUrl/filter?keyword=$query&vrf=$vrf&page=$page", headers = Headers.headersOf("Referer", "$baseUrl/"))
     }
 
     override fun animeDetailsParse(document: Document): SAnime {
@@ -260,7 +258,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val domainPref = ListPreference(screen.context).apply {
             key = "preferred_domain"
             title = "Preferred domain (requires app restart)"
-            entries = arrayOf("9anime.to", "9anime.id")
+            entries = arrayOf("9anime.to", "9anime.gs")
             entryValues = arrayOf("https://9anime.to", "https://9anime.gs")
             setDefaultValue("https://9anime.to")
             summary = "%s"
