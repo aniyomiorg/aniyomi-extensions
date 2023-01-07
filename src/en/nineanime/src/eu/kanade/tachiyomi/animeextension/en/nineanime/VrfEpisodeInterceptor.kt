@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -11,7 +12,6 @@ import android.webkit.WebViewClient
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.Interceptor
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
@@ -19,7 +19,7 @@ import uy.kohesive.injekt.api.get
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-class VizcloudInterceptor(private val client: OkHttpClient) : Interceptor {
+class VrfEpisodeInterceptor(private val id: String) : Interceptor {
 
     private val context = Injekt.get<Application>()
     private val handler by lazy { Handler(Looper.getMainLooper()) }
@@ -27,7 +27,7 @@ class VizcloudInterceptor(private val client: OkHttpClient) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
 
-        val newRequest = resolveWithWebView(originalRequest) ?: throw Exception("Please reload Episode List")
+        val newRequest = resolveWithWebView(originalRequest) ?: throw Exception("😂")
 
         return chain.proceed(newRequest)
     }
@@ -62,11 +62,10 @@ class VizcloudInterceptor(private val client: OkHttpClient) : Interceptor {
                     view: WebView,
                     request: WebResourceRequest,
                 ): WebResourceResponse? {
-                    if (request.url.toString().contains("https://vidstream.pro/")) {
-                        val body = client.newCall(GET(request.url.toString())).execute().body.toString()
-                        if (body.contains("list.m3u8")) {
-                            newRequest = GET(request.url.toString(), request.requestHeaders.toHeaders())
-                        }
+                    // Log.i("shouldInterceptRequest", request.url.toString())
+                    if (request.url.toString().contains(id)) {
+                        Log.i("shouldInterceptRequest", request.url.toString())
+                        newRequest = GET(request.url.toString(), request.requestHeaders.toHeaders())
                         latch.countDown()
                     }
                     return super.shouldInterceptRequest(view, request)
