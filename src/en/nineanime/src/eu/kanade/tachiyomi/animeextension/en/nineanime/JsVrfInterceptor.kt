@@ -18,7 +18,7 @@ import uy.kohesive.injekt.api.get
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-class JsVrfInterceptor(private val query: String) : Interceptor {
+class JsVrfInterceptor(private val query: String, private val baseUrl: String) : Interceptor {
 
     private val context = Injekt.get<Application>()
     private val handler by lazy { Handler(Looper.getMainLooper()) }
@@ -50,7 +50,7 @@ class JsVrfInterceptor(private val query: String) : Interceptor {
 
         val jsinterface = JsObject(latch)
 
-        //JavaScript uses search of 9Anime to convert IDs & Querys to the VRF-Key
+        // JavaScript uses search of 9Anime to convert IDs & Querys to the VRF-Key
         val jsScript = """
             (function() {
                document.querySelector("form.filters input.form-control").value = '$query';
@@ -81,7 +81,7 @@ class JsVrfInterceptor(private val query: String) : Interceptor {
 
                 webview.webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                        if (request?.url.toString().contains("https://9anime.to/filter")) {
+                        if (request?.url.toString().contains("$baseUrl/filter")) {
                             return super.shouldOverrideUrlLoading(view, request)
                         } else {
                             // Block the request
