@@ -260,8 +260,8 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val domainPref = ListPreference(screen.context).apply {
             key = "preferred_domain"
             title = "Preferred domain (requires app restart)"
-            entries = arrayOf("9anime.to", "9anime.id", "9anime.pl")
-            entryValues = arrayOf("https://9anime.to", "https://9anime.id", "https://9anime.pl")
+            entries = arrayOf("9anime.to", "9anime.id")
+            entryValues = arrayOf("https://9anime.to", "https://9anime.gs")
             setDefaultValue("https://9anime.to")
             summary = "%s"
 
