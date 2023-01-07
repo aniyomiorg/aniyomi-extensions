@@ -146,7 +146,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val embedLink = jsInterceptor.newCall(GET("$baseUrl$epurl")).execute().request.header("url").toString()
         val jsVizInterceptor = client.newBuilder().addInterceptor(JsVizInterceptor(embedLink)).build()
         val sourceUrl = jsVizInterceptor.newCall(GET(embedLink, headers = Headers.headersOf("Referer", "$baseUrl/"))).execute().request.header("url").toString()
-        val referer = Headers.headersOf("Referer", embedLink)
+        val referer = Headers.headersOf("referer", embedLink)
         val sourceObject = json.decodeFromString<JsonObject>(
             client.newCall(GET(sourceUrl, referer))
                 .execute().body!!.string()
@@ -154,7 +154,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val mediaSources = sourceObject["data"]!!.jsonObject["media"]!!.jsonObject["sources"]!!.jsonArray
         val masterUrls = mediaSources.map { it.jsonObject["file"]!!.jsonPrimitive.content }
         val masterUrl = masterUrls.find { !it.contains("/simple/") } ?: masterUrls.first()
-        val headers = Headers.headersOf("referer", embedLink, "origin", "https://" + masterUrl.toHttpUrl().topPrivateDomain())
+        val headers = Headers.headersOf("referer", "$baseUrl/", "origin", "https://" + masterUrl.toHttpUrl().topPrivateDomain())
         val result = client.newCall(GET(masterUrl, headers)).execute()
         val masterPlaylist = result.body!!.string()
         return masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
