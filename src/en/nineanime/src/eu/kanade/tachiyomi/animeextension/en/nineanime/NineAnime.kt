@@ -12,6 +12,10 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -70,13 +74,18 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val vrf = jsVrfInterceptor.newCall(GET("$baseUrl/filter")).execute().request.header("url").toString()
         return GET("$baseUrl/ajax/episode/list/$id?vrf=$vrf", headers = Headers.headersOf("url", anime.url))
     }
+    
+     private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val animeUrl = response.request.header("url").toString()
         val responseObject = json.decodeFromString<JsonObject>(response.body!!.string())
         val document = Jsoup.parse(JSONUtil.unescape(responseObject["result"]!!.jsonPrimitive.content))
         val episodeElements = document.select(episodeListSelector())
-        return episodeElements.map { episodeFromElements(it, animeUrl) }
+        return episodeElements.parallelMap { episodeFromElements(it, animeUrl) }
     }
 
     override fun episodeListSelector() = "div.episodes ul > li > a"
