@@ -163,15 +163,15 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         )
         val mediaSources = sourceObject["data"]!!.jsonObject["media"]!!.jsonObject["sources"]!!.jsonArray
         val masterUrls = mediaSources.map { it.jsonObject["file"]!!.jsonPrimitive.content }
-        val masterUrl = masterUrls.find { !it.contains("/simple/") } ?: masterUrls.first()
-        val headers = Headers.headersOf("referer", "$baseUrl/", "origin", "https://" + masterUrl.toHttpUrl().topPrivateDomain())
-        val result = client.newCall(GET(masterUrl, headers)).execute()
+        val masterUrl = masterUrls.find { it.contains("/simple/") } ?: masterUrls.first()
+        val result = client.newCall(GET(masterUrl)).execute()
         val masterPlaylist = result.body!!.string()
         return masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
             .split("#EXT-X-STREAM-INF:").map {
                 val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p $lang"
                 val videoUrl = masterUrl.substringBeforeLast("/") + "/" + it.substringAfter("\n").substringBefore("\n")
-                Video(videoUrl, quality, videoUrl, headers = headers)
+                Log.i("extractVideo", "videoUrl: $videoUrl")
+                Video(videoUrl, quality, videoUrl)
             }
     }
 
