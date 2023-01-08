@@ -170,7 +170,6 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .split("#EXT-X-STREAM-INF:").map {
                 val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p $lang"
                 val videoUrl = masterUrl.substringBeforeLast("/") + "/" + it.substringAfter("\n").substringBefore("\n")
-                Log.i("extractVideo", "videoUrl: $videoUrl")
                 Video(videoUrl, quality, videoUrl)
             }
     }
