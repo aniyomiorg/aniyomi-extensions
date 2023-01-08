@@ -49,7 +49,7 @@ class JsInterceptor(private val lang: String) : Interceptor {
 
         val jsinterface = JsObject(latch)
 
-        //JavaSrcipt gets the Dub or Sub link of vidstream
+        // JavaSrcipt gets the Dub or Sub link of vidstream
         val jsScript = """
             (function(){
                 setTimeout(function(){

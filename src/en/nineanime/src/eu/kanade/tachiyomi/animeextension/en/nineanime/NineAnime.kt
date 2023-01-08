@@ -23,7 +23,6 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -74,8 +73,8 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val vrf = jsVrfInterceptor.newCall(GET("$baseUrl/filter")).execute().request.header("url").toString()
         return GET("$baseUrl/ajax/episode/list/$id?vrf=$vrf", headers = Headers.headersOf("url", anime.url))
     }
-    
-     private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+
+    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
         runBlocking {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
@@ -85,7 +84,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val responseObject = json.decodeFromString<JsonObject>(response.body!!.string())
         val document = Jsoup.parse(JSONUtil.unescape(responseObject["result"]!!.jsonPrimitive.content))
         val episodeElements = document.select(episodeListSelector())
-        return episodeElements.parallelMap { episodeFromElements(it, animeUrl) }
+        return episodeElements.parallelMap { episodeFromElements(it, animeUrl) }.reversed()
     }
 
     override fun episodeListSelector() = "div.episodes ul > li > a"
