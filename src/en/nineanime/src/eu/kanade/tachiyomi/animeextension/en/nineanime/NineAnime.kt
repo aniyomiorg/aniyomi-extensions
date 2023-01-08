@@ -230,7 +230,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.title = document.select("h1.title").text()
         anime.genre = document.select("div:contains(Genre) > span > a").joinToString { it.text() }
         anime.description = document.select("div.synopsis > div.shorting > div.content").text()
-        anime.author = document.select("div:contains(Studios) > span > a").text()
+        anime.author = document.select("div:contains(Studio) > span > a").text()
         anime.status = parseStatus(document.select("div:contains(Status) > span").text())
 
         // add alternative name to anime description
