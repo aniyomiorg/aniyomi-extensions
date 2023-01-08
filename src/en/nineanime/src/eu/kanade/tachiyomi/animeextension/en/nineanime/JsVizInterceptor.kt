@@ -49,7 +49,7 @@ class JsVizInterceptor(private val embedLink: String) : Interceptor {
 
         val jsinterface = JsObject(latch)
 
-        //JavaSrcipt creates Iframe on vidstream page to bypass iframe-cors and gets the sourceUrl
+        // JavaSrcipt creates Iframe on vidstream page to bypass iframe-cors and gets the sourceUrl
         val jsScript = """
             (function(){
                     const html = '<iframe src="$embedLink" allow="autoplay; fullscreen" allowfullscreen="yes" scrolling="no" style="width: 100%; height: 100%; overflow: hidden;" frameborder="no"></iframe>';
