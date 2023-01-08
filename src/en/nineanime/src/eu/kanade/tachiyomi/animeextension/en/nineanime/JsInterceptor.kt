@@ -57,15 +57,15 @@ class JsInterceptor(private val lang: String) : Interceptor {
                     let e = document.createEvent('HTMLEvents');
                     e.initEvent('click',true,true);
                     el.dispatchEvent(e);
-                }, 2500);
-                setTimeout(function(){
-                    const resources = performance.getEntriesByType('resource');
-                    resources.forEach((entry) => {
-                        if(entry.name.includes("https://vidstream.pro/embed/")){
-                            window.android.passPayload(entry.name);
-                        }
-                    });
-                }, 4500);
+                    setTimeout(function(){
+                        const resources = performance.getEntriesByType('resource');
+                        resources.forEach((entry) => {
+                            if(entry.name.includes("https://vidstream.pro/embed/")){
+                                window.android.passPayload(entry.name);
+                            }
+                        });
+                    }, 2000);
+                }, 1000);
             })();"""
 
         val headers = request.headers.toMultimap().mapValues { it.value.getOrNull(0) ?: "" }.toMutableMap()
