@@ -96,9 +96,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val ids = element.attr("data-ids")
         val sub = element.attr("data-sub").toInt().toBoolean()
         val dub = element.attr("data-dub").toInt().toBoolean()
-        val jsVrfInterceptor = client.newBuilder().addInterceptor(JsVrfInterceptor(ids, baseUrl)).build()
-        val vrf = jsVrfInterceptor.newCall(GET("$baseUrl/filter")).execute().request.header("url").toString()
-        episode.url = "/ajax/server/list/$ids?vrf=$vrf&epurl=$url/ep-$epNum"
+        episode.url = "/ajax/server/list/$ids?vrf=&epurl=$url/ep-$epNum"
         episode.episode_number = epNum.toFloat()
         val langPrefix = "[" + if (sub) {
             "Sub"
@@ -128,7 +126,10 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun Int.toBoolean() = this == 1
 
     override fun videoListRequest(episode: SEpisode): Request {
-        val url = episode.url.substringBefore("&epurl")
+        val ids = episode.url.substringAfter("list/").substringBefore("?vrf")
+        val jsVrfInterceptor = client.newBuilder().addInterceptor(JsVrfInterceptor(ids, baseUrl)).build()
+        val vrf = jsVrfInterceptor.newCall(GET("$baseUrl/filter")).execute().request.header("url").toString()
+        val url = "/ajax/server/list/$ids?vrf=$vrf"
         val epurl = episode.url.substringAfter("epurl=")
         return GET(baseUrl + url, headers = Headers.headersOf("url", epurl))
     }
