@@ -52,7 +52,7 @@ class JsInterceptor(private val lang: String) : Interceptor {
         // JavaSrcipt gets the Dub or Sub link of vidstream
         val jsScript = """
             (function(){
-                setTimeout(function(){
+                window.onload = (function() {
                     let el = document.querySelector('div[data-type="$lang"] ul li[data-sv-id="41"]');
                     let e = document.createEvent('HTMLEvents');
                     e.initEvent('click',true,true);
@@ -64,8 +64,8 @@ class JsInterceptor(private val lang: String) : Interceptor {
                                 window.android.passPayload(entry.name);
                             }
                         });
-                    }, 2000);
-                }, 1000);
+                    }, 5000);
+                })();
             })();"""
 
         val headers = request.headers.toMultimap().mapValues { it.value.getOrNull(0) ?: "" }.toMutableMap()
