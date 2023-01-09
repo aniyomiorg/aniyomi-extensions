@@ -52,19 +52,28 @@ class JsVizInterceptor(private val embedLink: String) : Interceptor {
         // JavaSrcipt creates Iframe on vidstream page to bypass iframe-cors and gets the sourceUrl
         val jsScript = """
             (function(){
-                    const html = '<iframe src="$embedLink" allow="autoplay; fullscreen" allowfullscreen="yes" scrolling="no" style="width: 100%; height: 100%; overflow: hidden;" frameborder="no"></iframe>';
-                    document.body.innerHTML += html;
-                setTimeout(function() {
-                    const iframe = document.querySelector('iframe');
-                    const entries = iframe.contentWindow.performance.getEntries();
-                    entries.forEach((entry) => {
-                        if(entry.initiatorType.includes("xmlhttprequest")){
-                            if(!entry.name.includes("/ping/") && !entry.name.includes("/assets/")){
-                               window.android.passPayload(entry.name);
-                            }
+                const html = '<iframe src="$embedLink" allow="autoplay; fullscreen" allowfullscreen="yes" scrolling="no" style="width: 100%; height: 100%; overflow: hidden;" frameborder="no" onload="handleIframeLoad()"></iframe>';
+                document.body.innerHTML += html;
+                const iframe = document.querySelector('iframe');
+
+                const originalOpen = iframe.contentWindow.XMLHttpRequest.prototype.open;
+                iframe.contentWindow.XMLHttpRequest.prototype.open = function(method, url, async) {
+                    if (!url.includes("ping") && !url.includes("/assets/") && !url.includes("thumbnails") && !url.includes("jpg") && !url.includes("m3u8")) {
+                        if (url == null) {
+                            const entries = iframe.contentWindow.performance.getEntries();
+                            entries.forEach((entry) => {
+                                if (entry.initiatorType.includes("xmlhttprequest")) {
+                                    if (!entry.name.includes("/ping/") && !entry.name.includes("/assets/") && !entry.name.includes("thumbnails")) {
+                                        window.android.passPayload(entry.name);
+                                    }
+                                }
+                            });
+                        } else {
+                            window.android.passPayload("https://" + document.domain + "/" + url);
                         }
-                    });
-                }, 2000);
+                    }
+                    originalOpen.apply(this, arguments);
+                }
             })();
         """
 

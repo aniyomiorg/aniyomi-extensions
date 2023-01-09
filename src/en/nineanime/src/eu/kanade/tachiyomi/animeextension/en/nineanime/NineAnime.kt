@@ -71,7 +71,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val id = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup().selectFirst("div[data-id]").attr("data-id")
         val jsVrfInterceptor = client.newBuilder().addInterceptor(JsVrfInterceptor(id, baseUrl)).build()
         val vrf = jsVrfInterceptor.newCall(GET("$baseUrl/filter")).execute().request.header("url").toString()
-        return GET("$baseUrl/ajax/episode/list/$id?vrf=$vrf", headers = Headers.headersOf("url", anime.url))
+        return GET("$baseUrl/ajax/episode/list/$id?vrf=${java.net.URLEncoder.encode(vrf, "utf-8")}", headers = Headers.headersOf("url", anime.url))
     }
 
     private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
@@ -128,7 +128,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val ids = episode.url.substringAfter("list/").substringBefore("?vrf")
         val jsVrfInterceptor = client.newBuilder().addInterceptor(JsVrfInterceptor(ids, baseUrl)).build()
         val vrf = jsVrfInterceptor.newCall(GET("$baseUrl/filter")).execute().request.header("url").toString()
-        val url = "/ajax/server/list/$ids?vrf=$vrf"
+        val url = "/ajax/server/list/$ids?vrf=${java.net.URLEncoder.encode(vrf, "utf-8")}"
         val epurl = episode.url.substringAfter("epurl=")
         return GET(baseUrl + url, headers = Headers.headersOf("url", epurl))
     }
@@ -222,7 +222,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val jsVrfInterceptor = client.newBuilder().addInterceptor(JsVrfInterceptor(query, baseUrl)).build()
         val vrf = jsVrfInterceptor.newCall(GET("$baseUrl/filter")).execute().request.header("url").toString()
-        return GET("$baseUrl/filter?keyword=$query&vrf=$vrf&page=$page", headers = Headers.headersOf("Referer", "$baseUrl/"))
+        return GET("$baseUrl/filter?keyword=$query&vrf=${java.net.URLEncoder.encode(vrf, "utf-8")}&page=$page", headers = Headers.headersOf("Referer", "$baseUrl/"))
     }
 
     override fun animeDetailsParse(document: Document): SAnime {
