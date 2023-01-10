@@ -6,7 +6,7 @@ ext {
     extName = 'AnimesVision'
     pkgNameSuffix = 'pt.animesvision'
     extClass = '.AnimesVision'
-    extVersionCode = 14
+    extVersionCode = 15
     libVersion = '13'
 }
 
