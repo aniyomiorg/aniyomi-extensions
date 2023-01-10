@@ -7,7 +7,6 @@ import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.en.allanime.extractors.AllAnimeExtractor
 import eu.kanade.tachiyomi.animeextension.en.allanime.extractors.Mp4uploadExtractor
-import eu.kanade.tachiyomi.animeextension.en.allanime.extractors.OkruExtractor
 import eu.kanade.tachiyomi.animeextension.en.allanime.extractors.StreamlareExtractor
 import eu.kanade.tachiyomi.animeextension.en.allanime.extractors.VidstreamingExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -18,6 +17,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -311,7 +311,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                     }
                 }
                 altHosterSelection.contains("okru") && video.sourceUrl.contains("ok.ru") -> {
-                    val extractor = OkruExtractor()
+                    val extractor = OkruExtractor(client)
                     val videos = runCatching {
                         extractor.videosFromUrl(video.sourceUrl)
                     }.getOrNull() ?: emptyList()
