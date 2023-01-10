@@ -814,6 +814,27 @@
     ]
   },
   {
+    "name": "Aniyomi: AllAnime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.allanime",
+    "apk": "aniyomi-en.allanime-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AllAnime",
+        "lang": "en",
+        "id": "4709139914729853090",
+        "baseUrl": "https://allanime.site",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: AllMovies",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.allmovies",
     "apk": "aniyomi-en.allmovies-v13.11.apk",
