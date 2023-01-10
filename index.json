@@ -44,10 +44,10 @@
   {
     "name": "Aniyomi: Kamyroll",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.kamyroll",
-    "apk": "aniyomi-all.kamyroll-v13.5.apk",
+    "apk": "aniyomi-all.kamyroll-v13.6.apk",
     "lang": "all",
-    "code": 5,
-    "version": "13.5",
+    "code": 6,
+    "version": "13.6",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
