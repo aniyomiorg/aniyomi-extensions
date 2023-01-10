@@ -60,7 +60,7 @@ object AVFilters {
         val language: String = "",
         val sort: String = "padrao",
         val initial_year: String = "1917",
-        val last_year: String = "2022",
+        val last_year: String = "2023",
         val fansub: String = "",
         val season: String = "",
         val studio: String = "",
@@ -128,7 +128,7 @@ object AVFilters {
             Pair("Mais visualizados", "mais_visualizados")
         )
 
-        val initialYear = (1917..2022).map {
+        val initialYear = (1917..2023).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 
@@ -136,8 +136,11 @@ object AVFilters {
 
         val seasons = arrayOf(
             every,
+            Pair("Inverno 2023", "164"),
             Pair("Inverno 2022", "157"),
             Pair("Primavera 2022", "159"),
+            Pair("Verão 2022", "161"),
+            Pair("Outono 2022", "162"),
             Pair("Inverno 2021", "1"),
             Pair("Primavera 2021", "152"),
             Pair("Verão 2021", "155"),
