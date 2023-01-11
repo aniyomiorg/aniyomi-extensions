@@ -265,10 +265,14 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         query: String,
         filters: ZoroFilters.FilterSearchParams
     ): Request {
-        val url = "$baseUrl/search?".toHttpUrlOrNull()!!.newBuilder()
-            .addQueryParameter("page", page.toString())
-            .addQueryParameter("keyword", query)
-            .addIfNotBlank("type", filters.type)
+        val url = if (query.isEmpty()) {
+            "$baseUrl/filter".toHttpUrlOrNull()!!.newBuilder()
+                .addQueryParameter("page", page.toString())
+        } else {
+            "$baseUrl/search".toHttpUrlOrNull()!!.newBuilder()
+                .addQueryParameter("page", page.toString())
+                .addQueryParameter("keyword", query)
+        }.addIfNotBlank("type", filters.type)
             .addIfNotBlank("status", filters.status)
             .addIfNotBlank("rated", filters.rated)
             .addIfNotBlank("score", filters.score)
@@ -277,8 +281,10 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .addIfNotBlank("sort", filters.sort)
             .addIfNotBlank("sy", filters.start_year)
             .addIfNotBlank("sm", filters.start_month)
+            .addIfNotBlank("sd", filters.start_day)
             .addIfNotBlank("ey", filters.end_year)
             .addIfNotBlank("em", filters.end_month)
+            .addIfNotBlank("ed", filters.end_day)
             .addIfNotBlank("genres", filters.genres)
 
         return GET(url.build().toString())
