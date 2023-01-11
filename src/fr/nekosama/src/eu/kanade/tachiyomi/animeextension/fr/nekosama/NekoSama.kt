@@ -138,7 +138,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> "vostfr"
         }
 
-        val url = when {
+        return when {
             query.isNotBlank() -> GET("$baseUrl/animes-search-$typeSearch.json?$query")
             typeFilter.state != 0 || query.isNotBlank() -> when (page) {
                 1 -> GET("$baseUrl/${typeFilter.toUriPart()}")
@@ -149,7 +149,6 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 else -> GET("$baseUrl/anime/page/$page")
             }
         }
-        return url
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage {
