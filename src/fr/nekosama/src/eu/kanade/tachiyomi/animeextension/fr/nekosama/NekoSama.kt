@@ -38,7 +38,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "fr"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -50,7 +50,13 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "div.anime"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/anime/")
+    override fun popularAnimeRequest(page: Int): Request {
+        return if (page > 1) {
+            GET("$baseUrl/anime/$page")
+        } else {
+            GET("$baseUrl/anime/")
+        }
+    }
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -58,13 +64,13 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             element.select("div.info a").attr("href")
         )
         anime.title = element.select("div.info a div").text()
-        val thumb1 = element.select("div.cover a div img").attr("data-src")
-        val thumb2 = element.select("div.cover a div img").attr("src")
+        val thumb1 = element.select("div.cover a div img:not(.placeholder)").attr("data-src")
+        val thumb2 = element.select("div.cover a div img:not(.placeholder)").attr("src")
         anime.thumbnail_url = thumb1.ifBlank { thumb2 }
         return anime
     }
 
-    override fun popularAnimeNextPageSelector(): String = "div.nekosama.pagination a svg"
+    override fun popularAnimeNextPageSelector(): String = "div.nekosama.pagination a.active ~ a"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val pageBody = response.asJsoup()
@@ -79,7 +85,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                 episode_number = try { it.episode!!.substringAfter(". ").toFloat() } catch (e: Exception) { (0..10).random() }.toFloat()
             }
-        }
+        }.reversed()
     }
 
     override fun episodeListSelector() = throw Exception("not used")
@@ -95,13 +101,14 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val secondVideo = script.substringAfter("else {").substringAfter("video[0] = '").substringBefore("'").lowercase()
         when {
             firstVideo.contains("streamtape") -> StreamTapeExtractor(client).videoFromUrl(firstVideo, "StreamTape")?.let { videoList.add(it) }
-            firstVideo.contains("pstream") -> videoList.add(pstreamExtractor(firstVideo))
+            firstVideo.contains("pstream") || firstVideo.contains("veestream") -> videoList.addAll(pstreamExtractor(firstVideo))
         }
         when {
             secondVideo.contains("streamtape") -> StreamTapeExtractor(client).videoFromUrl(secondVideo, "StreamTape")?.let { videoList.add(it) }
-            secondVideo.contains("pstream") -> videoList.add(pstreamExtractor(secondVideo))
+            secondVideo.contains("pstream") || secondVideo.contains("veestream") -> videoList.addAll(pstreamExtractor(secondVideo))
         }
-        return videoList
+
+        return videoList.sort()
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -111,21 +118,15 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "Sabrosio")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality == quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
+        val quality = preferences.getString("preferred_quality", "1080")!!
+        val server = preferences.getString("preferred_server", "Pstream")!!
+
+        return this.sortedWith(
+            compareBy(
+                { it.quality.contains(quality) },
+                { it.quality.contains(server) }
+            )
+        ).reversed()
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -152,7 +153,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeParse(response: Response): AnimesPage {
         val pageUrl = response.request.url.toString()
-        val query = pageUrl.substringAfter("?").lowercase()
+        val query = pageUrl.substringAfter("?").lowercase().replace("%20", " ")
 
         return when {
             pageUrl.contains("animes-search") -> {
@@ -192,17 +193,67 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.title = document.selectFirst("div.col.offset-lg-3.offset-md-4 h1").text()
-        anime.description = document.select("div.synopsis p").text()
+        anime.title = document.selectFirst("div.col.offset-lg-3.offset-md-4 h1").ownText()
+        var description = document.select("div.synopsis p").text() + "\n\n"
+
+        val scoreElement = document.selectFirst("div#anime-info-list div.item:contains(Score)")
+        if (scoreElement.ownText().isNotEmpty()) description += "Score moyen: ★${scoreElement.ownText().trim()}"
+
+        val statusElement = document.selectFirst("div#anime-info-list div.item:contains(Status)")
+        if (statusElement.ownText().isNotEmpty()) description += "\nStatus: ${statusElement.ownText().trim()}"
+
+        val formatElement = document.selectFirst("div#anime-info-list div.item:contains(Format)")
+        if (formatElement.ownText().isNotEmpty()) description += "\nFormat: ${formatElement.ownText().trim()}"
+
+        val diffusionElement = document.selectFirst("div#anime-info-list div.item:contains(Diffusion)")
+        if (diffusionElement.ownText().isNotEmpty()) description += "\nDiffusion: ${diffusionElement.ownText().trim()}"
+
+        anime.status = parseStatus(statusElement.ownText().trim())
+        anime.description = description
         anime.thumbnail_url = document.select("div.cover img").attr("src")
+        anime.genre = document.select("div.col.offset-lg-3.offset-md-4 div.list a").eachText().joinToString(separator = ", ")
         return anime
+    }
+
+    private fun parseStatus(statusString: String): Int {
+        return when (statusString) {
+            "En cours" -> SAnime.ONGOING
+            "Terminé" -> SAnime.COMPLETED
+            else -> SAnime.UNKNOWN
+        }
     }
 
     override fun latestUpdatesNextPageSelector() = throw Exception("Not used")
 
     override fun latestUpdatesFromElement(element: Element) = throw Exception("Not used")
 
-    override fun latestUpdatesRequest(page: Int) = throw Exception("Not used")
+    override fun latestUpdatesRequest(page: Int): Request {
+        return GET(baseUrl)
+    }
+
+    override fun latestUpdatesParse(response: Response): AnimesPage {
+        val animeList = mutableListOf<SAnime>()
+
+        val jsonLatest = json.decodeFromString<List<SearchJson>>(
+            response.body!!.string().substringAfter("var lastEpisodes = ").substringBefore(";\n")
+        )
+
+        for (item in jsonLatest) {
+            val animeResult = SAnime.create().apply {
+                val type = item.url!!.substringAfterLast("-")
+                url = item.url!!.replace("episode", "info").substringBeforeLast("-").substringBeforeLast("-") + "-$type"
+                title = item.title!!
+                thumbnail_url = try {
+                    item.url_image
+                } catch (e: Exception) {
+                    "$baseUrl/images/default_poster.png"
+                }
+            }
+            animeList.add(animeResult)
+        }
+
+        return AnimesPage(animeList, false)
+    }
 
     override fun latestUpdatesSelector() = throw Exception("Not used")
 
@@ -229,8 +280,24 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("Pstream")
-            entryValues = arrayOf("Pstream")
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
+            setDefaultValue("1080")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
+        val serverPref = ListPreference(screen.context).apply {
+            key = "preferred_server"
+            title = "Preferred server"
+            entries = arrayOf("Pstream/Veestream", "Streamtape")
+            entryValues = arrayOf("Pstream", "Streamtape")
             setDefaultValue("Pstream")
             summary = "%s"
 
@@ -241,11 +308,13 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+
         screen.addPreference(videoQualityPref)
+        screen.addPreference(serverPref)
     }
 
-    private fun pstreamExtractor(url: String): Video {
-        val noVideo = "http://discloud-storage.herokuapp.com/file/cf781d7d4d02a84b85620ed9ddf7066b/amogus.mp4"
+    private fun pstreamExtractor(url: String): List<Video> {
+        val videoList = mutableListOf<Video>()
         val document = Jsoup.connect(url).headers(
             mapOf(
                 "Accept" to "*/*",
@@ -255,7 +324,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             )
         ).get()
         document.select("script").forEach { Script ->
-            if (Script.attr("src").contains("https://www.pstream.net/u/player-script")) {
+            if (Script.attr("src").contains("https://www.pstream.net/u/player-script") || Script.attr("src").contains("https://veestream.net/u/player-script")) {
                 val playerScript = Jsoup.connect(Script.attr("src")).headers(
                     mapOf(
                         "Accept" to "*/*",
@@ -279,10 +348,24 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     add("Connection", "keep-alive")
                     add("Referer", url)
                 }.build()
-                return Video(videoUrlDecoded, "Pstream", videoUrlDecoded, headers = headers)
+
+                val masterPlaylist = client.newCall(GET(videoUrlDecoded, headers))
+                    .execute()
+                    .body!!.string()
+
+                val separator = "#EXT-X-STREAM-INF"
+                masterPlaylist.substringAfter(separator).split(separator).map {
+                    val resolution = it.substringAfter("NAME=\"")
+                        .substringBefore("\"") + "p"
+                    val videoUrl = it.substringAfter("\n").substringBefore("\n")
+                    videoList.add(
+                        Video(videoUrl, "$resolution (Pstream)", videoUrl, headers = headers)
+                    )
+                }
+                return videoList
             }
         }
-        return Video(noVideo, "NO VIDEO", noVideo)
+        return emptyList()
     }
 
     @Serializable
@@ -315,7 +398,3 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     )
 }
-
-/*
-
- */
