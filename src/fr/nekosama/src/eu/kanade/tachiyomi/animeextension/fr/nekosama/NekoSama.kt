@@ -50,7 +50,13 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "div.anime"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/anime/")
+    override fun popularAnimeRequest(page: Int): Request {
+        return if (page > 1) {
+            GET("$baseUrl/anime/$page")
+        } else {
+            GET("$baseUrl/anime/")
+        }
+    }
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -64,7 +70,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun popularAnimeNextPageSelector(): String = "div.nekosama.pagination a svg"
+    override fun popularAnimeNextPageSelector(): String = "div.nekosama.pagination a.active ~ a"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val pageBody = response.asJsoup()
@@ -132,7 +138,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> "vostfr"
         }
 
-        return when {
+        val url = when {
             query.isNotBlank() -> GET("$baseUrl/animes-search-$typeSearch.json?$query")
             typeFilter.state != 0 || query.isNotBlank() -> when (page) {
                 1 -> GET("$baseUrl/${typeFilter.toUriPart()}")
@@ -143,11 +149,12 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 else -> GET("$baseUrl/anime/page/$page")
             }
         }
+        return url
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage {
         val pageUrl = response.request.url.toString()
-        val query = pageUrl.substringAfter("?").lowercase()
+        val query = pageUrl.substringAfter("?").lowercase().replace("%20", " ")
 
         return when {
             pageUrl.contains("animes-search") -> {
