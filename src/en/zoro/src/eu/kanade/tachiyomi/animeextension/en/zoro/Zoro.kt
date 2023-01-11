@@ -265,7 +265,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         query: String,
         filters: ZoroFilters.FilterSearchParams
     ): Request {
-        var url = if (query.isEmpty()) {
+        val url = if (query.isEmpty()) {
             "$baseUrl/filter".toHttpUrlOrNull()!!.newBuilder()
                 .addQueryParameter("page", page.toString())
         } else {
