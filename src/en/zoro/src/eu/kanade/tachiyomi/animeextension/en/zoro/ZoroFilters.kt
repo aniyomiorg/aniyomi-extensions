@@ -34,9 +34,11 @@ object ZoroFilters {
 
     class StartYearFilter : QueryPartFilter("Start year", ZoroFiltersData.years)
     class StartMonthFilter : QueryPartFilter("Start month", ZoroFiltersData.months)
+    class StartDayFilter : QueryPartFilter("Start day", ZoroFiltersData.days)
 
     class EndYearFilter : QueryPartFilter("End year", ZoroFiltersData.years)
     class EndMonthFilter : QueryPartFilter("End month", ZoroFiltersData.months)
+    class EndDayFilter : QueryPartFilter("End day", ZoroFiltersData.days)
 
     class GenresFilter : CheckBoxFilterList(
         "Genres",
@@ -55,8 +57,10 @@ object ZoroFilters {
 
         StartYearFilter(),
         StartMonthFilter(),
+        StartDayFilter(),
         EndYearFilter(),
         EndMonthFilter(),
+        EndDayFilter(),
         AnimeFilter.Separator(),
 
         GenresFilter()
@@ -72,8 +76,10 @@ object ZoroFilters {
         val sort: String = "",
         val start_year: String = "",
         val start_month: String = "",
+        val start_day: String = "",
         val end_year: String = "",
         val end_month: String = "",
+        val end_day: String = "",
         val genres: String = ""
     )
 
@@ -99,8 +105,10 @@ object ZoroFilters {
 
             filters.asQueryPart<StartYearFilter>(),
             filters.asQueryPart<StartMonthFilter>(),
+            filters.asQueryPart<StartDayFilter>(),
             filters.asQueryPart<EndYearFilter>(),
             filters.asQueryPart<EndMonthFilter>(),
+            filters.asQueryPart<EndDayFilter>(),
 
             genres
         )
@@ -176,11 +184,15 @@ object ZoroFilters {
             Pair("Most Watched", "most_watched")
         )
 
-        val years = arrayOf(all) + (1917..2022).map {
+        val years = arrayOf(all) + (1917..2023).map {
+            Pair(it.toString(), it.toString())
+        }.reversed().toTypedArray()
+
+        val months = arrayOf(all) + (1..12).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 
-        val months = arrayOf(all) + (1..12).map {
+        val days = arrayOf(all) + (1..31).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 
