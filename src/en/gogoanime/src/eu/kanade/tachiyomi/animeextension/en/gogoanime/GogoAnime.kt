@@ -142,10 +142,14 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
         val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
+        val recentFilter = filterList.find { it is RecentFilter } as RecentFilter
+        val seasonFilter = filterList.find { it is SeasonFilter } as SeasonFilter
 
         return when {
             query.isNotBlank() -> GET("$baseUrl/search.html?keyword=$query&page=$page", headers)
             genreFilter.state != 0 -> GET("$baseUrl/genre/${genreFilter.toUriPart()}?page=$page")
+            recentFilter.state != 0 -> GET("https://ajax.gogo-load.com/ajax/page-recent-release.html?page=$page&type=${recentFilter.toUriPart()}")
+            seasonFilter.state != 0 -> GET("$baseUrl/${seasonFilter.toUriPart()}?page=$page", headers)
             else -> GET("$baseUrl/popular.html?page=$page")
         }
     }
@@ -198,9 +202,9 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val domainPref = ListPreference(screen.context).apply {
             key = "preferred_domain"
             title = "Preferred domain (requires app restart)"
-            entries = arrayOf("gogoanime.lu", "gogoanime.gg")
-            entryValues = arrayOf("https://gogoanime.lu", "https://gogoanime.gg")
-            setDefaultValue("https://gogoanime.lu")
+            entries = arrayOf("gogoanime.tel", "gogoanime.ar")
+            entryValues = arrayOf("https://gogoanime.tel", "https://gogoanime.ar")
+            setDefaultValue("https://gogoanime.tel")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -248,7 +252,9 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // Filters
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("Text search ignores filters"),
-        GenreFilter()
+        GenreFilter(),
+        RecentFilter(),
+        SeasonFilter()
     )
 
     private class GenreFilter : UriPartFilter(
@@ -256,34 +262,61 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         arrayOf(
             Pair("<select>", ""),
             Pair("Action", "action"),
+            Pair("Adult Cast", "adult-cast"),
             Pair("Adventure", "adventure"),
+            Pair("Anthropomorphic", "anthropomorphic"),
+            Pair("Avant Garde", "avant-garde"),
+            Pair("Boys Love", "shounen-ai"),
             Pair("Cars", "cars"),
+            Pair("CGDCT", "cgdct"),
+            Pair("Childcare", "childcare"),
             Pair("Comedy", "comedy"),
+            Pair("Comic", "comic"),
             Pair("Crime", "crime"),
+            Pair("Crossdressing", "crossdressing"),
+            Pair("Delinquents", "delinquents"),
             Pair("Dementia", "dementia"),
             Pair("Demons", "demons"),
+            Pair("Detective", "detective"),
             Pair("Drama", "drama"),
             Pair("Dub", "dub"),
             Pair("Ecchi", "ecchi"),
+            Pair("Erotica", "erotica"),
             Pair("Family", "family"),
             Pair("Fantasy", "fantasy"),
+            Pair("Gag Humor", "gag-humor"),
             Pair("Game", "game"),
+            Pair("Gender Bender", "gender-bender"),
+            Pair("Gore", "gore"),
+            Pair("Gourmet", "gourmet"),
             Pair("Harem", "harem"),
+            Pair("Hentai", "hentai"),
+            Pair("High Stakes Game", "high-stakes-game"),
             Pair("Historical", "historical"),
             Pair("Horror", "horror"),
+            Pair("Isekai", "isekai"),
+            Pair("Iyashikei", "iyashikei"),
             Pair("Josei", "josei"),
             Pair("Kids", "kids"),
             Pair("Magic", "magic"),
+            Pair("Magical Sex Shift", "magical-sex-shift"),
+            Pair("Mahou Shoujo", "mahou-shoujo"),
             Pair("Martial Arts", "martial-arts"),
-            Pair("Mature", "mature"),
             Pair("Mecha", "mecha"),
+            Pair("Medical", "medical"),
             Pair("Military", "military"),
             Pair("Music", "music"),
             Pair("Mystery", "mystery"),
+            Pair("Mythology", "mythology"),
+            Pair("Organized Crime", "organized-crime"),
             Pair("Parody", "parody"),
+            Pair("Performing Arts", "performing-arts"),
+            Pair("Pets", "pets"),
             Pair("Police", "police"),
             Pair("Psychological", "psychological"),
+            Pair("Reincarnation", "reincarnation"),
             Pair("Romance", "romance"),
+            Pair("Romantic Subtext", "romantic-subtext"),
             Pair("Samurai", "samurai"),
             Pair("School", "school"),
             Pair("Sci-Fi", "sci-fi"),
@@ -291,16 +324,76 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Shoujo", "shoujo"),
             Pair("Shoujo Ai", "shoujo-ai"),
             Pair("Shounen", "shounen"),
-            Pair("Shounen Ai", "shounen-ai"),
             Pair("Slice of Life", "slice-of-life"),
             Pair("Space", "space"),
             Pair("Sports", "sports"),
+            Pair("Strategy Game", "strategy-game"),
             Pair("Super Power", "super-power"),
             Pair("Supernatural", "supernatural"),
+            Pair("Suspense", "suspense"),
+            Pair("Team Sports", "team-sports"),
             Pair("Thriller", "thriller"),
+            Pair("Time Travel", "time-travel"),
             Pair("Vampire", "vampire"),
+            Pair("Work Life", "work-life"),
+            Pair("Workplace", "workplace"),
             Pair("Yaoi", "yaoi"),
             Pair("Yuri", "yuri")
+        )
+    )
+
+    private class RecentFilter : UriPartFilter(
+        "Recent Episodes",
+        arrayOf(
+            Pair("<select>", ""),
+            Pair("Recent Release", "1"),
+            Pair("Recent Dub", "2"),
+            Pair("Recent Chinese", "3")
+        )
+    )
+
+    private class SeasonFilter : UriPartFilter(
+        "Season",
+        arrayOf(
+            Pair("<select>", ""),
+            Pair("Latest season", "new-season.html"),
+            Pair("Winter 2023", "sub-category/winter-2023-anime"),
+            Pair("Fall 2022", "sub-category/fall-2022-anime"),
+            Pair("Summer 2022", "sub-category/summer-2022-anime"),
+            Pair("Spring 2022", "sub-category/spring-2022-anime"),
+            Pair("Winter 2022", "sub-category/winter-2022-anime"),
+            Pair("Fall 2021", "sub-category/fall-2021-anime"),
+            Pair("Summer 2021", "sub-category/summer-2021-anime"),
+            Pair("Spring 2021", "sub-category/spring-2021-anime"),
+            Pair("Winter 2021", "sub-category/winter-2021-anime"),
+            Pair("Fall 2020", "sub-category/fall-2020-anime"),
+            Pair("Summer 2020", "sub-category/summer-2020-anime"),
+            Pair("Spring 2020", "sub-category/spring-2020-anime"),
+            Pair("Winter 2020", "sub-category/winter-2020-anime"),
+            Pair("Fall 2019", "sub-category/fall-2019-anime"),
+            Pair("Summer 2019", "sub-category/summer-2019-anime"),
+            Pair("Spring 2019", "sub-category/spring-2019-anime"),
+            Pair("Winter 2019", "sub-category/winter-2019-anime"),
+            Pair("Fall 2018", "sub-category/fall-2018-anime"),
+            Pair("Summer 2018", "sub-category/summer-2018-anime"),
+            Pair("Spring 2018", "sub-category/spring-2018-anime"),
+            Pair("Winter 2018", "sub-category/winter-2018-anime"),
+            Pair("Fall 2017", "sub-category/fall-2017-anime"),
+            Pair("Summer 2017", "sub-category/summer-2017-anime"),
+            Pair("Spring 2017", "sub-category/spring-2017-anime"),
+            Pair("Winter 2017", "sub-category/winter-2017-anime"),
+            Pair("Fall 2016", "sub-category/fall-2016-anime"),
+            Pair("Summer 2016", "sub-category/summer-2016-anime"),
+            Pair("Spring 2016", "sub-category/spring-2016-anime"),
+            Pair("Winter 2016", "sub-category/winter-2016-anime"),
+            Pair("Fall 2015", "sub-category/fall-2015-anime"),
+            Pair("Summer 2015", "sub-category/summer-2015-anime"),
+            Pair("Spring 2015", "sub-category/spring-2015-anime"),
+            Pair("Winter 2015", "sub-category/winter-2015-anime"),
+            Pair("Fall 2014", "sub-category/fall-2014-anime"),
+            Pair("Summer 2014", "sub-category/summer-2014-anime"),
+            Pair("Spring 2014", "sub-category/spring-2014-anime"),
+            Pair("Winter 2014", "sub-category/winter-2014-anime")
         )
     )
 
