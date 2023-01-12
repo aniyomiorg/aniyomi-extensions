@@ -324,6 +324,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Shoujo", "shoujo"),
             Pair("Shoujo Ai", "shoujo-ai"),
             Pair("Shounen", "shounen"),
+            Pair("Shounen Ai", "shounen-ai"),
             Pair("Slice of Life", "slice-of-life"),
             Pair("Space", "space"),
             Pair("Sports", "sports"),
