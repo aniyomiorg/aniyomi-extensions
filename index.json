@@ -1593,10 +1593,10 @@
   {
     "name": "Aniyomi: AnimeonlineNinja",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.animeonlineninja",
-    "apk": "aniyomi-es.animeonlineninja-v13.14.apk",
+    "apk": "aniyomi-es.animeonlineninja-v13.15.apk",
     "lang": "es",
-    "code": 14,
-    "version": "13.14",
+    "code": 15,
+    "version": "13.15",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2231,6 +2231,27 @@
         "lang": "it",
         "id": "6601315231151625432",
         "baseUrl": "https://www.animeworld.tv",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: AniPlay",
+    "pkg": "eu.kanade.tachiyomi.animeextension.it.aniplay",
+    "apk": "aniyomi-it.aniplay-v13.1.apk",
+    "lang": "it",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AniPlay",
+        "lang": "it",
+        "id": "9017321674111133535",
+        "baseUrl": "https://aniplay.it",
         "versionId": 1,
         "hasCloudflare": 1
       }
