@@ -62,15 +62,24 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> {
         val episodes = mutableListOf<SEpisode>()
         val url = response.request.url.toString()
-        if (url.contains("/pelicula/")) {
-            val episode = SEpisode.create().apply {
-                episode_number = 1.0F
-                name = "Pelicula"
-                setUrlWithoutDomain(url)
-            }
-            return listOf(episode)
-        }
         val document = response.asJsoup()
+
+        if (url.contains("/pelicula/")) {
+            document.select("ul#playeroptionsul li").forEach {
+                val epNum = it.attr("data-nume").toFloat()
+                val epName = it.select("span.title").text()
+
+                val episode = SEpisode.create().apply {
+                    episode_number = epNum
+                    name = epName
+                    setUrlWithoutDomain("$url?$epNum")
+                }
+
+                episodes.add(episode)
+            }
+            return episodes
+        }
+
         document.select("div#serie_contenido div#seasons div.se-c div.se-a ul.episodios li").forEach {
             val epTemp = it.select("div.numerando").text().substringBefore("-").replace(" ", "")
             val epNum = it.select("div.numerando").text().substringAfter("-").replace(" ", "").replace(".", "")
@@ -209,13 +218,13 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val otherOptionsGroup = filters.find { it is OtherOptionsGroup } as OtherOptionsGroup
-        val typeFilter = filters.find { it is TypeFilter } as TypeFilter
-        val letterFilter = filters.find { it is LetterFilter } as LetterFilter
-        val invertedResultsFilter = filters.find { it is InvertedResultsFilter } as InvertedResultsFilter
-        val genreFilter = otherOptionsGroup.state.find { it is GenreFilter } as GenreFilter
-        val langFilter = otherOptionsGroup.state.find { it is LangFilter } as LangFilter
-        val movieFilter = otherOptionsGroup.state.find { it is MovieFilter } as MovieFilter
+        val otherOptionsGroup = filters.find { it is OtherOptionsGroup } as? OtherOptionsGroup ?: OtherOptionsGroup()
+        val typeFilter = (filters.find { it is TypeFilter } as? TypeFilter) ?: TypeFilter()
+        val letterFilter = filters.find { it is LetterFilter } as? LetterFilter ?: LetterFilter()
+        val invertedResultsFilter = filters.find { it is InvertedResultsFilter } as? InvertedResultsFilter ?: InvertedResultsFilter()
+        val genreFilter = otherOptionsGroup.state.find { it is GenreFilter } as? GenreFilter ?: GenreFilter()
+        val langFilter = otherOptionsGroup.state.find { it is LangFilter } as? LangFilter ?: LangFilter()
+        val movieFilter = otherOptionsGroup.state.find { it is MovieFilter } as? MovieFilter ?: MovieFilter()
 
         if (genreFilter.state != 0) {
             return if (genreFilter.toUriPart() != "tendencias" && genreFilter.toUriPart() != "ratings") {
