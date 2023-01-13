@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto.AnimeDto
 import eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto.EpisodeDataDto
 import eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto.EpisodeVideoDto
@@ -159,13 +158,12 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun getVideosFromAPI(episodeId: String): List<Video> {
-        val url = "$API_URL/episodios/$episodeId/m3u8"
-        val usePlaylist = preferences.getBoolean(PREF_USE_PLAYLIST_KEY, true)
-        val request = if (usePlaylist) GET(url) else GET("$url/mp4/")
-        val episodeObject = runCatching {
-            val response = client.newCall(request).execute()
+        val url = "$API_URL/episodios/$episodeId/m3u8/"
+        val episodeObject = try {
+            val response = client.newCall(GET(url)).execute()
             response.parseAs<MinimalEpisodeDto>()
-        }.getOrNull() ?: return run {
+        } catch (e: Exception) {
+            e.printStackTrace()
             // Lets try again, sometimes the source simply doesnt send all data
             // needed in the json (script#__NEXT_DATA__)
             // and makes videoListParse use this function by mistake.
@@ -173,15 +171,9 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
             // we only retry here, because there is a higher chance that
             // the source will not return the data but the API call will work
             val newRequest = GET("$baseUrl/watch/$episodeId")
-            videoListParse(client.newCall(newRequest).execute())
+            return videoListParse(client.newCall(newRequest).execute())
         }
-        return if (usePlaylist) {
-            client.newCall(GET(episodeObject.url))
-                .execute()
-                .toVideoList()
-        } else {
-            episodeObject.streams?.toVideoList() ?: emptyList<Video>()
-        }
+        return episodeObject.streams?.toVideoList() ?: emptyList<Video>()
     }
 
     // =============================== Search ===============================
@@ -307,20 +299,8 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
-        val usePlaylistPref = SwitchPreferenceCompat(screen.context).apply {
-            key = PREF_USE_PLAYLIST_KEY
-            title = PREF_USE_PLAYLIST_TITLE
-            setDefaultValue(true)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val checkValue = newValue as Boolean
-                preferences.edit().putBoolean(key, checkValue).commit()
-            }
-        }
-
         screen.addPreference(videoQualityPref)
         screen.addPreference(showOnlyPref)
-        screen.addPreference(usePlaylistPref)
     }
 
     // ============================= Utilities ==============================
@@ -335,19 +315,6 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         return map {
             val quality = "${it.quality.last()}p"
             Video(it.url, quality, it.url, subtitleTracks = subs)
-        }
-    }
-
-    private fun Response.toVideoList(): List<Video> {
-        val responseBody = body?.string().orEmpty()
-        val separator = "#EXT-X-STREAM-INF:"
-        return responseBody.substringAfter(separator).split(separator).map {
-            val quality = it.substringAfter("RESOLUTION=")
-                .substringAfter("x")
-                .substringBefore("\n")
-                .substringBefore(",") + "p"
-            val videoUrl = it.substringAfter("\n").substringBefore("\n")
-            Video(videoUrl, quality, videoUrl)
         }
     }
 
@@ -396,9 +363,6 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_SHOW_ONLY_TITLE = "Mostrar apenas episódios:"
         private val ANIME_TYPES_ENTRIES = arrayOf("Todos", "Dublados", "Legendados")
         private val ANIME_TYPES_VALUES = arrayOf("", "dub", "sub")
-
-        private const val PREF_USE_PLAYLIST_KEY = "use_m3u8_playlist"
-        private const val PREF_USE_PLAYLIST_TITLE = "Usar/Ativar playlist M3U8(HLS)"
 
         const val PREFIX_SEARCH = "id:"
     }
