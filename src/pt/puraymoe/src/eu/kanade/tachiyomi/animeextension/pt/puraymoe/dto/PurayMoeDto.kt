@@ -73,13 +73,18 @@ data class EpisodeVideoDto(
 data class MinimalEpisodeDto(
     @SerialName("temporada")
     val season: MinimalSeasonDto? = null,
-    val streams: List<VideoDto>? = null,
     val url: String = ""
 )
 
 @Serializable
 data class MinimalSeasonDto(
     val anime: AnimeDto
+)
+
+@Serializable
+data class VideoLinksDto(
+    @SerialName("download_list")
+    val videos: List<VideoDto>? = null
 )
 
 @Serializable
