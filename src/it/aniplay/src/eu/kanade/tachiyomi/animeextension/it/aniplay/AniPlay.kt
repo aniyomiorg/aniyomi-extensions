@@ -235,7 +235,7 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
                         newUrl = videoUrl.substringBeforeLast("/") + "/" + newUrl
                     }
 
-                    videoList.add(Video(newUrl, quality, newUrl, Headers.headersOf("Referer", "https://aniplay.it/")))
+                    videoList.add(Video(newUrl, quality, newUrl, headers = Headers.headersOf("Referer", "https://aniplay.it/")))
                 }
         } else {}
 
