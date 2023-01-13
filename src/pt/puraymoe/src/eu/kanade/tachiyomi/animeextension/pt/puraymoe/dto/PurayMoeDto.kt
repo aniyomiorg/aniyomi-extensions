@@ -73,7 +73,6 @@ data class EpisodeVideoDto(
 data class MinimalEpisodeDto(
     @SerialName("temporada")
     val season: MinimalSeasonDto? = null,
-    val streams: List<VideoDto>? = null,
     val url: String = ""
 )
 
