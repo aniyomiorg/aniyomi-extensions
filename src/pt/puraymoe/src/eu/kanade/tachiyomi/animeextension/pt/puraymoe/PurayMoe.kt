@@ -12,6 +12,7 @@ import eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto.SearchDto
 import eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto.SeasonInfoDto
 import eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto.SeasonListDto
 import eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto.VideoDto
+import eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto.VideoLinksDto
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -161,7 +162,7 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         val url = "$API_URL/episodios/$episodeId/m3u8/"
         val episodeObject = try {
             val response = client.newCall(GET(url)).execute()
-            response.parseAs<MinimalEpisodeDto>()
+            response.parseAs<VideoLinksDto>()
         } catch (e: Exception) {
             e.printStackTrace()
             // Lets try again, sometimes the source simply doesnt send all data
@@ -173,7 +174,7 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
             val newRequest = GET("$baseUrl/watch/$episodeId")
             return videoListParse(client.newCall(newRequest).execute())
         }
-        return episodeObject.streams?.toVideoList() ?: emptyList<Video>()
+        return episodeObject.videos?.toVideoList() ?: emptyList<Video>()
     }
 
     // =============================== Search ===============================

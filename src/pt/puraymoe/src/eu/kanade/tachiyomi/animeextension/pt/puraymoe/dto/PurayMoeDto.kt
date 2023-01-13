@@ -83,6 +83,12 @@ data class MinimalSeasonDto(
 )
 
 @Serializable
+data class VideoLinksDto(
+    @SerialName("download_list")
+    val videos: List<VideoDto>? = null
+)
+
+@Serializable
 data class VideoDto(
     @SerialName("resolucao")
     val quality: List<Int>,
