@@ -940,27 +940,6 @@
     ]
   },
   {
-    "name": "Aniyomi: Animixplay",
-    "pkg": "eu.kanade.tachiyomi.animeextension.en.animixplay",
-    "apk": "aniyomi-en.animixplay-v13.13.apk",
-    "lang": "en",
-    "code": 13,
-    "version": "13.13",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "Animixplay",
-        "lang": "en",
-        "id": "6562836947822205552",
-        "baseUrl": "https://animixplay.to",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: AsianLoad",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.asianload",
     "apk": "aniyomi-en.asianload-v13.20.apk",
@@ -1234,6 +1213,27 @@
     ]
   },
   {
+    "name": "Aniyomi: marin.moe",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.marinmoe",
+    "apk": "aniyomi-en.marinmoe-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "marin.moe",
+        "lang": "en",
+        "id": "5712161630458401041",
+        "baseUrl": "https://marin.moe",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: 9anime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.nineanime",
     "apk": "aniyomi-en.nineanime-v13.25.apk",
@@ -1377,27 +1377,6 @@
         "baseUrl": "https://152.32.149.160/api/api_client/index/",
         "versionId": 1,
         "hasCloudflare": 1
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: tenshi.moe",
-    "pkg": "eu.kanade.tachiyomi.animeextension.en.tenshimoe",
-    "apk": "aniyomi-en.tenshimoe-v13.25.apk",
-    "lang": "en",
-    "code": 25,
-    "version": "13.25",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "tenshi.moe",
-        "lang": "en",
-        "id": "4989657838324346996",
-        "baseUrl": "https://tenshi.moe",
-        "versionId": 1,
-        "hasCloudflare": 0
       }
     ]
   },
