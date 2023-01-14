@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.en.tenshimoe
+package eu.kanade.tachiyomi.animeextension.en.marinmoe
 
 import android.webkit.CookieManager
 import eu.kanade.tachiyomi.network.GET
