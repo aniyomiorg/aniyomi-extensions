@@ -96,6 +96,7 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         if (filters.status.isNotBlank()) url += "&${filters.status}"
         if (filters.contentRating.isNotBlank()) url += "&${filters.contentRating}"
         if (filters.genre.isNotBlank()) url += "&${filters.genre}"
+        if (filters.source.isNotBlank()) url += "&${filters.source}"
         if (filters.group.isNotBlank()) url += "&filter[group][0][id]=${filters.group}&filter[group][0][opr]=include"
         if (filters.studio.isNotBlank()) url += "&filter[production][0][id]=${filters.studio}&filter[production][0][opr]=include"
 
@@ -129,6 +130,7 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         description += "\nContent Rating: ${details.content_rating.name}"
         description += "\nRelease Date: ${details.release_date}"
         description += "\nType: ${details.type.name}"
+        description += "\nSource: ${details.source_list.joinToString(separator = ", ") { it.name }}"
         anime.description = description
 
         return anime
