@@ -253,7 +253,7 @@ class Kamyroll : ConfigurableAnimeSource, AnimeHttpSource() {
     private val locale = arrayOf(
         Pair("ar-ME", "Arabic"),
         Pair("ar-SA", "Arabic (Saudi Arabia)"),
-        Pair("de-DE", "Dutch"),
+        Pair("de-DE", "German"),
         Pair("en-US", "English"),
         Pair("es-419", "Spanish"),
         Pair("es-ES", "Spanish (Spain)"),
