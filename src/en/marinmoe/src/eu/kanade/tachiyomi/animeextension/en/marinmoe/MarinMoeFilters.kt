@@ -40,6 +40,11 @@ object MarinMoeFilters {
         MarinMoeFiltersData.contentRating.map { CheckBoxVal(it.first, true) }
     )
 
+    class SourceFilter : CheckBoxFilterList(
+        "Source",
+        MarinMoeFiltersData.source.map { CheckBoxVal(it.first, false) }
+    )
+
     class GenreFilter : CheckBoxFilterList(
         "Genre",
         MarinMoeFiltersData.genre.map { CheckBoxVal(it.first, false) }
@@ -55,6 +60,7 @@ object MarinMoeFilters {
         TypeFilter(),
         StatusFilter(),
         ContentRatingFilter(),
+        SourceFilter(),
         AnimeFilter.Separator(),
         GenreFilter(),
         GroupFilter(),
@@ -66,6 +72,7 @@ object MarinMoeFilters {
         val type: String = "",
         val status: String = "",
         val contentRating: String = "",
+        val source: String = "",
         val genre: String = "",
         val group: String = "",
         val studio: String = ""
@@ -113,7 +120,17 @@ object MarinMoeFilters {
                 }
         )
 
-        val genre = filters.filterIsInstance<GenreFilter>()
+        val source: String = filters.filterIsInstance<SourceFilter>()
+            .first()
+            .state.mapNotNull { format ->
+                if (format.state) {
+                    MarinMoeFiltersData.source.find { it.first == format.name }!!.second
+                } else { null }
+            }.withIndex().joinToString(separator = "&") {
+                "filter[source][${it.index}][id]=${it.value}&filter[source][${it.index}][opr]=include"
+            }
+
+        val genre: String = filters.filterIsInstance<GenreFilter>()
             .first()
             .state.mapNotNull { format ->
                 if (format.state) {
@@ -128,6 +145,7 @@ object MarinMoeFilters {
             type,
             status,
             contentRating,
+            source,
             genre,
             filters.asQueryPart<GroupFilter>(),
             filters.asQueryPart<StudioFilter>(),
@@ -180,6 +198,17 @@ object MarinMoeFilters {
             Pair("R - 17+ (violence & profanity)", "5"),
             Pair("Rx - Hentai", "6"),
             Pair("G - All Ages", "7"),
+        )
+
+        val source = arrayOf(
+            Pair("Blu-ray", "5"),
+            Pair("DVD", "4"),
+            Pair("LD", "8"),
+            Pair("N/A", "1"),
+            Pair("TV", "2"),
+            Pair("VCD", "7"),
+            Pair("VHS", "6"),
+            Pair("Web", "3")
         )
 
         val genre = arrayOf(

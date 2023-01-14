@@ -50,7 +50,8 @@ data class AnimeDetails(
             val release_date: String,
             val description: String,
             val genre_list: List<InfoData>,
-            val production_list: List<InfoData>
+            val production_list: List<InfoData>,
+            val source_list: List<InfoData>
         ) {
             @Serializable
             data class InfoType(
