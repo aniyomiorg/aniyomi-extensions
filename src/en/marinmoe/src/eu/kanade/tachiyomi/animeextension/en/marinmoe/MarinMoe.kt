@@ -203,7 +203,7 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
                     Pair(
                         Video(
                             link.code.file,
-                            "${src.title} ${link.resolution} (${if (src.audio.code == "jp") "Sub" else "Dub"})",
+                            "${src.title} ${link.resolution} (${if (src.audio.code == "jp") "Sub" else "Dub"} - ${src.source.name})",
                             link.code.file,
                             headers = headers
                         ),

@@ -103,11 +103,17 @@ data class EpisodeData(
                 val title: String,
                 val sort: Float,
                 val audio: TrackInfo,
+                val source: SourceInfo,
                 val mirror: List<Track>
             ) {
                 @Serializable
                 data class TrackInfo(
                     val code: String,
+                )
+
+                @Serializable
+                data class SourceInfo(
+                    val name: String,
                 )
 
                 @Serializable
