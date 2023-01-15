@@ -11,9 +11,9 @@ class HinataSoulExtractor(private val headers: Headers) {
         val doc = response.asJsoup()
         val hasFHD = doc.selectFirst("div.Aba:contains(FULLHD)") != null
         val serverUrl = doc.selectFirst("meta[itemprop=contentURL]").attr("content")
-        val default = "appsd2"
+        val default = "appsd"
         val qualities = listOfNotNull("SD", "HD", if (hasFHD) "FULLHD" else null)
-        val paths = listOf(default, "apphd2", "appfullhd")
+        val paths = listOf(default, "apphd", "appfullhd")
         return qualities.mapIndexed { index, quality ->
             val path = paths[index]
             val url = if (index > 0) serverUrl.replace(default, path) else serverUrl

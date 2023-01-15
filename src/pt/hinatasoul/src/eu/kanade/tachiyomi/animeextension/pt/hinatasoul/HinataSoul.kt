@@ -212,7 +212,8 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun hasNextPage(doc: Document): Boolean {
         val currentUrl = doc.location()
         val nextUrl = doc.selectFirst("a:contains(»)").attr("href")
-        return !nextUrl.endsWith("1") && currentUrl != nextUrl
+        val endings = listOf("/1", "page=1")
+        return !endings.any { nextUrl.endsWith(it) } && currentUrl != nextUrl
     }
 
     private val animeMenuSelector = "div.controlesBoxItem > a > i.iconLista"
