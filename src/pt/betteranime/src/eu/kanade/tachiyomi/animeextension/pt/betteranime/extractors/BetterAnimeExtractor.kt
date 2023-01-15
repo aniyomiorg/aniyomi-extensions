@@ -43,9 +43,11 @@ class BetterAnimeExtractor(
         """.trimIndent()
         val reqBody = body.toRequestBody("application/json".toMediaType())
         val request = POST("$baseUrl/changePlayer", headers, reqBody)
-        val response = client.newCall(request).execute()
-        val resJson = json.decodeFromString<ChangePlayerDto>(response.body?.string().orEmpty())
-        return videoUrlFromPlayer(resJson.frameLink)
+        return runCatching {
+            val response = client.newCall(request).execute()
+            val resJson = json.decodeFromString<ChangePlayerDto>(response.body?.string().orEmpty())
+            videoUrlFromPlayer(resJson.frameLink)
+        }.getOrNull()
     }
 
     private fun videoUrlFromPlayer(url: String?): String? {
