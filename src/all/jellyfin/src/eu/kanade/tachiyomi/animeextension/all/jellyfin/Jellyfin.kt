@@ -453,13 +453,16 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
             if (item["ImageTags"].toString() == "{}") {
                 anime.thumbnail_url = "$baseUrl/Items/$seriesId/Images/Primary?api_key=$apiKey"
             }
-        } else if (item["Type"]!!.jsonPrimitive.content == "Movie") {
+        } else if (item["Type"]!!.jsonPrimitive.content == "Movie" || item["Type"]!!.jsonPrimitive.content == "Series") {
             val id = item["Id"]!!.jsonPrimitive.content
 
             anime.title = item["Name"]!!.jsonPrimitive.content
             anime.thumbnail_url = "$baseUrl/Items/$id/Images/Primary?api_key=$apiKey"
 
             anime.setUrlWithoutDomain("/Users/$userId/Items/$id?api_key=$apiKey")
+        } else {
+            anime.title = ""
+            anime.thumbnail_url = ""
         }
 
         return anime
