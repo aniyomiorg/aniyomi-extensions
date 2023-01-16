@@ -1215,10 +1215,10 @@
   {
     "name": "Aniyomi: marin.moe",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.marinmoe",
-    "apk": "aniyomi-en.marinmoe-v13.3.apk",
+    "apk": "aniyomi-en.marinmoe-v13.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1236,10 +1236,10 @@
   {
     "name": "Aniyomi: 9anime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.nineanime",
-    "apk": "aniyomi-en.nineanime-v13.25.apk",
+    "apk": "aniyomi-en.nineanime-v13.26.apk",
     "lang": "en",
-    "code": 25,
-    "version": "13.25",
+    "code": 26,
+    "version": "13.26",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2252,6 +2252,27 @@
         "lang": "it",
         "id": "5832452298268268088",
         "baseUrl": "https://www.hentaisaturn.com",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: Toonitalia",
+    "pkg": "eu.kanade.tachiyomi.animeextension.it.toonitalia",
+    "apk": "aniyomi-it.toonitalia-v13.1.apk",
+    "lang": "it",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Toonitalia",
+        "lang": "it",
+        "id": "8903679906651673401",
+        "baseUrl": "https://toonitalia.co",
         "versionId": 1,
         "hasCloudflare": 1
       }
