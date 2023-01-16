@@ -137,6 +137,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.thumbnail_url = document.select("div.entry-content > h2 > img").attr("src")
+        anime.title = document.select("header.entry-header > h1.entry-title").text()
 
         var descInfo = ""
         document.selectFirst("div.entry-content > h2 + p + p").childNodes().filter {
