@@ -5,6 +5,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -144,6 +145,7 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         val dataPage = document.select("div#app").attr("data-page").replace("&quot;", "\"")
 
         val dataJson = json.decodeFromString<AnimeDetails>(dataPage)
+        val includeSpecial = preferences.getBoolean("preferred_special", true)
 
         dataJson.props.episode_list.data.forEach {
             val episode = SEpisode.create()
@@ -155,7 +157,7 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
             val parsedDate = parseDate(it.release_date)
             if (parsedDate.time != -1L) episode.date_upload = parsedDate.time
 
-            episodes.add(episode)
+            if (includeSpecial || it.type != 2) episodes.add(episode)
         }
 
         var next = dataJson.props.episode_list.links.next
@@ -327,8 +329,20 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
+        val specialPref = SwitchPreferenceCompat(screen.context).apply {
+            key = "preferred_special"
+            title = "Include Special Episodes"
+            setDefaultValue(true)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val new = newValue as Boolean
+                preferences.edit().putBoolean(key, new).commit()
+            }
+        }
+
         screen.addPreference(videoQualityPref)
         screen.addPreference(groupPref)
         screen.addPreference(subPref)
+        screen.addPreference(specialPref)
     }
 }
