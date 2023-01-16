@@ -231,7 +231,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw java.lang.Exception("Not used")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
 
     private fun searchAnimeRequest(page: Int, query: String, filters: NineAnimeFilters.FilterSearchParams): Request {
         val jsVrfInterceptor = client.newBuilder().addInterceptor(JsVrfInterceptor(query, baseUrl)).build()
