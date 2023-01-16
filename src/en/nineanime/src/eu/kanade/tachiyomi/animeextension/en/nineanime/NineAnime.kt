@@ -6,11 +6,13 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -29,6 +31,7 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -219,11 +222,36 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        val params = NineAnimeFilters.getSearchParameters(filters)
+        return client.newCall(searchAnimeRequest(page, query, params))
+            .asObservableSuccess()
+            .map { response ->
+                searchAnimeParse(response)
+            }
+    }
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
+
+    private fun searchAnimeRequest(page: Int, query: String, filters: NineAnimeFilters.FilterSearchParams): Request {
         val jsVrfInterceptor = client.newBuilder().addInterceptor(JsVrfInterceptor(query, baseUrl)).build()
         val vrf = jsVrfInterceptor.newCall(GET("$baseUrl/filter")).execute().request.header("url").toString()
-        return GET("$baseUrl/filter?keyword=$query&vrf=${java.net.URLEncoder.encode(vrf, "utf-8")}&page=$page", headers = Headers.headersOf("Referer", "$baseUrl/"))
+
+        var url = "$baseUrl/filter?keyword=$query"
+
+        if (filters.genre.isNotBlank()) url += filters.genre
+        if (filters.country.isNotBlank()) url += filters.country
+        if (filters.season.isNotBlank()) url += filters.season
+        if (filters.year.isNotBlank()) url += filters.year
+        if (filters.type.isNotBlank()) url += filters.type
+        if (filters.status.isNotBlank()) url += filters.status
+        if (filters.language.isNotBlank()) url += filters.language
+        if (filters.rating.isNotBlank()) url += filters.rating
+
+        return GET("$url&sort=${filters.sort}&vrf=${java.net.URLEncoder.encode(vrf, "utf-8")}&page=$page", headers = Headers.headersOf("Referer", "$baseUrl/"))
     }
+
+    override fun getFilterList(): AnimeFilterList = NineAnimeFilters.filterList
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()

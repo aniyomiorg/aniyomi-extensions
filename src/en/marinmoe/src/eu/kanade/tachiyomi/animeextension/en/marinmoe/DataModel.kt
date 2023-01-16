@@ -75,6 +75,7 @@ data class AnimeDetails(
                 val title: String,
                 val sort: Float,
                 val slug: String,
+                val type: Int,
                 val release_date: String,
             )
 

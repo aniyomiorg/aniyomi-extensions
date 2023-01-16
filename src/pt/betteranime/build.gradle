@@ -6,8 +6,12 @@ ext {
     extName = 'Better Anime'
     pkgNameSuffix = 'pt.betteranime'
     extClass = '.BetterAnime'
-    extVersionCode = 4
+    extVersionCode = 5
     libVersion = '13'
+}
+
+dependencies {
+    compileOnly libs.bundles.coroutines
 }
 
 apply from: "$rootDir/common.gradle"
