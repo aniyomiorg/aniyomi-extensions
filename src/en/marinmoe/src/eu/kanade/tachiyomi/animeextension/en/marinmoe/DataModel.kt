@@ -100,6 +100,26 @@ data class EpisodeData(
         ) {
             @Serializable
             data class Video(
+                val slug: String,
+            )
+        }
+    }
+}
+
+@Serializable
+data class EpisodeResponse(
+    val props: PropData
+) {
+    @Serializable
+    data class PropData(
+        val video: VideoData
+    ) {
+        @Serializable
+        data class VideoData(
+            val data: Video
+        ) {
+            @Serializable
+            data class Video(
                 val title: String,
                 val sort: Float,
                 val audio: TrackInfo,
