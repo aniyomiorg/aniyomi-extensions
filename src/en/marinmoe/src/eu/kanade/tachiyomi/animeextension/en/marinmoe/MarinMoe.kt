@@ -157,7 +157,7 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
             val parsedDate = parseDate(it.release_date)
             if (parsedDate.time != -1L) episode.date_upload = parsedDate.time
 
-            if (!(!includeSpecial && it.type == 2)) episodes.add(episode)
+            if (includeSpecial || it.type != 2) episodes.add(episode)
         }
 
         var next = dataJson.props.episode_list.links.next
