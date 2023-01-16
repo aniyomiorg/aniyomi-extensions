@@ -32,9 +32,9 @@ class StreamSBExtractor(private val client: OkHttpClient) {
             .substringBefore(".html")
         return if (common) {
             val hexBytes = bytesToHex(id.toByteArray())
-            "$sbUrl/sources48/625a364258615242766475327c7c${hexBytes}7c7c4761574550654f7461566d347c7c73747265616d7362"
+            "$sbUrl/sources50/625a364258615242766475327c7c${hexBytes}7c7c4761574550654f7461566d347c7c73747265616d7362"
         } else {
-            "$sbUrl/sources48/${bytesToHex("||$id||||streamsb".toByteArray())}/"
+            "$sbUrl/sources50/${bytesToHex("||$id||||streamsb".toByteArray())}/"
         }
     }
 
