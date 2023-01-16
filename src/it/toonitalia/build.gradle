@@ -1,0 +1,16 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Toonitalia'
+    pkgNameSuffix = 'it.toonitalia'
+    extClass = '.Toonitalia'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-voe-extractor'))
+}
+
+apply from: "$rootDir/common.gradle"
