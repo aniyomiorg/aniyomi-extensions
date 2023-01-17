@@ -1402,6 +1402,27 @@
     ]
   },
   {
+    "name": "Aniyomi: UHD Movies (Experimental)",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.uhdmovies",
+    "apk": "aniyomi-en.uhdmovies-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "UHD Movies (Experimental)",
+        "lang": "en",
+        "id": "3575276602301041188",
+        "baseUrl": "https://uhdmovies.org.in",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Membed",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.vidembed",
     "apk": "aniyomi-en.vidembed-v13.21.apk",
