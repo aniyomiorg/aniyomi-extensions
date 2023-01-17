@@ -33,7 +33,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "شاهد فور يو"
 
-    override val baseUrl = "https://shahed4u.team"
+    override val baseUrl = "https://shahed4u.agency"
 
     override val lang = "ar"
 
