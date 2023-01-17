@@ -14,13 +14,16 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.Jsoup
 import rx.Observable
@@ -193,13 +196,43 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
+
+        var cookiesResponse = client.newCall(GET(response.request.url.toString(), headers = headers)).execute()
+        var newHeaders = headers.newBuilder()
+        for (cookie in cookiesResponse.headers) {
+            if (cookie.first == "set-cookie" && cookie.second.startsWith("XSRF-TOKEN")) {
+                newHeaders.add("X-XSRF-TOKEN", cookie.second.substringAfter("=").substringBefore(";").replace("%3D", "="))
+            }
+
+            if (cookie.first == "set-cookie" && cookie.second.startsWith("marinmoe_session")) {
+                newHeaders.add("Cookie", cookie.second.substringBefore(";").replace("%3D", "="))
+            }
+        }
+        newHeaders.add("Origin", baseUrl)
+            .add("Content-Type", "application/json")
+            .add("Referer", response.request.url.toString())
+            .add("Accept", "text/html, application/xhtml+xml")
+            .add("Accept-Language", "en-US,en;q=0.5")
+            .add("X-Requested-With", "XMLHttpRequest")
+
         val videoList = mutableListOf<Pair<Video, Float>>()
         val document = response.asJsoup()
         val dataPage = document.select("div#app").attr("data-page").replace("&quot;", "\"")
 
         val videos = json.decodeFromString<EpisodeData>(dataPage).props.video_list.data
 
-        for (src in videos) {
+        for (video in videos) {
+
+            val dataStr = """{"video":"${video.slug}"}"""
+
+            newHeaders.add("Content-Length", dataStr.length.toString())
+
+            val videoJson = client.newCall(
+                POST(response.request.url.toString(), body = dataStr.toRequestBody("application/json".toMediaType()), headers = newHeaders.build())
+            ).execute().asJsoup().select("div#app").attr("data-page").replace("&quot;", "\"")
+
+            val src = json.decodeFromString<EpisodeResponse>(videoJson).props.video.data
+
             for (link in src.mirror) {
                 videoList.add(
                     Pair(
