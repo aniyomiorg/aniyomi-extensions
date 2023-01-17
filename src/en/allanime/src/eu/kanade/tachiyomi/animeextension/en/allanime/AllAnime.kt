@@ -151,7 +151,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun animeDetailsRequest(anime: SAnime): Request {
         val variables = """{"_id":"${anime.url}"}"""
-        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"afcdaedfd46f36448916b5f7db84d2bdbb72fded428ad8755179a03845c57b96"}}"""
+        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"f73a8347df0e3e794f8955a18de6e85ac25dfc6b74af8ad613edf87bb446a854"}}"""
         val headers = headers.newBuilder()
             .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
             .build()
@@ -184,7 +184,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun episodeListRequest(anime: SAnime): Request {
         val variables = """{"_id":"${anime.url}"}"""
-        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"afcdaedfd46f36448916b5f7db84d2bdbb72fded428ad8755179a03845c57b96"}}"""
+        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"f73a8347df0e3e794f8955a18de6e85ac25dfc6b74af8ad613edf87bb446a854"}}"""
         val headers = headers.newBuilder()
             .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
             .build()
@@ -205,7 +205,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 episode.name = "Episode $numName (sub)"
 
                 val variables = """{"showId":"${medias.data.show._id}","translationType":"sub","episodeString":"$ep"}"""
-                val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"3933a4a68bc80c46e25b7b8b3f563df1416b7b583595e5e5bfc67c01bd791df8"}}"""
+                val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"bfda9b479f7a4810bfeb9e3c8d462c6d09a33f918328b0688eb370e1778f272f"}}"""
                 episode.setUrlWithoutDomain("/allanimeapi?variables=$variables&extensions=$extensions")
                 episodeList.add(episode)
             }
@@ -217,7 +217,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 episode.name = "Episode $numName (dub)"
 
                 val variables = """{"showId":"${medias.data.show._id}","translationType":"dub","episodeString":"$ep"}"""
-                val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"3933a4a68bc80c46e25b7b8b3f563df1416b7b583595e5e5bfc67c01bd791df8"}}"""
+                val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"bfda9b479f7a4810bfeb9e3c8d462c6d09a33f918328b0688eb370e1778f272f"}}"""
                 episode.setUrlWithoutDomain("/allanimeapi?variables=$variables&extensions=$extensions")
                 episodeList.add(episode)
             }
