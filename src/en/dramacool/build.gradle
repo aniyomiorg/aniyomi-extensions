@@ -5,7 +5,7 @@ ext {
     extName = 'DramaCool'
     pkgNameSuffix = 'en.dramacool'
     extClass = '.DramaCool'
-    extVersionCode = 26
+    extVersionCode = 27
     libVersion = '13'
 }
 

@@ -6,7 +6,7 @@ ext {
     extName = 'Kinoking'
     pkgNameSuffix = 'de.kinoking'
     extClass = '.Kinoking'
-    extVersionCode = 7
+    extVersionCode = 8
     libVersion = '13'
 }
 
