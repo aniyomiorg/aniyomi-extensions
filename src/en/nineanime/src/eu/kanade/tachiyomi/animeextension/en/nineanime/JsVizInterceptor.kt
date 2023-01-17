@@ -5,6 +5,8 @@ import android.app.Application
 import android.os.Handler
 import android.os.Looper
 import android.webkit.JavascriptInterface
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import eu.kanade.tachiyomi.network.GET
@@ -58,7 +60,7 @@ class JsVizInterceptor(private val embedLink: String) : Interceptor {
 
                 const originalOpen = iframe.contentWindow.XMLHttpRequest.prototype.open;
                 iframe.contentWindow.XMLHttpRequest.prototype.open = function(method, url, async) {
-                    if (!url.includes("ping") && !url.includes("/assets/") && !url.includes("thumbnails") && !url.includes("jpg") && !url.includes("m3u8")) {
+                    if (!url.includes("ping") && !url.includes("/assets/") && !url.includes("thumbnails") && !url.includes("jpg") && !url.includes("m3u8") && !url.includes("simplewebanalysis")) {
                         if (url == null) {
                             const entries = iframe.contentWindow.performance.getEntries();
                             entries.forEach((entry) => {
@@ -81,6 +83,8 @@ class JsVizInterceptor(private val embedLink: String) : Interceptor {
 
         var newRequest: Request? = null
 
+        var head = ""
+
         handler.post {
             val webview = WebView(context)
             webView = webview
@@ -93,6 +97,18 @@ class JsVizInterceptor(private val embedLink: String) : Interceptor {
                 userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:106.0) Gecko/20100101 Firefox/106.0"
                 webview.addJavascriptInterface(jsinterface, "android")
                 webview.webViewClient = object : WebViewClient() {
+                    override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
+                        if (request?.url.toString().contains("https://vidstream.pro/")) {
+                            if (request?.url.toString().contains("/embed/") || request?.url.toString().contains("/ping/") || request?.url.toString().contains("favicon.ico") ||
+                                request?.url.toString().contains("/assets/") || request?.url.toString().contains("/players/")
+                            ) {
+                                return null
+                            } else {
+                                head = request?.url.toString()
+                            }
+                        }
+                        return super.shouldInterceptRequest(view, request)
+                    }
                     override fun onPageFinished(view: WebView?, url: String?) {
                         view?.evaluateJavascript(jsScript) {}
                     }
@@ -108,7 +124,17 @@ class JsVizInterceptor(private val embedLink: String) : Interceptor {
             webView?.destroy()
             webView = null
         }
-        newRequest = GET(request.url.toString(), headers = Headers.headersOf("url", jsinterface.payload))
+        newRequest = GET(
+            request.url.toString(),
+            headers = Headers.headersOf(
+                "url",
+                if (jsinterface.payload.isNullOrEmpty() || (!jsinterface.payload.contains("https://vidstream.pro"))) {
+                    head
+                } else {
+                    jsinterface.payload
+                }
+            )
+        )
         return newRequest
     }
 }
