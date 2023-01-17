@@ -5,6 +5,8 @@ import android.app.Application
 import android.os.Handler
 import android.os.Looper
 import android.webkit.JavascriptInterface
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import eu.kanade.tachiyomi.network.GET
@@ -52,25 +54,25 @@ class JsInterceptor(private val lang: String) : Interceptor {
         // JavaSrcipt gets the Dub or Sub link of vidstream
         val jsScript = """
             (function(){
-                window.onload = (function() {
-                    let el = document.querySelector('div[data-type="$lang"] ul li[data-sv-id="41"]');
-                    let e = document.createEvent('HTMLEvents');
-                    e.initEvent('click',true,true);
-                    el.dispatchEvent(e);
-                    setTimeout(function(){
-                        const resources = performance.getEntriesByType('resource');
-                        resources.forEach((entry) => {
-                            if(entry.name.includes("https://vidstream.pro/embed/")){
-                                window.android.passPayload(entry.name);
-                            }
-                        });
-                    }, 5000);
-                })();
-            })();"""
+                let hoster = document.querySelector('div[data-type="$lang"] ul li[data-sv-id="41"]');
+                let event = document.createEvent('HTMLEvents');
+                event.initEvent('click',true,true);
+                hoster.dispatchEvent(event);
+                let intervalId = setInterval(() => {
+                    let element = document.querySelector("#player iframe");
+                    if (element) {
+                        clearInterval(intervalId);
+                        window.android.passPayload(element.src)
+                    }
+                }, 500);
+            })();
+        """
 
         val headers = request.headers.toMultimap().mapValues { it.value.getOrNull(0) ?: "" }.toMutableMap()
 
         var newRequest: Request? = null
+
+        var head = ""
 
         handler.post {
             val webview = WebView(context)
@@ -84,6 +86,12 @@ class JsInterceptor(private val lang: String) : Interceptor {
                 userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:106.0) Gecko/20100101 Firefox/106.0"
                 webview.addJavascriptInterface(jsinterface, "android")
                 webview.webViewClient = object : WebViewClient() {
+                    override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
+                        if (request?.url.toString().contains("https://vidstream.pro/embed")) {
+                            head = request?.url.toString()
+                        }
+                        return super.shouldInterceptRequest(view, request)
+                    }
                     override fun onPageFinished(view: WebView?, url: String?) {
                         view?.evaluateJavascript(jsScript) {}
                     }
@@ -99,7 +107,17 @@ class JsInterceptor(private val lang: String) : Interceptor {
             webView?.destroy()
             webView = null
         }
-        newRequest = GET(request.url.toString(), headers = Headers.headersOf("url", jsinterface.payload))
+        newRequest = GET(
+            request.url.toString(),
+            headers = Headers.headersOf(
+                "url",
+                if (jsinterface.payload.isNullOrEmpty() || (!jsinterface.payload.contains("https://vidstream.pro/embed"))) {
+                    head
+                } else {
+                    jsinterface.payload
+                }
+            )
+        )
         return newRequest
     }
 }

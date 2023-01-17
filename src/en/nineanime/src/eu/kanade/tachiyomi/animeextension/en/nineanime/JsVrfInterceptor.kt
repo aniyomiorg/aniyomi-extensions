@@ -58,7 +58,13 @@ class JsVrfInterceptor(private val query: String, private val baseUrl: String) :
                let e = document.createEvent('HTMLEvents');
                e.initEvent('keyup', true, true);
                inputElemente.dispatchEvent(e);
-               window.android.passPayload(document.querySelector('form.filters input[type="hidden"]').value);
+               let intervalId = setInterval(() => {
+                    let element = document.querySelector('form.filters input[type="hidden"]').value;
+                    if (element) {
+                        clearInterval(intervalId);
+                        window.android.passPayload(element)
+                    }
+                }, 100);
             })();
         """
 
