@@ -57,7 +57,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/page/$page/")
 
-    override fun popularAnimeSelector(): String = "div#content  div.gridlove-posts > div"
+    override fun popularAnimeSelector(): String = "div#content  div.gridlove-posts > div.layout-masonry"
 
     override fun popularAnimeNextPageSelector(): String =
         "div#content  > nav.gridlove-pagination > a.next"
@@ -97,7 +97,11 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =========================== Anime Details ============================
 
     override fun animeDetailsParse(document: Document): SAnime {
-        return SAnime.create()
+        return SAnime.create().apply {
+            title = document.selectFirst("h2").text()
+                .replace("Download", "", true).trim()
+            status = SAnime.COMPLETED
+        }
     }
 
     // ============================== Episodes ==============================
@@ -157,6 +161,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 )
             }
         } else {
+            var collectionIdx = 0F
             episodeElements.filter {
                 !it.text().contains("Zip", true) &&
                     !it.text().contains("Pack", true)
@@ -165,19 +170,23 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val qualityMatch = qualityRegex.find(prevP.text())
                 val quality = qualityMatch?.value ?: "HD"
 
+                val collectionName = row.previousElementSiblings().prev("h2").first().text()
+                    .replace("Download", "", true).trim()
+
                 row.select("a").map { linkElement ->
-                    Pair(linkElement.attr("href")!!.substringAfter("?id="), quality)
+                    Triple(linkElement.attr("href")!!.substringAfter("?id="), quality, collectionName)
                 }
-            }.flatten().let { link ->
+            }.flatten().groupBy { it.third }.map { group ->
+                collectionIdx++
                 episodeList.add(
                     SEpisode.create().apply {
                         url = EpLinks(
-                            urls = link.map {
+                            urls = group.value.map {
                                 EpUrl(url = it.first, quality = it.second)
                             }
                         ).toJson()
-                        name = "Movie"
-                        episode_number = 0F
+                        name = group.key
+                        episode_number = collectionIdx
                     }
                 )
             }
