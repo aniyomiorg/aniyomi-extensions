@@ -20,7 +20,6 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
-import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -254,10 +253,12 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
         )
 
         episodeList.addAll(
-            episodes.map {
+            episodes.filter {
+                it.scws_id != null && it.file_name != null
+            }.map {
                 SEpisode.create().apply {
                     name = "Episode ${it.number}"
-                    url = LinkData(it.scws_id.toString(), it.file_name).toJsonString()
+                    url = LinkData(it.scws_id.toString(), it.file_name!!).toJsonString()
                     date_upload = parseDate(it.created_at)
                     episode_number = it.number.split("-")[0].toFloatOrNull() ?: 0F
                 }
@@ -372,10 +373,12 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
             GET("$baseUrl/info_api/$animeId/1?start_range=$start&end_range=$end", headers = headers)
         ).execute()
         val json = json.decodeFromString<ApiResponse>(response.body!!.string())
-        return json.episodes.map {
+        return json.episodes.filter {
+            it.scws_id != null && it.file_name != null
+        }.map {
             SEpisode.create().apply {
                 name = "Episode ${it.number}"
-                url = LinkData(it.scws_id.toString(), it.file_name).toJsonString()
+                url = LinkData(it.scws_id.toString(), it.file_name!!).toJsonString()
                 date_upload = parseDate(it.created_at)
                 episode_number = it.number.split("-")[0].toFloatOrNull() ?: 0F
             }
