@@ -201,7 +201,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
 
         anime.title = animeDetails.title_eng
         anime.status = parseStatus(animeDetails.status)
-        anime.artist = animeDetails.studio
+        anime.artist = animeDetails.studio ?: ""
         anime.genre = animeDetails.genres.joinToString(", ") { it.name }
 
         var description = animeDetails.plot + "\n"
@@ -417,7 +417,10 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
         val quality = preferences.getString("preferred_quality", "1080")!!
 
         return this.sortedWith(
-            compareBy { it.quality.contains(quality) }
+            compareBy(
+                { it.quality.contains(quality) },
+                { it.quality.substringBefore("p").toIntOrNull() ?: 0 }
+            )
         ).reversed()
     }
 
