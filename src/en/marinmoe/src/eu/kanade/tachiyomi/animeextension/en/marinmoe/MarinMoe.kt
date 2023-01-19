@@ -196,9 +196,10 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-
         var cookiesResponse = client.newCall(GET(response.request.url.toString(), headers = headers)).execute()
+
         var newHeaders = headers.newBuilder()
+
         for (cookie in cookiesResponse.headers) {
             if (cookie.first == "set-cookie" && cookie.second.startsWith("XSRF-TOKEN")) {
                 newHeaders.add("X-XSRF-TOKEN", cookie.second.substringAfter("=").substringBefore(";").replace("%3D", "="))
@@ -208,6 +209,13 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
                 newHeaders.add("Cookie", cookie.second.substringBefore(";").replace("%3D", "="))
             }
         }
+
+        val videoHeaders = newHeaders.build().newBuilder()
+            .add("Accept", "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5")
+            .add("Referer", response.request.url.toString())
+            .add("Accept-Language", "en-US,en;q=0.5")
+            .add("Range", "bytes=0-")
+
         newHeaders.add("Origin", baseUrl)
             .add("Content-Type", "application/json")
             .add("Referer", response.request.url.toString())
@@ -237,10 +245,10 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
                 videoList.add(
                     Pair(
                         Video(
-                            link.code.file,
+                            response.request.url.toString(),
                             "${src.title} ${link.resolution} (${if (src.audio.code == "jp") "Sub" else "Dub"} - ${src.source.name})",
                             link.code.file,
-                            headers = headers
+                            headers = videoHeaders.build()
                         ),
                         src.sort
                     )

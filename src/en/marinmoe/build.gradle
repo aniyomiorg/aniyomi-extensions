@@ -6,7 +6,7 @@ ext {
     extName = 'marin.moe'
     pkgNameSuffix = 'en.marinmoe'
     extClass = '.MarinMoe'
-    extVersionCode = 5
+    extVersionCode = 6
     libVersion = '13'
 }
 
