@@ -61,8 +61,8 @@ data class AnimeInfo(
     val id: Int,
     val type: String,
     val status: String,
-    val studio: String,
     val genres: List<Genre>,
+    val studio: String? = null,
     val score: String? = null,
 ) {
     @Serializable

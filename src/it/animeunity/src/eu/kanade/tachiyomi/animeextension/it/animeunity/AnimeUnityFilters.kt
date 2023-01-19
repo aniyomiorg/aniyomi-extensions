@@ -164,6 +164,7 @@ object AnimeUnityFilters {
             any,
             Pair("Lista A-Z", "Lista A-Z"),
             Pair("Lista Z-A", "Lista Z-A"),
+            Pair("Popolarità", "Popolarità"),
             Pair("Valutazione", "Valutazione"),
         )
 
