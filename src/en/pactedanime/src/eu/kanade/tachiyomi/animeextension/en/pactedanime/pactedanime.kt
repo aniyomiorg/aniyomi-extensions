@@ -88,7 +88,7 @@ class pactedanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                         episode.name = "Season ${ep.selectFirst("div.numerando").ownText()} - ${ep.selectFirst("a[href]").ownText()}"
                         episode.episode_number = counter.toFloat()
-                        episode.setUrlWithoutDomain(ep.select("div.episodiotitle a").attr("href").toHttpUrl().encodedPath)
+                        episode.setUrlWithoutDomain(ep.selectFirst("a[href]").attr("href").toHttpUrl().encodedPath)
 
                         if (ep.selectFirst("p:contains(Filler)") != null) episode.scanlator = "Filler Episode"
 
