@@ -8,7 +8,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import okhttp3.Headers
+import eu.kanade.tachiyomi.network.GET
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.Interceptor
 import okhttp3.Request
@@ -22,17 +22,17 @@ class MasterPlaylistInterceptor : Interceptor {
 
     private val context = Injekt.get<Application>()
     private val handler by lazy { Handler(Looper.getMainLooper()) }
-    val playlist = mutableListOf<Pair<String, Headers>>()
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
 
-        val newRequest = resolveWithWebView(originalRequest)
+        val newRequest = resolveWithWebView(originalRequest) ?: throw Exception("Could not find playlist")
+
         return chain.proceed(newRequest)
     }
 
     @SuppressLint("SetJavaScriptEnabled")
-    private fun resolveWithWebView(request: Request): Request {
+    private fun resolveWithWebView(request: Request): Request? {
         // We need to lock this thread until the WebView finds the challenge solution url, because
         // OkHttp doesn't support asynchronous interceptors.
         val latch = CountDownLatch(1)
@@ -41,6 +41,8 @@ class MasterPlaylistInterceptor : Interceptor {
 
         val origRequestUrl = request.url.toString()
         val headers = request.headers.toMultimap().mapValues { it.value.getOrNull(0) ?: "" }.toMutableMap()
+
+        var newRequest: Request? = null
 
         handler.post {
             val webview = WebView(context)
@@ -51,8 +53,7 @@ class MasterPlaylistInterceptor : Interceptor {
                 databaseEnabled = true
                 useWideViewPort = false
                 loadWithOverviewMode = false
-                userAgentString = request.header("User-Agent")
-                    ?: "\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36 Edg/88.0.705.63\""
+                userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/110.0"
             }
 
             webview.webViewClient = object : WebViewClient() {
@@ -61,7 +62,7 @@ class MasterPlaylistInterceptor : Interceptor {
                     request: WebResourceRequest,
                 ): WebResourceResponse? {
                     if (request.url.toString().contains(".m3u8")) {
-                        playlist.add(Pair(request.url.toString(), request.requestHeaders.toHeaders()))
+                        newRequest = GET(request.url.toString(), request.requestHeaders.toHeaders())
                         latch.countDown()
                     }
                     return super.shouldInterceptRequest(view, request)
@@ -81,6 +82,6 @@ class MasterPlaylistInterceptor : Interceptor {
             webView = null
         }
 
-        return request
+        return newRequest
     }
 }
