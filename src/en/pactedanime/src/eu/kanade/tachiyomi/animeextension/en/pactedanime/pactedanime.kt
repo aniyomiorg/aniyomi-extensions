@@ -86,7 +86,7 @@ class pactedanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     if (ep.childrenSize() > 0) {
                         val episode = SEpisode.create()
 
-                        episode.name = "Season ${ep.selectFirst("div.numerando").ownText()} - ${ep.selectFirst("div.episodiotitle a").ownText()}"
+                        episode.name = "Season ${ep.selectFirst("div.numerando").ownText()} - ${ep.selectFirst("a[href]").ownText()}"
                         episode.episode_number = counter.toFloat()
                         episode.setUrlWithoutDomain(ep.select("div.episodiotitle a").attr("href").toHttpUrl().encodedPath)
 
