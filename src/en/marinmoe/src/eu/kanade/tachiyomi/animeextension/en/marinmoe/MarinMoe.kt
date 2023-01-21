@@ -65,7 +65,7 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun popularAnimeRequest(page: Int): Request {
-        return GET("$baseUrl/anime?sort=vwk-d&page=$page")
+        return GET("$baseUrl/anime?sort=vwk-d&page=$page", headers = headers)
     }
 
     // =============================== Latest ===============================
@@ -196,25 +196,23 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        var cookiesResponse = client.newCall(GET(response.request.url.toString(), headers = headers)).execute()
-
         var newHeaders = headers.newBuilder()
+        val ddosCookies = client.cookieJar.loadForRequest(response.request.url).filter {
+            // Don't need these
+            it.name !in arrayOf("__ddgid_", "__ddgmark_")
+        }.joinToString(";") { "${it.name}=${it.value}" }
 
-        for (cookie in cookiesResponse.headers) {
-            if (cookie.first == "set-cookie" && cookie.second.startsWith("XSRF-TOKEN")) {
-                newHeaders.add("X-XSRF-TOKEN", cookie.second.substringAfter("=").substringBefore(";").replace("%3D", "="))
-            }
+        newHeaders.add(
+            "X-XSRF-TOKEN",
+            ddosCookies.substringAfter("XSRF-TOKEN=").substringBefore(";").replace("%3D", "=")
+        )
 
-            if (cookie.first == "set-cookie" && cookie.second.startsWith("marinmoe_session")) {
-                newHeaders.add("Cookie", cookie.second.substringBefore(";").replace("%3D", "="))
-            }
-        }
+        newHeaders.add("Cookie", ddosCookies)
 
         val videoHeaders = newHeaders.build().newBuilder()
             .add("Accept", "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5")
             .add("Referer", response.request.url.toString())
             .add("Accept-Language", "en-US,en;q=0.5")
-            .add("Range", "bytes=0-")
 
         newHeaders.add("Origin", baseUrl)
             .add("Content-Type", "application/json")
