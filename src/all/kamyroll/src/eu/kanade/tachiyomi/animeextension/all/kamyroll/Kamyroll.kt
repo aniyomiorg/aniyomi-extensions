@@ -233,7 +233,7 @@ class Kamyroll : ConfigurableAnimeSource, AnimeHttpSource() {
                         val videoUrl = it.substringAfter("\n").substringBefore("\n")
 
                         try {
-                            Video(videoUrl, quality, videoUrl, subtitleTracks = subsList)
+                            Video(videoUrl, quality, videoUrl, subtitleTracks = if (stream.hardsub.getLocale().isNotBlank()) emptyList() else subsList)
                         } catch (e: Error) {
                             Video(videoUrl, quality, videoUrl)
                         }
