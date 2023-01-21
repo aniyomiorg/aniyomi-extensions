@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -12,6 +13,7 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -74,7 +76,20 @@ class AnimeForce : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val inputEl = cfResponse.asJsoup().selectFirst("input[type=hidden]")
         val headers = cfResponse.request.headers
 
-        return GET("$baseUrl/?s=$query&${inputEl.attr("name")}=${inputEl.attr("value")}", headers = headers)
+        return if (query.isNotBlank()) {
+            GET("$baseUrl/?s=$query&${inputEl.attr("name")}=${inputEl.attr("value")}", headers = headers)
+        } else {
+            val url = "$baseUrl/genre/".toHttpUrl().newBuilder()
+            filters.forEach { filter ->
+                when (filter) {
+                    is GenreFilter -> url.addPathSegment(filter.toUriPart())
+                    else -> {}
+                }
+            }
+            url.addPathSegment("page")
+            url.addPathSegment("$page")
+            GET("$url/", headers = headers)
+        }
     }
 
     override fun searchAnimeFromElement(element: Element): SAnime {
@@ -85,9 +100,79 @@ class AnimeForce : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
+    override fun searchAnimeNextPageSelector(): String = "nav[aria-label=navigation] > ul > li.disabled ~ li"
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
+
+    // ============================== Filters ===============================
+
+    override fun getFilterList() = AnimeFilterList(
+        AnimeFilter.Header("Nota: ignora la query di ricerca"),
+        AnimeFilter.Separator(),
+        GenreFilter(getGenreList())
+    )
+
+    private class GenreFilter(vals: Array<Pair<String, String>>) : UriPartFilter("Generi", vals)
+
+    private fun getGenreList() = arrayOf(
+        Pair("Nessuno", ""),
+        Pair("Arti Marziali", "arti-marziali"),
+        Pair("Avventura", "avventura"),
+        Pair("Azione", "azione"),
+        Pair("Bambini", "bambini"),
+        Pair("Cars", "cars"),
+        Pair("Combattimento", "combattimento"),
+        Pair("Commedia", "commedia"),
+        Pair("Crimine", "crimine"),
+        Pair("Cucina", "cucina"),
+        Pair("Demenziale", "demenziale"),
+        Pair("Demoni", "demoni"),
+        Pair("Drammatico", "drammatico"),
+        Pair("Ecchi", "ecchi"),
+        Pair("Fantascienza", "fantascienza"),
+        Pair("Fantasy", "fantasy"),
+        Pair("Giallo", "giallo"),
+        Pair("Gioco", "gioco"),
+        Pair("Guerra", "guerra"),
+        Pair("Harem", "harem"),
+        Pair("Hentai", "hentai"),
+        Pair("Horror", "horror"),
+        Pair("Josei", "josei"),
+        Pair("Magia", "magia"),
+        Pair("Majokko", "majokko"),
+        Pair("Mecha", "mecha"),
+        Pair("Militare", "militare"),
+        Pair("Mistero", "mistero"),
+        Pair("Musica", "musica"),
+        Pair("Parodia", "parodia"),
+        Pair("Poliziesco", "poliziesco"),
+        Pair("Psicologico", "psicologico"),
+        Pair("Reverse-harem", "reverse-harem"),
+        Pair("Samurai", "samurai"),
+        Pair("Scolastico", "scolastico"),
+        Pair("Seinen", "seinen"),
+        Pair("Sentimentale", "sentimentale"),
+        Pair("Shoujo", "shoujo"),
+        Pair("Shoujo Ai", "shoujo-ai"),
+        Pair("Shounen", "shounen"),
+        Pair("Shounen Ai", "shounen-ai"),
+        Pair("Slice of Life", "slice-of-life"),
+        Pair("Soprannaturale", "soprannaturale"),
+        Pair("Spazio", "spazio"),
+        Pair("Splatter", "splatter"),
+        Pair("Sport", "sport"),
+        Pair("Storico", "storico"),
+        Pair("Superpoteri", "superpoteri"),
+        Pair("Thriller", "thriller"),
+        Pair("Vampiri", "vampiri"),
+        Pair("Visual Novel", "visual-novel"),
+        Pair("Yaoi", "yaoi")
+    )
+
+    open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :
+        AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
+        fun toUriPart() = vals[state].second
+    }
 
     // =========================== Anime Details ============================
 
