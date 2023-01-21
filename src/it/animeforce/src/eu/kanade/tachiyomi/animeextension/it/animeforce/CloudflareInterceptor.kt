@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -62,7 +61,6 @@ class CloudflareInterceptor() : Interceptor {
                     view: WebView,
                     request: WebResourceRequest,
                 ): WebResourceResponse? {
-                    Log.i("PHEADERSSHOULDINTER", (request.url.toString().contains("https://www.animeforce.it")).toString())
                     if (request.url.toString().contains("https://www.animeforce.it")) {
                         newRequest = GET(request.url.toString(), request.requestHeaders.toHeaders())
                         latch.countDown()
