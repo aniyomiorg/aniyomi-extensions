@@ -115,7 +115,6 @@ class AnimeForce : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private class GenreFilter(vals: Array<Pair<String, String>>) : UriPartFilter("Generi", vals)
 
     private fun getGenreList() = arrayOf(
-        Pair("Nessuno", ""),
         Pair("Arti Marziali", "arti-marziali"),
         Pair("Avventura", "avventura"),
         Pair("Azione", "azione"),
