@@ -2195,6 +2195,27 @@
     ]
   },
   {
+    "name": "Aniyomi: AnimeForce",
+    "pkg": "eu.kanade.tachiyomi.animeextension.it.animeforce",
+    "apk": "aniyomi-it.animeforce-v13.1.apk",
+    "lang": "it",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimeForce",
+        "lang": "it",
+        "id": "6914258679503108111",
+        "baseUrl": "https://www.animeforce.it",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Anime Saturn",
     "pkg": "eu.kanade.tachiyomi.animeextension.it.animesaturn",
     "apk": "aniyomi-it.animesaturn-v13.7.apk",
