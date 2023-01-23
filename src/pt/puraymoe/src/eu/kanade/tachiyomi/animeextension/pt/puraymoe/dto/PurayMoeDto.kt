@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 
 @Serializable
 data class SearchDto(
@@ -83,8 +84,8 @@ data class MinimalSeasonDto(
 
 @Serializable
 data class VideoLinksDto(
-    @SerialName("download_list")
-    val videos: List<VideoDto>? = null
+    val softsub: JsonObject,
+    val subtitles: JsonObject
 )
 
 @Serializable

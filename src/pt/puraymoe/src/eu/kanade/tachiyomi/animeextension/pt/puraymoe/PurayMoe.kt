@@ -29,6 +29,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.serializer
 import okhttp3.Headers
 import okhttp3.OkHttpClient
@@ -174,7 +175,18 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
             val newRequest = GET("$baseUrl/watch/$episodeId")
             return videoListParse(client.newCall(newRequest).execute())
         }
-        return episodeObject.videos?.toVideoList() ?: emptyList<Video>()
+
+        val subs = episodeObject.subtitles.jsonObject.mapNotNull { (lang, element) ->
+            element.jsonObject.get("url")?.jsonPrimitive?.content?.let {
+                Track(it, lang)
+            }
+        }
+
+        return episodeObject.softsub.get("url")?.jsonPrimitive?.content?.let {
+            client.newCall(GET(it))
+                .execute()
+                .toVideoList(subs)
+        } ?: emptyList<Video>()
     }
 
     // =============================== Search ===============================
@@ -319,6 +331,18 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
+    private fun Response.toVideoList(subs: List<Track>): List<Video> {
+        val responseBody = body?.string().orEmpty()
+        val separator = "#EXT-X-STREAM-INF:"
+        return responseBody.substringAfter(separator).split(separator).map {
+            val quality = it.substringAfter("RESOLUTION=")
+                .substringAfter("x")
+                .substringBefore("\n")
+                .substringBefore(",") + "p"
+            val videoUrl = it.substringAfter("\n").substringBefore("\n")
+            Video(videoUrl, quality, videoUrl, headers = headers, subtitleTracks = subs)
+        }
+    }
     private fun String.toDate(): Long {
         return runCatching {
             DATE_FORMATTER.parse(this)?.time ?: 0L
