@@ -180,7 +180,7 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
             element.jsonObject.get("url")?.jsonPrimitive?.content?.let {
                 Track(it, lang)
             }
-        }
+        }.sortSubs()
 
         return episodeObject.softsub.get("url")?.jsonPrimitive?.content?.let {
             client.newCall(GET(it))
@@ -297,6 +297,22 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
+        val subLangPref = ListPreference(screen.context).apply {
+            key = PREF_SUB_KEY
+            title = PREF_SUB_TITLE
+            entries = PREF_SUB_ENTRIES
+            entryValues = PREF_SUB_VALUES
+            setDefaultValue(lang)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
         val showOnlyPref = ListPreference(screen.context).apply {
             key = PREF_SHOW_ONLY_KEY
             title = PREF_SHOW_ONLY_TITLE
@@ -313,6 +329,7 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         screen.addPreference(videoQualityPref)
+        screen.addPreference(subLangPref)
         screen.addPreference(showOnlyPref)
     }
 
@@ -324,7 +341,7 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun List<VideoDto>.toVideoList(subUrl: String? = null): List<Video> {
-        val subs = subUrl?.let { listOf(Track(it, "pt-br")) } ?: emptyList()
+        val subs = subUrl?.let { listOf(Track(it, lang)) } ?: emptyList()
         return map {
             val quality = "${it.quality.last()}p"
             Video(it.url, quality, it.url, subtitleTracks = subs)
@@ -369,6 +386,24 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         return this
     }
 
+    private fun List<Track>.sortSubs(): List<Track> {
+        val language = preferences.getString(PREF_SUB_KEY, lang)
+        if (language != null) {
+            val newList = mutableListOf<Track>()
+            var preferred = 0
+            for (track in this) {
+                if (track.lang.contains(language)) {
+                    newList.add(preferred, track)
+                    preferred++
+                } else {
+                    newList.add(track)
+                }
+            }
+            return newList
+        }
+        return this
+    }
+
     companion object {
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
@@ -382,6 +417,17 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         private val PREF_QUALITY_VALUES = arrayOf(
             "240p", "360p",
             "480p", "720p", "1080p"
+        )
+
+        private const val PREF_SUB_KEY = "preferred_subLang"
+        private const val PREF_SUB_TITLE = "Linguagem preferida na sub"
+        private val PREF_SUB_ENTRIES = arrayOf(
+            "Arabic", "English", "French", "German", "Portuguese",
+            "Spanish(Latin America)", "Spanish"
+        )
+        private val PREF_SUB_VALUES = arrayOf(
+            "ar-SA", "en-US", "fr-FR", "de-DE", "pt-BR",
+            "es-419", "es-ES"
         )
 
         private const val PREF_SHOW_ONLY_KEY = "show_only"
