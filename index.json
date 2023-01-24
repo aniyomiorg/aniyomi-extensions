@@ -2155,10 +2155,10 @@
   {
     "name": "Aniyomi: Oploverz",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.oploverz",
-    "apk": "aniyomi-id.oploverz-v13.12.apk",
+    "apk": "aniyomi-id.oploverz-v13.13.apk",
     "lang": "id",
-    "code": 12,
-    "version": "13.12",
+    "code": 13,
+    "version": "13.13",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2167,7 +2167,7 @@
         "name": "Oploverz",
         "lang": "id",
         "id": "2573103800968432770",
-        "baseUrl": "https://oploverz.co.id",
+        "baseUrl": "https://oploverz.co.in",
         "versionId": 1,
         "hasCloudflare": 0
       }
@@ -2336,6 +2336,27 @@
         "lang": "it",
         "id": "8903679906651673401",
         "baseUrl": "https://toonitalia.co",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: VVVVID",
+    "pkg": "eu.kanade.tachiyomi.animeextension.it.vvvvid",
+    "apk": "aniyomi-it.vvvvid-v13.1.apk",
+    "lang": "it",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "VVVVID",
+        "lang": "it",
+        "id": "8309061778249307518",
+        "baseUrl": "https://www.vvvvid.it",
         "versionId": 1,
         "hasCloudflare": 1
       }
