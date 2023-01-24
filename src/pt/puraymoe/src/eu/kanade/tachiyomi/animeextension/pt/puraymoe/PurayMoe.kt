@@ -385,40 +385,26 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun String.getId(): String = this.substringAfterLast("/")
 
+    private fun List<Video>.sortBy(item: String): List<Video> {
+        return sortedWith(
+            compareBy { it.quality.contains(item) }
+        )
+    }
+
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(PREF_QUALITY_KEY, null)
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.equals(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
+        val quality = preferences.getString(PREF_QUALITY_KEY, "720p")!!
+        val lang = preferences.getString(PREF_SUB_KEY, lang)!!
+        return this.sortBy(quality).let {
+            if (isStable) it.sortBy(lang)
+            else it
+        }.reversed()
     }
 
     private fun List<Track>.sortSubs(): List<Track> {
-        val language = preferences.getString(PREF_SUB_KEY, lang)
-        if (language != null) {
-            val newList = mutableListOf<Track>()
-            var preferred = 0
-            for (track in this) {
-                if (track.lang.contains(language)) {
-                    newList.add(preferred, track)
-                    preferred++
-                } else {
-                    newList.add(track)
-                }
-            }
-            return newList
-        }
-        return this
+        val language = preferences.getString(PREF_SUB_KEY, lang)!!
+        return sortedWith(
+            compareBy { it.lang.contains(language) }
+        ).reversed()
     }
 
     companion object {
