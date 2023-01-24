@@ -2,7 +2,13 @@ package eu.kanade.tachiyomi.animeextension.pt.puraymoe.dto
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNames
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonTransformingSerializer
 
 @Serializable
 data class SearchDto(
@@ -84,8 +90,18 @@ data class MinimalSeasonDto(
 
 @Serializable
 data class VideoLinksDto(
-    val softsub: JsonObject,
-    val subtitles: JsonObject
+    val softsub: SubtitleDto,
+    @Serializable(with = SubtitleSerializer::class)
+    val hardsub: List<SubtitleDto>,
+    @Serializable(with = SubtitleSerializer::class)
+    val subtitles: List<SubtitleDto>
+)
+
+@Serializable
+data class SubtitleDto(
+    val url: String,
+    @JsonNames("locale", "hardsub_locale")
+    val language: String
 )
 
 @Serializable
@@ -94,3 +110,12 @@ data class VideoDto(
     val quality: List<Int>,
     val url: String
 )
+
+object SubtitleSerializer : JsonTransformingSerializer<List<SubtitleDto>>(
+    ListSerializer(SubtitleDto.serializer())
+) {
+    override fun transformDeserialize(element: JsonElement): JsonElement {
+        require(element is JsonObject)
+        return JsonArray(element.values.toList())
+    }
+}

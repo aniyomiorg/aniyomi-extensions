@@ -29,7 +29,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.serializer
 import okhttp3.Headers
 import okhttp3.OkHttpClient
@@ -138,6 +137,13 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================ Video Links =============================
 
+    private val isStable by lazy {
+        runCatching {
+            Track(lang, baseUrl)
+            false
+        }.getOrDefault(true)
+    }
+
     override fun videoListRequest(episode: SEpisode) =
         GET("$baseUrl/watch/${episode.url}")
 
@@ -176,17 +182,18 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
             return videoListParse(client.newCall(newRequest).execute())
         }
 
-        val subs = episodeObject.subtitles.jsonObject.mapNotNull { (lang, element) ->
-            element.jsonObject.get("url")?.jsonPrimitive?.content?.let {
-                Track(it, lang)
+        return if (isStable) {
+            // Use hardlinks
+            episodeObject.hardsub.flatMap {
+                videoListFromUrl(it.url, it.language)
             }
-        }.sortSubs()
-
-        return episodeObject.softsub.get("url")?.jsonPrimitive?.content?.let {
-            client.newCall(GET(it))
-                .execute()
-                .toVideoList(subs)
-        } ?: emptyList<Video>()
+        } else {
+            // Use softlinks
+            val subs = episodeObject.subtitles.mapNotNull {
+                Track(it.url, it.language)
+            }.sortSubs()
+            videoListFromUrl(episodeObject.softsub.url, subs = subs)
+        }
     }
 
     // =============================== Search ===============================
@@ -340,6 +347,12 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         return json.decodeFromString(responseBody)
     }
 
+    private fun videoListFromUrl(url: String, lang: String = "", subs: List<Track> = emptyList()): List<Video> {
+        return client.newCall(GET(url))
+            .execute()
+            .toVideoList(subs, lang)
+    }
+
     private fun List<VideoDto>.toVideoList(subUrl: String? = null): List<Video> {
         val subs = subUrl?.let { listOf(Track(it, lang)) } ?: emptyList()
         return map {
@@ -348,7 +361,7 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
-    private fun Response.toVideoList(subs: List<Track>): List<Video> {
+    private fun Response.toVideoList(subs: List<Track> = emptyList(), lang: String = ""): List<Video> {
         val responseBody = body?.string().orEmpty()
         val separator = "#EXT-X-STREAM-INF:"
         return responseBody.substringAfter(separator).split(separator).map {
@@ -357,9 +370,13 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
                 .substringBefore("\n")
                 .substringBefore(",") + "p"
             val videoUrl = it.substringAfter("\n").substringBefore("\n")
-            Video(videoUrl, quality, videoUrl, headers = headers, subtitleTracks = subs)
+            if (isStable)
+                Video(videoUrl, quality + " - $lang", videoUrl, headers = headers)
+            else
+                Video(videoUrl, quality, videoUrl, headers = headers, subtitleTracks = subs)
         }
     }
+
     private fun String.toDate(): Long {
         return runCatching {
             DATE_FORMATTER.parse(this)?.time ?: 0L
