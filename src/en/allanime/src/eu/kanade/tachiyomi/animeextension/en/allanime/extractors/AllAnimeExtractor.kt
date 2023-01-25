@@ -125,7 +125,7 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
                             videoList.add(
                                 Video(
                                     it.url,
-                                    "Original (AC - Dash - Audio: ${it.audio_lang}${if (it.hardsub_lang.isEmpty()) "" else " Hardsub: ${it.hardsub_lang}"})",
+                                    "Original (AC - Dash${if (it.hardsub_lang.isEmpty()) "" else " - Hardsub: ${it.hardsub_lang}"})",
                                     it.url,
                                     subtitleTracks = subtitles
                                 )
@@ -134,7 +134,7 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
                             videoList.add(
                                 Video(
                                     it.url,
-                                    "Original (AC - Dash - Audio: ${it.audio_lang}${if (it.hardsub_lang.isEmpty()) "" else " Hardsub: ${it.hardsub_lang}"})",
+                                    "Original (AC - Dash${if (it.hardsub_lang.isEmpty()) "" else " - Hardsub: ${it.hardsub_lang}"})",
                                     it.url
                                 )
                             )
@@ -150,7 +150,7 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
                             val masterPlaylist = resp.body!!.string()
                             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:")
                                 .forEach { t ->
-                                    val quality = t.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p (AC - HLS - Audio: ${it.audio_lang}${if (it.hardsub_lang.isEmpty()) "" else " Hardsub: ${it.hardsub_lang}"})"
+                                    val quality = t.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p (AC - HLS${if (it.hardsub_lang.isEmpty()) "" else " - Hardsub: ${it.hardsub_lang}"})"
                                     var videoUrl = t.substringAfter("\n").substringBefore("\n")
 
                                     try {
