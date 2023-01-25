@@ -392,8 +392,8 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         val serverPref = ListPreference(screen.context).apply {
             key = "preferred_server"
             title = "Preferred Video Server"
-            entries = arrayOf("Site Default", "Luf-mp4", "Vid-mp4", "Yt-mp4", "Ok.ru", "Mp4upload", "Sl-mp4", "Uv-mp4", "S-mp4", "Ac-Hls", "Default")
-            entryValues = arrayOf("site_default", "luf-mp4", "vid-mp4", "yt-mp4", "okru", "mp4upload", "sl-mp4", "uv-mp4", "s-mp4", "ac-hls", "default")
+            entries = arrayOf("Site Default", "Ac", "Luf-mp4", "Vid-mp4", "Yt-mp4", "Ok.ru", "Mp4upload", "Sl-mp4", "Uv-mp4", "S-mp4", "Ac-Hls", "Default")
+            entryValues = arrayOf("site_default", "ac", "luf-mp4", "vid-mp4", "yt-mp4", "okru", "mp4upload", "sl-mp4", "uv-mp4", "s-mp4", "ac-hls", "default")
             setDefaultValue("site_default")
             summary = "%s"
 
