@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -17,15 +18,14 @@ import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.boolean
-import kotlinx.serialization.json.float
-import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -35,8 +35,10 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
+import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -47,6 +49,8 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
     override val lang = "all"
 
     override val supportsLatest = true
+
+    private val json: Json by injectLazy()
 
     override val client: OkHttpClient =
         network.client
@@ -95,7 +99,17 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
         return true
     }
 
-    // Popular Anime (is currently sorted by name instead of e.g. ratings)
+    // ============================== Popular ===============================
+
+    override fun popularAnimeParse(response: Response): AnimesPage = throw Exception("Not used")
+
+    override fun fetchPopularAnime(page: Int): Observable<AnimesPage> {
+        return client.newCall(popularAnimeRequest(page))
+            .asObservableSuccess()
+            .map { response ->
+                popularAnimeParsePage(response, page)
+            }
+    }
 
     override fun popularAnimeRequest(page: Int): Request {
         if (parentId.isEmpty()) {
@@ -111,7 +125,7 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
         url.addQueryParameter("Recursive", "true")
         url.addQueryParameter("SortBy", "SortName")
         url.addQueryParameter("SortOrder", "Ascending")
-        url.addQueryParameter("includeItemTypes", "Movie,Series,Season")
+        url.addQueryParameter("includeItemTypes", "Movie,Series,Season,BoxSet")
         url.addQueryParameter("ImageTypeLimit", "1")
         url.addQueryParameter("ParentId", parentId)
         url.addQueryParameter("EnableImageTypes", "Primary")
@@ -119,130 +133,205 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
         return GET(url.toString())
     }
 
-    override fun popularAnimeParse(response: Response): AnimesPage {
-        val (list, hasNext) = animeParse(response)
+    private fun popularAnimeParsePage(response: Response, page: Int): AnimesPage {
+        val (list, hasNext) = animeParse(response, page)
         return AnimesPage(
             list.sortedBy { it.title },
             hasNext,
         )
     }
 
-    // Episodes
+    // =============================== Latest ===============================
+
+    override fun latestUpdatesParse(response: Response) = throw Exception("Not used")
+
+    override fun fetchLatestUpdates(page: Int): Observable<AnimesPage> {
+        return client.newCall(latestUpdatesRequest(page))
+            .asObservableSuccess()
+            .map { response ->
+                latestUpdatesParsePage(response, page)
+            }
+    }
+
+    override fun latestUpdatesRequest(page: Int): Request {
+        if (parentId.isEmpty()) {
+            throw Exception("Select library in the extension settings.")
+        }
+
+        val startIndex = (page - 1) * 20
+
+        val url = "$baseUrl/Users/$userId/Items".toHttpUrl().newBuilder()
+
+        url.addQueryParameter("api_key", apiKey)
+        url.addQueryParameter("StartIndex", startIndex.toString())
+        url.addQueryParameter("Limit", "20")
+        url.addQueryParameter("Recursive", "true")
+        url.addQueryParameter("SortBy", "DateCreated,SortName")
+        url.addQueryParameter("SortOrder", "Descending")
+        url.addQueryParameter("includeItemTypes", "Movie,Series,Season,BoxSet")
+        url.addQueryParameter("ImageTypeLimit", "1")
+        url.addQueryParameter("ParentId", parentId)
+        url.addQueryParameter("EnableImageTypes", "Primary")
+
+        return GET(url.toString())
+    }
+
+    private fun latestUpdatesParsePage(response: Response, page: Int) = animeParse(response, page)
+
+    // =============================== Search ===============================
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
+
+    override fun searchAnimeParse(response: Response) = throw Exception("Not used")
+
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        if (parentId.isEmpty()) {
+            throw Exception("Select library in the extension settings.")
+        }
+
+        val animeList = mutableListOf<SAnime>()
+        val startIndex = (page - 1) * 5
+
+        val url = "$baseUrl/Users/$userId/Items".toHttpUrl().newBuilder()
+
+        url.addQueryParameter("api_key", apiKey)
+        url.addQueryParameter("StartIndex", startIndex.toString())
+        url.addQueryParameter("Limit", "5")
+        url.addQueryParameter("Recursive", "true")
+        url.addQueryParameter("SortBy", "SortName")
+        url.addQueryParameter("SortOrder", "Ascending")
+        url.addQueryParameter("includeItemTypes", "Movie,Series,BoxSet")
+        url.addQueryParameter("ImageTypeLimit", "1")
+        url.addQueryParameter("EnableImageTypes", "Primary")
+        url.addQueryParameter("ParentId", parentId)
+        url.addQueryParameter("SearchTerm", query)
+
+        val response = client.newCall(
+            GET(url.build().toString(), headers = headers)
+        ).execute()
+        val items = json.decodeFromString<ItemsResponse>(response.body!!.string())
+        items.Items.forEach {
+            animeList.addAll(
+                getAnimeFromId(it.Id)
+            )
+        }
+
+        return Observable.just(AnimesPage(animeList, 5 * page < items.TotalRecordCount))
+    }
+
+    private fun getAnimeFromId(id: String): List<SAnime> {
+        val url = "$baseUrl/Users/$userId/Items".toHttpUrl().newBuilder()
+
+        url.addQueryParameter("api_key", apiKey)
+        url.addQueryParameter("Recursive", "true")
+        url.addQueryParameter("SortBy", "SortName")
+        url.addQueryParameter("SortOrder", "Ascending")
+        url.addQueryParameter("includeItemTypes", "Movie,Series,Season")
+        url.addQueryParameter("ImageTypeLimit", "1")
+        url.addQueryParameter("EnableImageTypes", "Primary")
+        url.addQueryParameter("ParentId", id)
+
+        val response = client.newCall(
+            GET(url.build().toString())
+        ).execute()
+        return animeParse(response, 0).animes
+    }
+
+    // =========================== Anime Details ============================
+
+    override fun animeDetailsRequest(anime: SAnime): Request {
+        val mediaId = json.decodeFromString<LinkData>(anime.url)
+
+        val infoId = if (preferences.getBoolean("preferred_meta_type", false)) {
+            mediaId.seriesId
+        } else {
+            mediaId.seasonId
+        }
+
+        val url = "$baseUrl/Users/$userId/Items/$infoId".toHttpUrl().newBuilder()
+
+        url.addQueryParameter("api_key", apiKey)
+        url.addQueryParameter("fields", "Studios")
+
+        return GET(url.toString())
+    }
+
+    override fun animeDetailsParse(response: Response): SAnime {
+        val info = json.decodeFromString<ItemsResponse.Item>(response.body!!.string())
+
+        val anime = SAnime.create()
+
+        if (info.Genres != null) anime.genre = info.Genres.joinToString(", ")
+        if (info.SeriesStudio != null) anime.author = info.SeriesStudio
+
+        anime.description = if (info.Overview != null) {
+            Jsoup.parse(
+                info.Overview
+                    .replace("<br>\n", "br2n")
+                    .replace("<br>", "br2n")
+                    .replace("\n", "br2n")
+            ).text().replace("br2n", "\n")
+        } else {
+            ""
+        }
+
+        anime.title = info.Name
+
+        return anime
+    }
+
+    // ============================== Episodes ==============================
+
+    override fun episodeListRequest(anime: SAnime): Request {
+        val mediaId = json.decodeFromString<LinkData>(anime.url)
+        return GET(baseUrl + mediaId.path, headers = headers)
+    }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val json = Json.decodeFromString<JsonObject>(response.body!!.string())
-
-        val episodeList = mutableListOf<SEpisode>()
-
-        // Is movie
-        if (json.containsKey("Type")) {
+        val episodeList = if (response.request.url.toString().startsWith("$baseUrl/Users/")) {
+            val parsed = json.decodeFromString<ItemsResponse.Item>(response.body!!.string())
             val episode = SEpisode.create()
-            val id = json["Id"]!!.jsonPrimitive.content
-
             episode.episode_number = 1.0F
-            episode.name = "Movie: " + json["Name"]!!.jsonPrimitive.content
-
-            episode.setUrlWithoutDomain("/Users/$userId/Items/$id?api_key=$apiKey")
-            episodeList.add(episode)
+            episode.name = "Movie ${parsed.Name}"
+            episode.setUrlWithoutDomain(response.request.url.toString().substringAfter(baseUrl))
+            listOf(episode)
         } else {
-            val items = json["Items"]!!.jsonArray
+            val parsed = json.decodeFromString<ItemsResponse>(response.body!!.string())
 
-            for (item in items) {
+            parsed.Items.map { ep ->
 
-                val episode = SEpisode.create()
-                val jsonObj = item.jsonObject
-
-                val id = jsonObj["Id"]!!.jsonPrimitive.content
-
-                val epNum = if (jsonObj["IndexNumber"] == null) {
-                    null
+                val namePrefix = if (ep.IndexNumber == null) {
+                    ""
                 } else {
-                    jsonObj["IndexNumber"]!!.jsonPrimitive.float
-                }
-                if (epNum != null) {
-                    episode.episode_number = epNum
-                    val formattedEpNum = if (floor(epNum) == ceil(epNum)) {
-                        epNum.toInt().toString()
+                    val formattedEpNum = if (floor(ep.IndexNumber) == ceil(ep.IndexNumber)) {
+                        ep.IndexNumber.toInt()
                     } else {
-                        epNum.toString()
+                        ep.IndexNumber.toFloat()
                     }
-                    episode.name = "Episode $formattedEpNum: " + jsonObj["Name"]!!.jsonPrimitive.content
-                } else {
-                    episode.episode_number = 0F
-                    episode.name = jsonObj["Name"]!!.jsonPrimitive.content
+                    "Episode $formattedEpNum "
                 }
 
-                episode.setUrlWithoutDomain("/Users/$userId/Items/$id?api_key=$apiKey")
-                episodeList.add(episode)
+                SEpisode.create().apply {
+                    name = "$namePrefix${ep.Name}"
+                    episode_number = ep.IndexNumber ?: 0F
+                    url = "/Users/$userId/Items/${ep.Id}?api_key=$apiKey"
+                }
             }
         }
 
         return episodeList.reversed()
     }
 
-    private fun animeParse(response: Response): AnimesPage {
-        val items = Json.decodeFromString<JsonObject>(response.body!!.string())["Items"]?.jsonArray
-
-        val animesList = mutableListOf<SAnime>()
-
-        if (items != null) {
-            for (item in items) {
-                val anime = SAnime.create()
-                val jsonObj = item.jsonObject
-
-                if (jsonObj["Type"]!!.jsonPrimitive.content == "Season") {
-                    val seasonId = jsonObj["Id"]!!.jsonPrimitive.content
-                    val seriesId = jsonObj["SeriesId"]!!.jsonPrimitive.content
-
-                    anime.setUrlWithoutDomain("/Shows/$seriesId/Episodes?api_key=$apiKey&SeasonId=$seasonId")
-
-                    // Virtual if show doesn't have any sub-folders, i.e. no seasons
-                    if (jsonObj["LocationType"]!!.jsonPrimitive.content == "Virtual") {
-                        anime.title = jsonObj["SeriesName"]!!.jsonPrimitive.content
-                        anime.thumbnail_url = "$baseUrl/Items/$seriesId/Images/Primary?api_key=$apiKey"
-                    } else {
-                        anime.title = jsonObj["SeriesName"]!!.jsonPrimitive.content + " " + jsonObj["Name"]!!.jsonPrimitive.content
-                        anime.thumbnail_url = "$baseUrl/Items/$seasonId/Images/Primary?api_key=$apiKey"
-                    }
-
-                    // If season doesn't have image, fallback to series image
-                    if (jsonObj["ImageTags"].toString() == "{}") {
-                        anime.thumbnail_url = "$baseUrl/Items/$seriesId/Images/Primary?api_key=$apiKey"
-                    }
-                } else if (jsonObj["Type"]!!.jsonPrimitive.content == "Movie") {
-                    val id = jsonObj["Id"]!!.jsonPrimitive.content
-
-                    anime.title = jsonObj["Name"]!!.jsonPrimitive.content
-                    anime.thumbnail_url = "$baseUrl/Items/$id/Images/Primary?api_key=$apiKey"
-
-                    anime.setUrlWithoutDomain("/Users/$userId/Items/$id?api_key=$apiKey")
-                } else {
-                    continue
-                }
-
-                animesList.add(anime)
-            }
-        }
-
-        val hasNextPage = (items?.size?.compareTo(20) ?: -1) >= 0
-        return AnimesPage(animesList, hasNextPage)
-    }
-
-    // Video urls
+    // ============================ Video Links =============================
 
     override fun videoListParse(response: Response): List<Video> {
         val videoList = mutableListOf<Video>()
-        val item = Json.decodeFromString<JsonObject>(response.body!!.string())
-        val id = item["Id"]!!.jsonPrimitive.content
+        val id = json.decodeFromString<ItemsResponse.Item>(response.body!!.string()).Id
 
         val sessionResponse = client.newCall(
-            GET(
-                "$baseUrl/Items/$id/PlaybackInfo?userId=$userId&api_key=$apiKey"
-            )
+            GET("$baseUrl/Items/$id/PlaybackInfo?userId=$userId&api_key=$apiKey")
         ).execute()
-        val sessionJson = Json.decodeFromString<JsonObject>(sessionResponse.body!!.string())
-        val sessionId = sessionJson["PlaySessionId"]!!.jsonPrimitive.content
-        val mediaStreams = sessionJson["MediaSources"]!!.jsonArray[0].jsonObject["MediaStreams"]?.jsonArray
+        val parsed = json.decodeFromString<SessionResponse>(sessionResponse.body!!.string())
 
         val subtitleList = mutableListOf<Track>()
 
@@ -254,61 +343,48 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
         var width = 1920
         var height = 1080
 
-        // Get subtitle streams and audio index
-        if (mediaStreams != null) {
-            for (media in mediaStreams) {
-                val index = media.jsonObject["Index"]!!.jsonPrimitive.int
-                val codec = media.jsonObject["Codec"]!!.jsonPrimitive.content
-                val lang = media.jsonObject["Language"]
-                val supportsExternalStream = media.jsonObject["SupportsExternalStream"]!!.jsonPrimitive.boolean
-
-                val type = media.jsonObject["Type"]!!.jsonPrimitive.content
-                if (type == "Subtitle" && supportsExternalStream) {
-                    val subUrl = "$baseUrl/Videos/$id/$id/Subtitles/$index/0/Stream.$codec?api_key=$apiKey"
-                    // TODO: add ttf files in media attachment (if possible)
-                    val title = media.jsonObject["DisplayTitle"]!!.jsonPrimitive.content
-                    if (lang != null) {
-                        if (lang.jsonPrimitive.content == prefSub) {
-                            try {
-                                subtitleList.add(0, Track(subUrl, title))
-                            } catch (e: Error) {
-                                subIndex = index
+        parsed.MediaSources.first().MediaStreams.forEach { media ->
+            when (media.Type) {
+                "Subtitle" -> {
+                    if (media.SupportsExternalStream) {
+                        val subUrl = "$baseUrl/Videos/$id/$id/Subtitles/${media.Index}/0/Stream.${media.Codec}?api_key=$apiKey"
+                        if (media.Language != null) {
+                            if (media.Language == prefSub) {
+                                try {
+                                    subtitleList.add(0, Track(subUrl, media.DisplayTitle!!))
+                                } catch (e: Error) {
+                                    subIndex = media.Index
+                                }
+                            } else {
+                                try {
+                                    subtitleList.add(Track(subUrl, media.DisplayTitle!!))
+                                } catch (_: Error) {}
                             }
                         } else {
                             try {
-                                subtitleList.add(Track(subUrl, title))
+                                subtitleList.add(Track(subUrl, media.DisplayTitle!!))
                             } catch (_: Error) {}
                         }
                     } else {
-                        try {
-                            subtitleList.add(Track(subUrl, title))
-                        } catch (_: Error) {}
-                    }
-                } else if (type == "Subtitle") {
-                    if (lang != null) {
-                        if (lang.jsonPrimitive.content == prefSub) {
-                            subIndex = index
+                        if (media.Language != null && media.Language == prefSub) {
+                            subIndex = media.Index
                         }
                     }
                 }
-
-                if (type == "Audio") {
-                    if (lang != null) {
-                        if (lang.jsonPrimitive.content == prefAudio) {
-                            audioIndex = index
-                        }
+                "Audio" -> {
+                    if (media.Language != null && media.Language == prefAudio) {
+                        audioIndex = media.Index
                     }
                 }
-
-                if (media.jsonObject["Type"]!!.jsonPrimitive.content == "Video") {
-                    width = media.jsonObject["Width"]!!.jsonPrimitive.int
-                    height = media.jsonObject["Height"]!!.jsonPrimitive.int
+                "Video" -> {
+                    width = media.Width!!
+                    height = media.Height!!
                 }
             }
         }
 
         // Loop over qualities
-        for (quality in JFConstants.QUALITIES_LIST) {
+        JFConstants.QUALITIES_LIST.forEach { quality ->
             if (width < quality.width && height < quality.height) {
                 val url = "$baseUrl/Videos/$id/stream?static=True&api_key=$apiKey"
                 videoList.add(Video(url, "Best", url))
@@ -330,7 +406,7 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
                 url.addQueryParameter(
                     "AudioBitrate", quality.audioBitrate.toString()
                 )
-                url.addQueryParameter("PlaySessionId", sessionId)
+                url.addQueryParameter("PlaySessionId", parsed.PlaySessionId)
                 url.addQueryParameter("TranscodingMaxAudioChannels", "6")
                 url.addQueryParameter("RequireAvc", "false")
                 url.addQueryParameter("SegmentContainer", "ts")
@@ -355,149 +431,80 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
         return videoList.reversed()
     }
 
-    // search
+    // ============================= Utilities ==============================
 
-    override fun searchAnimeParse(response: Response) = animeParse(response)
+    private fun animeParse(response: Response, page: Int): AnimesPage {
+        val items = json.decodeFromString<ItemsResponse>(response.body!!.string())
+        val animesList = mutableListOf<SAnime>()
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        if (parentId.isEmpty()) {
-            throw Exception("Select library in the extension settings.")
-        }
-        if (query.isBlank()) {
-            throw Exception("Search query blank")
-        }
-        val startIndex = (page - 1) * 20
+        items.Items.forEach { item ->
+            val anime = SAnime.create()
 
-        val url = "$baseUrl/Users/$userId/Items".toHttpUrl().newBuilder()
+            when (item.Type) {
+                "Season" -> {
+                    anime.setUrlWithoutDomain(
+                        LinkData(
+                            path = "/Shows/${item.SeriesId}/Episodes?SeasonId=${item.Id}&api_key=$apiKey",
+                            seriesId = item.SeriesId!!,
+                            seasonId = item.Id
+                        ).toJsonString()
+                    )
+                    // Virtual if show doesn't have any sub-folders, i.e. no seasons
+                    if (item.LocationType == "Virtual") {
+                        anime.title = item.SeriesName!!
+                        anime.thumbnail_url = "$baseUrl/Items/${item.SeriesId}/Images/Primary?api_key=$apiKey"
+                    } else {
+                        anime.title = "${item.SeriesName} ${item.Name}"
+                        anime.thumbnail_url = "$baseUrl/Items/${item.Id}/Images/Primary?api_key=$apiKey"
+                    }
 
-        url.addQueryParameter("api_key", apiKey)
-        url.addQueryParameter("StartIndex", startIndex.toString())
-        url.addQueryParameter("Limit", "20")
-        url.addQueryParameter("Recursive", "true")
-        url.addQueryParameter("SortBy", "SortName")
-        url.addQueryParameter("SortOrder", "Ascending")
-        url.addQueryParameter("includeItemTypes", "Movie,Series,Season")
-        url.addQueryParameter("ImageTypeLimit", "1")
-        url.addQueryParameter("EnableImageTypes", "Primary")
-        url.addQueryParameter("ParentId", parentId)
-        url.addQueryParameter("SearchTerm", query)
+                    // If season doesn't have image, fallback to series image
+                    if (item.ImageTags.Primary == null) {
+                        anime.thumbnail_url = "$baseUrl/Items/${item.SeriesId}/Images/Primary?api_key=$apiKey"
+                    }
+                    animesList.add(anime)
+                }
+                "Movie" -> {
+                    anime.title = item.Name
+                    anime.thumbnail_url = "$baseUrl/Items/${item.Id}/Images/Primary?api_key=$apiKey"
+                    anime.setUrlWithoutDomain(
+                        LinkData(
+                            "/Users/$userId/Items/${item.Id}?api_key=$apiKey",
+                            item.Id,
+                            item.Id
+                        ).toJsonString()
+                    )
+                    animesList.add(anime)
+                }
+                "BoxSet" -> {
+                    val url = "$baseUrl/Users/$userId/Items".toHttpUrl().newBuilder()
 
-        return GET(url.toString())
-    }
+                    url.addQueryParameter("api_key", apiKey)
+                    url.addQueryParameter("Recursive", "true")
+                    url.addQueryParameter("SortBy", "SortName")
+                    url.addQueryParameter("SortOrder", "Ascending")
+                    url.addQueryParameter("includeItemTypes", "Movie,Series,Season")
+                    url.addQueryParameter("ImageTypeLimit", "1")
+                    url.addQueryParameter("ParentId", item.Id)
+                    url.addQueryParameter("EnableImageTypes", "Primary")
 
-    // Details
-
-    override fun animeDetailsRequest(anime: SAnime): Request {
-        val infoArr = anime.url.split("/").toTypedArray()
-
-        val id = if (infoArr[1] == "Users") {
-            infoArr[4].split("?").toTypedArray()[0]
-        } else {
-            infoArr[2]
-        }
-
-        val url = "$baseUrl/Users/$userId/Items/$id".toHttpUrl().newBuilder()
-
-        url.addQueryParameter("api_key", apiKey)
-        url.addQueryParameter("fields", "Studios")
-
-        return GET(url.toString())
-    }
-
-    override fun animeDetailsParse(response: Response): SAnime {
-        val item = Json.decodeFromString<JsonObject>(response.body!!.string())
-
-        val anime = SAnime.create()
-
-        anime.author = if (item["Studios"]!!.jsonArray.isEmpty()) {
-            ""
-        } else {
-            item["Studios"]!!.jsonArray[0].jsonObject["Name"]!!.jsonPrimitive.content
-        }
-
-        anime.description = item["Overview"]?.let {
-            Jsoup.parse(it.jsonPrimitive.content.replace("<br>", "br2n")).text().replace("br2n", "\n")
-        } ?: ""
-
-        if (item["Genres"]!!.jsonArray.isEmpty()) {
-            anime.genre = ""
-        } else {
-            val genres = mutableListOf<String>()
-
-            for (genre in item["Genres"]!!.jsonArray) {
-                genres.add(genre.jsonPrimitive.content)
+                    val response = client.newCall(
+                        GET(url.build().toString(), headers = headers)
+                    ).execute()
+                    animesList.addAll(animeParse(response, page).animes)
+                }
+                else -> {
+                    return@forEach
+                }
             }
-            anime.genre = genres.joinToString()
         }
 
-        anime.status = item["Status"]?.let {
-            if (it.jsonPrimitive.content == "Ended") SAnime.COMPLETED else SAnime.UNKNOWN
-        } ?: SAnime.UNKNOWN
-
-        if (item["Type"]!!.jsonPrimitive.content == "Season") {
-            val seasonId = item["Id"]!!.jsonPrimitive.content
-            val seriesId = item["SeriesId"]!!.jsonPrimitive.content
-
-            anime.setUrlWithoutDomain("/Shows/$seriesId/Episodes?api_key=$apiKey&SeasonId=$seasonId")
-
-            // Virtual if show doesn't have any sub-folders, i.e. no seasons
-            if (item["LocationType"]!!.jsonPrimitive.content == "Virtual") {
-                anime.title = item["SeriesName"]!!.jsonPrimitive.content
-                anime.thumbnail_url = "$baseUrl/Items/$seriesId/Images/Primary?api_key=$apiKey"
-            } else {
-                anime.title = item["SeriesName"]!!.jsonPrimitive.content + " " + item["Name"]!!.jsonPrimitive.content
-                anime.thumbnail_url = "$baseUrl/Items/$seasonId/Images/Primary?api_key=$apiKey"
-            }
-
-            // If season doesn't have image, fallback to series image
-            if (item["ImageTags"].toString() == "{}") {
-                anime.thumbnail_url = "$baseUrl/Items/$seriesId/Images/Primary?api_key=$apiKey"
-            }
-        } else if (item["Type"]!!.jsonPrimitive.content == "Movie" || item["Type"]!!.jsonPrimitive.content == "Series") {
-            val id = item["Id"]!!.jsonPrimitive.content
-
-            anime.title = item["Name"]!!.jsonPrimitive.content
-            anime.thumbnail_url = "$baseUrl/Items/$id/Images/Primary?api_key=$apiKey"
-
-            anime.setUrlWithoutDomain("/Users/$userId/Items/$id?api_key=$apiKey")
-        } else {
-            anime.title = ""
-            anime.thumbnail_url = ""
-        }
-
-        return anime
+        return AnimesPage(animesList, 20 * page < items.TotalRecordCount)
     }
 
-    // Latest
-
-    override fun latestUpdatesRequest(page: Int): Request {
-        if (parentId.isEmpty()) {
-            throw Exception("Select library in the extension settings.")
-        }
-
-        val startIndex = (page - 1) * 20
-
-        val url = "$baseUrl/Users/$userId/Items".toHttpUrl().newBuilder()
-
-        url.addQueryParameter("api_key", apiKey)
-        url.addQueryParameter("StartIndex", startIndex.toString())
-        url.addQueryParameter("Limit", "20")
-        url.addQueryParameter("Recursive", "true")
-        url.addQueryParameter("SortBy", "DateCreated,SortName")
-        url.addQueryParameter("SortOrder", "Descending")
-        url.addQueryParameter("includeItemTypes", "Movie,Series,Season")
-        url.addQueryParameter("ImageTypeLimit", "1")
-        url.addQueryParameter("ParentId", parentId)
-        url.addQueryParameter("EnableImageTypes", "Primary")
-
-        return GET(url.toString())
+    private fun LinkData.toJsonString(): String {
+        return json.encodeToString(this)
     }
-
-    override fun latestUpdatesParse(response: Response) = animeParse(response)
-
-    // Filters - not used
-
-    // settings
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val mediaLibPref = medialibPreference(screen)
@@ -549,6 +556,19 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
         screen.addPreference(audioLangPref)
+
+        val metaTypePref = SwitchPreferenceCompat(screen.context).apply {
+            key = "preferred_meta_type"
+            title = "Retrieve metadata from series"
+            summary = """Enable this to retrieve metadata from series instead of season when applicable.""".trimMargin()
+            setDefaultValue(false)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val new = newValue as Boolean
+                preferences.edit().putBoolean(key, new).commit()
+            }
+        }
+        screen.addPreference(metaTypePref)
     }
 
     private abstract class MediaLibPreference(context: Context) : ListPreference(context) {
