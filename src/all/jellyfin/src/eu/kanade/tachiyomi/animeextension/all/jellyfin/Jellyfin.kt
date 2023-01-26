@@ -25,10 +25,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Dns
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -589,15 +585,15 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
                                 val mediaLibsResponse = client.newCall(
                                     GET("$baseUrl/Users/$userId/Items?api_key=$apiKey")
                                 ).execute()
-                                val mediaJson = mediaLibsResponse.body?.let { Json.decodeFromString<JsonObject>(it.string()) }?.get("Items")?.jsonArray
+                                val mediaJson = mediaLibsResponse.body?.let { json.decodeFromString<ItemsResponse>(it.string()) }?.Items
 
                                 val entriesArray = mutableListOf<String>()
                                 val entriesValueArray = mutableListOf<String>()
 
                                 if (mediaJson != null) {
                                     for (media in mediaJson) {
-                                        entriesArray.add(media.jsonObject["Name"]!!.jsonPrimitive.content)
-                                        entriesValueArray.add(media.jsonObject["Id"]!!.jsonPrimitive.content)
+                                        entriesArray.add(media.Name)
+                                        entriesValueArray.add(media.Id)
                                     }
                                 }
 
