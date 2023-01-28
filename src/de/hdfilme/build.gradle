@@ -3,17 +3,15 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlinx-serialization'
 
 ext {
-    extName = 'AllAnime'
-    pkgNameSuffix = 'en.allanime'
-    extClass = '.AllAnime'
-    extVersionCode = 5
+    extName = 'HDFilme'
+    pkgNameSuffix = 'de.hdfilme'
+    extClass = '.HDFilme'
+    extVersionCode = 1
     libVersion = '13'
 }
 
 dependencies {
-    implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
-    implementation(project(':lib-okru-extractor'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
 

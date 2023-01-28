@@ -248,13 +248,14 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
         val hosterSelection = preferences.getStringSet(
             "hoster_selection",
-            setOf("default", "luf-mp4", "si-hls", "s-mp4", "ac-hls")
+            setOf("default", "ac", "luf-mp4", "si-hls", "s-mp4", "ac-hls")
         )!!
 
         for (video in videoJson.data.episode.sourceUrls) {
             when {
                 video.sourceUrl.startsWith("/apivtwo/") && (
                     (hosterSelection.contains("default") && video.sourceName.lowercase().contains("default")) ||
+                        (hosterSelection.contains("ac") && video.sourceName.lowercase().contains("ac")) ||
                         (hosterSelection.contains("luf-mp4") && video.sourceName.lowercase().contains("luf-mp4")) ||
                         (hosterSelection.contains("si-hls") && video.sourceName.lowercase().contains("si-hls")) ||
                         (hosterSelection.contains("s-mp4") && video.sourceName.lowercase().contains("s-mp4")) ||
@@ -391,8 +392,8 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         val serverPref = ListPreference(screen.context).apply {
             key = "preferred_server"
             title = "Preferred Video Server"
-            entries = arrayOf("Site Default", "Luf-mp4", "Vid-mp4", "Yt-mp4", "Ok.ru", "Mp4upload", "Sl-mp4", "Uv-mp4", "S-mp4", "Ac-Hls", "Default")
-            entryValues = arrayOf("site_default", "luf-mp4", "vid-mp4", "yt-mp4", "okru", "mp4upload", "sl-mp4", "uv-mp4", "s-mp4", "ac-hls", "default")
+            entries = arrayOf("Site Default", "Ac", "Luf-mp4", "Vid-mp4", "Yt-mp4", "Ok.ru", "Mp4upload", "Sl-mp4", "Uv-mp4", "S-mp4", "Ac-Hls", "Default")
+            entryValues = arrayOf("site_default", "ac", "luf-mp4", "vid-mp4", "yt-mp4", "okru", "mp4upload", "sl-mp4", "uv-mp4", "s-mp4", "ac-hls", "default")
             setDefaultValue("site_default")
             summary = "%s"
 
@@ -407,9 +408,9 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         val hostSelection = MultiSelectListPreference(screen.context).apply {
             key = "hoster_selection"
             title = "Enable/Disable Hosts"
-            entries = arrayOf("Default", "Luf-mp4", "Si-Hls", "S-mp4", "Ac-Hls", "Uv-mp4", "Pn-Hls")
-            entryValues = arrayOf("default", "luf-mp4", "si-hls", "s-mp4", "ac-hls", "uv-mp4", "pn-hls")
-            setDefaultValue(setOf("default", "luf-mp4", "si-hls", "s-mp4", "ac-hls"))
+            entries = arrayOf("Default", "Ac", "Luf-mp4", "Si-Hls", "S-mp4", "Ac-Hls", "Uv-mp4", "Pn-Hls")
+            entryValues = arrayOf("default", "ac", "luf-mp4", "si-hls", "s-mp4", "ac-hls", "uv-mp4", "pn-hls")
+            setDefaultValue(setOf("default", "ac", "luf-mp4", "si-hls", "s-mp4", "ac-hls"))
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
