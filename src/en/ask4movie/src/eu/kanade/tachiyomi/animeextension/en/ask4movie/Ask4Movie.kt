@@ -645,7 +645,14 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val bodyString = client.newCall(
                     GET(season.select("div.top-item a").attr("href"))
                 ).execute().body!!.string()
-                val episodeUrlList = episodeListFromSeason(bodyString).reversed()
+                val document = Jsoup.parse(bodyString)
+
+                val episodeUrlList = if (document.selectFirst("ul.group-links-list") == null) {
+                    episodeListFromSeason(bodyString).reversed()
+                } else {
+                    episodeListFromList(document).reversed()
+                }
+
                 for (ep in episodeUrlList) {
                     val episode = SEpisode.create()
                     episode.name = ep.name
@@ -673,6 +680,18 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episodeList
     }
 
+    private fun episodeListFromList(document: Document): List<EpisodeUrl> {
+        val seasonNumber = document.selectFirst("div.top-bar-video > a.video-title").text()
+            .substringAfterLast("(").substringBeforeLast(")")
+
+        return document.select("ul.group-links-list > li").map {
+            EpisodeUrl(
+                "$seasonNumber Episode ${it.selectFirst("a").text()}",
+                it.selectFirst("a").attr("data-embed-src")
+            )
+        }
+    }
+
     // https://github.com/recloudstream/cloudstream-extensions/blob/master/Ask4Movie/src/main/kotlin/com/lagradost/Ask4MovieProvider.kt
     private fun episodeListFromSeason(bodyString: String): List<EpisodeUrl> {
         var soup = Jsoup.parse(bodyString)
@@ -681,6 +700,7 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodeList = mutableListOf<EpisodeUrl>()
 
         // Get Episodes
+
         val playlistDoc = client.newCall(GET(iframeUrl)).execute().asJsoup()
 
         val episodeRegex = Regex("""([^\n\t]+) S(\d+).E(\d+)""")
