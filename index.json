@@ -709,6 +709,27 @@
     ]
   },
   {
+    "name": "Aniyomi: HDFilme",
+    "pkg": "eu.kanade.tachiyomi.animeextension.de.hdfilme",
+    "apk": "aniyomi-de.hdfilme-v13.1.apk",
+    "lang": "de",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "HDFilme",
+        "lang": "de",
+        "id": "7018512005482925234",
+        "baseUrl": "https://www.hdfilme.fun",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Kinoking",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.kinoking",
     "apk": "aniyomi-de.kinoking-v13.8.apk",
