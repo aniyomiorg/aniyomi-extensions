@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -72,8 +73,13 @@ class Anime24 : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-        episode.episode_number = element.select("div.su-spoiler-title").text()
-            .substringAfter("Episode ").substringBefore(" ").toFloat()
+        if (element.select("div.su-spoiler-title").text().contains("Ger Sub")) {
+            episode.episode_number = element.select("div.su-spoiler-title").text()
+                .substringAfter("Episode ").substringBefore(" ").toFloat()
+        } else {
+            episode.episode_number = element.select("div.su-spoiler-title").text()
+                .substringAfter("Folge ").substringBefore(" ").toFloat()
+        }
         episode.name = element.select("div.su-spoiler-title").text()
         episode.url = (element.select("div.su-spoiler-content center iframe").attr("data-lazy-src"))
         return episode
@@ -82,12 +88,12 @@ class Anime24 : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // Video Extractor
 
     override fun videoListRequest(episode: SEpisode): Request {
-        val url = episode.url.replace(baseUrl, "")
-        return GET(url)
+        val header = episode.url.replace(baseUrl, "")
+        return GET(baseUrl, headers = Headers.headersOf("url", header))
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val url = response.request.url.toString()
+        val url = response.request.header("url").toString()
         return videosFromElement(url)
     }
 
@@ -95,14 +101,14 @@ class Anime24 : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         val hosterSelection = preferences.getStringSet("hoster_selection", setOf("stape", "voe"))
         when {
-            url.contains("https://streamtape") || url.contains("https://adblockeronstape") && hosterSelection?.contains("stape") == true -> {
+            url.contains("https://streamtape") && hosterSelection?.contains("stape") == true -> {
                 val quality = "Streamtape"
                 val video = StreamTapeExtractor(client).videoFromUrl(url, quality)
                 if (video != null) {
                     videoList.add(video)
                 }
             }
-            url.contains("https://voe.sx") || url.contains("https://20demidistance9elongations.com") || url.contains("https://telyn610zoanthropy.com") && hosterSelection?.contains("voe") == true -> {
+            url.contains("https://voe.sx") && hosterSelection?.contains("voe") == true -> {
                 val quality = "Voe"
                 val video = VoeExtractor(client).videoFromUrl(url, quality)
                 if (video != null) {
