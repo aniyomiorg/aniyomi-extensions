@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesroll.dto
 
+import eu.kanade.tachiyomi.animesource.model.SAnime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -22,5 +23,13 @@ data class AnimeDataDto(
     @SerialName("slug_serie")
     val slug: String,
     @SerialName("titulo")
-    val title: String
-)
+    val anititle: String
+) {
+    fun toSAnime(): SAnime {
+        return SAnime.create().apply {
+            url = "/anime/$slug"
+            thumbnail_url = "https://static.anroll.net/images/animes/capas/$slug.jpg"
+            title = anititle
+        }
+    }
+}

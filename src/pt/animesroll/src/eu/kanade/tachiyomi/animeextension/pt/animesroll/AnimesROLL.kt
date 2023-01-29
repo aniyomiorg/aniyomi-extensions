@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesroll
 
+import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.AnimeDataDto
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.LatestAnimeDto
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.PagePropDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -38,13 +39,9 @@ class AnimesROLL : AnimeHttpSource() {
     }
 
     // ============================== Popular ===============================
-    override fun popularAnimeParse(response: Response): AnimesPage {
-        TODO("Not yet implemented")
-    }
-
-    override fun popularAnimeRequest(page: Int): Request {
-        TODO("Not yet implemented")
-    }
+    // The site doesn't have a popular anime tab, so we use the home page instead (latest anime).
+    override fun popularAnimeRequest(page: Int) = GET("$API_URL/index.json")
+    override fun popularAnimeParse(response: Response) = latestUpdatesParse(response)
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
@@ -77,13 +74,7 @@ class AnimesROLL : AnimeHttpSource() {
     // =============================== Latest ===============================
     override fun latestUpdatesParse(response: Response): AnimesPage {
         val parsed = response.parseAs<PagePropDto<LatestAnimeDto>>()
-        val animes = parsed.data.animes.map {
-            SAnime.create().apply {
-                setUrlWithoutDomain("/anime/${it.slug}")
-                thumbnail_url = "https://static.anroll.net/images/animes/capas/${it.slug}.jpg"
-                title = it.title
-            }
-        }
+        val animes = parsed.data.animes.map(AnimeDataDto::toSAnime)
         return AnimesPage(animes, false)
     }
 
