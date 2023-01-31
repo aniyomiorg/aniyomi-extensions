@@ -21,8 +21,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.OkHttpClient
@@ -50,6 +48,8 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val json: Json by injectLazy()
 
+    private val vrfInterceptor by lazy { JsVrfInterceptor(baseUrl) }
+
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
@@ -60,7 +60,11 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "div.ani.items > div"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/filter?sort=trending&page=$page")
+    override fun popularAnimeRequest(page: Int): Request {
+        // make the vrf webview available beforehand. please find another solution for this :)
+        vrfInterceptor.wake()
+        return GET("$baseUrl/filter?sort=trending&page=$page")
+    }
 
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.select("a.name").attr("href").substringBefore("?"))
@@ -72,8 +76,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListRequest(anime: SAnime): Request {
         val id = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup().selectFirst("div[data-id]").attr("data-id")
-        val jsVrfInterceptor = client.newBuilder().addInterceptor(JsVrfInterceptor(id, baseUrl)).build()
-        val vrf = jsVrfInterceptor.newCall(GET("$baseUrl/filter")).execute().request.header("url").toString()
+        val vrf = vrfInterceptor.getVrf(id)
         return GET("$baseUrl/ajax/episode/list/$id?vrf=${java.net.URLEncoder.encode(vrf, "utf-8")}", headers = Headers.headersOf("url", anime.url))
     }
 
@@ -129,8 +132,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListRequest(episode: SEpisode): Request {
         val ids = episode.url.substringAfter("list/").substringBefore("?vrf")
-        val jsVrfInterceptor = client.newBuilder().addInterceptor(JsVrfInterceptor(ids, baseUrl)).build()
-        val vrf = jsVrfInterceptor.newCall(GET("$baseUrl/filter")).execute().request.header("url").toString()
+        val vrf = vrfInterceptor.getVrf(ids)
         val url = "/ajax/server/list/$ids?vrf=${java.net.URLEncoder.encode(vrf, "utf-8")}"
         val epurl = episode.url.substringAfter("epurl=")
         return GET(baseUrl + url, headers = Headers.headersOf("url", epurl))
@@ -155,18 +157,8 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun extractVideo(lang: String, epurl: String): List<Video> {
         val jsInterceptor = client.newBuilder().addInterceptor(JsInterceptor(lang.lowercase())).build()
-        val embedLink = jsInterceptor.newCall(GET("$baseUrl$epurl")).execute().request.header("url").toString()
-        val jsVizInterceptor = client.newBuilder().addInterceptor(JsVizInterceptor(embedLink)).build()
-        val sourceUrl = jsVizInterceptor.newCall(GET(embedLink, headers = Headers.headersOf("Referer", "$baseUrl/"))).execute().request.header("url").toString()
-        val referer = Headers.headersOf("referer", embedLink)
-        val sourceObject = json.decodeFromString<JsonObject>(
-            client.newCall(GET(sourceUrl, referer))
-                .execute().body!!.string()
-        )
-        val mediaSources = sourceObject["data"]!!.jsonObject["media"]!!.jsonObject["sources"]!!.jsonArray
-        val masterUrls = mediaSources.map { it.jsonObject["file"]!!.jsonPrimitive.content }
-        val masterUrl = masterUrls.find { it.contains("/simple/") } ?: masterUrls.first()
-        val result = client.newCall(GET(masterUrl)).execute()
+        val result = jsInterceptor.newCall(GET("$baseUrl$epurl")).execute()
+        val masterUrl = result.request.url.toString()
         val masterPlaylist = result.body!!.string()
         return masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
             .split("#EXT-X-STREAM-INF:").map {
@@ -234,8 +226,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
 
     private fun searchAnimeRequest(page: Int, query: String, filters: NineAnimeFilters.FilterSearchParams): Request {
-        val jsVrfInterceptor = client.newBuilder().addInterceptor(JsVrfInterceptor(query, baseUrl)).build()
-        val vrf = jsVrfInterceptor.newCall(GET("$baseUrl/filter")).execute().request.header("url").toString()
+        val vrf = vrfInterceptor.getVrf(query)
 
         var url = "$baseUrl/filter?keyword=$query"
 
@@ -286,7 +277,11 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/filter?sort=recently_updated&page=$page")
+    override fun latestUpdatesRequest(page: Int): Request {
+        // make the vrf webview available beforehand. please find another solution for this :)
+        vrfInterceptor.wake()
+        return GET("$baseUrl/filter?sort=recently_updated&page=$page")
+    }
 
     override fun latestUpdatesSelector(): String = popularAnimeSelector()
 

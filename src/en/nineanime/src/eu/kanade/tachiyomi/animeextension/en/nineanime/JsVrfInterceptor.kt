@@ -4,73 +4,41 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.os.Handler
 import android.os.Looper
-import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import eu.kanade.tachiyomi.network.GET
-import okhttp3.Headers
-import okhttp3.Interceptor
-import okhttp3.Request
-import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-class JsVrfInterceptor(private val query: String, private val baseUrl: String) : Interceptor {
+class JsVrfInterceptor(private val baseUrl: String) {
 
     private val context = Injekt.get<Application>()
     private val handler by lazy { Handler(Looper.getMainLooper()) }
+    private val vrfWebView = createWebView()
 
-    class JsObject(private val latch: CountDownLatch, var payload: String = "") {
-        @JavascriptInterface
-        fun passPayload(passedPayload: String) {
-            payload = passedPayload
-            latch.countDown()
+    fun wake() = ""
+
+    fun getVrf(query: String): String {
+        val jscript = getJs(query)
+        val cdl = CountDownLatch(1)
+        var vrf = ""
+        handler.post {
+            vrfWebView?.evaluateJavascript(jscript) {
+                vrf = it?.removeSurrounding("\"") ?: ""
+                cdl.countDown()
+            }
         }
-    }
-
-    override fun intercept(chain: Interceptor.Chain): Response {
-        val originalRequest = chain.request()
-
-        val newRequest = resolveWithWebView(originalRequest) ?: throw Exception("Please reload Episode List")
-
-        return chain.proceed(newRequest)
+        cdl.await(12, TimeUnit.SECONDS)
+        if (vrf.isBlank()) throw Exception("vrf could not be retrieved")
+        return vrf
     }
 
     @SuppressLint("SetJavaScriptEnabled")
-    private fun resolveWithWebView(request: Request): Request? {
-
+    private fun createWebView(): WebView? {
         val latch = CountDownLatch(1)
-
         var webView: WebView? = null
-
-        val origRequestUrl = request.url.toString()
-
-        val jsinterface = JsObject(latch)
-
-        // JavaScript uses search of 9Anime to convert IDs & Querys to the VRF-Key
-        val jsScript = """
-            (function() {
-               document.querySelector("form.filters input.form-control").value = '$query';
-               let inputElemente = document.querySelector('form.filters input.form-control');
-               let e = document.createEvent('HTMLEvents');
-               e.initEvent('keyup', true, true);
-               inputElemente.dispatchEvent(e);
-               let intervalId = setInterval(() => {
-                    let element = document.querySelector('form.filters input[type="hidden"]').value;
-                    if (element) {
-                        clearInterval(intervalId);
-                        window.android.passPayload(element)
-                    }
-                }, 100);
-            })();
-        """
-
-        val headers = request.headers.toMultimap().mapValues { it.value.getOrNull(0) ?: "" }.toMutableMap()
-
-        var newRequest: Request? = null
 
         handler.post {
             val webview = WebView(context)
@@ -83,8 +51,6 @@ class JsVrfInterceptor(private val query: String, private val baseUrl: String) :
                 loadWithOverviewMode = false
                 userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:106.0) Gecko/20100101 Firefox/106.0"
 
-                webview.addJavascriptInterface(jsinterface, "android")
-
                 webview.webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                         if (request?.url.toString().contains("$baseUrl/filter")) {
@@ -95,21 +61,40 @@ class JsVrfInterceptor(private val query: String, private val baseUrl: String) :
                         }
                     }
                     override fun onPageFinished(view: WebView?, url: String?) {
-                        view?.evaluateJavascript(jsScript) {}
+                        latch.countDown()
                     }
                 }
-                webView?.loadUrl(origRequestUrl, headers)
+                webView?.loadUrl("$baseUrl/filter")
             }
         }
 
-        latch.await(12, TimeUnit.SECONDS)
+        latch.await()
 
         handler.post {
             webView?.stopLoading()
-            webView?.destroy()
-            webView = null
         }
-        newRequest = GET(request.url.toString(), headers = Headers.headersOf("url", jsinterface.payload, "user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:106.0) Gecko/20100101 Firefox/106.0"))
-        return newRequest
+        return webView
+    }
+
+    private fun getJs(query: String): String {
+        return """
+            (function() {
+                  document.querySelector("form.filters input.form-control").value = '$query';
+                  let inputElemente = document.querySelector('form.filters input.form-control');
+                  let e = document.createEvent('HTMLEvents');
+                  e.initEvent('keyup', true, true);
+                  inputElemente.dispatchEvent(e);
+                  let val = "";
+                  while (val == "") {
+                    let element = document.querySelector('form.filters input[type="hidden"]').value;
+                    if (element) {
+                      val = element;
+                      break;
+                    }
+                  }
+                  document.querySelector("form.filters input.form-control").value = '';
+                  return val;
+            })();
+        """.trimIndent()
     }
 }
