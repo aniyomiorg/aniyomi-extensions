@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.JkanimeExtractor
+import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.ZippyExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -63,7 +64,7 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val jsonResponse = json.decodeFromString<JsonObject>(document.body().text())["response"]!!.jsonObject
         val anime = jsonResponse["anime"]!!.jsonObject
         val studioId = anime["studios"]!!.jsonPrimitive.content.split(",")
-        val studio = studioId.map { id -> studiosMap.filter { it.value == id.toInt() }.keys.first() }
+        val studio = try { studioId.map { id -> studiosMap.filter { it.value == id.toInt() }.keys.first() } } catch (e: Exception) { emptyList() }
         return SAnime.create().apply {
             title = anime["name"]!!.jsonPrimitive.content
             description = anime["synopsis"]!!.jsonPrimitive.content
@@ -238,6 +239,10 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         val videoUrlD = ZippyExtractor().getVideoUrl(url, json)
                         val videoUrl = hostUrl + videoUrlD
                         videoList.add(Video(videoUrl, server, videoUrl))
+                    }
+                    url.contains("mp4upload") -> {
+                        val videoHeaders = headersBuilder().add("Referer", "https://mp4upload.com/").build()
+                        videoList.add(Mp4uploadExtractor().getVideoFromUrl(url, videoHeaders))
                     }
                 }
             } catch (_: Exception) {
