@@ -9,6 +9,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.Headers
 import okhttp3.Interceptor
@@ -24,18 +25,19 @@ class JsInterceptor(private val lang: String) : Interceptor {
     private val context = Injekt.get<Application>()
     private val handler by lazy { Handler(Looper.getMainLooper()) }
 
-    class JsObject(private val latch: CountDownLatch, var payload: String = "") {
+    class JsObject(var payload: String = "") {
         @JavascriptInterface
         fun passPayload(passedPayload: String) {
             payload = passedPayload
-            latch.countDown()
         }
     }
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
-
-        val newRequest = resolveWithWebView(originalRequest) ?: throw Exception("Please reload Episode List")
+        handler.post {
+            context.let { Toast.makeText(it, "This might take a while, Don't close me", Toast.LENGTH_LONG).show() }
+        }
+        val newRequest = resolveWithWebView(originalRequest) ?: throw Exception("Someting went wrong or took too long")
 
         return chain.proceed(newRequest)
     }
@@ -49,20 +51,22 @@ class JsInterceptor(private val lang: String) : Interceptor {
 
         val origRequestUrl = request.url.toString()
 
-        val jsinterface = JsObject(latch)
+        val jsinterface = JsObject()
 
         // JavaSrcipt gets the Dub or Sub link of vidstream
         val jsScript = """
             (function(){
-                let hoster = document.querySelector('div[data-type="$lang"] ul li[data-sv-id="41"]');
-                let event = document.createEvent('HTMLEvents');
-                event.initEvent('click',true,true);
-                hoster.dispatchEvent(event);
+                let jqclk = jQuery.Event('click');
+                jqclk.isTrusted = true;
+                jqclk.originalEvent = {
+                  isTrusted: true
+                };
+                ${'$'}('div[data-type="$lang"] ul li[data-sv-id="41"]').trigger(jqclk);
                 let intervalId = setInterval(() => {
                     let element = document.querySelector("#player iframe");
                     if (element) {
                         clearInterval(intervalId);
-                        window.android.passPayload(element.src)
+                        window.android.passPayload(element.src);
                     }
                 }, 500);
             })();
@@ -71,8 +75,6 @@ class JsInterceptor(private val lang: String) : Interceptor {
         val headers = request.headers.toMultimap().mapValues { it.value.getOrNull(0) ?: "" }.toMutableMap()
 
         var newRequest: Request? = null
-
-        var head = ""
 
         handler.post {
             val webview = WebView(context)
@@ -87,8 +89,17 @@ class JsInterceptor(private val lang: String) : Interceptor {
                 webview.addJavascriptInterface(jsinterface, "android")
                 webview.webViewClient = object : WebViewClient() {
                     override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
-                        if (request?.url.toString().contains("https://vidstream.pro/embed")) {
-                            head = request?.url.toString()
+                        if (!request?.url.toString().contains("vidstream") &&
+                            !request?.url.toString().contains("vizcloud")
+                        ) return null
+
+                        if (request?.url.toString().contains("/simple/")) {
+                            newRequest = GET(
+                                request?.url.toString(),
+                                Headers.headersOf("referer", "/orp.maertsdiv//:sptth".reversed())
+                            )
+                            latch.countDown()
+                            return null
                         }
                         return super.shouldInterceptRequest(view, request)
                     }
@@ -100,24 +111,13 @@ class JsInterceptor(private val lang: String) : Interceptor {
             }
         }
 
-        latch.await(12, TimeUnit.SECONDS)
+        latch.await(30, TimeUnit.SECONDS)
 
         handler.post {
             webView?.stopLoading()
             webView?.destroy()
             webView = null
         }
-        newRequest = GET(
-            request.url.toString(),
-            headers = Headers.headersOf(
-                "url",
-                if (jsinterface.payload.isNullOrEmpty() || (!jsinterface.payload.contains("https://vidstream.pro/embed"))) {
-                    head
-                } else {
-                    jsinterface.payload
-                }
-            )
-        )
         return newRequest
     }
 }
