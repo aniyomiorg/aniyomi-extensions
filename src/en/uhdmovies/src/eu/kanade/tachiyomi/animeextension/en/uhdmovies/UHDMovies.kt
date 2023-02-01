@@ -110,7 +110,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val response = client.newCall(GET(baseUrl + anime.url)).execute()
         val resp = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
-        val episodeElements = resp.select("p:has(a[href^=https://href.li])[style*=center]")
+        val episodeElements = resp.select("p:has(a[href*=?id])[style*=center]")
         val qualityRegex = "[0-9]{3,4}p".toRegex(RegexOption.IGNORE_CASE)
         if (episodeElements.first().text().contains("Episode", true) ||
             episodeElements.first().text().contains("Zip", true)
@@ -142,7 +142,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val episode = linkElement.text().replace("Episode", "", true).trim()
                     Triple(
                         season + "_$episode",
-                        linkElement.attr("href")!!.substringAfter("?id="),
+                        linkElement.attr("href")!!,
                         quality
                     )
                 }
@@ -174,7 +174,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     .replace("Download", "", true).trim()
 
                 row.select("a").map { linkElement ->
-                    Triple(linkElement.attr("href")!!.substringAfter("?id="), quality, collectionName)
+                    Triple(linkElement.attr("href")!!, quality, collectionName)
                 }
             }.flatten().groupBy { it.third }.map { group ->
                 collectionIdx++
@@ -236,8 +236,8 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 // ============================= Utilities ==============================
 
     private fun extractVideo(epUrl: EpUrl): Pair<List<Video>, String> {
-        val postLink = "https://blog.officialboypalak.in/"
-        val formData = FormBody.Builder().add("_wp_http", epUrl.url).build()
+        val postLink = epUrl.url.substringBefore("?id=")
+        val formData = FormBody.Builder().add("_wp_http", epUrl.url.substringAfter("?id=")).build()
         val response = client.newCall(POST(postLink, body = formData)).execute().asJsoup()
         val link = response.selectFirst("form#landing").attr("action")
         val wpHttp = response.selectFirst("input[name=_wp_http2]").attr("value")
