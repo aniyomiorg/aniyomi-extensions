@@ -66,16 +66,18 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         if (url.contains("/pelicula/")) {
             document.select("ul#playeroptionsul li").forEach {
-                val epNum = it.attr("data-nume").toFloat()
-                val epName = it.select("span.title").text()
+                if (it.attr("data-nume").toFloatOrNull() != null) {
+                    val epNum = it.attr("data-nume").toFloat()
+                    val epName = it.select("span.title").text()
 
-                val episode = SEpisode.create().apply {
-                    episode_number = epNum
-                    name = epName
-                    setUrlWithoutDomain("$url?$epNum")
+                    val episode = SEpisode.create().apply {
+                        episode_number = epNum
+                        name = epName
+                        setUrlWithoutDomain("$url?$epNum")
+                    }
+
+                    episodes.add(episode)
                 }
-
-                episodes.add(episode)
             }
             return episodes
         }
