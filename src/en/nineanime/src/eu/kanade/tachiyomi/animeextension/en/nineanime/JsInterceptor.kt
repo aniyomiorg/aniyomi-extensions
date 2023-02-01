@@ -18,7 +18,6 @@ import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 class JsInterceptor(private val lang: String) : Interceptor {
 
@@ -37,7 +36,7 @@ class JsInterceptor(private val lang: String) : Interceptor {
         handler.post {
             context.let { Toast.makeText(it, "This might take a while, Don't close me", Toast.LENGTH_LONG).show() }
         }
-        val newRequest = resolveWithWebView(originalRequest) ?: throw Exception("Someting went wrong or took too long")
+        val newRequest = resolveWithWebView(originalRequest) ?: throw Exception("Someting went wrong")
 
         return chain.proceed(newRequest)
     }
@@ -111,7 +110,7 @@ class JsInterceptor(private val lang: String) : Interceptor {
             }
         }
 
-        latch.await(30, TimeUnit.SECONDS)
+        latch.await()
 
         handler.post {
             webView?.stopLoading()
