@@ -110,19 +110,19 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val response = client.newCall(GET(baseUrl + anime.url)).execute()
         val resp = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
-        val episodeElements = resp.select("p:has(a[href*=?id])[style*=center]")
+        val episodeElements = resp.select("p:has(a[href*=?id])[style*=center],p:has(a[href*=?id]):has(span.maxbutton-1-center)")
         val qualityRegex = "[0-9]{3,4}p".toRegex(RegexOption.IGNORE_CASE)
         if (episodeElements.first().text().contains("Episode", true) ||
             episodeElements.first().text().contains("Zip", true)
         ) {
             episodeElements.map { row ->
                 val prevP = row.previousElementSibling()
-
                 val seasonRegex = "[ .]S(?:eason)?[ .]?([0-9]{1,2})[ .]".toRegex(RegexOption.IGNORE_CASE)
                 val result = seasonRegex.find(prevP.text())
+
                 val season = (
                     result?.groups?.get(1)?.value ?: let {
-                        val prevPre = row.previousElementSiblings().prev("pre")
+                        val prevPre = row.previousElementSiblings().prev("pre,div.mks_separator")
                         val preResult = seasonRegex.find(prevPre.first().text())
                         preResult?.groups?.get(1)?.value ?: let {
                             val title = resp.select("h1.entry-title")
@@ -137,7 +137,8 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                 row.select("a").filter {
                     !it.text().contains("Zip", true) &&
-                        !it.text().contains("Pack", true)
+                        !it.text().contains("Pack", true) &&
+                        !it.text().contains("Volume ", true)
                 }.map { linkElement ->
                     val episode = linkElement.text().replace("Episode", "", true).trim()
                     Triple(
@@ -164,13 +165,14 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             var collectionIdx = 0F
             episodeElements.filter {
                 !it.text().contains("Zip", true) &&
-                    !it.text().contains("Pack", true)
+                    !it.text().contains("Pack", true) &&
+                    !it.text().contains("Volume ", true)
             }.map { row ->
                 val prevP = row.previousElementSibling()
                 val qualityMatch = qualityRegex.find(prevP.text())
                 val quality = qualityMatch?.value ?: "HD"
 
-                val collectionName = row.previousElementSiblings().prev("h2").first().text()
+                val collectionName = row.previousElementSiblings().prev("h1,h2,h3,pre").first().text()
                     .replace("Download", "", true).trim()
 
                 row.select("a").map { linkElement ->
