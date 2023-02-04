@@ -125,6 +125,11 @@ class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
 
+        val hosterSelection = preferences.getStringSet(
+            "hoster_selection",
+            setOf("animeku", "mp4upload", "yourupload", "streamlare", "linkbox")
+        )!!
+
         document.select("select.mirror > option[value]").forEach { opt ->
             val decoded = if (opt.attr("value").isEmpty()) {
                 document.selectFirst("iframe").attr("data-src")
@@ -133,11 +138,6 @@ class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     String(Base64.decode(opt.attr("value"), Base64.DEFAULT))
                 ).select("iframe[data-src~=.]").attr("data-src")
             }
-
-            val hosterSelection = preferences.getStringSet(
-                "hoster_selection",
-                setOf("animeku", "mp4upload", "yourupload", "streamlare", "linkbox")
-            )!!
 
             when {
                 hosterSelection.contains("animeku") && decoded.contains("animeku.org") -> {
@@ -163,7 +163,7 @@ class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
-        return videoList
+        return videoList.sort()
     }
 
     override fun videoFromElement(element: Element): Video = throw Exception("not used")

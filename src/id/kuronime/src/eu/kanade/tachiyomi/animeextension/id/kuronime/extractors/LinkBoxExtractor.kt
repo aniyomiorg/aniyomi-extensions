@@ -13,7 +13,11 @@ import okhttp3.OkHttpClient
 class LinkBoxExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String, name: String): List<Video> {
         val videoList = mutableListOf<Video>()
-        val id = url.substringAfter("/file/")
+        val id = if (url.contains("/file/")) {
+            url.substringAfter("/file/")
+        } else {
+            url.substringAfter("?id=")
+        }
         val request = client.newCall(GET("https://www.linkbox.to/api/open/get_url?itemId=$id")).execute().asJsoup()
         val responseJson = Json.decodeFromString<JsonObject>(request.select("body").text())
         val data = responseJson["data"]?.jsonObject
