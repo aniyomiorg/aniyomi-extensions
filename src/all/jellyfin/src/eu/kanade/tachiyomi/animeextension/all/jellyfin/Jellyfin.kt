@@ -271,7 +271,11 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
             ""
         }
 
-        anime.title = info.Name
+        anime.title = if (info.SeriesName == null) {
+            info.Name
+        } else {
+            "${info.SeriesName} ${info.Name}"
+        }
 
         return anime
     }
