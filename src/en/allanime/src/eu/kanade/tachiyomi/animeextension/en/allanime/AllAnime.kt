@@ -46,6 +46,11 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private val json: Json by injectLazy()
 
+    private val popularHash = "6f6fe5663e3e9ea60bdfa693f878499badab83e7f18b56acdba5f8e8662002aa"
+    private val searchHash = "9c7a8bc1e095a34f2972699e8105f7aaf9082c6e1ccd56eab99c2f1a971152c6"
+    private val _idHash = "f73a8347df0e3e794f8955a18de6e85ac25dfc6b74af8ad613edf87bb446a854"
+    private val episodeHash = "1f0a5d6c9ce6cd3127ee4efd304349345b0737fbf5ec33a60bbc3d18e3bb7c61"
+
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
@@ -54,7 +59,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun popularAnimeRequest(page: Int): Request {
         val variables = """{"type":"anime","size":30,"dateRange":7,"page":$page,"allowAdult":false,"allowUnknown":false}"""
-        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"6f6fe5663e3e9ea60bdfa693f878499badab83e7f18b56acdba5f8e8662002aa"}}"""
+        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$popularHash"}}"""
         val headers = headers.newBuilder()
             .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
             .build()
@@ -90,7 +95,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun latestUpdatesRequest(page: Int): Request {
         val variables = """{"search":{"allowAdult":false,"allowUnknown":false},"limit":26,"page":$page,"translationType":"${preferences.getString("preferred_sub", "sub")!!}","countryOrigin":"ALL"}"""
-        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"9c7a8bc1e095a34f2972699e8105f7aaf9082c6e1ccd56eab99c2f1a971152c6"}}"""
+        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$searchHash"}}"""
         val headers = headers.newBuilder()
             .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
             .build()
@@ -117,7 +122,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun searchAnimeRequest(page: Int, query: String, filters: AllAnimeFilters.FilterSearchParams): Request {
         return if (query.isNotEmpty()) {
             val variables = """{"search":{"query":"$query","allowAdult":false,"allowUnknown":false},"limit":26,"page":$page,"translationType":"${preferences.getString("preferred_sub", "sub")!!}","countryOrigin":"ALL"}"""
-            val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"9c7a8bc1e095a34f2972699e8105f7aaf9082c6e1ccd56eab99c2f1a971152c6"}}"""
+            val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$searchHash"}}"""
             val headers = headers.newBuilder()
                 .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
                 .build()
@@ -133,7 +138,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             var variables = """{"search":{"allowAdult":false,"allowUnknown":false$seasonString$yearString$genresString$typesString$sortByString"""
             variables += """},"limit":26,"page":$page,"translationType":"${preferences.getString("preferred_sub", "sub")!!}","countryOrigin":"${filters.origin}"}"""
 
-            val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"9c7a8bc1e095a34f2972699e8105f7aaf9082c6e1ccd56eab99c2f1a971152c6"}}"""
+            val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$searchHash"}}"""
             val headers = headers.newBuilder()
                 .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
                 .build()
@@ -151,7 +156,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun animeDetailsRequest(anime: SAnime): Request {
         val variables = """{"_id":"${anime.url}"}"""
-        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"f73a8347df0e3e794f8955a18de6e85ac25dfc6b74af8ad613edf87bb446a854"}}"""
+        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$_idHash"}}"""
         val headers = headers.newBuilder()
             .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
             .build()
@@ -184,7 +189,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun episodeListRequest(anime: SAnime): Request {
         val variables = """{"_id":"${anime.url}"}"""
-        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"f73a8347df0e3e794f8955a18de6e85ac25dfc6b74af8ad613edf87bb446a854"}}"""
+        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$_idHash"}}"""
         val headers = headers.newBuilder()
             .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
             .build()
@@ -205,7 +210,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 episode.name = "Episode $numName (sub)"
 
                 val variables = """{"showId":"${medias.data.show._id}","translationType":"sub","episodeString":"$ep"}"""
-                val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"bfda9b479f7a4810bfeb9e3c8d462c6d09a33f918328b0688eb370e1778f272f"}}"""
+                val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$episodeHash"}}"""
                 episode.setUrlWithoutDomain("/allanimeapi?variables=$variables&extensions=$extensions")
                 episodeList.add(episode)
             }
@@ -217,7 +222,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 episode.name = "Episode $numName (dub)"
 
                 val variables = """{"showId":"${medias.data.show._id}","translationType":"dub","episodeString":"$ep"}"""
-                val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"bfda9b479f7a4810bfeb9e3c8d462c6d09a33f918328b0688eb370e1778f272f"}}"""
+                val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$episodeHash"}}"""
                 episode.setUrlWithoutDomain("/allanimeapi?variables=$variables&extensions=$extensions")
                 episodeList.add(episode)
             }
