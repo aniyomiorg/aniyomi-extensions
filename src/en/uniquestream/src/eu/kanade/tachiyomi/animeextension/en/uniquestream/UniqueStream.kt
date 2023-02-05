@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -83,13 +84,23 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =============================== Search ===============================
 
-    override fun searchAnimeParse(response: Response): AnimesPage {
+    override fun searchAnimeParse(response: Response): AnimesPage = throw Exception("Not used")
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
+
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        val (request, isExact) = searchAnimeRequestExact(page, query, filters)
+        return client.newCall(request)
+            .asObservableSuccess()
+            .map { response ->
+                searchAnimeParse(response, isExact)
+            }
+    }
+
+    private fun searchAnimeParse(response: Response, isExact: Boolean): AnimesPage {
         val document = response.asJsoup()
 
-        if (
-            response.request.url.toString().startsWith("$baseUrl/tvshows/") ||
-            response.request.url.toString().startsWith("$baseUrl/movies/")
-        ) {
+        if (isExact) {
             val anime = SAnime.create()
             anime.title = document.selectFirst("div.data > h1").text()
             anime.thumbnail_url = if (document.selectFirst("div.poster > img").hasAttr("data-wpfc-original-src")) {
@@ -112,7 +123,7 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return AnimesPage(animes, hasNextPage)
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+    private fun searchAnimeRequestExact(page: Int, query: String, filters: AnimeFilterList): Pair<Request, Boolean> {
         val cleanQuery = query.replace(" ", "+").lowercase()
 
         val filterList = if (filters.isEmpty()) getFilterList() else filters
@@ -122,12 +133,12 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val urlFilter = filterList.find { it is URLFilter } as URLFilter
 
         return when {
-            query.isNotBlank() -> GET("$baseUrl/page/$page/?s=$cleanQuery", headers = headers)
-            genreFilter.state != 0 -> GET("$baseUrl/genre/${genreFilter.toUriPart()}/page/$page/", headers = headers)
-            recentFilter.state != 0 -> GET("$baseUrl/${recentFilter.toUriPart()}/page/$page/", headers = headers)
-            yearFilter.state != 0 -> GET("$baseUrl/release/${yearFilter.toUriPart()}/page/$page/", headers = headers)
-            urlFilter.state.isNotEmpty() -> GET(urlFilter.state, headers = headers)
-            else -> popularAnimeRequest(page)
+            query.isNotBlank() -> Pair(GET("$baseUrl/page/$page/?s=$cleanQuery", headers = headers), false)
+            genreFilter.state != 0 -> Pair(GET("$baseUrl/genre/${genreFilter.toUriPart()}/page/$page/", headers = headers), false)
+            recentFilter.state != 0 -> Pair(GET("$baseUrl/${recentFilter.toUriPart()}/page/$page/", headers = headers), false)
+            yearFilter.state != 0 -> Pair(GET("$baseUrl/release/${yearFilter.toUriPart()}/page/$page/", headers = headers), false)
+            urlFilter.state.isNotEmpty() -> Pair(GET(urlFilter.state, headers = headers), true)
+            else -> Pair(popularAnimeRequest(page), false)
         }
     }
 
