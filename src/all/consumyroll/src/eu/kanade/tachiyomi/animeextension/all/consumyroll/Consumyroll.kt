@@ -220,7 +220,7 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
                     val playlist = client.newCall(GET(stream.url)).execute().body!!.string()
                     playlist.substringAfter("#EXT-X-STREAM-INF:")
                         .split("#EXT-X-STREAM-INF:").map {
-                            val hardsub = stream.quality.replace("hardsub", "").trim()
+                            val hardsub = stream.quality.replace("hardsub", "").replace("auto", "").trim()
                                 .let { hs ->
                                     if (hs.isNotBlank()) " - HardSub: $hs" else ""
                                 }
