@@ -2489,6 +2489,27 @@
     ]
   },
   {
+    "name": "Aniyomi: AnimesROLL",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesroll",
+    "apk": "aniyomi-pt.animesroll-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimesROLL",
+        "lang": "pt-BR",
+        "id": "1328689310980517070",
+        "baseUrl": "https://www.anroll.net",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: AnimesUP",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesup",
     "apk": "aniyomi-pt.animesup-v13.3.apk",
