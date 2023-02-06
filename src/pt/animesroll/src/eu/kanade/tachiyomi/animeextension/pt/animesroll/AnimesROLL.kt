@@ -19,6 +19,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.nodes.Document
 import rx.Observable
 
 class AnimesROLL : AnimeHttpSource() {
@@ -38,31 +39,18 @@ class AnimesROLL : AnimeHttpSource() {
         isLenient = true
     }
 
-    private val API_URL by lazy {
-        val home = client.newCall(GET(baseUrl)).execute()
-        val body = home.body?.string().orEmpty()
-        val buildId = body.substringAfter("\"buildId\":")
-            .substringAfter('"')
-            .substringBefore('"')
-        "$baseUrl/_next/data/$buildId"
-    }
-
     private val NEW_API_URL = "https://apiv2-prd.anroll.net"
 
     // ============================== Popular ===============================
     // The site doesn't have a popular anime tab, so we use the home page instead (latest anime).
-    override fun popularAnimeRequest(page: Int) = GET("$API_URL/index.json")
+    override fun popularAnimeRequest(page: Int) = GET(baseUrl)
     override fun popularAnimeParse(response: Response) = latestUpdatesParse(response)
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
         val originalUrl = response.request.url.toString()
         return if ("/f/" in originalUrl) {
-            val od = response.body?.string().orEmpty()
-                .substringAfter("\"od\":")
-                .substringAfter('"')
-                .substringBefore('"')
-
+            val od = response.asJsoup().parseAs<AnimeInfoDto>().animeData.od
             val episode = SEpisode.create().apply {
                 url = "$NEW_API_URL/od/$od/filme.mp4"
                 name = "Filme"
@@ -70,11 +58,7 @@ class AnimesROLL : AnimeHttpSource() {
             }
             listOf(episode)
         } else {
-            val id = originalUrl.substringAfter("/a/").substringBefore("/")
-            val epdata = client.newCall(GET("$NEW_API_URL/a/$id"))
-                .execute()
-                .parseAs<EpisodeDto>()
-
+            val epdata = response.asJsoup().parseAs<EpisodeDto>()
             val urlStart = "https://cdn-01.animesroll.com/hls/animes/${epdata.anime.slug}"
 
             (epdata.total_ep downTo 1).map {
@@ -105,11 +89,7 @@ class AnimesROLL : AnimeHttpSource() {
     // =========================== Anime Details ============================
     override fun animeDetailsParse(response: Response): SAnime {
         val doc = response.asJsoup()
-        val nextData = doc.selectFirst("script#__NEXT_DATA__")
-            .data()
-            .substringAfter(":")
-            .substringBeforeLast(",\"page\"")
-        val anime = json.decodeFromString<PagePropDto<AnimeInfoDto>>(nextData).data.animeData
+        val anime = doc.parseAs<AnimeInfoDto>().animeData
         return anime.toSAnime().apply {
             author = anime.director
             var desc = anime.description + "\n"
@@ -136,14 +116,22 @@ class AnimesROLL : AnimeHttpSource() {
 
     // =============================== Latest ===============================
     override fun latestUpdatesParse(response: Response): AnimesPage {
-        val parsed = response.parseAs<PagePropDto<LatestAnimeDto>>()
-        val animes = parsed.data.animes.map { it.toSAnime() }
+        val parsed = response.asJsoup().parseAs<LatestAnimeDto>()
+        val animes = parsed.animes.map { it.toSAnime() }
         return AnimesPage(animes, false)
     }
 
-    override fun latestUpdatesRequest(page: Int) = GET("$API_URL/lancamentos.json")
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/lancamentos")
 
     // ============================= Utilities ==============================
+
+    private inline fun <reified T> Document.parseAs(): T {
+        val nextData = this.selectFirst("script#__NEXT_DATA__")
+            .data()
+            .substringAfter(":")
+            .substringBeforeLast(",\"page\"")
+        return json.decodeFromString<PagePropDto<T>>(nextData).data
+    }
 
     private inline fun <reified T> Response.parseAs(): T {
         val responseBody = body?.string().orEmpty()
