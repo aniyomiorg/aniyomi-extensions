@@ -91,8 +91,8 @@ class AnimesROLL : AnimeHttpSource() {
         val doc = response.asJsoup()
         val anime = doc.parseAs<AnimeInfoDto>().animeData
         return anime.toSAnime().apply {
-            author = anime.director
-            var desc = anime.description + "\n"
+            author = if (anime.director != "0") anime.director else null
+            var desc = anime.description.ifNotEmpty { it + "\n" }
             desc += anime.duration.ifNotEmpty { "\nDuração: $it" }
             desc += anime.animeCalendar?.let {
                 it.ifNotEmpty { "\nLança toda(o) $it" }
@@ -139,7 +139,7 @@ class AnimesROLL : AnimeHttpSource() {
     }
 
     private fun String.ifNotEmpty(block: (String) -> String): String {
-        return if (isNotEmpty() && this != "0") block(this) else this
+        return if (isNotEmpty() && this != "0") block(this) else ""
     }
 
     fun AnimeDataDto.toSAnime(): SAnime {
