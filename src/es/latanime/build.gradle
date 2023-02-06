@@ -1,0 +1,20 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Latanime'
+    pkgNameSuffix = 'es.latanime'
+    extClass = '.Latanime'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-fembed-extractor'))
+    implementation(project(':lib-okru-extractor'))
+    implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib-streamsb-extractor'))
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
+}
+
+apply from: "$rootDir/common.gradle"
