@@ -5,6 +5,7 @@ import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.AnimeInfoDto
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.EpisodeDto
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.LatestAnimeDto
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.PagePropDto
+import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.SearchResultsDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -124,11 +125,13 @@ class AnimesROLL : AnimeHttpSource() {
 
     // =============================== Search ===============================
     override fun searchAnimeParse(response: Response): AnimesPage {
-        TODO("Not yet implemented")
+        val results = response.parseAs<SearchResultsDto>()
+        val animes = (results.animes + results.movies).map { it.toSAnime() }
+        return AnimesPage(animes, false)
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        TODO("Not yet implemented")
+        return GET("$NEW_API_URL/search?q=$query")
     }
 
     // =============================== Latest ===============================

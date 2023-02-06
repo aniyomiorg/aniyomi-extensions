@@ -35,6 +35,7 @@ data class AnimeDataDto(
     val description: String = "",
     @SerialName("slug_serie")
     val slug: String = "",
+    @SerialName("slug_filme")
     val slug_movie: String = "",
     @SerialName("duracao")
     val duration: String = "",
@@ -49,4 +50,12 @@ data class EpisodeDto(
     @SerialName("data_anime")
     val anime: AnimeDataDto,
     val total_ep: Int
+)
+
+@Serializable
+data class SearchResultsDto(
+    @SerialName("data_anime")
+    val animes: List<AnimeDataDto>,
+    @SerialName("data_filme")
+    val movies: List<AnimeDataDto>
 )
