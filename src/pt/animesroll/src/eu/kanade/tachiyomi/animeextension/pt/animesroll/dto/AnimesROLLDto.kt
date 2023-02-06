@@ -1,8 +1,8 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesroll.dto
 
-import eu.kanade.tachiyomi.animesource.model.SAnime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonNames
 
 @Serializable
 data class PagePropDto<T>(val pageProps: DataPropDto<T>) {
@@ -19,17 +19,34 @@ data class LatestAnimeDto(
 )
 
 @Serializable
+data class AnimeInfoDto(
+    @JsonNames("data_anime", "data_movie")
+    val animeData: AnimeDataDto,
+    val pages: Int = 0
+)
+
+@Serializable
 data class AnimeDataDto(
+    @SerialName("diretor")
+    val director: String = "",
+    @JsonNames("nome_filme", "titulo")
+    val anititle: String,
+    @JsonNames("sinopse", "sinopse_filme")
+    val description: String = "",
     @SerialName("slug_serie")
-    val slug: String,
-    @SerialName("titulo")
-    val anititle: String
-) {
-    fun toSAnime(): SAnime {
-        return SAnime.create().apply {
-            url = "/anime/$slug"
-            thumbnail_url = "https://static.anroll.net/images/animes/capas/$slug.jpg"
-            title = anititle
-        }
-    }
-}
+    val slug: String = "",
+    val slug_movie: String = "",
+    @SerialName("duracao")
+    val duration: String = "",
+    @SerialName("generate_id")
+    val id: String = "",
+    val animeCalendar: String? = null,
+    val od: String = ""
+)
+
+@Serializable
+data class EpisodeDto(
+    @SerialName("data_anime")
+    val anime: AnimeDataDto,
+    val total_ep: Int
+)
