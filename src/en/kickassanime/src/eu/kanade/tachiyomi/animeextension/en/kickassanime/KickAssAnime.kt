@@ -7,6 +7,7 @@ import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.extractors.GogoCdnExtractor
+import eu.kanade.tachiyomi.animeextension.en.kickassanime.extractors.PinkBird
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -170,38 +171,29 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 videoList.addAll(
                     sources.parallelMap { source ->
                         runCatching {
-                            when (source.jsonObject["name"]!!.jsonPrimitive.content) {
+                            val src = source.jsonObject["src"]!!.jsonPrimitive.content
+                            val name = source.jsonObject["name"]!!.jsonPrimitive.content
+                            when (name) {
                                 in deadServers -> { null }
                                 "SAPPHIRE-DUCK" -> {
-                                    extractSapphireVideo(
-                                        source.jsonObject["src"]!!.jsonPrimitive.content,
-                                        source.jsonObject["name"]!!.jsonPrimitive.content
-                                    )
+                                    extractSapphireVideo(src, name)
+                                }
+                                "PINK-BIRD" -> {
+                                    PinkBird(client, json).videosFromUrl(src, name)
                                 }
                                 "BETAPLAYER" -> {
-                                    extractBetaVideo(
-                                        source.jsonObject["src"]!!.jsonPrimitive.content,
-                                        source.jsonObject["name"]!!.jsonPrimitive.content
-                                    )
+                                    extractBetaVideo(src, name)
                                 }
                                 "KICKASSANIMEV2", "ORIGINAL-QUALITY-V2", "BETA-SERVER" -> {
-                                    extractKickasssVideo(
-                                        source.jsonObject["src"]!!.jsonPrimitive.content,
-                                        source.jsonObject["name"]!!.jsonPrimitive.content
-                                    )
+                                    extractKickasssVideo(src, name)
                                 }
                                 "DAILYMOTION" -> {
-                                    extractDailymotion(
-                                        source.jsonObject["src"]!!.jsonPrimitive.content,
-                                        source.jsonObject["name"]!!.jsonPrimitive.content
-                                    )
+                                    extractDailymotion(src, name)
                                 }
-                                else -> {
-                                    extractVideo(
-                                        source.jsonObject["src"]!!.jsonPrimitive.content,
-                                        source.jsonObject["name"]!!.jsonPrimitive.content
-                                    )
+                                "MAVERICKKI" -> {
+                                    extractMavrick(src, name)
                                 }
+                                else -> null
                             }
                         }.getOrNull()
                     }.filterNotNull().flatten()
@@ -211,31 +203,23 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         return videoList
     }
 
-    private fun extractVideo(serverLink: String, server: String): List<Video> {
+    private fun extractMavrick(serverLink: String, server: String): List<Video> {
         val playlist = mutableListOf<Video>()
         val subsList = mutableListOf<Track>()
-        var vidHeader = headers
+        val apiLink = serverLink.replace("embed", "api/source")
+        val embedHeader = Headers.headersOf("referer", serverLink)
+        val apiResponse = client.newCall(GET(apiLink, embedHeader)).execute()
+        val json = Json.decodeFromString<JsonObject>(apiResponse.body!!.string())
+        val uri = Uri.parse(serverLink)
 
-        val resp = if (server == "MAVERICKKI") {
-            val apiLink = serverLink.replace("embed", "api/source")
-            val embedHeader = Headers.headersOf("referer", serverLink)
-            val apiResponse = client.newCall(GET(apiLink, embedHeader)).execute()
-            val json = Json.decodeFromString<JsonObject>(apiResponse.body!!.string())
-            val uri = Uri.parse(serverLink)
-
-            json["subtitles"]!!.jsonArray.forEach {
-                val subLang = it.jsonObject["name"]!!.jsonPrimitive.content
-                val subUrl = "${uri.scheme}://${uri.host}" + it.jsonObject["src"]!!.jsonPrimitive.content
-                try {
-                    subsList.add(Track(subUrl, subLang))
-                } catch (_: Error) {}
-            }
-            vidHeader = embedHeader
-            client.newCall(GET("${uri.scheme}://${uri.host}" + json["hls"]!!.jsonPrimitive.content, embedHeader)).execute()
-        } else {
-            val kickAssClient = client.newBuilder().addInterceptor(MasterPlaylistInterceptor()).build()
-            kickAssClient.newCall(GET(serverLink, headers)).execute()
+        json["subtitles"]!!.jsonArray.forEach {
+            val subLang = it.jsonObject["name"]!!.jsonPrimitive.content
+            val subUrl = "${uri.scheme}://${uri.host}" + it.jsonObject["src"]!!.jsonPrimitive.content
+            try {
+                subsList.add(Track(subUrl, subLang))
+            } catch (_: Error) {}
         }
+        val resp = client.newCall(GET("${uri.scheme}://${uri.host}" + json["hls"]!!.jsonPrimitive.content, embedHeader)).execute()
 
         resp.body!!.string().substringAfter("#EXT-X-STREAM-INF:")
             .split("#EXT-X-STREAM-INF:").map {
@@ -246,12 +230,11 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                     videoUrl = resp.request.url.toString().substringBeforeLast("/") + "/$videoUrl"
                 }
                 try {
-                    playlist.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subsList, headers = vidHeader))
+                    playlist.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subsList, headers = embedHeader))
                 } catch (e: Error) {
-                    playlist.add(Video(videoUrl, quality, videoUrl, headers = vidHeader))
+                    playlist.add(Video(videoUrl, quality, videoUrl, headers = embedHeader))
                 }
             }
-
         return playlist
     }
 
