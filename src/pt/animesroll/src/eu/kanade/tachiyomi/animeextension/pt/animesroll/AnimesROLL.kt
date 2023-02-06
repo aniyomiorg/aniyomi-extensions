@@ -39,8 +39,6 @@ class AnimesROLL : AnimeHttpSource() {
         isLenient = true
     }
 
-    private val NEW_API_URL = "https://apiv2-prd.anroll.net"
-
     // ============================== Popular ===============================
     // The site doesn't have a popular anime tab, so we use the home page instead (latest anime).
     override fun popularAnimeRequest(page: Int) = GET(baseUrl)
@@ -155,6 +153,8 @@ class AnimesROLL : AnimeHttpSource() {
     }
 
     companion object {
+        private const val NEW_API_URL = "https://apiv2-prd.anroll.net"
+
         const val PREFIX_SEARCH = "id:"
     }
 }
