@@ -18,6 +18,12 @@
                     android:host="www.anroll.net"
                     android:pathPattern="/a/..*"
                     android:scheme="https" />
+                
+                <data
+                    android:host="www.anroll.net"
+                    android:pathPattern="/f/..*"
+                    android:scheme="https" />
+
             </intent-filter>
         </activity>
     </application>

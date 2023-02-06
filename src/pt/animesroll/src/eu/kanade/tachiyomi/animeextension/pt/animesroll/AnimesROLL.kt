@@ -13,6 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -102,6 +103,25 @@ class AnimesROLL : AnimeHttpSource() {
     }
 
     // =============================== Search ===============================
+
+    private fun searchAnimeByPathParse(response: Response, path: String): AnimesPage {
+        val details = animeDetailsParse(response)
+        details.url = "/$path"
+        return AnimesPage(listOf(details), false)
+    }
+
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        return if (query.startsWith(PREFIX_SEARCH)) {
+            val path = query.removePrefix(PREFIX_SEARCH)
+            client.newCall(GET("$baseUrl/$path"))
+                .asObservableSuccess()
+                .map { response ->
+                    searchAnimeByPathParse(response, path)
+                }
+        } else {
+            super.fetchSearchAnime(page, query, filters)
+        }
+    }
     override fun searchAnimeParse(response: Response): AnimesPage {
         val results = response.parseAs<SearchResultsDto>()
         val animes = (results.animes + results.movies).map { it.toSAnime() }
@@ -155,6 +175,6 @@ class AnimesROLL : AnimeHttpSource() {
     companion object {
         private const val NEW_API_URL = "https://apiv2-prd.anroll.net"
 
-        const val PREFIX_SEARCH = "id:"
+        const val PREFIX_SEARCH = "path:"
     }
 }
