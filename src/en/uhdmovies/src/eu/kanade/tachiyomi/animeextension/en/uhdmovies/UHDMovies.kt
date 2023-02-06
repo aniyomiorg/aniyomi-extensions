@@ -238,7 +238,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 // ============================= Utilities ==============================
 
     private fun extractVideo(epUrl: EpUrl): Pair<List<Video>, String> {
-        val postLink = epUrl.url.substringBefore("?id=")
+        val postLink = epUrl.url.substringBefore("?id=").substringAfter("/?")
         val formData = FormBody.Builder().add("_wp_http", epUrl.url.substringAfter("?id=")).build()
         val response = client.newCall(POST(postLink, body = formData)).execute().asJsoup()
         val link = response.selectFirst("form#landing").attr("action")
