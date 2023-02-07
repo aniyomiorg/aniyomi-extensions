@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.all.consumyroll
+package eu.kanade.tachiyomi.animeextension.all.kamyroll
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

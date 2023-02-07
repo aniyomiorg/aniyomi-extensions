@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.all.consumyroll
+package eu.kanade.tachiyomi.animeextension.all.kamyroll
 
 import android.app.Application
 import android.content.SharedPreferences
@@ -48,6 +48,8 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
     override val lang = "all"
 
     override val supportsLatest = true
+
+    override val id: Long = 7463514907068706782
 
     private val json: Json by injectLazy()
 

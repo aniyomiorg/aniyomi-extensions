@@ -4,9 +4,9 @@ apply plugin: 'kotlinx-serialization'
 
 ext {
     extName = 'Consumyroll'
-    pkgNameSuffix = 'all.consumyroll'
+    pkgNameSuffix = 'all.kamyroll'
     extClass = '.Consumyroll'
-    extVersionCode = 1
+    extVersionCode = 9
     libVersion = '13'
 }
 
