@@ -2426,6 +2426,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Aniweek",
+    "pkg": "eu.kanade.tachiyomi.animeextension.ko.aniweek",
+    "apk": "aniyomi-ko.aniweek-v13.1.apk",
+    "lang": "ko",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Aniweek",
+        "lang": "ko",
+        "id": "4565983297271071094",
+        "baseUrl": "https://aniweek.com",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: desu-online",
     "pkg": "eu.kanade.tachiyomi.animeextension.pl.desuonline",
     "apk": "aniyomi-pl.desuonline-v13.1.apk",
