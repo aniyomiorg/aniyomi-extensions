@@ -1194,10 +1194,10 @@
   {
     "name": "Aniyomi: KickAssAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.kickassanime",
-    "apk": "aniyomi-en.kickassanime-v13.14.apk",
+    "apk": "aniyomi-en.kickassanime-v13.15.apk",
     "lang": "en",
-    "code": 14,
-    "version": "13.14",
+    "code": 15,
+    "version": "13.15",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1425,10 +1425,10 @@
   {
     "name": "Aniyomi: UHD Movies (Experimental)",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.uhdmovies",
-    "apk": "aniyomi-en.uhdmovies-v13.4.apk",
+    "apk": "aniyomi-en.uhdmovies-v13.5.apk",
     "lang": "en",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1837,6 +1837,27 @@
         "lang": "es",
         "id": "5893372327521334179",
         "baseUrl": "https://www.jkhentai.net",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: Latanime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.latanime",
+    "apk": "aniyomi-es.latanime-v13.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Latanime",
+        "lang": "es",
+        "id": "7257892387451890645",
+        "baseUrl": "https://latanime.org",
         "versionId": 1,
         "hasCloudflare": 1
       }
