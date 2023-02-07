@@ -24,7 +24,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -110,19 +109,17 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
     // =========================== Anime Details ============================
 
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        return if (anime.description.isNullOrBlank()) {
-            val mediaId = json.decodeFromString<LinkData>(anime.url)
-            val resp = client.newCall(GET("$baseUrl/info/${mediaId.id}?type=${mediaId.type}&fetchAllSeasons=true")).execute()
-            val info = json.decodeFromString<JsonObject>(resp.body!!.string())
-            Observable.just(
-                anime.apply {
-                    description = info["description"]!!.jsonPrimitive.content
-                    genre = info["genres"]!!.jsonArray.joinToString()
-                }
-            )
-        } else {
-            Observable.just(anime.apply {})
-        }
+        val mediaId = json.decodeFromString<LinkData>(anime.url)
+        val resp = client.newCall(GET("$crUrl/content/v2/cms/series/${mediaId.id}?locale=en-US")).execute()
+        val info = json.decodeFromString<AnimeResult>(resp.body!!.string())
+        val media = info.data.first()
+        return Observable.just(
+            anime.apply {
+                author = media.content_provider
+                description += "\n\nAudio: " + media.audio_locales!!.joinToString { it.getLocale() } +
+                    "\nSubs: " + media.subtitle_locales!!.joinToString { it.getLocale() }
+            }
+        )
     }
 
     override fun animeDetailsParse(response: Response): SAnime = throw Exception("not used")
@@ -294,8 +291,8 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
             title = this@toSAnime.title
             thumbnail_url = this@toSAnime.images.poster_tall?.getOrNull(0)?.thirdLast()?.source
                 ?: this@toSAnime.images.poster_tall?.getOrNull(0)?.last()?.source
-            url = LinkData(this@toSAnime.id, this@toSAnime.type).toJsonString()
-            genre = this@toSAnime.series_metadata.genres?.joinToString() ?: "Anime"
+            url = this@toSAnime.type!!.let { LinkData(this@toSAnime.id, it).toJsonString() }
+            genre = this@toSAnime.series_metadata!!.genres?.joinToString() ?: "Anime"
             status = SAnime.COMPLETED
             var desc = this@toSAnime.description + "\n"
             desc += "\nLanguage: Sub" + (if (this@toSAnime.series_metadata.audio_locales.size > 1) " Dub" else "")

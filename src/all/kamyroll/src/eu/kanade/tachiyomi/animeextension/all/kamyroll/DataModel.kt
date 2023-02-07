@@ -31,11 +31,14 @@ data class Images(
 @Serializable
 data class Anime(
     val id: String,
-    val type: String,
+    val type: String? = null,
     val title: String,
     val description: String,
     val images: Images,
-    val series_metadata: Metadata
+    val series_metadata: Metadata? = null,
+    val content_provider: String? = null,
+    val audio_locales: ArrayList<String>? = null,
+    val subtitle_locales: ArrayList<String>? = null
 ) {
     @Serializable
     data class Metadata(
