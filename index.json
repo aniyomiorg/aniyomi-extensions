@@ -42,21 +42,21 @@
     ]
   },
   {
-    "name": "Aniyomi: Kamyroll",
+    "name": "Aniyomi: Consumyroll",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.kamyroll",
-    "apk": "aniyomi-all.kamyroll-v13.8.apk",
+    "apk": "aniyomi-all.kamyroll-v13.9.apk",
     "lang": "all",
-    "code": 8,
-    "version": "13.8",
+    "code": 9,
+    "version": "13.9",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
     "sources": [
       {
-        "name": "Kamyroll",
+        "name": "Consumyroll",
         "lang": "all",
         "id": "7463514907068706782",
-        "baseUrl": "https://api.kamyroll.tech",
+        "baseUrl": "https://cronchy.consumet.stream",
         "versionId": 1,
         "hasCloudflare": 0
       }
