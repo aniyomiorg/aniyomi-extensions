@@ -21,9 +21,6 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -61,14 +58,14 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
 
     companion object {
         private val DateFormatter by lazy {
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.ENGLISH)
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ENGLISH)
         }
     }
 
     // ============================== Popular ===============================
 
     override fun popularAnimeRequest(page: Int): Request {
-        val start = if (page != 1) "start${(page - 1) * 36}&" else ""
+        val start = if (page != 1) "start=${(page - 1) * 36}&" else ""
         return GET("$crUrl/content/v2/discover/browse?${start}n=36&sort_by=popularity&locale=en-US")
     }
 
@@ -83,7 +80,7 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
     // =============================== Latest ===============================
 
     override fun latestUpdatesRequest(page: Int): Request {
-        val start = if (page != 1) "start${(page - 1) * 36}&" else ""
+        val start = if (page != 1) "start=${(page - 1) * 36}&" else ""
         return GET("$crUrl/content/v2/discover/browse?${start}n=36&sort_by=newly_added&locale=en-US")
     }
 
@@ -112,14 +109,7 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
         val mediaId = json.decodeFromString<LinkData>(anime.url)
         val resp = client.newCall(GET("$crUrl/content/v2/cms/series/${mediaId.id}?locale=en-US")).execute()
         val info = json.decodeFromString<AnimeResult>(resp.body!!.string())
-        val media = info.data.first()
-        return Observable.just(
-            anime.apply {
-                author = media.content_provider
-                description += "\n\nAudio: " + media.audio_locales!!.joinToString { it.getLocale() } +
-                    "\nSubs: " + media.subtitle_locales!!.joinToString { it.getLocale() }
-            }
-        )
+        return Observable.just(anime.apply { author = info.data.first().content_provider })
     }
 
     override fun animeDetailsParse(response: Response): SAnime = throw Exception("not used")
@@ -128,48 +118,29 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun episodeListRequest(anime: SAnime): Request {
         val mediaId = json.decodeFromString<LinkData>(anime.url)
-        return GET("$baseUrl/info/${mediaId.id}?type=${mediaId.type}&fetchAllSeasons=true")
+        return GET("$crUrl/content/v2/cms/series/${mediaId.id}/seasons")
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val medias = json.decodeFromString<JsonObject>(response.body!!.string())
-        val rawEpisodes = mutableListOf<RawEpisode>()
-        medias["episodes"]!!.jsonObject.entries.map { (key, value) ->
-            val audLang = key.replace("[^A-Za-z ]".toRegex(), "")
-                .replace("Dub", "", true)
-                .replace("subbed", "Japanese", true)
-            val episodes = value.jsonArray.map {
-                json.decodeFromString<EpisodeDto>(it.jsonObject.toString())
-            }
-            rawEpisodes.addAll(
-                episodes.map { ep ->
-                    RawEpisode(
-                        ep.id,
-                        ep.title,
-                        ep.season_number,
-                        ep.episode_number,
-                        ep.releaseDate,
-                        audLang
-                    )
+        val seasons = json.decodeFromString<SeasonResult>(response.body!!.string())
+        return seasons.data.parallelMap { seasonData ->
+            runCatching {
+                val episodeResp = client.newCall(GET("$crUrl/content/v2/cms/seasons/${seasonData.id}/episodes")).execute()
+                val episodes = json.decodeFromString<EpisodeResult>(episodeResp.body!!.string())
+                episodes.data.sortedBy { it.episode_number }.map { ep ->
+                    SEpisode.create().apply {
+                        url = EpisodeData(
+                            ep.versions.map { Pair(it.id, it.audio_locale) }
+                        ).toJsonString()
+                        name = if (ep.episode_number > 0 || ep.episode.isNumeric()) {
+                            "Season ${seasonData.season_number} Ep ${df.format(ep.episode_number)}: " + ep.title
+                        } else { ep.title }
+                        episode_number = ep.episode_number
+                        date_upload = parseDate(ep.airDate)
+                    }
                 }
-            )
-        }
-        return rawEpisodes.sortedBy { it.episode }.groupBy { "${it.season}_${it.episode}" }
-            .mapNotNull { group ->
-                val (season, episode) = group.key.split("_")
-                val ep = episode.toFloatOrNull() ?: 0F
-                SEpisode.create().apply {
-                    url = EpisodeData(
-                        group.value.map { rawEp ->
-                            EpisodeData.Episode(rawEp.id, rawEp.audLang)
-                        }
-                    ).toJsonString()
-                    name = if (ep > 0) "Season $season Ep ${df.format(ep)}: " +
-                        group.value.first().title else group.value.first().title
-                    episode_number = ep
-                    date_upload = parseDate(group.value.first().releaseDate)
-                }
-            }.reversed()
+            }.getOrNull()
+        }.filterNotNull().flatten().reversed()
     }
 
     // ============================ Video Links =============================
@@ -178,7 +149,7 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
         val urlJson = json.decodeFromString<EpisodeData>(episode.url)
         val videoList = urlJson.ids.parallelMap { media ->
             runCatching {
-                extractVideo(media.epId, media.audLang)
+                extractVideo(media)
             }.getOrNull()
         }
             .filterNotNull()
@@ -188,30 +159,23 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================= Utilities ==============================
 
-    private fun extractVideo(vidId: String, audLang: String): List<Video> {
+    private fun extractVideo(media: Pair<String, String>): List<Video> {
+        val (vidId, audLang) = media
         val response = client.newCall(GET("$baseUrl/episode/$vidId")).execute()
-        val body = response.body!!.string()
-        val streams = json.decodeFromString<VideoStreams>(body)
+        val streams = json.decodeFromString<VideoStreams>(response.body!!.string())
 
-        val subsList = mutableListOf<Track>()
-        val subLocale = preferences.getString("preferred_sub", "en-US")!!
-        var subPreferred = 0
+        var subsList = emptyList<Track>()
+        val subLocale = preferences.getString("preferred_sub", "en-US")!!.getLocale()
         try {
-            streams.subtitles.forEach { sub ->
-                if (sub.lang == subLocale) {
-                    subsList.add(
-                        subPreferred,
-                        Track(sub.url, sub.lang.getLocale())
-                    )
-                    subPreferred++
-                } else {
-                    subsList.add(
-                        Track(sub.url, sub.lang.getLocale())
-                    )
-                }
-            }
-        } catch (_: Error) {
-        }
+            subsList = streams.subtitles.map { sub ->
+                Track(sub.url, sub.lang.getLocale())
+            }.sortedWith(
+                compareBy(
+                    { it.lang },
+                    { it.lang.contains(subLocale) }
+                )
+            )
+        } catch (_: Error) {}
 
         return streams.sources.filter { it.quality.contains("auto") || it.quality.contains("hardsub") }
             .parallelMap { stream ->
@@ -225,7 +189,7 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
                                 }
                             val quality = it.substringAfter("RESOLUTION=")
                                 .split(",")[0].split("\n")[0].substringAfter("x") +
-                                "p - Aud: $audLang$hardsub"
+                                "p - Aud: ${audLang.getLocale()}$hardsub"
 
                             val videoUrl = it.substringAfter("\n").substringBefore("\n")
 
@@ -252,25 +216,34 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
         return locale.firstOrNull { it.first == this }?.second ?: ""
     }
 
+    private fun String.isNumeric(): Boolean {
+        return this@isNumeric.toDoubleOrNull() != null
+    }
+
     private val locale = arrayOf(
         Pair("ar-ME", "Arabic"),
         Pair("ar-SA", "Arabic (Saudi Arabia)"),
         Pair("de-DE", "German"),
         Pair("en-US", "English"),
-        Pair("es-419", "Spanish (Latin America)"),
-        Pair("es-ES", "Spanish (Spain)"),
-        Pair("es-LA", "Spanish"),
+        Pair("en-IN", "English (India)"),
+        Pair("es-419", "Spanish (América Latina)"),
+        Pair("es-ES", "Spanish (España)"),
+        Pair("es-LA", "Spanish (América Latina)"),
         Pair("fr-FR", "French"),
         Pair("ja-JP", "Japanese"),
+        Pair("hi-IN", "Hindi"),
         Pair("it-IT", "Italian"),
-        Pair("pt-BR", "Portuguese (Brazil)"),
+        Pair("ko-KR", "Korean"),
+        Pair("pt-BR", "Português (Brasil)"),
+        Pair("pt-PT", "Português (Portugal)"),
         Pair("pl-PL", "Polish"),
         Pair("ru-RU", "Russian"),
         Pair("tr-TR", "Turkish"),
         Pair("uk-UK", "Ukrainian"),
         Pair("he-IL", "Hebrew"),
         Pair("ro-RO", "Romanian"),
-        Pair("sv-SE", "Swedish")
+        Pair("sv-SE", "Swedish"),
+        Pair("zh-CN", "Chinese")
     )
 
     private fun LinkData.toJsonString(): String {
@@ -298,7 +271,9 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
             desc += "\nLanguage: Sub" + (if (this@toSAnime.series_metadata.audio_locales.size > 1) " Dub" else "")
             desc += "\nMaturity Ratings: ${this@toSAnime.series_metadata.maturity_ratings.joinToString()}"
             desc += if (this@toSAnime.series_metadata.is_simulcast) "\nSimulcast" else ""
-            description = desc
+            desc += "\n\nAudio: " + this@toSAnime.series_metadata.audio_locales.joinToString { it.getLocale() }
+            desc += "\n\nSubs: " + this@toSAnime.series_metadata.subtitle_locales.joinToString { it.getLocale() }
+            description += desc
         }
 
     override fun List<Video>.sort(): List<Video> {

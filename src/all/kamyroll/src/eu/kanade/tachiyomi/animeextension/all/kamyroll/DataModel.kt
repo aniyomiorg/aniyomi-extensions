@@ -12,7 +12,7 @@ data class AccessToken(
 @Serializable
 data class LinkData(
     val id: String,
-    val type: String
+    val media_type: String
 )
 
 @Serializable
@@ -45,6 +45,7 @@ data class Anime(
         val maturity_ratings: ArrayList<String>,
         val is_simulcast: Boolean,
         val audio_locales: ArrayList<String>,
+        val subtitle_locales: ArrayList<String>,
         @SerialName("tenant_categories")
         val genres: ArrayList<String>?
     )
@@ -70,34 +71,45 @@ data class SearchAnimeResult(
 }
 
 @Serializable
-data class EpisodeDto(
-    val id: String,
-    val title: String,
-    val season_number: Int,
-    val episode_number: Float,
-    val releaseDate: String
-)
+data class SeasonResult(
+    val total: Int,
+    val data: ArrayList<Season>
+) {
+    @Serializable
+    data class Season(
+        val id: String,
+        val season_number: Int
+    )
+}
 
 @Serializable
-data class RawEpisode(
-    val id: String,
-    val title: String,
-    val season: Int,
-    val episode: Float,
-    val releaseDate: String,
-    val audLang: String
-)
-
-@Serializable
-data class EpisodeData(
-    val ids: List<Episode>
+data class EpisodeResult(
+    val total: Int,
+    val data: ArrayList<Episode>
 ) {
     @Serializable
     data class Episode(
-        val epId: String,
-        val audLang: String
-    )
+        val title: String,
+        @SerialName("sequence_number")
+        val episode_number: Float,
+        val episode: String,
+        @SerialName("episode_air_date")
+        val airDate: String,
+        val versions: ArrayList<Version>
+    ) {
+        @Serializable
+        data class Version(
+            val audio_locale: String,
+            @SerialName("guid")
+            val id: String
+        )
+    }
 }
+
+@Serializable
+data class EpisodeData(
+    val ids: List<Pair<String, String>>
+)
 
 @Serializable
 data class VideoStreams(
