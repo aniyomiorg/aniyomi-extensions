@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.all.kamyroll
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 
 @Serializable
 data class AccessToken(
@@ -59,16 +60,38 @@ data class AnimeResult(
 
 @Serializable
 data class SearchAnimeResult(
-    val total: Int,
-    val data: ArrayList<Result>
+    val results: ArrayList<SearchAnime>,
 ) {
     @Serializable
-    data class Result(
+    data class SearchAnime(
+        val id: String,
         val type: String,
-        val count: Int,
-        val items: ArrayList<Anime>
+        val title: String,
+        val description: String,
+        val image: String,
+        val hasDub: Boolean,
+        val genres: ArrayList<String>?
     )
 }
+
+@Serializable
+data class FetchAnime(
+    val id: String,
+    val title: String,
+    val description: String,
+    val images: Images,
+    val content_provider: String,
+    val audio_locales: ArrayList<String>,
+    val subtitle_locales: ArrayList<String>,
+    val maturity_ratings: ArrayList<String>,
+    val is_simulcast: Boolean,
+)
+
+@Serializable
+data class FetchResult(
+    val total: Int,
+    val data: ArrayList<FetchAnime>
+)
 
 @Serializable
 data class SeasonResult(
@@ -105,6 +128,30 @@ data class EpisodeResult(
         )
     }
 }
+
+@Serializable
+data class ConsumetEpsiodes(
+    val episodes: JsonObject
+)
+
+@Serializable
+data class EpisodeDto(
+    val id: String,
+    val title: String,
+    val season_number: Int,
+    val episode_number: Float,
+    val releaseDate: String
+)
+
+@Serializable
+data class RawEpisode(
+    val id: String,
+    val title: String,
+    val season: Int,
+    val episode: Float,
+    val releaseDate: String,
+    val audLang: String
+)
 
 @Serializable
 data class EpisodeData(
