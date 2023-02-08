@@ -17,7 +17,7 @@ data class LinkData(
 
 @Serializable
 data class Images(
-    val poster_tall: ArrayList<Image>? = null
+    val poster_tall: List<ArrayList<Image>>? = null
 ) {
     @Serializable
     data class Image(
@@ -29,137 +29,107 @@ data class Images(
 }
 
 @Serializable
-data class Metadata(
-    val is_dubbed: Boolean,
-    val is_mature: Boolean,
-    val is_subbed: Boolean,
-    val maturity_ratings: String,
-    val episode_count: Int? = null,
-    val is_simulcast: Boolean? = null,
-    val season_count: Int? = null
-)
-
-@Serializable
-data class Updated(
-    val total: Int,
-    val items: ArrayList<Item>
+data class Anime(
+    val id: String,
+    val type: String? = null,
+    val title: String,
+    val description: String,
+    val images: Images,
+    val series_metadata: Metadata? = null,
+    val content_provider: String? = null,
+    val audio_locales: ArrayList<String>? = null,
+    val subtitle_locales: ArrayList<String>? = null
 ) {
     @Serializable
-    data class Item(
-        val id: String,
-        val series_id: String,
-        val series_title: String,
-        val description: String,
-        val images: Images
+    data class Metadata(
+        val maturity_ratings: ArrayList<String>,
+        val is_simulcast: Boolean,
+        val audio_locales: ArrayList<String>,
+        val subtitle_locales: ArrayList<String>,
+        @SerialName("tenant_categories")
+        val genres: ArrayList<String>?
     )
 }
 
 @Serializable
-data class SearchResult(
+data class AnimeResult(
     val total: Int,
-    val items: ArrayList<SearchItem>
+    val data: ArrayList<Anime>
+)
+
+@Serializable
+data class SearchAnimeResult(
+    val total: Int,
+    val data: ArrayList<Result>
 ) {
     @Serializable
-    data class SearchItem(
+    data class Result(
         val type: String,
-        val total: Int,
-        val items: ArrayList<Item>
-    ) {
-        @Serializable
-        data class Item(
-            val id: String,
-            val description: String,
-            val media_type: String,
-            val title: String,
-            val images: Images,
-            val series_metadata: Metadata? = null,
-            val movie_listing_metadata: Metadata? = null
-        )
-    }
+        val count: Int,
+        val items: ArrayList<Anime>
+    )
 }
 
 @Serializable
-data class EpisodeList(
+data class SeasonResult(
     val total: Int,
-    val items: ArrayList<Item>
+    val data: ArrayList<Season>
 ) {
     @Serializable
-    data class Item(
-        @SerialName("__class__")
-        val media_class: String,
+    data class Season(
         val id: String,
-        val type: String? = null,
-        val is_subbed: Boolean? = null,
-        val is_dubbed: Boolean? = null,
-        val episodes: ArrayList<Episode>? = null
-    ) {
-        @Serializable
-        data class Episode(
-            val id: String,
-            val title: String,
-            val season_number: Int,
-            val sequence_number: Float,
-            val is_subbed: Boolean,
-            val is_dubbed: Boolean,
-            @SerialName("episode_air_date")
-            val air_date: String
-        )
-    }
+        val season_number: Int
+    )
 }
 
 @Serializable
-data class MediaResult(
-    val id: String,
-    val title: String,
-    val description: String,
-    val images: Images,
-    val maturity_ratings: String,
-    val content_provider: String,
-    val is_mature: Boolean,
-    val is_subbed: Boolean,
-    val is_dubbed: Boolean,
-    val episode_count: Int? = null,
-    val season_count: Int? = null,
-    val media_count: Int? = null,
-    val is_simulcast: Boolean? = null
-)
-
-@Serializable
-data class RawEpisode(
-    val id: String,
-    val title: String,
-    val season: Int,
-    val episode: Float,
-    val air_date: String
-)
+data class EpisodeResult(
+    val total: Int,
+    val data: ArrayList<Episode>
+) {
+    @Serializable
+    data class Episode(
+        val title: String,
+        @SerialName("sequence_number")
+        val episode_number: Float,
+        val episode: String,
+        @SerialName("episode_air_date")
+        val airDate: String,
+        val versions: ArrayList<Version>
+    ) {
+        @Serializable
+        data class Version(
+            val audio_locale: String,
+            @SerialName("guid")
+            val id: String
+        )
+    }
+}
 
 @Serializable
 data class EpisodeData(
-    val ids: List<String>
+    val ids: List<Pair<String, String>>
 )
 
 @Serializable
 data class VideoStreams(
-    val streams: List<Stream>,
+    val sources: List<Stream>,
     val subtitles: List<Subtitle>
 ) {
     @Serializable
     data class Stream(
-        @SerialName("audio_locale")
-        val audio: String,
-        @SerialName("hardsub_locale")
-        val hardsub: String,
-        val url: String
+        val url: String,
+        val quality: String
     )
 
     @Serializable
     data class Subtitle(
-        val locale: String,
-        val url: String
+        val url: String,
+        val lang: String
     )
 }
 
-fun <T> List<T>.thirdLast(): T {
-    if (size < 3) throw NoSuchElementException("List has less than three elements")
+fun <T> List<T>.thirdLast(): T? {
+    if (size < 3) return null
     return this[size - 3]
 }

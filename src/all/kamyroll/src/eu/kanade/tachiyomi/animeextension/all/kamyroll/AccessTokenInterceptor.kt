@@ -1,51 +1,57 @@
 package eu.kanade.tachiyomi.animeextension.all.kamyroll
 
 import android.content.SharedPreferences
-import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.Headers
 import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.net.HttpURLConnection
 
-class AccessTokenInterceptor(val baseUrl: String, val json: Json, val preferences: SharedPreferences) : Interceptor {
-    private val deviceId = randomId()
+class AccessTokenInterceptor(
+    private val json: Json,
+    private val preferences: SharedPreferences
+) : Interceptor {
     private var accessToken = preferences.getString("access_token", null) ?: ""
 
     override fun intercept(chain: Interceptor.Chain): Response {
         if (accessToken.isBlank()) accessToken = refreshAccessToken()
 
-        val request = if (chain.request().url.toString().contains("kamyroll")) {
-            chain.request().newBuilder()
-                .header("authorization", accessToken)
-                .build()
-        } else {
-            chain.request()
-        }
+        val request = chain.request().newBuilder()
+            .header("authorization", accessToken)
+            .build()
+
         val response = chain.proceed(request)
 
-        if (response.code == HttpURLConnection.HTTP_UNAUTHORIZED) {
-            synchronized(this) {
-                response.close()
-                val newAccessToken = refreshAccessToken()
-                // Access token is refreshed in another thread.
-                if (accessToken != newAccessToken) {
-                    accessToken = newAccessToken
-                    return chain.proceed(newRequestWithAccessToken(chain.request(), newAccessToken))
+        when (response.code) {
+            HttpURLConnection.HTTP_UNAUTHORIZED -> {
+                synchronized(this) {
+                    response.close()
+                    val newAccessToken = refreshAccessToken()
+                    // Access token is refreshed in another thread.
+                    if (accessToken != newAccessToken) {
+                        accessToken = newAccessToken
+                        return chain.proceed(
+                            newRequestWithAccessToken(chain.request(), newAccessToken)
+                        )
+                    }
+
+                    // Need to refresh an access token
+                    val updatedAccessToken = refreshAccessToken()
+                    accessToken = updatedAccessToken
+                    // Retry the request
+                    return chain.proceed(
+                        newRequestWithAccessToken(chain.request(), updatedAccessToken)
+                    )
                 }
-
-                // Need to refresh an access token
-                val updatedAccessToken = refreshAccessToken()
-                accessToken = updatedAccessToken
-                // Retry the request
-                return chain.proceed(newRequestWithAccessToken(chain.request(), updatedAccessToken))
             }
+            else -> return response
         }
-
-        return response
     }
 
     private fun newRequestWithAccessToken(request: Request, accessToken: String): Request {
@@ -56,22 +62,17 @@ class AccessTokenInterceptor(val baseUrl: String, val json: Json, val preference
 
     private fun refreshAccessToken(): String {
         val client = OkHttpClient().newBuilder().build()
-        val url = "$baseUrl/auth/v1/token".toHttpUrlOrNull()!!.newBuilder()
-            .addQueryParameter("device_id", deviceId)
-            .addQueryParameter("device_type", "aniyomi")
-            .addQueryParameter("access_token", "HMbQeThWmZq4t7w")
-            .build()
-        val response = client.newCall(GET(url.toString())).execute()
-        val parsedJson = json.decodeFromString<AccessToken>(response.body!!.string())
+        val headers = Headers.headersOf(
+            "Content-Type", "application/x-www-form-urlencoded",
+            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:106.0) Gecko/20100101 Firefox/106.0",
+            "Authorization", "Basic a3ZvcGlzdXZ6Yy0teG96Y21kMXk6R21JSTExenVPVnRnTjdlSWZrSlpibzVuLTRHTlZ0cU8="
+        )
+        val postBody = "grant_type=client_id".toRequestBody("application/x-www-form-urlencoded".toMediaType())
+        val response = client.newCall(POST("https://beta-api.crunchyroll.com/auth/v1/token", headers, postBody)).execute()
+        val respBody = response.body!!.string()
+        val parsedJson = json.decodeFromString<AccessToken>(respBody)
         val token = "${parsedJson.token_type} ${parsedJson.access_token}"
         preferences.edit().putString("access_token", token).apply()
         return token
-    }
-
-    // Random 15 length string
-    private fun randomId(): String {
-        return (0..14).joinToString("") {
-            (('0'..'9') + ('a'..'f')).random().toString()
-        }
     }
 }
