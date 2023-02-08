@@ -245,7 +245,7 @@ class AnimeXin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }.filterNotNull().flatten()
         )
 
-        return videoList
+        return videoList.sort()
     }
 
     override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
