@@ -137,6 +137,8 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
                         } else { ep.title }
                         episode_number = ep.episode_number
                         date_upload = parseDate(ep.airDate)
+                        scanlator = ep.versions.sortedBy { it.audio_locale }
+                            .joinToString { it.audio_locale.substringBefore("-") }
                     }
                 }
             }.getOrNull()
