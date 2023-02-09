@@ -112,13 +112,15 @@ data class EpisodeResult(
 ) {
     @Serializable
     data class Episode(
+        val id: String,
+        val audio_locale: String,
         val title: String,
         @SerialName("sequence_number")
         val episode_number: Float,
         val episode: String,
         @SerialName("episode_air_date")
-        val airDate: String,
-        val versions: ArrayList<Version>
+        val airDate: String? = null,
+        val versions: ArrayList<Version>? = null
     ) {
         @Serializable
         data class Version(

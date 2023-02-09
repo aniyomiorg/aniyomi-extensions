@@ -143,16 +143,22 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
                     val episodes = json.decodeFromString<EpisodeResult>(episodeResp.body!!.string())
                     episodes.data.sortedBy { it.episode_number }.map { ep ->
                         SEpisode.create().apply {
-                            url = EpisodeData(
-                                ep.versions.map { Pair(it.id, it.audio_locale) }
+                            url = ep.versions?.let {
+                                EpisodeData(
+                                    it.map { t -> Pair(t.id, t.audio_locale) }
+                                ).toJsonString()
+                            } ?: EpisodeData(
+                                listOf(Pair(ep.id, ep.audio_locale))
                             ).toJsonString()
                             name = if (ep.episode_number > 0 || ep.episode.isNumeric()) {
                                 "Season ${seasonData.season_number} Ep ${df.format(ep.episode_number)}: " + ep.title
                             } else { ep.title }
                             episode_number = ep.episode_number
-                            date_upload = parseDate(ep.airDate)
-                            scanlator = ep.versions.sortedBy { it.audio_locale }
-                                .joinToString { it.audio_locale.substringBefore("-") }
+                            date_upload = ep.airDate?.let { parseDate(it) } ?: 0L
+                            scanlator = ep.versions?.let { version ->
+                                version.sortedBy { it.audio_locale }
+                                    .joinToString { it.audio_locale.substringBefore("-") }
+                            } ?: ep.audio_locale
                         }
                     }
                 }.getOrNull()
