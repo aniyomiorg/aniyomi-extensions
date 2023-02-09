@@ -64,13 +64,11 @@ data class AnimeResult(
 
 @Serializable
 data class SearchAnimeResult(
-    val total: Int,
-    val data: ArrayList<Result>
+    val data: ArrayList<SearchAnime>,
 ) {
     @Serializable
-    data class Result(
+    data class SearchAnime(
         val type: String,
-        val count: Int,
         val items: ArrayList<Anime>
     )
 }
