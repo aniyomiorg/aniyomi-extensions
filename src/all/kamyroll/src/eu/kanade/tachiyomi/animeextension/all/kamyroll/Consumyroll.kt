@@ -21,6 +21,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -130,15 +131,15 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
                 episodes.data.sortedBy { it.episode_number }.map { ep ->
                     SEpisode.create().apply {
                         url = EpisodeData(
-                            ep.versions.map { Pair(it.id, it.audio_locale) }
+                            ep.versions?.map { Pair(it.mediaId, it.audio_locale) } ?: listOf(Pair(ep.id, ep.audio_locale))
                         ).toJsonString()
                         name = if (ep.episode_number > 0 || ep.episode.isNumeric()) {
                             "Season ${seasonData.season_number} Ep ${df.format(ep.episode_number)}: " + ep.title
                         } else { ep.title }
                         episode_number = ep.episode_number
-                        date_upload = parseDate(ep.airDate)
-                        scanlator = ep.versions.sortedBy { it.audio_locale }
-                            .joinToString { it.audio_locale.substringBefore("-") }
+                        date_upload = ep.airDate?.let { parseDate(it) } ?: 0L
+                        scanlator = ep.versions?.sortedBy { it.audio_locale }
+                            ?.joinToString { it.audio_locale.substringBefore("-") } ?: ep.audio_locale.substringBefore("-")
                     }
                 }
             }.getOrNull()
@@ -149,28 +150,34 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val urlJson = json.decodeFromString<EpisodeData>(episode.url)
-        val videoList = urlJson.ids.parallelMap { media ->
-            runCatching {
-                extractVideo(media)
-            }.getOrNull()
-        }
-            .filterNotNull()
-            .flatten()
+        val response = client.newCall(GET("$baseUrl/token")).execute()
+        val tokenJson = json.decodeFromString<AccessToken>(response.body!!.string())
+        val videoList = urlJson.ids.chunked(5).map {
+            it.parallelMap { media ->
+                runCatching {
+                    extractVideo(media, tokenJson)
+                }.getOrNull()
+            }
+                .filterNotNull()
+                .flatten()
+        }.flatten()
+
         return Observable.just(videoList.sort())
     }
 
     // ============================= Utilities ==============================
 
-    private fun extractVideo(media: Pair<String, String>): List<Video> {
-        val (vidId, audLang) = media
-        val response = client.newCall(GET("$baseUrl/episode/$vidId")).execute()
+    private fun extractVideo(media: Pair<String, String>, tokenJson: AccessToken): List<Video> {
+        val (mediaId, audLang) = media
+        val response = client.newCall(GET("$crUrl/cms/v2${tokenJson.bucket}/videos/$mediaId/streams?Policy=${tokenJson.policy}&Signature=${tokenJson.signature}&Key-Pair-Id=${tokenJson.key_pair_id}")).execute()
         val streams = json.decodeFromString<VideoStreams>(response.body!!.string())
 
         var subsList = emptyList<Track>()
         val subLocale = preferences.getString("preferred_sub", "en-US")!!.getLocale()
         try {
-            subsList = streams.subtitles.map { sub ->
-                Track(sub.url, sub.lang.getLocale())
+            subsList = streams.subtitles.entries.map { (_, value) ->
+                val sub = json.decodeFromString<Subtitle>(value.jsonObject.toString())
+                Track(sub.url, sub.locale.getLocale())
             }.sortedWith(
                 compareBy(
                     { it.lang },
@@ -179,35 +186,34 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
             )
         } catch (_: Error) {}
 
-        return streams.sources.filter { it.quality.contains("auto") || it.quality.contains("hardsub") }
-            .parallelMap { stream ->
-                runCatching {
-                    val playlist = client.newCall(GET(stream.url)).execute().body!!.string()
-                    playlist.substringAfter("#EXT-X-STREAM-INF:")
-                        .split("#EXT-X-STREAM-INF:").map {
-                            val hardsub = stream.quality.replace("hardsub", "").replace("auto", "").trim()
-                                .let { hs ->
-                                    if (hs.isNotBlank()) " - HardSub: $hs" else ""
-                                }
-                            val quality = it.substringAfter("RESOLUTION=")
-                                .split(",")[0].split("\n")[0].substringAfter("x") +
-                                "p - Aud: ${audLang.getLocale()}$hardsub"
-
-                            val videoUrl = it.substringAfter("\n").substringBefore("\n")
-
-                            try {
-                                Video(
-                                    videoUrl,
-                                    quality,
-                                    videoUrl,
-                                    subtitleTracks = if (hardsub.isNotBlank()) emptyList() else subsList
-                                )
-                            } catch (_: Error) {
-                                Video(videoUrl, quality, videoUrl)
-                            }
+        return streams.streams.adaptive_hls.entries.parallelMap { (_, value) ->
+            val stream = json.decodeFromString<HlsLinks>(value.jsonObject.toString())
+            runCatching {
+                val playlist = client.newCall(GET(stream.url)).execute().body!!.string()
+                playlist.substringAfter("#EXT-X-STREAM-INF:")
+                    .split("#EXT-X-STREAM-INF:").map {
+                        val hardsub = stream.hardsub_locale.let { hs ->
+                            if (hs.isNotBlank()) " - HardSub: $hs" else ""
                         }
-                }.getOrNull()
-            }
+                        val quality = it.substringAfter("RESOLUTION=")
+                            .split(",")[0].split("\n")[0].substringAfter("x") +
+                            "p - Aud: ${audLang.getLocale()}$hardsub"
+
+                        val videoUrl = it.substringAfter("\n").substringBefore("\n")
+
+                        try {
+                            Video(
+                                videoUrl,
+                                quality,
+                                videoUrl,
+                                subtitleTracks = if (hardsub.isNotBlank()) emptyList() else subsList
+                            )
+                        } catch (_: Error) {
+                            Video(videoUrl, quality, videoUrl)
+                        }
+                    }
+            }.getOrNull()
+        }
             .filterNotNull()
             .flatten()
     }

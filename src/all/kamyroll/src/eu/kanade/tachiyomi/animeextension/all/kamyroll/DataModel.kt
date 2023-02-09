@@ -2,11 +2,16 @@ package eu.kanade.tachiyomi.animeextension.all.kamyroll
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 
 @Serializable
 data class AccessToken(
     val access_token: String,
     val token_type: String,
+    val policy: String,
+    val signature: String,
+    val key_pair_id: String,
+    val bucket: String
 )
 
 @Serializable
@@ -89,19 +94,21 @@ data class EpisodeResult(
 ) {
     @Serializable
     data class Episode(
+        val id: String,
+        val audio_locale: String,
         val title: String,
         @SerialName("sequence_number")
         val episode_number: Float,
         val episode: String,
         @SerialName("episode_air_date")
-        val airDate: String,
-        val versions: ArrayList<Version>
+        val airDate: String? = null,
+        val versions: ArrayList<Version>? = null
     ) {
         @Serializable
         data class Version(
             val audio_locale: String,
-            @SerialName("guid")
-            val id: String
+            @SerialName("media_guid")
+            val mediaId: String
         )
     }
 }
@@ -113,21 +120,26 @@ data class EpisodeData(
 
 @Serializable
 data class VideoStreams(
-    val sources: List<Stream>,
-    val subtitles: List<Subtitle>
+    val streams: Stream,
+    val subtitles: JsonObject
 ) {
     @Serializable
     data class Stream(
-        val url: String,
-        val quality: String
-    )
-
-    @Serializable
-    data class Subtitle(
-        val url: String,
-        val lang: String
+        val adaptive_hls: JsonObject,
     )
 }
+
+@Serializable
+data class HlsLinks(
+    val hardsub_locale: String,
+    val url: String
+)
+
+@Serializable
+data class Subtitle(
+    val locale: String,
+    val url: String
+)
 
 fun <T> List<T>.thirdLast(): T? {
     if (size < 3) return null
