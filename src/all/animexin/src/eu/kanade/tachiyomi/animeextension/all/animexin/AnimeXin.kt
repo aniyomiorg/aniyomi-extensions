@@ -10,6 +10,7 @@ import eu.kanade.tachiyomi.animeextension.all.animexin.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.all.animexin.extractors.FembedExtractor
 import eu.kanade.tachiyomi.animeextension.all.animexin.extractors.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.animeextension.all.animexin.extractors.StreamSBExtractor
+import eu.kanade.tachiyomi.animeextension.all.animexin.extractors.VidstreamingExtractor
 import eu.kanade.tachiyomi.animeextension.all.animexin.extractors.YouTubeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -238,6 +239,9 @@ class AnimeXin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         }
                         decoded.contains("youtube.com") -> {
                             YouTubeExtractor(client).videosFromUrl(decoded, prefix = prefix)
+                        }
+                        decoded.contains("vidstreaming") -> {
+                            VidstreamingExtractor(client).videosFromUrl(decoded, prefix = prefix)
                         }
                         else -> null
                     }

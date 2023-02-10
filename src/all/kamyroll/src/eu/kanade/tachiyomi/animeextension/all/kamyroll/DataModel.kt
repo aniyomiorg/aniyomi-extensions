@@ -8,6 +8,10 @@ import kotlinx.serialization.json.JsonObject
 data class AccessToken(
     val access_token: String,
     val token_type: String,
+    val policy: String,
+    val signature: String,
+    val key_pair_id: String,
+    val bucket: String
 )
 
 @Serializable
@@ -36,6 +40,8 @@ data class Anime(
     val title: String,
     val description: String,
     val images: Images,
+    @SerialName("keywords")
+    val genres: ArrayList<String>? = null,
     val series_metadata: Metadata? = null,
     val content_provider: String? = null,
     val audio_locales: ArrayList<String>? = null,
@@ -48,7 +54,7 @@ data class Anime(
         val audio_locales: ArrayList<String>,
         val subtitle_locales: ArrayList<String>,
         @SerialName("tenant_categories")
-        val genres: ArrayList<String>?
+        val genres: ArrayList<String>? = null
     )
 }
 
@@ -60,38 +66,14 @@ data class AnimeResult(
 
 @Serializable
 data class SearchAnimeResult(
-    val results: ArrayList<SearchAnime>,
+    val data: ArrayList<SearchAnime>,
 ) {
     @Serializable
     data class SearchAnime(
-        val id: String,
         val type: String,
-        val title: String,
-        val description: String,
-        val image: String,
-        val hasDub: Boolean,
-        val genres: ArrayList<String>?
+        val items: ArrayList<Anime>
     )
 }
-
-@Serializable
-data class FetchAnime(
-    val id: String,
-    val title: String,
-    val description: String,
-    val images: Images,
-    val content_provider: String,
-    val audio_locales: ArrayList<String>,
-    val subtitle_locales: ArrayList<String>,
-    val maturity_ratings: ArrayList<String>,
-    val is_simulcast: Boolean,
-)
-
-@Serializable
-data class FetchResult(
-    val total: Int,
-    val data: ArrayList<FetchAnime>
-)
 
 @Serializable
 data class SeasonResult(
@@ -112,48 +94,24 @@ data class EpisodeResult(
 ) {
     @Serializable
     data class Episode(
-        val id: String,
         val audio_locale: String,
         val title: String,
         @SerialName("sequence_number")
         val episode_number: Float,
-        val episode: String,
+        val episode: String? = null,
         @SerialName("episode_air_date")
         val airDate: String? = null,
-        val versions: ArrayList<Version>? = null
+        val versions: ArrayList<Version>? = null,
+        val streams_link: String
     ) {
         @Serializable
         data class Version(
             val audio_locale: String,
-            @SerialName("guid")
-            val id: String
+            @SerialName("media_guid")
+            val mediaId: String
         )
     }
 }
-
-@Serializable
-data class ConsumetEpsiodes(
-    val episodes: JsonObject
-)
-
-@Serializable
-data class EpisodeDto(
-    val id: String,
-    val title: String,
-    val season_number: Int,
-    val episode_number: Float,
-    val releaseDate: String
-)
-
-@Serializable
-data class RawEpisode(
-    val id: String,
-    val title: String,
-    val season: Int,
-    val episode: Float,
-    val releaseDate: String,
-    val audLang: String
-)
 
 @Serializable
 data class EpisodeData(
@@ -162,21 +120,26 @@ data class EpisodeData(
 
 @Serializable
 data class VideoStreams(
-    val sources: List<Stream>,
-    val subtitles: List<Subtitle>
+    val streams: Stream,
+    val subtitles: JsonObject
 ) {
     @Serializable
     data class Stream(
-        val url: String,
-        val quality: String
-    )
-
-    @Serializable
-    data class Subtitle(
-        val url: String,
-        val lang: String
+        val adaptive_hls: JsonObject,
     )
 }
+
+@Serializable
+data class HlsLinks(
+    val hardsub_locale: String,
+    val url: String
+)
+
+@Serializable
+data class Subtitle(
+    val locale: String,
+    val url: String
+)
 
 fun <T> List<T>.thirdLast(): T? {
     if (size < 3) return null
