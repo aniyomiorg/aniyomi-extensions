@@ -110,7 +110,15 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
         val mediaId = json.decodeFromString<LinkData>(anime.url)
         val resp = client.newCall(GET("$crUrl/content/v2/cms/series/${mediaId.id}?locale=en-US")).execute()
         val info = json.decodeFromString<AnimeResult>(resp.body!!.string())
-        return Observable.just(anime.apply { author = info.data.first().content_provider })
+        return Observable.just(
+            anime.apply {
+                author = info.data.first().content_provider
+                status = SAnime.COMPLETED
+                if (genre.isNullOrBlank()) {
+                    genre = info.data.first().genres?.joinToString { gen -> gen.replaceFirstChar { it.uppercase() } }
+                }
+            }
+        )
     }
 
     override fun animeDetailsParse(response: Response): SAnime = throw Exception("not used")
@@ -131,9 +139,12 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
                 episodes.data.sortedBy { it.episode_number }.map { ep ->
                     SEpisode.create().apply {
                         url = EpisodeData(
-                            ep.versions?.map { Pair(it.mediaId, it.audio_locale) } ?: listOf(Pair(ep.id, ep.audio_locale))
+                            ep.versions?.map { Pair(it.mediaId, it.audio_locale) } ?: listOf(Pair(
+                                ep.streams_link.substringAfter("videos/").substringBefore("/streams"),
+                                ep.audio_locale
+                            ))
                         ).toJsonString()
-                        name = if (ep.episode_number > 0 || ep.episode.isNumeric()) {
+                        name = if (ep.episode_number > 0 && ep.episode.isNumeric()) {
                             "Season ${seasonData.season_number} Ep ${df.format(ep.episode_number)}: " + ep.title
                         } else { ep.title }
                         episode_number = ep.episode_number
@@ -224,8 +235,8 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
         return locale.firstOrNull { it.first == this }?.second ?: ""
     }
 
-    private fun String.isNumeric(): Boolean {
-        return this@isNumeric.toDoubleOrNull() != null
+    private fun String?.isNumeric(): Boolean {
+        return this@isNumeric?.toDoubleOrNull() != null
     }
 
     private val locale = arrayOf(
@@ -281,7 +292,7 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
             desc += if (this@toSAnime.series_metadata.is_simulcast) "\nSimulcast" else ""
             desc += "\n\nAudio: " + this@toSAnime.series_metadata.audio_locales.joinToString { it.getLocale() }
             desc += "\n\nSubs: " + this@toSAnime.series_metadata.subtitle_locales.joinToString { it.getLocale() }
-            description += desc
+            description = desc
         }
 
     override fun List<Video>.sort(): List<Video> {
