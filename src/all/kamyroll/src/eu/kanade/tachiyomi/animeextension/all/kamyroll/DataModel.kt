@@ -40,6 +40,8 @@ data class Anime(
     val title: String,
     val description: String,
     val images: Images,
+    @SerialName("keywords")
+    val genres: ArrayList<String>? = null,
     val series_metadata: Metadata? = null,
     val content_provider: String? = null,
     val audio_locales: ArrayList<String>? = null,
@@ -52,7 +54,7 @@ data class Anime(
         val audio_locales: ArrayList<String>,
         val subtitle_locales: ArrayList<String>,
         @SerialName("tenant_categories")
-        val genres: ArrayList<String>?
+        val genres: ArrayList<String>? = null
     )
 }
 
@@ -92,15 +94,15 @@ data class EpisodeResult(
 ) {
     @Serializable
     data class Episode(
-        val id: String,
         val audio_locale: String,
         val title: String,
         @SerialName("sequence_number")
         val episode_number: Float,
-        val episode: String,
+        val episode: String? = null,
         @SerialName("episode_air_date")
         val airDate: String? = null,
-        val versions: ArrayList<Version>? = null
+        val versions: ArrayList<Version>? = null,
+        val streams_link: String
     ) {
         @Serializable
         data class Version(
