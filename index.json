@@ -65,10 +65,10 @@
   {
     "name": "Aniyomi: Consumyroll",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.kamyroll",
-    "apk": "aniyomi-all.kamyroll-v13.12.apk",
+    "apk": "aniyomi-all.kamyroll-v13.13.apk",
     "lang": "all",
-    "code": 12,
-    "version": "13.12",
+    "code": 13,
+    "version": "13.13",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
