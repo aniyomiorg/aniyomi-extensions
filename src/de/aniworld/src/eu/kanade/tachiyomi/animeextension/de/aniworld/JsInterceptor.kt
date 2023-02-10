@@ -4,10 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.webkit.JavascriptInterface
-import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import eu.kanade.tachiyomi.network.GET
@@ -70,7 +67,7 @@ class JsInterceptor(private val client: OkHttpClient) : Interceptor {
 
         val jsinterface = JsObject(latch, client)
 
-        // JavaSrcipt bypass recaptcha FUCK GOOGLE RECAPTCHA 0.1V
+        // JavaSrcipt bypass recaptcha FUCK GOOGLE RECAPTCHA v0.1
         val jsScript = """
             (function(){
                 let intervalIdA = setInterval(() => {
