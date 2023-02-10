@@ -241,7 +241,6 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     hoster.contains("VOE") && hosterSelection.contains(AWConstants.NAME_VOE) -> {
                         val quality = "Voe $language"
                         var url = redirectInterceptor.newCall(GET(redirectgs)).execute().request.url.toString()
-                        Log.i("videoListParse", url)
                         if (url.contains("payload")) {
                             url = recapbypass(jsInterceptor, redirectgs)
                         }
@@ -254,7 +253,6 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     hoster.contains("Doodstream") && hosterSelection.contains(AWConstants.NAME_DOOD) -> {
                         val quality = "Doodstream $language"
                         var url = redirectInterceptor.newCall(GET(redirectgs)).execute().request.url.toString()
-                        Log.i("videoListParse", url)
                         if (url.contains("payload")) {
                             url = recapbypass(jsInterceptor, redirectgs)
                         }
@@ -267,7 +265,6 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     hoster.contains("Streamtape") && hosterSelection.contains(AWConstants.NAME_STAPE) -> {
                         val quality = "Streamtape $language"
                         var url = redirectInterceptor.newCall(GET(redirectgs)).execute().request.url.toString()
-                        Log.i("videoListParse", url)
                         if (url.contains("payload")) {
                             url = recapbypass(jsInterceptor, redirectgs)
                         }
@@ -279,7 +276,6 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     hoster.contains("Vidoza") && hosterSelection.contains(AWConstants.NAME_VIZ) -> {
                         val quality = "Vidoza $language"
                         var url = redirectInterceptor.newCall(GET(redirectgs)).execute().request.url.toString()
-                        Log.i("videoListParse", url)
                         if (url.contains("payload")) {
                             url = recapbypass(jsInterceptor, redirectgs)
                         }
@@ -297,7 +293,6 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun recapbypass(jsInterceptor: OkHttpClient, redirectgs: String): String {
         val token = jsInterceptor.newCall(GET(redirectgs)).execute().request.header("url").toString()
         val url = client.newCall(GET("$redirectgs?token=$token&original=")).execute().request.url.toString()
-        Log.i("recapbypass", url)
         return url
     }
 

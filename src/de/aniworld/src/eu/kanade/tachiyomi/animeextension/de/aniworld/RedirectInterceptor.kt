@@ -63,7 +63,6 @@ class RedirectInterceptor : Interceptor {
                     view: WebView,
                     request: WebResourceRequest,
                 ): WebResourceResponse? {
-                    Log.i("shouldInterceptRequest", request.url.toString())
                     if (request.url.toString().contains("payload")) {
                         newRequest = GET(request.url.toString(), request.requestHeaders.toHeaders())
                         latch.countDown()

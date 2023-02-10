@@ -47,7 +47,6 @@ class JsInterceptor(private val client: OkHttpClient) : Interceptor {
                     )
                 )
             ).execute().body?.string()
-            Log.i("JsInterceptor", solved!!)
             return solved
         }
     }
@@ -141,10 +140,6 @@ class JsInterceptor(private val client: OkHttpClient) : Interceptor {
                 userAgentString = "Mozilla/5.0 (Linux; Android 12; Pixel 5 Build/SP2A.220405.004; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/100.0.4896.127 Safari/537.36"
                 webview.addJavascriptInterface(jsinterface, "android")
                 webview.webViewClient = object : WebViewClient() {
-                    override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
-                        Log.i("shouldInterceptRequest", request?.url.toString())
-                        return super.shouldInterceptRequest(view, request)
-                    }
                     override fun onPageFinished(view: WebView?, url: String?) {
                         view?.clearCache(true)
                         view?.clearFormData()
