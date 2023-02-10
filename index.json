@@ -1444,21 +1444,21 @@
     ]
   },
   {
-    "name": "Aniyomi: UHD Movies (Experimental)",
+    "name": "Aniyomi: UHD Movies",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.uhdmovies",
-    "apk": "aniyomi-en.uhdmovies-v13.5.apk",
+    "apk": "aniyomi-en.uhdmovies-v13.6.apk",
     "lang": "en",
-    "code": 5,
-    "version": "13.5",
+    "code": 6,
+    "version": "13.6",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
     "sources": [
       {
-        "name": "UHD Movies (Experimental)",
+        "name": "UHD Movies",
         "lang": "en",
-        "id": "3575276602301041188",
-        "baseUrl": "https://uhdmovies.org.in",
+        "id": "582068848290425167",
+        "baseUrl": "https://uhdmovies.world",
         "versionId": 1,
         "hasCloudflare": 1
       }
