@@ -520,27 +520,6 @@
     ]
   },
   {
-    "name": "Aniyomi: Anifreakz",
-    "pkg": "eu.kanade.tachiyomi.animeextension.de.anifreakz",
-    "apk": "aniyomi-de.anifreakz-v13.1.apk",
-    "lang": "de",
-    "code": 1,
-    "version": "13.1",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "Anifreakz",
-        "lang": "de",
-        "id": "8497573592639207102",
-        "baseUrl": "https://anifreakz.com",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: Aniking",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.aniking",
     "apk": "aniyomi-de.aniking-v13.5.apk",
@@ -627,10 +606,10 @@
   {
     "name": "Aniyomi: AnimeToast",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.animetoast",
-    "apk": "aniyomi-de.animetoast-v13.5.apk",
+    "apk": "aniyomi-de.animetoast-v13.6.apk",
     "lang": "de",
-    "code": 5,
-    "version": "13.5",
+    "code": 6,
+    "version": "13.6",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -690,10 +669,10 @@
   {
     "name": "Aniyomi: FilmPalast",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.filmpalast",
-    "apk": "aniyomi-de.filmpalast-v13.7.apk",
+    "apk": "aniyomi-de.filmpalast-v13.8.apk",
     "lang": "de",
-    "code": 7,
-    "version": "13.7",
+    "code": 8,
+    "version": "13.8",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -837,10 +816,10 @@
   {
     "name": "Aniyomi: StreamCloud",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.streamcloud",
-    "apk": "aniyomi-de.streamcloud-v13.3.apk",
+    "apk": "aniyomi-de.streamcloud-v13.4.apk",
     "lang": "de",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
