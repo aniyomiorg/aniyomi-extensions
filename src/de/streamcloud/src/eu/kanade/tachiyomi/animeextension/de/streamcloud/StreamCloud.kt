@@ -32,7 +32,7 @@ class StreamCloud : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "de"
 
-    override val supportsLatest = true
+    override val supportsLatest = false
 
     override val client: OkHttpClient = network.cloudflareClient
 

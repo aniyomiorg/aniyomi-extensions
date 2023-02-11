@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.de.anifreakz.extractors
+package eu.kanade.tachiyomi.animeextension.de.filmpalast.extractors
 
 import java.util.regex.Pattern
 import kotlin.math.pow
