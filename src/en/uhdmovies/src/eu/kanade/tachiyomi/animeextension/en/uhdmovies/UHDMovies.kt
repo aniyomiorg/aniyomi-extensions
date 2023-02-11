@@ -37,9 +37,9 @@ import uy.kohesive.injekt.injectLazy
 @ExperimentalSerializationApi
 class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "UHD Movies (Experimental)"
+    override val name = "UHD Movies"
 
-    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://uhdmovies.org.in")!! }
+    override val baseUrl = "https://uhdmovies.world"
 
     override val lang = "en"
 
@@ -163,7 +163,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         } else {
             var collectionIdx = 0F
-            episodeElements.filter {
+            episodeElements.asSequence().filter {
                 !it.text().contains("Zip", true) &&
                     !it.text().contains("Pack", true) &&
                     !it.text().contains("Volume ", true)
@@ -331,21 +331,6 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val domainPref = ListPreference(screen.context).apply {
-            key = "preferred_domain"
-            title = "Preferred domain (requires app restart)"
-            entries = arrayOf("uhdmovies.org.in")
-            entryValues = arrayOf("https://uhdmovies.org.in")
-            setDefaultValue("https://uhdmovies.org.in")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
@@ -361,8 +346,6 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
-
-        screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
     }
 
