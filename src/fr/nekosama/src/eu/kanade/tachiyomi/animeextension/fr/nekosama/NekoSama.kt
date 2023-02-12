@@ -19,6 +19,8 @@ import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -97,13 +99,17 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         // probably exists a better way to make this idk
         val script = document.selectFirst("script:containsData(var video = [];)").data()
+
         val firstVideo = script.substringBefore("else {").substringAfter("video[0] = '").substringBefore("'").lowercase()
         val secondVideo = script.substringAfter("else {").substringAfter("video[0] = '").substringBefore("'").lowercase()
+
         when {
+            firstVideo.contains("fusevideo") -> videoList.addAll(extractFuse(firstVideo))
             firstVideo.contains("streamtape") -> StreamTapeExtractor(client).videoFromUrl(firstVideo, "StreamTape")?.let { videoList.add(it) }
             firstVideo.contains("pstream") || firstVideo.contains("veestream") -> videoList.addAll(pstreamExtractor(firstVideo))
         }
         when {
+            secondVideo.contains("fusevideo") -> videoList.addAll(extractFuse(secondVideo))
             secondVideo.contains("streamtape") -> StreamTapeExtractor(client).videoFromUrl(secondVideo, "StreamTape")?.let { videoList.add(it) }
             secondVideo.contains("pstream") || secondVideo.contains("veestream") -> videoList.addAll(pstreamExtractor(secondVideo))
         }
@@ -124,7 +130,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this.sortedWith(
             compareBy(
                 { it.quality.contains(quality) },
-                { it.quality.contains(server) }
+                { it.quality.contains(server, true) }
             )
         ).reversed()
     }
@@ -366,6 +372,57 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         return emptyList()
+    }
+
+    private fun extractFuse(videoUrl: String): List<Video> {
+        val videoList = mutableListOf<Video>()
+        val iframeHeaders = Headers.headersOf(
+            "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+            "Accept-Language", "en-US,en;q=0.5",
+            "Host", videoUrl.toHttpUrl().host,
+            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36 Edg/88.0.705.63"
+        )
+
+        val soup = client.newCall(
+            GET(videoUrl, headers = iframeHeaders)
+        ).execute().asJsoup()
+
+        val jsUrl = soup.selectFirst("script[src~=player-script]").attr("src")
+
+        val jsHeaders = Headers.headersOf(
+            "Accept", "*/*",
+            "Accept-Language", "en-US,en;q=0.5",
+            "Host", videoUrl.toHttpUrl().host,
+            "Referer", videoUrl,
+            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36 Edg/88.0.705.63"
+        )
+        val jsString = client.newCall(
+            GET(jsUrl, headers = jsHeaders)
+        ).execute().body!!.string()
+        val base64Data = jsString.substringAfter("e.parseJSON(atob(t).slice(2))}(\"").substringBefore("\"")
+        val base64Decoded = Base64.decode(base64Data, Base64.DEFAULT).toString(Charsets.UTF_8)
+        val playlistUrl = "https:" + base64Decoded.substringAfter("https:").substringBefore("\"}").replace("\\", "")
+
+        val masterPlaylist = client.newCall(
+            GET(playlistUrl, headers = jsHeaders)
+        ).execute().body!!.string()
+
+        masterPlaylist.substringAfter("#EXT-X-STREAM-INF").split("#EXT-X-STREAM-INF").map {
+            val resolution = it.substringAfter("NAME=\"")
+                .substringBefore("\"") + "p"
+            val newUrl = it.substringAfter("\n").substringBefore("\n")
+            val videoHeaders = Headers.headersOf(
+                "Accept", "*/*",
+                "Accept-Language", "en-US,en;q=0.5",
+                "Host", videoUrl.toHttpUrl().host,
+                "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36 Edg/88.0.705.63",
+            )
+            videoList.add(
+                Video(videoUrl, "$resolution (fusevideo)", newUrl, headers = videoHeaders)
+            )
+        }
+
+        return videoList.sort()
     }
 
     @Serializable
