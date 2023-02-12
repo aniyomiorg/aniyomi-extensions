@@ -1509,10 +1509,10 @@
   {
     "name": "Aniyomi: WCOStream",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.wcostream",
-    "apk": "aniyomi-en.wcostream-v13.3.apk",
+    "apk": "aniyomi-en.wcostream-v13.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1521,7 +1521,7 @@
         "name": "WCOStream",
         "lang": "en",
         "id": "4144024127778211557",
-        "baseUrl": "https://wcostream.cc",
+        "baseUrl": "https://www.wcostream.net",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -2071,10 +2071,10 @@
   {
     "name": "Aniyomi: NekoSama",
     "pkg": "eu.kanade.tachiyomi.animeextension.fr.nekosama",
-    "apk": "aniyomi-fr.nekosama-v13.3.apk",
+    "apk": "aniyomi-fr.nekosama-v13.4.apk",
     "lang": "fr",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2934,6 +2934,27 @@
         "baseUrl": "https://www.animesrbija.com",
         "versionId": 1,
         "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: UFDub",
+    "pkg": "eu.kanade.tachiyomi.animeextension.uk.ufdub",
+    "apk": "aniyomi-uk.ufdub-v13.1.apk",
+    "lang": "uk",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "UFDub",
+        "lang": "uk",
+        "id": "4077428168272340843",
+        "baseUrl": "https://ufdub.com/anime",
+        "versionId": 1,
+        "hasCloudflare": 0
       }
     ]
   }
