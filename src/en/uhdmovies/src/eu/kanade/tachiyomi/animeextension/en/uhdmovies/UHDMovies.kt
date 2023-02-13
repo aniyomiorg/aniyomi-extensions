@@ -143,7 +143,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }.mapIndexed { index, linkElement ->
                     val episode = linkElement?.text()
                         ?.replace("Episode", "", true)
-                        ?.trim()?.toFloatOrNull() ?: (index + 1)
+                        ?.trim()?.toIntOrNull() ?: (index + 1)
                     Triple(
                         season + "_$episode",
                         linkElement.attr("href") ?: return@mapIndexed null,
