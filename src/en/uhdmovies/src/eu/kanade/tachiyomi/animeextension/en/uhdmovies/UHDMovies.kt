@@ -113,7 +113,8 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodeElements = resp.select("p:has(a[href*=?id])[style*=center],p:has(a[href*=?id]):has(span.maxbutton-1-center)")
         val qualityRegex = "[0-9]{3,4}p".toRegex(RegexOption.IGNORE_CASE)
         if (episodeElements.first().text().contains("Episode", true) ||
-            episodeElements.first().text().contains("Zip", true)
+            episodeElements.first().text().contains("Zip", true) ||
+            episodeElements.first().text().contains("Pack", true)
         ) {
             episodeElements.map { row ->
                 val prevP = row.previousElementSibling()
@@ -139,14 +140,16 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     !it.text().contains("Zip", true) &&
                         !it.text().contains("Pack", true) &&
                         !it.text().contains("Volume ", true)
-                }.map { linkElement ->
-                    val episode = linkElement.text().replace("Episode", "", true).trim()
+                }.mapIndexed { index, linkElement ->
+                    val episode = linkElement?.text()
+                        ?.replace("Episode", "", true)
+                        ?.trim()?.toIntOrNull() ?: (index + 1)
                     Triple(
                         season + "_$episode",
-                        linkElement.attr("href")!!,
+                        linkElement.attr("href") ?: return@mapIndexed null,
                         quality
                     )
-                }
+                }.filterNotNull()
             }.flatten().groupBy { it.first }.map { group ->
                 val (season, episode) = group.key.split("_")
                 episodeList.add(
