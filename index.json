@@ -1213,6 +1213,27 @@
     ]
   },
   {
+    "name": "Aniyomi: KissAnime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.kissanime",
+    "apk": "aniyomi-en.kissanime-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "kissanime.com.ru",
+        "lang": "en",
+        "id": "7306944860534104910",
+        "baseUrl": "https://kissanime.com.ru",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: KissKH",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.kisskh",
     "apk": "aniyomi-en.kisskh-v13.1.apk",
