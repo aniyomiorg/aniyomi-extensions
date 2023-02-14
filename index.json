@@ -2959,6 +2959,27 @@
     ]
   },
   {
+    "name": "Aniyomi: UAKino",
+    "pkg": "eu.kanade.tachiyomi.animeextension.uk.uakino",
+    "apk": "aniyomi-uk.uakino-v13.1.apk",
+    "lang": "uk",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "UAKino",
+        "lang": "uk",
+        "id": "2256494309842770890",
+        "baseUrl": "https://uakino.club",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: UFDub",
     "pkg": "eu.kanade.tachiyomi.animeextension.uk.ufdub",
     "apk": "aniyomi-uk.ufdub-v13.1.apk",
