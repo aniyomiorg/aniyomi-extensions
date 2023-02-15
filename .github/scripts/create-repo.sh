@@ -30,6 +30,9 @@ for APK in ${APKS[@]}; do
     LANG=$(echo $APK | grep -Po "aniyomi-\K[^\.]+")
 
     ICON=$(echo "$BADGING" | grep -Po "application-icon-320.*'\K[^']+")
+    if [[ $ICON == *xml ]]; then
+      ICON="res/jy.png"
+    fi
     unzip -p $APK $ICON > icon/${FILENAME%.*}.png
 
     SOURCE_INFO=$(jq ".[\"$PKGNAME\"]" < ../output.json)
