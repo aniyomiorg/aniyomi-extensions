@@ -36,7 +36,8 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "AllAnime"
 
-    override val baseUrl = "https://allanime.site"
+    // allanime.to
+    override val baseUrl = "https://api.allanime.co"
 
     override val lang = "en"
 
@@ -67,7 +68,8 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val parsed = json.decodeFromString<PopularResult>(response.body!!.string())
+        val body = response.body!!.string()
+        val parsed = json.decodeFromString<PopularResult>(body)
         val animeList = mutableListOf<SAnime>()
 
         val titleStyle = preferences.getString("preferred_title_style", "romaji")!!
