@@ -27,7 +27,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "MY Cima"
 
-    override val baseUrl = "https://mycima.pw"
+    override val baseUrl = "https://weciima.autos"
 
     override val lang = "ar"
 
@@ -41,7 +41,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== popular ==============================
 
-    override fun popularAnimeSelector(): String = "div.Grid--MycimaPosts div.GridItem div.Thumb--GridItem"
+    override fun popularAnimeSelector(): String = "div.Grid--WecimaPosts div.GridItem div.Thumb--GridItem"
 
     override fun popularAnimeNextPageSelector(): String = "ul.page-numbers li a.next"
 
@@ -181,7 +181,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeNextPageSelector(): String = "ul.page-numbers li a.next"
 
-    override fun searchAnimeSelector(): String = "div.Grid--MycimaPosts div.GridItem div.Thumb--GridItem"
+    override fun searchAnimeSelector(): String = "div.Grid--WecimaPosts div.GridItem div.Thumb--GridItem"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         if (query.isNotBlank()) {
@@ -235,7 +235,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== latest ==============================
 
-    override fun latestUpdatesSelector(): String = "div.Grid--MycimaPosts div.GridItem div.Thumb--GridItem"
+    override fun latestUpdatesSelector(): String = "div.Grid--WecimaPosts div.GridItem div.Thumb--GridItem"
 
     override fun latestUpdatesNextPageSelector(): String = "ul.page-numbers li a.next"
 
