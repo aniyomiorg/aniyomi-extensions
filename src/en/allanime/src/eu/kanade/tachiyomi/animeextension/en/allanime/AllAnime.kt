@@ -68,8 +68,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val body = response.body!!.string()
-        val parsed = json.decodeFromString<PopularResult>(body)
+        val parsed = json.decodeFromString<PopularResult>(response.body!!.string())
         val animeList = mutableListOf<SAnime>()
 
         val titleStyle = preferences.getString("preferred_title_style", "romaji")!!
