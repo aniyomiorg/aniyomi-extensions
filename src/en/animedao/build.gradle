@@ -11,7 +11,7 @@ ext {
 }
 
 dependencies {
-	compileOnly libs.bundles.coroutines
+    compileOnly libs.bundles.coroutines
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-fembed-extractor'))
