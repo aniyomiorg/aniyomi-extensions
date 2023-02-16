@@ -18,9 +18,7 @@ import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.float
@@ -59,8 +57,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     override val client: OkHttpClient = network.cloudflareClient
 
     override fun animeDetailsRequest(anime: SAnime): Request {
-        val parsed = json.decodeFromString<LinkData>(anime.url)
-        val animeId = parsed.url.substringAfterLast("?anime_id=")
+        val animeId = anime.url.substringAfterLast("?anime_id=").substringBefore("\"")
         val session = getSession(anime.title, animeId)
         return GET("$baseUrl/anime/$session?anime_id=$animeId")
     }
@@ -115,12 +112,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             val anime = SAnime.create()
             anime.title = item.jsonObject["title"]!!.jsonPrimitive.content
             val animeId = item.jsonObject["id"]!!.jsonPrimitive.int
-            anime.setUrlWithoutDomain(
-                LinkData(
-                    "$baseUrl/anime/?anime_id=$animeId",
-                    item.jsonObject["session"]!!.jsonPrimitive.content
-                ).toJsonString()
-            )
+            anime.setUrlWithoutDomain("$baseUrl/anime/?anime_id=$animeId")
             animeList.add(anime)
         }
         return AnimesPage(animeList, false)
@@ -145,12 +137,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             val anime = SAnime.create()
             anime.title = item.jsonObject["anime_title"]!!.jsonPrimitive.content
             val animeId = item.jsonObject["anime_id"]!!.jsonPrimitive.int
-            anime.setUrlWithoutDomain(
-                LinkData(
-                    "$baseUrl/anime/?anime_id=$animeId",
-                    item.jsonObject["anime_session"]!!.jsonPrimitive.content
-                ).toJsonString()
-            )
+            anime.setUrlWithoutDomain("$baseUrl/anime/?anime_id=$animeId")
             anime.artist = item.jsonObject["fansub"]!!.jsonPrimitive.content
             animeList.add(anime)
         }
@@ -166,12 +153,14 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
-        val parsed = json.decodeFromString<LinkData>(anime.url)
+        val id = anime.url.substringAfter("?anime_id=").substringBefore("\"")
+        val session = getSession(anime.title, id)
+
         return if (anime.status != SAnime.LICENSED) {
             client.newCall(episodeListRequest(anime))
                 .asObservableSuccess()
                 .map { response ->
-                    episodeListParse(response, parsed.animeSession)
+                    episodeListParse(response, session)
                 }
         } else {
             Observable.error(Exception("Licensed - No episodes to show"))
@@ -179,8 +168,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun episodeListRequest(anime: SAnime): Request {
-        val parsed = json.decodeFromString<LinkData>(anime.url)
-        val animeId = parsed.url.substringAfterLast("?anime_id=")
+        val animeId = anime.url.substringAfterLast("?anime_id=").substringBefore("\"")
         val session = getSession(anime.title, animeId)
         return GET("$baseUrl/api?m=release&id=$session&sort=episode_desc&page=1")
     }
@@ -333,15 +321,5 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         screen.addPreference(domainPref)
         screen.addPreference(subPref)
         screen.addPreference(linkPref)
-    }
-
-    @Serializable
-    data class LinkData(
-        val url: String,
-        val animeSession: String
-    )
-
-    private fun LinkData.toJsonString(): String {
-        return json.encodeToString(this)
     }
 }
