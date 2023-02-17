@@ -574,7 +574,6 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
@@ -657,17 +656,13 @@ class ConsumyBili : ConfigurableAnimeSource, AnimeHttpSource() {
             SAnime.create().apply {
                 title = ani.title.romaji
                 thumbnail_url = ani.coverImage.extraLarge
-                setUrlWithoutDomain(
-                    AnimeInfo(
-                        title = ani.title.romaji,
-                        id = ani.id.toString(),
-                        thumbnailUrl = ani.coverImage.extraLarge,
-                        studio = ani.studios.nodes.firstOrNull()?.name ?: "",
-                        genres = ani.genres.joinToString(", "),
-                        description = ani.description,
-                        status = ani.status
-                    ).toJsonString()
-                )
+                author = ani.studios.nodes.firstOrNull()?.name ?: ""
+                genre = ani.genres.joinToString(", ")
+                description = Jsoup.parse(
+                    ani.description.replace("<br>", "br2n")
+                ).text().replace("br2n", "\n")
+                status = parseStatus(ani.status)
+                setUrlWithoutDomain(ani.id.toString())
             }
         }
         return AnimesPage(animeList, parsed.data.Page.pageInfo.hasNextPage)
@@ -727,20 +722,7 @@ class ConsumyBili : ConfigurableAnimeSource, AnimeHttpSource() {
     // =========================== Anime Details ============================
 
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        val parsed = json.decodeFromString<AnimeInfo>(anime.url)
-
-        return Observable.just(
-            anime.apply {
-                title = parsed.title
-                description = Jsoup.parse(
-                    parsed.description.replace("<br>", "br2n")
-                ).text().replace("br2n", "\n")
-                genre = parsed.genres
-                status = parseStatus(parsed.status)
-                thumbnail_url = parsed.thumbnailUrl
-                author = parsed.studio
-            }
-        )
+        return Observable.just(anime)
     }
 
     override fun animeDetailsParse(response: Response): SAnime = throw Exception("not used")
@@ -748,8 +730,7 @@ class ConsumyBili : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================== Episodes ==============================
 
     override fun episodeListRequest(anime: SAnime): Request {
-        val parsed = json.decodeFromString<AnimeInfo>(anime.url)
-        return GET("$baseUrl/server/anime/episodes?id=${parsed.id}&source_id=bilibili")
+        return GET("$baseUrl/server/anime/episodes?id=${anime.url}&source_id=bilibili")
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
@@ -826,10 +807,6 @@ class ConsumyBili : ConfigurableAnimeSource, AnimeHttpSource() {
             ci.next()
         }
         return java.lang.String.format("%.2f%cbs", bits / 1000.0, ci.current())
-    }
-
-    private fun AnimeInfo.toJsonString(): String {
-        return json.encodeToString(this)
     }
 
     private fun parseStatus(statusString: String): Int {

@@ -55,17 +55,6 @@ data class AnilistResponse(
 }
 
 @Serializable
-data class AnimeInfo(
-    val title: String,
-    val id: String,
-    val thumbnailUrl: String,
-    val studio: String,
-    val genres: String,
-    val description: String,
-    val status: String
-)
-
-@Serializable
 data class EpisodeResponse(
     val episodes: List<EpisodeObject>? = null
 ) {
