@@ -36,7 +36,8 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "AllAnime"
 
-    override val baseUrl = "https://allanime.site"
+    // allanime.to
+    override val baseUrl = "https://api.allanime.co"
 
     override val lang = "en"
 
