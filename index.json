@@ -105,6 +105,27 @@
     ]
   },
   {
+    "name": "Aniyomi: NetFilm",
+    "pkg": "eu.kanade.tachiyomi.animeextension.all.netfilm",
+    "apk": "aniyomi-all.netfilm-v13.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "NetFilm",
+        "lang": "all",
+        "id": "7380900262139500622",
+        "baseUrl": "https://net-film.vercel.app/api",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Onepace",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.onepace",
     "apk": "aniyomi-all.onepace-v13.8.apk",
