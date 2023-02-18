@@ -299,7 +299,10 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                         videoList.add(Pair(v, video.priority))
                     }
                 }
-                altHosterSelection.contains("vidstreaming") && (video.sourceUrl.contains("vidstreaming") || video.sourceUrl.contains("https://gogo")) -> {
+                altHosterSelection.contains("vidstreaming") && (
+                    video.sourceUrl.contains("vidstreaming") || video.sourceUrl.contains("https://gogo") ||
+                        video.sourceUrl.contains("playgo1.cc")
+                    ) -> {
                     val extractor = VidstreamingExtractor(client, json)
                     val videos = runCatching {
                         extractor.videosFromUrl(video.sourceUrl.replace(Regex("^//"), "https://"))

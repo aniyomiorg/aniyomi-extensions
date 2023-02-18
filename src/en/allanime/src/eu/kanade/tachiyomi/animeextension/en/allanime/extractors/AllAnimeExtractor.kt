@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import uy.kohesive.injekt.injectLazy
 import java.util.Locale
@@ -139,6 +140,24 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
                         audioList.add(
                             Track(url, language)
                         )
+                    }
+
+                    if (!masterPlaylist.contains("#EXT-X-STREAM-INF:")) {
+                        val headers = Headers.headersOf(
+                            "Accept", "*/*",
+                            "Host", link.link.toHttpUrl().host,
+                            "Origin", "https://allanimenews.com",
+                            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0"
+                        )
+                        return try {
+                            if (audioList.isEmpty()) {
+                                listOf(Video(link.link, "$name - ${link.resolutionStr}", link.link, subtitleTracks = subtitles, headers = headers))
+                            } else {
+                                listOf(Video(link.link, "$name - ${link.resolutionStr}", link.link, subtitleTracks = subtitles, audioTracks = audioList, headers = headers))
+                            }
+                        } catch (_: Error) {
+                            listOf(Video(link.link, "$name - ${link.resolutionStr}", link.link, headers = headers))
+                        }
                     }
 
                     masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:")
