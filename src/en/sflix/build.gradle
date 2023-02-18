@@ -5,7 +5,7 @@ ext {
     extName = 'Sflix'
     pkgNameSuffix = 'en.sflix'
     extClass = '.SFlix'
-    extVersionCode = 15
+    extVersionCode = 16
     libVersion = '13'
 }
 
