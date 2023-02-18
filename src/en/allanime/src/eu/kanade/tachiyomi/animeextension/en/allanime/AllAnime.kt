@@ -21,6 +21,10 @@ import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
@@ -246,6 +250,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
         val videoJson = json.decodeFromString<EpisodeResult>(body)
         val videoList = mutableListOf<Pair<Video, Float>>()
+        val serverList = mutableListOf<Server>()
 
         val altHosterSelection = preferences.getStringSet(
             "alt_hoster_selection",
@@ -269,86 +274,119 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                         (hosterSelection.contains("uv-mp4") && video.sourceName.lowercase().contains("uv-mp4")) ||
                         (hosterSelection.contains("pn-hls") && video.sourceName.lowercase().contains("pn-hls"))
                     ) -> {
-                    val extractor = AllAnimeExtractor(client)
-                    val videos = runCatching {
-                        extractor.videoFromUrl(video.sourceUrl, video.sourceName)
-                    }.getOrNull() ?: emptyList()
-                    for (v in videos) {
-                        videoList.add(Pair(v, video.priority))
-                    }
+                    serverList.add(Server(video.sourceUrl, "internal", video.priority))
                 }
                 altHosterSelection.contains("player") && video.type == "player" -> {
-                    videoList.add(
-                        Pair(
-                            Video(
-                                video.sourceUrl,
-                                "Original (player ${video.sourceName})",
-                                video.sourceUrl
-                            ),
-                            video.priority
-                        )
-
-                    )
+                    serverList.add(Server(video.sourceUrl, "player", video.priority))
                 }
                 altHosterSelection.contains("streamsb") && video.sourceUrl.contains("streamsb") -> {
-                    val extractor = StreamSBExtractor(client)
-                    val videos = runCatching {
-                        extractor.videosFromUrl(video.sourceUrl, headers)
-                    }.getOrNull() ?: emptyList()
-                    for (v in videos) {
-                        videoList.add(Pair(v, video.priority))
-                    }
+                    serverList.add(Server(video.sourceUrl, "streamsb", video.priority))
                 }
                 altHosterSelection.contains("vidstreaming") && (
                     video.sourceUrl.contains("vidstreaming") || video.sourceUrl.contains("https://gogo") ||
                         video.sourceUrl.contains("playgo1.cc")
                     ) -> {
-                    val extractor = VidstreamingExtractor(client, json)
-                    val videos = runCatching {
-                        extractor.videosFromUrl(video.sourceUrl.replace(Regex("^//"), "https://"))
-                    }.getOrNull() ?: emptyList()
-                    for (v in videos) {
-                        videoList.add(Pair(v, video.priority))
-                    }
+                    serverList.add(Server(video.sourceUrl, "gogo", video.priority))
                 }
                 altHosterSelection.contains("doodstream") && video.sourceUrl.contains("dood") -> {
-                    val extractor = DoodExtractor(client)
-                    val videos = runCatching {
-                        extractor.videosFromUrl(video.sourceUrl)
-                    }.getOrNull() ?: emptyList()
-                    for (v in videos) {
-                        videoList.add(Pair(v, video.priority))
-                    }
+                    serverList.add(Server(video.sourceUrl, "dood", video.priority))
                 }
                 altHosterSelection.contains("okru") && video.sourceUrl.contains("ok.ru") -> {
-                    val extractor = OkruExtractor(client)
-                    val videos = runCatching {
-                        extractor.videosFromUrl(video.sourceUrl)
-                    }.getOrNull() ?: emptyList()
-                    for (v in videos) {
-                        videoList.add(Pair(v, video.priority))
-                    }
+                    serverList.add(Server(video.sourceUrl, "okru", video.priority))
                 }
                 altHosterSelection.contains("mp4upload") && video.sourceUrl.contains("mp4upload.com") -> {
-                    val headers = headers.newBuilder().set("referer", "https://mp4upload.com/").build()
-                    val videos = runCatching {
-                        Mp4uploadExtractor(client).getVideoFromUrl(video.sourceUrl, headers)
-                    }.getOrNull() ?: emptyList()
-                    for (v in videos) {
-                        videoList.add(Pair(v, video.priority))
-                    }
+                    serverList.add(Server(video.sourceUrl, "mp4upload", video.priority))
                 }
                 altHosterSelection.contains("streamlare") && video.sourceUrl.contains("streamlare.com") -> {
-                    val extractor = StreamlareExtractor(client)
-                    val videos = runCatching {
-                        extractor.videosFromUrl(video.sourceUrl)
-                    }.getOrNull() ?: emptyList()
-                    for (v in videos) {
-                        videoList.add(Pair(v, video.priority))
-                    }
+                    serverList.add(Server(video.sourceUrl, "streamlare", video.priority))
                 }
             }
         }
+
+        videoList.addAll(
+            serverList.parallelMap { server ->
+                runCatching {
+                    when (server.sourceName) {
+                        "internal" -> {
+                            val extractor = AllAnimeExtractor(client)
+                            val videos = runCatching {
+                                extractor.videoFromUrl(server.sourceUrl, server.sourceName)
+                            }.getOrNull() ?: emptyList()
+                            videos.map {
+                                Pair(it, server.priority)
+                            }
+                        }
+                        "player" -> {
+                            listOf(
+                                Pair(
+                                    Video(
+                                        server.sourceUrl,
+                                        "Original (player ${server.sourceName})",
+                                        server.sourceUrl
+                                    ),
+                                    server.priority
+                                )
+                            )
+                        }
+                        "streamsb" -> {
+                            val extractor = StreamSBExtractor(client)
+                            val videos = runCatching {
+                                extractor.videosFromUrl(server.sourceUrl, headers)
+                            }.getOrNull() ?: emptyList()
+                            videos.map {
+                                Pair(it, server.priority)
+                            }
+                        }
+                        "gogo" -> {
+                            val extractor = VidstreamingExtractor(client, json)
+                            val videos = runCatching {
+                                extractor.videosFromUrl(server.sourceUrl.replace(Regex("^//"), "https://"))
+                            }.getOrNull() ?: emptyList()
+                            videos.map {
+                                Pair(it, server.priority)
+                            }
+                        }
+                        "dood" -> {
+                            val extractor = DoodExtractor(client)
+                            val videos = runCatching {
+                                extractor.videosFromUrl(server.sourceUrl)
+                            }.getOrNull() ?: emptyList()
+                            videos.map {
+                                Pair(it, server.priority)
+                            }
+                        }
+                        "okru" -> {
+                            val extractor = OkruExtractor(client)
+                            val videos = runCatching {
+                                extractor.videosFromUrl(server.sourceUrl)
+                            }.getOrNull() ?: emptyList()
+                            videos.map {
+                                Pair(it, server.priority)
+                            }
+                        }
+                        "mp4upload" -> {
+                            val headers = headers.newBuilder().set("referer", "https://mp4upload.com/").build()
+                            val videos = runCatching {
+                                Mp4uploadExtractor(client).getVideoFromUrl(server.sourceUrl, headers)
+                            }.getOrNull() ?: emptyList()
+                            videos.map {
+                                Pair(it, server.priority)
+                            }
+                        }
+                        "streamlare" -> {
+                            val extractor = StreamlareExtractor(client)
+                            val videos = runCatching {
+                                extractor.videosFromUrl(server.sourceUrl)
+                            }.getOrNull() ?: emptyList()
+                            videos.map {
+                                Pair(it, server.priority)
+                            }
+                        }
+                        else -> null
+                    }
+                }.getOrNull()
+            }.filterNotNull().flatten()
+        )
 
         return prioritySort(videoList)
     }
@@ -368,6 +406,12 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             )
         ).reversed().map { t -> t.first }
     }
+
+    data class Server(
+        val sourceUrl: String,
+        val sourceName: String,
+        val priority: Float,
+    )
 
     private fun parseStatus(string: String?): Int {
         return when (string) {
@@ -493,4 +537,10 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         screen.addPreference(titleStylePref)
         screen.addPreference(subPref)
     }
+
+    // From Dopebox
+    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 }
