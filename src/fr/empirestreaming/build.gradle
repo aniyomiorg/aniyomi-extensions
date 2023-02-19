@@ -6,7 +6,7 @@ ext {
     extName = 'EmpireStreaming'
     pkgNameSuffix = 'fr.empirestreaming'
     extClass = '.EmpireStreaming'
-    extVersionCode = 4
+    extVersionCode = 5
     libVersion = '13'
 }
 
