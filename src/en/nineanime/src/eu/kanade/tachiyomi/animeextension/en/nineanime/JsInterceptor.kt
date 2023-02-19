@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.os.Handler
 import android.os.Looper
-import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -18,18 +17,12 @@ import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class JsInterceptor(private val lang: String) : Interceptor {
 
     private val context = Injekt.get<Application>()
     private val handler by lazy { Handler(Looper.getMainLooper()) }
-
-    class JsObject(var payload: String = "") {
-        @JavascriptInterface
-        fun passPayload(passedPayload: String) {
-            payload = passedPayload
-        }
-    }
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
@@ -50,24 +43,12 @@ class JsInterceptor(private val lang: String) : Interceptor {
 
         val origRequestUrl = request.url.toString()
 
-        val jsinterface = JsObject()
-
         // JavaSrcipt gets the Dub or Sub link of vidstream
         val jsScript = """
-            (function(){
-                let jqclk = jQuery.Event('click');
-                jqclk.isTrusted = true;
-                jqclk.originalEvent = {
-                  isTrusted: true
-                };
-                ${'$'}('div[data-type="$lang"] ul li[data-sv-id="41"]').trigger(jqclk);
-                let intervalId = setInterval(() => {
-                    let element = document.querySelector("#player iframe");
-                    if (element) {
-                        clearInterval(intervalId);
-                        window.android.passPayload(element.src);
-                    }
-                }, 500);
+            (function() {
+              var click = document.createEvent('MouseEvents');
+              click.initMouseEvent('click', true, true);
+              document.querySelector('div[data-type="$lang"] ul li[data-sv-id="41"]').dispatchEvent(click);
             })();
         """
 
@@ -85,7 +66,6 @@ class JsInterceptor(private val lang: String) : Interceptor {
                 useWideViewPort = false
                 loadWithOverviewMode = false
                 userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:106.0) Gecko/20100101 Firefox/106.0"
-                webview.addJavascriptInterface(jsinterface, "android")
                 webview.webViewClient = object : WebViewClient() {
                     override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                         if (!request?.url.toString().contains("vidstream") &&
@@ -110,7 +90,7 @@ class JsInterceptor(private val lang: String) : Interceptor {
             }
         }
 
-        latch.await()
+        latch.await(80, TimeUnit.SECONDS)
 
         handler.post {
             webView?.stopLoading()
