@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.animeextension.all.kamyroll
 import android.content.SharedPreferences
 import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -14,13 +15,19 @@ class AccessTokenInterceptor(
     private val json: Json,
     private val preferences: SharedPreferences
 ) : Interceptor {
-    private var accessToken = preferences.getString("access_token", null) ?: ""
+    private var accessToken = preferences.getString("access_token", null).let {
+        if (it.isNullOrBlank()) {
+            null
+        } else {
+            json.decodeFromString<AccessToken>(it)
+        }
+    }
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        if (accessToken.isBlank()) accessToken = refreshAccessToken()
+        if (accessToken == null) accessToken = refreshAccessToken()
 
         val request = chain.request().newBuilder()
-            .header("authorization", accessToken)
+            .header("authorization", "${accessToken!!.token_type} ${accessToken!!.access_token}")
             .build()
 
         val response = chain.proceed(request)
@@ -34,7 +41,7 @@ class AccessTokenInterceptor(
                     if (accessToken != newAccessToken) {
                         accessToken = newAccessToken
                         return chain.proceed(
-                            newRequestWithAccessToken(chain.request(), newAccessToken)
+                            newRequestWithAccessToken(chain.request(), "${accessToken!!.token_type} ${accessToken!!.access_token}")
                         )
                     }
 
@@ -43,7 +50,7 @@ class AccessTokenInterceptor(
                     accessToken = updatedAccessToken
                     // Retry the request
                     return chain.proceed(
-                        newRequestWithAccessToken(chain.request(), updatedAccessToken)
+                        newRequestWithAccessToken(chain.request(), "${accessToken!!.token_type} ${accessToken!!.access_token}")
                     )
                 }
             }
@@ -57,12 +64,15 @@ class AccessTokenInterceptor(
             .build()
     }
 
-    private fun refreshAccessToken(): String {
+    private fun refreshAccessToken(): AccessToken {
         val client = OkHttpClient().newBuilder().build()
         val response = client.newCall(GET("https://cronchy.consumet.stream/token")).execute()
         val parsedJson = json.decodeFromString<AccessToken>(response.body!!.string())
-        val token = "${parsedJson.token_type} ${parsedJson.access_token}"
-        preferences.edit().putString("access_token", token).apply()
-        return token
+        preferences.edit().putString("access_token", parsedJson.toJsonString()).apply()
+        return parsedJson
+    }
+
+    private fun AccessToken.toJsonString(): String {
+        return json.encodeToString(this)
     }
 }

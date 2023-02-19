@@ -139,10 +139,12 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
                 episodes.data.sortedBy { it.episode_number }.map { ep ->
                     SEpisode.create().apply {
                         url = EpisodeData(
-                            ep.versions?.map { Pair(it.mediaId, it.audio_locale) } ?: listOf(Pair(
-                                ep.streams_link.substringAfter("videos/").substringBefore("/streams"),
-                                ep.audio_locale
-                            ))
+                            ep.versions?.map { Pair(it.mediaId, it.audio_locale) } ?: listOf(
+                                Pair(
+                                    ep.streams_link.substringAfter("videos/").substringBefore("/streams"),
+                                    ep.audio_locale
+                                )
+                            )
                         ).toJsonString()
                         name = if (ep.episode_number > 0 && ep.episode.isNumeric()) {
                             "Season ${seasonData.season_number} Ep ${df.format(ep.episode_number)}: " + ep.title
@@ -161,12 +163,13 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val urlJson = json.decodeFromString<EpisodeData>(episode.url)
-        val response = client.newCall(GET("$baseUrl/token")).execute()
-        val tokenJson = json.decodeFromString<AccessToken>(response.body!!.string())
+        val policyJson = preferences.getString("access_token", null)!!.let {
+            json.decodeFromString<AccessToken>(it)
+        }
         val videoList = urlJson.ids.chunked(5).map {
             it.parallelMap { media ->
                 runCatching {
-                    extractVideo(media, tokenJson)
+                    extractVideo(media, policyJson)
                 }.getOrNull()
             }
                 .filterNotNull()
@@ -178,9 +181,9 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================= Utilities ==============================
 
-    private fun extractVideo(media: Pair<String, String>, tokenJson: AccessToken): List<Video> {
+    private fun extractVideo(media: Pair<String, String>, policyJson: AccessToken): List<Video> {
         val (mediaId, audLang) = media
-        val response = client.newCall(GET("$crUrl/cms/v2${tokenJson.bucket}/videos/$mediaId/streams?Policy=${tokenJson.policy}&Signature=${tokenJson.signature}&Key-Pair-Id=${tokenJson.key_pair_id}")).execute()
+        val response = client.newCall(GET("$crUrl/cms/v2${policyJson.bucket}/videos/$mediaId/streams?Policy=${policyJson.policy}&Signature=${policyJson.signature}&Key-Pair-Id=${policyJson.key_pair_id}")).execute()
         val streams = json.decodeFromString<VideoStreams>(response.body!!.string())
 
         var subsList = emptyList<Track>()
@@ -239,6 +242,7 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
         return this@isNumeric?.toDoubleOrNull() != null
     }
 
+    // Add new locales to the bottom so it doesn't mess with pref indexes
     private val locale = arrayOf(
         Pair("ar-ME", "Arabic"),
         Pair("ar-SA", "Arabic (Saudi Arabia)"),
@@ -262,7 +266,8 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
         Pair("he-IL", "Hebrew"),
         Pair("ro-RO", "Romanian"),
         Pair("sv-SE", "Swedish"),
-        Pair("zh-CN", "Chinese")
+        Pair("zh-CN", "Chinese (PRC)"),
+        Pair("zh-HK", "Chinese (Hong Kong)")
     )
 
     private fun LinkData.toJsonString(): String {
@@ -290,8 +295,8 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
             desc += "\nLanguage: Sub" + (if (this@toSAnime.series_metadata.audio_locales.size > 1) " Dub" else "")
             desc += "\nMaturity Ratings: ${this@toSAnime.series_metadata.maturity_ratings.joinToString()}"
             desc += if (this@toSAnime.series_metadata.is_simulcast) "\nSimulcast" else ""
-            desc += "\n\nAudio: " + this@toSAnime.series_metadata.audio_locales.joinToString { it.getLocale() }
-            desc += "\n\nSubs: " + this@toSAnime.series_metadata.subtitle_locales.joinToString { it.getLocale() }
+            desc += "\n\nAudio: " + this@toSAnime.series_metadata.audio_locales.sortedBy { it.getLocale() }.joinToString { it.getLocale() }
+            desc += "\n\nSubs: " + this@toSAnime.series_metadata.subtitle_locales.sortedBy { it.getLocale() }.joinToString { it.getLocale() }
             description = desc
         }
 
