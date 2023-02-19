@@ -34,7 +34,7 @@ class JsInterceptor(private val lang: String) : Interceptor {
         return chain.proceed(newRequest)
     }
 
-    @SuppressLint("SetJavaScriptEnabled", "JavascriptInterface")
+    @SuppressLint("SetJavaScriptEnabled")
     private fun resolveWithWebView(request: Request): Request? {
 
         val latch = CountDownLatch(1)
@@ -66,7 +66,6 @@ class JsInterceptor(private val lang: String) : Interceptor {
                 useWideViewPort = false
                 loadWithOverviewMode = false
                 userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:106.0) Gecko/20100101 Firefox/106.0"
-                webview.addJavascriptInterface(this, "android")
                 webview.webViewClient = object : WebViewClient() {
                     override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                         if (!request?.url.toString().contains("vidstream") &&
