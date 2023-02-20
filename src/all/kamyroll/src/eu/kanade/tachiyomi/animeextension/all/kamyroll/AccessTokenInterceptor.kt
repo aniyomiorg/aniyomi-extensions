@@ -12,23 +12,17 @@ import okhttp3.Response
 import java.net.HttpURLConnection
 
 class AccessTokenInterceptor(
+    private val baseUrl: String,
     private val json: Json,
     private val preferences: SharedPreferences
 ) : Interceptor {
-    private var accessToken = preferences.getString("access_token", null).let {
-        if (it.isNullOrBlank()) {
-            null
-        } else {
-            json.decodeFromString<AccessToken>(it)
-        }
-    }
+    private var accessToken = preferences.getString(TOKEN_PREF_KEY, null) ?: ""
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        if (accessToken == null) accessToken = refreshAccessToken()
+        if (accessToken.isBlank()) accessToken = refreshAccessToken()
 
-        val request = chain.request().newBuilder()
-            .header("authorization", "${accessToken!!.token_type} ${accessToken!!.access_token}")
-            .build()
+        val parsed = json.decodeFromString<AccessToken>(accessToken)
+        val request = newRequestWithAccessToken(chain.request(), "${parsed.token_type} ${parsed.access_token}")
 
         val response = chain.proceed(request)
 
@@ -36,21 +30,12 @@ class AccessTokenInterceptor(
             HttpURLConnection.HTTP_UNAUTHORIZED -> {
                 synchronized(this) {
                     response.close()
-                    val newAccessToken = refreshAccessToken()
                     // Access token is refreshed in another thread.
-                    if (accessToken != newAccessToken) {
-                        accessToken = newAccessToken
-                        return chain.proceed(
-                            newRequestWithAccessToken(chain.request(), "${accessToken!!.token_type} ${accessToken!!.access_token}")
-                        )
-                    }
-
-                    // Need to refresh an access token
-                    val updatedAccessToken = refreshAccessToken()
-                    accessToken = updatedAccessToken
+                    accessToken = refreshAccessToken()
+                    val newParsed = json.decodeFromString<AccessToken>(accessToken)
                     // Retry the request
                     return chain.proceed(
-                        newRequestWithAccessToken(chain.request(), "${accessToken!!.token_type} ${accessToken!!.access_token}")
+                        newRequestWithAccessToken(chain.request(), "${newParsed.token_type} ${newParsed.access_token}")
                     )
                 }
             }
@@ -64,15 +49,19 @@ class AccessTokenInterceptor(
             .build()
     }
 
-    private fun refreshAccessToken(): AccessToken {
+    fun refreshAccessToken(): String {
         val client = OkHttpClient().newBuilder().build()
-        val response = client.newCall(GET("https://cronchy.consumet.stream/token")).execute()
-        val parsedJson = json.decodeFromString<AccessToken>(response.body!!.string())
-        preferences.edit().putString("access_token", parsedJson.toJsonString()).apply()
+        val response = client.newCall(GET("$baseUrl/token")).execute()
+        val parsedJson = json.decodeFromString<AccessToken>(response.body!!.string()).toJsonString()
+        preferences.edit().putString(TOKEN_PREF_KEY, parsedJson).apply()
         return parsedJson
     }
 
     private fun AccessToken.toJsonString(): String {
         return json.encodeToString(this)
+    }
+
+    companion object {
+        val TOKEN_PREF_KEY = "access_token_data"
     }
 }
