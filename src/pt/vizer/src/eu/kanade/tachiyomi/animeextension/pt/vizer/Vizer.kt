@@ -162,14 +162,16 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
         val videoList = players.iterator().mapNotNull loop@{ (name, status) ->
             if (status == "0") return@loop null
             val url = getPlayerUrl(videoObj.id, name)
-            when {
-                name == "mixdrop" ->
+            when (name) {
+                "mixdrop" ->
                     MixDropExtractor(client)
-                        .videoFromUrl(url, langPrefix)?.let(::listOf)
-                name == "streamtape" ->
+                        .videoFromUrl(url, langPrefix)
+                        ?.let(::listOf)
+                "streamtape" ->
                     StreamTapeExtractor(client)
-                        .videoFromUrl(url, "StreamTape($langPrefix)")?.let(::listOf)
-                name == "fembed" ->
+                        .videoFromUrl(url, "StreamTape($langPrefix)")
+                        ?.let(::listOf)
+                "fembed" ->
                     FembedExtractor(client)
                         .videosFromUrl(url, langPrefix)
                 else -> null
