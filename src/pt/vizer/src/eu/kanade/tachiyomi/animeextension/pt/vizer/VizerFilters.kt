@@ -34,7 +34,7 @@ object VizerFilters {
     class SortFilter : AnimeFilter.Sort(
         "Ordernar por",
         VizerFiltersData.orders.map { it.first }.toTypedArray(),
-        Selection(0, true)
+        Selection(0, false)
     )
 
     val filterList = AnimeFilterList(

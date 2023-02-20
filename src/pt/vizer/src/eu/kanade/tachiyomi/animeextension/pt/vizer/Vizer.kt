@@ -61,7 +61,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================== Popular ===============================
 
     override fun popularAnimeRequest(page: Int): Request {
-        val initialUrl = "$API_URL/ajaxPagination.php?categoryFilterOrderBy=vzViews&page=$page&categoryFilterOrderWay=desc&categoryFilterYearMin=1950&categoryFilterYearMax=2022"
+        val initialUrl = "$API_URL/ajaxPagination.php?categoryFilterOrderBy=vzViews&page=${page - 1}&categoryFilterOrderWay=desc&categoryFilterYearMin=1950&categoryFilterYearMax=2022"
         val pageType = preferences.getString(PREF_POPULAR_PAGE_KEY, "movie")!!
         val finalUrl = if ("movie" in pageType) {
             initialUrl + "&saga=0&categoriesListMovies=all"
@@ -162,14 +162,16 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
         val videoList = players.iterator().mapNotNull loop@{ (name, status) ->
             if (status == "0") return@loop null
             val url = getPlayerUrl(videoObj.id, name)
-            when {
-                name == "mixdrop" ->
+            when (name) {
+                "mixdrop" ->
                     MixDropExtractor(client)
-                        .videoFromUrl(url, langPrefix)?.let(::listOf)
-                name == "streamtape" ->
+                        .videoFromUrl(url, langPrefix)
+                        ?.let(::listOf)
+                "streamtape" ->
                     StreamTapeExtractor(client)
-                        .videoFromUrl(url, "StreamTape($langPrefix)")?.let(::listOf)
-                name == "fembed" ->
+                        .videoFromUrl(url, "StreamTape($langPrefix)")
+                        ?.let(::listOf)
+                "fembed" ->
                     FembedExtractor(client)
                         .videosFromUrl(url, langPrefix)
                 else -> null
@@ -194,7 +196,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
                 }
         } else {
             val params = VizerFilters.getSearchParameters(filters)
-            client.newCall(searchAnimeRequest(page, query, params))
+            client.newCall(searchAnimeRequest(page - 1, query, params))
                 .asObservableSuccess()
                 .map { response ->
                     searchAnimeParse(response)
