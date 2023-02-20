@@ -230,7 +230,7 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         val hosterSelection = preferences.getStringSet(AWConstants.HOSTER_SELECTION, null)
         val redirectInterceptor = client.newBuilder().addInterceptor(RedirectInterceptor()).build()
-        val jsInterceptor = client.newBuilder().addInterceptor(JsInterceptor(network.client)).build()
+        val jsInterceptor = client.newBuilder().addInterceptor(JsInterceptor()).build()
         redirectlink.forEach {
             val langkey = it.attr("data-lang-key")
             val language = getlanguage(langkey)
@@ -241,7 +241,7 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     hoster.contains("VOE") && hosterSelection.contains(AWConstants.NAME_VOE) -> {
                         val quality = "Voe $language"
                         var url = redirectInterceptor.newCall(GET(redirectgs)).execute().request.url.toString()
-                        if (url.contains("payload")) {
+                        if (url.contains("payload") || url.contains(redirectgs)) {
                             url = recapbypass(jsInterceptor, redirectgs)
                         }
                         val video = VoeExtractor(client).videoFromUrl(url, quality)
@@ -253,7 +253,7 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     hoster.contains("Doodstream") && hosterSelection.contains(AWConstants.NAME_DOOD) -> {
                         val quality = "Doodstream $language"
                         var url = redirectInterceptor.newCall(GET(redirectgs)).execute().request.url.toString()
-                        if (url.contains("payload")) {
+                        if (url.contains("payload") || url.contains(redirectgs)) {
                             url = recapbypass(jsInterceptor, redirectgs)
                         }
                         val video = DoodExtractor(client).videoFromUrl(url, quality)
@@ -265,7 +265,7 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     hoster.contains("Streamtape") && hosterSelection.contains(AWConstants.NAME_STAPE) -> {
                         val quality = "Streamtape $language"
                         var url = redirectInterceptor.newCall(GET(redirectgs)).execute().request.url.toString()
-                        if (url.contains("payload")) {
+                        if (url.contains("payload") || url.contains(redirectgs)) {
                             url = recapbypass(jsInterceptor, redirectgs)
                         }
                         val video = StreamTapeExtractor(client).videoFromUrl(url, quality)
@@ -276,7 +276,7 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     hoster.contains("Vidoza") && hosterSelection.contains(AWConstants.NAME_VIZ) -> {
                         val quality = "Vidoza $language"
                         var url = redirectInterceptor.newCall(GET(redirectgs)).execute().request.url.toString()
-                        if (url.contains("payload")) {
+                        if (url.contains("payload") || url.contains(redirectgs)) {
                             url = recapbypass(jsInterceptor, redirectgs)
                         }
                         val video = VidozaExtractor(client).videoFromUrl(url, quality)

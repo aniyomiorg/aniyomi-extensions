@@ -5,46 +5,30 @@ import android.app.Application
 import android.os.Handler
 import android.os.Looper
 import android.webkit.JavascriptInterface
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import okhttp3.Headers
 import okhttp3.Interceptor
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-class JsInterceptor(private val client: OkHttpClient) : Interceptor {
+class JsInterceptor : Interceptor {
 
     private val context = Injekt.get<Application>()
     private val handler by lazy { Handler(Looper.getMainLooper()) }
 
-    class JsObject(private val latch: CountDownLatch, private val client: OkHttpClient, var payload: String = "") {
+    class JsObject(private val latch: CountDownLatch, var payload: String = "") {
         @JavascriptInterface
         fun passPayload(passedPayload: String) {
             payload = passedPayload
             latch.countDown()
-        }
-        @JavascriptInterface
-        fun client(source: String): String? {
-            val body = "input=${java.net.URLEncoder.encode(source, "utf-8")}&lang=de".toRequestBody("application/x-www-form-urlencoded".toMediaType())
-            val solved = client.newCall(
-                POST(
-                    "https://engageub.pythonanywhere.com", body = body,
-                    headers = Headers.headersOf(
-                        "Content-Type", "application/x-www-form-urlencoded",
-                        "user-agent", "Mozilla/5.0 (Linux; Android 12; Pixel 5 Build/SP2A.220405.004; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/100.0.4896.127 Safari/537.36"
-                    )
-                )
-            ).execute().body?.string()
-            return solved
         }
     }
 
@@ -65,58 +49,241 @@ class JsInterceptor(private val client: OkHttpClient) : Interceptor {
 
         val origRequestUrl = request.url.toString()
 
-        val jsinterface = JsObject(latch, client)
+        val jsinterface = JsObject(latch)
 
-        // JavaSrcipt bypass recaptcha FUCK GOOGLE RECAPTCHA v0.1
+        // JavaSrcipt bypass recaptcha FUCK GOOGLE RECAPTCHA v1.0
         val jsScript = """
-            (function(){
+            function audioBufferToWav(buffer, opt) {
+                opt = opt || {}
+
+                var numChannels = buffer.numberOfChannels
+                var sampleRate = buffer.sampleRate
+                var format = opt.float32 ? 3 : 1
+                var bitDepth = format === 3 ? 32 : 16
+
+                var result
+                if (numChannels === 2) {
+                    result = interleave(buffer.getChannelData(0), buffer.getChannelData(1))
+                } else {
+                    result = buffer.getChannelData(0)
+                }
+
+                return encodeWAV(result, format, sampleRate, numChannels, bitDepth)
+            }
+
+            function encodeWAV(samples, format, sampleRate, numChannels, bitDepth) {
+                var bytesPerSample = bitDepth / 8
+                var blockAlign = numChannels * bytesPerSample
+
+                var buffer = new ArrayBuffer(44 + samples.length * bytesPerSample)
+                var view = new DataView(buffer)
+
+                /* RIFF identifier */
+                writeString(view, 0, 'RIFF')
+                /* RIFF chunk length */
+                view.setUint32(4, 36 + samples.length * bytesPerSample, true)
+                /* RIFF type */
+                writeString(view, 8, 'WAVE')
+                /* format chunk identifier */
+                writeString(view, 12, 'fmt ')
+                /* format chunk length */
+                view.setUint32(16, 16, true)
+                /* sample format (raw) */
+                view.setUint16(20, format, true)
+                /* channel count */
+                view.setUint16(22, numChannels, true)
+                /* sample rate */
+                view.setUint32(24, sampleRate, true)
+                /* byte rate (sample rate * block align) */
+                view.setUint32(28, sampleRate * blockAlign, true)
+                /* block align (channel count * bytes per sample) */
+                view.setUint16(32, blockAlign, true)
+                /* bits per sample */
+                view.setUint16(34, bitDepth, true)
+                /* data chunk identifier */
+                writeString(view, 36, 'data')
+                /* data chunk length */
+                view.setUint32(40, samples.length * bytesPerSample, true)
+                if (format === 1) { // Raw PCM
+                    floatTo16BitPCM(view, 44, samples)
+                } else {
+                    writeFloat32(view, 44, samples)
+                }
+
+                return buffer
+            }
+
+            function interleave(inputL, inputR) {
+                var length = inputL.length + inputR.length
+                var result = new Float32Array(length)
+
+                var index = 0
+                var inputIndex = 0
+
+                while (index < length) {
+                    result[index++] = inputL[inputIndex]
+                    result[index++] = inputR[inputIndex]
+                    inputIndex++
+                }
+                return result
+            }
+
+            function writeFloat32(output, offset, input) {
+                for (var i = 0; i < input.length; i++, offset += 4) {
+                    output.setFloat32(offset, input[i], true)
+                }
+            }
+
+            function floatTo16BitPCM(output, offset, input) {
+                for (var i = 0; i < input.length; i++, offset += 2) {
+                    var s = Math.max(-1, Math.min(1, input[i]))
+                    output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true)
+                }
+            }
+
+            function writeString(view, offset, string) {
+                for (var i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i))
+                }
+            }
+
+            async function normalizeAudio(buffer) {
+                const ctx = new AudioContext();
+                const audioBuffer = await ctx.decodeAudioData(buffer);
+                ctx.close();
+
+                const offlineCtx = new OfflineAudioContext(
+                    1,
+                    audioBuffer.duration * 16000,
+                    16000
+                );
+                const source = offlineCtx.createBufferSource();
+                source.connect(offlineCtx.destination);
+                source.buffer = audioBuffer;
+                source.start();
+
+                return offlineCtx.startRendering();
+            }
+
+            async function sliceAudio({
+                                          audioBuffer,
+                                          start,
+                                          end
+                                      }) {
+                const sampleRate = audioBuffer.sampleRate;
+                const channels = audioBuffer.numberOfChannels;
+
+                const startOffset = sampleRate * start;
+                const endOffset = sampleRate * end;
+                const frameCount = endOffset - startOffset;
+
+                const ctx = new AudioContext();
+                const audioSlice = ctx.createBuffer(channels, frameCount, sampleRate);
+                ctx.close();
+
+                const tempArray = new Float32Array(frameCount);
+                for (var channel = 0; channel < channels; channel++) {
+                    audioBuffer.copyFromChannel(tempArray, channel, startOffset);
+                    audioSlice.copyToChannel(tempArray, channel, 0);
+                }
+
+                return audioSlice;
+            }
+
+            async function prepareAudio(audio) {
+                const audioBuffer = await normalizeAudio(audio);
+
+                const audioSlice = await sliceAudio({
+                    audioBuffer,
+                    start: 1.5,
+                    end: audioBuffer.duration - 1.5
+                });
+
+                return audioBufferToWav(audioSlice);
+            }
+
+            async function getWitSpeechApiResult(audioUrl) {
+                var audioRsp = await fetch(audioUrl);
+                var t = 0;
+                while(audioRsp.status === 404 && t <= 2){
+                    t++;
+                    audioRsp = await fetch(audioUrl);
+                }
+                const audioContent = await prepareAudio(await audioRsp.arrayBuffer());
+                const result = {};
+
+                const rsp = await fetch('https://api.wit.ai/speech?v=20221114', {
+                    mode: 'cors',
+                    method: 'POST',
+                    headers: {
+                        Authorization: 'Bearer ' + 'YZLWLZHOWH7MZR636L5IGJW66R43CEID'
+                    },
+                    body: new Blob([audioContent], {
+                        type: 'audio/wav'
+                    })
+                });
+
+                if (rsp.status !== 200) {
+                    if (rsp.status === 429) {
+                        result.errorId = 'error_apiQuotaExceeded';
+                        result.errorTimeout = 6000;
+                    } else {
+                        throw new Error('API response:' + rsp.status + ',' + await rsp.text());
+                    }
+                } else {
+                    const data = JSON.parse((await rsp.text()).split('\r\n').at(-1)).text;
+                    if (data) {
+                        result.text = data.trim();
+                    }
+                }
+                return result.text;
+            }
+
+            (async function() {
                 let intervalIdA = setInterval(() => {
                     let iframewindow = document.querySelector('iframe[title="reCAPTCHA-Aufgabe läuft in zwei Minuten ab"]').contentWindow;
                     if (iframewindow) {
                         clearInterval(intervalIdA);
                         let audiobutton = iframewindow.document.querySelector('#recaptcha-audio-button');
                         let event = iframewindow.document.createEvent('HTMLEvents');
-                        event.initEvent('click',false,false);
+                        event.initEvent('click', false, false);
                         audiobutton.dispatchEvent(event);
-                        let intervalIdB = setInterval(() => {
+                        let intervalIdB = setInterval(async () => {
                             let source = iframewindow.document.querySelector('#audio-source').getAttribute('src');
                             if (source) {
                                 clearInterval(intervalIdB);
                                 let audioresponse = iframewindow.document.querySelector('#audio-response');
                                 let verifybutton = iframewindow.document.querySelector('#recaptcha-verify-button');
-                                var solved = window.android.client(source);
-                                var tries = 0
-                                while((solved == "0" || solved.includes("<") || solved.includes(">") || solved.length < 2 || solved.length > 50) && tries <= 3) {
-                                    solved = window.android.client(source);
-                                    if(solved == "0" || solved.includes("<") || solved.includes(">") || solved.length < 2 || solved.length > 50){
-                                        tries++;
-                                    } else {
-                                        tries = 3
+                                var tries = 0;
+                                let intervalIdC = setInterval(async () => {
+                                    var solved = null
+                                    solved = await getWitSpeechApiResult(source);
+                                    tries++;
+                                    if (solved != null) {
+                                        clearInterval(intervalIdC);
+                                        audioresponse.value = solved;
+                                        verifybutton.dispatchEvent(event);
+                                        const originalOpen = iframewindow.XMLHttpRequest.prototype.open;
+                                        iframewindow.XMLHttpRequest.prototype.open = function (method, url, async) {
+                                            if (url.includes('userverify')) {
+                                                originalOpen.apply(this, arguments); // call the original open method
+                                                this.onreadystatechange = function () {
+                                                    if (this.readyState === 4 && this.status === 200) {
+                                                        const responseBody = this.responseText;
+                                                        window.android.passPayload(responseBody);
+                                                    }
+                                                };
+                                            }
+                                        };
+                                    } else if(tries >= 2) {
+                                        window.android.passPayload("");
                                     }
-                                }
-                                if(solved == "0" || solved.includes("<") || solved.includes(">") || solved.length < 2 || solved.length > 50){
-                                    window.android.passPayload("");
-                                } else {
-                                    audioresponse.value = solved;
-                                    verifybutton.dispatchEvent(event);
-                                    const originalOpen = iframewindow.XMLHttpRequest.prototype.open;
-                                    iframewindow.XMLHttpRequest.prototype.open = function(method, url, async) {
-                                        if(url.includes('userverify')){
-                                            originalOpen.apply(this, arguments); // call the original open method
-                                            this.onreadystatechange = function() {
-                                                if (this.readyState === 4 && this.status === 200) {
-                                                    const responseBody = this.responseText;
-                                                    window.android.passPayload(responseBody);
-                                                }
-                                            };
-                                        }
-                                    };
-                                }
+                                }, 2000);
                             }
                         }, 2000);
                     }
                 }, 2000);
-            })();
+            })()
         """
 
         val headers = request.headers.toMultimap().mapValues { it.value.getOrNull(0) ?: "" }.toMutableMap()
@@ -137,6 +304,13 @@ class JsInterceptor(private val client: OkHttpClient) : Interceptor {
                 userAgentString = "Mozilla/5.0 (Linux; Android 12; Pixel 5 Build/SP2A.220405.004; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/100.0.4896.127 Safari/537.36"
                 webview.addJavascriptInterface(jsinterface, "android")
                 webview.webViewClient = object : WebViewClient() {
+                    override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
+                        if (request?.url.toString().contains("https://www.google.com/?token=")) {
+                            jsinterface.payload = request?.url.toString().substringAfter("?token=").substringBefore("&original=")
+                            latch.countDown()
+                        }
+                        return super.shouldInterceptRequest(view, request)
+                    }
                     override fun onPageFinished(view: WebView?, url: String?) {
                         view?.clearCache(true)
                         view?.clearFormData()
@@ -153,8 +327,8 @@ class JsInterceptor(private val client: OkHttpClient) : Interceptor {
                 webView?.loadUrl(origRequestUrl, headers)
             }
         }
-
-        latch.await(120, TimeUnit.SECONDS)
+        
+        latch.await(60, TimeUnit.SECONDS)
 
         handler.post {
             webView?.stopLoading()

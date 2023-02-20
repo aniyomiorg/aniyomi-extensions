@@ -45,6 +45,8 @@ class RedirectInterceptor : Interceptor {
 
         var newRequest: Request? = null
 
+        var test = true
+
         handler.post {
             val webview = WebView(context)
             webView = webview
@@ -62,14 +64,21 @@ class RedirectInterceptor : Interceptor {
                     view: WebView,
                     request: WebResourceRequest,
                 ): WebResourceResponse? {
+
                     if (request.url.toString().contains("payload")) {
                         newRequest = GET(request.url.toString(), request.requestHeaders.toHeaders())
                         latch.countDown()
-                    }
-                    if (request.url.toString().contains("https://aniworld.to/redirect/") && request.url.toString().contains("token")) {
+                    } else if (request.url.toString().contains("https://aniworld.to/redirect/") && request.url.toString().contains("token")) {
                         newRequest = GET(request.url.toString(), request.requestHeaders.toHeaders())
                         latch.countDown()
+                    } else {
+                        test = false
                     }
+                    if (test == false) {
+                        newRequest = GET(origRequestUrl, headers.toHeaders())
+                        latch.countDown()
+                    }
+
                     return super.shouldInterceptRequest(view, request)
                 }
             }
