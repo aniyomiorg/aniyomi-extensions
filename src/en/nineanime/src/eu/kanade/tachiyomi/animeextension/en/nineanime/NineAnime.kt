@@ -38,7 +38,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "9anime"
 
-    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://9anime.id")!! }
+    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://9anime.to")!! }
 
     override val lang = "en"
 
@@ -289,8 +289,8 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val domainPref = ListPreference(screen.context).apply {
             key = "preferred_domain"
             title = "Preferred domain (requires app restart)"
-            entries = arrayOf("9anime.id", "9anime.gs", "9anime.pl")
-            entryValues = arrayOf("https://9anime.id", "https://9anime.gs", "https://9anime.pl")
+            entries = arrayOf("9anime.id", "9anime.gs", "9anime.pl", "9anime.id")
+            entryValues = arrayOf("https://9anime.to", "https://9anime.gs", "https://9anime.pl", "https://9anime.id")
             setDefaultValue("https://9anime.id")
             summary = "%s"
 
