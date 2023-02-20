@@ -113,12 +113,10 @@ class SubAnimes : ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     // =============================== Search ===============================
-    // We'll be using serialization in the search system,
-    // so those functions won't be used.
-    override fun searchAnimeFromElement(element: Element) = throw Exception("not used")
-    override fun searchAnimeSelector() = throw Exception("not used")
-    override fun searchAnimeNextPageSelector() = throw Exception("not used")
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
+    override fun searchAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
+    override fun searchAnimeSelector() = "div.aniItem > a"
+    override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = GET("$baseUrl/page/$page/?s=$query")
 
     override fun getFilterList(): AnimeFilterList = SBFilters.filterList
 
@@ -130,6 +128,10 @@ class SubAnimes : ParsedAnimeHttpSource() {
                 .map { searchAnimeBySlugParse(it, slug) }
         } else {
             val params = SBFilters.getSearchParameters(filters)
+
+            if (params == SBFilters.FilterSearchParams()) // no filters
+                return super.fetchSearchAnime(page, query, filters)
+
             client.newCall(searchAnimeRequest(page, query, params))
                 .asObservableSuccess()
                 .map { searchAnimeParse(it, page) }
