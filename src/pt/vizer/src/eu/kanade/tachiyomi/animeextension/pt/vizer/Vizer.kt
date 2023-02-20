@@ -61,7 +61,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================== Popular ===============================
 
     override fun popularAnimeRequest(page: Int): Request {
-        val initialUrl = "$API_URL/ajaxPagination.php?categoryFilterOrderBy=vzViews&page=$page&categoryFilterOrderWay=desc&categoryFilterYearMin=1950&categoryFilterYearMax=2022"
+        val initialUrl = "$API_URL/ajaxPagination.php?categoryFilterOrderBy=vzViews&page=${page - 1}&categoryFilterOrderWay=desc&categoryFilterYearMin=1950&categoryFilterYearMax=2022"
         val pageType = preferences.getString(PREF_POPULAR_PAGE_KEY, "movie")!!
         val finalUrl = if ("movie" in pageType) {
             initialUrl + "&saga=0&categoriesListMovies=all"
@@ -194,7 +194,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
                 }
         } else {
             val params = VizerFilters.getSearchParameters(filters)
-            client.newCall(searchAnimeRequest(page, query, params))
+            client.newCall(searchAnimeRequest(page - 1, query, params))
                 .asObservableSuccess()
                 .map { response ->
                     searchAnimeParse(response)
