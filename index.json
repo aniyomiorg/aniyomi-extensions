@@ -1341,10 +1341,10 @@
   {
     "name": "Aniyomi: 9anime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.nineanime",
-    "apk": "aniyomi-en.nineanime-v13.30.apk",
+    "apk": "aniyomi-en.nineanime-v13.31.apk",
     "lang": "en",
-    "code": 30,
-    "version": "13.30",
+    "code": 31,
+    "version": "13.31",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2762,27 +2762,6 @@
     ]
   },
   {
-    "name": "Aniyomi: Better Anime",
-    "pkg": "eu.kanade.tachiyomi.animeextension.pt.betteranime",
-    "apk": "aniyomi-pt.betteranime-v13.5.apk",
-    "lang": "pt-BR",
-    "code": 5,
-    "version": "13.5",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "Better Anime",
-        "lang": "pt-BR",
-        "id": "4877901824203895720",
-        "baseUrl": "https://betteranime.net",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: CineVision",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.cinevision",
     "apk": "aniyomi-pt.cinevision-v13.3.apk",
@@ -2911,10 +2890,10 @@
   {
     "name": "Aniyomi: SubAnimes",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.subanimes",
-    "apk": "aniyomi-pt.subanimes-v13.1.apk",
+    "apk": "aniyomi-pt.subanimes-v13.2.apk",
     "lang": "pt-BR",
-    "code": 1,
-    "version": "13.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2953,10 +2932,10 @@
   {
     "name": "Aniyomi: Vizer.tv",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.vizer",
-    "apk": "aniyomi-pt.vizer-v13.5.apk",
+    "apk": "aniyomi-pt.vizer-v13.6.apk",
     "lang": "pt-BR",
-    "code": 5,
-    "version": "13.5",
+    "code": 6,
+    "version": "13.6",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
