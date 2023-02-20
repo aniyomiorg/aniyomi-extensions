@@ -3,10 +3,10 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlinx-serialization'
 
 ext {
-    extName = 'UHD Movies (Experimental)'
+    extName = 'UHD Movies'
     pkgNameSuffix = 'en.uhdmovies'
     extClass = '.UHDMovies'
-    extVersionCode = 1
+    extVersionCode = 7
     libVersion = '13'
 }
 

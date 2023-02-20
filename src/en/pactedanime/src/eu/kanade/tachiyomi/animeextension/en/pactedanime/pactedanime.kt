@@ -45,7 +45,7 @@ class pactedanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeSelector(): String = "div.content > div.items > article.item"
 
     override fun popularAnimeRequest(page: Int): Request {
-        return GET("$baseUrl/trending-2/page/$page/")
+        return GET("$baseUrl/trending/page/$page/")
     }
 
     override fun popularAnimeFromElement(element: Element): SAnime {
@@ -54,7 +54,7 @@ class pactedanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.setUrlWithoutDomain(element.select("div h3 a").attr("href").toHttpUrl().encodedPath)
         anime.title = element.select("div h3 a").text()
         anime.thumbnail_url = element.select("div.poster img").attr("src")
-        if (anime.thumbnail_url.toString().isEmpty()) {
+        if (!anime.thumbnail_url.toString().startsWith("https://")) {
             anime.thumbnail_url = element.select("div.poster img").attr("data-src")
         }
 
@@ -81,22 +81,27 @@ class pactedanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } else {
             var counter = 1
             for (season in document.select("div#seasons > div")) {
+                val seasonList = mutableListOf<SEpisode>()
                 for (ep in season.select("ul > li")) {
                     if (ep.childrenSize() > 0) {
                         val episode = SEpisode.create()
 
-                        episode.name = "Season ${ep.select("div.numerando").text()} - ${ep.select("div.episodiotitle a").text()}"
+                        episode.name = "Season ${ep.selectFirst("div.numerando").ownText()} - ${ep.selectFirst("a[href]").ownText()}"
                         episode.episode_number = counter.toFloat()
-                        episode.setUrlWithoutDomain(ep.select("div.episodiotitle a").attr("href").toHttpUrl().encodedPath)
-                        episodeList.add(episode)
+                        episode.setUrlWithoutDomain(ep.selectFirst("a[href]").attr("href").toHttpUrl().encodedPath)
+
+                        if (ep.selectFirst("p:contains(Filler)") != null) episode.scanlator = "Filler Episode"
+
+                        seasonList.add(episode)
 
                         counter++
                     }
                 }
+                episodeList.addAll(seasonList.reversed())
             }
         }
 
-        return episodeList.reversed()
+        return episodeList
     }
 
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not used")
@@ -176,8 +181,8 @@ class pactedanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.setUrlWithoutDomain(element.select("div.details > div.title a").attr("href").toHttpUrl().encodedPath)
         anime.title = element.select("div.details > div.title a").text()
         anime.thumbnail_url = element.select("div.image img").attr("src")
-        if (anime.thumbnail_url.toString().isEmpty()) {
-            anime.thumbnail_url = element.select("div.image img").attr("data-src")
+        if (!anime.thumbnail_url.toString().startsWith("https://")) {
+            anime.thumbnail_url = element.select("div.poster img").attr("data-src")
         }
 
         return anime
@@ -191,7 +196,7 @@ class pactedanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.setUrlWithoutDomain(element.select("div.data h3 a").attr("href").toHttpUrl().encodedPath)
         anime.title = element.select("div.data h3 a").text()
         anime.thumbnail_url = element.select("div.poster img").attr("src")
-        if (anime.thumbnail_url.toString().isEmpty()) {
+        if (!anime.thumbnail_url.toString().startsWith("https://")) {
             anime.thumbnail_url = element.select("div.poster img").attr("data-src")
         }
 

@@ -26,15 +26,16 @@ class StreamSBExtractor(private val client: OkHttpClient) {
 
     // animension, asianload and dramacool uses "common = false"
     private fun fixUrl(url: String, common: Boolean): String {
-        val sbUrl = url.substringBefore("/e/")
+        val sbUrl = url.substringBefore("/e/").substringBefore("/embed-")
         val id = url.substringAfter("/e/")
+            .substringAfter("/embed-")
             .substringBefore("?")
             .substringBefore(".html")
         return if (common) {
             val hexBytes = bytesToHex(id.toByteArray())
-            "$sbUrl/sources50/625a364258615242766475327c7c${hexBytes}7c7c4761574550654f7461566d347c7c73747265616d7362"
+            "$sbUrl/sources51/625a364258615242766475327c7c${hexBytes}7c7c4761574550654f7461566d347c7c73747265616d7362"
         } else {
-            "$sbUrl/sources50/${bytesToHex("||$id||||streamsb".toByteArray())}/"
+            "$sbUrl/sources51/${bytesToHex("||$id||||streamsb".toByteArray())}/"
         }
     }
 

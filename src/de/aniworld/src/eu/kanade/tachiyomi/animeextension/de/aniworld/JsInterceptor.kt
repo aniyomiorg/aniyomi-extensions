@@ -327,7 +327,7 @@ class JsInterceptor : Interceptor {
                 webView?.loadUrl(origRequestUrl, headers)
             }
         }
-
+        
         latch.await(60, TimeUnit.SECONDS)
 
         handler.post {

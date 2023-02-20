@@ -13,13 +13,13 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.float
 import kotlinx.serialization.json.int
@@ -30,6 +30,7 @@ import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -56,7 +57,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     override val client: OkHttpClient = network.cloudflareClient
 
     override fun animeDetailsRequest(anime: SAnime): Request {
-        val animeId = anime.url.substringAfterLast("?anime_id=")
+        val animeId = anime.url.substringAfterLast("?anime_id=").substringBefore("\"")
         val session = getSession(anime.title, animeId)
         return GET("$baseUrl/anime/$session?anime_id=$animeId")
     }
@@ -151,17 +152,34 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
+    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+        val id = anime.url.substringAfter("?anime_id=").substringBefore("\"")
+        val session = getSession(anime.title, id)
+
+        return if (anime.status != SAnime.LICENSED) {
+            client.newCall(episodeListRequest(anime))
+                .asObservableSuccess()
+                .map { response ->
+                    episodeListParse(response, session)
+                }
+        } else {
+            Observable.error(Exception("Licensed - No episodes to show"))
+        }
+    }
+
     override fun episodeListRequest(anime: SAnime): Request {
-        val animeId = anime.url.substringAfterLast("?anime_id=")
+        val animeId = anime.url.substringAfterLast("?anime_id=").substringBefore("\"")
         val session = getSession(anime.title, animeId)
         return GET("$baseUrl/api?m=release&id=$session&sort=episode_desc&page=1")
     }
 
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        return recursivePages(response)
+    override fun episodeListParse(response: Response): List<SEpisode> = throw Exception("Not used")
+
+    private fun episodeListParse(response: Response, animeSession: String): List<SEpisode> {
+        return recursivePages(response, animeSession)
     }
 
-    private fun parseEpisodePage(jsonLine: String?): MutableList<SEpisode> {
+    private fun parseEpisodePage(jsonLine: String?, animeSession: String): MutableList<SEpisode> {
         val jsonData = jsonLine ?: return mutableListOf()
         val jObject = json.decodeFromString<JsonObject>(jsonData)
         val array = jObject["data"]!!.jsonArray
@@ -171,9 +189,8 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             val episode = SEpisode.create()
             episode.date_upload = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
                 .parse(itemO["created_at"]!!.jsonPrimitive.content)!!.time
-            val animeId = itemO["anime_id"]!!.jsonPrimitive.int
             val session = itemO["session"]!!.jsonPrimitive.content
-            episode.setUrlWithoutDomain("$baseUrl/api?m=links&id=$animeId&session=$session&p=kwik")
+            episode.setUrlWithoutDomain("$baseUrl/play/$animeSession/$session")
             val epNum = itemO["episode"]!!.jsonPrimitive.float
             episode.episode_number = epNum
             val epNumString = if (epNum % 1F == 0F) epNum.toInt().toString() else epNum.toString()
@@ -183,16 +200,16 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         return episodeList
     }
 
-    private fun recursivePages(response: Response): List<SEpisode> {
+    private fun recursivePages(response: Response, animeSession: String): List<SEpisode> {
         val responseString = response.body!!.string()
         val jObject = json.decodeFromString<JsonObject>(responseString)
         val lastPage = jObject["last_page"]!!.jsonPrimitive.int
         val page = jObject["current_page"]!!.jsonPrimitive.int
         val hasNextPage = page < lastPage
-        val returnList = parseEpisodePage(responseString)
+        val returnList = parseEpisodePage(responseString, animeSession)
         if (hasNextPage) {
             val nextPage = nextPageRequest(response.request.url.toString(), page + 1)
-            returnList += recursivePages(nextPage)
+            returnList += recursivePages(nextPage, animeSession)
         }
         return returnList
     }
@@ -203,18 +220,17 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val array = json.decodeFromString<JsonObject>(response.body!!.string())
-            .jsonObject["data"]!!.jsonArray
-        val videos = mutableListOf<Video>()
-        for (item in array) {
-            val quality = item.jsonObject.keys.first()
-            val paheWinLink = item.jsonObject[quality]!!.jsonObject["kwik_pahewin"]!!.jsonPrimitive.content
-            val kwikLink = item.jsonObject[quality]!!.jsonObject["kwik"]!!.jsonPrimitive.content
-            val audio = item.jsonObject[quality]!!.jsonObject["audio"]!!
-            val qualityString = if (audio is JsonNull) "${quality}p" else "${quality}p (" + audio.jsonPrimitive.content + " audio)"
-            videos.add(getVideo(paheWinLink, kwikLink, qualityString))
+        val document = response.asJsoup()
+        val videoList = mutableListOf<Video>()
+
+        document.select("div#resolutionMenu > button").forEachIndexed { index, btn ->
+            val kwikLink = btn.attr("data-src")
+            val quality = btn.text()
+            val paheWinLink = document.select("div#pickDownload > a")[index].attr("href")
+            videoList.add(getVideo(paheWinLink, kwikLink, quality))
         }
-        return videos
+
+        return videoList
     }
 
     private fun getVideo(paheUrl: String, kwikUrl: String, quality: String): Video {
@@ -233,27 +249,14 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         val subPreference = preferences.getString("preferred_sub", "jpn")!!
         val quality = preferences.getString("preferred_quality", "1080")!!
-        val qualityList = mutableListOf<Video>()
-        val newList = mutableListOf<Video>()
-        var preferred = 0
-        for (video in this.reversed()) {
-            if (video.quality.contains(quality)) {
-                qualityList.add(preferred, video)
-                preferred++
-            } else {
-                qualityList.add(video)
-            }
-        }
-        preferred = 0
-        for (video in qualityList) {
-            if (video.quality.contains(subPreference)) {
-                newList.add(preferred, video)
-                preferred++
-            } else {
-                newList.add(video)
-            }
-        }
-        return newList
+        val shouldEndWithEng = (subPreference == "eng")
+
+        return this.sortedWith(
+            compareBy(
+                { it.quality.contains(quality) },
+                { it.quality.endsWith("eng", true) == shouldEndWithEng },
+            )
+        ).reversed()
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {

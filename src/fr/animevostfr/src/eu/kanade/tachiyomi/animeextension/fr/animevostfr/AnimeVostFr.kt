@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.fr.animevostfr.extractors.CdopeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -132,7 +133,7 @@ class AnimeVostFr : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return if (type == "MOVIE") {
             return listOf(
                 SEpisode.create().apply {
-                    url = response.request.url.toString() + "?server=download"
+                    url = response.request.url.toString()
                     name = "Movie"
                 }
             )
@@ -148,42 +149,78 @@ class AnimeVostFr : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .substringAfterLast("-episode-")
             .substringBefore("-")
         return SEpisode.create().apply {
-            setUrlWithoutDomain(element.attr("href") + "?server=download")
+            setUrlWithoutDomain(element.attr("href"))
             name = "Épisode $number"
             episode_number = number.toFloat()
         }
     }
 
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
-        val response = client.newCall(GET(episode.url)).execute()
+        val videoList = mutableListOf<Video>()
+
+        val url = if (episode.url.startsWith("https:")) {
+            episode.url
+        } else {
+            baseUrl + episode.url
+        }
+
+        val response = client.newCall(GET(url)).execute()
         val parsedResponse = response.asJsoup()
         if (parsedResponse.select("title").text().contains("Warning"))
             throw Exception(parsedResponse.select("body").text())
         val epId = parsedResponse.select("link[rel=shortlink]").attr("href")
             .substringAfter("?p=")
+
+        parsedResponse.select("div.list-server > select > option").forEach { server ->
+            videoList.addAll(
+                extractVideos(
+                    server.attr("value"),
+                    server.text(),
+                    epId
+                )
+            )
+        }
+
+        return Observable.just(videoList)
+    }
+
+    private fun extractVideos(serverValue: String, serverName: String, epId: String): List<Video> {
         Log.i("bruh", "ID: $epId \nLink: $")
         val xhr = Headers.headersOf("x-requested-with", "XMLHttpRequest")
-        val epLink = client.newCall(GET("$baseUrl/ajax-get-link-stream/?server=download&filmId=$epId", xhr))
+        val epLink = client.newCall(GET("$baseUrl/ajax-get-link-stream/?server=$serverValue&filmId=$epId", xhr))
             .execute().body!!.string()
-        val playlistInterceptor = CloudFlareInterceptor()
-        val cfClient = client.newBuilder().addInterceptor(playlistInterceptor).build()
-        val headers = Headers.headersOf(
-            "referer", "$baseUrl/",
-            "user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"
-        )
-        val playlistResponse = cfClient.newCall(GET(epLink, headers)).execute().body!!.string()
-        val headersVideo = Headers.headersOf(
-            "referer", epLink,
-            "user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"
-        )
+
         val playlist = mutableListOf<Video>()
-        playlistResponse.substringAfter("#EXT-X-STREAM-INF:")
-            .split("#EXT-X-STREAM-INF:").map {
-                val quality = it.substringAfter("RESOLUTION=").split(",")[0].split("\n")[0].substringAfter("x") + "p"
-                val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                playlist.add(Video(videoUrl, quality, videoUrl, headers = headersVideo))
+        when {
+            epLink.contains("comedyshow.to") -> {
+                val playlistInterceptor = CloudFlareInterceptor()
+                val cfClient = client.newBuilder().addInterceptor(playlistInterceptor).build()
+                val headers = Headers.headersOf(
+                    "referer", "$baseUrl/",
+                    "user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"
+                )
+                val playlistResponse = cfClient.newCall(GET(epLink, headers)).execute().body!!.string()
+                val headersVideo = Headers.headersOf(
+                    "referer", epLink,
+                    "user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"
+                )
+
+                playlistResponse.substringAfter("#EXT-X-STREAM-INF:")
+                    .split("#EXT-X-STREAM-INF:").map {
+                        val quality = it.substringAfter("RESOLUTION=").split(",")[0].split("\n")[0].substringAfter("x") + "p ($serverName)"
+                        val videoUrl = it.substringAfter("\n").substringBefore("\n")
+                        playlist.add(Video(videoUrl, quality, videoUrl, headers = headersVideo))
+                    }
             }
-        return Observable.just(playlist.sort())
+            epLink.contains("cdopetimes.xyz") -> {
+                val extractor = CdopeExtractor(client)
+                playlist.addAll(
+                    extractor.videosFromUrl(epLink)
+                )
+            }
+        }
+
+        return playlist.sort()
     }
 
     override fun videoListSelector() = throw Exception("not used")

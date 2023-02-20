@@ -37,7 +37,7 @@ class ZoroExtractor(private val client: OkHttpClient) {
             .execute()
             .body!!.string()
 
-        val key = newClient.newCall(GET("https://raw.githubusercontent.com/consumet/rapidclown/main/key.txt"))
+        val key = newClient.newCall(GET("https://raw.githubusercontent.com/enimax-anime/key/e6/key.txt"))
             .execute()
             .body!!.string()
 

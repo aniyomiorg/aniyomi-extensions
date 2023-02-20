@@ -48,7 +48,7 @@ class DopeBoxExtractor(private val client: OkHttpClient) {
             .execute()
             .body!!.string()
 
-        val key = newClient.newCall(GET("https://raw.githubusercontent.com/consumet/rapidclown/rabbitstream/key.txt"))
+        val key = newClient.newCall(GET("https://raw.githubusercontent.com/enimax-anime/key/e4/key.txt"))
             .execute()
             .body!!.string()
         // encrypted data will start with "U2Fsd..." because they put

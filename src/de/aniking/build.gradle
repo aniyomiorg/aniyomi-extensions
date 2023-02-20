@@ -6,7 +6,7 @@ ext {
     extName = 'Aniking'
     pkgNameSuffix = 'de.aniking'
     extClass = '.Aniking'
-    extVersionCode = 5
+    extVersionCode = 7
     libVersion = '13'
 }
 

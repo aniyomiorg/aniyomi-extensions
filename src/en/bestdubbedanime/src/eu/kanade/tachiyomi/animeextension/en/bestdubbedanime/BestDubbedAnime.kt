@@ -22,6 +22,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -107,9 +108,38 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                 counter++
             }
+
+            if (document.select("div.eplistz > div > div > a").isEmpty()) {
+                val cacheUrlRegex = Regex("""url: '(.*?)'(?:.*?)episodesListxf""", RegexOption.DOT_MATCHES_ALL)
+
+                val jsText = document.selectFirst("script:containsData(episodesListxf)").data()
+                val url = cacheUrlRegex.find(jsText)?.groupValues?.get(1) ?: ""
+
+                if (url.isNotBlank()) {
+                    episodeList.addAll(extractFromCache(url))
+                }
+            }
         }
 
         return episodeList.reversed()
+    }
+
+    private fun extractFromCache(url: String): List<SEpisode> {
+        val headers = Headers.headersOf(
+            "Accept", "*/*",
+            "Origin", baseUrl,
+            "Referer", "$baseUrl/",
+            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0"
+        )
+
+        val soup = client.newCall(GET(url, headers = headers)).execute().asJsoup()
+        return soup.select("a").mapIndexed { index, ep ->
+            SEpisode.create().apply {
+                name = ep.select("div.inwel > span").text()
+                episode_number = (index + 1).toFloat()
+                setUrlWithoutDomain(("https:" + ep.attr("href")).toHttpUrl().encodedPath)
+            }
+        }
     }
 
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not used")

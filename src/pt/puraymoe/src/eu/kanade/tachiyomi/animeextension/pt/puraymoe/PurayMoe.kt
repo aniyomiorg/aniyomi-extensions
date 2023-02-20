@@ -137,6 +137,13 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================ Video Links =============================
 
+    private val isStable by lazy {
+        runCatching {
+            Track(lang, baseUrl)
+            false
+        }.getOrDefault(true)
+    }
+
     override fun videoListRequest(episode: SEpisode) =
         GET("$baseUrl/watch/${episode.url}")
 
@@ -174,7 +181,19 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
             val newRequest = GET("$baseUrl/watch/$episodeId")
             return videoListParse(client.newCall(newRequest).execute())
         }
-        return episodeObject.videos?.toVideoList() ?: emptyList<Video>()
+
+        return if (isStable) {
+            // Use hardlinks
+            episodeObject.hardsub.flatMap {
+                videoListFromUrl(it.url, it.language)
+            }
+        } else {
+            // Use softlinks
+            val subs = episodeObject.subtitles.mapNotNull {
+                Track(it.url, it.language)
+            }.sortSubs()
+            videoListFromUrl(episodeObject.softsub.url, subs = subs)
+        }
     }
 
     // =============================== Search ===============================
@@ -285,6 +304,22 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
+        val subLangPref = ListPreference(screen.context).apply {
+            key = PREF_SUB_KEY
+            title = PREF_SUB_TITLE
+            entries = PREF_SUB_ENTRIES
+            entryValues = PREF_SUB_VALUES
+            setDefaultValue(lang)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
         val showOnlyPref = ListPreference(screen.context).apply {
             key = PREF_SHOW_ONLY_KEY
             title = PREF_SHOW_ONLY_TITLE
@@ -301,6 +336,7 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         screen.addPreference(videoQualityPref)
+        screen.addPreference(subLangPref)
         screen.addPreference(showOnlyPref)
     }
 
@@ -311,11 +347,33 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         return json.decodeFromString(responseBody)
     }
 
+    private fun videoListFromUrl(url: String, lang: String = "", subs: List<Track> = emptyList()): List<Video> {
+        return client.newCall(GET(url))
+            .execute()
+            .toVideoList(subs, lang)
+    }
+
     private fun List<VideoDto>.toVideoList(subUrl: String? = null): List<Video> {
-        val subs = subUrl?.let { listOf(Track(it, "pt-br")) } ?: emptyList()
+        val subs = subUrl?.let { listOf(Track(it, lang)) } ?: emptyList()
         return map {
             val quality = "${it.quality.last()}p"
             Video(it.url, quality, it.url, subtitleTracks = subs)
+        }
+    }
+
+    private fun Response.toVideoList(subs: List<Track> = emptyList(), lang: String = ""): List<Video> {
+        val responseBody = body?.string().orEmpty()
+        val separator = "#EXT-X-STREAM-INF:"
+        return responseBody.substringAfter(separator).split(separator).map {
+            val quality = it.substringAfter("RESOLUTION=")
+                .substringAfter("x")
+                .substringBefore("\n")
+                .substringBefore(",") + "p"
+            val videoUrl = it.substringAfter("\n").substringBefore("\n")
+            if (isStable)
+                Video(videoUrl, quality + " - $lang", videoUrl, headers = headers)
+            else
+                Video(videoUrl, quality, videoUrl, headers = headers, subtitleTracks = subs)
         }
     }
 
@@ -327,22 +385,26 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun String.getId(): String = this.substringAfterLast("/")
 
+    private fun List<Video>.sortBy(item: String): List<Video> {
+        return sortedWith(
+            compareBy { it.quality.contains(item) }
+        )
+    }
+
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(PREF_QUALITY_KEY, null)
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.equals(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
+        val quality = preferences.getString(PREF_QUALITY_KEY, "720p")!!
+        val lang = preferences.getString(PREF_SUB_KEY, lang)!!
+        return this.sortBy(quality).let {
+            if (isStable) it.sortBy(lang)
+            else it
+        }.reversed()
+    }
+
+    private fun List<Track>.sortSubs(): List<Track> {
+        val language = preferences.getString(PREF_SUB_KEY, lang)!!
+        return sortedWith(
+            compareBy { it.lang.contains(language) }
+        ).reversed()
     }
 
     companion object {
@@ -358,6 +420,17 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         private val PREF_QUALITY_VALUES = arrayOf(
             "240p", "360p",
             "480p", "720p", "1080p"
+        )
+
+        private const val PREF_SUB_KEY = "preferred_subLang"
+        private const val PREF_SUB_TITLE = "Linguagem preferida na sub"
+        private val PREF_SUB_ENTRIES = arrayOf(
+            "Arabic", "English", "French", "German", "Portuguese",
+            "Spanish(Latin America)", "Spanish"
+        )
+        private val PREF_SUB_VALUES = arrayOf(
+            "ar-SA", "en-US", "fr-FR", "de-DE", "pt-BR",
+            "es-419", "es-ES"
         )
 
         private const val PREF_SHOW_ONLY_KEY = "show_only"

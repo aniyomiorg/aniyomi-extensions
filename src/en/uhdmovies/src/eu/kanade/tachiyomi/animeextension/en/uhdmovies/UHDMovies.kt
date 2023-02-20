@@ -37,9 +37,9 @@ import uy.kohesive.injekt.injectLazy
 @ExperimentalSerializationApi
 class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "UHD Movies (Experimental)"
+    override val name = "UHD Movies"
 
-    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://uhdmovies.org.in")!! }
+    override val baseUrl = "https://uhdmovies.world"
 
     override val lang = "en"
 
@@ -57,7 +57,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/page/$page/")
 
-    override fun popularAnimeSelector(): String = "div#content  div.gridlove-posts > div"
+    override fun popularAnimeSelector(): String = "div#content  div.gridlove-posts > div.layout-masonry"
 
     override fun popularAnimeNextPageSelector(): String =
         "div#content  > nav.gridlove-pagination > a.next"
@@ -97,7 +97,11 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =========================== Anime Details ============================
 
     override fun animeDetailsParse(document: Document): SAnime {
-        return SAnime.create()
+        return SAnime.create().apply {
+            title = document.selectFirst("h2").text()
+                .replace("Download", "", true).trim()
+            status = SAnime.COMPLETED
+        }
     }
 
     // ============================== Episodes ==============================
@@ -106,19 +110,20 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val response = client.newCall(GET(baseUrl + anime.url)).execute()
         val resp = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
-        val episodeElements = resp.select("p:has(a[href^=https://href.li])[style*=center]")
+        val episodeElements = resp.select("p:has(a[href*=?id])[style*=center],p:has(a[href*=?id]):has(span.maxbutton-1-center)")
         val qualityRegex = "[0-9]{3,4}p".toRegex(RegexOption.IGNORE_CASE)
         if (episodeElements.first().text().contains("Episode", true) ||
-            episodeElements.first().text().contains("Zip", true)
+            episodeElements.first().text().contains("Zip", true) ||
+            episodeElements.first().text().contains("Pack", true)
         ) {
             episodeElements.map { row ->
                 val prevP = row.previousElementSibling()
-
                 val seasonRegex = "[ .]S(?:eason)?[ .]?([0-9]{1,2})[ .]".toRegex(RegexOption.IGNORE_CASE)
                 val result = seasonRegex.find(prevP.text())
+
                 val season = (
                     result?.groups?.get(1)?.value ?: let {
-                        val prevPre = row.previousElementSiblings().prev("pre")
+                        val prevPre = row.previousElementSiblings().prev("pre,div.mks_separator")
                         val preResult = seasonRegex.find(prevPre.first().text())
                         preResult?.groups?.get(1)?.value ?: let {
                             val title = resp.select("h1.entry-title")
@@ -133,15 +138,18 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                 row.select("a").filter {
                     !it.text().contains("Zip", true) &&
-                        !it.text().contains("Pack", true)
-                }.map { linkElement ->
-                    val episode = linkElement.text().replace("Episode", "", true).trim()
+                        !it.text().contains("Pack", true) &&
+                        !it.text().contains("Volume ", true)
+                }.mapIndexed { index, linkElement ->
+                    val episode = linkElement?.text()
+                        ?.replace("Episode", "", true)
+                        ?.trim()?.toIntOrNull() ?: (index + 1)
                     Triple(
                         season + "_$episode",
-                        linkElement.attr("href")!!.substringAfter("?id="),
+                        linkElement.attr("href") ?: return@mapIndexed null,
                         quality
                     )
-                }
+                }.filterNotNull()
             }.flatten().groupBy { it.first }.map { group ->
                 val (season, episode) = group.key.split("_")
                 episodeList.add(
@@ -157,27 +165,33 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 )
             }
         } else {
-            episodeElements.filter {
+            var collectionIdx = 0F
+            episodeElements.asSequence().filter {
                 !it.text().contains("Zip", true) &&
-                    !it.text().contains("Pack", true)
+                    !it.text().contains("Pack", true) &&
+                    !it.text().contains("Volume ", true)
             }.map { row ->
                 val prevP = row.previousElementSibling()
                 val qualityMatch = qualityRegex.find(prevP.text())
                 val quality = qualityMatch?.value ?: "HD"
 
+                val collectionName = row.previousElementSiblings().prev("h1,h2,h3,pre").first().text()
+                    .replace("Download", "", true).trim()
+
                 row.select("a").map { linkElement ->
-                    Pair(linkElement.attr("href")!!.substringAfter("?id="), quality)
+                    Triple(linkElement.attr("href")!!, quality, collectionName)
                 }
-            }.flatten().let { link ->
+            }.flatten().groupBy { it.third }.map { group ->
+                collectionIdx++
                 episodeList.add(
                     SEpisode.create().apply {
                         url = EpLinks(
-                            urls = link.map {
+                            urls = group.value.map {
                                 EpUrl(url = it.first, quality = it.second)
                             }
                         ).toJson()
-                        name = "Movie"
-                        episode_number = 0F
+                        name = group.key
+                        episode_number = collectionIdx
                     }
                 )
             }
@@ -227,8 +241,8 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 // ============================= Utilities ==============================
 
     private fun extractVideo(epUrl: EpUrl): Pair<List<Video>, String> {
-        val postLink = "https://blog.officialboypalak.in/"
-        val formData = FormBody.Builder().add("_wp_http", epUrl.url).build()
+        val postLink = epUrl.url.substringBefore("?id=").substringAfter("/?")
+        val formData = FormBody.Builder().add("_wp_http", epUrl.url.substringAfter("?id=")).build()
         val response = client.newCall(POST(postLink, body = formData)).execute().asJsoup()
         val link = response.selectFirst("form#landing").attr("action")
         val wpHttp = response.selectFirst("input[name=_wp_http2]").attr("value")
@@ -320,21 +334,6 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val domainPref = ListPreference(screen.context).apply {
-            key = "preferred_domain"
-            title = "Preferred domain (requires app restart)"
-            entries = arrayOf("uhdmovies.org.in")
-            entryValues = arrayOf("https://uhdmovies.org.in")
-            setDefaultValue("https://uhdmovies.org.in")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
@@ -350,8 +349,6 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
-
-        screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
     }
 

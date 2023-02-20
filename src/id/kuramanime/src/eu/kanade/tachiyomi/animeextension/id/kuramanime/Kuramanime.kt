@@ -81,7 +81,7 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val html = document.select(episodeListSelector()).attr("data-content")
         val jsoupE = Jsoup.parse(html)
 
-        return jsoupE.select("a").filter { ele -> !ele.attr("href").contains("batch") }.map { episodeFromElement(it) }
+        return jsoupE.select("a").filter { ele -> !ele.attr("href").contains("batch") }.map { episodeFromElement(it) }.reversed()
     }
 
     private fun parseShortInfo(element: Element): SAnime {
@@ -116,7 +116,28 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = "div.product__item"
 
-    override fun videoListSelector() = "#player > source"
+    override fun videoListSelector() = "video#player > source"
+
+    override fun videoListParse(response: Response): List<Video> {
+        val videoList = mutableListOf<Video>()
+        val document = response.asJsoup()
+
+        document.select("select#changeServer > option").forEach {
+            videoList.addAll(
+                videosFromServer(response.request.url.toString(), it.attr("value"), it.text())
+            )
+        }
+
+        return videoList.sort()
+    }
+
+    private fun videosFromServer(episodeUrl: String, server: String, name: String): List<Video> {
+        val document = client.newCall(
+            GET("$episodeUrl?activate_stream=1&stream_server=$server", headers = headers)
+        ).execute().asJsoup()
+        return document.select(videoListSelector()).map { videoFromElement(it, name, episodeUrl) }
+    }
+
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", null)
         if (quality != null) {
@@ -135,8 +156,14 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this
     }
 
-    override fun videoFromElement(element: Element): Video {
-        val url = element.attr("src")
+    override fun videoFromElement(element: Element) = throw Exception("not used")
+
+    private fun videoFromElement(element: Element, name: String, episodeUrl: String): Video {
+        var url = element.attr("src")
+        if (!url.startsWith("http")) {
+            url = episodeUrl + url
+        }
+
         val quality = with(element.attr("size")) {
             when {
                 contains("1080") -> "1080p"
@@ -145,7 +172,7 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 contains("360") -> "360p"
                 else -> "Default"
             }
-        }
+        } + " - $name"
         return Video(url, quality, url)
     }
 

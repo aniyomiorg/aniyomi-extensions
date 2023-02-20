@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.es.animeflv
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.YourUploadExtractor
@@ -83,7 +82,8 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         document.select("script").forEach { script ->
             if (script.data().contains("var anime_info =")) {
                 val animeInfo = script.data().substringAfter("var anime_info = [").substringBefore("];")
-                val arrInfo = animeInfo.split(",")
+                val arrInfo = json.decodeFromString<List<String>>("[$animeInfo]")
+
                 val animeUri = arrInfo[2]!!.replace("\"", "")
                 val episodes = script.data().substringAfter("var episodes = [").substringBefore("];").trim()
                 val arrEpisodes = episodes.split("],[")
