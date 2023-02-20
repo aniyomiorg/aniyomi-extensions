@@ -291,7 +291,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title = "Preferred domain (requires app restart)"
             entries = arrayOf("9anime.id", "9anime.gs", "9anime.pl", "9anime.id")
             entryValues = arrayOf("https://9anime.to", "https://9anime.gs", "https://9anime.pl", "https://9anime.id")
-            setDefaultValue("https://9anime.id")
+            setDefaultValue("https://9anime.to")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
