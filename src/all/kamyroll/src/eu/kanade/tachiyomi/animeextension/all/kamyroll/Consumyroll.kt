@@ -54,8 +54,10 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    private val TokenInterceptor = AccessTokenInterceptor(baseUrl, json, preferences)
+
     override val client: OkHttpClient = OkHttpClient().newBuilder()
-        .addInterceptor(AccessTokenInterceptor(json, preferences)).build()
+        .addInterceptor(TokenInterceptor).build()
 
     companion object {
         private val DateFormatter by lazy {
@@ -163,18 +165,17 @@ class Consumyroll : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val urlJson = json.decodeFromString<EpisodeData>(episode.url)
-        val policyJson = preferences.getString("access_token", null)!!.let {
-            json.decodeFromString<AccessToken>(it)
-        }
-        val videoList = urlJson.ids.chunked(5).map {
-            it.parallelMap { media ->
-                runCatching {
-                    extractVideo(media, policyJson)
-                }.getOrNull()
-            }
-                .filterNotNull()
-                .flatten()
-        }.flatten()
+        val dubLocale = preferences.getString("preferred_audio", "en-US")!!
+        val tokenJson = preferences.getString(AccessTokenInterceptor.TOKEN_PREF_KEY, null)
+            ?: TokenInterceptor.refreshAccessToken()
+        val policyJson = json.decodeFromString<AccessToken>(tokenJson)
+        val videoList = urlJson.ids.filter {
+            it.second == dubLocale || it.second == "ja-JP" || it.second == "en-US"
+        }.parallelMap { media ->
+            runCatching {
+                extractVideo(media, policyJson)
+            }.getOrNull()
+        }.filterNotNull().flatten()
 
         return Observable.just(videoList.sort())
     }
