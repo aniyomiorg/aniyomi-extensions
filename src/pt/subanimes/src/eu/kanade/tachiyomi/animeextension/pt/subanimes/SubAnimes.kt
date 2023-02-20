@@ -23,6 +23,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.api.get
+import java.util.concurrent.TimeUnit
 import kotlin.Exception
 
 class SubAnimes : ParsedAnimeHttpSource() {
@@ -36,7 +37,12 @@ class SubAnimes : ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.client
+    // Sometimes the site is slow.
+    override val client: OkHttpClient = network.client.newBuilder()
+        .connectTimeout(1, TimeUnit.MINUTES)
+        .readTimeout(1, TimeUnit.MINUTES)
+        .writeTimeout(1, TimeUnit.MINUTES)
+        .build()
 
     private val json = Json {
         ignoreUnknownKeys = true
