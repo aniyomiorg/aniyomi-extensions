@@ -940,6 +940,27 @@
     ]
   },
   {
+    "name": "Aniyomi: AnimeFlix",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.animeflix",
+    "apk": "aniyomi-en.animeflix-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimeFlix",
+        "lang": "en",
+        "id": "7035893907447463920",
+        "baseUrl": "https://animeflix.org.in",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Animension",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.animension",
     "apk": "aniyomi-en.animension-v13.11.apk",
