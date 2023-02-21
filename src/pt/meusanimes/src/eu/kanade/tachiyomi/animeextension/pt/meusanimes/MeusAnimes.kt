@@ -53,7 +53,17 @@ class MeusAnimes : ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
-        TODO("Not yet implemented")
+        return SAnime.create().apply {
+            val infos = document.selectFirst("div.animeInfos")!!
+            val right = document.selectFirst("div.right")!!
+
+            setUrlWithoutDomain(document.location())
+            title = right.selectFirst("h1")!!.text()
+            genre = right.select("ul.animeGen a").joinToString(", ") { it.text() }
+
+            thumbnail_url = infos.selectFirst("img")!!.attr("data-lazy-src")
+            description = right.selectFirst("div.animeSecondContainer > p:gt(0)")!!.text()
+        }
     }
 
     // ============================ Video Links =============================
