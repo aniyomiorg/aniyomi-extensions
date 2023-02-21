@@ -59,6 +59,8 @@ class MeusAnimes : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListSelector(): String = "div#aba_epi > a"
 
+    override fun episodeListParse(response: Response) = super.episodeListParse(response).reversed()
+
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
         return SAnime.create().apply {
