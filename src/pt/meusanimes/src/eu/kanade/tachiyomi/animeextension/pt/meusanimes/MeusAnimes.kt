@@ -44,12 +44,18 @@ class MeusAnimes : ParsedAnimeHttpSource() {
 
     // ============================== Episodes ==============================
     override fun episodeFromElement(element: Element): SEpisode {
-        TODO("Not yet implemented")
+        return SEpisode.create().apply {
+            element.attr("href")!!.also {
+                setUrlWithoutDomain(it)
+                episode_number = try {
+                    it.substringAfterLast("/").toFloat()
+                } catch (e: NumberFormatException) { 0F }
+            }
+            name = element.text()
+        }
     }
 
-    override fun episodeListSelector(): String {
-        TODO("Not yet implemented")
-    }
+    override fun episodeListSelector(): String = "div#aba_epi > a"
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
