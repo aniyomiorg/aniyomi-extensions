@@ -90,20 +90,22 @@ class MeusAnimes : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     // =============================== Search ===============================
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        TODO("Not yet implemented")
-    }
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
+    override fun searchAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
+    override fun searchAnimeSelector() = popularAnimeSelector()
+    override fun searchAnimeNextPageSelector() = "div.paginacao > a.next"
+    override fun getFilterList(): AnimeFilterList = MAFilters.filterList
 
-    override fun searchAnimeNextPageSelector(): String? {
-        TODO("Not yet implemented")
-    }
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        TODO("Not yet implemented")
-    }
-
-    override fun searchAnimeSelector(): String {
-        TODO("Not yet implemented")
+    private fun searchAnimeRequest(page: Int, query: String, filters: MAFilters.FilterSearchParams): Request {
+        val defaultUrl = "$baseUrl/lista-de-animes/$page"
+        return when {
+            filters.letter.isNotBlank() -> GET("$defaultUrl?letra=${filters.letter}")
+            filters.year.isNotBlank() -> GET("$defaultUrl?ano=${filters.year}")
+            filters.audio.isNotBlank() -> GET("$defaultUrl?audio=${filters.audio}")
+            filters.genre.isNotBlank() -> GET("$defaultUrl?genero=${filters.genre}")
+            query.isNotBlank() -> GET("$defaultUrl?s=$query")
+            else -> GET(defaultUrl)
+        }
     }
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
@@ -115,7 +117,12 @@ class MeusAnimes : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     searchAnimeByIdParse(response, id)
                 }
         } else {
-            super.fetchSearchAnime(page, query, filters)
+            val params = MAFilters.getSearchParameters(filters)
+            client.newCall(searchAnimeRequest(page, query, params))
+                .asObservableSuccess()
+                .map { response ->
+                    searchAnimeParse(response)
+                }
         }
     }
 
