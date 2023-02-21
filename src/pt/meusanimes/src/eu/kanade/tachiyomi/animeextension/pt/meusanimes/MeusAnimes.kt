@@ -1,7 +1,12 @@
 package eu.kanade.tachiyomi.animeextension.pt.meusanimes
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.meusanimes.extractors.IframeExtractor
 import eu.kanade.tachiyomi.animeextension.pt.meusanimes.extractors.MeusAnimesExtractor
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -16,8 +21,10 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
-class MeusAnimes : ParsedAnimeHttpSource() {
+class MeusAnimes : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Meus Animes"
 
@@ -26,6 +33,10 @@ class MeusAnimes : ParsedAnimeHttpSource() {
     override val lang = "pt-BR"
 
     override val supportsLatest = true
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     // ============================== Popular ===============================
     override fun popularAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
@@ -131,7 +142,38 @@ class MeusAnimes : ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request = GET(baseUrl)
     override fun latestUpdatesSelector(): String = "div.ultEpsContainerItem > a"
 
+    // ============================== Settings ==============================
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val videoQualityPref = ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_VALUES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_VALUES.last())
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(videoQualityPref)
+    }
+
+    // ============================= Utilities ==============================
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, "HD")!!
+        return sortedWith(
+            compareBy { it.quality.contains(quality) }
+        ).reversed()
+    }
+
     companion object {
         const val PREFIX_SEARCH = "id:"
+
+        private const val PREF_QUALITY_KEY = "pref_quality"
+        private const val PREF_QUALITY_TITLE = "Qualidade preferida"
+        private val PREF_QUALITY_VALUES = arrayOf("SD", "HD")
     }
 }
