@@ -1,5 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.pt.meusanimes
 
+import eu.kanade.tachiyomi.animeextension.pt.meusanimes.extractors.IframeExtractor
+import eu.kanade.tachiyomi.animeextension.pt.meusanimes.extractors.MeusAnimesExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -62,17 +64,19 @@ class MeusAnimes : ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
-    override fun videoFromElement(element: Element): Video {
-        TODO("Not yet implemented")
+    override fun videoListParse(response: Response): List<Video> {
+        val document: Document = response.asJsoup()
+        val videoElement = document.selectFirst("div.playerBox > *")!!
+        return if (videoElement.tagName() == "video") {
+            MeusAnimesExtractor(client).videoListFromElement(videoElement)
+        } else {
+            IframeExtractor(client, headers).videoListFromIframe(videoElement)
+        }
     }
 
-    override fun videoListSelector(): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun videoUrlParse(document: Document): String {
-        TODO("Not yet implemented")
-    }
+    override fun videoListSelector() = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     // =============================== Search ===============================
     override fun searchAnimeFromElement(element: Element): SAnime {
