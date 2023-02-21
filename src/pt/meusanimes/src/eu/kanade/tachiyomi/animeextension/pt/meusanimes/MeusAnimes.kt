@@ -23,7 +23,7 @@ class MeusAnimes : ParsedAnimeHttpSource() {
 
     override val lang = "pt-BR"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     // ============================== Popular ===============================
     override fun popularAnimeFromElement(element: Element): SAnime {
@@ -107,20 +107,20 @@ class MeusAnimes : ParsedAnimeHttpSource() {
 
     // =============================== Latest ===============================
     override fun latestUpdatesFromElement(element: Element): SAnime {
-        TODO("Not yet implemented")
+        return SAnime.create().apply {
+            title = element.attr("title")
+            thumbnail_url = element.selectFirst("img")?.attr("data-lazy-src")
+            val epUrl = element.attr("href")
+
+            if (epUrl.substringAfterLast("/").toIntOrNull() != null) {
+                setUrlWithoutDomain(epUrl.substringBeforeLast("/") + "-todos-os-episodios")
+            } else { setUrlWithoutDomain(epUrl) }
+        }
     }
 
-    override fun latestUpdatesNextPageSelector(): String? {
-        TODO("Not yet implemented")
-    }
-
-    override fun latestUpdatesRequest(page: Int): Request {
-        TODO("Not yet implemented")
-    }
-
-    override fun latestUpdatesSelector(): String {
-        TODO("Not yet implemented")
-    }
+    override fun latestUpdatesNextPageSelector(): String? = null
+    override fun latestUpdatesRequest(page: Int): Request = GET(baseUrl)
+    override fun latestUpdatesSelector(): String = "div.ultEpsContainerItem > a"
 
     companion object {
         const val PREFIX_SEARCH = "id:"
