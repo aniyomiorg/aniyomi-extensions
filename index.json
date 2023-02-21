@@ -2678,27 +2678,6 @@
     ]
   },
   {
-    "name": "Aniyomi: AnimesVision",
-    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesvision",
-    "apk": "aniyomi-pt.animesvision-v13.15.apk",
-    "lang": "pt-BR",
-    "code": 15,
-    "version": "13.15",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "AnimesVision",
-        "lang": "pt-BR",
-        "id": "7211886220891821251",
-        "baseUrl": "https://animes.vision",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: AnimeTV",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animetv",
     "apk": "aniyomi-pt.animetv-v12.1.apk",
@@ -2863,6 +2842,27 @@
         "baseUrl": "https://www.hinatasoul.com",
         "versionId": 1,
         "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: Meus Animes",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.meusanimes",
+    "apk": "aniyomi-pt.meusanimes-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Meus Animes",
+        "lang": "pt-BR",
+        "id": "8394381853778573358",
+        "baseUrl": "https://meusanimes.org",
+        "versionId": 1,
+        "hasCloudflare": 0
       }
     ]
   },
