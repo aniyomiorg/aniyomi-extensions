@@ -20,7 +20,7 @@ class AHUrlActivity : Activity() {
         val pathSegments = intent?.data?.pathSegments
         if (pathSegments != null && pathSegments.size > 1) {
             val slug = pathSegments[1]
-            val searchQuery = AHConstants.PREFIX_SEARCH + slug
+            val searchQuery = AnimesHouse.PREFIX_SEARCH + slug
             val mainIntent = Intent().apply {
                 action = "eu.kanade.tachiyomi.ANIMESEARCH"
                 putExtra("query", searchQuery)
