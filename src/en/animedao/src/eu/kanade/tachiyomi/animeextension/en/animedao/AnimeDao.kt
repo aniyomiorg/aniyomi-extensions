@@ -371,6 +371,21 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val videoServerPref = ListPreference(screen.context).apply {
+            key = "preferred_server"
+            title = "Preferred server"
+            entries = arrayOf("Vidstreaming", "Doodstream", "Mixdrop", "StreamSB", "streamtape", "Fembed")
+            entryValues = arrayOf("Vidstreaming", "Doodstream", "Mixdrop", "StreamSB", "streamtape", "Fembed")
+            setDefaultValue("Vidstreaming")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
         val episodeSortPref = SwitchPreferenceCompat(screen.context).apply {
             key = "preferred_episode_sorting"
             title = "Attempt episode sorting"
@@ -386,6 +401,7 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
+        screen.addPreference(videoServerPref)
         screen.addPreference(episodeSortPref)
     }
 }
