@@ -310,7 +310,7 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", "1080")!!
-        val server = preferences.getString("preferred_server", "Vidstreaming")!!
+        val server = preferences.getString("preferred_server", "vstream")!!
 
         return this.sortedWith(
             compareBy( 
@@ -378,9 +378,9 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoServerPref = ListPreference(screen.context).apply {
             key = "preferred_server"
             title = "Preferred server"
-            entries = arrayOf("Vidstreaming", "Doodstream", "Mixdrop", "StreamSB", "streamtape", "Fembed")
-            entryValues = arrayOf("Vidstreaming", "Doodstream", "Mixdrop", "StreamSB", "streamtape", "Fembed")
-            setDefaultValue("Vidstreaming")
+            entries = arrayOf("vstream", "src2", "src", "mixdrop", "vcdn", "streamsb", "streamtape", "vplayer", "doodstream")
+            entryValues = arrayOf("vstream", "src2", "src", "mixdrop", "vcdn", "streamsb", "streamtape", "vplayer", "doodstream")
+            setDefaultValue("vstream")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
