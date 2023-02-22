@@ -53,8 +53,8 @@ class LegacyFunExtractor(private val client: OkHttpClient) {
             } ?: doc.selectFirst("script:containsData(var player)")?.data()
         }
         return body?.let {
-            val url = it.substringAfter("file\":")
-                .substringAfter("\"")
+            val url = "https" + it.substringAfter("file:")
+                .substringAfter("\"https")
                 .substringBefore("\"")
             val videoHeaders = Headers.headersOf(
                 "referer", iframeUrl,
