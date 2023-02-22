@@ -257,8 +257,8 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = AHConstants.PREFERRED_QUALITY
             title = "Qualidade preferida"
-            entries = AHConstants.QUALITY_LIST
-            entryValues = AHConstants.QUALITY_LIST
+            entries = AHConstants.QUALITY_LIST_ENTRIES
+            entryValues = AHConstants.QUALITY_LIST_VALUES
             setDefaultValue(AHConstants.DEFAULT_QUALITY)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->

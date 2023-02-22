@@ -7,5 +7,9 @@ object AHConstants {
     const val PREFERRED_QUALITY = "preferred_quality"
     const val DEFAULT_QUALITY = "720p"
     const val PREFIX_SEARCH = "slug:"
-    val QUALITY_LIST = arrayOf("240p", "360p", "480p", "720p", "1080p")
+    val QUALITY_LIST_ENTRIES = arrayOf(
+        "SD - 240p", "SD - 360p", "SD - 480p",
+        "HD - 720p", "FULLHD - 1080p"
+    )
+    val QUALITY_LIST_VALUES = arrayOf("240p", "360p", "480p", "720p", "1080p")
 }
