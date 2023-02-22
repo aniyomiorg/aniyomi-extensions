@@ -48,8 +48,8 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("Referer", baseUrl)
-        .add("Accept-Language", AHConstants.ACCEPT_LANGUAGE)
-        .add("User-Agent", AHConstants.USER_AGENT)
+        .add("Accept-Language", ACCEPT_LANGUAGE)
+        .add("User-Agent", USER_AGENT)
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -129,7 +129,7 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun getPlayerVideos(url: String): List<Video> {
         val iframeBody = client.newCall(GET(url, headers)).execute()
-            .body?.string() ?: throw Exception(AHConstants.MSG_ERR_BODY)
+            .body?.string() ?: throw Exception(MSG_ERR_BODY)
 
         val unpackedBody = JsUnpacker.unpack(iframeBody)
 
@@ -180,8 +180,8 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        return if (query.startsWith(AHConstants.PREFIX_SEARCH)) {
-            val slug = query.removePrefix(AHConstants.PREFIX_SEARCH)
+        return if (query.startsWith(PREFIX_SEARCH)) {
+            val slug = query.removePrefix(PREFIX_SEARCH)
             client.newCall(GET("$baseUrl/anime/$slug", headers))
                 .asObservableSuccess()
                 .map { response ->
@@ -252,14 +252,15 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/episodio/page/$page", headers)
+
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = AHConstants.PREFERRED_QUALITY
-            title = "Qualidade preferida"
-            entries = AHConstants.QUALITY_LIST_ENTRIES
-            entryValues = AHConstants.QUALITY_LIST_VALUES
-            setDefaultValue(AHConstants.DEFAULT_QUALITY)
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -295,9 +296,26 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(AHConstants.PREFERRED_QUALITY, AHConstants.DEFAULT_QUALITY)!!
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
         return sortedWith(
             compareBy { it.quality.contains(quality) }
         ).reversed()
+    }
+
+    companion object {
+        const val PREFIX_SEARCH = "slug:"
+        const val MSG_ERR_BODY = "Erro ao obter dados do episódio."
+
+        private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
+        private const val USER_AGENT = "Mozilla/5.0 (Linux; Android 10; SM-A307GT Build/QP1A.190711.020;) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/103.0.5060.71 Mobile Safari/537.36"
+
+        private const val PREF_QUALITY_DEFAULT = "720p"
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Qualidade preferida"
+        private val PREF_QUALITY_ENTRIES = arrayOf(
+            "SD - 240p", "SD - 360p", "SD - 480p",
+            "HD - 720p", "FULLHD - 1080p"
+        )
+        private val PREF_QUALITY_VALUES = arrayOf("240p", "360p", "480p", "720p", "1080p")
     }
 }
