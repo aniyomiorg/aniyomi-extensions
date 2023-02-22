@@ -15,7 +15,7 @@ class RedplayBypasser(
 
     fun fromUrl(url: String): String {
         val firstDoc = client.newCall(GET(url, headers)).execute().asJsoup()
-        val next = firstDoc.selectFirst("a").attr("href")
+        val next = firstDoc.selectFirst("a")!!.attr("href")
         var nextPage = client.newCall(GET(next, headers)).execute()
         var iframeUrl = ""
         var formUrl = next
@@ -29,7 +29,7 @@ class RedplayBypasser(
                     .set("Referer", formUrl)
                     .build()
                 val formBody = FormBody.Builder()
-                formUrl = nextDoc.selectFirst("form").attr("action")
+                formUrl = nextDoc.selectFirst("form")!!.attr("action")
                 nextDoc.select("input[name]").forEach {
                     formBody.add(it.attr("name"), it.attr("value"))
                 }
