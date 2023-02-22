@@ -23,7 +23,7 @@ class LegacyFunExtractor(private val client: OkHttpClient) {
                 if (form == null) {
                     return getVideoFromDocument(body, quality)
                 } else {
-                    val url = form.attr("action").let {
+                    val newUrl = form.attr("action").let {
                         if (!it.startsWith("http"))
                             "https://legacyfun.site/$it"
                         else it
@@ -32,7 +32,7 @@ class LegacyFunExtractor(private val client: OkHttpClient) {
                     val formBody = FormBody.Builder().apply {
                         add("token", token)
                     }.build()
-                    body = client.newCall(POST(url, body = formBody))
+                    body = client.newCall(POST(newUrl, body = formBody))
                         .execute()
                         .asJsoup()
                 }
@@ -40,10 +40,10 @@ class LegacyFunExtractor(private val client: OkHttpClient) {
         }
     }
 
-    private fun getVideoFromDocument(doc: Document, quality: String): Video? {
-        val iframeUrl = doc.selectFirst("iframe#iframeidv").attr("src")
+    private fun getVideoFromDocument(document: Document, quality: String): Video? {
+        val iframeUrl = document.selectFirst("iframe#iframeidv")!!.attr("src")
         val newHeaders = Headers.headersOf(
-            "referer", doc.location(),
+            "referer", document.location(),
             "user-agent", USER_AGENT
         )
         val newDoc = client.newCall(GET(iframeUrl, newHeaders)).execute().asJsoup()
@@ -53,8 +53,8 @@ class LegacyFunExtractor(private val client: OkHttpClient) {
             } ?: doc.selectFirst("script:containsData(var player)")?.data()
         }
         return body?.let {
-            val url = it.substringAfter("file\":")
-                .substringAfter("\"")
+            val url = "https" + it.substringAfter("file:")
+                .substringAfter("\"https")
                 .substringBefore("\"")
             val videoHeaders = Headers.headersOf(
                 "referer", iframeUrl,

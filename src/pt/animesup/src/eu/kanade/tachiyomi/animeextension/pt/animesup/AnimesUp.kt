@@ -32,7 +32,7 @@ class AnimesUp : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AnimesUp"
 
-    override val baseUrl = "https://animesup.biz"
+    override val baseUrl = "https://animesup.cx"
 
     override val lang = "pt-BR"
 
