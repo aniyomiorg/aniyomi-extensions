@@ -374,9 +374,9 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoServerPref = ListPreference(screen.context).apply {
             key = "preferred_server"
             title = "Preferred server"
-            entries = arrayOf("vstream", "src2", "src", "mixdrop", "vcdn", "streamsb", "streamtape", "vplayer", "doodstream")
-            entryValues = arrayOf("vstream", "src2", "src", "mixdrop", "vcdn", "streamsb", "streamtape", "vplayer", "doodstream")
-            setDefaultValue("vstream")
+            entries = arrayOf("Vidstreaming", "Doodstream", "Mixdrop", "StreamSB", "streamtape", "Fembed")
+            entryValues = arrayOf("Vidstreaming", "Doodstream", "Mixdrop", "StreamSB", "streamtape", "Fembed")
+            setDefaultValue("Vidstreaming")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
