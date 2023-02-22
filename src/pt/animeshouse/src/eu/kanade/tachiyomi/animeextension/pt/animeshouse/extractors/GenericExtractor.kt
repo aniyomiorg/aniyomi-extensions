@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.pt.animeshouse.extractors
 
-import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.Headers
@@ -20,7 +19,6 @@ class GenericExtractor(
             "gcloud" in url -> Pair("GCLOUD", REGEX_GCLOUD_PLAYER)
             else -> Pair("CLP", REGEX_CLP_PLAYER)
         }
-        Log.e(player, url)
 
         val playlistUrl = regex.find(js)!!.groupValues.get(1)
         if ("m3u8.php" in playlistUrl) {

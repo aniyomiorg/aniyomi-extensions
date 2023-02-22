@@ -7,6 +7,10 @@ on:
     paths-ignore:
       - '**.md'
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
 env:
   CI_CHUNK_SIZE: 65
 
@@ -20,20 +24,12 @@ jobs:
     env:
       CI_MODULE_GEN: true
     steps:
-      - name: Cancel previous runs
-        uses: styfle/cancel-workflow-action@0.9.1
-        with:
-          access_token: ${{ github.token }}
-          all_but_latest: true
-
       - name: Clone repo
         uses: actions/checkout@v3
-        with:
-          ref: master
 
       - name: Find lib changes
         id: modified-libs
-        uses: tj-actions/changed-files@v32
+        uses: tj-actions/changed-files@v35
         with:
           files: lib/**
           files_ignore: lib/**.md
@@ -144,8 +140,6 @@ jobs:
     steps:
       - name: Checkout master branch
         uses: actions/checkout@v3
-        with:
-          ref: master
 
       - name: Set up JDK
         uses: actions/setup-java@v3
@@ -169,7 +163,7 @@ jobs:
           arguments: assembleRelease
 
       - name: Upload APKs (chunk ${{ matrix.chunk }})
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: "github.repository == 'jmir1/aniyomi-extensions'"
         with:
           name: "individual-apks-${{ matrix.chunk }}"
@@ -187,7 +181,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download APK artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           path: ~/apk-artifacts
 

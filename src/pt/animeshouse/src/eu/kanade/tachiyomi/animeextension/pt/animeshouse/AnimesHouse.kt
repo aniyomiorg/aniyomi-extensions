@@ -58,26 +58,18 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Popular ===============================
     override fun popularAnimeSelector(): String = "div#featured-titles div.poster"
 
-    override fun popularAnimeRequest(page: Int): Request = GET(baseUrl, headers)
+    override fun popularAnimeRequest(page: Int): Request = GET(baseUrl)
 
     override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        val img = element.selectFirst("img")
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
-        anime.title = img.attr("alt")
-        anime.thumbnail_url = img.attr("src")
-        return anime
-    }
-
-    override fun popularAnimeNextPageSelector() = throw Exception("not used")
-
-    override fun popularAnimeParse(response: Response): AnimesPage {
-        val document = response.asJsoup()
-        val animes = document.select(popularAnimeSelector()).map { element ->
-            popularAnimeFromElement(element)
+        return SAnime.create().apply {
+            val img = element.selectFirst("img")!!
+            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+            title = img.attr("alt")
+            thumbnail_url = img.attr("src")
         }
-        return AnimesPage(animes, false)
     }
+
+    override fun popularAnimeNextPageSelector() = null
 
     // ============================== Episodes ==============================
     override fun episodeListSelector(): String = "ul.episodios > li"
@@ -85,25 +77,24 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> {
         val doc = getRealDoc(response.asJsoup())
         val epList = doc.select(episodeListSelector())
-        if (epList.size < 1) {
-            val episode = SEpisode.create()
-            episode.setUrlWithoutDomain(response.request.url.toString())
-            episode.episode_number = 1F
-            episode.name = "Filme"
-            return listOf(episode)
+        return if (epList.size < 1) {
+            SEpisode.create().apply {
+                setUrlWithoutDomain(doc.location())
+                episode_number = 1F
+                name = "Filme"
+            }.let(::listOf)
+        } else {
+            epList.reversed().map { episodeFromElement(it) }
         }
-        return epList.reversed().map { episodeFromElement(it) }
     }
 
     override fun episodeFromElement(element: Element): SEpisode {
-        val episode = SEpisode.create()
-        val origName = element.selectFirst("div.numerando").text()
-
-        episode.episode_number = origName.substring(origName.indexOf("-") + 1)
-            .toFloat() + if ("Dub" in origName) 0.5F else 0F
-        episode.name = "Temp " + origName.replace(" - ", ": Ep ")
-        episode.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
-        return episode
+        return SEpisode.create().apply {
+            val origName = element.selectFirst("div.numerando")!!.text()
+            episode_number = origName.substringAfter("- ").toFloat() + if ("Dub" in origName) 0.5F else 0F
+            name = "Temp " + origName.replace(" - ", ": Ep ")
+            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        }
     }
 
     // ============================ Video Links =============================
@@ -119,7 +110,7 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         )
             .execute()
             .asJsoup()
-        val iframe = doc.selectFirst("iframe")
+        val iframe = doc.selectFirst("iframe")!!
         return iframe.attr("src").let {
             if (it.startsWith("/redplay"))
                 RedplayBypasser(client, headers).fromUrl(baseUrl + it)
@@ -130,14 +121,10 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val players = document.select("ul#playeroptionsul li")
-        val videoList = mutableListOf<Video>()
-        players.forEach { player ->
+        return players.flatMap { player ->
             val url = getPlayerUrl(player)
-            val videos = runCatching { getPlayerVideos(url) }
-                .getOrNull() ?: emptyList<Video>()
-            videoList.addAll(videos)
+            runCatching { getPlayerVideos(url) }.getOrDefault(emptyList<Video>())
         }
-        return videoList
     }
 
     private fun getPlayerVideos(url: String): List<Video> {
@@ -152,7 +139,7 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "edifier" in url ->
                 EdifierExtractor(client, headers).getVideoList(url)
             "mp4doo" in url ->
-                MpFourDooExtractor(headers).getVideoList(unpackedBody)
+                MpFourDooExtractor(client, headers).getVideoList(unpackedBody)
             "clp-new" in url || "gcloud" in url ->
                 GenericExtractor(client, headers).getVideoList(url, unpackedBody)
             "mcp_comm" in unpackedBody ->
@@ -173,9 +160,8 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val url = response.request.url.toString()
         val document = response.asJsoup()
-
+        val url = document.location()
         val animes = when {
             "/generos/" in url -> {
                 document.select(latestUpdatesSelector()).map { element ->
@@ -228,10 +214,10 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.attr("href"))
-        anime.title = element.text()
-        return anime
+        return SAnime.create().apply {
+            setUrlWithoutDomain(element.attr("href"))
+            title = element.text()
+        }
     }
 
     override fun searchAnimeNextPageSelector(): String = latestUpdatesNextPageSelector()
@@ -240,20 +226,21 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
         val doc = getRealDoc(document)
-        val sheader = doc.selectFirst("div.sheader")
-        anime.thumbnail_url = sheader.selectFirst("div.poster > img").attr("src")
-        anime.title = sheader.selectFirst("div.data > h1").text()
+        val sheader = doc.selectFirst("div.sheader")!!
+        val anime = SAnime.create()
+        anime.thumbnail_url = sheader.selectFirst("div.poster > img")!!.attr("src")
+        anime.title = sheader.selectFirst("div.data > h1")!!.text()
         anime.genre = sheader.select("div.data > div.sgeneros > a")
             .joinToString(", ") { it.text() }
-        val info = doc.selectFirst("div#info")
-        var description = info.selectFirst("p")?.let { it.text() + "\n" } ?: ""
-        info.getInfo("Título")?.let { description += "$it" }
-        info.getInfo("Ano")?.let { description += "$it" }
-        info.getInfo("Temporadas")?.let { description += "$it" }
-        info.getInfo("Episódios")?.let { description += "$it" }
-        anime.description = description
+        doc.selectFirst("div#info")?.let { info ->
+            var description = info.selectFirst("p")?.let { it.text() + "\n" } ?: ""
+            info.getInfo("Título")?.let { description += "$it" }
+            info.getInfo("Ano")?.let { description += "$it" }
+            info.getInfo("Temporadas")?.let { description += "$it" }
+            info.getInfo("Episódios")?.let { description += "$it" }
+            anime.description = description
+        }
         return anime
     }
 
@@ -265,7 +252,7 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/episodio/page/$page", headers)
-    // ============================== Settings ============================== 
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = AHConstants.PREFERRED_QUALITY
@@ -291,7 +278,7 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun getRealDoc(document: Document): Document {
         val menu = document.selectFirst(animeMenuSelector)
         if (menu != null) {
-            val originalUrl = menu.parent().attr("href")
+            val originalUrl = menu.parent()!!.attr("href")
             val req = client.newCall(GET(originalUrl, headers)).execute()
             return req.asJsoup()
         } else {
@@ -302,23 +289,15 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun Element.getInfo(substring: String): String? {
         val target = this.selectFirst("div.custom_fields:contains($substring)")
             ?: return null
-        val key = target.selectFirst("b").text()
-        val value = target.selectFirst("span").text()
+        val key = target.selectFirst("b")!!.text()
+        val value = target.selectFirst("span")!!.text()
         return "\n$key: $value"
     }
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(AHConstants.PREFERRED_QUALITY, AHConstants.DEFAULT_QUALITY)!!
-        val newList = mutableListOf<Video>()
-        var preferred = 0
-        for (video in this) {
-            if (quality in video.quality) {
-                newList.add(preferred, video)
-                preferred++
-            } else {
-                newList.add(video)
-            }
-        }
-        return newList
+        return sortedWith(
+            compareBy { it.quality.contains(quality) }
+        ).reversed()
     }
 }
