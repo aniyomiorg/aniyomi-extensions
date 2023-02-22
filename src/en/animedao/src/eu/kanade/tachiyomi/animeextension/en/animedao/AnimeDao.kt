@@ -310,9 +310,13 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", "1080")!!
+        val server = preferences.getString("preferred_server", "Vidstreaming")!!
 
         return this.sortedWith(
-            compareBy { it.quality.contains(quality) }
+            compareBy( 
+            { it.quality.contains(quality) },
+            { it.quality.contains(server) }
+          )
         ).reversed()
     }
 
