@@ -152,7 +152,7 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "edifier" in url ->
                 EdifierExtractor(client, headers).getVideoList(url)
             "mp4doo" in url ->
-                MpFourDooExtractor(headers).getVideoList(unpackedBody)
+                MpFourDooExtractor(client, headers).getVideoList(unpackedBody)
             "clp-new" in url || "gcloud" in url ->
                 GenericExtractor(client, headers).getVideoList(url, unpackedBody)
             "mcp_comm" in unpackedBody ->
@@ -265,7 +265,7 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/episodio/page/$page", headers)
-    // ============================== Settings ============================== 
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = AHConstants.PREFERRED_QUALITY
