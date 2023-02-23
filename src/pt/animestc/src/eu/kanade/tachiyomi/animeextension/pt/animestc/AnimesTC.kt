@@ -34,14 +34,11 @@ class AnimesTC : AnimeHttpSource() {
     }
 
     // ============================== Popular ===============================
-    override fun popularAnimeParse(response: Response): AnimesPage {
-        TODO("Not yet implemented")
-    }
-
-    override fun popularAnimeRequest(page: Int): Request {
-        TODO("Not yet implemented")
-    }
-
+    // This source doesnt have a popular animes page,
+    // so we use latest animes page instead.
+    override fun fetchPopularAnime(page: Int) = fetchLatestUpdates(page)
+    override fun popularAnimeParse(response: Response): AnimesPage = TODO()
+    override fun popularAnimeRequest(page: Int): Request = TODO()
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
         val id = response.getAnimeDto().id
