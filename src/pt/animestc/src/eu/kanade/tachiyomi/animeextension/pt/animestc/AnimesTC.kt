@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.animestc
 
+import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.AnimeDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.EpisodeDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.ResponseDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -20,7 +21,7 @@ class AnimesTC : AnimeHttpSource() {
 
     override val name = "AnimesTC"
 
-    override val baseUrl = "https://wwww.animestc.net"
+    override val baseUrl = "https://api2.animestc.com"
 
     override val lang = "pt-BR"
 
@@ -55,7 +56,20 @@ class AnimesTC : AnimeHttpSource() {
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(response: Response): SAnime {
-        TODO("Not yet implemented")
+        val body = response.body?.string().orEmpty()
+        val anime = try {
+            response.parseAs<AnimeDto>(body)
+        } catch (e: Exception) {
+            response.parseAs<ResponseDto<AnimeDto>>(body).items.first()
+        }
+
+        return SAnime.create().apply {
+            setUrlWithoutDomain("/series/${anime.id}")
+            title = anime.title
+            status = anime.status
+            genre = anime.tags.joinToString(", ") { it.name }
+            description = anime.synopsis
+        }
     }
 
     // =============================== Search ===============================
@@ -93,7 +107,7 @@ class AnimesTC : AnimeHttpSource() {
         val animes = parsed.items.map {
             SAnime.create().apply {
                 title = it.title
-                url = "$API_URL/series/${it.animeId}"
+                setUrlWithoutDomain("/series/${it.animeId}")
                 thumbnail_url = it.cover.url
             }
         }
@@ -102,17 +116,16 @@ class AnimesTC : AnimeHttpSource() {
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$API_URL/episodes?order=created_at&direction=desc&page=$page&ignoreIndex=false")
+        return GET("$baseUrl/episodes?order=created_at&direction=desc&page=$page&ignoreIndex=false")
     }
 
     // ============================= Utilities ==============================
-    private inline fun <reified T> Response.parseAs(): T {
-        val responseBody = body?.string().orEmpty()
+    private inline fun <reified T> Response.parseAs(preloaded: String? = null): T {
+        val responseBody = preloaded ?: body?.string().orEmpty()
         return json.decodeFromString(responseBody)
     }
 
     companion object {
         const val PREFIX_SEARCH = "id:"
-        private const val API_URL = "https://api2.animestc.com"
     }
 }

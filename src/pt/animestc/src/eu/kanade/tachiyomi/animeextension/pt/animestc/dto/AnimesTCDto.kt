@@ -1,26 +1,47 @@
 package eu.kanade.tachiyomi.animeextension.pt.animestc.dto
 
+import eu.kanade.tachiyomi.animesource.model.SAnime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class ResponseDto<T>(
-    val page: Int,
-    val lastPage: Int,
     @SerialName("data")
-    val items: List<T>
+    val items: List<T>,
+    val lastPage: Int,
+    val page: Int
 )
 
 @Serializable
+data class AnimeDto(
+    val cover: CoverDto,
+    val id: Int,
+    val releaseStatus: String,
+    val synopsis: String,
+    val tags: List<TagDto>,
+    val title: String,
+) {
+    val status by lazy {
+        when (releaseStatus) {
+            "complete" -> SAnime.COMPLETED
+            "airing" -> SAnime.ONGOING
+            else -> SAnime.UNKNOWN
+        }
+    }
+    @Serializable
+    data class TagDto(val name: String)
+}
+
+@Serializable
 data class EpisodeDto(
-    @SerialName("id")
-    val episodeId: Int,
     @SerialName("seriesId")
     val animeId: Int,
-    val number: String,
-    val title: String,
     val cover: CoverDto,
-    val links: VideoLinksDto
+    @SerialName("id")
+    val episodeId: Int,
+    val links: VideoLinksDto,
+    val number: String,
+    val title: String
 ) {
     @Serializable
     data class VideoLinksDto(
@@ -32,8 +53,8 @@ data class EpisodeDto(
 
     @Serializable
     data class VideoLink(
-        val name: String,
         val index: Int,
+        val name: String,
         val quality: String
     )
 }
