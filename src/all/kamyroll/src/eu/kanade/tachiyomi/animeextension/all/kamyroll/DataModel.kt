@@ -8,11 +8,24 @@ import kotlinx.serialization.json.JsonObject
 data class AccessToken(
     val access_token: String,
     val token_type: String,
-    val policy: String,
-    val signature: String,
-    val key_pair_id: String,
-    val bucket: String
+    val policy: String? = null,
+    val signature: String? = null,
+    val key_pair_id: String? = null,
+    val bucket: String? = null
 )
+
+@Serializable
+data class Policy(
+    val cms: Tokens
+) {
+    @Serializable
+    data class Tokens(
+        val policy: String,
+        val signature: String,
+        val key_pair_id: String,
+        val bucket: String
+    )
+}
 
 @Serializable
 data class LinkData(
@@ -43,15 +56,27 @@ data class Anime(
     @SerialName("keywords")
     val genres: ArrayList<String>? = null,
     val series_metadata: Metadata? = null,
-    val content_provider: String? = null,
-    val audio_locales: ArrayList<String>? = null,
-    val subtitle_locales: ArrayList<String>? = null
+    @SerialName("movie_listing_metadata")
+    val movie_metadata: MovieMeta? = null,
+    val content_provider: String? = null
 ) {
     @Serializable
     data class Metadata(
         val maturity_ratings: ArrayList<String>,
         val is_simulcast: Boolean,
         val audio_locales: ArrayList<String>,
+        val subtitle_locales: ArrayList<String>,
+        val is_dubbed: Boolean,
+        val is_subbed: Boolean,
+        @SerialName("tenant_categories")
+        val genres: ArrayList<String>? = null
+    )
+
+    @Serializable
+    data class MovieMeta(
+        val is_dubbed: Boolean,
+        val is_subbed: Boolean,
+        val maturity_ratings: ArrayList<String>,
         val subtitle_locales: ArrayList<String>,
         @SerialName("tenant_categories")
         val genres: ArrayList<String>? = null
@@ -71,6 +96,7 @@ data class SearchAnimeResult(
     @Serializable
     data class SearchAnime(
         val type: String,
+        val count: Int,
         val items: ArrayList<Anime>
     )
 }
@@ -83,7 +109,9 @@ data class SeasonResult(
     @Serializable
     data class Season(
         val id: String,
-        val season_number: Int
+        val season_number: Int? = null,
+        @SerialName("premium_available_date")
+        val date: String? = null
     )
 }
 
@@ -113,6 +141,14 @@ data class EpisodeResult(
     }
 }
 
+data class TempEpisode(
+    var epData: EpisodeData,
+    var name: String,
+    var episode_number: Float,
+    var date_upload: Long,
+    var scanlator: String?
+)
+
 @Serializable
 data class EpisodeData(
     val ids: List<Pair<String, String>>
@@ -121,7 +157,8 @@ data class EpisodeData(
 @Serializable
 data class VideoStreams(
     val streams: Stream,
-    val subtitles: JsonObject
+    val subtitles: JsonObject,
+    val audio_locale: String
 ) {
     @Serializable
     data class Stream(
