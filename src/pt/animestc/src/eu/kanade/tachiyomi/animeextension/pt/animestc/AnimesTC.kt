@@ -1,5 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.pt.animestc
 
+import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.EpisodeDto
+import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.ResponseDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -8,6 +10,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Request
 import okhttp3.Response
@@ -21,7 +24,7 @@ class AnimesTC : AnimeHttpSource() {
 
     override val lang = "pt-BR"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -85,14 +88,31 @@ class AnimesTC : AnimeHttpSource() {
 
     // =============================== Latest ===============================
     override fun latestUpdatesParse(response: Response): AnimesPage {
-        TODO("Not yet implemented")
+        val parsed = response.parseAs<ResponseDto<EpisodeDto>>()
+        val hasNextPage = parsed.page < parsed.lastPage
+        val animes = parsed.items.map {
+            SAnime.create().apply {
+                title = it.title
+                url = "$API_URL/series/${it.animeId}"
+                thumbnail_url = it.cover.url
+            }
+        }
+
+        return AnimesPage(animes, hasNextPage)
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
-        TODO("Not yet implemented")
+        return GET("$API_URL/episodes?order=created_at&direction=desc&page=$page&ignoreIndex=false")
+    }
+
+    // ============================= Utilities ==============================
+    private inline fun <reified T> Response.parseAs(): T {
+        val responseBody = body?.string().orEmpty()
+        return json.decodeFromString(responseBody)
     }
 
     companion object {
         const val PREFIX_SEARCH = "id:"
+        private const val API_URL = "https://api2.animestc.com"
     }
 }
