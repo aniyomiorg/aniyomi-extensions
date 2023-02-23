@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.animestc
 
+import eu.kanade.tachiyomi.animeextension.pt.animestc.ATCFilters.applyFilterParams
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.AnimeDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.EpisodeDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.ResponseDto
@@ -14,12 +15,14 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import okhttp3.CacheControl
 import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.concurrent.TimeUnit.DAYS
 
 class AnimesTC : AnimeHttpSource() {
 
@@ -66,10 +69,11 @@ class AnimesTC : AnimeHttpSource() {
             }
         }
 
-        if (parsed.page < parsed.lastPage)
+        if (parsed.page < parsed.lastPage) {
             return episodes + getEpisodeList(animeId, page + 1)
-        else
+        } else {
             return episodes
+        }
     }
 
     // ============================ Video Links =============================
@@ -88,7 +92,7 @@ class AnimesTC : AnimeHttpSource() {
             setUrlWithoutDomain("/series/${anime.id}")
             title = anime.title
             status = anime.status
-            genre = anime.tags.joinToString(", ") { it.name }
+            genre = anime.genres
             description = anime.synopsis
         }
     }
@@ -111,8 +115,39 @@ class AnimesTC : AnimeHttpSource() {
                     searchAnimeBySlugParse(response)
                 }
         } else {
-            super.fetchSearchAnime(page, query, filters)
+            val params = ATCFilters.getSearchParameters(filters)
+            return Observable.just(searchAnime(page, query, params))
         }
+    }
+
+    private val allAnimesList by lazy {
+        val cache = CacheControl.Builder().maxAge(1, DAYS).build()
+        listOf("movie", "ova", "series").map { type ->
+            val url = "$baseUrl/series?order=title&direction=asc&page=1&full=true&type=$type"
+            val response = client.newCall(GET(url, cache = cache)).execute()
+            response.parseAs<ResponseDto<AnimeDto>>().items
+        }.flatten()
+    }
+
+    override fun getFilterList(): AnimeFilterList = ATCFilters.filterList
+
+    private fun searchAnime(page: Int, query: String, filterParams: ATCFilters.FilterSearchParams): AnimesPage {
+        filterParams.animeName = query
+        val filtered = allAnimesList.applyFilterParams(filterParams)
+        val results = filtered.chunked(30)
+        val hasNextPage = results.size > page
+        val currentPage = if (results.size == 0) {
+            emptyList<SAnime>()
+        } else {
+            results.get(page - 1).map(::searchAnimeFromObject)
+        }
+        return AnimesPage(currentPage, hasNextPage)
+    }
+
+    private fun searchAnimeFromObject(anime: AnimeDto) = SAnime.create().apply {
+        thumbnail_url = anime.cover.url
+        title = anime.title
+        setUrlWithoutDomain("/series/${anime.id}")
     }
 
     private fun searchAnimeBySlugParse(response: Response): AnimesPage {
@@ -128,7 +163,7 @@ class AnimesTC : AnimeHttpSource() {
             SAnime.create().apply {
                 title = it.title
                 setUrlWithoutDomain("/series/${it.animeId}")
-                thumbnail_url = it.cover.url
+                thumbnail_url = it.cover!!.url
             }
         }
 

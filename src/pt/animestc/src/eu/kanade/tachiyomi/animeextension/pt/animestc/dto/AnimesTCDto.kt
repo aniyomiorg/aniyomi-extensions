@@ -20,6 +20,7 @@ data class AnimeDto(
     val synopsis: String,
     val tags: List<TagDto>,
     val title: String,
+    val year: Int?
 ) {
     val status by lazy {
         when (releaseStatus) {
@@ -28,6 +29,9 @@ data class AnimeDto(
             else -> SAnime.UNKNOWN
         }
     }
+
+    val genres by lazy { tags.joinToString(", ") { it.name } }
+
     @Serializable
     data class TagDto(val name: String)
 }
@@ -36,7 +40,7 @@ data class AnimeDto(
 data class EpisodeDto(
     @SerialName("seriesId")
     val animeId: Int,
-    val cover: CoverDto,
+    val cover: CoverDto?,
     val created_at: String,
     val number: String,
     val slug: String,
