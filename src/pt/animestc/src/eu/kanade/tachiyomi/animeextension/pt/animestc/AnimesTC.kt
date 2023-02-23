@@ -98,20 +98,19 @@ class AnimesTC : AnimeHttpSource() {
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
-            val id = query.removePrefix(PREFIX_SEARCH)
-            client.newCall(GET("$baseUrl/animes/$id"))
+            val slug = query.removePrefix(PREFIX_SEARCH)
+            client.newCall(GET("$baseUrl/series?slug=$slug"))
                 .asObservableSuccess()
                 .map { response ->
-                    searchAnimeByIdParse(response, id)
+                    searchAnimeBySlugParse(response)
                 }
         } else {
             super.fetchSearchAnime(page, query, filters)
         }
     }
 
-    private fun searchAnimeByIdParse(response: Response, id: String): AnimesPage {
+    private fun searchAnimeBySlugParse(response: Response): AnimesPage {
         val details = animeDetailsParse(response)
-        details.url = "/animes/$id"
         return AnimesPage(listOf(details), false)
     }
 
@@ -140,6 +139,7 @@ class AnimesTC : AnimeHttpSource() {
         return try {
             parseAs<AnimeDto>(responseBody)
         } catch (e: Exception) {
+            // URL intent handler moment
             parseAs<ResponseDto<AnimeDto>>(responseBody).items.first()
         }
     }
@@ -160,6 +160,6 @@ class AnimesTC : AnimeHttpSource() {
             SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
         }
 
-        const val PREFIX_SEARCH = "id:"
+        const val PREFIX_SEARCH = "slug:"
     }
 }
