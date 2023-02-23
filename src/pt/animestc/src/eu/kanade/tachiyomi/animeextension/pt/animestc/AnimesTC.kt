@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.animeextension.pt.animestc
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.AnimeDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.EpisodeDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.ResponseDto
+import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.VideoDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -13,6 +14,7 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
@@ -29,6 +31,9 @@ class AnimesTC : AnimeHttpSource() {
 
     override val supportsLatest = true
 
+    override fun headersBuilder() = Headers.Builder()
+        .add("Referer", "https://www.animestc.net/")
+
     private val json = Json {
         ignoreUnknownKeys = true
     }
@@ -39,6 +44,7 @@ class AnimesTC : AnimeHttpSource() {
     override fun fetchPopularAnime(page: Int) = fetchLatestUpdates(page)
     override fun popularAnimeParse(response: Response): AnimesPage = TODO()
     override fun popularAnimeRequest(page: Int): Request = TODO()
+
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
         val id = response.getAnimeDto().id
@@ -67,12 +73,12 @@ class AnimesTC : AnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
-    override fun videoListRequest(episode: SEpisode): Request {
-        TODO("Not yet implemented")
-    }
 
     override fun videoListParse(response: Response): List<Video> {
-        TODO("Not yet implemented")
+        val links = response.parseAs<ResponseDto<VideoDto>>().items.first().links
+        return links.online?.filterNot { "mega.nz" in it }?.map {
+            Video(it, "online", it, headers)
+        } ?: emptyList<Video>()
     }
 
     // =========================== Anime Details ============================
