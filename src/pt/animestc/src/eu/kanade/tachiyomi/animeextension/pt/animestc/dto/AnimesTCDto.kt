@@ -37,11 +37,15 @@ data class EpisodeDto(
     @SerialName("seriesId")
     val animeId: Int,
     val cover: CoverDto,
-    @SerialName("id")
-    val episodeId: Int,
-    val links: VideoLinksDto,
+    val created_at: String,
     val number: String,
+    val slug: String,
     val title: String
+)
+
+@Serializable
+data class VideoDto(
+    val links: VideoLinksDto
 ) {
     @Serializable
     data class VideoLinksDto(

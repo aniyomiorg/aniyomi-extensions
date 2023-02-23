@@ -16,6 +16,8 @@ import kotlinx.serialization.json.Json
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class AnimesTC : AnimeHttpSource() {
 
@@ -42,7 +44,29 @@ class AnimesTC : AnimeHttpSource() {
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
-        TODO("Not yet implemented")
+        val id = response.getAnimeDto().id
+        return getEpisodeList(id)
+    }
+
+    private fun episodeListRequest(animeId: Int, page: Int) =
+        GET("$baseUrl/episodes?order=id&direction=desc&page=$page&seriesId=$animeId&specialOrder=true")
+
+    private fun getEpisodeList(animeId: Int, page: Int = 1): List<SEpisode> {
+        val response = client.newCall(episodeListRequest(animeId, page)).execute()
+        val parsed = response.parseAs<ResponseDto<EpisodeDto>>()
+        val episodes = parsed.items.map {
+            SEpisode.create().apply {
+                name = it.title
+                setUrlWithoutDomain("/episodes?slug=${it.slug}")
+                episode_number = it.number.toFloat()
+                date_upload = it.created_at.toDate()
+            }
+        }
+
+        if (parsed.page < parsed.lastPage)
+            return episodes + getEpisodeList(animeId, page + 1)
+        else
+            return episodes
     }
 
     // ============================ Video Links =============================
@@ -56,13 +80,7 @@ class AnimesTC : AnimeHttpSource() {
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(response: Response): SAnime {
-        val body = response.body?.string().orEmpty()
-        val anime = try {
-            response.parseAs<AnimeDto>(body)
-        } catch (e: Exception) {
-            response.parseAs<ResponseDto<AnimeDto>>(body).items.first()
-        }
-
+        val anime = response.getAnimeDto()
         return SAnime.create().apply {
             setUrlWithoutDomain("/series/${anime.id}")
             title = anime.title
@@ -120,12 +138,31 @@ class AnimesTC : AnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
+    private fun Response.getAnimeDto(): AnimeDto {
+        val responseBody = body?.string().orEmpty()
+        return try {
+            parseAs<AnimeDto>(responseBody)
+        } catch (e: Exception) {
+            parseAs<ResponseDto<AnimeDto>>(responseBody).items.first()
+        }
+    }
+
+    private fun String.toDate(): Long {
+        return runCatching {
+            DATE_FORMATTER.parse(this)?.time ?: 0L
+        }.getOrNull() ?: 0L
+    }
+
     private inline fun <reified T> Response.parseAs(preloaded: String? = null): T {
         val responseBody = preloaded ?: body?.string().orEmpty()
         return json.decodeFromString(responseBody)
     }
 
     companion object {
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+        }
+
         const val PREFIX_SEARCH = "id:"
     }
 }
