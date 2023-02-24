@@ -1404,10 +1404,10 @@
   {
     "name": "Aniyomi: pactedanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.pactedanime",
-    "apk": "aniyomi-en.pactedanime-v13.3.apk",
+    "apk": "aniyomi-en.pactedanime-v13.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1593,10 +1593,10 @@
   {
     "name": "Aniyomi: Wcofun",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.wcofun",
-    "apk": "aniyomi-en.wcofun-v13.7.apk",
+    "apk": "aniyomi-en.wcofun-v13.8.apk",
     "lang": "en",
-    "code": 7,
-    "version": "13.7",
+    "code": 8,
+    "version": "13.8",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1605,7 +1605,7 @@
         "name": "Wcofun",
         "lang": "en",
         "id": "1677488626877212634",
-        "baseUrl": "https://www.wcofun.net",
+        "baseUrl": "https://www.wcofun.com",
         "versionId": 1,
         "hasCloudflare": 1
       }
