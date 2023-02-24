@@ -18,7 +18,7 @@ import uy.kohesive.injekt.api.get
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-class RedirectInterceptor : Interceptor {
+class RedirectInterceptor(private val baseUrl: String) : Interceptor {
 
     private val context = Injekt.get<Application>()
     private val handler by lazy { Handler(Looper.getMainLooper()) }
@@ -63,7 +63,7 @@ class RedirectInterceptor : Interceptor {
                     view: WebView,
                     request: WebResourceRequest,
                 ): WebResourceResponse? {
-                    if (request.url.toString().contains("https://www.wcofun.net")) {
+                    if (request.url.toString().contains(baseUrl)) {
                         newRequest = GET(request.url.toString(), request.requestHeaders.toHeaders())
                         latch.countDown()
                     }
