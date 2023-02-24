@@ -7,6 +7,7 @@ import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.ResponseDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.VideoDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.extractors.AnonFilesExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animestc.extractors.LinkBypasser
+import eu.kanade.tachiyomi.animeextension.pt.animestc.extractors.SendcmExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -88,7 +89,7 @@ class AnimesTC : AnimeHttpSource() {
         val videoDto = response.parseAs<ResponseDto<VideoDto>>().items.first()
         val links = videoDto.links
         val allLinks = listOf(links.low, links.medium, links.high).flatten()
-        val supportedPlayers = listOf("anonfiles")
+        val supportedPlayers = listOf("anonfiles", "send")
         val online = links.online?.filterNot { "mega" in it }?.map {
             Video(it, "Player ATC", it, headers)
         } ?: emptyList<Video>()
@@ -104,6 +105,10 @@ class AnimesTC : AnimeHttpSource() {
             when (it.name) {
                 "anonfiles" ->
                     AnonFilesExtractor(client)
+                        .videoFromUrl(playerUrl, quality)
+                        ?.let(::listOf)
+                "send" ->
+                    SendcmExtractor(client)
                         .videoFromUrl(playerUrl, quality)
                         ?.let(::listOf)
                 else -> emptyList<Video>()
