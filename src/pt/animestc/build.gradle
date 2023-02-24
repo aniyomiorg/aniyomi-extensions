@@ -1,0 +1,16 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'AnimesTC'
+    pkgNameSuffix = 'pt.animestc'
+    extClass = '.AnimesTC'
+    extVersionCode = 1
+}
+
+dependencies {
+    compileOnly(libs.bundles.coroutines)
+}
+
+apply from: "$rootDir/common.gradle"
