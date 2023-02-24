@@ -49,6 +49,7 @@ data class EpisodeDto(
 
 @Serializable
 data class VideoDto(
+    val id: Int,
     val links: VideoLinksDto
 ) {
     @Serializable
@@ -63,7 +64,7 @@ data class VideoDto(
     data class VideoLink(
         val index: Int,
         val name: String,
-        val quality: String
+        val quality: String,
     )
 }
 

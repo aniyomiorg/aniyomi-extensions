@@ -5,6 +5,8 @@ import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.AnimeDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.EpisodeDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.ResponseDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.VideoDto
+import eu.kanade.tachiyomi.animeextension.pt.animestc.extractors.AnonFilesExtractor
+import eu.kanade.tachiyomi.animeextension.pt.animestc.extractors.LinkBypasser
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -13,6 +15,10 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.CacheControl
@@ -79,10 +85,30 @@ class AnimesTC : AnimeHttpSource() {
     // ============================ Video Links =============================
 
     override fun videoListParse(response: Response): List<Video> {
-        val links = response.parseAs<ResponseDto<VideoDto>>().items.first().links
-        return links.online?.filterNot { "mega.nz" in it }?.map {
-            Video(it, "online", it, headers)
+        val videoDto = response.parseAs<ResponseDto<VideoDto>>().items.first()
+        val links = videoDto.links
+        val allLinks = listOf(links.low, links.medium, links.high).flatten()
+        val supportedPlayers = listOf("anonfiles")
+        val online = links.online?.filterNot { "mega" in it }?.map {
+            Video(it, "Player ATC", it, headers)
         } ?: emptyList<Video>()
+        return online + allLinks.filter { it.name in supportedPlayers }.parallelMap {
+            val playerUrl = LinkBypasser(client, json).bypass(it, videoDto.id)
+            if (playerUrl == null) return@parallelMap null
+            val quality = when (it.quality) {
+                "low" -> "SD"
+                "medium" -> "HD"
+                "high" -> "FULLHD"
+                else -> "SD"
+            }
+            when (it.name) {
+                "anonfiles" ->
+                    AnonFilesExtractor(client)
+                        .videoFromUrl(playerUrl, quality)
+                        ?.let(::listOf)
+                else -> emptyList<Video>()
+            }
+        }.filterNotNull().toList().flatten()
     }
 
     // =========================== Anime Details ============================
@@ -175,6 +201,11 @@ class AnimesTC : AnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
+    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
+
     private fun Response.getAnimeDto(): AnimeDto {
         val responseBody = body?.string().orEmpty()
         return try {
