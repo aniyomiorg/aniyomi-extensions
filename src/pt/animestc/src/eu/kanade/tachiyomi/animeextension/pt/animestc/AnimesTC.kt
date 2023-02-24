@@ -117,14 +117,12 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
                 "anonfiles" ->
                     AnonFilesExtractor(client)
                         .videoFromUrl(playerUrl, quality)
-                        ?.let(::listOf)
                 "send" ->
                     SendcmExtractor(client)
                         .videoFromUrl(playerUrl, quality)
-                        ?.let(::listOf)
-                else -> emptyList<Video>()
+                else -> null
             }
-        }.filterNotNull().toList().flatten()
+        }.filterNotNull()
     }
 
     // =========================== Anime Details ============================
