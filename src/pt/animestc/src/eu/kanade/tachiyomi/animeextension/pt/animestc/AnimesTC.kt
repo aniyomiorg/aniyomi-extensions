@@ -1,5 +1,9 @@
 package eu.kanade.tachiyomi.animeextension.pt.animestc
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.animestc.ATCFilters.applyFilterParams
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.AnimeDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.EpisodeDto
@@ -8,6 +12,7 @@ import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.VideoDto
 import eu.kanade.tachiyomi.animeextension.pt.animestc.extractors.AnonFilesExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animestc.extractors.LinkBypasser
 import eu.kanade.tachiyomi.animeextension.pt.animestc.extractors.SendcmExtractor
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -27,11 +32,13 @@ import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit.DAYS
 
-class AnimesTC : AnimeHttpSource() {
+class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "AnimesTC"
 
@@ -43,6 +50,10 @@ class AnimesTC : AnimeHttpSource() {
 
     override fun headersBuilder() = Headers.Builder()
         .add("Referer", "https://www.animestc.net/")
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -205,6 +216,25 @@ class AnimesTC : AnimeHttpSource() {
         return GET("$baseUrl/episodes?order=created_at&direction=desc&page=$page&ignoreIndex=false")
     }
 
+    // ============================== Settings ==============================
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val videoQualityPref = ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_VALUES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(videoQualityPref)
+    }
+
     // ============================= Utilities ==============================
     private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
         runBlocking {
@@ -232,11 +262,23 @@ class AnimesTC : AnimeHttpSource() {
         return json.decodeFromString(responseBody)
     }
 
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        return sortedWith(
+            compareBy { it.quality.contains("- $quality") }
+        ).reversed()
+    }
+
     companion object {
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
         }
 
         const val PREFIX_SEARCH = "slug:"
+
+        private const val PREF_QUALITY_KEY = "pref_quality"
+        private const val PREF_QUALITY_TITLE = "Qualidade preferida"
+        private const val PREF_QUALITY_DEFAULT = "HD"
+        private val PREF_QUALITY_VALUES = arrayOf("SD", "HD", "FULLHD")
     }
 }
