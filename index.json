@@ -2657,6 +2657,27 @@
     ]
   },
   {
+    "name": "Aniyomi: AnimesTC",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animestc",
+    "apk": "aniyomi-pt.animestc-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimesTC",
+        "lang": "pt-BR",
+        "id": "3010449287201563287",
+        "baseUrl": "https://api2.animestc.com",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: AnimesUP",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesup",
     "apk": "aniyomi-pt.animesup-v13.4.apk",
