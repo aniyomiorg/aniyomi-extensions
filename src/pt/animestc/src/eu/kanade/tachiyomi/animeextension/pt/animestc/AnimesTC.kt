@@ -232,7 +232,24 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+
+        val playerPref = ListPreference(screen.context).apply {
+            key = PREF_PLAYER_KEY
+            title = PREF_PLAYER_TITLE
+            entries = PREF_PLAYER_VALUES
+            entryValues = PREF_PLAYER_VALUES
+            setDefaultValue(PREF_PLAYER_DEFAULT)
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
         screen.addPreference(videoQualityPref)
+        screen.addPreference(playerPref)
     }
 
     // ============================= Utilities ==============================
@@ -264,8 +281,12 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val player = preferences.getString(PREF_PLAYER_KEY, PREF_PLAYER_DEFAULT)!!
         return sortedWith(
-            compareBy { it.quality.contains("- $quality") }
+            compareBy(
+                { it.quality.contains(player) },
+                { it.quality.contains("- $quality") },
+            )
         ).reversed()
     }
 
@@ -280,5 +301,10 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_QUALITY_TITLE = "Qualidade preferida"
         private const val PREF_QUALITY_DEFAULT = "HD"
         private val PREF_QUALITY_VALUES = arrayOf("SD", "HD", "FULLHD")
+
+        private const val PREF_PLAYER_KEY = "pref_player"
+        private const val PREF_PLAYER_TITLE = "Player preferido"
+        private const val PREF_PLAYER_DEFAULT = "AnonFiles"
+        private val PREF_PLAYER_VALUES = arrayOf("AnonFiles", "Sendcm", "Player ATC")
     }
 }
