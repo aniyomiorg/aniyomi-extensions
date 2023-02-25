@@ -134,7 +134,10 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     ).replaceFirst("^0+(?!$)".toRegex(), "")
 
                 val qualityMatch = qualityRegex.find(prevP.text())
-                val quality = qualityMatch?.value ?: "HD"
+                val quality = qualityMatch?.value ?: let {
+                    val qualityMatchOwn = qualityRegex.find(row.text())
+                    qualityMatchOwn?.value ?: "HD"
+                }
 
                 row.select("a").filter {
                     !it.text().contains("Zip", true) &&
@@ -173,7 +176,10 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }.map { row ->
                 val prevP = row.previousElementSibling()
                 val qualityMatch = qualityRegex.find(prevP.text())
-                val quality = qualityMatch?.value ?: "HD"
+                val quality = qualityMatch?.value ?: let {
+                    val qualityMatchOwn = qualityRegex.find(row.text())
+                    qualityMatchOwn?.value ?: "HD"
+                }
 
                 val collectionName = row.previousElementSiblings().prev("h1,h2,h3,pre").first().text()
                     .replace("Download", "", true).trim()
@@ -314,24 +320,23 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", null)
+        val quality = preferences.getString("preferred_quality", "1080")!!
+        val ascSort = preferences.getString("preferred_size_sort", "asc")!! == "asc"
 
-        val newList = mutableListOf<Video>()
-        if (quality != null) {
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
+        val comparator = compareByDescending<Video> { it.quality.contains(quality) }.let { cmp ->
+            if (ascSort) {
+                cmp.thenBy { it.quality.fixQuality() }
+            } else {
+                cmp.thenByDescending { it.quality.fixQuality() }
             }
-
-            return newList
         }
-        return this
+        return this.sortedWith(comparator)
     }
+
+    private fun String.fixQuality(): Float = this.substringAfterLast("-").trim()
+        .replace("GB", "", true)
+        .replace("MB", "", true)
+        .toFloat()
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
@@ -349,7 +354,24 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val sizeSortPref = ListPreference(screen.context).apply {
+            key = "preferred_size_sort"
+            title = "Preferred Size Sort"
+            entries = arrayOf("Ascending", "Descending")
+            entryValues = arrayOf("asc", "dec")
+            setDefaultValue("asc")
+            summary = "%s -  Sort order to be used after the videos are sorted by their quality."
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
         screen.addPreference(videoQualityPref)
+        screen.addPreference(sizeSortPref)
     }
 
     @Serializable
