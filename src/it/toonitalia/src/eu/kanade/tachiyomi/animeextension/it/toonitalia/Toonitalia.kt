@@ -345,7 +345,8 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
                 url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com") ||
                 url.contains("sbchill.com") || url.contains("sblongvu.com") || url.contains("sbanh.com") ||
-                url.contains("sblanh.com")
+                url.contains("sblanh.com") || url.contains("sbhight.com") || url.contains("sbbrisk.com") ||
+                url.contains("sbspeed.com")
             -> {
                 val videos = StreamSBExtractor(client).videosFromUrl(url, headers, suffix = name, common = false)
                 videos
