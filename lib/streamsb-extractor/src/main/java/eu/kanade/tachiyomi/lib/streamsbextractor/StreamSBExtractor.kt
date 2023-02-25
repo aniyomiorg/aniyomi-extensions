@@ -8,6 +8,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 
 class StreamSBExtractor(private val client: OkHttpClient) {
@@ -26,8 +27,9 @@ class StreamSBExtractor(private val client: OkHttpClient) {
 
     // animension, asianload and dramacool uses "common = false"
     private fun fixUrl(url: String, common: Boolean): String {
-        val sbUrl = url.substringBefore("/e/").substringBefore("/embed-")
-        val id = url.substringAfter("/e/")
+        val sbUrl = "https://${url.toHttpUrl().host}"
+        val id = url.substringAfter("${url.toHttpUrl().host}/")
+            .substringAfter("/e/")
             .substringAfter("/embed-")
             .substringBefore("?")
             .substringBefore(".html")
