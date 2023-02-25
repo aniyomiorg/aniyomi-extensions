@@ -313,10 +313,10 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val server = preferences.getString("preferred_server", "vstream")!!
 
         return this.sortedWith(
-            compareBy( 
-            { it.quality.contains(quality) },
-            { it.quality.contains(server) }
-          )
+            compareBy(
+                { it.quality.contains(quality) },
+                { it.quality.contains(server) }
+            )
         ).reversed()
     }
 
