@@ -5,7 +5,7 @@ ext {
     extName = 'WIT ANIME'
     pkgNameSuffix = 'ar.witanime'
     extClass = '.WitAnime'
-    extVersionCode = 29
+    extVersionCode = 30
     libVersion = '13'
 }
 

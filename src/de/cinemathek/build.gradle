@@ -5,7 +5,7 @@ ext {
     extName = 'Cinemathek'
     pkgNameSuffix = 'de.cinemathek'
     extClass = '.Cinemathek'
-    extVersionCode = 6
+    extVersionCode = 7
     libVersion = '13'
 }
 

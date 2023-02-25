@@ -6,7 +6,7 @@ ext {
     extName = 'Serienstream'
     pkgNameSuffix = 'de.serienstream'
     extClass = '.Serienstream'
-    extVersionCode = 5
+    extVersionCode = 6
     libVersion = '13'
 }
 
