@@ -3,10 +3,10 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlinx-serialization'
 
 ext {
-    extName = 'Consumyroll'
+    extName = 'Yomiroll'
     pkgNameSuffix = 'all.kamyroll'
-    extClass = '.Consumyroll'
-    extVersionCode = 15
+    extClass = '.Yomiroll'
+    extVersionCode = 16
     libVersion = '13'
 }
 
