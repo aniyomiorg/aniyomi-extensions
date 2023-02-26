@@ -111,6 +111,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         for (item in array) {
             val anime = SAnime.create()
             anime.title = item.jsonObject["title"]!!.jsonPrimitive.content
+            anime.thumbnail_url = item.jsonObject["poster"]!!.jsonPrimitive.content
             val animeId = item.jsonObject["id"]!!.jsonPrimitive.int
             anime.setUrlWithoutDomain("$baseUrl/anime/?anime_id=$animeId")
             animeList.add(anime)
@@ -136,6 +137,9 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         for (item in array) {
             val anime = SAnime.create()
             anime.title = item.jsonObject["anime_title"]!!.jsonPrimitive.content
+            if (preferences.getBoolean("preferred_cover_type", false)) {
+                anime.thumbnail_url = item.jsonObject["snapshot"]!!.jsonPrimitive.content
+            }
             val animeId = item.jsonObject["anime_id"]!!.jsonPrimitive.int
             anime.setUrlWithoutDomain("$baseUrl/anime/?anime_id=$animeId")
             anime.artist = item.jsonObject["fansub"]!!.jsonPrimitive.content
@@ -317,9 +321,22 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
                 preferences.edit().putBoolean(key, new).commit()
             }
         }
+        val snapshotPref = SwitchPreferenceCompat(screen.context).apply {
+            key = "preferred_cover_type"
+            title = "Use Snapshot as Cover"
+            summary = """Enable this if you are experiencing lag loading pages.
+                |To get real cover click on the anime to fetch the details""".trimMargin()
+            setDefaultValue(false)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val new = newValue as Boolean
+                preferences.edit().putBoolean(key, new).commit()
+            }
+        }
         screen.addPreference(videoQualityPref)
         screen.addPreference(domainPref)
         screen.addPreference(subPref)
         screen.addPreference(linkPref)
+        screen.addPreference(snapshotPref)
     }
 }
