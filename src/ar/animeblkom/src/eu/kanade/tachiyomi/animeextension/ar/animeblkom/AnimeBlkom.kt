@@ -108,13 +108,17 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val newHeaders = Headers.headersOf("referer", baseUrl + referer)
         val iframeResponse = client.newCall(GET(iframe, newHeaders))
             .execute().asJsoup()
-        return iframeResponse.select(videoListSelector()).map { videoFromElement(it) }
+        return iframeResponse.select(videoListSelector()).map { videoFromElement(it, iframe) }
     }
 
     override fun videoListSelector() = "source"
 
-    override fun videoFromElement(element: Element): Video {
-        return Video(element.attr("src").replace("watch", "download"), element.attr("res") + "p", element.attr("src").replace("watch", "download"))
+    override fun videoFromElement(element: Element) = throw Exception("Not used")
+
+    private fun videoFromElement(element: Element, referrer: String): Video {
+        val videoUrl = element.attr("src")
+        val headers = Headers.headersOf("Referer", referrer)
+        return Video(videoUrl, element.attr("res") + "p", videoUrl, headers = headers)
     }
 
     override fun List<Video>.sort(): List<Video> {
