@@ -10,6 +10,7 @@ ext {
 }
 
 dependencies {
+    implementation(project(':lib-yourupload-extractor'))
     implementation(project(':lib-fembed-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation project(path: ':lib-streamsb-extractor')

@@ -7,7 +7,6 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.latanime.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animeextension.es.latanime.extractors.UploadExtractor
-import eu.kanade.tachiyomi.animeextension.es.latanime.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -19,6 +18,7 @@ import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
+import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -106,7 +106,7 @@ class Latanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
         YearFilter(),
         GenreFilter(),
-        LetterFilter()
+        LetterFilter(),
     )
 
     private class YearFilter : UriPartFilter(
@@ -154,8 +154,8 @@ class Latanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("1985", "1985"),
             Pair("1984", "1984"),
             Pair("1983", "1983"),
-            Pair("1982", "1982")
-        )
+            Pair("1982", "1982"),
+        ),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -207,8 +207,8 @@ class Latanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Aenime", "aenime"),
             Pair("Donghua", "donghua"),
             Pair("Blu-ray", "blu-ray"),
-            Pair("Monogatari", "monogatari")
-        )
+            Pair("Monogatari", "monogatari"),
+        ),
     )
 
     private class LetterFilter : UriPartFilter(
@@ -241,8 +241,8 @@ class Latanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("W", "W"),
             Pair("X", "X"),
             Pair("Y", "Y"),
-            Pair("Z", "Z")
-        )
+            Pair("Z", "Z"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -332,8 +332,7 @@ class Latanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     videoList.addAll(videos)
                 }
                 url.contains("yourupload") -> {
-                    val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
-                    val videos = YourUploadExtractor(client).videoFromUrl(url, headers = headers, prefix = prefix)
+                    val videos = YourUploadExtractor(client).videoFromUrl(url, headers = headers, name = "Original", prefix = prefix)
                     videoList.addAll(videos)
                 }
                 url.contains("sbembed.com") || url.contains("sbembed1.com") || url.contains("sbplay.org") ||
@@ -367,7 +366,7 @@ class Latanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val quality = preferences.getString("preferred_quality", "1080")!!
 
         return this.sortedWith(
-            compareBy { it.quality.contains(quality) }
+            compareBy { it.quality.contains(quality) },
         ).reversed()
     }
 

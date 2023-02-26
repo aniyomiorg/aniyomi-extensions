@@ -11,13 +11,13 @@ import eu.kanade.tachiyomi.animeextension.id.kuronime.extractors.HxFileExtractor
 import eu.kanade.tachiyomi.animeextension.id.kuronime.extractors.LinkBoxExtractor
 import eu.kanade.tachiyomi.animeextension.id.kuronime.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animeextension.id.kuronime.extractors.StreamlareExtractor
-import eu.kanade.tachiyomi.animeextension.id.kuronime.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Request
@@ -127,7 +127,7 @@ class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val hosterSelection = preferences.getStringSet(
             "hoster_selection",
-            setOf("animeku", "mp4upload", "yourupload", "streamlare", "linkbox")
+            setOf("animeku", "mp4upload", "yourupload", "streamlare", "linkbox"),
         )!!
 
         document.select("select.mirror > option[value]").forEach { opt ->
@@ -135,7 +135,7 @@ class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 document.selectFirst("iframe").attr("data-src")
             } else {
                 Jsoup.parse(
-                    String(Base64.decode(opt.attr("value"), Base64.DEFAULT))
+                    String(Base64.decode(opt.attr("value"), Base64.DEFAULT)),
                 ).select("iframe[data-src~=.]").attr("data-src")
             }
 
@@ -148,8 +148,7 @@ class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     videoList.addAll(Mp4uploadExtractor(client).getVideoFromUrl(decoded, headers, opt.text()))
                 }
                 hosterSelection.contains("yourupload") && decoded.contains("yourupload.com") -> {
-                    val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
-                    videoList.addAll(YourUploadExtractor(client).videoFromUrl(decoded, headers, opt.text()))
+                    videoList.addAll(YourUploadExtractor(client).videoFromUrl(decoded, headers, opt.text(), "Original - "))
                 }
                 hosterSelection.contains("streamlare") && decoded.contains("streamlare.com") -> {
                     videoList.addAll(StreamlareExtractor(client).videosFromUrl(decoded, opt.text()))

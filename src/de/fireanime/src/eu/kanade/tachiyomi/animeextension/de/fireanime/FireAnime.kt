@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.animeextension.de.fireanime.dto.EpisodeListingWrapper
 import eu.kanade.tachiyomi.animeextension.de.fireanime.dto.EpisodeSourcesDto
 import eu.kanade.tachiyomi.animeextension.de.fireanime.dto.HosterSourceDto
 import eu.kanade.tachiyomi.animeextension.de.fireanime.dto.VideoLinkDto
-import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.de.fireanime.extractors.FireCdnExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -23,6 +22,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit

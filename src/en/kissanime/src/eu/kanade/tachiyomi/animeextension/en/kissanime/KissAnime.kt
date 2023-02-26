@@ -7,7 +7,6 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.en.kissanime.extractors.DailymotionExtractor
 import eu.kanade.tachiyomi.animeextension.en.kissanime.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animeextension.en.kissanime.extractors.VodstreamExtractor
-import eu.kanade.tachiyomi.animeextension.en.kissanime.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -16,6 +15,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
+import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -179,7 +179,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodeId = (baseUrl + episode.url).toHttpUrl().queryParameter("id")!!
 
         var document = client.newCall(
-            GET(baseUrl + episode.url, headers = headers)
+            GET(baseUrl + episode.url, headers = headers),
         ).execute().asJsoup()
         var newDocument = document
 
@@ -188,7 +188,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
             if (!server.hasAttr("selected")) {
                 newDocument = client.newCall(
-                    GET(url, headers = headers)
+                    GET(url, headers = headers),
                 ).execute().asJsoup()
             }
 
@@ -202,7 +202,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 "Origin", baseUrl,
                 "Referer", url,
                 "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
-                "X-Requested-With", "XMLHttpRequest"
+                "X-Requested-With", "XMLHttpRequest",
             )
 
             val getIframeBody = "episode_id=$episodeId&ctk=$ctk".toRequestBody("application/x-www-form-urlencoded".toMediaType())
@@ -210,8 +210,8 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
             val iframe = json.decodeFromString<IframeResponse>(
                 client.newCall(
-                    POST("$baseUrl/ajax/anime/load_episodes_v2?s=$serverName", body = getIframeBody, headers = getIframeHeaders)
-                ).execute().body!!.string()
+                    POST("$baseUrl/ajax/anime/load_episodes_v2?s=$serverName", body = getIframeBody, headers = getIframeHeaders),
+                ).execute().body!!.string(),
             )
             var iframeUrl = Jsoup.parse(iframe.value).selectFirst("iframe").attr("src")
 
@@ -258,7 +258,6 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             FembedExtractor(client).videosFromUrl(newUrl, prefix = "${server.name} - ")
                         }
                         url.contains("yourupload") -> {
-                            val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
                             YourUploadExtractor(client).videoFromUrl(url, headers = headers, name = server.name)
                         }
                         url.contains("mp4upload") -> {
@@ -275,7 +274,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         else -> null
                     }
                 }.getOrNull()
-            }.filterNotNull().flatten()
+            }.filterNotNull().flatten(),
         )
 
         return Observable.just(videoList.sort())
@@ -293,19 +292,19 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val quality = preferences.getString("preferred_quality", "1080")!!
 
         return this.sortedWith(
-            compareBy { it.quality.contains(quality) }
+            compareBy { it.quality.contains(quality) },
         ).reversed()
     }
 
     data class Server(
         val name: String,
         val url: String,
-        val password: String? = null
+        val password: String? = null,
     )
 
     @Serializable
     data class IframeResponse(
-        val value: String
+        val value: String,
     )
 
     private fun parseDate(dateStr: String): Long {

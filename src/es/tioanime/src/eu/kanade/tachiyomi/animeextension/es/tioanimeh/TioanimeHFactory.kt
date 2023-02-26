@@ -9,7 +9,7 @@ import okhttp3.Request
 class TioanimeHFactory : AnimeSourceFactory {
     override fun createSources(): List<AnimeSource> = listOf(
         tioanime(),
-        tiohentai()
+        tiohentai(),
     )
 }
 
@@ -25,7 +25,7 @@ class tioanime : TioanimeH("TioAnime", "https://tioanime.com") {
     }
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
-        GenreFilter()
+        GenreFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -71,8 +71,8 @@ class tioanime : TioanimeH("TioAnime", "https://tioanime.com") {
             Pair("Terror", "terror"),
             Pair("Vampiros", "vampiros"),
             Pair("Yaoi", "yaoi"),
-            Pair("Yuri", "yuri")
-        )
+            Pair("Yuri", "yuri"),
+        ),
     )
 }
 
