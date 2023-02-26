@@ -111,9 +111,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         for (item in array) {
             val anime = SAnime.create()
             anime.title = item.jsonObject["title"]!!.jsonPrimitive.content
-            if (preferences.getBoolean("preferred_cover_type", false)) {
-                anime.thumbnail_url = item.jsonObject["snapshot"]!!.jsonPrimitive.content
-            }
+            anime.thumbnail_url = item.jsonObject["poster"]!!.jsonPrimitive.content
             val animeId = item.jsonObject["id"]!!.jsonPrimitive.int
             anime.setUrlWithoutDomain("$baseUrl/anime/?anime_id=$animeId")
             animeList.add(anime)
