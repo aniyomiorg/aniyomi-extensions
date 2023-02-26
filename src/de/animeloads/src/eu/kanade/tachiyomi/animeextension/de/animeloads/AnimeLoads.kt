@@ -40,7 +40,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val lang = "de"
 
     override val supportsLatest = false
-    
+
     override val id: Long = 655155856096L
 
     override val client: OkHttpClient = network.client.newBuilder()

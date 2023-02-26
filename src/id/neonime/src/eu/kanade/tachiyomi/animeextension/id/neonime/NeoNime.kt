@@ -8,7 +8,6 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.id.neonime.extractors.BloggerExtractor
 import eu.kanade.tachiyomi.animeextension.id.neonime.extractors.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.animeextension.id.neonime.extractors.LinkBoxExtractor
-import eu.kanade.tachiyomi.animeextension.id.neonime.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -18,6 +17,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
@@ -210,7 +210,7 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val hosterSelection = preferences.getStringSet(
             "hoster_selection",
-            setOf("blogger", "linkbox", "fembed", "okru", "yourupload", "gdriveplayer")
+            setOf("blogger", "linkbox", "fembed", "okru", "yourupload", "gdriveplayer"),
         )!!
 
         document.select("div.player2 > div.embed2 > div").forEach {
@@ -235,17 +235,19 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     videoList.addAll(BloggerExtractor(client).videosFromUrl(link, it.text()))
                 }
                 hosterSelection.contains("linkbox") && link.contains("yourupload.com") -> {
-                    val yuHeaders = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
-                    videoList.addAll(YourUploadExtractor(client).videoFromUrl(link, yuHeaders, it.text()))
+                    videoList.addAll(YourUploadExtractor(client).videoFromUrl(link, headers, it.text(), "Original - "))
                 }
                 hosterSelection.contains("gdriveplayer") && link.contains("neonime.fun") -> {
                     val headers = Headers.headersOf(
-                        "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-                        "Referer", response.request.url.toString(),
-                        "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0"
+                        "Accept",
+                        "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                        "Referer",
+                        response.request.url.toString(),
+                        "User-Agent",
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
                     )
                     var iframe = client.newCall(
-                        GET(link, headers = headers)
+                        GET(link, headers = headers),
                     ).execute().asJsoup()
 
                     var iframeUrl = iframe.selectFirst("iframe").attr("src")

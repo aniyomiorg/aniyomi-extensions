@@ -4,10 +4,10 @@ import dev.datlag.jsunpacker.JsUnpacker
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.OkHttpClient
 import okhttp3.Headers
+import okhttp3.OkHttpClient
 
-//From Vizer Extension
+// From Vizer Extension
 class MixDropExtractor(private val client: OkHttpClient) {
     fun videoFromUrl(url: String, lang: String = ""): List<Video> {
         val doc = client.newCall(GET(url)).execute().asJsoup()

@@ -6,7 +6,6 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.JkanimeExtractor
 import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.Mp4uploadExtractor
-import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.ZippyExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -19,6 +18,7 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
@@ -99,7 +99,8 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val body = FormBody.Builder().add("apyki", apyki).build()
         return POST(
             "$baseUrl/v2/directories?studio=0&not_genre=&year=&orderBy=2&language=&type=&duration=&search=&letter=0&limit=24&genre=&season=&page=${(page - 1) * 24}&status=",
-            headers = headers1, body = body
+            headers = headers1,
+            body = body,
         )
     }
 
@@ -109,7 +110,8 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val body = FormBody.Builder().add("apyki", apyki).build()
         return POST(
             "$baseUrl/v2/directories?studio=0&not_genre=&year=&orderBy=4&language=&type=&duration=&search=&letter=0&limit=24&genre=&season=&page=${(page - 1) * 24}&status=",
-            headers = headers1, body = body
+            headers = headers1,
+            body = body,
         )
     }
 
@@ -127,7 +129,7 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         thumbnail_url = aip.random() + animeDetail["img_url"]!!.jsonPrimitive.content
                     }
                 },
-                true
+                true,
             )
         } catch (e: Exception) {
             return AnimesPage(emptyList(), false)
@@ -145,16 +147,22 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val genre = try {
             if (genreFilter.isNotEmpty()) {
                 genreFilter.filter { it.state }.map { genres[it.name] }.joinToString("%2C") { it.toString() }
-            } else ""
+            } else {
+                ""
+            }
         } catch (e: Exception) { "" }
 
         val excludeGenre = if (excludeGenreFilter.isNotEmpty()) {
             excludeGenreFilter.filter { it.state }.map { genres[it.name] }.joinToString("%2C") { it.toString() }
-        } else ""
+        } else {
+            ""
+        }
 
         val studio = if (studioFilter.isNotEmpty()) {
             studioFilter.filter { it.state }.map { studiosMap[it.name] }.joinToString("%2C") { it.toString() }
-        } else 0
+        } else {
+            0
+        }
 
         val status = if (stateFilter.state != 0) stateFilter.toUriPart() else ""
 
@@ -162,7 +170,8 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return POST(
             url,
-            headers = headers1, body = body
+            headers = headers1,
+            body = body,
         )
     }
 
@@ -180,7 +189,7 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         thumbnail_url = aip.random() + animeDetail["img_url"]!!.jsonPrimitive.content
                     }
                 },
-                false
+                false,
             )
         } catch (e: Exception) {
             return AnimesPage(emptyList(), false)
@@ -231,7 +240,6 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         }
                     }
                     url.contains("yourupload") -> {
-                        val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
                         videoList.addAll(YourUploadExtractor(client).videoFromUrl(url, headers))
                     }
                     url.contains("zippyshare") -> {
@@ -269,7 +277,7 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return POST(
             episode.url,
             headers1,
-            body
+            body,
         )
     }
 
@@ -290,7 +298,7 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Emision", "1"),
             Pair("Finalizado", "2"),
             Pair("Proximamente", "3"),
-        )
+        ),
     )
 
     class TagCheckBox(tag: String) : AnimeFilter.CheckBox(tag, false)
@@ -310,7 +318,7 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "FHD-ALT Fembed:1080p", "FHD-ALT Fembed:720p", "FHD-ALT Fembed:480p", "FHD-ALT Fembed:360p", "FHD-ALT Fembed:240p", // Fembed-ALT
             "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", // Okru
             "StreamSB:360p", "StreamSB:480p", "StreamSB:720p", "StreamSB:1080p", // StreamSB
-            "Xtreme S", "Nozomi", "Desu", "F1S-TAPE", "F1NIX" // video servers without resolution
+            "Xtreme S", "Nozomi", "Desu", "F1S-TAPE", "F1NIX", // video servers without resolution
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"

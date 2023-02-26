@@ -39,7 +39,7 @@ class AOAPIInterceptor(client: OkHttpClient) : Interceptor {
             val tokenObject = Json.decodeFromString<JsonObject>(tokenResponse)
 
             tokenObject["access_token"]!!.jsonPrimitive.content
-        } catch(_: Throwable) {
+        } catch (_: Throwable) {
             ""
         }
     }

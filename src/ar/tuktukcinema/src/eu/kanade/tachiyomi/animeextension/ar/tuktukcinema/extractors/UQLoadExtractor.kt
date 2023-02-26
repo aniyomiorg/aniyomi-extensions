@@ -12,7 +12,7 @@ class UQLoadExtractor(private val client: OkHttpClient) {
         val videoUrl = check.substringAfter("sources: [\"").substringBefore("\"")
         return if (check.contains("sources"))
             Video(url, quality, videoUrl)
-         else
-             null
+        else
+            null
     }
 }

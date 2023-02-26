@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.animeextension.es.monoschinos
 import android.app.Application
 import android.content.SharedPreferences
 import android.util.Base64
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.monoschinos.extractors.Mp4uploadExtractor
@@ -88,19 +87,19 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             // val server = it.select("a").text()
             val urlBase64 = it.select("a").attr("data-player")
             val url = Base64.decode(urlBase64, Base64.DEFAULT).toString(Charsets.UTF_8).substringAfter("=")
-                when {
-                    url.contains("fembed") -> videoList.addAll(FembedExtractor(client).videosFromUrl(url))
-                    url.contains("ok") -> if (!url.contains("streamcherry")) videoList.addAll(OkruExtractor(client).videosFromUrl(url))
-                    url.contains("solidfiles") -> videoList.addAll(SolidFilesExtractor(client).videosFromUrl(url))
-                    url.contains("uqload") -> {
-                        val video = UploadExtractor(client).videoFromUrl(url, headers)
-                        if (video != null) videoList.add(video)
-                    }
-                    url.contains("mp4upload") -> {
-                        val videoHeaders = headersBuilder().add("Referer", "https://mp4upload.com/").build()
-                        videoList.add(Mp4uploadExtractor().getVideoFromUrl(url, videoHeaders))
-                    }
+            when {
+                url.contains("fembed") -> videoList.addAll(FembedExtractor(client).videosFromUrl(url))
+                url.contains("ok") -> if (!url.contains("streamcherry")) videoList.addAll(OkruExtractor(client).videosFromUrl(url))
+                url.contains("solidfiles") -> videoList.addAll(SolidFilesExtractor(client).videosFromUrl(url))
+                url.contains("uqload") -> {
+                    val video = UploadExtractor(client).videoFromUrl(url, headers)
+                    if (video != null) videoList.add(video)
                 }
+                url.contains("mp4upload") -> {
+                    val videoHeaders = headersBuilder().add("Referer", "https://mp4upload.com/").build()
+                    videoList.add(Mp4uploadExtractor().getVideoFromUrl(url, videoHeaders))
+                }
+            }
         }
 
         return videoList.filter { video -> video.url.contains("http") }
