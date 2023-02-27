@@ -82,7 +82,7 @@ class AccessTokenInterceptor(
         )
 
         // Thanks Stormzy
-        val refreshTokenResp = client.newCall(GET("https://raw.githubusercontent.com/Stormunblessed/IPTV-CR-NIC/main/logos/refreshtoken.txt")).execute()
+        val refreshTokenResp = client.newCall(GET("https://raw.githubusercontent.com/Samfun75/File-host/main/aniyomi/refreshToken.txt")).execute()
         val refreshToken = refreshTokenResp.body!!.string().replace("[\n\r]".toRegex(), "")
         val headers = Headers.headersOf(
             "Content-Type", "application/x-www-form-urlencoded",
