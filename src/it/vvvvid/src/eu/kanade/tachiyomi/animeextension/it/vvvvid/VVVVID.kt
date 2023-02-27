@@ -219,6 +219,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
                         filterCounter++
                     }
                 }
+                else -> {}
             }
         }
 

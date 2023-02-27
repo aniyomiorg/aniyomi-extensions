@@ -217,6 +217,7 @@ class Movies4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             return GET(genreUrl, headers)
                         }
                     }
+                    else -> {}
                 }
             }
             throw Exception("اختر فلتر")

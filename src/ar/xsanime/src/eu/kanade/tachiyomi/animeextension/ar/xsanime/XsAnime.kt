@@ -122,6 +122,7 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     is GenreFilter -> url.addQueryParameter("genre", filter.toUriPart())
                     is StatusFilter -> url.addQueryParameter("status", filter.toUriPart())
                     // is LetterFilter -> url.addQueryParameter("letter", filter.toUriPart())
+                    else -> {}
                 }
             }
             GET(url.build().toString(), headers)

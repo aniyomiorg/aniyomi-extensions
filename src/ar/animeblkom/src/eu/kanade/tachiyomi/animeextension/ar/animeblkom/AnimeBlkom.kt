@@ -168,6 +168,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             return GET(genreUrl.toString(), headers)
                         }
                     }
+                    else -> {}
                 }
             }
             throw Exception("اختر فلتر")

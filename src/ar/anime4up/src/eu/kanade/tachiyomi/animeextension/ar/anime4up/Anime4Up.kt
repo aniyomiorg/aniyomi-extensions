@@ -297,6 +297,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             return GET(typeUrl.toString(), headers)
                         }
                     }
+                    else -> {}
                 }
             }
             throw Exception("اختر فلتر")

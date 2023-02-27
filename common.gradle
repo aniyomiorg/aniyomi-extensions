@@ -79,7 +79,7 @@ android {
 
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_1_8.toString()
-        freeCompilerArgs += "-Xopt-in=kotlinx.serialization.ExperimentalSerializationApi"
+        freeCompilerArgs += "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"
     }
 }
 
@@ -91,6 +91,16 @@ dependencies {
     implementation(project(":core"))
     compileOnly(libs.bundles.common)
 }
+
+configurations.all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        if (details.requested.group == 'org.jetbrains.kotlin' && details.requested.name == 'kotlin-stdlib-jdk8' && details.requested.version == '1.7.0') {
+            details.useVersion '1.7.21'
+            details.because 'Fix problems with dev.datlag JsUnpacker'
+        }
+    }
+}
+
 
 preBuild.dependsOn(lintKotlin)
 lintKotlin.dependsOn(formatKotlin)

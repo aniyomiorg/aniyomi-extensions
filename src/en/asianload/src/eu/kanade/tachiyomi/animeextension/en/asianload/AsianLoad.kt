@@ -182,6 +182,7 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             return GET(genreUrl.toString(), headers)
                         }
                     }
+                    else -> {}
                 }
             }
             throw Exception("Choose Filter")
