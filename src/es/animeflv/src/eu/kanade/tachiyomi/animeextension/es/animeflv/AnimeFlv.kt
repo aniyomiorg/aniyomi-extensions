@@ -289,9 +289,9 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = externalOrInternalImg(document.selectFirst("div.AnimeCover div.Image figure img").attr("src"))
-        anime.title = document.selectFirst("div.Ficha.fchlt div.Container .Title").text()
-        anime.description = document.selectFirst("div.Description").text().removeSurrounding("\"")
+        anime.thumbnail_url = externalOrInternalImg(document.selectFirst("div.AnimeCover div.Image figure img")!!.attr("src"))
+        anime.title = document.selectFirst("div.Ficha.fchlt div.Container .Title")!!.text()
+        anime.description = document.selectFirst("div.Description")!!.text().removeSurrounding("\"")
         anime.genre = document.select("nav.Nvgnrs a").joinToString { it.text() }
         anime.status = parseStatus(document.select("span.fa-tv").text())
         return anime

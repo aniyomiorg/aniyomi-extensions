@@ -27,7 +27,7 @@ class VodstreamExtractor(private val client: OkHttpClient) {
             GET(url, headers = getIframeHeaders)
         ).execute().asJsoup()
 
-        val sourcesData = iframe.selectFirst("script:containsData(playerInstance)").data()
+        val sourcesData = iframe.selectFirst("script:containsData(playerInstance)")!!.data()
         val sources = json.decodeFromString<List<Source>>("[${sourcesData.substringAfter("sources: [").substringBefore("],")}]")
 
         sources.forEach { source ->

@@ -47,9 +47,9 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.selectFirst("div.msebox div.headsebox div.tisebox h2 a").attr("href"))
-        anime.title = formatTitle(element.selectFirst("div.msebox div.headsebox div.tisebox h2 a").text())
-        anime.thumbnail_url = element.selectFirst("div.msebox div.bigsebox div.l img.attachment-post-thumbnail.size-post-thumbnail.wp-post-image").attr("src")
+        anime.setUrlWithoutDomain(element.selectFirst("div.msebox div.headsebox div.tisebox h2 a")!!.attr("href"))
+        anime.title = formatTitle(element.selectFirst("div.msebox div.headsebox div.tisebox h2 a")!!.text())
+        anime.thumbnail_url = element.selectFirst("div.msebox div.bigsebox div.l img.attachment-post-thumbnail.size-post-thumbnail.wp-post-image")!!.attr("src")
         return anime
     }
 
@@ -64,8 +64,8 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-        episode.setUrlWithoutDomain(element.selectFirst("a.btn.btn-dark.mb-1.bottone-ep").attr("href"))
-        val epText = element.selectFirst("a.btn.btn-dark.mb-1.bottone-ep").text()
+        episode.setUrlWithoutDomain(element.selectFirst("a.btn.btn-dark.mb-1.bottone-ep")!!.attr("href"))
+        val epText = element.selectFirst("a.btn.btn-dark.mb-1.bottone-ep")!!.text()
         val epNumber = epText.substringAfter("Episodio ")
         if (epNumber.contains("-", true)) {
             episode.episode_number = epNumber.substringBefore("-").toFloat()
@@ -151,13 +151,13 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         if (filterSearch) {
             // filter search
-            anime.setUrlWithoutDomain(element.selectFirst("div.card.mb-4.shadow-sm a").attr("href"))
-            anime.title = formatTitle(element.selectFirst("div.card.mb-4.shadow-sm a").attr("title"))
-            anime.thumbnail_url = element.selectFirst("div.card.mb-4.shadow-sm a img.new-anime").attr("src")
+            anime.setUrlWithoutDomain(element.selectFirst("div.card.mb-4.shadow-sm a")!!.attr("href"))
+            anime.title = formatTitle(element.selectFirst("div.card.mb-4.shadow-sm a")!!.attr("title"))
+            anime.thumbnail_url = element.selectFirst("div.card.mb-4.shadow-sm a img.new-anime")!!.attr("src")
         } else {
             // word search
-            anime.setUrlWithoutDomain(element.selectFirst("li.list-group-item.bg-dark-as-box-shadow div.item-archivio div.info-archivio h3 a.badge.badge-archivio.badge-light").attr("href"))
-            anime.title = formatTitle(element.selectFirst("li.list-group-item.bg-dark-as-box-shadow div.item-archivio div.info-archivio h3 a.badge.badge-archivio.badge-light").text())
+            anime.setUrlWithoutDomain(element.selectFirst("li.list-group-item.bg-dark-as-box-shadow div.item-archivio div.info-archivio h3 a.badge.badge-archivio.badge-light")!!.attr("href"))
+            anime.title = formatTitle(element.selectFirst("li.list-group-item.bg-dark-as-box-shadow div.item-archivio div.info-archivio h3 a.badge.badge-archivio.badge-light")!!.text())
             anime.thumbnail_url = element.select("li.list-group-item.bg-dark-as-box-shadow div.item-archivio a.thumb.image-wrapper img.rounded.locandina-archivio").attr("src")
         }
         return anime
@@ -198,12 +198,12 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.genre =
             document.select("div.container.shadow.rounded.bg-dark-as-box.mb-3.p-3.w-100 a.badge.badge-dark.generi-as.mb-1")
                 .joinToString { it.text() }
-        anime.thumbnail_url = document.selectFirst("img.img-fluid.cover-anime.rounded").attr("src")
+        anime.thumbnail_url = document.selectFirst("img.img-fluid.cover-anime.rounded")!!.attr("src")
         val alterTitle = formatTitle(
-            document.selectFirst("div.box-trasparente-alternativo.rounded").text()
+            document.selectFirst("div.box-trasparente-alternativo.rounded")!!.text()
         ).replace("Dub ITA", "").trim()
-        val description1 = document.select("div#trama div#shown-trama").firstOrNull()?.ownText()
-        val description2 = document.select("div#full-trama.d-none").firstOrNull()?.ownText()
+        val description1 = document.selectFirst("div#trama div#shown-trama")?.ownText()
+        val description2 = document.selectFirst("div#full-trama.d-none")?.ownText()
         when {
             description1 == null -> {
                 anime.description = description2
@@ -238,9 +238,9 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
-        anime.title = formatTitle(element.selectFirst("a").attr("title"))
-        anime.thumbnail_url = element.selectFirst("a img.new-anime").attr("src")
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        anime.title = formatTitle(element.selectFirst("a")!!.attr("title"))
+        anime.thumbnail_url = element.selectFirst("a img.new-anime")!!.attr("src")
         return anime
     }
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/newest?page=$page")

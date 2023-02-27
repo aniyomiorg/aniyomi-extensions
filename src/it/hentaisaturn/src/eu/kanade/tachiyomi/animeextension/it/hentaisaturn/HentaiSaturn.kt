@@ -47,9 +47,9 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
-        anime.title = formatTitle(element.selectFirst("a img.img-fluid.w-100.rounded.hentai-img").attr("title"))
-        anime.thumbnail_url = element.selectFirst("a img.img-fluid.w-100.rounded.hentai-img").attr("src")
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        anime.title = formatTitle(element.selectFirst("a img.img-fluid.w-100.rounded.hentai-img")!!.attr("title"))
+        anime.thumbnail_url = element.selectFirst("a img.img-fluid.w-100.rounded.hentai-img")!!.attr("src")
         return anime
     }
 
@@ -64,8 +64,8 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-        episode.setUrlWithoutDomain(element.selectFirst("a.btn.btn-dark.mb-1.bottone-ep").attr("href"))
-        val epText = element.selectFirst("a.btn.btn-dark.mb-1.bottone-ep").text()
+        episode.setUrlWithoutDomain(element.selectFirst("a.btn.btn-dark.mb-1.bottone-ep")!!.attr("href"))
+        val epText = element.selectFirst("a.btn.btn-dark.mb-1.bottone-ep")!!.text()
         val epNumber = epText.substringAfter("Episodio ")
         if (epNumber.contains("-", true)) {
             episode.episode_number = epNumber.substringBefore("-").toFloat()
@@ -151,13 +151,13 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         if (filterSearch) {
             // filter search
-            anime.setUrlWithoutDomain(element.selectFirst("div.card.mb-4.shadow-sm a").attr("href"))
-            anime.title = formatTitle(element.selectFirst("div.card.mb-4.shadow-sm a").attr("title"))
-            anime.thumbnail_url = element.selectFirst("div.card.mb-4.shadow-sm a img.new-hentai").attr("src")
+            anime.setUrlWithoutDomain(element.selectFirst("div.card.mb-4.shadow-sm a")!!.attr("href"))
+            anime.title = formatTitle(element.selectFirst("div.card.mb-4.shadow-sm a")!!.attr("title"))
+            anime.thumbnail_url = element.selectFirst("div.card.mb-4.shadow-sm a img.new-hentai")!!.attr("src")
         } else {
             // word search
-            anime.setUrlWithoutDomain(element.selectFirst("a.thumb.image-wrapper").attr("href"))
-            anime.title = formatTitle(element.selectFirst("a.thumb.image-wrapper img.rounded.copertina-archivio").attr("alt"))
+            anime.setUrlWithoutDomain(element.selectFirst("a.thumb.image-wrapper")!!.attr("href"))
+            anime.title = formatTitle(element.selectFirst("a.thumb.image-wrapper img.rounded.copertina-archivio")!!.attr("alt"))
             anime.thumbnail_url = element.select("a.thumb.image-wrapper img.rounded.copertina-archivio").attr("src")
         }
         return anime
@@ -193,10 +193,10 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val indexS2 = tempDetails.indexOf("Data di uscita:")
         anime.status = parseStatus(tempDetails.substring(indexS1, indexS2).trim())
         anime.genre = document.select("div.container.shadow.rounded.bg-dark-as-box.mb-3.p-3.w-100 a.badge.badge-dark.generi-as.mb-1").joinToString { it.text() }
-        anime.thumbnail_url = document.selectFirst("img.img-fluid.cover-anime.rounded").attr("src")
-        val alterTitle = formatTitle(document.selectFirst("div.box-trasparente-alternativo.rounded").text()).replace("Dub ITA", "").trim()
-        val description1 = document.select("div#trama div#shown-trama").firstOrNull()?.ownText()
-        val description2 = document.select("div#full-trama.d-none").firstOrNull()?.ownText()
+        anime.thumbnail_url = document.selectFirst("img.img-fluid.cover-anime.rounded")!!.attr("src")
+        val alterTitle = formatTitle(document.selectFirst("div.box-trasparente-alternativo.rounded")!!.text()).replace("Dub ITA", "").trim()
+        val description1 = document.selectFirst("div#trama div#shown-trama")?.ownText()
+        val description2 = document.selectFirst("div#full-trama.d-none")?.ownText()
         when {
             description1 == null -> {
                 anime.description = description2
@@ -235,9 +235,9 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
-        anime.title = formatTitle(element.selectFirst("a").attr("title"))
-        anime.thumbnail_url = element.selectFirst("a img.new-hentai").attr("src")
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        anime.title = formatTitle(element.selectFirst("a")!!.attr("title"))
+        anime.thumbnail_url = element.selectFirst("a img.new-hentai")!!.attr("src")
         return anime
     }
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/newest?page=$page")

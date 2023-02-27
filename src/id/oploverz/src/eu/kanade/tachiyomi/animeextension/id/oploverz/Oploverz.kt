@@ -93,8 +93,8 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun getAnimeFromAnimeElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("div > a").first().attr("href"))
-        anime.thumbnail_url = element.select("div > a > div.limit > img").first().attr("src")
+        anime.setUrlWithoutDomain(element.selectFirst("div > a")!!.attr("href"))
+        anime.thumbnail_url = element.selectFirst("div > a > div.limit > img")!!.attr("src")
         anime.title = element.select("div > a > div.tt > h2").text()
         return anime
     }

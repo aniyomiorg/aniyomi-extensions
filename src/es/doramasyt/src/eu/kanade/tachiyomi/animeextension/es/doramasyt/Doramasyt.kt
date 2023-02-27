@@ -164,7 +164,7 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
-            element.selectFirst("a").attr("href")
+            element.selectFirst("a")!!.attr("href")
         )
         anime.title = element.select("div.animedtls p").text()
         anime.thumbnail_url = element.select("a img").attr("src")
@@ -178,11 +178,11 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        // anime.thumbnail_url = document.selectFirst("div.herohead div.heroheadmain").attr("style").substringAfter(",url(").substringBefore(") no-repeat;")
-        val sub = document.selectFirst("div.herohead div.heroheadmain strong").text()
-        val title = document.selectFirst("div.herohead div.heroheadmain h1").text().trim()
+        // anime.thumbnail_url = document.selectFirst("div.herohead div.heroheadmain")!!.attr("style").substringAfter(",url(").substringBefore(") no-repeat;")
+        val sub = document.selectFirst("div.herohead div.heroheadmain strong")!!.text()
+        val title = document.selectFirst("div.herohead div.heroheadmain h1")!!.text().trim()
         anime.title = title + if (sub.isNotEmpty()) " ($sub)" else ""
-        anime.description = document.selectFirst("div.herohead div.heroheadmain div.flimdtls p.textComplete")
+        anime.description = document.selectFirst("div.herohead div.heroheadmain div.flimdtls p.textComplete")!!
             .text().removeSurrounding("\"").replace("Ver menos", "")
         anime.genre = document.select("div.herohead div.heroheadmain div.writersdiv div.nobel h6 a").joinToString { it.text() }
         anime.status = parseStatus(document.select("div.herohead div.heroheadmain div.writersdiv div.state h6").text())
@@ -202,9 +202,9 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
-            element.selectFirst("a").attr("href")
+            element.selectFirst("a")!!.attr("href")
         )
-        anime.title = element.selectFirst("a div.chapter p").text()
+        anime.title = element.selectFirst("a div.chapter p")!!.text()
         anime.thumbnail_url = element.select("a div.chapter img").attr("src")
         anime.description = element.select("div.animedtls p").text()
         return anime

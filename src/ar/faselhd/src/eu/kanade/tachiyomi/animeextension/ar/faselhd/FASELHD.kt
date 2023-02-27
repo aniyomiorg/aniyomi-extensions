@@ -81,7 +81,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 document.select("div.shortLink").map { episodes.add(episodeExtract(it)) }
             else {
                 document.select(episodeListSelector()).map { episodes.add(episodeFromElement(it)) }
-                document.select(seasonsNextPageSelector(seasonNumber)).firstOrNull()?.let {
+                document.selectFirst(seasonsNextPageSelector(seasonNumber))?.let {
                     seasonNumber++
                     addEpisodes(
                         client.newCall(
@@ -103,7 +103,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("abs:href"))
-        episode.name = element.ownerDocument().select("div.seasonDiv.active > div.title").text() + " : " + element.text()
+        episode.name = element.ownerDocument()!!.select("div.seasonDiv.active > div.title").text() + " : " + element.text()
         episode.episode_number = element.text().replace("الحلقة ", "").toFloat()
         return episode
     }
@@ -116,7 +116,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val getSources = "master.m3u8"
         val referer = Headers.headersOf("Referer", "$baseUrl/")
-        val iframe = document.selectFirst("iframe").attr("src").substringBefore("&img")
+        val iframe = document.selectFirst("iframe")!!.attr("src").substringBefore("&img")
         val webViewIncpec = client.newBuilder().addInterceptor(GetSourcesInterceptor(getSources, client)).build()
         val lol = webViewIncpec.newCall(GET(iframe, referer)).execute().body.string()
         val videoList = mutableListOf<Video>()

@@ -248,8 +248,8 @@ class LocoPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = externalOrInternalImg(document.selectFirst("div.intsd div.peli_img_int img").attr("src"))
-        anime.description = document.selectFirst("div.content span div.sinoptxt strong").text().removeSurrounding("\"")
+        anime.thumbnail_url = externalOrInternalImg(document.selectFirst("div.intsd div.peli_img_int img")!!.attr("src"))
+        anime.description = document.selectFirst("div.content span div.sinoptxt strong")!!.text().removeSurrounding("\"")
         document.select("div.content div.details ul.dtalist li").map {
             val textContent = it.text()
             val tempContent = textContent.lowercase()

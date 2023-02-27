@@ -54,7 +54,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("div.anime-card-poster a").attr("href"))
         anime.title = element.select("div.anime-card-poster div.ehover6 img").attr("alt")
-        anime.thumbnail_url = element.select("div.anime-card-poster div.ehover6 img").first().attr("abs:src")
+        anime.thumbnail_url = element.selectFirst("div.anime-card-poster div.ehover6 img")!!.attr("abs:src")
         return anime
     }
 
@@ -182,7 +182,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("div.anime-card-poster a").attr("href"))
         anime.title = element.select("div.anime-card-poster div.ehover6 img").attr("alt")
-        anime.thumbnail_url = element.select("div.anime-card-poster div.ehover6 img").first().attr("abs:src")
+        anime.thumbnail_url = element.selectFirst("div.anime-card-poster div.ehover6 img")!!.attr("abs:src")
         return anime
     }
 
@@ -200,7 +200,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             client.newCall(GET(document.select("div.anime-page-link a").attr("href"), headers)).execute().asJsoup()
         else
             document
-        anime.thumbnail_url = doc.select("img.thumbnail").first().attr("src")
+        anime.thumbnail_url = doc.selectFirst("img.thumbnail")!!.attr("src")
         anime.title = doc.select("h1.anime-details-title").text()
         anime.genre = doc.select("ul.anime-genres > li > a, div.anime-info > a").joinToString(", ") { it.text() }
         anime.description = doc.select("p.anime-story").text()
@@ -227,7 +227,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("div.anime-card-poster a").attr("href"))
         anime.title = element.select("div.anime-card-poster div.ehover6 img").attr("alt")
-        anime.thumbnail_url = element.select("div.anime-card-poster div.ehover6 img").first().attr("abs:src")
+        anime.thumbnail_url = element.selectFirst("div.anime-card-poster div.ehover6 img")!!.attr("abs:src")
         return anime
     }
 

@@ -64,7 +64,7 @@ class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         val epsNum = getNumberFromEpsString(element.select("span.lchx").text())
-        episode.setUrlWithoutDomain(element.select("a").first().attr("href"))
+        episode.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
         episode.episode_number = when {
             (epsNum.isNotEmpty()) -> epsNum.toFloat()
             else -> 1F
@@ -84,9 +84,9 @@ class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun getAnimeFromAnimeElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("div > a").first().attr("href"))
+        anime.setUrlWithoutDomain(element.selectFirst("div > a")!!.attr("href"))
 
-        val thumbnailElement = element.selectFirst("div > a > div.limit > img")
+        val thumbnailElement = element.selectFirst("div > a > div.limit > img")!!
         val thumbnail = thumbnailElement.attr("src")
         anime.thumbnail_url = if (thumbnail.startsWith("https:")) {
             thumbnail
@@ -132,7 +132,7 @@ class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         document.select("select.mirror > option[value]").forEach { opt ->
             val decoded = if (opt.attr("value").isEmpty()) {
-                document.selectFirst("iframe").attr("data-src")
+                document.selectFirst("iframe")!!.attr("data-src")
             } else {
                 Jsoup.parse(
                     String(Base64.decode(opt.attr("value"), Base64.DEFAULT)),

@@ -149,7 +149,7 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val nextData = response.asJsoup()
-            .selectFirst("script#__NEXT_DATA__")
+            .selectFirst("script#__NEXT_DATA__")!!
             .data()
             .let { json.decodeFromString<JsonObject>(it) }
 

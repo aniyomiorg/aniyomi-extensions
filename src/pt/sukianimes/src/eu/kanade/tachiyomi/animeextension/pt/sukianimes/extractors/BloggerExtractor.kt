@@ -10,7 +10,7 @@ class BloggerExtractor(private val client: OkHttpClient) {
 
     fun videoFromUrl(url: String, player: String, headers: Headers): List<Video> {
         val iframeBody = client.newCall(GET(url)).execute().asJsoup()
-        val iframeUrl = iframeBody.selectFirst("iframe").attr("src")
+        val iframeUrl = iframeBody.selectFirst("iframe")!!.attr("src")
         val response = client.newCall(GET(iframeUrl, headers)).execute()
         val html = response.body.string()
         return html.split("play_url").drop(1).map {

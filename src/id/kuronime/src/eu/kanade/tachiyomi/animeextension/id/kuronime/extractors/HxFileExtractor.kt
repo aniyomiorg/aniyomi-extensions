@@ -10,7 +10,7 @@ import okhttp3.OkHttpClient
 class HxFileExtractor(private val client: OkHttpClient) {
     fun getVideoFromUrl(url: String, name: String): List<Video> {
         val document = client.newCall(GET(url)).execute().asJsoup()
-        val packed = document.selectFirst("script:containsData(eval\\(function\\()").data()
+        val packed = document.selectFirst("script:containsData(eval\\(function\\()")!!.data()
         val unpacked = JsUnpacker.unpackAndCombine(packed) ?: return emptyList()
         val videoUrl = unpacked.substringAfter("\"type\":\"video").substringAfter("\"file\":\"").substringBefore("\"")
         return listOf(

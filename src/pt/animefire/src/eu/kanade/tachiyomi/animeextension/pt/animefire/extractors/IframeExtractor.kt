@@ -12,7 +12,7 @@ class IframeExtractor(private val client: OkHttpClient) {
     private val headers = Headers.headersOf("User-Agent", AFConstants.USER_AGENT)
 
     fun videoListFromDocument(doc: Document): List<Video> {
-        val iframeElement = doc.selectFirst("div#div_video iframe")
+        val iframeElement = doc.selectFirst("div#div_video iframe")!!
         val iframeUrl = iframeElement.attr("src")
         val response = client.newCall(GET(iframeUrl, headers)).execute()
         val html = response.body.string()

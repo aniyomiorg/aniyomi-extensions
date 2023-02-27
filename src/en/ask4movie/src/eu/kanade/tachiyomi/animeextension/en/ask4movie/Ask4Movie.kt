@@ -681,13 +681,13 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun episodeListFromList(document: Document): List<EpisodeUrl> {
-        val seasonNumber = document.selectFirst("div.top-bar-video > a.video-title").text()
+        val seasonNumber = document.selectFirst("div.top-bar-video > a.video-title")!!.text()
             .substringAfterLast("(").substringBeforeLast(")")
 
         return document.select("ul.group-links-list > li").map {
             EpisodeUrl(
-                "$seasonNumber Episode ${it.selectFirst("a").text()}",
-                it.selectFirst("a").attr("data-embed-src")
+                "$seasonNumber Episode ${it.selectFirst("a")!!.text()}",
+                it.selectFirst("a")!!.attr("data-embed-src")
             )
         }
     }

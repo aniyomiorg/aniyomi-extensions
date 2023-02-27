@@ -64,7 +64,7 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodes = mutableListOf<SEpisode>()
         val episodeLink = response.request.url
         val pageBody = response.asJsoup()
-        val scriptText = pageBody.selectFirst("script:containsData(var invertir =)").data()
+        val scriptText = pageBody.selectFirst("script:containsData(var invertir =)")!!.data()
         val animeId = scriptText.substringAfter("'/ajax/last_episode/", "")
             .substringBefore("/',", "")
             .ifEmpty { throw Exception("no video links found.") }
@@ -291,9 +291,9 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.selectFirst("div.col-lg-3 div.anime__details__pic.set-bg").attr("data-setbg")
-        anime.title = document.selectFirst("div.anime__details__text div.anime__details__title h3").text()
-        anime.description = document.select("div.col-lg-9 div.anime__details__text p").first().ownText()
+        anime.thumbnail_url = document.selectFirst("div.col-lg-3 div.anime__details__pic.set-bg")!!.attr("data-setbg")
+        anime.title = document.selectFirst("div.anime__details__text div.anime__details__title h3")!!.text()
+        anime.description = document.selectFirst("div.col-lg-9 div.anime__details__text p")!!.ownText()
         document.select("div.row div.col-lg-6.col-md-6 ul li").forEach { animeData ->
             val data = animeData.select("span").text()
             if (data.contains("Genero")) {

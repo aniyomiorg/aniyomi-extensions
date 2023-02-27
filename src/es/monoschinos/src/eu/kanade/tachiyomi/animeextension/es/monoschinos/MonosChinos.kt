@@ -161,9 +161,9 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         return SAnime.create().apply {
-            thumbnail_url = document.selectFirst("div.chapterpic img").attr("src")
-            title = document.selectFirst("div.chapterdetails h1").text()
-            description = document.select("p.textShort").first().ownText()
+            thumbnail_url = document.selectFirst("div.chapterpic img")!!.attr("src")
+            title = document.selectFirst("div.chapterdetails h1")!!.text()
+            description = document.selectFirst("p.textShort")!!.ownText()
             genre = document.select("ol.breadcrumb li.breadcrumb-item a").joinToString { it.text() }
             status = parseStatus(document.select("div.butns button.btn1").text())
         }

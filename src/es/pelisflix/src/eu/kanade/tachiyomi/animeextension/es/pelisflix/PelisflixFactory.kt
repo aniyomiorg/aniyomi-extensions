@@ -45,7 +45,7 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("a").attr("href"))
         anime.title = element.select("a h2.Title").text()
-        anime.thumbnail_url = element.selectFirst("a div.Image figure.Objf img").attr("src")
+        anime.thumbnail_url = element.selectFirst("a div.Image figure.Objf img")!!.attr("src")
         anime.description = element.select("div.TPMvCn div.Description p:nth-child(1)").text().removeSurrounding("\"")
         return anime
     }
@@ -85,7 +85,7 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
             val serverID = serverList.attr("data-key")
             val type = if (response.request.url.toString().contains("movies")) 1 else 2
             val url = "$baseUrl/?trembed=$serverID&trid=$movieID&trtype=$type"
-            val langTag = serverList.selectFirst("p.AAIco-language").text().substring(3).uppercase()
+            val langTag = serverList.selectFirst("p.AAIco-language")!!.text().substring(3).uppercase()
 
             val lang = if (langTag.contains("LATINO")) "[LAT]" else if (langTag.contains("CASTELLANO")) "[CAST]" else "[SUB]"
             var request = client.newCall(GET(url)).execute()

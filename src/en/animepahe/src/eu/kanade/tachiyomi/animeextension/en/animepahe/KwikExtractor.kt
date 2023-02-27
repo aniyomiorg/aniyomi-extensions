@@ -51,7 +51,7 @@ class KwikExtractor(private val client: OkHttpClient) {
     fun getHlsStreamUrl(kwikUrl: String, referer: String): String {
         val eContent = client.newCall(GET(kwikUrl, Headers.headersOf("referer", referer)))
             .execute().asJsoup()
-        val script = eContent.selectFirst("script:containsData(eval\\(function)").data().substringAfterLast("eval(function(")
+        val script = eContent.selectFirst("script:containsData(eval\\(function)")!!.data().substringAfterLast("eval(function(")
         val unpacked = JsUnpacker.unpackAndCombine("eval(function($script")!!
         return unpacked.substringAfter("const source=\\'").substringBefore("\\';")
     }

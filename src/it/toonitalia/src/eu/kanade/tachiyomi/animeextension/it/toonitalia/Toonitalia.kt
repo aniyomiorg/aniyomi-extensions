@@ -54,8 +54,8 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.title = element.select("h2 > a").text()
-        anime.thumbnail_url = element.selectFirst("img").attr("src")
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href").substringAfter(baseUrl))
+        anime.thumbnail_url = element.selectFirst("img")!!.attr("src")
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").substringAfter(baseUrl))
         return anime
     }
 
@@ -118,15 +118,15 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.title = element.selectFirst("h2").text()
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href").substringAfter(baseUrl))
+        anime.title = element.selectFirst("h2")!!.text()
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").substringAfter(baseUrl))
         return anime
     }
 
     private fun searchIndexAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.title = element.select("a").text()
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href").substringAfter(baseUrl))
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").substringAfter(baseUrl))
         return anime
     }
 
@@ -140,7 +140,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.title = document.select("header.entry-header > h1.entry-title").text()
 
         var descInfo = ""
-        document.selectFirst("div.entry-content > h2 + p + p").childNodes().filter {
+        document.selectFirst("div.entry-content > h2 + p + p")!!.childNodes().filter {
             s ->
             s.nodeName() != "br"
         }.forEach {
@@ -189,7 +189,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
             var isValid = false
             var counter = 1
-            for (child in singleEpisode.first().childNodes()) {
+            for (child in singleEpisode.first()!!.childNodes()) {
                 if (child.nodeName() == "br" || (child.nextSibling() == null && child.nodeName() == "a")) {
                     episode.url = response.request.url.toString() + "#$counter"
 
@@ -246,7 +246,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val movie = document.select("div.entry-content > p:contains(Link Streaming)")
         if (movie.isNotEmpty()) {
             val episode = SEpisode.create()
-            for (child in movie.first().childNodes()) {
+            for (child in movie.first()!!.childNodes()) {
                 if (child.nodeName() == "br" || (child.nextSibling() == null && child.nodeName() == "a")) {
                     // episode.url = links.joinToString(separator = "///")
                     episode.url = response.request.url.toString() + "#1"
@@ -286,7 +286,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (singleEpisode.isNotEmpty() && singleEpisode.text().isNotEmpty()) {
 
             var counter = 1
-            for (child in singleEpisode.first().childNodes()) {
+            for (child in singleEpisode.first()!!.childNodes()) {
                 if (child.nodeName() == "a" && counter == episodeNumber) {
                     videoList.addAll(extractVideos(child.attr("href"), child.childNode(0).toString()))
                 }
@@ -317,7 +317,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         // Select movie
         val movie = document.select("div.entry-content > p:contains(Link Streaming)")
         if (movie.isNotEmpty()) {
-            for (child in movie.first().childNodes()) {
+            for (child in movie.first()!!.childNodes()) {
                 if (child.nodeName() == "a") {
                     videoList.addAll(extractVideos(child.attr("href"), child.childNode(0).toString()))
                 }

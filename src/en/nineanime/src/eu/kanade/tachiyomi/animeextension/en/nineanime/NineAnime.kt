@@ -75,7 +75,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector(): String = "nav > ul.pagination > li > a[aria-label=pagination.next]"
 
     override fun episodeListRequest(anime: SAnime): Request {
-        val id = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup().selectFirst("div[data-id]").attr("data-id")
+        val id = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup().selectFirst("div[data-id]")!!.attr("data-id")
         val vrf = vrfInterceptor.getVrf(id)
         return GET("$baseUrl/ajax/episode/list/$id?vrf=${java.net.URLEncoder.encode(vrf, "utf-8")}", headers = Headers.headersOf("url", anime.url))
     }

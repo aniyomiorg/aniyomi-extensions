@@ -26,8 +26,8 @@ class VidstreamingExtractor(private val client: OkHttpClient, private val json: 
         try {
             var document = client.newCall(GET(serverUrl)).execute().asJsoup()
             var newUrl = serverUrl
-            if (serverUrl.contains("/embedded/") && document.selectFirst("body").childrenSize() == 1) {
-                newUrl = document.selectFirst("iframe").attr("src")
+            if (serverUrl.contains("/embedded/") && document.selectFirst("body")!!.childrenSize() == 1) {
+                newUrl = document.selectFirst("iframe")!!.attr("src")
                 document = client.newCall(
                     GET(newUrl)
                 ).execute().asJsoup()

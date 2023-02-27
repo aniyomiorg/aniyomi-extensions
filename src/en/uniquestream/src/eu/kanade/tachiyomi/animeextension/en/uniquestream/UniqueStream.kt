@@ -62,13 +62,13 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a").attr("href").toHttpUrl().encodedPath)
-            thumbnail_url = if (element.selectFirst("img").hasAttr("data-wpfc-original-src")) {
-                element.selectFirst("img").attr("data-wpfc-original-src")
+            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").toHttpUrl().encodedPath)
+            thumbnail_url = if (element.selectFirst("img")!!.hasAttr("data-wpfc-original-src")) {
+                element.selectFirst("img")!!.attr("data-wpfc-original-src")
             } else {
-                element.selectFirst("img").attr("src")
+                element.selectFirst("img")!!.attr("src")
             }
-            title = element.selectFirst("div.data > h3").text()
+            title = element.selectFirst("div.data > h3")!!.text()
         }
     }
 
@@ -102,11 +102,11 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         if (isExact) {
             val anime = SAnime.create()
-            anime.title = document.selectFirst("div.data > h1").text()
-            anime.thumbnail_url = if (document.selectFirst("div.poster > img").hasAttr("data-wpfc-original-src")) {
-                document.selectFirst("div.poster > img").attr("data-wpfc-original-src")
+            anime.title = document.selectFirst("div.data > h1")!!.text()
+            anime.thumbnail_url = if (document.selectFirst("div.poster > img")!!.hasAttr("data-wpfc-original-src")) {
+                document.selectFirst("div.poster > img")!!.attr("data-wpfc-original-src")
             } else {
-                document.selectFirst("div.poster > img").attr("src")
+                document.selectFirst("div.poster > img")!!.attr("src")
             }
             anime.setUrlWithoutDomain(response.request.url.encodedPath)
             return AnimesPage(listOf(anime), false)
@@ -282,11 +282,11 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         return SAnime.create().apply {
-            title = document.selectFirst("div.data > h1").text()
-            thumbnail_url = if (document.selectFirst("div.poster > img").hasAttr("data-wpfc-original-src")) {
-                document.selectFirst("div.poster > img").attr("data-wpfc-original-src")
+            title = document.selectFirst("div.data > h1")!!.text()
+            thumbnail_url = if (document.selectFirst("div.poster > img")!!.hasAttr("data-wpfc-original-src")) {
+                document.selectFirst("div.poster > img")!!.attr("data-wpfc-original-src")
             } else {
-                document.selectFirst("div.poster > img").attr("src")
+                document.selectFirst("div.poster > img")!!.attr("src")
             }
             status = SAnime.COMPLETED
             description = document.selectFirst("div:contains(Synopsis) > div > p")?.text() ?: ""
@@ -301,7 +301,7 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         if (response.request.url.encodedPath.startsWith("/movies/")) {
             val episode = SEpisode.create()
-            episode.name = document.selectFirst("div.data > h1").text().replace(":", "")
+            episode.name = document.selectFirst("div.data > h1")!!.text().replace(":", "")
             episode.episode_number = 1F
             episode.setUrlWithoutDomain(response.request.url.encodedPath)
             episodeList.add(episode)
@@ -313,9 +313,9 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     if (ep.childrenSize() > 0) {
                         val episode = SEpisode.create()
 
-                        episode.name = "Season ${ep.selectFirst("div.numerando").ownText()} - ${ep.selectFirst("a[href]").ownText()}"
+                        episode.name = "Season ${ep.selectFirst("div.numerando")!!.ownText()} - ${ep.selectFirst("a[href]")!!.ownText()}"
                         episode.episode_number = counter.toFloat()
-                        episode.setUrlWithoutDomain(ep.selectFirst("a[href]").attr("href").toHttpUrl().encodedPath)
+                        episode.setUrlWithoutDomain(ep.selectFirst("a[href]")!!.attr("href").toHttpUrl().encodedPath)
 
                         seasonList.add(episode)
                         counter++
@@ -373,7 +373,7 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 GET(embedUrl, headers = embedHeaders)
             ).execute().asJsoup()
 
-            val script = embedDocument.selectFirst("script:containsData(m3u8)").data()
+            val script = embedDocument.selectFirst("script:containsData(m3u8)")!!.data()
             val playlistUrl = script
                 .substringAfter("let url = '").substringBefore("'")
 

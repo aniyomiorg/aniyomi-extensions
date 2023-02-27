@@ -96,7 +96,7 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val elements = document.select(videoListSelector())
         for (element in elements) {
             val url = element.attr("href")
-            val location = element.ownerDocument().location()
+            val location = element.ownerDocument()!!.location()
             val videoHeaders = Headers.headersOf("Referer", location)
             when {
                 url.contains("animeworld.biz") || url.contains("sbembed.com") || url.contains("sbembed1.com") || url.contains("sbplay.org") ||
@@ -175,7 +175,7 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.select("div.thumb img").first().attr("src")
+        anime.thumbnail_url = document.selectFirst("div.thumb img")!!.attr("src")
         anime.title = document.select("div.c1 h2.title").text()
         val dl = document.select("div.info dl")
         anime.genre = dl.select("dd:has(a[href*=language]) a, dd:has(a[href*=genre]) a").joinToString(", ") { it.text() }

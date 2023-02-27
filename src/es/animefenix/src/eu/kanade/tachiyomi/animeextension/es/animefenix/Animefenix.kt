@@ -81,14 +81,14 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-        val servers = document.selectFirst("script:containsData(var tabsArray)").data()
+        val servers = document.selectFirst("script:containsData(var tabsArray)")!!.data()
             .split("tabsArray").map { it.substringAfter("src='").substringBefore("'").replace("amp;", "") }
             .filter { it.contains("https") }
 
         servers.forEach { server ->
             val decodedUrl = URLDecoder.decode(server, "UTF-8")
             val realUrl = try {
-                client.newCall(GET(decodedUrl)).execute().asJsoup().selectFirst("script")
+                client.newCall(GET(decodedUrl)).execute().asJsoup().selectFirst("script")!!
                     .data().substringAfter("src=\"").substringBefore("\"")
             } catch (e: Exception) { "" }
             /*
@@ -243,7 +243,7 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun amazonExtractor(url: String): String {
         val document = client.newCall(GET(url)).execute().asJsoup()
-        val videoURl = document.selectFirst("script:containsData(sources: [)").data()
+        val videoURl = document.selectFirst("script:containsData(sources: [)")!!.data()
             .substringAfter("[{\"file\":\"")
             .substringBefore("\",").replace("\\", "")
 

@@ -59,7 +59,7 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
         anime.title = element.select("a .Title").text()
         anime.thumbnail_url = element.select("a .Image figure.Objf img").attr("data-src")
         return anime
@@ -110,8 +110,8 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         document.select("div.TPlayer.embed_div iframe").map {
             val langPrefix = try {
-                val optLanguage = it.parent().attr("id")
-                val languageTag = document.selectFirst("li[data-tplayernv=$optLanguage]").closest(".open_submenu").selectFirst("div:first-child").text()
+                val optLanguage = it.parent()!!.attr("id")
+                val languageTag = document.selectFirst("li[data-tplayernv=$optLanguage]")!!.closest(".open_submenu")!!.selectFirst("div:first-child")!!.text()
                 if (languageTag.lowercase().contains("latino")) {
                     "[LAT]"
                 } else if (languageTag.lowercase().contains("españa")) {
@@ -332,9 +332,9 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.title = document.selectFirst("#top-single div.backdrop article.TPost header .Title").text()
-        anime.thumbnail_url = document.selectFirst("#top-single div.backdrop article div.Image figure img").attr("data-src")
-        anime.description = document.selectFirst("#top-single div.backdrop article.TPost div.Description").text().trim()
+        anime.title = document.selectFirst("#top-single div.backdrop article.TPost header .Title")!!.text()
+        anime.thumbnail_url = document.selectFirst("#top-single div.backdrop article div.Image figure img")!!.attr("data-src")
+        anime.description = document.selectFirst("#top-single div.backdrop article.TPost div.Description")!!.text().trim()
         anime.genre = document.select("#MvTb-Info ul.InfoList li:nth-child(2) > a").joinToString { it.text() }
         anime.status = SAnime.UNKNOWN
         return anime

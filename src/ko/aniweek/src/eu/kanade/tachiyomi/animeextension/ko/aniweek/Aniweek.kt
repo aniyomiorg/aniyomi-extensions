@@ -66,15 +66,15 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector(): String = "ul.pagination > li.active ~ li:not(.disabled):matches(.)"
 
     override fun popularAnimeFromElement(element: Element): SAnime {
-        val thumbnailUrl = element.selectFirst("img").attr("src")
+        val thumbnailUrl = element.selectFirst("img")!!.attr("src")
         return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a").attr("href"))
+            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
             thumbnail_url = if (thumbnailUrl.startsWith("..")) {
                 baseUrl + thumbnailUrl.substringAfter("..")
             } else {
                 thumbnailUrl
             }
-            title = element.selectFirst("div.post-title").text()
+            title = element.selectFirst("div.post-title")!!.text()
         }
     }
 
@@ -182,9 +182,9 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =========================== Anime Details ============================
 
     override fun animeDetailsParse(document: Document): SAnime {
-        val thumbnailUrl = document.selectFirst("div.view-info > div.image img").attr("src")
+        val thumbnailUrl = document.selectFirst("div.view-info > div.image img")!!.attr("src")
         return SAnime.create().apply {
-            title = document.selectFirst("div.view-title").text()
+            title = document.selectFirst("div.view-title")!!.text()
             thumbnail_url = if (thumbnailUrl.startsWith("..")) {
                 baseUrl + thumbnailUrl.substringAfter("..")
             } else {
@@ -205,7 +205,7 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         episode.episode_number = element.selectFirst("div.wr-num")?.let { it.text()?.toFloatOrNull() ?: 1F } ?: 1F
         episode.name = element.selectFirst("a")!!.text()
-        episode.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
+        episode.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
         episode.date_upload = element.selectFirst("div.wr-date")?.let { parseDate(it.text()) } ?: 0L
 
         return episode
@@ -217,7 +217,7 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
 
-        val iframeUrl = document.selectFirst("iframe").attr("src")
+        val iframeUrl = document.selectFirst("iframe")!!.attr("src")
 
         val iframeHeaders = Headers.headersOf(
             "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",

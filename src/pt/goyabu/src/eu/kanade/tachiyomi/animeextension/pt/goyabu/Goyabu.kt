@@ -58,7 +58,7 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         .add("Accept-Language", GYConstants.ACCEPT_LANGUAGE)
         .add("Referer", baseUrl)
 
-    // ============================== Popular ===============================   
+    // ============================== Popular ===============================
     private fun popularAnimeContainerSelector(): String = "div.index-size > div.episodes-container"
 
     override fun popularAnimeSelector(): String = "div.anime-episode"
@@ -67,9 +67,9 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime: SAnime = SAnime.create()
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
-        anime.title = element.selectFirst("h3").text()
-        anime.thumbnail_url = element.selectFirst("img").attr("src")
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        anime.title = element.selectFirst("h3")!!.text()
+        anime.thumbnail_url = element.selectFirst("img")!!.attr("src")
         return anime
     }
 
@@ -77,7 +77,7 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
-        val content = document.selectFirst(popularAnimeContainerSelector())
+        val content = document.selectFirst(popularAnimeContainerSelector())!!
         val animes = content.select(popularAnimeSelector()).map { element ->
             popularAnimeFromElement(element)
         }
@@ -111,11 +111,11 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-        val info_div = element.selectFirst("div.chaps-infs")
+        val info_div = element.selectFirst("div.chaps-infs")!!
         episode.setUrlWithoutDomain(element.attr("href"))
         val epName = info_div.ownText()
         episode.name = epName.substringAfter("– ")
-        episode.date_upload = info_div.selectFirst("small").ownText().toDate()
+        episode.date_upload = info_div.selectFirst("small")!!.ownText().toDate()
         episode.episode_number = try {
             epName.substringAfter("#")
                 .substringBefore(" ")
@@ -212,14 +212,14 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         val doc = getRealDoc(document)
 
-        val infos = doc.selectFirst("div.anime-cover")
+        val infos = doc.selectFirst("div.anime-cover")!!
 
-        anime.thumbnail_url = infos.selectFirst("img").attr("src")
-        anime.title = infos.selectFirst("div.anime-title").text()
+        anime.thumbnail_url = infos.selectFirst("img")!!.attr("src")
+        anime.title = infos.selectFirst("div.anime-title")!!.text()
         anime.genre = infos.getInfo("Generos")
         anime.status = parseStatus(infos.getInfo("Status"))
 
-        var desc = doc.selectFirst("div.anime-description").text() + "\n"
+        var desc = doc.selectFirst("div.anime-description")!!.text() + "\n"
         desc += "\n" + infos.getInfo("Alternativo", false)
         desc += "\n" + infos.getInfo("Views", false)
         desc += "\n" + infos.getInfo("Episódios", false)
@@ -234,16 +234,16 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        val img = element.selectFirst("img")
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
-        anime.title = element.selectFirst("h3").text()
+        val img = element.selectFirst("img")!!
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        anime.title = element.selectFirst("h3")!!.text()
         anime.thumbnail_url = img.attr("src")
         return anime
     }
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/page/$page/")
 
-    // ============================== Settings ============================== 
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = GYConstants.PREFERRED_QUALITY
@@ -268,7 +268,7 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun getRealDoc(document: Document): Document {
         val player = document.selectFirst("div[itemprop=video]")
         if (player != null) {
-            val url = document.selectFirst("div.anime-thumb-single > a").attr("href")
+            val url = document.selectFirst("div.anime-thumb-single > a")!!.attr("href")
             val req = client.newCall(GET(url)).execute()
             return req.asJsoup()
         } else {
@@ -277,7 +277,7 @@ class Goyabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun Element.getInfo(item: String, cut: Boolean = true): String {
-        val text = this.selectFirst("div.anime-info-right div:contains($item)").text()
+        val text = this.selectFirst("div.anime-info-right div:contains($item)")!!.text()
         return when {
             cut -> text.substringAfter(": ")
             else -> text.substringAfter(" ")

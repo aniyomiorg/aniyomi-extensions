@@ -105,8 +105,8 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 document.select(seasonsNextPageSelector()).reversed().forEach { season ->
                     val seasonNum = season.select("h3").text()
                     (
-                        if (seasonNum == document.selectFirst("div#mpbreadcrumbs a span:contains(الموسم)").text())
-                            document else client.newCall(GET(season.selectFirst("a").attr("href"))).execute().asJsoup()
+                        if (seasonNum == document.selectFirst("div#mpbreadcrumbs a span:contains(الموسم)")!!.text())
+                            document else client.newCall(GET(season.selectFirst("a")!!.attr("href"))).execute().asJsoup()
                         )
                         .select("section.allepcont a").forEach { episode ->
                             addEpisodeNew(
@@ -207,7 +207,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.title = titleEdit(element.select("h3").text(), true).trim()
-        anime.thumbnail_url = element.select("img").attr(if (element.ownerDocument().location().contains("?s="))"src" else "data-src")
+        anime.thumbnail_url = element.select("img").attr(if (element.ownerDocument()!!.location().contains("?s="))"src" else "data-src")
         anime.setUrlWithoutDomain(element.select("a").attr("href") + "watch/")
         return anime
     }

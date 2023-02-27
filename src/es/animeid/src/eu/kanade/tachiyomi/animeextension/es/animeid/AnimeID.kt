@@ -166,10 +166,10 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.thumbnail_url = externalOrInternalImg(
-            document.selectFirst("#anime figure img.cover").attr("src")
+            document.selectFirst("#anime figure img.cover")!!.attr("src")
         )
-        anime.title = document.selectFirst("#anime section hgroup h1").text()
-        anime.description = document.selectFirst("#anime section p.sinopsis").text().removeSurrounding("\"")
+        anime.title = document.selectFirst("#anime section hgroup h1")!!.text()
+        anime.description = document.selectFirst("#anime section p.sinopsis")!!.text().removeSurrounding("\"")
         anime.genre = document.select("#anime section ul.tags li a").joinToString { it.text() }
         anime.status = parseStatus(document.select("div.main div section div.status-left div.cuerpo div:nth-child(2) span").text().trim())
         return anime

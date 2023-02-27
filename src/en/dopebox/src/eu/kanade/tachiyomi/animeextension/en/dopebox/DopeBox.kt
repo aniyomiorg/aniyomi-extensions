@@ -73,9 +73,9 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
-        anime.thumbnail_url = element.selectFirst("img").attr("data-src")
-        anime.title = element.selectFirst("a").attr("title")
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        anime.thumbnail_url = element.selectFirst("img")!!.attr("data-src")
+        anime.title = element.selectFirst("a")!!.attr("title")
         return anime
     }
 
@@ -130,8 +130,8 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun episodeFromElement(element: Element, seasonName: String): SEpisode {
         val episodeId = element.attr("data-id")
-        val epNum = element.selectFirst("div.episode-number").text()
-        val epName = element.selectFirst("h3.film-name a").text()
+        val epNum = element.selectFirst("div.episode-number")!!.text()
+        val epName = element.selectFirst("h3.film-name a")!!.text()
         val episode = SEpisode.create().apply {
             name = "$seasonName $epNum $epName"
             setUrlWithoutDomain("$baseUrl/ajax/v2/episode/servers/$episodeId")
@@ -151,7 +151,7 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val extractor = DopeBoxExtractor(client)
         val videoList = doc.select("ul.fss-list a.btn-play")
             .parallelMap { server ->
-                val name = server.selectFirst("span").text()
+                val name = server.selectFirst("span")!!.text()
                 val id = server.attr("data-id")
                 val url = "$baseUrl/ajax/sources/$id"
                 val reqBody = client.newCall(GET(url, episodeReferer)).execute()
@@ -306,11 +306,11 @@ class DopeBox : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create().apply {
-            thumbnail_url = document.selectFirst("img.film-poster-img").attr("src")
-            title = document.selectFirst("img.film-poster-img").attr("title")
+            thumbnail_url = document.selectFirst("img.film-poster-img")!!.attr("src")
+            title = document.selectFirst("img.film-poster-img")!!.attr("title")
             genre = document.select("div.row-line:contains(Genre) a")
                 .joinToString(", ") { it.text() }
-            description = document.selectFirst("div.detail_page-watch div.description")
+            description = document.selectFirst("div.detail_page-watch div.description")!!
                 .text().replace("Overview:", "")
             author = document.select("div.row-line:contains(Production) a")
                 .joinToString(", ") { it.text() }

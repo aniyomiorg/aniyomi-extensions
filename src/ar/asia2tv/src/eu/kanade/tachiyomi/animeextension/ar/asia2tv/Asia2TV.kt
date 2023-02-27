@@ -54,7 +54,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        // anime.thumbnail_url = element.select("div.image img").first().attr("data-src")
+        // anime.thumbnail_url = element.selectFirst("div.image img")!!.attr("data-src")
         anime.title = element.attr("title")
         return anime
     }
@@ -80,7 +80,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListRequest(episode: SEpisode): Request {
         val document = client.newCall(GET(baseUrl + episode.url)).execute().asJsoup()
-        val link = document.selectFirst("div.loop-episode a.current").attr("href")
+        val link = document.selectFirst("div.loop-episode a.current")!!.attr("href")
         return GET(link)
     }
 
@@ -142,7 +142,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        // anime.thumbnail_url = element.select("div.image img").first().attr("data-src")
+        // anime.thumbnail_url = element.selectFirst("div.image img")!!.attr("data-src")
         anime.title = element.attr("title")
         return anime
     }

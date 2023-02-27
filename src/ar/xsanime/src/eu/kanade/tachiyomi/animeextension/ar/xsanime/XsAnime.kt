@@ -49,7 +49,7 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.title = element.attr("title")
-        anime.thumbnail_url = element.select("div.itemtype_anime_poster img").first().attr("data-src")
+        anime.thumbnail_url = element.selectFirst("div.itemtype_anime_poster img")!!.attr("data-src")
         return anime
     }
 
@@ -103,7 +103,7 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.title = element.attr("title")
-        anime.thumbnail_url = element.select("div.itemtype_anime_poster img").first().attr("data-src")
+        anime.thumbnail_url = element.selectFirst("div.itemtype_anime_poster img")!!.attr("data-src")
         return anime
     }
 
@@ -133,7 +133,7 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.select("div.inner--image img").first().attr("src")
+        anime.thumbnail_url = document.selectFirst("div.inner--image img")!!.attr("src")
         anime.title = document.select("h1.post--inner-title").text()
         anime.genre = document.select("ul.terms--and--metas > li:contains(تصنيفات الأنمي) > a").joinToString(", ") { it.text() }
         anime.description = document.select("div.post--content--inner").text()

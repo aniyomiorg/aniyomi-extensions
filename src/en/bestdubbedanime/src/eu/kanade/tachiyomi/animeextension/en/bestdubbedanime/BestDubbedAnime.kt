@@ -112,7 +112,7 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (document.select("div.eplistz > div > div > a").isEmpty()) {
                 val cacheUrlRegex = Regex("""url: '(.*?)'(?:.*?)episodesListxf""", RegexOption.DOT_MATCHES_ALL)
 
-                val jsText = document.selectFirst("script:containsData(episodesListxf)").data()
+                val jsText = document.selectFirst("script:containsData(episodesListxf)")!!.data()
                 val url = cacheUrlRegex.find(jsText)?.groupValues?.get(1) ?: ""
 
                 if (url.isNotBlank()) {
@@ -205,7 +205,7 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             } else {
                 val sourceElement = client.newCall(
                     GET("https:" + playerUrl + server.attr("hl") + "&_=${System.currentTimeMillis() / 1000}")
-                ).execute().asJsoup().selectFirst("source")
+                ).execute().asJsoup().selectFirst("source")!!
 
                 val videoUrl = sourceElement.attr("src").replace("^//".toRegex(), "https://")
 

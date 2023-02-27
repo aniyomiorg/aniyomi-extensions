@@ -12,7 +12,7 @@ object AnitubeExtractor {
     fun getVideoList(response: Response): List<Video> {
         val doc = response.asJsoup()
         val hasFHD = doc.selectFirst("div.abaItem:contains(FULLHD)") != null
-        val serverUrl = doc.selectFirst("meta[itemprop=contentURL]").attr("content")
+        val serverUrl = doc.selectFirst("meta[itemprop=contentURL]")!!.attr("content")
         val type = serverUrl.split("/").get(3)
         val qualities = listOfNotNull("SD", "HD", if (hasFHD) "FULLHD" else null)
         val paths = when (type) {

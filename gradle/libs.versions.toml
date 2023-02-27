@@ -19,7 +19,7 @@ coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", ve
 coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines_version" }
 
 injekt-core = { module = "com.github.inorichi.injekt:injekt-core", version = "65b0440" }
-jsoup = { module = "org.jsoup:jsoup", version = "1.13.1" }
+jsoup = { module = "org.jsoup:jsoup", version = "1.15.3" }
 quickjs = { module = "app.cash.quickjs:quickjs-android", version = "0.9.2" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version = "5.0.0-alpha.11" }
 rxandroid = { module = "io.reactivex:rxandroid", version = "1.2.1" }

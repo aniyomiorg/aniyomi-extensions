@@ -32,7 +32,7 @@ class AnimeSrbija : ParsedAnimeHttpSource() {
     // Popular Anime
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a").last().attr("href"))
+        anime.setUrlWithoutDomain(element.select("a").last()!!.attr("href"))
         anime.thumbnail_url = element.select("img").attr("src")
         anime.title = element.select("img").attr("title")
 
@@ -54,7 +54,7 @@ class AnimeSrbija : ParsedAnimeHttpSource() {
     // Latest anime
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a").last().attr("href"))
+        anime.setUrlWithoutDomain(element.select("a").last()!!.attr("href"))
         anime.thumbnail_url = element.select("img").attr("src")
         anime.title = element.select("img").attr("title")
 
@@ -76,7 +76,7 @@ class AnimeSrbija : ParsedAnimeHttpSource() {
     // Search anime
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a").last().attr("href"))
+        anime.setUrlWithoutDomain(element.select("a").last()!!.attr("href"))
         anime.thumbnail_url = element.select("img").attr("src")
         anime.title = element.select("img").attr("title")
 
@@ -126,7 +126,7 @@ class AnimeSrbija : ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val episodeId = document.select("div.prevnext:nth-child(4)").first().attr("data-post-id")
+        val episodeId = document.selectFirst("div.prevnext:nth-child(4)")!!.attr("data-post-id")
         val nume: String = "1"
 
         val referer = response.request.url.encodedPath

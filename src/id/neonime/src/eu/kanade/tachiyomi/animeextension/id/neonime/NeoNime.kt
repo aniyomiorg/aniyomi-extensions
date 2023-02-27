@@ -61,28 +61,28 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun getAnimeFromAnimeElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a").first().attr("href"))
-        anime.thumbnail_url = element.select("a > div.image > img").first().attr("data-src")
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        anime.thumbnail_url = element.selectFirst("a > div.image > img")!!.attr("data-src")
         anime.title = element.select("div.fixyear > div > h2").text()
         return anime
     }
 
     private fun getAnimeFromEpisodeElement(element: Element): SAnime {
-        val animepage = client.newCall(GET(element.select("td.bb > a").first().attr("href"))).execute().asJsoup()
+        val animepage = client.newCall(GET(element.selectFirst("td.bb > a")!!.attr("href"))).execute().asJsoup()
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(animepage.select("#fixar > div.imagen > a").first().attr("href"))
-        anime.thumbnail_url = animepage.select("#fixar > div.imagen > a > img").first().attr("data-src")
-        anime.title = animepage.select("#fixar > div.imagen > a > img").first().attr("alt")
+        anime.setUrlWithoutDomain(animepage.selectFirst("#fixar > div.imagen > a")!!.attr("href"))
+        anime.thumbnail_url = animepage.selectFirst("#fixar > div.imagen > a > img")!!.attr("data-src")
+        anime.title = animepage.selectFirst("#fixar > div.imagen > a > img")!!.attr("alt")
         return anime
     }
 
     private fun getAnimeFromSearchElement(element: Element): SAnime {
-        val url = element.select("a").first().attr("href")
+        val url = element.selectFirst("a")!!.attr("href")
         val animepage = client.newCall(GET(url)).execute().asJsoup()
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(url)
         anime.title = animepage.select("#info > div:nth-child(2) > span").text()
-        anime.thumbnail_url = animepage.select("div.imagen > img").first().attr("data-src")
+        anime.thumbnail_url = animepage.selectFirst("div.imagen > img")!!.attr("data-src")
         anime.status = parseStatus(animepage.select("#info > div:nth-child(13) > span").text())
         anime.genre = animepage.select("#info > div:nth-child(3) > span > a").joinToString(", ") { it.text() }
         // this site didnt provide artist and author
@@ -169,7 +169,7 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.select("#info > div:nth-child(2) > span").text()
-        anime.thumbnail_url = document.select("div.imagen > img").first().attr("data-src")
+        anime.thumbnail_url = document.selectFirst("div.imagen > img")!!.attr("data-src")
         anime.status = parseStatus(document.select("#info > div:nth-child(13) > span").text())
         anime.genre = document.select("#info > div:nth-child(3) > span > a").joinToString(", ") { it.text() }
         // this site didnt provide artist and author
@@ -250,7 +250,7 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         GET(link, headers = headers),
                     ).execute().asJsoup()
 
-                    var iframeUrl = iframe.selectFirst("iframe").attr("src")
+                    var iframeUrl = iframe.selectFirst("iframe")!!.attr("src")
 
                     if (!iframeUrl.startsWith("http")) {
                         iframeUrl = "https:$iframeUrl"

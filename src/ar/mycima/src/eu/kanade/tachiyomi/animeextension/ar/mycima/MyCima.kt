@@ -74,10 +74,10 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 if (!document.select("mycima singlerelated.hasdivider ${popularAnimeSelector()}").isNullOrEmpty()) {
                     document.select("mycima singlerelated.hasdivider ${popularAnimeSelector()}").map { episodes.add(newEpisodeFromElement(it, "mSeries")) }
                 } else
-                    episodes.add(newEpisodeFromElement(document.select("div.Poster--Single-begin > a").first(), "movie"))
+                    episodes.add(newEpisodeFromElement(document.selectFirst("div.Poster--Single-begin > a")!!, "movie"))
             } else {
                 document.select(episodeListSelector()).map { episodes.add(newEpisodeFromElement(it)) }
-                document.select(seasonsNextPageSelector(seasonNumber)).firstOrNull()?.let {
+                document.selectFirst(seasonsNextPageSelector(seasonNumber))?.let {
                     seasonNumber++
                     addEpisodes(
                         client.newCall(GET(it.attr("abs:href"), headers)).execute().asJsoup()
@@ -101,7 +101,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         episode.name = when (type) {
             "movie" -> "مشاهدة"
             "mSeries" -> element.select("a").attr("title")
-            else -> element.ownerDocument().select("div.List--Seasons--Episodes a.selected").text() + element.text()
+            else -> element.ownerDocument()!!.select("div.List--Seasons--Episodes a.selected").text() + element.text()
         }
         return episode
     }
@@ -116,13 +116,13 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val iframe = document.selectFirst("iframe").attr("data-lazy-src")
+        val iframe = document.selectFirst("iframe")!!.attr("data-lazy-src")
         val referer = response.request.url.encodedPath
         val newHeaderList = mutableMapOf(Pair("referer", baseUrl + referer))
         headers.forEach { newHeaderList[it.first] = it.second }
         val iframeResponse = client.newCall(GET(iframe, newHeaderList.toHeaders()))
             .execute().asJsoup()
-        return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
+        return videosFromElement(iframeResponse.selectFirst(videoListSelector())!!)
     }
 
     override fun videoListSelector() = "body"
@@ -143,7 +143,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             return videoList
         }
-        val sourceTag = element.ownerDocument().select("source").firstOrNull()!!
+        val sourceTag = element.ownerDocument()!!.select("source").firstOrNull()!!
         return listOf(Video(sourceTag.attr("src"), "Default", sourceTag.attr("src")))
     }
 

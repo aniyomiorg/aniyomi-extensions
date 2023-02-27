@@ -55,7 +55,7 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        val img = element.selectFirst("img")
+        val img = element.selectFirst("img")!!
         val url = element.selectFirst("a")?.attr("href") ?: element.attr("href")
         anime.setUrlWithoutDomain(url)
         anime.title = img.attr("alt")
@@ -91,12 +91,12 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-        val origName = element.selectFirst("div.numerando").text()
+        val origName = element.selectFirst("div.numerando")!!.text()
 
         episode.episode_number = origName.substring(origName.indexOf("-") + 1)
             .toFloat() + if ("Dub" in origName) 0.5F else 0F
         episode.name = "Temp " + origName.replace(" - ", ": Ep ")
-        episode.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
+        episode.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
         episode.date_upload = element.selectFirst("span.date")?.text()?.toDate() ?: 0L
         return episode
     }
@@ -117,7 +117,7 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val type = player.attr("data-type")
         val id = player.attr("data-post")
         val num = player.attr("data-nume")
-        val name = player.selectFirst("span.title").text()
+        val name = player.selectFirst("span.title")!!.text()
         val json = Json.decodeFromString<JsonObject>(
             client.newCall(GET("$baseUrl/wp-json/dooplayer/v2/$id/$type/$num"))
                 .execute().body.string()
@@ -202,7 +202,7 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        val img = element.selectFirst("img")
+        val img = element.selectFirst("img")!!
         anime.title = img.attr("alt")
         anime.thumbnail_url = img.attr("data-src").replace("/p/w92", "/p/w185")
         return anime
@@ -216,14 +216,14 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         val doc = getRealDoc(document)
-        val sheader = doc.selectFirst("div.sheader")
-        val img = sheader.selectFirst("div.poster > img")
+        val sheader = doc.selectFirst("div.sheader")!!
+        val img = sheader.selectFirst("div.poster > img")!!
         anime.thumbnail_url = img.attr("abs:data-src")
-        anime.title = sheader.selectFirst("div.data > h1").text()
+        anime.title = sheader.selectFirst("div.data > h1")!!.text()
         anime.genre = sheader.select("div.data > div.sgeneros > a")
             .joinToString(", ") { it.text() }
-        val info = doc.selectFirst("div#info")
-        var description = info.selectFirst("p").text() + "\n"
+        val info = doc.selectFirst("div#info")!!
+        var description = info.selectFirst("p")!!.text() + "\n"
         info.getInfo("Título")?.let { description += "$it" }
         info.getInfo("Ano")?.let { description += "$it" }
         info.getInfo("Temporadas")?.let { description += "$it" }
@@ -241,7 +241,7 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/episodio/page/$page/", headers)
 
-    // ============================== Settings ============================== 
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREFERRED_QUALITY
@@ -282,7 +282,7 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun getRealDoc(document: Document): Document {
         val menu = document.selectFirst(animeMenuSelector)
         if (menu != null) {
-            val originalUrl = menu.parent().attr("href")
+            val originalUrl = menu.parent()!!.attr("href")
             val req = client.newCall(GET(originalUrl, headers)).execute()
             return req.asJsoup()
         } else {
@@ -293,8 +293,8 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun Element.getInfo(substring: String): String? {
         val target = this.selectFirst("div.custom_fields:contains($substring)")
             ?: return null
-        val key = target.selectFirst("b").text()
-        val value = target.selectFirst("span").text()
+        val key = target.selectFirst("b")!!.text()
+        val value = target.selectFirst("span")!!.text()
         return "\n$key: $value"
     }
 

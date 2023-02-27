@@ -56,7 +56,7 @@ class MiniOppai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         val epsNum = getNumberFromEpsString(element.select("span.lchx").text())
-        episode.setUrlWithoutDomain(element.select("a").first().attr("href"))
+        episode.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
         episode.episode_number = when {
             (epsNum.isNotEmpty()) -> epsNum.toFloat()
             else -> 1F
@@ -76,8 +76,8 @@ class MiniOppai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun getAnimeFromAnimeElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("div > a").first().attr("href"))
-        anime.thumbnail_url = element.select("img").first().attr("data-src")
+        anime.setUrlWithoutDomain(element.selectFirst("div > a")!!.attr("href"))
+        anime.thumbnail_url = element.selectFirst("img")!!.attr("data-src")
         anime.title = element.select("div > a > div.tt").text()
         return anime
     }

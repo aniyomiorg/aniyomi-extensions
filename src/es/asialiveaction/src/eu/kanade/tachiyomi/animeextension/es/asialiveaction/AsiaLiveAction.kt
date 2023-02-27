@@ -58,9 +58,9 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.selectFirst("header div.Image figure img").attr("src").trim().replace("//", "https://")
-        anime.title = document.selectFirst("header div.asia-post-header h1.Title").text()
-        anime.description = document.selectFirst("header div.asia-post-main div.Description p:nth-child(2)").text().removeSurrounding("\"")
+        anime.thumbnail_url = document.selectFirst("header div.Image figure img")!!.attr("src").trim().replace("//", "https://")
+        anime.title = document.selectFirst("header div.asia-post-header h1.Title")!!.text()
+        anime.description = document.selectFirst("header div.asia-post-main div.Description p:nth-child(2)")!!.text().removeSurrounding("\"")
         anime.genre = document.select("div.asia-post-main p.Info span.tags a").joinToString { it.text() }
         val year = document.select("header div.asia-post-main p.Info span.Date a").text().toInt()
         val currentYear = Calendar.getInstance().get(Calendar.YEAR)

@@ -75,7 +75,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(document.location())
         episode.episode_number = 1F
-        episode.name = document.selectFirst("div.name.col-xs-12 span h1").text()
+        episode.name = document.selectFirst("div.name.col-xs-12 span h1")!!.text()
         return listOf(episode)
     }
 
@@ -103,7 +103,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val iframe = document.selectFirst("iframe").attr("src")
+        val iframe = document.selectFirst("iframe")!!.attr("src")
         val referer = response.request.url.encodedPath
         val newHeaders = Headers.headersOf("referer", baseUrl + referer)
         val iframeResponse = client.newCall(GET(iframe, newHeaders))
@@ -146,7 +146,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        anime.thumbnail_url = baseUrl + element.select("img").first().attr("data-original")
+        anime.thumbnail_url = baseUrl + element.selectFirst("img")!!.attr("data-original")
         anime.title = element.select("img").attr("alt").replace(" poster", "")
         return anime
     }

@@ -34,7 +34,7 @@ class GuiaNoticiarioBypasser(
                 next = REGEX_LINK.find(currentBody)!!.groupValues.get(1)
                 currentPage = client.newCall(GET(next, newHeaders)).execute()
             } else {
-                iframeUrl = possibleIframe.attr("src")
+                iframeUrl = possibleIframe!!.attr("src")
             }
         }
         return iframeUrl

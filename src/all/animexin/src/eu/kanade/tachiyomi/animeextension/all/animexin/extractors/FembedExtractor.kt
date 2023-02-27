@@ -49,7 +49,7 @@ class FembedExtractor(private val client: OkHttpClient) {
         }.getOrNull() ?: return emptyList()
 
         val userId = client.newCall(GET(url)).execute().asJsoup()
-            .selectFirst("script:containsData(USER_ID)")
+            .selectFirst("script:containsData(USER_ID)")!!
             .data()
             .substringAfter("USER_ID")
             .substringAfter("'")

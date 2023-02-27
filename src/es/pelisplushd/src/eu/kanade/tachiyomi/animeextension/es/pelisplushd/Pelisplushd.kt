@@ -93,7 +93,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
 
-        val data = document.selectFirst("script:containsData(video[1] = )").data()
+        val data = document.selectFirst("script:containsData(video[1] = )")!!.data()
         val apiUrl = data.substringAfter("video[1] = '", "").substringBefore("';", "")
         val alternativeServers = document.select("ul.TbVideoNv.nav.nav-tabs li:not(:first-child)")
         if (apiUrl.isNotEmpty()) {
@@ -173,7 +173,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         .isNotBlank()
                     ) {
                         val shareId =
-                            body.selectFirst("script:containsData(var shareId)").data()
+                            body.selectFirst("script:containsData(var shareId)")!!.data()
                                 .substringAfter("shareId = \"").substringBefore("\"")
                         val amazonApiJson =
                             client.newCall(GET("https://www.amazon.com/drive/v1/shares/$shareId?resourceVersion=V2&ContentType=JSON&asset=ALL"))
@@ -251,10 +251,10 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.title = document.selectFirst("h1.m-b-5").text()
-        anime.thumbnail_url = document.selectFirst("div.card-body div.row div.col-sm-3 img.img-fluid")
+        anime.title = document.selectFirst("h1.m-b-5")!!.text()
+        anime.thumbnail_url = document.selectFirst("div.card-body div.row div.col-sm-3 img.img-fluid")!!
             .attr("src").replace("/w154/", "/w500/")
-        anime.description = document.selectFirst("div.col-sm-4 div.text-large").ownText()
+        anime.description = document.selectFirst("div.col-sm-4 div.text-large")!!.ownText()
         anime.genre = document.select("div.p-v-20.p-h-15.text-center a span").joinToString { it.text() }
         anime.status = SAnime.COMPLETED
         return anime

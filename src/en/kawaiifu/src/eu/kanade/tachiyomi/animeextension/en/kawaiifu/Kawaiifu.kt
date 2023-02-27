@@ -214,7 +214,7 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         anime.genre = document.select("div.sub-desc h3 ~ a").eachText().joinToString(separator = ", ")
         anime.title = document.select("div.desc h2.title").text()
-        anime.description = document.select("div.wrap-desc div.sub-desc p").filter {
+        anime.description = document.select("div.wrap-desc div.sub-desc p").filter { it ->
             it.select("a").isEmpty() && it.select("iframe").isEmpty()
         }.joinToString(separator = "\n\n") { t -> t.text() }
 

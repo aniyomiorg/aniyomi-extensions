@@ -51,7 +51,7 @@ class AnimeForce : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.title = element.select("p").text()
         anime.thumbnail_url = element.select("img").attr("src")
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href").substringAfter(baseUrl))
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").substringAfter(baseUrl))
         return anime
     }
 
@@ -73,7 +73,7 @@ class AnimeForce : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val interceptor = client.newBuilder().addInterceptor(CloudflareInterceptor()).build()
         val cfResponse = interceptor.newCall(GET(baseUrl)).execute()
 
-        val inputEl = cfResponse.asJsoup().selectFirst("input[type=hidden]")
+        val inputEl = cfResponse.asJsoup().selectFirst("input[type=hidden]")!!
         val headers = cfResponse.request.headers
 
         return if (query.isNotBlank()) {
@@ -96,7 +96,7 @@ class AnimeForce : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.title = element.select("p").text()
         anime.thumbnail_url = element.select("img").attr("src")
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href").substringAfter(baseUrl))
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").substringAfter(baseUrl))
         return anime
     }
 
@@ -196,11 +196,11 @@ class AnimeForce : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (seasonElement != null) desc += "\nStagione: ${seasonElement.select("a").text()}"
 
         anime.description = desc
-        anime.title = document.selectFirst("div.details-text > div.anime-title").text()
+        anime.title = document.selectFirst("div.details-text > div.anime-title")!!.text()
         anime.genre = document.selectFirst("div.details-text > div:has(span:contains(Genere))")?.let { gen ->
             gen.select("a").joinToString(", ") { it.text() }
         } ?: ""
-        anime.thumbnail_url = document.selectFirst("div.info-content > div.info-image > img").attr("src")
+        anime.thumbnail_url = document.selectFirst("div.info-content > div.info-image > img")!!.attr("src")
 
         return anime
     }
@@ -215,7 +215,7 @@ class AnimeForce : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
 
-        val tabCElement = document.selectFirst("div.servers-container > div.tab-content > div.active")
+        val tabCElement = document.selectFirst("div.servers-container > div.tab-content > div.active")!!
         val selector = if (
             tabCElement.selectFirst(
                 "div > div[id=pills-tabContent]"

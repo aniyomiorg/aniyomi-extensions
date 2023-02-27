@@ -130,9 +130,9 @@ class Animeyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.selectFirst("div.sa-series-dashboard__poster div.sa-layout__line.sa-layout__line--sm div figure.sa-poster__fig img").attr("src")
-        anime.title = document.selectFirst("#info div.sa-layout__line div div.sa-title-series__title span").html()
-        anime.description = document.selectFirst("#info div.sa-layout__line p.sa-text").text().removeSurrounding("\"")
+        anime.thumbnail_url = document.selectFirst("div.sa-series-dashboard__poster div.sa-layout__line.sa-layout__line--sm div figure.sa-poster__fig img")!!.attr("src")
+        anime.title = document.selectFirst("#info div.sa-layout__line div div.sa-title-series__title span")!!.html()
+        anime.description = document.selectFirst("#info div.sa-layout__line p.sa-text")!!.text().removeSurrounding("\"")
         // anime.genre = document.select("nav.Nvgnrs a").joinToString { it.text() }
         anime.status = parseStatus(document.select("#info > div:nth-child(2) > button").text())
         return anime

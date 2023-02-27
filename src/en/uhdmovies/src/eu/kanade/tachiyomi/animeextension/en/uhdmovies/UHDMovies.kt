@@ -98,7 +98,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         return SAnime.create().apply {
-            title = document.selectFirst("h2").text()
+            title = document.selectFirst("h2")!!.text()
                 .replace("Download", "", true).trim()
             status = SAnime.COMPLETED
         }
@@ -112,19 +112,20 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodeList = mutableListOf<SEpisode>()
         val episodeElements = resp.select("p:has(a[href*=?id])[style*=center],p:has(a[href*=?id]):has(span.maxbutton-1-center)")
         val qualityRegex = "[0-9]{3,4}p".toRegex(RegexOption.IGNORE_CASE)
-        if (episodeElements.first().text().contains("Episode", true) ||
-            episodeElements.first().text().contains("Zip", true) ||
-            episodeElements.first().text().contains("Pack", true)
+        val firstText = episodeElements.first()!!.text()
+        if (firstText.contains("Episode", true) ||
+            firstText.contains("Zip", true) ||
+            firstText.contains("Pack", true)
         ) {
             episodeElements.map { row ->
-                val prevP = row.previousElementSibling()
+                val prevP = row.previousElementSibling()!!
                 val seasonRegex = "[ .]S(?:eason)?[ .]?([0-9]{1,2})[ .]".toRegex(RegexOption.IGNORE_CASE)
                 val result = seasonRegex.find(prevP.text())
 
                 val season = (
                     result?.groups?.get(1)?.value ?: let {
-                        val prevPre = row.previousElementSiblings().prev("pre,div.mks_separator")
-                        val preResult = seasonRegex.find(prevPre.first().text())
+                        val prevPre = row.previousElementSiblings()!!.prev("pre,div.mks_separator")
+                        val preResult = seasonRegex.find(prevPre.first()!!.text())
                         preResult?.groups?.get(1)?.value ?: let {
                             val title = resp.select("h1.entry-title")
                             val titleResult = "[ .\\[(]S(?:eason)?[ .]?([0-9]{1,2})[ .\\])]".toRegex(RegexOption.IGNORE_CASE).find(title.text())
@@ -139,7 +140,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     qualityMatchOwn?.value ?: "HD"
                 }
 
-                row.select("a").filter {
+                row.select("a").filter { it ->
                     !it.text().contains("Zip", true) &&
                         !it.text().contains("Pack", true) &&
                         !it.text().contains("Volume ", true)
@@ -174,14 +175,14 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     !it.text().contains("Pack", true) &&
                     !it.text().contains("Volume ", true)
             }.map { row ->
-                val prevP = row.previousElementSibling()
+                val prevP = row.previousElementSibling()!!
                 val qualityMatch = qualityRegex.find(prevP.text())
                 val quality = qualityMatch?.value ?: let {
                     val qualityMatchOwn = qualityRegex.find(row.text())
                     qualityMatchOwn?.value ?: "HD"
                 }
 
-                val collectionName = row.previousElementSiblings().prev("h1,h2,h3,pre").first().text()
+                val collectionName = row.previousElementSiblings()!!.prev("h1,h2,h3,pre").first()!!.text()
                     .replace("Download", "", true).trim()
 
                 row.select("a").map { linkElement ->
@@ -250,9 +251,9 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val postLink = epUrl.url.substringBefore("?id=").substringAfter("/?")
         val formData = FormBody.Builder().add("_wp_http", epUrl.url.substringAfter("?id=")).build()
         val response = client.newCall(POST(postLink, body = formData)).execute().asJsoup()
-        val link = response.selectFirst("form#landing").attr("action")
-        val wpHttp = response.selectFirst("input[name=_wp_http2]").attr("value")
-        val token = response.selectFirst("input[name=token]").attr("value")
+        val link = response.selectFirst("form#landing")!!.attr("action")
+        val wpHttp = response.selectFirst("input[name=_wp_http2]")!!.attr("value")
+        val token = response.selectFirst("input[name=token]")!!.attr("value")
         val blogFormData = FormBody.Builder()
             .add("_wp_http2", wpHttp)
             .add("token", token)
@@ -305,7 +306,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun extractGDriveLink(mediaUrl: String, quality: String): List<Video> {
         val tokenClient = client.newBuilder().addInterceptor(TokenInterceptor()).build()
         val response = tokenClient.newCall(GET(mediaUrl)).execute().asJsoup()
-        val gdBtn = response.selectFirst("div.card-body a.btn")
+        val gdBtn = response.selectFirst("div.card-body a.btn")!!
         val gdLink = gdBtn.attr("href")
         val sizeMatch = sizeRegex.find(gdBtn.text())
         val size = sizeMatch?.groups?.get(1)?.value?.let { " - $it" } ?: ""

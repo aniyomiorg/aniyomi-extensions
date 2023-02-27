@@ -90,7 +90,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.episode_number = element.select("td > span.Num").text().toFloat()
-        val seasonNum = element.ownerDocument().select("div.Title span").text()
+        val seasonNum = element.ownerDocument()!!.select("div.Title span").text()
         episode.name = "Season $seasonNum" + "x" + element.select("td span.Num").text() + " : " + element.select("td.MvTbTtl > a").text()
         episode.setUrlWithoutDomain(element.select("td.MvTbPly > a.ClA").attr("abs:href"))
         return episode
@@ -123,7 +123,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val elements = document.select(videoListSelector())
         for (element in elements) {
             val url = element.attr("abs:src")
-            val location = element.ownerDocument().location()
+            val location = element.ownerDocument()!!.location()
             val videoHeaders = Headers.headersOf("Referer", location)
             when {
                 url.contains("https://dood") -> {
@@ -133,7 +133,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
                 url.contains("streamhub") -> {
                     val response = client.newCall(GET(url, videoHeaders)).execute().asJsoup()
-                    val script = response.selectFirst("script:containsData(m3u8)")
+                    val script = response.selectFirst("script:containsData(m3u8)")!!
                     val data = script.data()
                     val masterUrl = masterExtractor(data)
                     val masterPlaylist = client.newCall(GET(masterUrl)).execute().body.string()

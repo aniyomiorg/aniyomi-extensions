@@ -77,9 +77,9 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a").attr("href").toHttpUrl().encodedPath)
-            thumbnail_url = element.selectFirst("img").attr("src")
-            title = element.selectFirst("div.title_in_cat_container > a").text()
+            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").toHttpUrl().encodedPath)
+            thumbnail_url = element.selectFirst("img")!!.attr("src")
+            title = element.selectFirst("div.title_in_cat_container > a")!!.text()
         }
     }
 
@@ -121,9 +121,9 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
             val animes = document.select("div.barContent > div.schedule_container > div.schedule_item:has(div.schedule_block_title:contains($name)) div.schedule_row > div.schedule_block").map {
                 SAnime.create().apply {
-                    title = it.selectFirst("h2 > a > span.jtitle").text()
-                    thumbnail_url = it.selectFirst("img").attr("src")
-                    setUrlWithoutDomain(it.selectFirst("a").attr("href").toHttpUrl().encodedPath)
+                    title = it.selectFirst("h2 > a > span.jtitle")!!.text()
+                    thumbnail_url = it.selectFirst("img")!!.attr("src")
+                    setUrlWithoutDomain(it.selectFirst("a")!!.attr("href").toHttpUrl().encodedPath)
                 }
             }
 
@@ -148,9 +148,9 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val rating = document.selectFirst("div.Votes > div.Prct > div[data-percent]")?.let { "\n\nUser rating: ${it.attr("data-percent")}%" } ?: ""
         return SAnime.create().apply {
-            title = document.selectFirst("div.barContent > div.full > h2").text()
-            thumbnail_url = document.selectFirst("div.cover_anime img").attr("src")
-            status = parseStatus(document.selectFirst("div.full > div.static_single > p:has(span:contains(Status))").ownText())
+            title = document.selectFirst("div.barContent > div.full > h2")!!.text()
+            thumbnail_url = document.selectFirst("div.cover_anime img")!!.attr("src")
+            status = parseStatus(document.selectFirst("div.full > div.static_single > p:has(span:contains(Status))")!!.ownText())
             description = (document.selectFirst("div.full > div.summary > p")?.text() ?: "") + rating
             genre = document.select("div.full > p.info:has(span:contains(Genre)) > a").joinToString(", ") { it.text() }
         }
@@ -162,10 +162,10 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode {
         return SEpisode.create().apply {
-            name = element.selectFirst("a").text()
-            episode_number = element.selectFirst("a").text().substringAfter("Episode ").toFloatOrNull() ?: 0F
-            date_upload = parseDate(element.selectFirst("div:not(:has(a))").text())
-            setUrlWithoutDomain(element.selectFirst("a").attr("href").substringAfter(baseUrl))
+            name = element.selectFirst("a")!!.text()
+            episode_number = element.selectFirst("a")!!.text().substringAfter("Episode ").toFloatOrNull() ?: 0F
+            date_upload = parseDate(element.selectFirst("div:not(:has(a))")!!.text())
+            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").substringAfter(baseUrl))
         }
     }
 
@@ -192,7 +192,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 ).execute().asJsoup()
             }
 
-            val ctk = newDocument.selectFirst("script:containsData(ctk)").data().substringAfter("var ctk = '").substringBefore("';")
+            val ctk = newDocument.selectFirst("script:containsData(ctk)")!!.data().substringAfter("var ctk = '").substringBefore("';")
 
             val getIframeHeaders = Headers.headersOf(
                 "Accept", "application/json, text/javascript, */*; q=0.01",
@@ -213,7 +213,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     POST("$baseUrl/ajax/anime/load_episodes_v2?s=$serverName", body = getIframeBody, headers = getIframeHeaders),
                 ).execute().body.string(),
             )
-            var iframeUrl = Jsoup.parse(iframe.value).selectFirst("iframe").attr("src")
+            var iframeUrl = Jsoup.parse(iframe.value).selectFirst("iframe")!!.attr("src")
 
             val password = if (iframe.value.contains("password: ")) {
                 iframe.value.substringAfter("password: ").substringBefore(" <button")

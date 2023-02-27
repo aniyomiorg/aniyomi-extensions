@@ -102,7 +102,7 @@ class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-        val script = document.selectFirst("script:containsData(decodeURIComponent)").data()
+        val script = document.selectFirst("script:containsData(decodeURIComponent)")!!.data()
         val stringList = json.decodeFromString<List<String>>("[${script.substringAfter("[").substringBefore("]")}]")
         val shiftNumber = script.substringAfterLast("- ").substringBefore(");").toInt()
         val iframeStuff = stringList.joinToString("") {
@@ -110,7 +110,7 @@ class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         val iframeUrl = Jsoup.parse(
             iframeStuff
-        ).selectFirst("iframe").attr("src")
+        ).selectFirst("iframe")!!.attr("src")
 
         val iframeHeaders = Headers.headersOf(
             "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
@@ -126,7 +126,7 @@ class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val iframeSoup = client.newCall(
             GET(iframeUrl, headers = iframeHeaders)
         ).execute().asJsoup()
-        val getVideoLinkScript = iframeSoup.selectFirst("script:containsData(getJSON)").data()
+        val getVideoLinkScript = iframeSoup.selectFirst("script:containsData(getJSON)")!!.data()
         val getVideoLinkUrl = getVideoLinkScript.substringAfter("getJSON(\"").substringBefore("\"")
 
         val getVideoHeaders = Headers.headersOf(

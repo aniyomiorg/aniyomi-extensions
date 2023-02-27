@@ -61,7 +61,7 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        val img = element.selectFirst("img")
+        val img = element.selectFirst("img")!!
         val url = element.selectFirst("a")?.attr("href") ?: element.attr("href")
         anime.setUrlWithoutDomain(url)
         anime.title = img.attr("alt")
@@ -97,13 +97,13 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-        val origName = element.selectFirst("div.numerando").text()
+        val origName = element.selectFirst("div.numerando")!!.text()
 
         episode.episode_number = origName.substringAfter("- ")
             .replace("-", "")
             .toFloat() + if ("Dub" in origName) 0.5F else 0F
         episode.name = "Temp " + origName.replace(" - ", ": Ep ")
-        episode.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
+        episode.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
         episode.date_upload = element.selectFirst("span.date")
             ?.text()
             ?.toDate() ?: 0L
@@ -118,8 +118,8 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .map { it.attr("href") }
         val resolutions = document.select("ul#playeroptionsul > li:not(#player-option-trailer)")
             .map {
-                val player = it.selectFirst("span.title").text()
-                val expectedQuality = it.selectFirst("span.resol")
+                val player = it.selectFirst("span.title")!!.text()
+                val expectedQuality = it.selectFirst("span.resol")!!
                     .text()
                     .replace("HD", "720p")
                 "$player - $expectedQuality"
@@ -235,16 +235,16 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         val doc = getRealDoc(document)
-        val sheader = doc.selectFirst("div.sheader")
-        val img = sheader.selectFirst("div.poster > img")
+        val sheader = doc.selectFirst("div.sheader")!!
+        val img = sheader.selectFirst("div.poster > img")!!
         anime.thumbnail_url = img.attr("src")
-        val name = sheader.selectFirst("div.data > h1").text()
+        val name = sheader.selectFirst("div.data > h1")!!.text()
         anime.title = name
         val status = sheader.selectFirst("div.alert")?.text()
         anime.status = parseStatus(status)
         anime.genre = sheader.select("div.data > div.sgeneros > a")
             .joinToString(", ") { it.text() }
-        val info = doc.selectFirst("div#info")
+        val info = doc.selectFirst("div#info")!!
         var description = info.select("div.wp-content > p")
             .joinToString("\n") { it.text() }
             .substringBefore("Assistir $name") + "\n"
@@ -318,7 +318,7 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun getRealDoc(document: Document): Document {
         val menu = document.selectFirst(animeMenuSelector)
         if (menu != null) {
-            val originalUrl = menu.parent().attr("href")
+            val originalUrl = menu.parent()!!.attr("href")
             val req = client.newCall(GET(originalUrl, headers)).execute()
             return req.asJsoup()
         } else {
@@ -336,8 +336,8 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun Element.getInfo(substring: String): String? {
         val target = this.selectFirst("div.custom_fields:contains($substring)")
             ?: return null
-        val key = target.selectFirst("b").text()
-        val value = target.selectFirst("span").text()
+        val key = target.selectFirst("b")!!.text()
+        val value = target.selectFirst("span")!!.text()
         return "\n$key: $value"
     }
 

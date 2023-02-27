@@ -28,7 +28,7 @@ class LegacyFunExtractor(private val client: OkHttpClient) {
                             "https://legacyfun.site/$it"
                         else it
                     }
-                    val token = form.selectFirst("input").attr("value")!!
+                    val token = form.selectFirst("input")!!.attr("value")!!
                     val formBody = FormBody.Builder().apply {
                         add("token", token)
                     }.build()

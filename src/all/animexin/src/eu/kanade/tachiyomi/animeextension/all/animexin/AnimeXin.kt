@@ -72,9 +72,9 @@ class AnimeXin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a.series").attr("href").toHttpUrl().encodedPath)
-            thumbnail_url = element.selectFirst("img").attr("src").substringBefore("?resize")
-            title = element.selectFirst("a.series:not(:has(img))").text()
+            setUrlWithoutDomain(element.selectFirst("a.series")!!.attr("href").toHttpUrl().encodedPath)
+            thumbnail_url = element.selectFirst("img")!!.attr("src").substringBefore("?resize")
+            title = element.selectFirst("a.series:not(:has(img))")!!.text()
         }
     }
 
@@ -120,9 +120,9 @@ class AnimeXin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a").attr("href").toHttpUrl().encodedPath)
-            thumbnail_url = element.selectFirst("img").attr("src").substringBefore("?resize")
-            title = element.selectFirst("div.tt").text()
+            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").toHttpUrl().encodedPath)
+            thumbnail_url = element.selectFirst("img")!!.attr("src").substringBefore("?resize")
+            title = element.selectFirst("div.tt")!!.text()
         }
     }
 
@@ -132,8 +132,8 @@ class AnimeXin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         return SAnime.create().apply {
-            title = document.selectFirst("h1.entry-title").text()
-            thumbnail_url = document.selectFirst("div.thumb > img").attr("src").substringBefore("?resize")
+            title = document.selectFirst("h1.entry-title")!!.text()
+            thumbnail_url = document.selectFirst("div.thumb > img")!!.attr("src").substringBefore("?resize")
             status = SAnime.COMPLETED
             description = document.select("div[itemprop=description] p")?.let {
                 it.joinToString("\n\n") { t -> t.text() } +
@@ -151,7 +151,7 @@ class AnimeXin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
 
         return document.select("div.eplister > ul > li").map { episodeElement ->
-            val numberText = episodeElement.selectFirst("div.epl-num").text()
+            val numberText = episodeElement.selectFirst("div.epl-num")!!.text()
             val numberString = numberText.substringBefore(" ")
             val episodeNumber = if (numberText.contains("part 2", true)) {
                 numberString.toFloatOrNull()?.plus(0.5F) ?: 0F
@@ -163,7 +163,7 @@ class AnimeXin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 episode_number = episodeNumber
                 name = numberText
                 date_upload = parseDate(episodeElement.selectFirst("div.epl-date")?.text() ?: "")
-                setUrlWithoutDomain(episodeElement.selectFirst("a").attr("href").toHttpUrl().encodedPath)
+                setUrlWithoutDomain(episodeElement.selectFirst("a")!!.attr("href").toHttpUrl().encodedPath)
             }
         }
     }

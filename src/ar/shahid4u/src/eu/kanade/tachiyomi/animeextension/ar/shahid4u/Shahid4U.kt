@@ -207,7 +207,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
         return try {
-            val scriptSelect = document.select("script:containsData(eval)").first().data()
+            val scriptSelect = document.selectFirst("script:containsData(eval)")!!.data()
             val serverPrefix =
                 scriptSelect.substringAfter("|net|cdn|amzn|").substringBefore("|rewind|icon|")
             val sourceServer = "https://$serverPrefix.e-amzn-cdn.net"
@@ -300,7 +300,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.author = document.select("div.SingleDetails li:contains(دولة) a").text()
         anime.description = document.select("div.ServersEmbeds section.story").text().replace(document.select("meta[property=og:title]").attr("content"), "").replace(":", "").trim()
         anime.status = SAnime.COMPLETED
-        if (anime.title.contains("سلسلة")) anime.thumbnail_url = document.select("img.imgInit").first().attr("data-image")
+        if (anime.title.contains("سلسلة")) anime.thumbnail_url = document.selectFirst("img.imgInit")!!.attr("data-image")
         return anime
     }
 

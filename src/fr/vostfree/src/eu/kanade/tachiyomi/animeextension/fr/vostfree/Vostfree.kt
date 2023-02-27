@@ -219,7 +219,7 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.select("div.slide-middle h1").text()
-        anime.description = document.select("div.slide-desc").first().ownText()
+        anime.description = document.selectFirst("div.slide-desc")!!.ownText()
         anime.genre = document.select("div.image-bg-content div.slide-block div.slide-middle ul.slide-top li.right a").joinToString { it.text() }
         return anime
     }

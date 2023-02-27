@@ -153,7 +153,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.title = element.select("div.BlockName h4").text()
-        anime.thumbnail_url = element.select("img").first().attr("data-src")
+        anime.thumbnail_url = element.selectFirst("img")!!.attr("data-src")
         return anime
     }
 
@@ -186,7 +186,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.select("div.Poster img").first().attr("data-src")
+        anime.thumbnail_url = document.selectFirst("div.Poster img")!!.attr("data-src")
         anime.title = document.select("div.BreadCrumbs ol li:last-child a span").text().replace(" مترجم", "").replace("فيلم ", "")
         anime.genre = document.select("div.MetaTermsInfo  > li:contains(النوع) > a").joinToString(", ") { it.text() }
         anime.description = document.select("div.StoryLine p").text()

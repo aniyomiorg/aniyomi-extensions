@@ -147,9 +147,9 @@ class Jkhentai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.selectFirst("div#contenedor div.items.ptts div#movie div.post div.headingder div.datos div.imgs.tsll a img").attr("src")
-        anime.title = document.selectFirst("div#contenedor div.items.ptts div#movie div.post div.headingder div.datos div.dataplus h1").text()
-        anime.description = "Titulo Original: " + document.select("div#contenedor div.items.ptts div#movie div.post div.headingder div.datos div.dataplus span.original").first().ownText()
+        anime.thumbnail_url = document.selectFirst("div#contenedor div.items.ptts div#movie div.post div.headingder div.datos div.imgs.tsll a img")!!.attr("src")
+        anime.title = document.selectFirst("div#contenedor div.items.ptts div#movie div.post div.headingder div.datos div.dataplus h1")!!.text()
+        anime.description = "Titulo Original: " + document.selectFirst("div#contenedor div.items.ptts div#movie div.post div.headingder div.datos div.dataplus span.original")!!.ownText()
         anime.genre = document.select("div.items.ptts div#movie div.post div.headingder div.datos div.dataplus div#dato-1.data-content div.xmll p.xcsd strong a").joinToString { it.text() }
         anime.status = SAnime.COMPLETED
         return anime

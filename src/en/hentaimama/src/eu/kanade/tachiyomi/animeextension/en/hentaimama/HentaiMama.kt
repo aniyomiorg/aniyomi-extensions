@@ -198,7 +198,7 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.select("div.sheader div.poster img").first().attr("data-src")
+        anime.thumbnail_url = document.selectFirst("div.sheader div.poster img")!!.attr("data-src")
         anime.title = document.select("#info1 div:nth-child(2) span").text()
         anime.genre = document.select("div.sheader  div.data  div.sgeneros a")
             .joinToString(", ") { it.text() }

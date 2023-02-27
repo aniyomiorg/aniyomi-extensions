@@ -63,7 +63,7 @@ class Cartoons4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("href"))
-        episode.name = element.ownerDocument().select("header.Top h1").text()
+        episode.name = element.ownerDocument()!!.select("header.Top h1").text()
         return episode
     }
 
@@ -76,7 +76,7 @@ class Cartoons4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val refererHeaders = Headers.headersOf("referer", referer)
         val iframeResponse = client.newCall(GET(iframe, refererHeaders))
             .execute().asJsoup()
-        return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
+        return videosFromElement(iframeResponse.selectFirst(videoListSelector())!!)
     }
 
     override fun videoListSelector() = "a.button.is-success"

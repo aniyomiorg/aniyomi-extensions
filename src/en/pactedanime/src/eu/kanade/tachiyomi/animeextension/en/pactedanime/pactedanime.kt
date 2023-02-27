@@ -86,9 +86,9 @@ class pactedanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     if (ep.childrenSize() > 0) {
                         val episode = SEpisode.create()
 
-                        episode.name = "Season ${season.selectFirst("span.se-t").text()} × ${ep.selectFirst("div.numerando").ownText().substringAfter("E")} - ${ep.selectFirst("a[href]").ownText()}"
+                        episode.name = "Season ${season.selectFirst("span.se-t")!!.text()} × ${ep.selectFirst("div.numerando")!!.ownText().substringAfter("E")} - ${ep.selectFirst("a[href]")!!.ownText()}"
                         episode.episode_number = counter.toFloat()
-                        episode.setUrlWithoutDomain(ep.selectFirst("a[href]").attr("href").toHttpUrl().encodedPath)
+                        episode.setUrlWithoutDomain(ep.selectFirst("a[href]")!!.attr("href").toHttpUrl().encodedPath)
 
                         if (ep.selectFirst("p:contains(Filler)") != null) episode.scanlator = "Filler Episode"
 
@@ -228,7 +228,7 @@ class pactedanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.title = document.select("div.sheader > div.data > h1").text()
         anime.genre = document.select("div.sgeneros a").eachText().joinToString(separator = ", ")
-        anime.description = document.selectFirst("div#info p").text()
+        anime.description = document.selectFirst("div#info p")!!.text()
         return anime
     }
 

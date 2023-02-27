@@ -236,9 +236,9 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun animeDetailsParse(response: Response): SAnime {
         val doc = response.asJsoup()
         return SAnime.create().apply {
-            title = doc.selectFirst("section.ai > h2").text()
-            thumbnail_url = doc.selectFirst("meta[property=og:image]").attr("content")
-            var desc = doc.selectFirst("span.desc").text() + "\n"
+            title = doc.selectFirst("section.ai > h2")!!.text()
+            thumbnail_url = doc.selectFirst("meta[property=og:image]")!!.attr("content")
+            var desc = doc.selectFirst("span.desc")!!.text() + "\n"
             doc.selectFirst("div.year")?.let { desc += "\nAno: ${it.text()}" }
             doc.selectFirst("div.tm")?.let { desc += "\nDuração: ${it.text()}" }
             doc.selectFirst("a.rating")?.let { desc += "\nNota: ${it.text()}" }

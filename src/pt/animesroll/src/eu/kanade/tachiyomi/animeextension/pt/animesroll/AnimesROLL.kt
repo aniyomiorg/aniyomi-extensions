@@ -144,7 +144,7 @@ class AnimesROLL : AnimeHttpSource() {
     // ============================= Utilities ==============================
 
     private inline fun <reified T> Document.parseAs(): T {
-        val nextData = this.selectFirst("script#__NEXT_DATA__")
+        val nextData = this.selectFirst("script#__NEXT_DATA__")!!
             .data()
             .substringAfter(":")
             .substringBeforeLast(",\"page\"")

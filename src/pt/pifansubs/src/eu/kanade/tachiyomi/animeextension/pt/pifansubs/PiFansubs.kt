@@ -60,8 +60,8 @@ class PiFansubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        val img = element.selectFirst("img")
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
+        val img = element.selectFirst("img")!!
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
         anime.title = img.attr("alt")
         anime.thumbnail_url = img.attr("abs:data-src")
         return anime
@@ -95,12 +95,12 @@ class PiFansubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-        val origName = element.selectFirst("div.numerando").text()
+        val origName = element.selectFirst("div.numerando")!!.text()
 
         episode.episode_number = origName.substring(origName.indexOf("-") + 1)
             .toFloat() + if ("Dub" in origName) 0.5F else 0F
         episode.name = "Temp " + origName.replace(" - ", ": Ep ")
-        episode.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
+        episode.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
         episode.date_upload = element.selectFirst("span.date")?.text()?.toDate() ?: 0L
         return episode
     }
@@ -220,13 +220,13 @@ class PiFansubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         val doc = getRealDoc(document)
-        val sheader = doc.selectFirst("div.sheader")
-        val img = sheader.selectFirst("div.poster > img")
+        val sheader = doc.selectFirst("div.sheader")!!
+        val img = sheader.selectFirst("div.poster > img")!!
         anime.thumbnail_url = img.attr("data-src")
-        anime.title = sheader.selectFirst("div.data > h1").text()
+        anime.title = sheader.selectFirst("div.data > h1")!!.text()
         anime.genre = sheader.select("div.data > div.sgeneros > a")
             .joinToString(", ") { it.text() }
-        val info = doc.selectFirst("div#info")
+        val info = doc.selectFirst("div#info")!!
         var description = info.select("p").joinToString("\n\n") + "\n"
         info.getInfo("Título")?.let { description += "$it" }
         info.getInfo("Ano")?.let { description += "$it" }
@@ -245,7 +245,7 @@ class PiFansubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/episodes/page/$page", headers)
 
-    // ============================== Settings ============================== 
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PFConstants.PREFERRED_QUALITY
@@ -271,7 +271,7 @@ class PiFansubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun getRealDoc(document: Document): Document {
         val menu = document.selectFirst(animeMenuSelector)
         if (menu != null) {
-            val originalUrl = menu.parent().attr("href")
+            val originalUrl = menu.parent()!!.attr("href")
             val req = client.newCall(GET(originalUrl, headers)).execute()
             return req.asJsoup()
         } else {
@@ -283,8 +283,8 @@ class PiFansubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val target = this.selectFirst("div.custom_fields:contains($substring)")
             ?: return null
         return runCatching {
-            val key = target.selectFirst("b").text()
-            val value = target.selectFirst("span").text()
+            val key = target.selectFirst("b")!!.text()
+            val value = target.selectFirst("span")!!.text()
             "\n$key: $value"
         }.getOrNull()
     }

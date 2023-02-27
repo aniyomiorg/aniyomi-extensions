@@ -107,7 +107,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val newHeaders = Headers.headersOf("referer", baseUrl + referer)
             val iframeResponse = client.newCall(GET(iframe, newHeaders))
                 .execute().asJsoup()
-            return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
+            return videosFromElement(iframeResponse.selectFirst(videoListSelector())!!)
         } else {
             val postUrl = document.select("form[method=post]").attr("action")
             val ur = document.select("input[name=ur]").attr("value")
@@ -141,7 +141,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         val elements = element.select(videoListSelector())
         for (element in elements) {
-            val location = element.ownerDocument().location()
+            val location = element.ownerDocument()!!.location()
             val embedUrl = element.attr("data-ep-url")
             val qualityy = element.text()
             Log.i("embedUrl", "$embedUrl")
@@ -309,7 +309,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.select("img.thumbnail").first().attr("src")
+        anime.thumbnail_url = document.selectFirst("img.thumbnail")!!.attr("src")
         anime.title = document.select("h1.anime-details-title").text()
         anime.genre = document.select("ul.anime-genres > li > a, div.anime-info > a").joinToString(", ") { it.text() }
         anime.description = document.select("p.anime-story").text()

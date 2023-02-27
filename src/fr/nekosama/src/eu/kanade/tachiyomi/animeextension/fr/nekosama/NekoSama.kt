@@ -76,7 +76,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val pageBody = response.asJsoup()
-        val episodesJson = pageBody.selectFirst("script:containsData(var episodes =)").data()
+        val episodesJson = pageBody.selectFirst("script:containsData(var episodes =)")!!.data()
             .substringAfter("var episodes = ").substringBefore(";")
         val json = json.decodeFromString<List<EpisodesJson>>(episodesJson)
 
@@ -98,7 +98,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
         // probably exists a better way to make this idk
-        val script = document.selectFirst("script:containsData(var video = [];)").data()
+        val script = document.selectFirst("script:containsData(var video = [];)")!!.data()
 
         val firstVideo = script.substringBefore("else {").substringAfter("video[0] = '").substringBefore("'").lowercase()
         val secondVideo = script.substringAfter("else {").substringAfter("video[0] = '").substringBefore("'").lowercase()
@@ -199,19 +199,19 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.title = document.selectFirst("div.col.offset-lg-3.offset-md-4 h1").ownText()
+        anime.title = document.selectFirst("div.col.offset-lg-3.offset-md-4 h1")!!.ownText()
         var description = document.select("div.synopsis p").text() + "\n\n"
 
-        val scoreElement = document.selectFirst("div#anime-info-list div.item:contains(Score)")
+        val scoreElement = document.selectFirst("div#anime-info-list div.item:contains(Score)")!!
         if (scoreElement.ownText().isNotEmpty()) description += "Score moyen: ★${scoreElement.ownText().trim()}"
 
-        val statusElement = document.selectFirst("div#anime-info-list div.item:contains(Status)")
+        val statusElement = document.selectFirst("div#anime-info-list div.item:contains(Status)")!!
         if (statusElement.ownText().isNotEmpty()) description += "\nStatus: ${statusElement.ownText().trim()}"
 
-        val formatElement = document.selectFirst("div#anime-info-list div.item:contains(Format)")
+        val formatElement = document.selectFirst("div#anime-info-list div.item:contains(Format)")!!
         if (formatElement.ownText().isNotEmpty()) description += "\nFormat: ${formatElement.ownText().trim()}"
 
-        val diffusionElement = document.selectFirst("div#anime-info-list div.item:contains(Diffusion)")
+        val diffusionElement = document.selectFirst("div#anime-info-list div.item:contains(Diffusion)")!!
         if (diffusionElement.ownText().isNotEmpty()) description += "\nDiffusion: ${diffusionElement.ownText().trim()}"
 
         anime.status = parseStatus(statusElement.ownText().trim())
@@ -387,7 +387,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             GET(videoUrl, headers = iframeHeaders)
         ).execute().asJsoup()
 
-        val jsUrl = soup.selectFirst("script[src~=player-script]").attr("src")
+        val jsUrl = soup.selectFirst("script[src~=player-script]")!!.attr("src")
 
         val jsHeaders = Headers.headersOf(
             "Accept", "*/*",

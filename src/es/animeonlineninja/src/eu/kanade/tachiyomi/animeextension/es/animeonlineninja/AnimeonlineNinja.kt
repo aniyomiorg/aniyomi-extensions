@@ -107,8 +107,8 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
         if (multiserverCheck(document)) {
-            val datapost = document.selectFirst("#playeroptionsul li").attr("data-post")
-            val datatype = document.selectFirst("#playeroptionsul li").attr("data-type")
+            val datapost = document.selectFirst("#playeroptionsul li")!!.attr("data-post")
+            val datatype = document.selectFirst("#playeroptionsul li")!!.attr("data-type")
             val apiCall = client.newCall(GET("https://www1.animeonline.ninja/wp-json/dooplayer/v1/post/$datapost?type=$datatype&source=1")).execute().asJsoup().body()
             val iframeLink = apiCall.toString().substringAfter("{\"embed_url\":\"").substringBefore("\"")
             val sDocument = client.newCall(GET(iframeLink)).execute().asJsoup()
@@ -120,8 +120,8 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             }
         } else {
-            val datapost = document.selectFirst("#playeroptionsul li").attr("data-post")
-            val datatype = document.selectFirst("#playeroptionsul li").attr("data-type")
+            val datapost = document.selectFirst("#playeroptionsul li")!!.attr("data-post")
+            val datatype = document.selectFirst("#playeroptionsul li")!!.attr("data-type")
             document.select("#playeroptionsul li").forEach {
                 val sourceId = it.attr("data-nume")
                 val apiCall = client.newCall(GET("https://www1.animeonline.ninja/wp-json/dooplayer/v1/post/$datapost?type=$datatype&source=$sourceId")).execute().asJsoup().body()
@@ -168,7 +168,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             serverUrl.contains("mixdrop") && lang.contains(langSelect) -> {
                 try {
-                    val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(eval)").data()
+                    val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(eval)")!!.data()
                     if (jsE.contains("MDCore")) {
                         val url = "http:" + JsUnpacker(jsE).unpack().toString().substringAfter("MDCore.wurl=\"").substringBefore("\"")
                         if (!url.contains("\$(document).ready(function(){});")) {
@@ -178,7 +178,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 } catch (e: Exception) { }
             }
             serverUrl.contains("wolfstream") && lang.contains(langSelect) -> {
-                val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(sources)").data()
+                val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(sources)")!!.data()
                 val url = jsE.substringAfter("{file:\"").substringBefore("\"")
                 videos.add(Video(url, "$lang WolfStream", url))
             }

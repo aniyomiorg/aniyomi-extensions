@@ -91,7 +91,7 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-        val videoServers = document.selectFirst("script:containsData(var videos = [)").data().substringAfter("videos = ").substringBefore(";")
+        val videoServers = document.selectFirst("script:containsData(var videos = [)")!!.data().substringAfter("videos = ").substringBefore(";")
             .replace("[[", "").replace("]]", "")
         val videoServerList = videoServers.split("],[")
         videoServerList.forEach {
@@ -188,8 +188,8 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = baseUrl + document.selectFirst("div.h-thumb figure img").attr("src")
-        anime.title = document.selectFirst("article.hentai-single header.h-header h1").text()
+        anime.thumbnail_url = baseUrl + document.selectFirst("div.h-thumb figure img")!!.attr("src")
+        anime.title = document.selectFirst("article.hentai-single header.h-header h1")!!.text()
         anime.description = document.select("article.hentai-single div.h-content p").text()
         anime.genre = document.select("article.hentai-single footer.h-footer nav.genres a.btn.sm").joinToString { it.text() }
         anime.status = SAnime.COMPLETED

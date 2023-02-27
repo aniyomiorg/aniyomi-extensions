@@ -86,8 +86,8 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun parseShortInfo(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a").first().attr("href"))
-        anime.thumbnail_url = element.select("a > div").first().attr("data-setbg")
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        anime.thumbnail_url = element.selectFirst("a > div")!!.attr("data-setbg")
         anime.title = element.select("div.product__item__text > h5").text()
         return anime
     }

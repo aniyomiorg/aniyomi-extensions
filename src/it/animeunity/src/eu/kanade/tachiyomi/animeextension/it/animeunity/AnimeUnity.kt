@@ -82,7 +82,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
         val animeList = document.select("div.home-wrapper-body > div.row > div.latest-anime-container").map {
             SAnime.create().apply {
                 title = it.select("a > strong").text()
-                url = it.selectFirst("a").attr("href").substringAfter("/anime/")
+                url = it.selectFirst("a")!!.attr("href").substringAfter("/anime/")
                 thumbnail_url = it.select("img").attr("src")
             }
         }
@@ -193,7 +193,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
         val anime = SAnime.create()
         val document = response.asJsoup()
 
-        val videoPlayer = document.selectFirst("video-player[episodes_count]")
+        val videoPlayer = document.selectFirst("video-player[episodes_count]")!!
 
         val animeDetails = json.decodeFromString<AnimeInfo>(
             videoPlayer.attr("anime").replace("&quot;", "\"")
@@ -244,7 +244,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
             .add("X-Requested-With", "XMLHttpRequest")
         val newHeaders = newHeadersBuilder.build()
 
-        val videoPlayer = document.selectFirst("video-player[episodes_count]")
+        val videoPlayer = document.selectFirst("video-player[episodes_count]")!!
         val episodeCount = videoPlayer.attr("episodes_count").toInt()
         val animeId = response.request.url.toString().substringAfter("/anime/").substringBefore("-")
 

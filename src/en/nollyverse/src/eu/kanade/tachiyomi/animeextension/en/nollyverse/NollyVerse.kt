@@ -130,7 +130,7 @@ class NollyVerse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 for (ep in episodeTable.select("tbody tr")) {
                     val episode = SEpisode.create()
 
-                    episode.name = "Episode S${seasonNumber}E${ep.selectFirst("td").text().split(" ")!![1]}"
+                    episode.name = "Episode S${seasonNumber}E${ep.selectFirst("td")!!.text().split(" ")!![1]}"
                     episode.episode_number = counter.toFloat()
                     episode.setUrlWithoutDomain(seasonUrl + "#$counter")
                     episodeList.add(episode)
@@ -149,7 +149,7 @@ class NollyVerse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.episode_number = element.select("td > span.Num").text().toFloat()
-        val seasonNum = element.ownerDocument().select("div.Title span").text()
+        val seasonNum = element.ownerDocument()!!.select("div.Title span").text()
         episode.name = "Season $seasonNum" + "x" + element.select("td span.Num").text() + " : " + element.select("td.MvTbTtl > a").text()
         episode.setUrlWithoutDomain(element.select("td.MvTbPly > a.ClA").attr("abs:href"))
         return episode

@@ -67,8 +67,8 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/most-popular?page=$page")
 
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
-        thumbnail_url = element.selectFirst("div.film-poster > img").attr("data-src")
-        val filmDetail = element.selectFirst("div.film-detail a")
+        thumbnail_url = element.selectFirst("div.film-poster > img")!!.attr("data-src")
+        val filmDetail = element.selectFirst("div.film-detail a")!!
         setUrlWithoutDomain(filmDetail.attr("href"))
         title = filmDetail.attr("data-jname")
     }
@@ -295,10 +295,10 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        val info = document.selectFirst("div.anisc-info")
-        val detail = document.selectFirst("div.anisc-detail")
-        anime.thumbnail_url = document.selectFirst("div.anisc-poster img").attr("src")
-        anime.title = detail.selectFirst("h2").attr("data-jname")
+        val info = document.selectFirst("div.anisc-info")!!
+        val detail = document.selectFirst("div.anisc-detail")!!
+        anime.thumbnail_url = document.selectFirst("div.anisc-poster img")!!.attr("src")
+        anime.title = detail.selectFirst("h2")!!.attr("data-jname")
         anime.author = info.getInfo("Studios:")
         anime.status = parseStatus(info.getInfo("Status:"))
         anime.genre = info.getInfo("Genres:", isList = true)
