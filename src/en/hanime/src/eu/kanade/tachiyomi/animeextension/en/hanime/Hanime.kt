@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -25,11 +26,13 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
@@ -44,6 +47,8 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
+
+    private var authCookie: String? = null
 
     private val json: Json by injectLazy()
 
@@ -69,8 +74,9 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
     private val popularRequestHeaders =
         Headers.headersOf("authority", "search.htv-services.com", "accept", "application/json, text/plain, */*", "content-type", "application/json;charset=UTF-8")
 
-    override fun popularAnimeRequest(page: Int): Request =
-        POST("https://search.htv-services.com/", popularRequestHeaders, searchRequestBody("", page, AnimeFilterList()))
+    override fun popularAnimeRequest(page: Int): Request {
+        return POST("https://search.htv-services.com/", popularRequestHeaders, searchRequestBody("", page, AnimeFilterList()))
+    }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val responseString = response.body!!.string()
@@ -127,6 +133,41 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
         return GET(episode.url)
     }
 
+    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+        setAuthCookie()
+
+        if (authCookie != null) {
+            return fetchVideoListPremium(episode)
+        }
+
+        return super.fetchVideoList(episode)
+    }
+
+    private fun fetchVideoListPremium(episode: SEpisode): Observable<List<Video>> {
+        val videoList = mutableListOf<Video>()
+        val id = episode.url.substringAfter("?id=")
+        val headers = headers.newBuilder()
+            .add("cookie", authCookie!!)
+        val document = client.newCall(
+            GET("$baseUrl/videos/hentai/$id", headers = headers.build())
+        ).execute().asJsoup()
+        val data = document.selectFirst("script:containsData(__NUXT__)").data()
+            .substringAfter("__NUXT__=").substringBeforeLast(";")
+        val parsed = json.decodeFromString<WindowNuxt>(data)
+        parsed.state.data.video.videos_manifest.servers.forEach { server ->
+            server.streams.forEach { stream ->
+                videoList.add(
+                    Video(
+                        stream.url,
+                        stream.height + "p",
+                        stream.url
+                    )
+                )
+            }
+        }
+        return Observable.just(videoList)
+    }
+
     override fun videoListParse(response: Response): List<Video> {
         val responseString = response.body!!.string()
         val jObject = json.decodeFromString<JsonObject>(responseString)
@@ -180,6 +221,15 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
         episode.url = response.request.url.toString()
         episode.episode_number = 1F
         return listOf(episode)
+    }
+
+    private fun setAuthCookie() {
+        if (authCookie == null) {
+            val cookieList = client.cookieJar.loadForRequest(baseUrl.toHttpUrl())
+            if (cookieList.isNotEmpty()) {
+                cookieList.firstOrNull { it.name == "htv3session" }?.let { authCookie = "${it.name}=${it.value}" }
+            }
+        }
     }
 
     private fun latestSearchRequestBody(page: Int): RequestBody {
@@ -534,5 +584,41 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
         screen.addPreference(videoQualityPref)
+    }
+
+    @Serializable
+    data class WindowNuxt(
+        val state: State
+    ) {
+        @Serializable
+        data class State(
+            val data: Data
+        ) {
+            @Serializable
+            data class Data(
+                val video: DataVideo
+            ) {
+                @Serializable
+                data class DataVideo(
+                    val videos_manifest: VideosManifest
+                ) {
+                    @Serializable
+                    data class VideosManifest(
+                        val servers: List<Server>
+                    ) {
+                        @Serializable
+                        data class Server(
+                            val streams: List<Stream>
+                        ) {
+                            @Serializable
+                            data class Stream(
+                                val height: String,
+                                val url: String
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
