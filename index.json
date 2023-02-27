@@ -1740,10 +1740,10 @@
   {
     "name": "Aniyomi: AnimeonlineNinja",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.animeonlineninja",
-    "apk": "aniyomi-es.animeonlineninja-v13.20.apk",
+    "apk": "aniyomi-es.animeonlineninja-v13.21.apk",
     "lang": "es",
-    "code": 20,
-    "version": "13.20",
+    "code": 21,
+    "version": "13.21",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
