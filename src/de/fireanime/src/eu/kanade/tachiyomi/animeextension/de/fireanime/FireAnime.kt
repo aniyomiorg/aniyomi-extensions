@@ -94,7 +94,7 @@ class FireAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ===== ANIME LIST PARSING =====
     private fun parseAnimeListJson(response: Response, singlePage: Boolean = false): AnimesPage {
-        val animes = json.decodeFromString(ListSerializer(AnimeBaseDto.serializer()), response.body!!.string())
+        val animes = json.decodeFromString(ListSerializer(AnimeBaseDto.serializer()), response.body.string())
             .distinctBy { it.url }
         return AnimesPage(animes.map { createAnime(it) }, animes.count() > 0 && !singlePage)
     }
@@ -118,7 +118,7 @@ class FireAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun animeDetailsParse(response: Response): SAnime = throw UnsupportedOperationException("Not used")
 
     private fun animeDetailsParse(response: Response, baseAnime: SAnime): SAnime {
-        val anime = json.decodeFromString(AnimeDetailsWrapperDto.serializer(), response.body!!.string()).response
+        val anime = json.decodeFromString(AnimeDetailsWrapperDto.serializer(), response.body.string()).response
         return createAnime(baseAnime, anime)
     }
 
@@ -162,7 +162,7 @@ class FireAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> = throw UnsupportedOperationException("Not used")
 
     private fun episodeListParse(response: Response, animeUrl: String): List<SEpisode> {
-        val episodes = json.decodeFromString(EpisodeListingWrapperDto.serializer(), response.body!!.string()).response
+        val episodes = json.decodeFromString(EpisodeListingWrapperDto.serializer(), response.body.string()).response
         return episodes.mapIndexed { i, ep ->
             SEpisode.create().apply {
                 episode_number = ep.episode.toFloat()
@@ -182,7 +182,7 @@ class FireAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     )
 
     override fun videoListParse(response: Response): List<Video> {
-        val episode = json.decodeFromString(EpisodeSourcesDto.serializer(), response.body!!.string().substringAfter("\"ep\":").substringBefore(",\"next\""))
+        val episode = json.decodeFromString(EpisodeSourcesDto.serializer(), response.body.string().substringAfter("\"ep\":").substringBefore(",\"next\""))
 
         val videos = mutableListOf<Video>()
         videos.addAll(getVideos(episode.cdns, "$baseUrl/api/public/cdn"))
@@ -199,7 +199,7 @@ class FireAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                     .add("id", source.id.toString())
                     .build()
             )
-            val link = json.decodeFromString(VideoLinkDto.serializer(), client.newCall(linkRequest).execute().body!!.string()).url
+            val link = json.decodeFromString(VideoLinkDto.serializer(), client.newCall(linkRequest).execute().body.string()).url
 
             val sourceName = if (source is CdnSourceDto) FAConstants.NAME_FIRECDN else (source as HosterSourceDto).hoster
             val lang = if (source.isSub == 1) FAConstants.LANG_SUB else FAConstants.LANG_DUB

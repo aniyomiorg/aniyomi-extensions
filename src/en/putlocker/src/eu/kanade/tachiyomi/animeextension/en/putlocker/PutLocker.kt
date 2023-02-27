@@ -132,7 +132,7 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val html = json.decodeFromString<JsonObject>(response.body!!.string())["html"]!!.jsonPrimitive.content
+        val html = json.decodeFromString<JsonObject>(response.body.string())["html"]!!.jsonPrimitive.content
         val parsedHtml = Jsoup.parse(JSONUtil.unescape(html))
         val rawEpisodes = parsedHtml.select("div[id^=sv]").mapNotNull { server ->
             val linkElement = server.select("div.les-content > a")
@@ -190,7 +190,7 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun extractVideo(dataId: String): List<Video> {
         val url = "$baseUrl/ajax/movie_embed/$dataId"
-        val embedResp = client.newCall(GET(url)).execute().body!!.string()
+        val embedResp = client.newCall(GET(url)).execute().body.string()
         val embedUrl = json.decodeFromString<JsonObject>(embedResp)["src"]!!.jsonPrimitive.content
         val vidReferer = Headers.headersOf("Referer", embedUrl)
         val vidResponse = extractVideoEmbed(embedUrl, vidReferer)
@@ -260,7 +260,7 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .addQueryParameter("t", cipher.salt)
             .build().toString()
         val resp = client.newCall(GET(vidUrl, vidReferer)).execute()
-        return resp.body!!.string()
+        return resp.body.string()
     }
 
     private fun extractVideoLinks(source: VidSource, vidReferer: Headers, subsList: List<Track>, serverId: String): List<Video> {
@@ -268,7 +268,7 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (source.file.endsWith(".m3u8")) {
             val videoLink = source.file
             val resp = client.newCall(GET(videoLink, vidReferer)).execute()
-            val masterPlaylist = resp.body!!.string()
+            val masterPlaylist = resp.body.string()
             if (resp.code == 200) {
                 masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
                     .split("#EXT-X-STREAM-INF:").map {

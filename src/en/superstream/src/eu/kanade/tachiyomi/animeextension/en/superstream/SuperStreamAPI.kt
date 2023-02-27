@@ -843,7 +843,7 @@ class SuperStreamAPI(val json: Json) {
     }
 
     private inline fun <reified T : Any> queryApiParsed(query: String, altApi: Boolean = false): T {
-        return parseJson(queryApi(query, altApi).body!!.string())
+        return parseJson(queryApi(query, altApi).body.string())
     }
 
     private val unixTime: Long
@@ -913,7 +913,7 @@ class SuperStreamAPI(val json: Json) {
     private fun sendQuery(page: Int): String {
         return queryApi(
             """{"childmode":"$hideNsfw","app_version":"11.5","appid":"$appId","module":"Home_list_type_v2","channel":"Website","page":"$page","lang":"en","type":"all","pagelimit":"20","expired_date":"${getExpiryDate()}","platform":"android"}""".trimIndent()
-        ).body!!.string()
+        ).body.string()
     }
 
     private fun Data.toSearchResponse(): SAnime? {
@@ -938,7 +938,7 @@ class SuperStreamAPI(val json: Json) {
         val apiQuery =
             // Originally 8 pagelimit
             """{"childmode":"$hideNsfw","app_version":"11.5","appid":"$appId","module":"Search3","channel":"Website","page":"$page","lang":"en","type":"all","keyword":"$query","pagelimit":"20","expired_date":"${getExpiryDate()}","platform":"android"}"""
-        val searchResponse = parseJson<MainData>(queryApi(apiQuery, true).body!!.string()).data.mapNotNull {
+        val searchResponse = parseJson<MainData>(queryApi(apiQuery, true).body.string()).data.mapNotNull {
             it.toSearchResponse()
         }
         return searchResponse

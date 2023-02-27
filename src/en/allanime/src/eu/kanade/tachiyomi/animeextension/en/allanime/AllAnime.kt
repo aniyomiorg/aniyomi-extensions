@@ -72,7 +72,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val parsed = json.decodeFromString<PopularResult>(response.body!!.string())
+        val parsed = json.decodeFromString<PopularResult>(response.body.string())
         val animeList = mutableListOf<SAnime>()
 
         val titleStyle = preferences.getString("preferred_title_style", "romaji")!!
@@ -169,7 +169,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
-        val show = json.decodeFromString<SeriesResult>(response.body!!.string()).data.show
+        val show = json.decodeFromString<SeriesResult>(response.body.string()).data.show
         val anime = SAnime.create()
 
         anime.title = show.name
@@ -202,7 +202,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val medias = json.decodeFromString<SeriesResult>(response.body!!.string())
+        val medias = json.decodeFromString<SeriesResult>(response.body.string())
         val episodeList = mutableListOf<SEpisode>()
 
         val subOrDub = preferences.getString("preferred_sub", "sub")!!
@@ -246,7 +246,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val body = response.body!!.string()
+        val body = response.body.string()
 
         val videoJson = json.decodeFromString<EpisodeResult>(body)
         val videoList = mutableListOf<Pair<Video, Float>>()
@@ -423,7 +423,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun ParseAnime(response: Response): AnimesPage {
-        val parsed = json.decodeFromString<SearchResult>(response.body!!.string())
+        val parsed = json.decodeFromString<SearchResult>(response.body.string())
         val titleStyle = preferences.getString("preferred_title_style", "romaji")!!
 
         val animeList = parsed.data.shows.edges.map { ani ->

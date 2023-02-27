@@ -13,7 +13,7 @@ class XstreamcdnExtractor(private val client: OkHttpClient, private val json: Js
         val headers = Headers.Builder().set("referer", url.substringBefore("#")).build()
         val apiUrl = url.replace("/e/", "/api/source/")
         val resp = json.decodeFromString<LinkData>(
-            client.newCall(POST(apiUrl, headers)).execute().body!!.string()
+            client.newCall(POST(apiUrl, headers)).execute().body.string()
         )
         val videoList = mutableListOf<Video>()
 

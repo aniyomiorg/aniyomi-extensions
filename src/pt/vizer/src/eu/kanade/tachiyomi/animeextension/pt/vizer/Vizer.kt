@@ -143,7 +143,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val body = response.body?.string().orEmpty()
+        val body = response.body.string()
         val videoObjectList = if (body.startsWith("{")) {
             json.decodeFromString<VideoLanguagesDto>(body).videos
         } else {
@@ -313,7 +313,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun getPlayerUrl(id: String, name: String): String {
         val req = GET("$baseUrl/embed/getPlay.php?id=$id&sv=$name")
-        val body = client.newCall(req).execute().body?.string().orEmpty()
+        val body = client.newCall(req).execute().body.string()
         return body.substringAfter("location.href=\"").substringBefore("\";")
     }
 
@@ -346,7 +346,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private inline fun <reified T> Response.parseAs(): T {
-        val responseBody = body?.string().orEmpty()
+        val responseBody = body.string()
         return json.decodeFromString(responseBody)
     }
 

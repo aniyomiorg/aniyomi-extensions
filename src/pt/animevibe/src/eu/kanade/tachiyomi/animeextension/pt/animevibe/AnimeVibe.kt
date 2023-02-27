@@ -57,8 +57,8 @@ class AnimeVibe : AnimeHttpSource() {
         }
 
         val response = chain.proceed(chain.request())
-        val contentType = response.body!!.contentType()
-        val body = response.body!!.string()
+        val contentType = response.body.contentType()
+        val body = response.body.string()
         requestCache[url] = body
         return response.newBuilder()
             .body(body.toResponseBody(contentType))
@@ -92,7 +92,7 @@ class AnimeVibe : AnimeHttpSource() {
     }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val animes = format.decodeFromString<AnimeVibePopularDto>(response.body!!.string())
+        val animes = format.decodeFromString<AnimeVibePopularDto>(response.body.string())
 
         if (animes.data.isNullOrEmpty()) {
             return AnimesPage(emptyList(), hasNextPage = false)
@@ -115,7 +115,7 @@ class AnimeVibe : AnimeHttpSource() {
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
-        val animes = format.decodeFromString<AnimeVibePopularDto>(response.body!!.string())
+        val animes = format.decodeFromString<AnimeVibePopularDto>(response.body.string())
         if (animes.data.isNullOrEmpty()) throw Exception(COULD_NOT_PARSE_ANIME)
 
         val id = response.request.header("X-id")!!.toInt()
@@ -131,7 +131,7 @@ class AnimeVibe : AnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val episodes = format.decodeFromString<AnimeVibeEpisodeListDto>(response.body!!.string())
+        val episodes = format.decodeFromString<AnimeVibeEpisodeListDto>(response.body.string())
         if (episodes.data.isNullOrEmpty()) return emptyList()
 
         return episodes.data
@@ -166,7 +166,7 @@ class AnimeVibe : AnimeHttpSource() {
                 .add("User-Agent", USER_AGENT)
                 .build()
             val response = client.newCall(GET(source, headers)).execute()
-            val streams = response.body!!.string().substringAfter("\"streams\":[").substringBefore("]")
+            val streams = response.body.string().substringAfter("\"streams\":[").substringBefore("]")
             return streams.split("},")
                 .map {
                     val url = it.substringAfter("{\"play_url\":\"").substringBefore('"')
@@ -182,7 +182,7 @@ class AnimeVibe : AnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val number = response.request.header("X-number")!!.toFloat()
-        val episodes = format.decodeFromString<AnimeVibeEpisodeListDto>(response.body!!.string())
+        val episodes = format.decodeFromString<AnimeVibeEpisodeListDto>(response.body.string())
         if (episodes.data.isNullOrEmpty()) throw Exception("NO DATA ${response.request.header("X-mediaid")} ${response.request.header("X-url")}")
 
         val episode = episodes.data.find { it.number == number } ?: throw Exception("NO EPISODE $number")
@@ -201,7 +201,7 @@ class AnimeVibe : AnimeHttpSource() {
 
     override fun searchAnimeParse(response: Response): AnimesPage {
         val query = response.request.header("X-query")!!
-        val animes = format.decodeFromString<AnimeVibePopularDto>(response.body!!.string())
+        val animes = format.decodeFromString<AnimeVibePopularDto>(response.body.string())
         if (animes.data.isNullOrEmpty()) {
             return AnimesPage(emptyList(), hasNextPage = false)
         }

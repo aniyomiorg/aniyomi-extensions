@@ -102,7 +102,7 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         val referer = document.location()
         return if (url.endsWith("playlist.m3u8")) {
-            val playlist = client.newCall(GET(url)).execute().body!!.string()
+            val playlist = client.newCall(GET(url)).execute().body.string()
             val linkRegex = """(?<=\n)./.+""".toRegex()
             val qualityRegex = """(?<=RESOLUTION=)\d+x\d+""".toRegex()
             val qualities = qualityRegex.findAll(playlist).map {

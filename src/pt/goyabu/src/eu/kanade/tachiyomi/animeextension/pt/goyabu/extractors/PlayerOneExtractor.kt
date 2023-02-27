@@ -27,7 +27,7 @@ class PlayerOneExtractor {
             "User-Agent", GYConstants.USER_AGENT
         )
         val res = client.newCall(GET(url, headers)).execute()
-        val html = res.body?.string().orEmpty()
+        val html = res.body.string()
         return videoListFromHtml(html, headers)
     }
 }

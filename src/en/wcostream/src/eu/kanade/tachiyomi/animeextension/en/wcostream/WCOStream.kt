@@ -139,7 +139,7 @@ class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val getVideoLinkBody = client.newCall(
             GET("https://${iframeUrl.toHttpUrl().host}$getVideoLinkUrl", headers = getVideoHeaders)
-        ).execute().body!!.string()
+        ).execute().body.string()
 
         val parsed = json.decodeFromString<GetVideoResponse>(getVideoLinkBody)
         val videoUrl = "${parsed.server}/getvid?evid=${parsed.enc}"

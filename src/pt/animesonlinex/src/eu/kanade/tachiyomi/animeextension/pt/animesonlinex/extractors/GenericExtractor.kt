@@ -15,7 +15,7 @@ class GenericExtractor(
             .set("Referer", "https://guianoticiario.net/")
             .build()
         val response = client.newCall(GET(url, resHeaders)).execute()
-        val body = response.body!!.string()
+        val body = response.body.string()
         val item = if ("/firestream/" in url) "play_url" else "file"
         val REGEX_URL = Regex("${item}\":\"(.*?)\"")
         val videoUrl = REGEX_URL.find(body)!!.groupValues.get(1)

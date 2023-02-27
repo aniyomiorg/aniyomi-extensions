@@ -74,7 +74,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val parsed = json.decodeFromString<AnimeResult>(response.body!!.string())
+        val parsed = json.decodeFromString<AnimeResult>(response.body.string())
         val animeList = parsed.data.parallelMap { ani ->
             runCatching {
                 ani.toSAnime()
@@ -111,7 +111,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val bod = response.body!!.string()
+        val bod = response.body.string()
         val total: Int
         val animeList = (
             if (response.request.url.encodedPath.contains("search")) {
@@ -145,7 +145,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
             if (mediaId.media_type == "series") GET("$crUrl/content/v2/cms/series/${mediaId.id}?locale=en-US")
             else GET("$crUrl/content/v2/cms/movie_listings/${mediaId.id}?locale=en-US")
         ).execute()
-        val info = json.decodeFromString<AnimeResult>(resp.body!!.string())
+        val info = json.decodeFromString<AnimeResult>(resp.body.string())
         return Observable.just(
             anime.apply {
                 author = info.data.first().content_provider
@@ -171,7 +171,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val seasons = json.decodeFromString<SeasonResult>(response.body!!.string())
+        val seasons = json.decodeFromString<SeasonResult>(response.body.string())
         val series = response.request.url.encodedPath.contains("series/")
         // Why all this? well crunchy sends same season twice with different quality eg. One Piece
         // which causes the number of episodes to be higher that what it actually is.
@@ -184,7 +184,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                                 client.newCall(GET("$crUrl/content/v2/cms/seasons/${seasonData.id}/episodes"))
                                     .execute()
                             val episodes =
-                                json.decodeFromString<EpisodeResult>(episodeResp.body!!.string())
+                                json.decodeFromString<EpisodeResult>(episodeResp.body.string())
                             episodes.data.sortedBy { it.episode_number }.parallelMap { ep ->
                                 TempEpisode(
                                     epData = EpisodeData(
@@ -257,7 +257,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun extractVideo(media: Pair<String, String>, policyJson: AccessToken): List<Video> {
         val (mediaId, aud) = media
         val response = client.newCall(GET("$crUrl/cms/v2${policyJson.bucket}/videos/$mediaId/streams?Policy=${policyJson.policy}&Signature=${policyJson.signature}&Key-Pair-Id=${policyJson.key_pair_id}")).execute()
-        val streams = json.decodeFromString<VideoStreams>(response.body!!.string())
+        val streams = json.decodeFromString<VideoStreams>(response.body.string())
 
         var subsList = emptyList<Track>()
         val subLocale = preferences.getString("preferred_sub", "en-US")!!.getLocale()
@@ -277,7 +277,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         return streams.streams.adaptive_hls.entries.parallelMap { (_, value) ->
             val stream = json.decodeFromString<HlsLinks>(value.jsonObject.toString())
             runCatching {
-                val playlist = client.newCall(GET(stream.url)).execute().body!!.string()
+                val playlist = client.newCall(GET(stream.url)).execute().body.string()
                 playlist.substringAfter("#EXT-X-STREAM-INF:")
                     .split("#EXT-X-STREAM-INF:").map {
                         val hardsub = stream.hardsub_locale.let { hs ->

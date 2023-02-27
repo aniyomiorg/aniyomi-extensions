@@ -188,7 +188,7 @@ class AnimeVostFr : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Log.i("bruh", "ID: $epId \nLink: $")
         val xhr = Headers.headersOf("x-requested-with", "XMLHttpRequest")
         val epLink = client.newCall(GET("$baseUrl/ajax-get-link-stream/?server=$serverValue&filmId=$epId", xhr))
-            .execute().body!!.string()
+            .execute().body.string()
 
         val playlist = mutableListOf<Video>()
         when {
@@ -199,7 +199,7 @@ class AnimeVostFr : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     "referer", "$baseUrl/",
                     "user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"
                 )
-                val playlistResponse = cfClient.newCall(GET(epLink, headers)).execute().body!!.string()
+                val playlistResponse = cfClient.newCall(GET(epLink, headers)).execute().body.string()
                 val headersVideo = Headers.headersOf(
                     "referer", epLink,
                     "user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"

@@ -257,7 +257,7 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
     private fun Response.getAnimeDto(): AnimeDto {
-        val responseBody = body?.string().orEmpty()
+        val responseBody = body.string()
         return try {
             parseAs<AnimeDto>(responseBody)
         } catch (e: Exception) {
@@ -273,7 +273,7 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private inline fun <reified T> Response.parseAs(preloaded: String? = null): T {
-        val responseBody = preloaded ?: body?.string().orEmpty()
+        val responseBody = preloaded ?: body.string()
         return json.decodeFromString(responseBody)
     }
 

@@ -257,7 +257,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .add("_wp_http2", wpHttp)
             .add("token", token)
             .build()
-        val blogResponse = client.newCall(POST(link, body = blogFormData)).execute().body!!.string()
+        val blogResponse = client.newCall(POST(link, body = blogFormData)).execute().body.string()
         val skToken = blogResponse.substringAfter("?go=").substringBefore("\"")
         val tokenUrl = "$postLink?go=$skToken"
         val cookieHeader = Headers.headersOf("Cookie", "$skToken=$wpHttp")
@@ -267,7 +267,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .substringAfter("url=").substringBefore("\"")
         val mediaResponse = client.newBuilder().followRedirects(false).build()
             .newCall(GET(redirectUrl)).execute()
-        val path = mediaResponse.body!!.string().substringAfter("replace(\"").substringBefore("\"")
+        val path = mediaResponse.body.string().substringAfter("replace(\"").substringBefore("\"")
         val mediaUrl = "https://" + mediaResponse.request.url.host + path
         val videoList = mutableListOf<Video>()
 

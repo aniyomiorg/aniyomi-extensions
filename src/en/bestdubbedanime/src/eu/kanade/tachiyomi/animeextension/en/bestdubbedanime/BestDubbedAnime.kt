@@ -168,7 +168,7 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val jsString = client.newCall(
             GET("$baseUrl/xz/v3/js/index_beta.js?999995b")
-        ).execute().body!!.string()
+        ).execute().body.string()
 
         val apiPath = if (response.request.url.encodedPath.startsWith("/movies/")) {
             "/movies/jsonMovie.php?slug="
@@ -181,7 +181,7 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             GET(baseUrl + apiPath + slug + "&_=${System.currentTimeMillis() / 1000}")
         ).execute()
 
-        val apiJson = apiResp.body?.let { Json.decodeFromString<JsonObject>(it.string()) }
+        val apiJson = apiResp.body.let { Json.decodeFromString<JsonObject>(it.string()) }
 
         val serversHtml = apiJson!!["result"]!!
             .jsonObject["anime"]!!
@@ -449,7 +449,7 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 GET(baseUrl + "/movies/jsonMovie.php?slug=" + slug + "&_=${System.currentTimeMillis() / 1000}")
             ).execute()
 
-            val apiJson = apiResp.body?.let { Json.decodeFromString<JsonObject>(it.string()) }
+            val apiJson = apiResp.body.let { Json.decodeFromString<JsonObject>(it.string()) }
             val animeJson = apiJson!!["result"]!!
                 .jsonObject["anime"]!!
                 .jsonArray[0]

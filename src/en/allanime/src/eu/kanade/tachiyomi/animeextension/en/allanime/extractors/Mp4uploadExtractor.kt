@@ -8,7 +8,7 @@ import okhttp3.OkHttpClient
 
 class Mp4uploadExtractor(private val client: OkHttpClient) {
     fun getVideoFromUrl(url: String, headers: Headers): List<Video> {
-        val body = client.newCall(GET(url, headers = headers)).execute().body!!.string()
+        val body = client.newCall(GET(url, headers = headers)).execute().body.string()
 
         val packed = body.substringAfter("<script type='text/javascript'>eval(function(p,a,c,k,e,d)")
             .substringBefore("</script>")

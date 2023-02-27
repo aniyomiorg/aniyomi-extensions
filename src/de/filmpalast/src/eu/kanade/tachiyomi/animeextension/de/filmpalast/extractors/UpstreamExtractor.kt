@@ -15,7 +15,7 @@ class UpstreamExtractor(private val client: OkHttpClient) {
             val masterUrl = JsUnpacker(jsE).unpack().toString()
                 .substringAfter("{file:\"").substringBefore("\"}")
             val masterBase = masterUrl.substringBefore("master")
-            val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
+            val masterPlaylist = client.newCall(GET(masterUrl)).execute().body.string()
             val videoList = mutableListOf<Video>()
             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:")
                 .forEach {

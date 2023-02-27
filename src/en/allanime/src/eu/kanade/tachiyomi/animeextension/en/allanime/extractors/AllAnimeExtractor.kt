@@ -83,7 +83,7 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
             return emptyList()
         }
 
-        val body = resp.body!!.string()
+        val body = resp.body.string()
         val linkJson = json.decodeFromString<VideoLink>(body)
 
         for (link in linkJson.links) {
@@ -129,7 +129,7 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
                 }.getOrNull()
 
                 if (resp != null && resp.code == 200) {
-                    val masterPlaylist = resp.body!!.string()
+                    val masterPlaylist = resp.body.string()
 
                     val audioList = mutableListOf<Track>()
                     if (masterPlaylist.contains("#EXT-X-MEDIA:TYPE=AUDIO")) {
@@ -215,7 +215,7 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
                         }.getOrNull()
 
                         if (resp != null && resp.code == 200) {
-                            val masterPlaylist = resp.body!!.string()
+                            val masterPlaylist = resp.body.string()
                             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:")
                                 .forEach { t ->
                                     val quality = t.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p (AC - HLS${if (it.hardsub_lang.isEmpty()) "" else " - Hardsub: ${it.hardsub_lang}"})"

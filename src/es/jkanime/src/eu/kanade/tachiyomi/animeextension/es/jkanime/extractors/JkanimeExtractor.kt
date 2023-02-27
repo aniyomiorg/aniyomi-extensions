@@ -26,7 +26,7 @@ class JkanimeExtractor(
 
         val nozomiBody = "v=$postKey".toRequestBody("application/x-www-form-urlencoded".toMediaTypeOrNull())
         val nozomiResponse = client.newCall(POST("https://jkanime.net/gsplay/api.php", body = nozomiBody)).execute()
-        val nozomiUrl = JSONObject(nozomiResponse.body!!.string()).getString("file")
+        val nozomiUrl = JSONObject(nozomiResponse.body.string()).getString("file")
         if (nozomiResponse.isSuccessful && nozomiUrl.isNotBlank()) {
             return Video(nozomiUrl, "${prefix}Nozomi", nozomiUrl)
         }

@@ -13,7 +13,7 @@ class FilemoonExtractor(private val client: OkHttpClient) {
             val jsE = client.newCall(GET(url)).execute().asJsoup().selectFirst("script:containsData(eval)").data()
             val masterUrl = JsUnpacker(jsE).unpack().toString()
                 .substringAfter("{file:\"").substringBefore("\"}")
-            val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
+            val masterPlaylist = client.newCall(GET(masterUrl)).execute().body.string()
             val videoList = mutableListOf<Video>()
             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:")
                 .forEach {

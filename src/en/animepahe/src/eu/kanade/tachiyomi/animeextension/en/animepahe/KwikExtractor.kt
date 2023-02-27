@@ -66,7 +66,7 @@ class KwikExtractor(private val client: OkHttpClient) {
         val fContent =
             client.newCall(GET(kwikUrl, Headers.headersOf("referer", "https://kwik.cx/"))).execute()
         cookies += (fContent.header("set-cookie")!!)
-        val fContentString = fContent.body!!.string()
+        val fContentString = fContent.body.string()
 
         val (fullString, key, v1, v2) = kwikParamsRegex.find(fContentString)!!.destructured
         val decrypted = decrypt(fullString, key, v1.toInt(), v2.toInt())

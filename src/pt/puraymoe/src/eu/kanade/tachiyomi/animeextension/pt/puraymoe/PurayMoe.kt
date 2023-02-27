@@ -343,7 +343,7 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================= Utilities ==============================
 
     private inline fun <reified T> Response.parseAs(): T {
-        val responseBody = body?.string().orEmpty()
+        val responseBody = body.string()
         return json.decodeFromString(responseBody)
     }
 
@@ -362,7 +362,7 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun Response.toVideoList(subs: List<Track> = emptyList(), lang: String = ""): List<Video> {
-        val responseBody = body?.string().orEmpty()
+        val responseBody = body.string()
         val separator = "#EXT-X-STREAM-INF:"
         return responseBody.substringAfter(separator).split(separator).map {
             val quality = it.substringAfter("RESOLUTION=")

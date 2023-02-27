@@ -93,7 +93,7 @@ class Cinemathek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         player.forEach {
             val id = it.attr("data-post")
             val nume = it.attr("data-nume")
-            val ajax = client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", body = "action=doo_player_ajax&post=$id&nume=$nume&type=movie".toRequestBody("application/x-www-form-urlencoded".toMediaType()))).execute().body!!.string()
+            val ajax = client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", body = "action=doo_player_ajax&post=$id&nume=$nume&type=movie".toRequestBody("application/x-www-form-urlencoded".toMediaType()))).execute().body.string()
             val url = ajax.substringAfter("embed_url\":\"").substringBefore("\",").replace("\\", "")
             when {
                 url.contains("https://streamlare.com") && hosterSelection?.contains("slare") == true -> {

@@ -55,7 +55,7 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val parsed = json.decodeFromString<CategoryResponse>(response.body!!.string())
+        val parsed = json.decodeFromString<CategoryResponse>(response.body.string())
         if (parsed.data.isEmpty()) {
             return AnimesPage(emptyList(), false)
         }
@@ -104,7 +104,7 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
         return if (url.startsWith("/api/category")) {
             popularAnimeParse(response)
         } else {
-            val parsed = json.decodeFromString<SearchResponse>(response.body!!.string())
+            val parsed = json.decodeFromString<SearchResponse>(response.body.string())
             if (parsed.data.results.isEmpty()) {
                 return AnimesPage(emptyList(), false)
             }
@@ -157,7 +157,7 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
         val parsed = json.decodeFromString<LinkData>(anime.url)
         val resp = client.newCall(GET("$baseUrl/detail?category=${parsed.category}&id=${parsed.id}")).execute()
-        val data = json.decodeFromString<AnimeInfoResponse>(resp.body!!.string()).data
+        val data = json.decodeFromString<AnimeInfoResponse>(resp.body.string()).data
         return Observable.just(
             anime.apply {
                 title = data.name
@@ -175,7 +175,7 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
         val parsed = json.decodeFromString<LinkData>(anime.url)
         val resp = client.newCall(GET("$baseUrl/detail?category=${parsed.category}&id=${parsed.id}")).execute()
-        val data = json.decodeFromString<AnimeInfoResponse>(resp.body!!.string()).data
+        val data = json.decodeFromString<AnimeInfoResponse>(resp.body.string()).data
         val episodeList = data.episodeVo.map { ep ->
             val formattedEpNum = if (floor(ep.seriesNo) == ceil(ep.seriesNo)) {
                 ep.seriesNo.toInt()
@@ -204,7 +204,7 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val parsed = json.decodeFromString<LinkData>(episode.url)
         val resp = client.newCall(GET("$baseUrl/episode?category=${parsed.category}&id=${parsed.id}&episode=${parsed.episodeId!!}")).execute()
-        val episodeParsed = json.decodeFromString<EpisodeResponse>(resp.body!!.string())
+        val episodeParsed = json.decodeFromString<EpisodeResponse>(resp.body.string())
         val subtitleList = episodeParsed.data.subtitles.map { sub ->
             Track(sub.url, sub.language)
         }

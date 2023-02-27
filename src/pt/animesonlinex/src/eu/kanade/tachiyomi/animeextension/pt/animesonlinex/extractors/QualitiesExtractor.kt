@@ -12,7 +12,7 @@ class QualitiesExtractor(
 
     fun getVideoList(url: String, qualityStr: String): List<Video> {
         val playlistBody = client.newCall(GET(url, headers)).execute()
-            .body!!.string()
+            .body.string()
 
         val separator = "#EXT-X-STREAM-INF:"
         val playerName = qualityStr.substringBefore(" -")

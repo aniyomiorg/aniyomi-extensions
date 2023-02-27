@@ -83,7 +83,7 @@ class Cartoons4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun videosFromElement(element: Element): List<Video> {
         val vidURL = element.attr("abs:href")
-        val apiCall = client.newCall(POST(vidURL.replace("/v/", "/api/source/"))).execute().body!!.string()
+        val apiCall = client.newCall(POST(vidURL.replace("/v/", "/api/source/"))).execute().body.string()
         val data = apiCall.substringAfter("\"data\":[").substringBefore("],")
         val sources = data.split("\"file\":\"").drop(1)
         val videoList = mutableListOf<Video>()

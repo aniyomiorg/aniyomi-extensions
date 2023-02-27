@@ -160,7 +160,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                     "Accept", "image/avif,image/webp,*/*", "cache-control", "max-age=15"
                                 )
                             )
-                        ).execute().body?.byteString()
+                        ).execute().body.byteString()
                         val size = png.toString()
                             .substringAfter("[size=").substringBefore(" hex")
                         pnglist.add("$size | $hash")
@@ -390,7 +390,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                     "Accept", "image/avif,image/webp,*/*", "cache-control", "max-age=15"
                                 )
                             )
-                        ).execute().body?.byteString()
+                        ).execute().body.byteString()
                         val size = png.toString()
                             .substringAfter("[size=").substringBefore(" hex")
                         pnglist.add("$size | $hash")

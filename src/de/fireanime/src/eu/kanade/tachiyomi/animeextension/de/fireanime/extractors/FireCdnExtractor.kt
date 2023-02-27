@@ -11,7 +11,7 @@ import okhttp3.OkHttpClient
 class FireCdnExtractor(private val client: OkHttpClient, private val json: Json) {
     fun videoFromUrl(url: String, quality: String): Video? {
         // Check if video is available. It is faster than waiting for the api response status
-        if (client.newCall(GET(url)).execute().body!!.string().contains("still converting"))
+        if (client.newCall(GET(url)).execute().body.string().contains("still converting"))
             return null
 
         val fileName = url.split("/").last()
@@ -22,7 +22,7 @@ class FireCdnExtractor(private val client: OkHttpClient, private val json: Json)
                 .build()
         )
 
-        val file = json.decodeFromString(FireCdnFileDto.serializer(), client.newCall(fileRequest).execute().body!!.string())
+        val file = json.decodeFromString(FireCdnFileDto.serializer(), client.newCall(fileRequest).execute().body.string())
         val videoUrl = "${file.proxy.replace("\\", "")}/share/${file.file}/apple.mp4"
         return Video(url, quality, videoUrl)
     }

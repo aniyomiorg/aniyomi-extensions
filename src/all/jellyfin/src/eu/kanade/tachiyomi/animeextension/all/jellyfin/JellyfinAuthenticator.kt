@@ -49,7 +49,7 @@ class JellyfinAuthenticator(
         """.trimIndent()
             .toRequestBody("application/json".toMediaType())
         val request = POST("$baseUrl/Users/authenticatebyname", headers = authHeader, body = body)
-        val response = client.newCall(request).execute().body?.string()
+        val response = client.newCall(request).execute().body.string()
         return response?.let { Json.decodeFromString<JsonObject>(it) }
     }
 

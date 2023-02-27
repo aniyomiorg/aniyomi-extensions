@@ -87,7 +87,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val animeUrl = response.request.header("url").toString()
-        val responseObject = json.decodeFromString<JsonObject>(response.body!!.string())
+        val responseObject = json.decodeFromString<JsonObject>(response.body.string())
         val document = Jsoup.parse(JSONUtil.unescape(responseObject["result"]!!.jsonPrimitive.content))
         val episodeElements = document.select(episodeListSelector())
         return episodeElements.parallelMap { episodeFromElements(it, animeUrl) }.reversed()
@@ -140,7 +140,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val epurl = response.request.header("url").toString()
-        val responseObject = json.decodeFromString<JsonObject>(response.body!!.string())
+        val responseObject = json.decodeFromString<JsonObject>(response.body.string())
         val document = Jsoup.parse(JSONUtil.unescape(responseObject["result"]!!.jsonPrimitive.content))
         val videoList = mutableListOf<Video>()
 
@@ -159,7 +159,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val jsInterceptor = client.newBuilder().addInterceptor(JsInterceptor(lang.lowercase())).build()
         val result = jsInterceptor.newCall(GET("$baseUrl$epurl")).execute()
         val masterUrl = result.request.url.toString()
-        val masterPlaylist = result.body!!.string()
+        val masterPlaylist = result.body.string()
         return masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
             .split("#EXT-X-STREAM-INF:").map {
                 val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p $lang"

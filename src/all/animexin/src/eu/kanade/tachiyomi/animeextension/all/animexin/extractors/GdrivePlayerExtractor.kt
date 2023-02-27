@@ -29,7 +29,7 @@ class GdrivePlayerExtractor(private val client: OkHttpClient) {
         )
 
         val body = client.newCall(GET(url.replace(".me", ".to"), headers = headers)).execute()
-            .body!!.string()
+            .body.string()
 
         val subtitleUrl = Jsoup.parse(body).selectFirst("div:contains(\\.srt)")
         val subtitleList = mutableListOf<Track>()

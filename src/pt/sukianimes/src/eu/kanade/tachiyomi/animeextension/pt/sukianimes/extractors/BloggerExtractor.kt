@@ -12,7 +12,7 @@ class BloggerExtractor(private val client: OkHttpClient) {
         val iframeBody = client.newCall(GET(url)).execute().asJsoup()
         val iframeUrl = iframeBody.selectFirst("iframe").attr("src")
         val response = client.newCall(GET(iframeUrl, headers)).execute()
-        val html = response.body?.string().orEmpty()
+        val html = response.body.string()
         return html.split("play_url").drop(1).map {
             val url = it.substringAfter(":\"").substringBefore("\"")
             val format = it.substringAfter("format_id\":").substringBefore("}")

@@ -66,7 +66,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         return runBlocking {
             withContext(Dispatchers.IO) {
                 client.newCall(GET("$baseUrl/api?m=search&q=$title"))
-                    .execute().body!!.string()
+                    .execute().body.string()
             }
         }.substringAfter("\"id\":$animeId")
             .substringAfter("\"session\":\"").substringBefore("\"")
@@ -98,7 +98,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         GET("$baseUrl/api?m=search&l=8&q=$query")
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         return parseSearchJson(responseString)
     }
 
@@ -122,7 +122,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/api?m=airing&page=$page")
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         return parsePopularAnimeJson(responseString)
     }
 
@@ -205,7 +205,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun recursivePages(response: Response, animeSession: String): List<SEpisode> {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         val jObject = json.decodeFromString<JsonObject>(responseString)
         val lastPage = jObject["last_page"]!!.jsonPrimitive.int
         val page = jObject["current_page"]!!.jsonPrimitive.int

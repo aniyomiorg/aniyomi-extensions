@@ -27,7 +27,7 @@ class GdrivePlayerExtractor(private val client: OkHttpClient) {
         )
 
         val body = client.newCall(GET(url.replace(".me", ".to"), headers = headers)).execute()
-            .body!!.string()
+            .body.string()
 
         val eval = JsUnpacker.unpackAndCombine(body)!!.replace("\\", "")
         val json = Json.decodeFromString<JsonObject>(REGEX_DATAJSON.getFirst(eval))

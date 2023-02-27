@@ -143,7 +143,7 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun googleLinkFromElement(iframe: Element): List<Video> {
         val iframeResponse = client.newCall(GET(iframe.attr("src"))).execute()
-        val streams = iframeResponse.body!!.string().substringAfter("\"streams\":[").substringBefore("]")
+        val streams = iframeResponse.body.string().substringAfter("\"streams\":[").substringBefore("]")
         val videoList = mutableListOf<Video>()
         streams.split("},").reversed().forEach {
             val url = unescape(it.substringAfter("{\"play_url\":\"").substringBefore("\""))

@@ -136,7 +136,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val script = response.selectFirst("script:containsData(m3u8)")
                     val data = script.data()
                     val masterUrl = masterExtractor(data)
-                    val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
+                    val masterPlaylist = client.newCall(GET(masterUrl)).execute().body.string()
                     masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
                         val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
                         val videoUrl = it.substringAfter("\n").substringBefore("\n")
@@ -175,7 +175,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun doodUrlParse(url: String): String? {
         val response = client.newCall(GET(url.replace("/d/", "/e/"))).execute()
-        val content = response.body!!.string()
+        val content = response.body.string()
         if (!content.contains("'/pass_md5/")) return null
         val md5 = content.substringAfter("'/pass_md5/").substringBefore("',")
         val token = md5.substringAfterLast("/")
@@ -187,7 +187,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 "https://dood.$doodTld/pass_md5/$md5",
                 Headers.headersOf("referer", url)
             )
-        ).execute().body!!.string()
+        ).execute().body.string()
         return "$videoUrlStart$randomString?token=$token&expiry=$expiry"
     }
 

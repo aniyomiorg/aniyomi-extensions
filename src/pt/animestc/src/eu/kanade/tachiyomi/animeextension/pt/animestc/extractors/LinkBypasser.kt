@@ -28,7 +28,7 @@ class LinkBypasser(
         if (apiCall.code != 200)
             return null
 
-        val apiBody = apiCall.body?.string().orEmpty()
+        val apiBody = apiCall.body.string()
         return json.decodeFromString<LinkDto>(apiBody).link
     }
 

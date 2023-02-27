@@ -18,7 +18,7 @@ class MpFourDooExtractor(
             .replace("fy..", "fy.v.")
         return if (videoUrl.endsWith("playlist.m3u8")) {
             val playlistBody = client.newCall(GET(videoUrl, headers)).execute()
-                .body!!.string()
+                .body.string()
 
             val separator = "#EXT-X-STREAM-INF:"
             playlistBody.substringAfter(separator).split(separator).map {

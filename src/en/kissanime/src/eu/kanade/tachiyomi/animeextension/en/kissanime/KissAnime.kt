@@ -211,7 +211,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val iframe = json.decodeFromString<IframeResponse>(
                 client.newCall(
                     POST("$baseUrl/ajax/anime/load_episodes_v2?s=$serverName", body = getIframeBody, headers = getIframeHeaders),
-                ).execute().body!!.string(),
+                ).execute().body.string(),
             )
             var iframeUrl = Jsoup.parse(iframe.value).selectFirst("iframe").attr("src")
 

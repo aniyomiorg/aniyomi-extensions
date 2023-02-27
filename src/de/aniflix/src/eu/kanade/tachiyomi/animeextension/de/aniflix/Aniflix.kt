@@ -72,7 +72,7 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
-        val anime = json.decodeFromString(AnimeDetailsDto.serializer(), response.body!!.string())
+        val anime = json.decodeFromString(AnimeDetailsDto.serializer(), response.body.string())
         val newAnime = SAnime.create().apply {
             title = anime.name!!
             setUrlWithoutDomain("$baseUrl/api/show/" + anime.url!!)
@@ -95,7 +95,7 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun popularAnimeParse(response: Response) = parseAnimePage(response)
 
     private fun parseAnimePage(response: Response, singlePage: Boolean = false): AnimesPage {
-        val animes = json.decodeFromString(ListSerializer(AnimeDto.serializer()), response.body!!.string())
+        val animes = json.decodeFromString(ListSerializer(AnimeDto.serializer()), response.body.string())
         if (animes.isEmpty()) return AnimesPage(emptyList(), false)
         val animeList = mutableListOf<SAnime>()
         for (anime in animes) {
@@ -124,7 +124,7 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/api/show/airing/${page - 1}", refererHeader)
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
-        val releases = json.decodeFromString(ListSerializer(Release.serializer()), response.body!!.string()).toMutableList()
+        val releases = json.decodeFromString(ListSerializer(Release.serializer()), response.body.string()).toMutableList()
         if (releases.isEmpty()) return AnimesPage(emptyList(), false)
         val animeList = mutableListOf<SAnime>()
         val releaseList = mutableListOf<Int>()
@@ -159,7 +159,7 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun searchAnimeParse(response: Response) = parseAnimePage(response, singlePage = true)
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val anime = json.decodeFromString(AnimeDetailsDto.serializer(), response.body!!.string())
+        val anime = json.decodeFromString(AnimeDetailsDto.serializer(), response.body.string())
         if (anime.seasons.isNullOrEmpty()) return emptyList()
         val episodeList = mutableListOf<SEpisode>()
         val animeUrl = anime.url!!
@@ -171,7 +171,7 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
                     Season.serializer(),
                     client.newCall(
                         GET("$baseUrl/api/show/$animeUrl/${season.id!!}/$page")
-                    ).execute().body!!.string()
+                    ).execute().body.string()
                 )
                 page++
                 episodes.addAll(seasonPart.episodes!!)
@@ -189,7 +189,7 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val streams = json.decodeFromString(Episode.serializer(), response.body!!.string()).streams
+        val streams = json.decodeFromString(Episode.serializer(), response.body.string()).streams
         if (streams.isNullOrEmpty()) return emptyList()
         val videoList = mutableListOf<Video>()
         for (stream in streams) {

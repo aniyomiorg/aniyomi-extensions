@@ -13,7 +13,7 @@ class EvoloadExtractor(private val client: OkHttpClient) {
         val videoList = mutableListOf<Video>()
         val id = url.substringAfter("https://evoload.io/e/")
         val csrv_token =
-            client.newCall(GET("https://csrv.evosrv.com/captcha?m412548=")).execute().body!!.string() // whatever that is
+            client.newCall(GET("https://csrv.evosrv.com/captcha?m412548=")).execute().body.string() // whatever that is
         val captchaPass = client.newCall(GET("https://cd2.evosrv.com/html/jsx/e.jsx")).execute().toString()
             .substringAfter("var captcha_pass = '").substringBefore("'")
         val file = client.newCall(
@@ -21,7 +21,7 @@ class EvoloadExtractor(private val client: OkHttpClient) {
                 "https://evoload.io/SecurePlayer",
                 body = "{\"code\":\"$id\",\"token\":\"ok\",\"csrv_token\":\"$csrv_token\",\"pass\":\"$captchaPass\",\"reff\":\"https://filmpalast.to/\"}".toRequestBody("application/json".toMediaType())
             )
-        ).execute().body!!.string()
+        ).execute().body.string()
 
         if (file.contains("backup")) {
             val videoUrl = file.substringAfter("\"encoded_src\":\"").substringBefore("\",")

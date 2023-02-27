@@ -14,7 +14,7 @@ class StreamZExtractor(private val client: OkHttpClient) {
         val link = response.request.url.toString()
 
         val dllpart = if (url.contains("streamcrypt.net")) {
-            response.body!!.string().substringAfter("o.href = \"")
+            response.body.string().substringAfter("o.href = \"")
                 .substringBefore("\"").substringAfter("download")
         } else {
             link.substringAfter("/y")

@@ -93,7 +93,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
             POST("$baseUrl/user/login", body = body, headers = headers)
         ).execute()
         if (response.code != 200) throw Exception("Failed to log in")
-        val parsed = json.decodeFromString<LoginResponse>(response.body!!.string())
+        val parsed = json.decodeFromString<LoginResponse>(response.body.string())
 
         connId = parsed.data.conn_id
         sessionId = parsed.data.sessionId
@@ -123,7 +123,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val parsed = json.decodeFromString<AnimesResponse>(response.body!!.string())
+        val parsed = json.decodeFromString<AnimesResponse>(response.body.string())
 
         val animesList = parsed.data.map { ani ->
             SAnime.create().apply {
@@ -339,7 +339,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
-        val detailsJson = json.decodeFromString<InfoResponse>(response.body!!.string()).data
+        val detailsJson = json.decodeFromString<InfoResponse>(response.body.string()).data
         val anime = SAnime.create()
 
         anime.title = detailsJson.title
@@ -375,7 +375,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val animeJson = json.decodeFromString<SeasonsResponse>(response.body!!.string())
+        val animeJson = json.decodeFromString<SeasonsResponse>(response.body.string())
         val episodeList = mutableListOf<SEpisode>()
         val subDub = preferences.getString("preferred_sub", "none")!!
 
@@ -445,7 +445,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun videoListParse(response: Response, videoId: Int): List<Video> {
-        val videoJson = json.decodeFromString<VideosResponse>(response.body!!.string())
+        val videoJson = json.decodeFromString<VideosResponse>(response.body.string())
         val videoList = mutableListOf<Video>()
 
         val video = videoJson.data.first {
@@ -475,7 +475,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
         val channels = client.newCall(
             GET("$baseUrl/vvvvid/ondemand/$channelName/channels?conn_id=$connId")
         ).execute()
-        val channelsJson = json.decodeFromString<ChannelsResponse>(channels.body!!.string())
+        val channelsJson = json.decodeFromString<ChannelsResponse>(channels.body.string())
 
         val subPages = mutableListOf<Pair<String, String>>()
         subPages.add(Pair("Nessuno", ""))
@@ -536,7 +536,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
 
         val dashContents = client.newCall(
             GET(url, headers = dashHeaders)
-        ).execute().body!!.string()
+        ).execute().body.string()
 
         val baseVideoUrl = url.substringBeforeLast("/")
         val videoUrl = dashContents.substringAfter("mimeType=\"video").substringBefore("</BaseURL>").substringAfter("<BaseURL>")

@@ -633,7 +633,7 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListSelector() = throw Exception("not used")
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val bodyString = response.body!!.string()
+        val bodyString = response.body.string()
 
         val document = Jsoup.parse(bodyString)
         val episodeList = mutableListOf<SEpisode>()
@@ -644,7 +644,7 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             for (season in document.select("div.cactus-sub-wrap div.item")) {
                 val bodyString = client.newCall(
                     GET(season.select("div.top-item a").attr("href"))
-                ).execute().body!!.string()
+                ).execute().body.string()
                 val document = Jsoup.parse(bodyString)
 
                 val episodeUrlList = if (document.selectFirst("ul.group-links-list") == null) {
@@ -764,7 +764,7 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 url.contains("diampokusy.com") || url.contains("diampokusy.com") || url.contains("i18n.pw") ||
                 url.contains("vanfem.com") || url.contains("fembed9hd.com") || url.contains("votrefilms.xyz") || url.contains("watchjavnow.xyz") ->
                 {
-                    val userId = Regex("""USER_ID.*?(\d+)""").find(response.body!!.string())?.groupValues?.getOrNull(1) ?: ""
+                    val userId = Regex("""USER_ID.*?(\d+)""").find(response.body.string())?.groupValues?.getOrNull(1) ?: ""
                     CinegrabberExtractor(client).videosFromUrl(url, userId).sort()
                 }
             "filemoon" in url -> {

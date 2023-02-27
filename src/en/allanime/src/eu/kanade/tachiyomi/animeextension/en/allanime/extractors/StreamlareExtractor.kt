@@ -17,12 +17,12 @@ class StreamlareExtractor(private val client: OkHttpClient) {
                 body = "{\"id\":\"$id\"}"
                     .toRequestBody("application/json".toMediaType())
             )
-        ).execute().body!!.string()
+        ).execute().body.string()
 
         val type = playlist.substringAfter("\"type\":\"").substringBefore("\"")
         if (type == "hls") {
             val masterPlaylistUrl = playlist.substringAfter("\"file\":\"").substringBefore("\"").replace("\\/", "/")
-            val masterPlaylist = client.newCall(GET(masterPlaylistUrl)).execute().body!!.string()
+            val masterPlaylist = client.newCall(GET(masterPlaylistUrl)).execute().body.string()
 
             val separator = "#EXT-X-STREAM-INF"
             masterPlaylist.substringAfter(separator).split(separator).map {

@@ -85,7 +85,7 @@ class YouTubeExtractor(private val client: OkHttpClient) {
             POST(playerUrl, headers = headers, body = body)
         ).execute()
 
-        val responseObject = json.decodeFromString<JsonObject>(postResponse.body!!.string())
+        val responseObject = json.decodeFromString<JsonObject>(postResponse.body.string())
         val videoList = mutableListOf<Video>()
 
         val formats = responseObject["streamingData"]!!

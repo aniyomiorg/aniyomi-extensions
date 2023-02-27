@@ -109,7 +109,7 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val parsed = json.decodeFromString<List<SearchResult>>(response.body!!.string())
+        val parsed = json.decodeFromString<List<SearchResult>>(response.body.string())
 
         val animeList = parsed.map { ani ->
             SAnime.create().apply {
@@ -134,7 +134,7 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
-        val detailsJson = json.decodeFromString<AnimeResult>(response.body!!.string())
+        val detailsJson = json.decodeFromString<AnimeResult>(response.body.string())
         val anime = SAnime.create()
 
         anime.title = detailsJson.title
@@ -159,7 +159,7 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val animeJson = json.decodeFromString<AnimeResult>(response.body!!.string())
+        val animeJson = json.decodeFromString<AnimeResult>(response.body.string())
         val episodeList = mutableListOf<SEpisode>()
 
         if (animeJson.seasons.isNotEmpty()) {
@@ -167,7 +167,7 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
                 val episodesResponse = client.newCall(
                     GET("$baseUrl/api/anime/${animeJson.id}/season/${season.id}")
                 ).execute()
-                val episodesJson = json.decodeFromString<List<AnimeResult.Episode>>(episodesResponse.body!!.string())
+                val episodesJson = json.decodeFromString<List<AnimeResult.Episode>>(episodesResponse.body.string())
 
                 for (ep in episodesJson) {
                     val episode = SEpisode.create()
@@ -207,7 +207,7 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val videoList = mutableListOf<Video>()
-        val videoJson = json.decodeFromString<VideoResult>(response.body!!.string())
+        val videoJson = json.decodeFromString<VideoResult>(response.body.string())
         val videoUrl = videoJson.videoUrl
 
         if (videoUrl.contains(".mp4")) {
@@ -224,7 +224,7 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
         } else if (videoUrl.contains(".m3u8")) {
             val masterPlaylist = client.newCall(
                 GET(videoUrl, headers = Headers.headersOf("Referer", "https://aniplay.it/play/${videoJson.id}"))
-            ).execute().body!!.string()
+            ).execute().body.string()
 
             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:")
                 .forEach {

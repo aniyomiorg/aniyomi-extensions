@@ -255,7 +255,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val firstLeech = client.newCall(GET(it.url)).execute().asJsoup().selectFirst(
                 "script:containsData(downlaod_button)"
             ).data().substringAfter("<a href=\"").substringBefore("\">")
-            val link = "https://" + firstLeech.toHttpUrl().host + client.newCall(GET(firstLeech)).execute().body!!.string()
+            val link = "https://" + firstLeech.toHttpUrl().host + client.newCall(GET(firstLeech)).execute().body.string()
                 .substringAfter("replace(\"").substringBefore("\"")
             EpUrl(it.quality, link, it.name)
         }

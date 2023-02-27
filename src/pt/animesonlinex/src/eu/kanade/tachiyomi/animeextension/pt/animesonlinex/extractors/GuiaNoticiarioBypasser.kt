@@ -14,13 +14,13 @@ class GuiaNoticiarioBypasser(
 
     fun fromUrl(url: String): String {
         val firstBody = client.newCall(GET(url, headers)).execute()
-            .body!!.string()
+            .body.string()
 
         var next = REGEX_LINK.find(firstBody)!!.groupValues.get(1)
         var currentPage = client.newCall(GET(next, headers)).execute()
         var iframeUrl = ""
         while (iframeUrl == "") {
-            val currentBody = currentPage.body!!.string()
+            val currentBody = currentPage.body.string()
             val currentDoc = currentPage.asJsoup(currentBody)
             val possibleIframe = currentDoc.selectFirst("iframe")
             if (REGEX_LINK.containsMatchIn(currentBody)) {

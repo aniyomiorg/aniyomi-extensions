@@ -162,7 +162,7 @@ class SukiAnimes : ParsedAnimeHttpSource() {
     private fun searchAnimeRequest(page: Int, query: String, filters: SKFilters.FilterSearchParams): Request {
         val body = FormBody.Builder().apply {
             val nonceReq = client.newCall(GET(NONCE_URL)).execute()
-            val nonce = nonceReq.body?.string()
+            val nonce = nonceReq.body.string()
                 .orEmpty()
                 .substringAfter("'")
                 .substringBefore("'")
@@ -259,7 +259,7 @@ class SukiAnimes : ParsedAnimeHttpSource() {
     }
 
     private inline fun <reified T> Response.parseAs(): T {
-        val responseBody = body?.string().orEmpty()
+        val responseBody = body.string()
         return json.decodeFromString(responseBody)
     }
 

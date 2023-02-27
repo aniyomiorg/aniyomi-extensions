@@ -20,7 +20,7 @@ class RedplayBypasser(
         var iframeUrl = ""
         var formUrl = next
         while (iframeUrl == "") {
-            val nextDoc = nextPage.asJsoup(decodeAtob(nextPage.body!!.string()))
+            val nextDoc = nextPage.asJsoup(decodeAtob(nextPage.body.string()))
             val iframe = nextDoc.selectFirst("iframe")
             if (iframe != null)
                 iframeUrl = iframe.attr("src")

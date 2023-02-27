@@ -281,7 +281,7 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             POST("https://${iframeUrl.toHttpUrl().host}/player/index.php?data=$hash&do=getVideo", body = postBody, headers = postHeaders)
         ).execute()
 
-        val parsed = json.decodeFromString<IframeResponse>(postResponse.body!!.string())
+        val parsed = json.decodeFromString<IframeResponse>(postResponse.body.string())
 
         if (parsed.hls) {
             val playlistHeaders = Headers.headersOf(
@@ -298,7 +298,7 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
             val masterPlaylist = client.newCall(
                 GET(parsed.videoSource, headers = playlistHeaders)
-            ).execute().body!!.string()
+            ).execute().body.string()
 
             val videoHeaders = Headers.headersOf(
                 "Accept", "*/*",

@@ -83,17 +83,17 @@ class AccessTokenInterceptor(
 
         // Thanks Stormzy
         val refreshTokenResp = client.newCall(GET("https://raw.githubusercontent.com/Stormunblessed/IPTV-CR-NIC/main/logos/refreshtoken.txt")).execute()
-        val refreshToken = refreshTokenResp.body!!.string().replace("[\n\r]".toRegex(), "")
+        val refreshToken = refreshTokenResp.body.string().replace("[\n\r]".toRegex(), "")
         val headers = Headers.headersOf(
             "Content-Type", "application/x-www-form-urlencoded",
             "Authorization", "Basic a3ZvcGlzdXZ6Yy0teG96Y21kMXk6R21JSTExenVPVnRnTjdlSWZrSlpibzVuLTRHTlZ0cU8="
         )
         val postBody = "grant_type=refresh_token&refresh_token=$refreshToken&scope=offline_access".toRequestBody("application/x-www-form-urlencoded".toMediaType())
         val response = proxy.newCall(POST("$crUrl/auth/v1/token", headers, postBody)).execute()
-        val parsedJson = json.decodeFromString<AccessToken>(response.body!!.string())
+        val parsedJson = json.decodeFromString<AccessToken>(response.body.string())
 
         val policy = proxy.newCall(newRequestWithAccessToken(GET("$crUrl/index/v2"), parsedJson)).execute()
-        val policyJson = json.decodeFromString<Policy>(policy.body!!.string())
+        val policyJson = json.decodeFromString<Policy>(policy.body.string())
         val allTokens = AccessToken(
             parsedJson.access_token,
             parsedJson.token_type,

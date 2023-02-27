@@ -96,7 +96,7 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val body = """{"limit":$limit,"page":${page - 1},"pageCount":0,"value":"$query","sort":4,"selected":{"type":[],"genre":[],"year":[],"country":[],"season":[],"status":[],"sort":[],"language":[]}}""".toRequestBody(mediaType)
 
         val response = client.newCall(POST("$baseUrl/api/advance-search", body = body, headers = headers)).execute()
-        val result = json.decodeFromString<JsonObject>(response.body!!.string())
+        val result = json.decodeFromString<JsonObject>(response.body.string())
 
         val total = result["total"]!!.jsonPrimitive.int
         val nextPage = ceil(total.toFloat() / limit).toInt() > page
@@ -147,7 +147,7 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
         val animeId = response.asJsoup().select("div#unq-anime-id").attr("animeId")
-        val episodesJson = client.newCall(GET("$baseUrl/api/anime/$animeId/episodes")).execute().body!!.string()
+        val episodesJson = client.newCall(GET("$baseUrl/api/anime/$animeId/episodes")).execute().body.string()
         val episodes = json.decodeFromString<JsonObject>(episodesJson)
         val subList = episodes["sub"]!!.jsonArray
         val dubList = episodes["dub"]!!.jsonArray
@@ -211,7 +211,7 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================= Utilities ==============================
     private fun extractOwlVideo(link: String, files: List<Pair<String, Headers>>, lang: String): List<Video> {
         val videoList = mutableListOf<Video>()
-        val response = client.newCall(GET(baseUrl + link)).execute().body!!.string()
+        val response = client.newCall(GET(baseUrl + link)).execute().body.string()
         val serverJson = json.decodeFromString<JsonObject>(response)
 
         files.map { (url, headers) ->

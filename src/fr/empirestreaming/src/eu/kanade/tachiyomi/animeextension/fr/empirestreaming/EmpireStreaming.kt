@@ -254,7 +254,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = POST("$baseUrl/api/views/search", body = "{\"search\":\"$query\"}".toRequestBody("application/json".toMediaType()))
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         return parseSearchAnimeJson(responseString)
     }
 

@@ -41,7 +41,7 @@ class VodstreamExtractor(private val client: OkHttpClient) {
             )
 
             if (source.file.contains(".m3u8")) {
-                val masterPlaylist = client.newCall(GET(source.file, headers = videoHeaders)).execute().body!!.string()
+                val masterPlaylist = client.newCall(GET(source.file, headers = videoHeaders)).execute().body.string()
 
                 val separator = "#EXT-X-STREAM-INF"
                 masterPlaylist.substringAfter(separator).split(separator).map {

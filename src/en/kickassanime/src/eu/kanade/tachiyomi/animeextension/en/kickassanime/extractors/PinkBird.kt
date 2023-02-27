@@ -19,12 +19,12 @@ class PinkBird(private val client: OkHttpClient, private val json: Json) {
         return try {
             val apiLink = serverUrl.replace("player.php", "pref.php")
             val resp = client.newCall(GET(apiLink)).execute()
-            val jsonResp = json.decodeFromString<JsonObject>(resp.body!!.string())
+            val jsonResp = json.decodeFromString<JsonObject>(resp.body.string())
             jsonResp["data"]!!.jsonArray.map { el ->
                 val eid = el.jsonObject["eid"]!!.jsonPrimitive.content.decodeBase64()
                 val response = client.newCall(GET("https://pb.kaast1.com/manifest/$eid/master.m3u8")).execute()
                 if (response.code != 200) return emptyList()
-                response.body!!.string().substringAfter("#EXT-X-STREAM-INF:")
+                response.body.string().substringAfter("#EXT-X-STREAM-INF:")
                     .split("#EXT-X-STREAM-INF:").map {
                         val quality = it.substringAfter("RESOLUTION=").split(",")[0].split("\n")[0].substringAfter("x") + "p $server"
                         var videoUrl = it.substringAfter("\n").substringBefore("\n")

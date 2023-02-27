@@ -599,7 +599,7 @@ class CinegrabberExtractor(private val client: OkHttpClient) {
         """.trimIndent().toRequestBody("application/json".toMediaType())
 
         val body = runCatching {
-            client.newCall(POST(videoApi, body = data)).execute().body?.string().orEmpty()
+            client.newCall(POST(videoApi, body = data)).execute().body.string()
         }.getOrNull() ?: return emptyList<Video>()
 
         val jsonResponse = try { Json { ignoreUnknownKeys = true }.decodeFromString<FembedResponse>(body) } catch (e: Exception) { FembedResponse(false, emptyList()) }

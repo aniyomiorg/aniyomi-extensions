@@ -34,7 +34,7 @@ class AOAPIInterceptor(client: OkHttpClient) : Interceptor {
                     headers,
                     body,
                 )
-            ).execute().body!!.string()
+            ).execute().body.string()
 
             val tokenObject = Json.decodeFromString<JsonObject>(tokenResponse)
 

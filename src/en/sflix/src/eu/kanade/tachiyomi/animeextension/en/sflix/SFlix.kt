@@ -155,7 +155,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val id = server.attr("data-id")
                 val url = "$baseUrl/ajax/sources/$id"
                 val reqBody = client.newCall(GET(url, episodeReferer)).execute()
-                    .body!!.string()
+                    .body.string()
                 val sourceUrl = reqBody.substringAfter("\"link\":\"")
                     .substringBefore("\"")
                 runCatching {
@@ -195,7 +195,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (masterUrl.contains("playlist.m3u8")) {
             val prefix = "#EXT-X-STREAM-INF:"
             val playlist = client.newCall(GET(masterUrl)).execute()
-                .body!!.string()
+                .body.string()
             val videoList = playlist.substringAfter(prefix).split(prefix).map {
                 val quality = "$name - " + it.substringAfter("RESOLUTION=")
                     .substringAfter("x")

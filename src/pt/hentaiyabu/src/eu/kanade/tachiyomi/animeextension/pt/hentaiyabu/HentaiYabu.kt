@@ -175,7 +175,7 @@ class HentaiYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (searchJson == null) {
             val body = client.newCall(GET("$baseUrl/api/show.php"))
                 .execute()
-                .body?.string().orEmpty()
+                .body.string()
             searchJson = json.decodeFromString<List<SearchResultDto>>(body)
         }
         val mutableJson = searchJson!!.toMutableList()

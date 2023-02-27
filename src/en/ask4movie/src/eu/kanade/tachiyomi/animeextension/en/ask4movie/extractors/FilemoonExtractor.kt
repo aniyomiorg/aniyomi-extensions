@@ -33,7 +33,7 @@ class FilemoonExtractor(private val client: OkHttpClient) {
                             GET(subtitleString)
                         ).execute()
 
-                        val subtitles = Json.decodeFromString<List<CaptionElement>>(subResponse.body!!.string())
+                        val subtitles = Json.decodeFromString<List<CaptionElement>>(subResponse.body.string())
                         for (sub in subtitles) {
                             subtitleTracks.add(Track(sub.file, sub.label))
                         }
@@ -43,7 +43,7 @@ class FilemoonExtractor(private val client: OkHttpClient) {
 
             val masterUrl = unpacked.substringAfter("{file:\"").substringBefore("\"}")
 
-            val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
+            val masterPlaylist = client.newCall(GET(masterUrl)).execute().body.string()
 
             val videoList = mutableListOf<Video>()
 

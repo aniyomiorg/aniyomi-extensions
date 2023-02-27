@@ -70,7 +70,7 @@ class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
         GET("$apiUrl/content/index?start=${(page - 1) * 20}&limit=20")
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val responseJson = json.decodeFromString<AnimeListResponse>(response.body!!.string())
+        val responseJson = json.decodeFromString<AnimeListResponse>(response.body.string())
         val animes = responseJson.content.map {
             it.toSAnime()
         }
@@ -82,7 +82,7 @@ class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> {
         val contentId = response.request.url.toString().substringBeforeLast("/episodes")
             .substringAfterLast("/")
-        val responseJson = json.decodeFromString<JsonObject>(response.body!!.string())
+        val responseJson = json.decodeFromString<JsonObject>(response.body.string())
         return responseJson.keys.map { epNum ->
             SEpisode.create().apply {
                 url = "$contentId/video/$epNum"
@@ -100,7 +100,7 @@ class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val videoData = json.decodeFromString<VideoData>(response.body!!.string())
+        val videoData = json.decodeFromString<VideoData>(response.body.string())
         val videoUrl = videoData.uri.stream
         val subtitleLangs = videoData.metadata.subtitles
         val headers = Headers.headersOf(
@@ -126,7 +126,7 @@ class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // =============================== Search ===============================
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val searchResult = json.decodeFromString<SearchResponse>(response.body!!.string()).result
+        val searchResult = json.decodeFromString<SearchResponse>(response.body.string()).result
         val results = searchResult.map {
             it.toSAnime()
         }
@@ -137,7 +137,7 @@ class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(response: Response): SAnime {
-        val details = json.decodeFromString<AnimeDetails>(response.body!!.string())
+        val details = json.decodeFromString<AnimeDetails>(response.body.string())
         val anime = SAnime.create().apply {
             url = details.content_id
             title = details.content_title ?: details.content_title_en!!

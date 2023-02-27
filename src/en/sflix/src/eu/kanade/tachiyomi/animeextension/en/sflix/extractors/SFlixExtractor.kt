@@ -30,7 +30,7 @@ class SFlixExtractor(private val client: OkHttpClient) {
     // speedup of the manual cache will be worth it.
     private val cachedJs by lazy {
         newClient.newCall(GET(JS_URL, cache = cacheControl)).execute()
-            .body!!.string()
+            .body.string()
     }
     init { cachedJs }
 
@@ -46,11 +46,11 @@ class SFlixExtractor(private val client: OkHttpClient) {
             )
         )
             .execute()
-            .body!!.string()
+            .body.string()
 
         val key = newClient.newCall(GET("https://raw.githubusercontent.com/enimax-anime/key/e4/key.txt"))
             .execute()
-            .body!!.string()
+            .body.string()
 
         // encrypted data will start with "U2Fsd..." because they put
         // "Salted__" at the start of encrypted data, thanks openssl

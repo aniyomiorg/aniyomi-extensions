@@ -44,7 +44,7 @@ class DailymotionExtractor(private val client: OkHttpClient) {
 
     fun videosFromUrl(url: String, prefix: String): List<Video> {
         val videoList = mutableListOf<Video>()
-        val htmlString = client.newCall(GET(url)).execute().body!!.string()
+        val htmlString = client.newCall(GET(url)).execute().body.string()
 
         val internalData = htmlString.substringAfter("\"dmInternalData\":").substringBefore("</script>")
         val ts = internalData.substringAfter("\"ts\":").substringBefore(",")
@@ -53,7 +53,7 @@ class DailymotionExtractor(private val client: OkHttpClient) {
         val jsonUrl = "https://www.dailymotion.com/player/metadata/video/${url.toHttpUrl().encodedPath}?locale=en-US&dmV1st=$v1st&dmTs=$ts&is_native_app=0"
         val parsed = json.decodeFromString<DailyQuality>(
             client.newCall(GET(jsonUrl))
-                .execute().body!!.string()
+                .execute().body.string()
         )
 
         val subtitleList = mutableListOf<Track>()
@@ -72,7 +72,7 @@ class DailymotionExtractor(private val client: OkHttpClient) {
 
         val masterUrl = parsed.qualities.auto.first().url
 
-        val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
+        val masterPlaylist = client.newCall(GET(masterUrl)).execute().body.string()
 
         val separator = "#EXT-X-STREAM-INF"
         masterPlaylist.substringAfter(separator).split(separator).map {

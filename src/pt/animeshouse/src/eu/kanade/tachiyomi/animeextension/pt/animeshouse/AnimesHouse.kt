@@ -129,7 +129,7 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun getPlayerVideos(url: String): List<Video> {
         val iframeBody = client.newCall(GET(url, headers)).execute()
-            .body?.string() ?: throw Exception(MSG_ERR_BODY)
+            .body.string()
 
         val unpackedBody = JsUnpacker.unpack(iframeBody)
 
@@ -304,7 +304,6 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     companion object {
         const val PREFIX_SEARCH = "slug:"
-        const val MSG_ERR_BODY = "Erro ao obter dados do episódio."
 
         private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
         private const val USER_AGENT = "Mozilla/5.0 (Linux; Android 10; SM-A307GT Build/QP1A.190711.020;) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/103.0.5060.71 Mobile Safari/537.36"

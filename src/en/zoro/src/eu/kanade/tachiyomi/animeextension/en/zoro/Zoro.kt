@@ -85,7 +85,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val data = response.body!!.string()
+        val data = response.body.string()
             .substringAfter("\"html\":\"")
             .substringBefore("<script>")
         val unescapedData = JSONUtil.unescape(data)
@@ -110,7 +110,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val body = response.body!!.string()
+        val body = response.body.string()
         val episodeReferer = Headers.headersOf("Referer", response.request.header("referer")!!)
         val data = body.substringAfter("\"html\":\"").substringBefore("<script>")
         val unescapedData = JSONUtil.unescape(data)
@@ -123,7 +123,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val subDub = server.attr("data-type")
                 val url = "$baseUrl/ajax/v2/episode/sources?id=$id"
                 val reqBody = client.newCall(GET(url, episodeReferer)).execute()
-                    .body!!.string()
+                    .body.string()
                 val sourceUrl = reqBody.substringAfter("\"link\":\"")
                     .substringBefore("\"")
                 runCatching {
@@ -166,7 +166,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val subs = subLangOrder(subs2)
         val prefix = "#EXT-X-STREAM-INF:"
         val playlist = client.newCall(GET(masterUrl)).execute()
-            .body!!.string()
+            .body.string()
         val videoList = playlist.substringAfter(prefix).split(prefix).map {
             val quality = name + " - " + it.substringAfter("RESOLUTION=")
                 .substringAfter("x")

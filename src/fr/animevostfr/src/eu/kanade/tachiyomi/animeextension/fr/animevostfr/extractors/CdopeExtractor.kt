@@ -40,7 +40,7 @@ class CdopeExtractor(private val client: OkHttpClient) {
             POST("https://cdopetimes.xyz/api/source/$id", body = body, headers = headers)
         ).execute()
 
-        Json { ignoreUnknownKeys = true }.decodeFromString<CdopeResponse>(response.body!!.string()).data.forEach { file ->
+        Json { ignoreUnknownKeys = true }.decodeFromString<CdopeResponse>(response.body.string()).data.forEach { file ->
             val videoHeaders = Headers.headersOf(
                 "Accept", "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5",
                 "Referer", "https://cdopetimes.xyz/",

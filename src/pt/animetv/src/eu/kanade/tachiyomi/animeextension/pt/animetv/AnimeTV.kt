@@ -27,7 +27,7 @@ class AnimeTV : AnimeHttpSource() {
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl?populares")
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val animes = Json.decodeFromString<JsonArray>(response.body!!.string())
+        val animes = Json.decodeFromString<JsonArray>(response.body.string())
         if (animes.isEmpty()) return AnimesPage(emptyList(), false)
         val animeList = mutableListOf<SAnime>()
         for (anime in animes) {
@@ -44,7 +44,7 @@ class AnimeTV : AnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl?latest")
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
-        val animes = Json.decodeFromString<JsonArray>(response.body!!.string())
+        val animes = Json.decodeFromString<JsonArray>(response.body.string())
         if (animes.isEmpty()) return AnimesPage(emptyList(), false)
         val animeList = mutableListOf<SAnime>()
         for (anime in animes) {
@@ -61,7 +61,7 @@ class AnimeTV : AnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl?search=$query")
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val animes = Json.decodeFromString<JsonArray>(response.body!!.string())
+        val animes = Json.decodeFromString<JsonArray>(response.body.string())
         if (animes.isEmpty()) return AnimesPage(emptyList(), false)
         val animeList = mutableListOf<SAnime>()
         for (anime in animes) {
@@ -77,7 +77,7 @@ class AnimeTV : AnimeHttpSource() {
     // == PARSE ANIME ==
     override fun animeDetailsRequest(anime: SAnime): Request = GET(anime.url)
     override fun animeDetailsParse(response: Response): SAnime {
-        val animes = Json.decodeFromString<JsonArray>(response.body!!.string())
+        val animes = Json.decodeFromString<JsonArray>(response.body.string())
         if (animes.isEmpty()) return SAnime.create()
         val animeData = animes.first()
         val anime = SAnime.create()
@@ -94,7 +94,7 @@ class AnimeTV : AnimeHttpSource() {
     override fun episodeListRequest(anime: SAnime): Request = GET("$baseUrl?cat_id=" + anime.url.substring(42))
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val episodesData = Json.decodeFromString<JsonArray>(response.body!!.string())
+        val episodesData = Json.decodeFromString<JsonArray>(response.body.string())
         if (episodesData.isEmpty()) return emptyList()
         val episodes = mutableListOf<SEpisode>()
         val ovas = mutableListOf<SEpisode>()
@@ -118,7 +118,7 @@ class AnimeTV : AnimeHttpSource() {
         return GET("$baseUrl?episodios=" + episode.url.substring(47))
     }
     override fun videoListParse(response: Response): List<Video> {
-        val videosData = Json.decodeFromString<JsonArray>(response.body!!.string())
+        val videosData = Json.decodeFromString<JsonArray>(response.body.string())
         val videoData = videosData.first()
 
         val videos = mutableListOf<Video>()

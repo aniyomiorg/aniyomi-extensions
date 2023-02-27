@@ -43,7 +43,7 @@ class VidstreamingExtractor(private val client: OkHttpClient, private val json: 
                 )
 
                 val videoList = mutableListOf<Video>()
-                val masterPlaylist = client.newCall(GET(url, headers = headers)).execute().body!!.string()
+                val masterPlaylist = client.newCall(GET(url, headers = headers)).execute().body.string()
 
                 if (masterPlaylist.contains("#EXT-X-STREAM-INF:")) {
                     masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
@@ -89,7 +89,7 @@ class VidstreamingExtractor(private val client: OkHttpClient, private val json: 
                         "X-Requested-With", "XMLHttpRequest"
                     )
                 )
-            ).execute().body!!.string()
+            ).execute().body.string()
             val data = json.decodeFromString<JsonObject>(jsonResponse)["data"]!!.jsonPrimitive.content
             val decryptedData = cryptoHandler(data, iv, decryptionKey, false)
             val videoList = mutableListOf<Video>()
@@ -97,7 +97,7 @@ class VidstreamingExtractor(private val client: OkHttpClient, private val json: 
             val array = json.decodeFromString<JsonObject>(decryptedData)["source"]!!.jsonArray
             if (array.size == 1 && array[0].jsonObject["type"]!!.jsonPrimitive.content == "hls") {
                 val fileURL = array[0].jsonObject["file"].toString().trim('"')
-                val masterPlaylist = client.newCall(GET(fileURL)).execute().body!!.string()
+                val masterPlaylist = client.newCall(GET(fileURL)).execute().body.string()
                 masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
                     .split("#EXT-X-STREAM-INF:").forEach {
                         val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",").substringBefore("\n") + "p"

@@ -93,7 +93,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         GET("$baseUrl/api/get_anime_list/all/$page")
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val responseObject = json.decodeFromString<JsonObject>(response.body!!.string())
+        val responseObject = json.decodeFromString<JsonObject>(response.body.string())
         val data = responseObject["data"]!!.jsonArray
         val animes = data.map { item ->
             SAnime.create().apply {
@@ -209,7 +209,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         val apiLink = serverLink.replace("embed", "api/source")
         val embedHeader = Headers.headersOf("referer", serverLink)
         val apiResponse = client.newCall(GET(apiLink, embedHeader)).execute()
-        val json = Json.decodeFromString<JsonObject>(apiResponse.body!!.string())
+        val json = Json.decodeFromString<JsonObject>(apiResponse.body.string())
         val uri = Uri.parse(serverLink)
 
         json["subtitles"]!!.jsonArray.forEach {
@@ -221,7 +221,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         }
         val resp = client.newCall(GET("${uri.scheme}://${uri.host}" + json["hls"]!!.jsonPrimitive.content, embedHeader)).execute()
 
-        resp.body!!.string().substringAfter("#EXT-X-STREAM-INF:")
+        resp.body.string().substringAfter("#EXT-X-STREAM-INF:")
             .split("#EXT-X-STREAM-INF:").map {
                 val quality = it.substringAfter("RESOLUTION=").split(",")[0].split("\n")[0].substringAfter("x") + "p $server" +
                     if (subsList.size > 0) { " (Toggleable Sub Available)" } else { "" }
@@ -303,10 +303,10 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 .substringAfter("src=\"").substringBefore("\"").substringBefore("?")
                 .replace("/embed/", "/player/metadata/")
             val response = client.newCall(GET(embedUrl, headers)).execute()
-            val decodedJson = json.decodeFromString<DailyQuality>(response.body!!.string())
+            val decodedJson = json.decodeFromString<DailyQuality>(response.body.string())
             masterPlaylist = decodedJson.qualities.auto.parallelMap { item ->
                 runCatching {
-                    val resp = client.newCall(GET(item.url)).execute().body!!.string()
+                    val resp = client.newCall(GET(item.url)).execute().body.string()
                     resp.substringAfter("#EXT-X-STREAM-INF:")
                         .split("#EXT-X-STREAM-INF:").map {
                             val videoUrl = it.substringAfter("\n").substringBefore("\n")
@@ -329,7 +329,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun extractSapphireVideo(serverLink: String, server: String): List<Video> {
         val url = serverLink.toHttpUrl().newBuilder().addQueryParameter("action", "config").build()
         val response = client.newCall(GET(url.toString(), Headers.headersOf("referer", serverLink))).execute()
-        val rawJson = response.body!!.string().let {
+        val rawJson = response.body.string().let {
             var decoded = it
             while (!decoded.startsWith("{\"id")) decoded = decoded.decodeBase64()
             return@let decoded
@@ -345,7 +345,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
         return decodedJson.streams.filter { it.format == "adaptive_hls" }.parallelMap { stream ->
             runCatching {
-                val playlist = client.newCall(GET(stream.url)).execute().body!!.string()
+                val playlist = client.newCall(GET(stream.url)).execute().body.string()
                 playlist.substringAfter("#EXT-X-STREAM-INF:")
                     .split("#EXT-X-STREAM-INF:").map {
                         val quality = it.substringAfter("RESOLUTION=").split(",")[0].split("\n")[0].substringAfter("x") + "p $server" +

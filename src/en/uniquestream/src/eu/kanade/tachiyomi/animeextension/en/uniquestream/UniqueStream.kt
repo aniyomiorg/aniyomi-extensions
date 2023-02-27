@@ -359,7 +359,7 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 POST("$baseUrl/wp-admin/admin-ajax.php", body = postBody, headers = postHeaders)
             ).execute()
 
-            var embedUrl = json.decodeFromString<EmbedResponse>(embedResponse.body!!.string()).embed_url
+            var embedUrl = json.decodeFromString<EmbedResponse>(embedResponse.body.string()).embed_url
             if (!embedUrl.startsWith("http")) embedUrl = "https:$embedUrl"
 
             val embedHeaders = Headers.headersOf(
@@ -401,7 +401,7 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
             val masterPlaylist = client.newCall(
                 GET(playlistUrl, headers = playlistHeaders)
-            ).execute().body!!.string()
+            ).execute().body.string()
             val playlistHost = playlistUrl.toHttpUrl().host
 
             val audioList = mutableListOf<Track>()

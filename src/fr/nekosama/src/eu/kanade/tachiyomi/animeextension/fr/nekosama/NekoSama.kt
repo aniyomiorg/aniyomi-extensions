@@ -241,7 +241,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val animeList = mutableListOf<SAnime>()
 
         val jsonLatest = json.decodeFromString<List<SearchJson>>(
-            response.body!!.string().substringAfter("var lastEpisodes = ").substringBefore(";\n")
+            response.body.string().substringAfter("var lastEpisodes = ").substringBefore(";\n")
         )
 
         for (item in jsonLatest) {
@@ -357,7 +357,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                 val masterPlaylist = client.newCall(GET(videoUrlDecoded, headers))
                     .execute()
-                    .body!!.string()
+                    .body.string()
 
                 val separator = "#EXT-X-STREAM-INF"
                 masterPlaylist.substringAfter(separator).split(separator).map {
@@ -398,14 +398,14 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         )
         val jsString = client.newCall(
             GET(jsUrl, headers = jsHeaders)
-        ).execute().body!!.string()
+        ).execute().body.string()
         val base64Data = jsString.substringAfter("e.parseJSON(atob(t).slice(2))}(\"").substringBefore("\"")
         val base64Decoded = Base64.decode(base64Data, Base64.DEFAULT).toString(Charsets.UTF_8)
         val playlistUrl = "https:" + base64Decoded.substringAfter("https:").substringBefore("\"}").replace("\\", "")
 
         val masterPlaylist = client.newCall(
             GET(playlistUrl, headers = jsHeaders)
-        ).execute().body!!.string()
+        ).execute().body.string()
 
         masterPlaylist.substringAfter("#EXT-X-STREAM-INF").split("#EXT-X-STREAM-INF").map {
             val resolution = it.substringAfter("NAME=\"")

@@ -118,7 +118,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val referer = Headers.headersOf("Referer", "$baseUrl/")
         val iframe = document.selectFirst("iframe").attr("src").substringBefore("&img")
         val webViewIncpec = client.newBuilder().addInterceptor(GetSourcesInterceptor(getSources, client)).build()
-        val lol = webViewIncpec.newCall(GET(iframe, referer)).execute().body!!.string()
+        val lol = webViewIncpec.newCall(GET(iframe, referer)).execute().body.string()
         val videoList = mutableListOf<Video>()
         lol.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
             val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"

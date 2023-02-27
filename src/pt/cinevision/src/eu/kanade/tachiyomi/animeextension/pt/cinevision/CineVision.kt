@@ -120,7 +120,7 @@ class CineVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val name = player.selectFirst("span.title").text()
         val json = Json.decodeFromString<JsonObject>(
             client.newCall(GET("$baseUrl/wp-json/dooplayer/v2/$id/$type/$num"))
-                .execute().body!!.string()
+                .execute().body.string()
         )
         val url = "https:" + json["embed_url"]!!.jsonPrimitive.content
 

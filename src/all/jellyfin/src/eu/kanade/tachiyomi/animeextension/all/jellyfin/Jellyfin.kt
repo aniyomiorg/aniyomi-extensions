@@ -205,7 +205,7 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
         val response = client.newCall(
             GET(url.build().toString(), headers = headers)
         ).execute()
-        val items = json.decodeFromString<ItemsResponse>(response.body!!.string())
+        val items = json.decodeFromString<ItemsResponse>(response.body.string())
         items.Items.forEach {
             animeList.addAll(
                 getAnimeFromId(it.Id)
@@ -253,7 +253,7 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
-        val info = json.decodeFromString<ItemsResponse.Item>(response.body!!.string())
+        val info = json.decodeFromString<ItemsResponse.Item>(response.body.string())
 
         val anime = SAnime.create()
 
@@ -289,14 +289,14 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val episodeList = if (response.request.url.toString().startsWith("$baseUrl/Users/")) {
-            val parsed = json.decodeFromString<ItemsResponse.Item>(response.body!!.string())
+            val parsed = json.decodeFromString<ItemsResponse.Item>(response.body.string())
             val episode = SEpisode.create()
             episode.episode_number = 1.0F
             episode.name = "Movie ${parsed.Name}"
             episode.setUrlWithoutDomain(response.request.url.toString().substringAfter(baseUrl))
             listOf(episode)
         } else {
-            val parsed = json.decodeFromString<ItemsResponse>(response.body!!.string())
+            val parsed = json.decodeFromString<ItemsResponse>(response.body.string())
 
             parsed.Items.map { ep ->
 
@@ -326,12 +326,12 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val videoList = mutableListOf<Video>()
-        val id = json.decodeFromString<ItemsResponse.Item>(response.body!!.string()).Id
+        val id = json.decodeFromString<ItemsResponse.Item>(response.body.string()).Id
 
         val sessionResponse = client.newCall(
             GET("$baseUrl/Items/$id/PlaybackInfo?userId=$userId&api_key=$apiKey")
         ).execute()
-        val parsed = json.decodeFromString<SessionResponse>(sessionResponse.body!!.string())
+        val parsed = json.decodeFromString<SessionResponse>(sessionResponse.body.string())
 
         val subtitleList = mutableListOf<Track>()
 
@@ -434,7 +434,7 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================= Utilities ==============================
 
     private fun animeParse(response: Response, page: Int): AnimesPage {
-        val items = json.decodeFromString<ItemsResponse>(response.body!!.string())
+        val items = json.decodeFromString<ItemsResponse>(response.body.string())
         val animesList = mutableListOf<SAnime>()
 
         items.Items.forEach { item ->
@@ -589,7 +589,7 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
                                 val mediaLibsResponse = client.newCall(
                                     GET("$baseUrl/Users/$userId/Items?api_key=$apiKey")
                                 ).execute()
-                                val mediaJson = mediaLibsResponse.body?.let { json.decodeFromString<ItemsResponse>(it.string()) }?.Items
+                                val mediaJson = mediaLibsResponse.body.let { json.decodeFromString<ItemsResponse>(it.string()) }?.Items
 
                                 val entriesArray = mutableListOf<String>()
                                 val entriesValueArray = mutableListOf<String>()

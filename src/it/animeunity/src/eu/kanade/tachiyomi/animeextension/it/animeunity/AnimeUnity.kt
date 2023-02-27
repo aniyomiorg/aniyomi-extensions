@@ -56,7 +56,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val parsed = json.decodeFromString<AnimeResponse>(
-            response.body!!.string().substringAfter("top-anime animes=\"").substringBefore("\"></top-anime>").replace("&quot;", "\"")
+            response.body.string().substringAfter("top-anime animes=\"").substringBefore("\"></top-anime>").replace("&quot;", "\"")
         )
 
         val animeList = parsed.data.map { ani ->
@@ -164,7 +164,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun searchAnimeParse(response: Response, page: Int): AnimesPage {
         return if (response.request.method == "POST") {
             val data = json.decodeFromString<SearchResponse>(
-                response.body!!.string()
+                response.body.string()
             )
 
             val animeList = data.records.map {
@@ -303,10 +303,10 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
         val videoList = mutableListOf<Video>()
 
         val serverJson = json.decodeFromString<ServerResponse>(
-            client.newCall(GET("https://scws.work/videos/${mediaId.id}", headers = newHeaders)).execute().body!!.string()
+            client.newCall(GET("https://scws.work/videos/${mediaId.id}", headers = newHeaders)).execute().body.string()
         )
 
-        val appJs = client.newCall(GET("$baseUrl/js/app.js", headers = headers)).execute().body!!.string()
+        val appJs = client.newCall(GET("$baseUrl/js/app.js", headers = headers)).execute().body.string()
 
         val tokenRegex = """(\d+),(?:\w+)\.client_ip,"(\w+)"""".toRegex()
         val (multiplier, key) = tokenRegex.find(appJs)!!.destructured
@@ -319,7 +319,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
 
         val masterPlaylist = client.newCall(
             GET("$workerUrl/master/${mediaId.id}?token=$playListToken", headers = headers)
-        ).execute().body!!.string()
+        ).execute().body.string()
 
         val qualities = mutableListOf<String>()
         masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
@@ -372,7 +372,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
         val response = client.newCall(
             GET("$baseUrl/info_api/$animeId/1?start_range=$start&end_range=$end", headers = headers)
         ).execute()
-        val json = json.decodeFromString<ApiResponse>(response.body!!.string())
+        val json = json.decodeFromString<ApiResponse>(response.body.string())
         return json.episodes.filter {
             it.scws_id != null && it.file_name != null
         }.map {

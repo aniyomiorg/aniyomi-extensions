@@ -10,7 +10,7 @@ class IframeExtractor(private val client: OkHttpClient, private val headers: Hea
     fun videoListFromIframe(iframeElement: Element): List<Video> {
         val iframeUrl = iframeElement.attr("src")
         val response = client.newCall(GET(iframeUrl, headers)).execute()
-        val html = response.body?.string().orEmpty()
+        val html = response.body.string()
         val url = html.substringAfter("play_url")
             .substringAfter(":\"")
             .substringBefore("\"")

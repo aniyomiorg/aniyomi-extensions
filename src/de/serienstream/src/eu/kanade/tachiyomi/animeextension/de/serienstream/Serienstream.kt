@@ -125,7 +125,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeNextPageSelector() = throw UnsupportedOperationException("Not used.")
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val body = response.body!!.string()
+        val body = response.body.string()
         val results = json.decodeFromString<JsonArray>(body)
         val animes = results.filter {
             val link = it.jsonObject["link"]!!.jsonPrimitive.content
