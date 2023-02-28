@@ -21,6 +21,7 @@ class JsVrfInterceptor(private val baseUrl: String) {
     fun wake() = ""
 
     fun getVrf(query: String): String {
+        if (query.isBlank()) return ""
         val jscript = getJs(query)
         val cdl = CountDownLatch(1)
         var vrf = ""
