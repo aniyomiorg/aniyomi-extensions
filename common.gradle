@@ -91,10 +91,6 @@ android {
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     implementation(project(":core"))
     compileOnly(libs.bundles.common)

@@ -1,23 +1,8 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        google()
-        maven(url = "https://plugins.gradle.org/m2/")
-    }
-    dependencies {
-        classpath(libs.gradle.agp)
-        classpath(libs.gradle.kotlin)
-        classpath(libs.gradle.serialization)
-        classpath(libs.gradle.kotlinter)
-    }
-}
-
-allprojects {
-    repositories {
-        mavenCentral()
-        google()
-        maven(url = "https://jitpack.io")
-    }
+plugins {
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.kotlin.android) apply false 
+    alias(libs.plugins.kotlin.serialization) apply false 
+    alias(libs.plugins.kotlinter) apply false
 }
 
 tasks.register<Delete>("clean") {
