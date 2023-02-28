@@ -272,7 +272,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val result = jsInterceptor.newCall(GET("$baseUrl$epurl")).execute()
         val masterUrl = result.request.url.toString()
         val masterPlaylist = result.body!!.string()
-        return parseVizPlaylist(masterPlaylist, masterUrl, "Vizcloud - $lang")
+        return parseVizPlaylist(masterPlaylist, masterUrl, "Vidstream - $lang")
     }
 
     private fun extractVideoConsumet(server: Triple<String, String, String>): List<Video> {
@@ -291,7 +291,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         parseVizPlaylist(
                             playlist.body!!.string(),
                             playlist.request.url.toString(),
-                            "Vizcloud - ${server.first}"
+                            "Vidstream - ${server.first}"
                         )
                     )
                 }
