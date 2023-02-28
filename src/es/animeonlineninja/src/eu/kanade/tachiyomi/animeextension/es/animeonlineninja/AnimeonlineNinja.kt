@@ -40,6 +40,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
+        .newBuilder().addInterceptor(VrfInterceptor()).build()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -106,9 +107,10 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
+        val datapost = document.selectFirst("#playeroptionsul li")!!.attr("data-post")
+        val datatype = document.selectFirst("#playeroptionsul li")!!.attr("data-type")
+
         if (multiserverCheck(document)) {
-            val datapost = document.selectFirst("#playeroptionsul li")!!.attr("data-post")
-            val datatype = document.selectFirst("#playeroptionsul li")!!.attr("data-type")
             val apiCall = client.newCall(GET("https://www1.animeonline.ninja/wp-json/dooplayer/v1/post/$datapost?type=$datatype&source=1")).execute().asJsoup().body()
             val iframeLink = apiCall.toString().substringAfter("{\"embed_url\":\"").substringBefore("\"")
             val sDocument = client.newCall(GET(iframeLink)).execute().asJsoup()
@@ -120,8 +122,6 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             }
         } else {
-            val datapost = document.selectFirst("#playeroptionsul li")!!.attr("data-post")
-            val datatype = document.selectFirst("#playeroptionsul li")!!.attr("data-type")
             document.select("#playeroptionsul li").forEach {
                 val sourceId = it.attr("data-nume")
                 val apiCall = client.newCall(GET("https://www1.animeonline.ninja/wp-json/dooplayer/v1/post/$datapost?type=$datatype&source=$sourceId")).execute().asJsoup().body()
@@ -164,7 +164,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 try {
                     val video = StreamSBExtractor(client).videosFromUrl(serverUrl, headers, lang)
                     videos.addAll(video)
-                } catch (e: Exception) { }
+                } catch (_: Exception) { }
             }
             serverUrl.contains("mixdrop") && lang.contains(langSelect) -> {
                 try {
@@ -175,7 +175,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             videos.add(Video(url, "$lang MixDrop", url))
                         }
                     }
-                } catch (e: Exception) { }
+                } catch (_: Exception) { }
             }
             serverUrl.contains("wolfstream") && lang.contains(langSelect) -> {
                 val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(sources)")!!.data()
