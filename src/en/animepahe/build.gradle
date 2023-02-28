@@ -12,8 +12,6 @@ ext {
 
 dependencies {
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
-    ext.coroutinesVersion = "1.4.3"
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
 }
 
 apply from: "$rootDir/common.gradle"
