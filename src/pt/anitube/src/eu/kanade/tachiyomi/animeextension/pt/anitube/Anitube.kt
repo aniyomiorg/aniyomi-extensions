@@ -60,7 +60,7 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime: SAnime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        val img = element.selectFirst("img")
+        val img = element.selectFirst("img")!!
         anime.title = img.attr("title")
         anime.thumbnail_url = img.attr("src")
         return anime
@@ -89,7 +89,7 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val epList = mutableListOf<SEpisode>()
         epList.addAll(epElementList.map { episodeFromElement(it) })
         if (hasNextPage(doc)) {
-            val next = doc.selectFirst(popularAnimeNextPageSelector()).attr("href")
+            val next = doc.selectFirst(popularAnimeNextPageSelector())!!.attr("href")
             val request = GET(baseUrl + next)
             val newResponse = client.newCall(request).execute()
             epList.addAll(getAllEps(newResponse))
@@ -104,12 +104,12 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("href"))
         episode.episode_number = try {
-            element.selectFirst("div.animepag_episodios_item_views")
+            element.selectFirst("div.animepag_episodios_item_views")!!
                 .text()
                 .substringAfter(" ").toFloat()
         } catch (e: NumberFormatException) { 0F }
-        episode.name = element.selectFirst("div.animepag_episodios_item_nome").text()
-        episode.date_upload = element.selectFirst("div.animepag_episodios_item_date")
+        episode.name = element.selectFirst("div.animepag_episodios_item_nome")!!.text()
+        episode.date_upload = element.selectFirst("div.animepag_episodios_item_date")!!
             .text().toDate()
         return episode
     }
@@ -150,24 +150,26 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 !genre.isBlank() -> GET("$baseUrl/genero/$genre/page/$page/${char.replace("todos", "")}")
                 else -> GET("$baseUrl/anime/page/$page/letra/$char")
             }
-        } else GET("$baseUrl/busca.php?s=$query&submit=Buscar")
+        } else {
+            GET("$baseUrl/busca.php?s=$query&submit=Buscar")
+        }
     }
 
     // Anime Details
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         val doc = getRealDoc(document)
-        val content = doc.selectFirst("div.anime_container_content")
-        val infos = content.selectFirst("div.anime_infos")
+        val content = doc.selectFirst("div.anime_container_content")!!
+        val infos = content.selectFirst("div.anime_infos")!!
 
-        anime.title = doc.selectFirst("div.anime_container_titulo").text()
-        anime.thumbnail_url = content.selectFirst("img").attr("src")
+        anime.title = doc.selectFirst("div.anime_container_titulo")!!.text()
+        anime.thumbnail_url = content.selectFirst("img")!!.attr("src")
         anime.genre = infos.getInfo("Gêneros")
         anime.author = infos.getInfo("Autor")
         anime.artist = infos.getInfo("Estúdio")
         anime.status = parseStatus(infos.getInfo("Status"))
 
-        var desc = doc.selectFirst("div.sinopse_container_content").text() + "\n"
+        var desc = doc.selectFirst("div.sinopse_container_content")!!.text() + "\n"
         infos.getInfo("Ano")?.let { desc += "\nAno: $it" }
         infos.getInfo("Direção")?.let { desc += "\nDireção: $it" }
         infos.getInfo("Episódios")?.let { desc += "\nEpisódios: $it" }
@@ -185,8 +187,8 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        val img = element.selectFirst("img")
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
+        val img = element.selectFirst("img")!!
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
         anime.title = img.attr("title")
         anime.thumbnail_url = img.attr("src")
         return anime
@@ -229,7 +231,7 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun getRealDoc(document: Document): Document {
         val menu = document.selectFirst("div.controles_ep > a[href] > i.spr.listaEP")
         if (menu != null) {
-            val parent = menu.parent()
+            val parent = menu.parent()!!
             val parentPath = parent.attr("href")
             val req = client.newCall(GET(baseUrl + parentPath)).execute()
             return req.asJsoup()

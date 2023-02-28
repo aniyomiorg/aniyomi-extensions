@@ -4,28 +4,28 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ResponseData(
-    val props: PropData
+    val props: PropData,
 ) {
     @Serializable
     data class PropData(
-        val anime_list: AnimeList
+        val anime_list: AnimeList,
     ) {
         @Serializable
         data class AnimeList(
             val data: List<Anime>,
-            val meta: MetaData
+            val meta: MetaData,
         ) {
             @Serializable
             data class Anime(
                 val title: String,
                 val slug: String,
-                val cover: String
+                val cover: String,
             )
 
             @Serializable
             data class MetaData(
                 val current_page: Int,
-                val last_page: Int
+                val last_page: Int,
             )
         }
     }
@@ -33,12 +33,12 @@ data class ResponseData(
 
 @Serializable
 data class AnimeDetails(
-    val props: DetailsData
+    val props: DetailsData,
 ) {
     @Serializable
     data class DetailsData(
         val anime: AnimeDetailsData,
-        val episode_list: EpisodesData
+        val episode_list: EpisodesData,
     ) {
         @Serializable
         data class AnimeDetailsData(
@@ -51,12 +51,12 @@ data class AnimeDetails(
             val description: String,
             val genre_list: List<InfoData>,
             val production_list: List<InfoData>,
-            val source_list: List<InfoData>
+            val source_list: List<InfoData>,
         ) {
             @Serializable
             data class InfoType(
                 val id: Int,
-                val name: String
+                val name: String,
             )
 
             @Serializable
@@ -68,7 +68,7 @@ data class AnimeDetails(
         @Serializable
         data class EpisodesData(
             val data: List<EpisodeData>,
-            val links: LinksData
+            val links: LinksData,
         ) {
             @Serializable
             data class EpisodeData(
@@ -81,7 +81,7 @@ data class AnimeDetails(
 
             @Serializable
             data class LinksData(
-                val next: String? = null
+                val next: String? = null,
             )
         }
     }
@@ -89,15 +89,15 @@ data class AnimeDetails(
 
 @Serializable
 data class EpisodeData(
-    val props: PropData
+    val props: PropData,
 ) {
     @Serializable
     data class PropData(
-        val video_list: VideoList
+        val video_list: VideoList,
     ) {
         @Serializable
         data class VideoList(
-            val data: List<Video>
+            val data: List<Video>,
         ) {
             @Serializable
             data class Video(
@@ -109,15 +109,15 @@ data class EpisodeData(
 
 @Serializable
 data class EpisodeResponse(
-    val props: PropData
+    val props: PropData,
 ) {
     @Serializable
     data class PropData(
-        val video: VideoData
+        val video: VideoData,
     ) {
         @Serializable
         data class VideoData(
-            val data: Video
+            val data: Video,
         ) {
             @Serializable
             data class Video(
@@ -125,7 +125,7 @@ data class EpisodeResponse(
                 val sort: Float,
                 val audio: TrackInfo,
                 val source: SourceInfo,
-                val mirror: List<Track>
+                val mirror: List<Track>,
             ) {
                 @Serializable
                 data class TrackInfo(
@@ -140,11 +140,11 @@ data class EpisodeResponse(
                 @Serializable
                 data class Track(
                     val resolution: String,
-                    val code: TrackCode
+                    val code: TrackCode,
                 ) {
                     @Serializable
                     data class TrackCode(
-                        val file: String
+                        val file: String,
                     )
                 }
             }

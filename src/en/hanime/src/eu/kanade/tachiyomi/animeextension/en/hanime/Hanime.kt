@@ -79,7 +79,7 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         return parseSearchJson(responseString)
     }
     private fun parseSearchJson(jsonLine: String?): AnimesPage {
@@ -110,7 +110,7 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = POST("https://search.htv-services.com/", popularRequestHeaders, searchRequestBody(query, page, filters))
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         return parseSearchJson(responseString)
     }
 
@@ -149,9 +149,9 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
         val headers = headers.newBuilder()
             .add("cookie", authCookie!!)
         val document = client.newCall(
-            GET("$baseUrl/videos/hentai/$id", headers = headers.build())
+            GET("$baseUrl/videos/hentai/$id", headers = headers.build()),
         ).execute().asJsoup()
-        val data = document.selectFirst("script:containsData(__NUXT__)").data()
+        val data = document.selectFirst("script:containsData(__NUXT__)")!!.data()
             .substringAfter("__NUXT__=").substringBeforeLast(";")
         val parsed = json.decodeFromString<WindowNuxt>(data)
         parsed.state.data.video.videos_manifest.servers.forEach { server ->
@@ -160,8 +160,8 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
                     Video(
                         stream.url,
                         stream.height + "p",
-                        stream.url
-                    )
+                        stream.url,
+                    ),
                 )
             }
         }
@@ -169,7 +169,7 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         val jObject = json.decodeFromString<JsonObject>(responseString)
         val server = jObject["videos_manifest"]!!.jsonObject["servers"]!!.jsonArray[0].jsonObject
         val streams = server["streams"]!!.jsonArray
@@ -182,7 +182,7 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
                         url = streamObject["url"]!!.jsonPrimitive.content,
                         quality = streamObject["height"]!!.jsonPrimitive.content + "p",
                         videoUrl = streamObject["url"]!!.jsonPrimitive.content,
-                    )
+                    ),
                 )
             }
         }
@@ -213,7 +213,7 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         val jObject = json.decodeFromString<JsonObject>(responseString)
         val episode = SEpisode.create()
         episode.date_upload = jObject.jsonObject["hentai_video"]!!.jsonObject["released_at_unix"]!!.jsonPrimitive.long * 1000
@@ -248,15 +248,16 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request = POST("https://search.htv-services.com/", popularRequestHeaders, latestSearchRequestBody(page))
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         return parseSearchJson(responseString)
     }
+
     // Filters
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         TagList(getTags()),
         BrandList(getBrands()),
         SortFilter(sortableList.map { it.first }.toTypedArray()),
-        TagInclusionMode()
+        TagInclusionMode(),
 
     )
     internal class Tag(val id: String, name: String) : AnimeFilter.TriState(name)
@@ -272,7 +273,7 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
         val brands: ArrayList<String>,
         val tagsMode: String,
         val orderBy: String,
-        val ordering: String
+        val ordering: String,
     )
 
     private fun getSearchParameters(filters: AnimeFilterList): SearchParameters {
@@ -289,14 +290,14 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
                         if (tag.isIncluded()) {
                             includedTags.add(
                                 "\"" + tag.id.toLowerCase(
-                                    Locale.US
-                                ) + "\""
+                                    Locale.US,
+                                ) + "\"",
                             )
                         } else if (tag.isExcluded()) {
                             blackListedTags.add(
                                 "\"" + tag.id.toLowerCase(
-                                    Locale.US
-                                ) + "\""
+                                    Locale.US,
+                                ) + "\"",
                             )
                         }
                     }
@@ -320,8 +321,8 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
                         if (brand.state) {
                             brands.add(
                                 "\"" + brand.id.toLowerCase(
-                                    Locale.US
-                                ) + "\""
+                                    Locale.US,
+                                ) + "\"",
                             )
                         }
                     }
@@ -486,7 +487,7 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
         Brand("X City", "x-city"),
         Brand("yosino", "yosino"),
         Brand("Y.O.U.C.", "y-o-u-c"),
-        Brand("ZIZ", "ziz")
+        Brand("ZIZ", "ziz"),
     )
 
     private fun getTags() = listOf(
@@ -588,32 +589,32 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     @Serializable
     data class WindowNuxt(
-        val state: State
+        val state: State,
     ) {
         @Serializable
         data class State(
-            val data: Data
+            val data: Data,
         ) {
             @Serializable
             data class Data(
-                val video: DataVideo
+                val video: DataVideo,
             ) {
                 @Serializable
                 data class DataVideo(
-                    val videos_manifest: VideosManifest
+                    val videos_manifest: VideosManifest,
                 ) {
                     @Serializable
                     data class VideosManifest(
-                        val servers: List<Server>
+                        val servers: List<Server>,
                     ) {
                         @Serializable
                         data class Server(
-                            val streams: List<Stream>
+                            val streams: List<Stream>,
                         ) {
                             @Serializable
                             data class Stream(
                                 val height: String,
-                                val url: String
+                                val url: String,
                             )
                         }
                     }

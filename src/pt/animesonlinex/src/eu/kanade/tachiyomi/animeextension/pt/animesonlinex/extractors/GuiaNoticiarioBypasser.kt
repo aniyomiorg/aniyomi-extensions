@@ -7,20 +7,20 @@ import okhttp3.OkHttpClient
 
 class GuiaNoticiarioBypasser(
     private val client: OkHttpClient,
-    private val headers: Headers
+    private val headers: Headers,
 ) {
 
     private val REGEX_LINK = Regex("link\\.href = \"(\\S+?)\"")
 
     fun fromUrl(url: String): String {
         val firstBody = client.newCall(GET(url, headers)).execute()
-            .body!!.string()
+            .body.string()
 
         var next = REGEX_LINK.find(firstBody)!!.groupValues.get(1)
         var currentPage = client.newCall(GET(next, headers)).execute()
         var iframeUrl = ""
         while (iframeUrl == "") {
-            val currentBody = currentPage.body!!.string()
+            val currentBody = currentPage.body.string()
             val currentDoc = currentPage.asJsoup(currentBody)
             val possibleIframe = currentDoc.selectFirst("iframe")
             if (REGEX_LINK.containsMatchIn(currentBody)) {
@@ -34,7 +34,7 @@ class GuiaNoticiarioBypasser(
                 next = REGEX_LINK.find(currentBody)!!.groupValues.get(1)
                 currentPage = client.newCall(GET(next, newHeaders)).execute()
             } else {
-                iframeUrl = possibleIframe.attr("src")
+                iframeUrl = possibleIframe!!.attr("src")
             }
         }
         return iframeUrl

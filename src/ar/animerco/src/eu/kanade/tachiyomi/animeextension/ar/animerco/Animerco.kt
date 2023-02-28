@@ -81,9 +81,9 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (type.contains("animes")) {
             val seasonsHtml = client.newCall(
                 GET(
-                    seriesLink
+                    seriesLink,
                     // headers = Headers.headersOf("Referer", document.location())
-                )
+                ),
             ).execute().asJsoup()
             val seasonsElements = seasonsHtml.select("ul.chapters-list li a.title")
             seasonsElements.reversed().forEach {
@@ -107,7 +107,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodesHtml = client.newCall(
             GET(
                 episodesUrl,
-            )
+            ),
         ).execute().asJsoup()
         val episodeElements = episodesHtml.select("ul.chapters-list li")
         return episodeElements.map { episodeFromElement(it) }
@@ -121,8 +121,8 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> 1F
         }
         // element.select("td > span.Num").text().toFloat()
-        // val SeasonNum = element.ownerDocument().select("div.Title span").text()
-        val seasonName = element.ownerDocument().select("div.media-title h1").text()
+        // val SeasonNum = element.ownerDocument()!!.select("div.Title span").text()
+        val seasonName = element.ownerDocument()!!.select("div.media-title h1").text()
         episode.name = "$seasonName : " + element.select("a.title h3").text()
         episode.setUrlWithoutDomain(element.select("a.title").attr("abs:href"))
         return episode
@@ -145,7 +145,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         val elements = document.select(videoListSelector())
         for (element in elements) {
-            val location = element.ownerDocument().location()
+            val location = element.ownerDocument()!!.location()
             val videoHeaders = Headers.headersOf("Referer", location)
             val qualityy = element.text()
             val post = element.attr("data-post")

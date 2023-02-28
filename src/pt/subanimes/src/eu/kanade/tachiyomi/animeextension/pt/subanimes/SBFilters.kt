@@ -7,10 +7,10 @@ object SBFilters {
 
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
 
         fun toQueryPart() = vals[state].second
@@ -37,7 +37,7 @@ object SBFilters {
 
     class GenresFilter : CheckBoxFilterList(
         "Gêneros",
-        SBFiltersData.genres.map { CheckBoxVal(it.first, false) }
+        SBFiltersData.genres.map { CheckBoxVal(it.first, false) },
     )
 
     // Mimicking the order of filters on the source
@@ -46,7 +46,7 @@ object SBFilters {
         StatusFilter(),
         AdultFilter(),
         FormatFilter(),
-        GenresFilter()
+        GenresFilter(),
     )
 
     data class FilterSearchParams(
@@ -58,7 +58,6 @@ object SBFilters {
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
-
         if (filters.isEmpty()) return FilterSearchParams()
 
         val genres = filters.getFirst<GenresFilter>().state
@@ -73,7 +72,7 @@ object SBFilters {
             filters.asQueryPart<FormatFilter>(),
             genres,
             filters.asQueryPart<StatusFilter>(),
-            filters.asQueryPart<TypeFilter>()
+            filters.asQueryPart<TypeFilter>(),
         )
     }
 
@@ -83,19 +82,19 @@ object SBFilters {
         val types = arrayOf(
             every,
             Pair("Japonês/Legendado", "1"),
-            Pair("Português/Dublado", "2")
+            Pair("Português/Dublado", "2"),
         )
 
         val status = arrayOf(
             every,
             Pair("Completo", "Completo"),
-            Pair("Em lançamento", "Lançamento")
+            Pair("Em lançamento", "Lançamento"),
         )
 
         val formats = arrayOf(
             every,
             Pair("Anime", "Anime"),
-            Pair("Filme", "Filme")
+            Pair("Filme", "Filme"),
         )
 
         val genres = arrayOf(
@@ -171,7 +170,7 @@ object SBFilters {
             Pair("Violência", "59"),
             Pair("Yaoi", "1386"),
             Pair("Yuri", "243"),
-            Pair("Zumbi", "574")
+            Pair("Zumbi", "574"),
         )
     }
 }

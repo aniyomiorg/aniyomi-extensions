@@ -10,7 +10,7 @@ class AnimesUpExtractor(private val client: OkHttpClient) {
     fun videoFromUrl(url: String, quality: String, headers: Headers): Video? {
         val body = client.newCall(GET(url, headers))
             .execute()
-            .body?.string()
+            .body.string()
             .orEmpty()
         val videoUrl = body.substringAfter("file: \"").substringBefore("\",")
         val newHeaders = Headers.headersOf("referer", url)

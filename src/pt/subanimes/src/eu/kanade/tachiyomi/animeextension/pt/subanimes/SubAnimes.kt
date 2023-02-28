@@ -104,7 +104,7 @@ class SubAnimes : ParsedAnimeHttpSource() {
             val url = it.attr("data-player-url")
             Pair(it.text(), url)
         }.ifEmpty {
-            val defaultPlayer = doc.selectFirst("div.playerBoxInfra > iframe")
+            val defaultPlayer = doc.selectFirst("div.playerBoxInfra > iframe")!!
             listOf(Pair("Default", defaultPlayer.attr("src")))
         }
 
@@ -135,8 +135,10 @@ class SubAnimes : ParsedAnimeHttpSource() {
         } else {
             val params = SBFilters.getSearchParameters(filters)
 
-            if (params == SBFilters.FilterSearchParams()) // no filters
+            if (params == SBFilters.FilterSearchParams()) {
+                // no filters
                 return super.fetchSearchAnime(page, query, filters)
+            }
 
             client.newCall(searchAnimeRequest(page, query, params))
                 .asObservableSuccess()
@@ -154,10 +156,11 @@ class SubAnimes : ParsedAnimeHttpSource() {
         val body = FormBody.Builder().apply {
             add("action", "anime_search")
             add("posts_per_page", "12")
-            if (filters.adult)
+            if (filters.adult) {
                 add("age", "yes")
-            else
+            } else {
                 add("age", "no")
+            }
             add("format", filters.format)
             add("name", query)
             add("paged", "$page")
@@ -195,19 +198,19 @@ class SubAnimes : ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val doc = getRealDoc(document)
         return SAnime.create().apply {
-            val div = doc.selectFirst("div.leftAnime")
-            thumbnail_url = div.selectFirst("img").attr("src")
-            title = doc.selectFirst("section.page_title").text()
-            status = parseStatus(div.selectFirst("div.anime_status"))
+            val div = doc.selectFirst("div.leftAnime")!!
+            thumbnail_url = div.selectFirst("img")!!.attr("src")
+            title = doc.selectFirst("section.page_title")!!.text()
+            status = parseStatus(div.selectFirst("div.anime_status")!!)
 
-            val container = doc.selectFirst("div.sinopse_container")
+            val container = doc.selectFirst("div.sinopse_container")!!
             genre = container.select("div.genders_container > span")
                 .joinToString(", ") { it.text() }
 
-            var desc = container.selectFirst("div.sinopse_content").text()
+            var desc = container.selectFirst("div.sinopse_content")!!.text()
             desc += "\n\n" + div.select("div.animeInfosItemSingle").joinToString("\n") {
-                val key = it.selectFirst("b").text()
-                val value = it.selectFirst("span").text()
+                val key = it.selectFirst("b")!!.text()
+                val value = it.selectFirst("span")!!.text()
                 "$key: $value"
             }
             description = desc
@@ -222,7 +225,7 @@ class SubAnimes : ParsedAnimeHttpSource() {
         return SAnime.create().apply {
             setUrlWithoutDomain(element.attr("href"))
             title = element.attr("title")
-            thumbnail_url = element.selectFirst("img").attr("src")
+            thumbnail_url = element.selectFirst("img")!!.attr("src")
         }
     }
 
@@ -250,7 +253,7 @@ class SubAnimes : ParsedAnimeHttpSource() {
     }
 
     private inline fun <reified T> Response.parseAs(): T {
-        val responseBody = body?.string().orEmpty()
+        val responseBody = body.string()
         return json.decodeFromString(responseBody)
     }
 

@@ -11,12 +11,12 @@ import uy.kohesive.injekt.injectLazy
 
 @Serializable
 data class VideoConfig(
-    val streams: List<Stream>
+    val streams: List<Stream>,
 ) {
     @Serializable
     data class Stream(
         val play_url: String,
-        val format_id: Int
+        val format_id: Int,
     )
 }
 

@@ -8,7 +8,7 @@ import okhttp3.OkHttpClient
 class SharedExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String, quality: String = "mirror"): Video? {
         val document = client.newCall(GET(url)).execute().asJsoup()
-        return document.select("source").firstOrNull()?.let {
+        return document.selectFirst("source")?.let {
             Video(it.attr("src"), "4Shared: $quality", it.attr("src"))
         }
     }

@@ -572,13 +572,13 @@ import okhttp3.RequestBody.Companion.toRequestBody
 data class FembedResponse(
     val success: Boolean,
     val data: List<FembedVideo> = emptyList(),
-    val captions: List<FembedCaptions>? = emptyList()
+    val captions: List<FembedCaptions>? = emptyList(),
 )
 
 @Serializable
 data class FembedVideo(
     val file: String,
-    val label: String
+    val label: String,
 )
 
 @Serializable
@@ -586,7 +586,7 @@ data class FembedCaptions(
     val id: String,
     val hash: String,
     val language: String,
-    val extension: String
+    val extension: String,
 )
 
 class CinegrabberExtractor(private val client: OkHttpClient) {
@@ -599,7 +599,7 @@ class CinegrabberExtractor(private val client: OkHttpClient) {
         """.trimIndent().toRequestBody("application/json".toMediaType())
 
         val body = runCatching {
-            client.newCall(POST(videoApi, body = data)).execute().body?.string().orEmpty()
+            client.newCall(POST(videoApi, body = data)).execute().body.string()
         }.getOrNull() ?: return emptyList<Video>()
 
         val jsonResponse = try { Json { ignoreUnknownKeys = true }.decodeFromString<FembedResponse>(body) } catch (e: Exception) { FembedResponse(false, emptyList()) }
@@ -611,8 +611,8 @@ class CinegrabberExtractor(private val client: OkHttpClient) {
                     subtitleList.add(
                         Track(
                             "https://${url.toHttpUrl().host}/asset/userdata/$userId/caption/${it.hash}/${it.id}.${it.extension}",
-                            it.language
-                        )
+                            it.language,
+                        ),
                     )
                 }
             }
@@ -621,8 +621,11 @@ class CinegrabberExtractor(private val client: OkHttpClient) {
         return if (jsonResponse.success) {
             jsonResponse.data.map {
                 val quality = ("Fembed:${it.label}").let {
-                    if (prefix.isNotBlank()) "$prefix $it"
-                    else it
+                    if (prefix.isNotBlank()) {
+                        "$prefix $it"
+                    } else {
+                        it
+                    }
                 }
                 try {
                     Video(it.file, quality, it.file, subtitleTracks = subtitleList)

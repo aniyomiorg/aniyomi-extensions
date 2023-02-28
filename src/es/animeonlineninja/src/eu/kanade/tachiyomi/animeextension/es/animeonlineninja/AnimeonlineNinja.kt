@@ -107,8 +107,8 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-        val datapost = document.selectFirst("#playeroptionsul li").attr("data-post")
-        val datatype = document.selectFirst("#playeroptionsul li").attr("data-type")
+        val datapost = document.selectFirst("#playeroptionsul li")!!.attr("data-post")
+        val datatype = document.selectFirst("#playeroptionsul li")!!.attr("data-type")
 
         if (multiserverCheck(document)) {
             val apiCall = client.newCall(GET("https://www1.animeonline.ninja/wp-json/dooplayer/v1/post/$datapost?type=$datatype&source=1")).execute().asJsoup().body()
@@ -168,7 +168,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             serverUrl.contains("mixdrop") && lang.contains(langSelect) -> {
                 try {
-                    val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(eval)").data()
+                    val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(eval)")!!.data()
                     if (jsE.contains("MDCore")) {
                         val url = "http:" + JsUnpacker(jsE).unpack().toString().substringAfter("MDCore.wurl=\"").substringBefore("\"")
                         if (!url.contains("\$(document).ready(function(){});")) {
@@ -178,7 +178,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 } catch (_: Exception) { }
             }
             serverUrl.contains("wolfstream") && lang.contains(langSelect) -> {
-                val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(sources)").data()
+                val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(sources)")!!.data()
                 val url = jsE.substringAfter("{file:\"").substringBefore("\"")
                 videos.add(Video(url, "$lang WolfStream", url))
             }
@@ -201,7 +201,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         return try {
             val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
             val userPreferredQuality = preferences.getString("preferred_quality", "SUB Fembed:1080p")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
@@ -251,24 +251,28 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> "$baseUrl/tendencias/?"
         }
 
-        if (letterFilter.state.isNotBlank()) url = try {
-            if (letterFilter.state.first().isLetter()) {
-                "$baseUrl/letra/${letterFilter.state.first().uppercase()}/?"
-            } else {
+        if (letterFilter.state.isNotBlank()) {
+            url = try {
+                if (letterFilter.state.first().isLetter()) {
+                    "$baseUrl/letra/${letterFilter.state.first().uppercase()}/?"
+                } else {
+                    "$baseUrl/letra/a/?"
+                }
+            } catch (e: Exception) {
                 "$baseUrl/letra/a/?"
             }
-        } catch (e: Exception) {
-            "$baseUrl/letra/a/?"
         }
 
-        if (typeFilter.state != 0) url += if (url.contains("tendencias")) {
-            "&get=${when (typeFilter.toUriPart()){
-                "serie" -> "TV"
-                "pelicula" -> "movies"
-                else -> "todos"
-            }}"
-        } else {
-            "&tipo=${typeFilter.toUriPart()}"
+        if (typeFilter.state != 0) {
+            url += if (url.contains("tendencias")) {
+                "&get=${when (typeFilter.toUriPart()){
+                    "serie" -> "TV"
+                    "pelicula" -> "movies"
+                    else -> "todos"
+                }}"
+            } else {
+                "&tipo=${typeFilter.toUriPart()}"
+            }
         }
 
         if (invertedResultsFilter.state) url += "&orden=asc"
@@ -385,7 +389,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             GenreFilter(),
             LangFilter(),
             MovieFilter(),
-        )
+        ),
     )
 
     private class LetterFilter : AnimeFilter.Text("Filtrar por letra", "")
@@ -397,8 +401,8 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         arrayOf(
             Pair("Todos", "todos"),
             Pair("Series", "serie"),
-            Pair("Peliculas", "pelicula")
-        )
+            Pair("Peliculas", "pelicula"),
+        ),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -411,8 +415,8 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Próximamente", "proximamente"),
             Pair("Live Action \uD83C\uDDEF\uD83C\uDDF5", "live-action"),
             Pair("Popular en la web \uD83D\uDCAB", "tendencias"),
-            Pair("Mejores valorados ⭐", "ratings")
-        )
+            Pair("Mejores valorados ⭐", "ratings"),
+        ),
     )
 
     private class LangFilter : UriPartFilter(
@@ -420,8 +424,8 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         arrayOf(
             Pair("Seleccionar", ""),
             Pair("Audio Latino \uD83C\uDDF2\uD83C\uDDFD", "audio-latino"),
-            Pair("Audio Castellano \uD83C\uDDEA\uD83C\uDDF8", "anime-castellano")
-        )
+            Pair("Audio Castellano \uD83C\uDDEA\uD83C\uDDF8", "anime-castellano"),
+        ),
     )
 
     private class MovieFilter : UriPartFilter(
@@ -429,8 +433,8 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         arrayOf(
             Pair("Seleccionar", ""),
             Pair("Anime ㊗️", "pelicula"),
-            Pair("Live Action \uD83C\uDDEF\uD83C\uDDF5", "live-action")
-        )
+            Pair("Live Action \uD83C\uDDEF\uD83C\uDDF5", "live-action"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

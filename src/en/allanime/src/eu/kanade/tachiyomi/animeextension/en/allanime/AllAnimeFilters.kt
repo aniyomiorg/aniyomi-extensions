@@ -7,10 +7,10 @@ object AllAnimeFilters {
 
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
         fun toQueryPart() = vals[state].second
     }
@@ -28,16 +28,21 @@ object AllAnimeFilters {
     }
 
     private inline fun <reified R> AnimeFilterList.parseCheckbox(
-        options: Array<Pair<String, String>>
+        options: Array<Pair<String, String>>,
     ): String {
         return (this.getFirst<R>() as CheckBoxFilterList).state
             .mapNotNull { checkbox ->
-                if (checkbox.state)
+                if (checkbox.state) {
                     options.find { it.first == checkbox.name }!!.second
-                else null
+                } else {
+                    null
+                }
             }.joinToString("\",\"").let {
-                if (it.isBlank()) "all"
-                else "[\"$it\"]"
+                if (it.isBlank()) {
+                    "all"
+                } else {
+                    "[\"$it\"]"
+                }
             }
     }
 
@@ -48,12 +53,12 @@ object AllAnimeFilters {
 
     class TypesFilter : CheckBoxFilterList(
         "Types",
-        AllAnimeFiltersData.types.map { CheckBoxVal(it.first, false) }
+        AllAnimeFiltersData.types.map { CheckBoxVal(it.first, false) },
     )
 
     class GenresFilter : CheckBoxFilterList(
         "Genres",
-        AllAnimeFiltersData.genres.map { CheckBoxVal(it.first, false) }
+        AllAnimeFiltersData.genres.map { CheckBoxVal(it.first, false) },
     )
 
     val filterList = AnimeFilterList(
@@ -63,7 +68,7 @@ object AllAnimeFilters {
         SortByFilter(),
         AnimeFilter.Separator(),
         TypesFilter(),
-        GenresFilter()
+        GenresFilter(),
     )
 
     data class FilterSearchParams(
@@ -72,7 +77,7 @@ object AllAnimeFilters {
         val releaseYear: String = "",
         val sortBy: String = "",
         val types: String = "",
-        val genres: String = ""
+        val genres: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
@@ -95,7 +100,7 @@ object AllAnimeFilters {
             Pair("All", "ALL"),
             Pair("Japan", "JP"),
             Pair("China", "CN"),
-            Pair("Korea", "KR")
+            Pair("Korea", "KR"),
         )
 
         val seasons = arrayOf(
@@ -103,7 +108,7 @@ object AllAnimeFilters {
             Pair("Winter", "Winter"),
             Pair("Spring", "Spring"),
             Pair("Summer", "Summer"),
-            Pair("Fall", "Fall")
+            Pair("Fall", "Fall"),
         )
 
         val years = arrayOf(
@@ -157,14 +162,14 @@ object AllAnimeFilters {
             Pair("1978", "1978"),
             Pair("1977", "1977"),
             Pair("1976", "1976"),
-            Pair("1975", "1975")
+            Pair("1975", "1975"),
         )
 
         val sortBy = arrayOf(
             Pair("Update", "update"),
             Pair("Name Asc", "Name_ASC"),
             Pair("Name Desc", "Name_DESC"),
-            Pair("Ratings", "Top")
+            Pair("Ratings", "Top"),
         )
 
         val types = arrayOf(
@@ -220,7 +225,7 @@ object AllAnimeFilters {
             Pair("Unknown", "Unknown"),
             Pair("Vampire", "Vampire"),
             Pair("Yaoi", "Yaoi"),
-            Pair("Yuri", "Yuri")
+            Pair("Yuri", "Yuri"),
         )
     }
 }

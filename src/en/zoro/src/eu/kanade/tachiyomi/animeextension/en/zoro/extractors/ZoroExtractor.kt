@@ -7,7 +7,7 @@ import okhttp3.OkHttpClient
 
 class ZoroExtractor(private val client: OkHttpClient) {
 
-    // Prevent (automatic) caching the .JS file for different episodes, because it 
+    // Prevent (automatic) caching the .JS file for different episodes, because it
     // changes everytime, and a cached old .js will have a invalid AES password,
     // invalidating the decryption algorithm.
     // We cache it manually when initializing the class.
@@ -22,11 +22,11 @@ class ZoroExtractor(private val client: OkHttpClient) {
         private const val SOURCES_URL = SERVER_URL + "/ajax/embed-6/getSources?id="
     }
 
-    // This will create a lag of 1~3s at the initialization of the class, but the 
+    // This will create a lag of 1~3s at the initialization of the class, but the
     // speedup of the manual cache will be worth it.
     private val cachedJs by lazy {
         newClient.newCall(GET(JS_URL, cache = cacheControl)).execute()
-            .body!!.string()
+            .body.string()
     }
     init { cachedJs }
 
@@ -35,11 +35,11 @@ class ZoroExtractor(private val client: OkHttpClient) {
             .substringBefore("?", "").ifEmpty { return null }
         val srcRes = newClient.newCall(GET(SOURCES_URL + id, cache = cacheControl))
             .execute()
-            .body!!.string()
+            .body.string()
 
         val key = newClient.newCall(GET("https://raw.githubusercontent.com/enimax-anime/key/e6/key.txt"))
             .execute()
-            .body!!.string()
+            .body.string()
 
         if ("\"encrypted\":false" in srcRes) return srcRes
         if (!srcRes.contains("{\"sources\":")) return null

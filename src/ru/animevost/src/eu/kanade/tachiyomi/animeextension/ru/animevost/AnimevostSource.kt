@@ -116,8 +116,8 @@ class AnimevostSource(override val name: String, override val baseUrl: String) :
                 type,
                 rating,
                 votes,
-                description
-            )
+                description,
+            ),
         )
         return anime
     }
@@ -169,7 +169,7 @@ class AnimevostSource(override val name: String, override val baseUrl: String) :
                     name = entry.split(":")[0]
                     episode_number = index.toFloat()
                     url = "/frame5.php?play=$id&old=1"
-                }
+                },
             )
         }
 

@@ -9,10 +9,10 @@ object ATCFilters {
 
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
         fun toQueryPart() = vals[state].second
     }
@@ -36,12 +36,12 @@ object ATCFilters {
     class SortFilter : AnimeFilter.Sort(
         "Ordenar",
         ATCFiltersData.orders.map { it.first }.toTypedArray(),
-        Selection(0, true)
+        Selection(0, true),
     )
 
     class GenresFilter : TriStateFilterList(
         "Gêneros",
-        ATCFiltersData.genres.map { TriStateVal(it) }
+        ATCFiltersData.genres.map { TriStateVal(it) },
     )
 
     val filterList = AnimeFilterList(
@@ -60,14 +60,14 @@ object ATCFilters {
         var sortBy: String = "",
         val blackListedGenres: ArrayList<String> = ArrayList(),
         val includedGenres: ArrayList<String> = ArrayList(),
-        var animeName: String = ""
+        var animeName: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
         if (filters.isEmpty()) return FilterSearchParams()
         val searchParams = FilterSearchParams(
             filters.asQueryPart<InitialLetterFilter>(),
-            filters.asQueryPart<StatusFilter>()
+            filters.asQueryPart<StatusFilter>(),
         )
 
         filters.getFirst<SortFilter>().state?.let {
@@ -109,10 +109,13 @@ object ATCFilters {
 
     private inline fun <T, R : Comparable<R>> List<out T>.sortedByIf(
         condition: Boolean,
-        crossinline selector: (T) -> R?
+        crossinline selector: (T) -> R?,
     ): List<T> {
-        return if (condition) sortedBy(selector)
-        else sortedByDescending(selector)
+        return if (condition) {
+            sortedBy(selector)
+        } else {
+            sortedByDescending(selector)
+        }
     }
 
     fun List<AnimeDto>.applyFilterParams(params: FilterSearchParams): List<AnimeDto> {
@@ -129,13 +132,13 @@ object ATCFilters {
 
         val orders = arrayOf(
             Pair("Alfabeticamente", "A-Z"),
-            Pair("Por ano", "year")
+            Pair("Por ano", "year"),
         )
 
         val status = arrayOf(
             Pair("Selecione", ""),
             Pair("Completo", SAnime.COMPLETED.toString()),
-            Pair("Em Lançamento", SAnime.ONGOING.toString())
+            Pair("Em Lançamento", SAnime.ONGOING.toString()),
         )
 
         val initialLetter = arrayOf(Pair("Selecione", "")) + ('A'..'Z').map {
@@ -182,7 +185,7 @@ object ATCFilters {
             "Terror",
             "Tragédia",
             "Vampiro",
-            "Vida Escolar"
+            "Vida Escolar",
         )
     }
 }

@@ -7,7 +7,7 @@ import okhttp3.OkHttpClient
 
 class MpFourDooExtractor(
     private val client: OkHttpClient,
-    private val headers: Headers
+    private val headers: Headers,
 ) {
     private val REGEX_MPDOO = Regex("file\":\"(.*?)\"")
     private val PLAYER_NAME = "Mp4Doo"
@@ -18,7 +18,7 @@ class MpFourDooExtractor(
             .replace("fy..", "fy.v.")
         return if (videoUrl.endsWith("playlist.m3u8")) {
             val playlistBody = client.newCall(GET(videoUrl, headers)).execute()
-                .body!!.string()
+                .body.string()
 
             val separator = "#EXT-X-STREAM-INF:"
             playlistBody.substringAfter(separator).split(separator).map {
@@ -31,7 +31,9 @@ class MpFourDooExtractor(
 
                 val playlistUrl = if (!path.startsWith("https:")) {
                     videoUrl.replace("playlist.m3u8", path)
-                } else path
+                } else {
+                    path
+                }
 
                 Video(playlistUrl, quality, playlistUrl, headers)
             }

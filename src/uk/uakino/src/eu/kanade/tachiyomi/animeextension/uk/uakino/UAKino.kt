@@ -122,7 +122,7 @@ class UAKino : ParsedAnimeHttpSource() {
         // Do call
         val episodesList = client.newCall(GET(episodesAPI.format(titleID)))
             .execute()
-            .body!!.string()
+            .body.string()
 
         // Parse JSON
         Log.d("episodeListParse", episodesAPI.format(titleID))
@@ -205,7 +205,7 @@ class UAKino : ParsedAnimeHttpSource() {
 
         // Parse m3u (480p/720p/1080p)
         // GET Calll m3u8 url
-        val masterPlaylist = client.newCall(GET(m3u8Episode)).execute().body!!.string()
+        val masterPlaylist = client.newCall(GET(m3u8Episode)).execute().body.string()
         // Parse quality and videoUrl from m3u8 file
         masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
             val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"

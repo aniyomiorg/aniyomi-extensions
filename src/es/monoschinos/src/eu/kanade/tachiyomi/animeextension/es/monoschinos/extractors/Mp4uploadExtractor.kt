@@ -25,7 +25,7 @@ class Mp4uploadExtractor {
                     "referer" to url,
                     "method_free" to "+",
                     "method_premiun" to "",
-                )
+                ),
             ).method(Connection.Method.POST).ignoreContentType(true)
                 .ignoreHttpErrors(true).sslSocketFactory(this.socketFactory()).execute().url().toString()
             Video(videoUrl, "Mp4Upload", videoUrl, headers)
@@ -39,7 +39,7 @@ class Mp4uploadExtractor {
                 override fun getAcceptedIssuers() = arrayOf<X509Certificate>()
                 override fun checkClientTrusted(certs: Array<X509Certificate>, authType: String) {}
                 override fun checkServerTrusted(certs: Array<X509Certificate>, authType: String) {}
-            }
+            },
         )
 
         return try {

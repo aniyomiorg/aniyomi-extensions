@@ -53,7 +53,7 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
-        val epInfoScript = document.selectFirst("script:containsData(var episodes = )").data()
+        val epInfoScript = document.selectFirst("script:containsData(var episodes = )")!!.data()
 
         if (epInfoScript.substringAfter("episodes = [").substringBefore("];").isEmpty()) {
             return listOf<SEpisode>()
@@ -77,10 +77,10 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-        val serverList = document.selectFirst("script:containsData(var videos =)").data().substringAfter("var videos = [[").substringBefore("]];")
+        val serverList = document.selectFirst("script:containsData(var videos =)")!!.data().substringAfter("var videos = [[").substringBefore("]];")
             .replace("\"", "").split("],[")
 
-        serverList.forEach() {
+        serverList.forEach {
             val servers = it.split(",")
             val serverName = servers[0]
             val serverUrl = servers[1].replace("\\/", "/")
@@ -152,7 +152,7 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.select("h1.title").text()
-        anime.description = document.select("p.sinopsis").first().ownText()
+        anime.description = document.selectFirst("p.sinopsis")!!.ownText()
         anime.genre = document.select("p.genres span.btn.btn-sm.btn-primary.rounded-pill a").joinToString { it.text() }
         anime.status = parseStatus(document.select("a.btn.btn-success.btn-block.status").text())
         return anime

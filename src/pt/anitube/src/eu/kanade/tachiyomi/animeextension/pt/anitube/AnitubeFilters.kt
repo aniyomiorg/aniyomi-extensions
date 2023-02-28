@@ -7,10 +7,10 @@ object AnitubeFilters {
 
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
         fun toQueryPart() = vals[state].second
     }
@@ -32,20 +32,20 @@ object AnitubeFilters {
         CharacterFilter(),
         AnimeFilter.Header(AnitubeFiltersData.IGNORE_SEASON_MSG),
         SeasonFilter(),
-        YearFilter()
+        YearFilter(),
     )
 
     data class FilterSearchParams(
         val genre: String = "",
         val season: String = "",
         val year: String = "",
-        val initialChar: String = ""
+        val initialChar: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
         return FilterSearchParams(
             filters.asQueryPart<GenreFilter>(),
-            filters.asQueryPart<SeasonFilter>()
+            filters.asQueryPart<SeasonFilter>(),
         )
     }
 
@@ -60,7 +60,7 @@ object AnitubeFilters {
             Pair("Outono", "outono"),
             Pair("Inverno", "inverno"),
             Pair("Primavera", "primavera"),
-            Pair("Verão", "verao")
+            Pair("Verão", "verao"),
         )
 
         val years = (2022 downTo 1979).map {
@@ -68,7 +68,7 @@ object AnitubeFilters {
         }.toTypedArray()
 
         val initialChars = arrayOf(
-            Pair("Qualquer letra", "todos")
+            Pair("Qualquer letra", "todos"),
         ) + ('A'..'Z').map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
@@ -130,7 +130,7 @@ object AnitubeFilters {
             Pair("Vampiros", "vampiros"),
             Pair("Vida Escolar", "vida-escolar"),
             Pair("Yaoi", "yaoi"),
-            Pair("Yuri", "yuri")
+            Pair("Yuri", "yuri"),
         )
     }
 }

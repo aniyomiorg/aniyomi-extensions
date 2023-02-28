@@ -73,7 +73,7 @@ class HahoMoe : ParsedAnimeHttpSource() {
         } catch (e: NumberFormatException) {
             numeric = false
         }
-        episode.episode_number = if (numeric) episodeNumberString.toFloat() else element.parent().className().removePrefix("episode").toFloat()
+        episode.episode_number = if (numeric) episodeNumberString.toFloat() else element.parent()!!.className().removePrefix("episode").toFloat()
         episode.name = element.select("div.episode-number").text() + ": " + element.select("div.episode-label").text() + element.select("div.episode-title").text()
         val date: String = element.select("div.date").text()
         val parsedDate = parseDate(date)
@@ -102,7 +102,7 @@ class HahoMoe : ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val iframe = document.selectFirst("iframe").attr("src")
+        val iframe = document.selectFirst("iframe")!!.attr("src")
         val referer = response.request.url.encodedPath
         val newHeaderList = mutableMapOf(Pair("referer", baseUrl + referer))
         headers.forEach { newHeaderList[it.first] = it.second }
@@ -141,7 +141,7 @@ class HahoMoe : ParsedAnimeHttpSource() {
     }
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.select("img.cover-image.img-thumbnail").first().attr("src")
+        anime.thumbnail_url = document.selectFirst("img.cover-image.img-thumbnail")!!.attr("src")
         anime.title = document.select("li.breadcrumb-item.active").text()
         anime.genre = document.select("li.genre span.value").joinToString(", ") { it.text() }
         anime.description = document.select("div.card-body").text()
@@ -846,7 +846,7 @@ class HahoMoe : ParsedAnimeHttpSource() {
         val includedTags: ArrayList<String>,
         val blackListedTags: ArrayList<String>,
         val orderBy: String,
-        val ordering: String
+        val ordering: String,
     )
     internal class Brand(val id: String, name: String) : AnimeFilter.CheckBox(name)
     private val sortableList = listOf(
@@ -875,14 +875,14 @@ class HahoMoe : ParsedAnimeHttpSource() {
                         if (tag.isIncluded()) {
                             includedTags.add(
                                 "\"" + tag.id.toLowerCase(
-                                    Locale.US
-                                ) + "\""
+                                    Locale.US,
+                                ) + "\"",
                             )
                         } else if (tag.isExcluded()) {
                             blackListedTags.add(
                                 "\"" + tag.id.toLowerCase(
-                                    Locale.US
-                                ) + "\""
+                                    Locale.US,
+                                ) + "\"",
                             )
                         }
                     }

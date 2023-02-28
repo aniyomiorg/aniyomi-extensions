@@ -72,7 +72,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val parsed = json.decodeFromString<PopularResult>(response.body!!.string())
+        val parsed = json.decodeFromString<PopularResult>(response.body.string())
         val animeList = mutableListOf<SAnime>()
 
         val titleStyle = preferences.getString("preferred_title_style", "romaji")!!
@@ -88,7 +88,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                         }
                         thumbnail_url = it.anyCard.thumbnail
                         url = it.anyCard._id
-                    }
+                    },
                 )
             }
         }
@@ -133,7 +133,6 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 .build()
             GET("$baseUrl/allanimeapi?variables=$variables&extensions=$extensions", headers = headers)
         } else {
-
             val seasonString = if (filters.season == "all") "" else ""","season":"${filters.season}""""
             val yearString = if (filters.releaseYear == "all") "" else ""","year":${filters.releaseYear}"""
             val genresString = if (filters.genres == "all") "" else ""","genres":${filters.genres},"excludeGenres":[]"""
@@ -169,13 +168,13 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
-        val show = json.decodeFromString<SeriesResult>(response.body!!.string()).data.show
+        val show = json.decodeFromString<SeriesResult>(response.body.string()).data.show
         val anime = SAnime.create()
 
         anime.title = show.name
 
         anime.description = Jsoup.parse(
-            show.description?.replace("<br>", "br2n") ?: ""
+            show.description?.replace("<br>", "br2n") ?: "",
         ).text().replace("br2n", "\n") + "\n\n"
         anime.description += "Type: ${show.type ?: "Unknown"}"
         anime.description += "\nAired: ${show.season?.quarter ?: "-"} ${show.season?.year ?: "-"}"
@@ -202,7 +201,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val medias = json.decodeFromString<SeriesResult>(response.body!!.string())
+        val medias = json.decodeFromString<SeriesResult>(response.body.string())
         val episodeList = mutableListOf<SEpisode>()
 
         val subOrDub = preferences.getString("preferred_sub", "sub")!!
@@ -246,7 +245,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val body = response.body!!.string()
+        val body = response.body.string()
 
         val videoJson = json.decodeFromString<EpisodeResult>(body)
         val videoList = mutableListOf<Pair<Video, Float>>()
@@ -254,12 +253,12 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
         val altHosterSelection = preferences.getStringSet(
             "alt_hoster_selection",
-            setOf("player", "vidstreaming", "okru", "mp4upload", "streamlare", "doodstream")
+            setOf("player", "vidstreaming", "okru", "mp4upload", "streamlare", "doodstream"),
         )!!
 
         val hosterSelection = preferences.getStringSet(
             "hoster_selection",
-            setOf("default", "ac", "luf-mp4", "si-hls", "s-mp4", "ac-hls")
+            setOf("default", "ac", "luf-mp4", "si-hls", "s-mp4", "ac-hls"),
         )!!
 
         for (video in videoJson.data.episode.sourceUrls) {
@@ -322,10 +321,10 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                                     Video(
                                         server.sourceUrl,
                                         "Original (player ${server.sourceName})",
-                                        server.sourceUrl
+                                        server.sourceUrl,
                                     ),
-                                    server.priority
-                                )
+                                    server.priority,
+                                ),
                             )
                         }
                         "streamsb" -> {
@@ -385,7 +384,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                         else -> null
                     }
                 }.getOrNull()
-            }.filterNotNull().flatten()
+            }.filterNotNull().flatten(),
         )
 
         return prioritySort(videoList)
@@ -402,8 +401,8 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             compareBy(
                 { if (prefServer == "site_default") it.second else it.first.quality.lowercase().contains(prefServer) },
                 { it.first.quality.lowercase().contains(quality) },
-                { it.first.quality.lowercase().contains(subOrDub) }
-            )
+                { it.first.quality.lowercase().contains(subOrDub) },
+            ),
         ).reversed().map { t -> t.first }
     }
 
@@ -423,7 +422,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun ParseAnime(response: Response): AnimesPage {
-        val parsed = json.decodeFromString<SearchResult>(response.body!!.string())
+        val parsed = json.decodeFromString<SearchResult>(response.body.string())
         val titleStyle = preferences.getString("preferred_title_style", "romaji")!!
 
         val animeList = parsed.data.shows.edges.map { ani ->

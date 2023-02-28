@@ -8,7 +8,7 @@ import okhttp3.OkHttpClient
 
 class DopeBoxExtractor(private val client: OkHttpClient) {
 
-    // Prevent (automatic) caching the .JS file for different episodes, because it 
+    // Prevent (automatic) caching the .JS file for different episodes, because it
     // changes everytime, and a cached old .js will have a invalid AES password,
     // invalidating the decryption algorithm.
     // We cache it manually when initializing the class.
@@ -18,19 +18,20 @@ class DopeBoxExtractor(private val client: OkHttpClient) {
         .build()
 
     companion object {
-        // its the same .js file for any server it may use, 
+        // its the same .js file for any server it may use,
         // so we choose rabbitstream arbitrarily
         private const val JS_URL = "https://rabbitstream.net/js/player/prod/e4-player.min.js"
-        // unlike the case of the .js file, here it is not possible to 
+
+        // unlike the case of the .js file, here it is not possible to
         // simply use the same host.
         private const val SOURCES_PATH = "/ajax/embed-4/getSources?id="
     }
 
-    // This will create a lag of 1~3s at the initialization of the class, but the 
+    // This will create a lag of 1~3s at the initialization of the class, but the
     // speedup of the manual cache will be worth it.
     private val cachedJs by lazy {
         newClient.newCall(GET(JS_URL, cache = cacheControl)).execute()
-            .body!!.string()
+            .body.string()
     }
     init { cachedJs }
 
@@ -42,15 +43,15 @@ class DopeBoxExtractor(private val client: OkHttpClient) {
             GET(
                 serverUrl + SOURCES_PATH + id,
                 headers = Headers.headersOf("x-requested-with", "XMLHttpRequest"),
-                cache = cacheControl
-            )
+                cache = cacheControl,
+            ),
         )
             .execute()
-            .body!!.string()
+            .body.string()
 
         val key = newClient.newCall(GET("https://raw.githubusercontent.com/enimax-anime/key/e4/key.txt"))
             .execute()
-            .body!!.string()
+            .body.string()
         // encrypted data will start with "U2Fsd..." because they put
         // "Salted__" at the start of encrypted data, thanks openssl
         // if its not encrypted, then return it

@@ -55,7 +55,7 @@ class KissKH : ConfigurableAnimeSource, AnimeHttpSource() {
         GET("$baseUrl/api/DramaList/List?page=$page&type=0&sub=0&country=0&status=0&order=1&pageSize=40")
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         return parsePopularAnimeJson(responseString)
     }
 
@@ -81,7 +81,7 @@ class KissKH : ConfigurableAnimeSource, AnimeHttpSource() {
     // episodes
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         return parseEpisodePage(responseString)
     }
 
@@ -123,10 +123,10 @@ class KissKH : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun videosFromElement(response: Response, id: String): List<Video> {
-        val jsonData = response.body!!.string()
+        val jsonData = response.body.string()
         val jObject = json.decodeFromString<JsonObject>(jsonData)
         val videoList = mutableListOf<Video>()
-        val subData = client.newCall(GET("$baseUrl/api/Sub/$id")).execute().body!!.string()
+        val subData = client.newCall(GET("$baseUrl/api/Sub/$id")).execute().body.string()
         val subj = json.decodeFromString<JsonArray>(subData)
         val subList = mutableListOf<Track>()
         for (item in subj) {
@@ -169,7 +169,7 @@ class KissKH : ConfigurableAnimeSource, AnimeHttpSource() {
         GET("$baseUrl/api/DramaList/Search?q=$query&type=0")
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         return parseSearchAnimeJson(responseString)
     }
 
@@ -191,7 +191,7 @@ class KissKH : ConfigurableAnimeSource, AnimeHttpSource() {
     // Details
 
     override fun animeDetailsParse(response: Response): SAnime {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         return parseAnimeDetailsParseJson(responseString)
     }
 
@@ -218,7 +218,7 @@ class KissKH : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/api/DramaList/List?page=$page&type=0&sub=0&country=0&status=0&order=2&pageSize=40")
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         return parseLatestAnimeJson(responseString)
     }
 

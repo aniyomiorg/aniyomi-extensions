@@ -98,7 +98,6 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } else {
             var counter = 1
             for (ep in document.select("div.eplistz > div > div > a")) {
-
                 val episode = SEpisode.create()
 
                 episode.name = ep.select("div.inwel > span").text()
@@ -112,7 +111,7 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (document.select("div.eplistz > div > div > a").isEmpty()) {
                 val cacheUrlRegex = Regex("""url: '(.*?)'(?:.*?)episodesListxf""", RegexOption.DOT_MATCHES_ALL)
 
-                val jsText = document.selectFirst("script:containsData(episodesListxf)").data()
+                val jsText = document.selectFirst("script:containsData(episodesListxf)")!!.data()
                 val url = cacheUrlRegex.find(jsText)?.groupValues?.get(1) ?: ""
 
                 if (url.isNotBlank()) {
@@ -126,10 +125,14 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun extractFromCache(url: String): List<SEpisode> {
         val headers = Headers.headersOf(
-            "Accept", "*/*",
-            "Origin", baseUrl,
-            "Referer", "$baseUrl/",
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0"
+            "Accept",
+            "*/*",
+            "Origin",
+            baseUrl,
+            "Referer",
+            "$baseUrl/",
+            "User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
         )
 
         val soup = client.newCall(GET(url, headers = headers)).execute().asJsoup()
@@ -167,8 +170,8 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
 
         val jsString = client.newCall(
-            GET("$baseUrl/xz/v3/js/index_beta.js?999995b")
-        ).execute().body!!.string()
+            GET("$baseUrl/xz/v3/js/index_beta.js?999995b"),
+        ).execute().body.string()
 
         val apiPath = if (response.request.url.encodedPath.startsWith("/movies/")) {
             "/movies/jsonMovie.php?slug="
@@ -178,10 +181,10 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val playerUrl = decodeAtob(jsString.substringAfter("var gkrrxx = '").substringBefore("';"))
 
         val apiResp = client.newCall(
-            GET(baseUrl + apiPath + slug + "&_=${System.currentTimeMillis() / 1000}")
+            GET(baseUrl + apiPath + slug + "&_=${System.currentTimeMillis() / 1000}"),
         ).execute()
 
-        val apiJson = apiResp.body?.let { Json.decodeFromString<JsonObject>(it.string()) }
+        val apiJson = apiResp.body.let { Json.decodeFromString<JsonObject>(it.string()) }
 
         val serversHtml = apiJson!!["result"]!!
             .jsonObject["anime"]!!
@@ -204,8 +207,8 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             } else {
                 val sourceElement = client.newCall(
-                    GET("https:" + playerUrl + server.attr("hl") + "&_=${System.currentTimeMillis() / 1000}")
-                ).execute().asJsoup().selectFirst("source")
+                    GET("https:" + playerUrl + server.attr("hl") + "&_=${System.currentTimeMillis() / 1000}"),
+                ).execute().asJsoup().selectFirst("source")!!
 
                 val videoUrl = sourceElement.attr("src").replace("^//".toRegex(), "https://")
 
@@ -213,8 +216,8 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     Video(
                         videoUrl,
                         "1080p (${server.select("small").text()})",
-                        videoUrl
-                    )
+                        videoUrl,
+                    ),
                 )
             }
         }
@@ -301,7 +304,6 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val url = if (query.isNotEmpty()) {
             GET("$baseUrl/xz/searchgrid.php?p=$page&limit=12&s=$query&_=${System.currentTimeMillis() / 1000}", headers)
         } else {
-
             val genreFilter = (filters.find { it is TagFilter } as TagFilter).state.filter { it.state }
 
             var categories = mutableListOf<String>()
@@ -318,7 +320,7 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("NOTE: Ignored if using text search!"),
         AnimeFilter.Separator(),
-        TagFilter("Tags", checkboxesFrom(tagsList))
+        TagFilter("Tags", checkboxesFrom(tagsList)),
     )
 
     private fun checkboxesFrom(tagArray: Array<Pair<String, String>>): List<TagCheckBox> = tagArray.map { TagCheckBox(it.second) }
@@ -435,7 +437,7 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("Virtual Reality", "Virtual Reality"),
         Pair("War", "War"),
         Pair("Work Life", "Work Life"),
-        Pair("Zombies", "Zombies")
+        Pair("Zombies", "Zombies"),
     )
 
     // Details
@@ -446,10 +448,10 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val slug = response.request.url.toString().split(".com/movies/")[1]
 
             val apiResp = client.newCall(
-                GET(baseUrl + "/movies/jsonMovie.php?slug=" + slug + "&_=${System.currentTimeMillis() / 1000}")
+                GET(baseUrl + "/movies/jsonMovie.php?slug=" + slug + "&_=${System.currentTimeMillis() / 1000}"),
             ).execute()
 
-            val apiJson = apiResp.body?.let { Json.decodeFromString<JsonObject>(it.string()) }
+            val apiJson = apiResp.body.let { Json.decodeFromString<JsonObject>(it.string()) }
             val animeJson = apiJson!!["result"]!!
                 .jsonObject["anime"]!!
                 .jsonArray[0]

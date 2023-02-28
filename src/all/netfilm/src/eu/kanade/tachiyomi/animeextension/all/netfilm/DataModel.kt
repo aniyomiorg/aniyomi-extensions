@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CategoryResponse(
-    val data: List<CategoryData>
+    val data: List<CategoryData>,
 ) {
     @Serializable
     data class CategoryData(
@@ -12,13 +12,13 @@ data class CategoryResponse(
         val domainType: Int,
         val id: String,
         val name: String,
-        val sort: String
+        val sort: String,
     )
 }
 
 @Serializable
 data class AnimeInfoResponse(
-    val data: InfoData
+    val data: InfoData,
 ) {
     @Serializable
     data class InfoData(
@@ -33,45 +33,45 @@ data class AnimeInfoResponse(
         @Serializable
         data class EpisodeInfo(
             val id: Int,
-            val seriesNo: Float
+            val seriesNo: Float,
         )
 
         @Serializable
         data class IdInfo(
-            val name: String
+            val name: String,
         )
     }
 }
 
 @Serializable
 data class SearchResponse(
-    val data: InfoData
+    val data: InfoData,
 ) {
     @Serializable
     data class InfoData(
-        val results: List<CategoryResponse.CategoryData>
+        val results: List<CategoryResponse.CategoryData>,
     )
 }
 
 @Serializable
 data class EpisodeResponse(
-    val data: EpisodeData
+    val data: EpisodeData,
 ) {
     @Serializable
     data class EpisodeData(
         val qualities: List<Quality>,
-        val subtitles: List<Subtitle>
+        val subtitles: List<Subtitle>,
     ) {
         @Serializable
         data class Quality(
             val quality: Int,
-            val url: String
+            val url: String,
         )
 
         @Serializable
         data class Subtitle(
             val language: String,
-            val url: String
+            val url: String,
         )
     }
 }
@@ -80,5 +80,5 @@ data class EpisodeResponse(
 data class LinkData(
     val category: String,
     val id: String,
-    val episodeId: String? = null
+    val episodeId: String? = null,
 )

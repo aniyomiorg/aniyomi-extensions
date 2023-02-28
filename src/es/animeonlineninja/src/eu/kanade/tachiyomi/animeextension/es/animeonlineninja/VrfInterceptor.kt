@@ -12,18 +12,18 @@ class VrfInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val response = chain.proceed(request)
-        val respBody = response.body!!.string()
+        val respBody = response.body.string()
         val body = if (respBody.contains("One moment, please")) {
             val parsed = Jsoup.parse(respBody)
-            val js = parsed.selectFirst("script:containsData(west=)").data()
+            val js = parsed.selectFirst("script:containsData(west=)")!!.data()
             val west = js.substringAfter("west=").substringBefore(",")
             val east = js.substringAfter("east=").substringBefore(",")
-            val form = parsed.selectFirst("form#wsidchk-form").attr("action")
+            val form = parsed.selectFirst("form#wsidchk-form")!!.attr("action")
             val eval = evalJs(west, east)
             val getLink = "https://" + request.url.host + form + "?wsidchk=$eval"
             chain.proceed(GET(getLink)).body
         } else {
-            respBody.toResponseBody(response.body!!.contentType())
+            respBody.toResponseBody(response.body.contentType())
         }
         return response.newBuilder().body(body).build()
     }

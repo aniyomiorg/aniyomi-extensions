@@ -10,7 +10,7 @@ import okhttp3.OkHttpClient
 
 class RedplayBypasser(
     private val client: OkHttpClient,
-    private val headers: Headers
+    private val headers: Headers,
 ) {
 
     fun fromUrl(url: String): String {
@@ -20,11 +20,11 @@ class RedplayBypasser(
         var iframeUrl = ""
         var formUrl = next
         while (iframeUrl == "") {
-            val nextDoc = nextPage.asJsoup(decodeAtob(nextPage.body!!.string()))
+            val nextDoc = nextPage.asJsoup(decodeAtob(nextPage.body.string()))
             val iframe = nextDoc.selectFirst("iframe")
-            if (iframe != null)
+            if (iframe != null) {
                 iframeUrl = iframe.attr("src")
-            else {
+            } else {
                 val newHeaders = headers.newBuilder()
                     .set("Referer", formUrl)
                     .build()

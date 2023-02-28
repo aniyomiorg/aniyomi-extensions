@@ -144,7 +144,7 @@ class AnimesROLL : AnimeHttpSource() {
     // ============================= Utilities ==============================
 
     private inline fun <reified T> Document.parseAs(): T {
-        val nextData = this.selectFirst("script#__NEXT_DATA__")
+        val nextData = this.selectFirst("script#__NEXT_DATA__")!!
             .data()
             .substringAfter(":")
             .substringBeforeLast(",\"page\"")
@@ -152,7 +152,7 @@ class AnimesROLL : AnimeHttpSource() {
     }
 
     private inline fun <reified T> Response.parseAs(): T {
-        val responseBody = body?.string().orEmpty()
+        val responseBody = body.string()
         return json.decodeFromString(responseBody)
     }
 
@@ -165,8 +165,11 @@ class AnimesROLL : AnimeHttpSource() {
             val ismovie = slug == ""
             url = if (ismovie) "/f/$id" else "/anime/$slug"
             thumbnail_url = "https://static.anroll.net/images/".let {
-                if (ismovie) it + "filmes/capas/$slug_movie.jpg"
-                else it + "animes/capas/$slug.jpg"
+                if (ismovie) {
+                    it + "filmes/capas/$slug_movie.jpg"
+                } else {
+                    it + "animes/capas/$slug.jpg"
+                }
             }
             title = anititle
         }

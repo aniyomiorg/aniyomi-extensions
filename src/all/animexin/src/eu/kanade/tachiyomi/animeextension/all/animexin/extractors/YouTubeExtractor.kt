@@ -34,7 +34,7 @@ class YouTubeExtractor(private val client: OkHttpClient) {
         val videoId = url.substringAfter("/embed/")
 
         val document = client.newCall(
-            GET(url.replace("/embed/", "/watch?v="))
+            GET(url.replace("/embed/", "/watch?v=")),
         ).execute().asJsoup()
 
         for (element in document.select("script")) {
@@ -78,14 +78,14 @@ class YouTubeExtractor(private val client: OkHttpClient) {
             "X-YouTube-Client-Version", "17.31.35",
             "Origin", "https://www.youtube.com",
             "User-Agent", "com.google.android.youtube/17.31.35 (Linux; U; Android 11) gzip",
-            "content-type", "application/json"
+            "content-type", "application/json",
         )
 
         val postResponse = client.newCall(
-            POST(playerUrl, headers = headers, body = body)
+            POST(playerUrl, headers = headers, body = body),
         ).execute()
 
-        val responseObject = json.decodeFromString<JsonObject>(postResponse.body!!.string())
+        val responseObject = json.decodeFromString<JsonObject>(postResponse.body.string())
         val videoList = mutableListOf<Video>()
 
         val formats = responseObject["streamingData"]!!
@@ -103,8 +103,8 @@ class YouTubeExtractor(private val client: OkHttpClient) {
                         Track(
                             format.jsonObject["url"]!!.jsonPrimitive.content,
                             format.jsonObject["audioQuality"]!!.jsonPrimitive.content +
-                                " (${formatBits(format.jsonObject["averageBitrate"]!!.jsonPrimitive.long)}ps)"
-                        )
+                                " (${formatBits(format.jsonObject["averageBitrate"]!!.jsonPrimitive.long)}ps)",
+                        ),
                     )
                 } catch (a: Exception) { }
             }
@@ -124,8 +124,8 @@ class YouTubeExtractor(private val client: OkHttpClient) {
                         Track(
                             // TODO: Would replacing srv3 with vtt work for every video?
                             captionJson["baseUrl"]!!.jsonPrimitive.content.replace("srv3", "vtt"),
-                            captionJson["name"]!!.jsonObject["runs"]!!.jsonArray[0].jsonObject["text"]!!.jsonPrimitive.content
-                        )
+                            captionJson["name"]!!.jsonObject["runs"]!!.jsonArray[0].jsonObject["text"]!!.jsonPrimitive.content,
+                        ),
                     )
                 } catch (a: Exception) { }
             }
@@ -143,16 +143,16 @@ class YouTubeExtractor(private val client: OkHttpClient) {
                                 " (${mimeType.substringAfter("codecs=\"").substringBefore("\"")})",
                             format.jsonObject["url"]!!.jsonPrimitive.content,
                             audioTracks = audioTracks,
-                            subtitleTracks = subtitleTracks
+                            subtitleTracks = subtitleTracks,
                         )
                     } catch (a: Exception) {
                         Video(
                             format.jsonObject["url"]!!.jsonPrimitive.content,
                             prefix + format.jsonObject["qualityLabel"]!!.jsonPrimitive.content +
                                 " (${mimeType.substringAfter("codecs=\"").substringBefore("\"")})",
-                            format.jsonObject["url"]!!.jsonPrimitive.content
+                            format.jsonObject["url"]!!.jsonPrimitive.content,
                         )
-                    }
+                    },
 
                 )
             }

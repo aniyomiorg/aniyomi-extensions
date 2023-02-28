@@ -118,19 +118,19 @@ class NollyVerse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             for (season in document.select("table.table.table-striped tbody tr").reversed()) {
                 val seasonUrl = season.select("td a[href]").attr("href")
                 val seasonSoup = client.newCall(
-                    GET(seasonUrl, headers)
+                    GET(seasonUrl, headers),
                 ).execute().asJsoup()
 
                 val episodeTable = seasonSoup.select("table.table.table-striped")
                 val seasonNumber = episodeTable.select("thead th").eachText().find {
-                    t ->
+                        t ->
                     """Season (\d+)""".toRegex().matches(t)
                 }?.split(" ")!![1]
 
                 for (ep in episodeTable.select("tbody tr")) {
                     val episode = SEpisode.create()
 
-                    episode.name = "Episode S${seasonNumber}E${ep.selectFirst("td").text().split(" ")!![1]}"
+                    episode.name = "Episode S${seasonNumber}E${ep.selectFirst("td")!!.text().split(" ")!![1]}"
                     episode.episode_number = counter.toFloat()
                     episode.setUrlWithoutDomain(seasonUrl + "#$counter")
                     episodeList.add(episode)
@@ -149,7 +149,7 @@ class NollyVerse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.episode_number = element.select("td > span.Num").text().toFloat()
-        val seasonNum = element.ownerDocument().select("div.Title span").text()
+        val seasonNum = element.ownerDocument()!!.select("div.Title span").text()
         episode.name = "Season $seasonNum" + "x" + element.select("td span.Num").text() + " : " + element.select("td.MvTbTtl > a").text()
         episode.setUrlWithoutDomain(element.select("td.MvTbPly > a.ClA").attr("abs:href"))
         return episode
@@ -161,7 +161,7 @@ class NollyVerse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             GET(baseUrl + episode.url + "#movie", headers)
         } else {
             val episodeIndex = """Episode S(\d+)E(?<num>\d+)""".toRegex().matchEntire(
-                episode.name
+                episode.name,
             )!!.groups["num"]!!.value
             GET(baseUrl + episode.url.replaceAfterLast("#", "") + episodeIndex, headers)
         }
@@ -187,7 +187,7 @@ class NollyVerse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val url = res.select("a").attr("href")
                 if (url.isNotEmpty()) {
                     videoList.add(
-                        Video(url, res.text().trim(), url)
+                        Video(url, res.text().trim(), url),
                     )
                 }
             }
@@ -458,7 +458,7 @@ class NollyVerse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         AnimeFilter.Separator(),
         CategoryFilter(getCategoryList()),
         MovieGenreFilter(getMovieGenreList()),
-        SeriesGenreFilter(getSeriesGenreList())
+        SeriesGenreFilter(getSeriesGenreList()),
     )
 
     private class CategoryFilter(vals: Array<Pair<String, String>>) : UriPartFilter("Category", vals)
@@ -475,7 +475,7 @@ class NollyVerse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("Latest series", "/category/new-series/"),
         Pair("Latest uploads", "/category/latest-uploads/"),
         Pair("Popular movies", "/category/popular-movies/"),
-        Pair("Trending movies", "/category/trending-movies/")
+        Pair("Trending movies", "/category/trending-movies/"),
     )
 
     private fun getMovieGenreList() = arrayOf(
@@ -532,7 +532,7 @@ class NollyVerse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("News", "news"),
         Pair("Sitcom", "sitcom"),
         Pair("Talk-Show", "talk-show"),
-        Pair("Costume", "Costume")
+        Pair("Costume", "Costume"),
     )
 
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :

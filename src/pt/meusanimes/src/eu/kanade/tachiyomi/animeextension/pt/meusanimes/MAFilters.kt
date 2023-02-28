@@ -7,10 +7,10 @@ object MAFilters {
 
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
         fun toQueryPart() = vals[state].second
     }
@@ -34,14 +34,14 @@ object MAFilters {
         AnimeFilter.Header(MAFiltersData.IGNORE_YEAR_MSG),
         AudioFilter(),
         AnimeFilter.Header(MAFiltersData.IGNORE_AUDIO_MSG),
-        GenreFilter()
+        GenreFilter(),
     )
 
     data class FilterSearchParams(
         val letter: String = "",
         val year: String = "",
         val audio: String = "",
-        val genre: String = ""
+        val genre: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
@@ -49,7 +49,7 @@ object MAFilters {
             filters.asQueryPart<LetterFilter>(),
             filters.asQueryPart<YearFilter>(),
             filters.asQueryPart<AudioFilter>(),
-            filters.asQueryPart<GenreFilter>()
+            filters.asQueryPart<GenreFilter>(),
         )
     }
 
@@ -71,7 +71,7 @@ object MAFilters {
         val audio = arrayOf(
             every,
             Pair("Dublado", "Dublado"),
-            Pair("Legendado", "Legendado")
+            Pair("Legendado", "Legendado"),
         )
 
         val genres = arrayOf(
@@ -112,7 +112,7 @@ object MAFilters {
             Pair("Vampiros", "vampiros"),
             Pair("Vida Escolar", "vida-escolar"),
             Pair("Yaoi", "yaoi"),
-            Pair("Yuri", "yuri")
+            Pair("Yuri", "yuri"),
         )
     }
 }

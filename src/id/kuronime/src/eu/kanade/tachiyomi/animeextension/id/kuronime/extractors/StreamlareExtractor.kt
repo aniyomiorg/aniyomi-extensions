@@ -14,9 +14,9 @@ class StreamlareExtractor(private val client: OkHttpClient) {
             POST(
                 "https://slwatch.co/api/video/stream/get",
                 body = "{\"id\":\"$id\"}"
-                    .toRequestBody("application/json".toMediaType())
-            )
-        ).execute().body!!.string()
+                    .toRequestBody("application/json".toMediaType()),
+            ),
+        ).execute().body.string()
 
         playlist.substringAfter("\"label\":\"").split("\"label\":\"").forEach {
             val quality = it.substringAfter("\"label\":\"").substringBefore("\",") + " - $name"

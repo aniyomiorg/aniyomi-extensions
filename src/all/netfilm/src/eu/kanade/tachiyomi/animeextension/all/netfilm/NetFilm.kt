@@ -55,7 +55,7 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val parsed = json.decodeFromString<CategoryResponse>(response.body!!.string())
+        val parsed = json.decodeFromString<CategoryResponse>(response.body.string())
         if (parsed.data.isEmpty()) {
             return AnimesPage(emptyList(), false)
         }
@@ -67,8 +67,8 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
                 setUrlWithoutDomain(
                     LinkData(
                         ani.domainType.toString(),
-                        ani.id
-                    ).toJsonString()
+                        ani.id,
+                    ).toJsonString(),
                 )
             }
         }
@@ -104,7 +104,7 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
         return if (url.startsWith("/api/category")) {
             popularAnimeParse(response)
         } else {
-            val parsed = json.decodeFromString<SearchResponse>(response.body!!.string())
+            val parsed = json.decodeFromString<SearchResponse>(response.body.string())
             if (parsed.data.results.isEmpty()) {
                 return AnimesPage(emptyList(), false)
             }
@@ -116,8 +116,8 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
                     setUrlWithoutDomain(
                         LinkData(
                             ani.domainType.toString(),
-                            ani.id
-                        ).toJsonString()
+                            ani.id,
+                        ).toJsonString(),
                     )
                 }
             }
@@ -144,7 +144,7 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
             Pair("Recent TV Series", "/category?area=&category=1&order=up&params=TV,SETI,MINISERIES,VARIETY,TALK,DOCUMENTARY&size=30"),
             Pair("Popular Anime", "/category?area=&category=1&order=count&params=COMIC&size=30"),
             Pair("Recent Anime", "/category?area=&category=1&order=up&params=COMIC&size=30"),
-        )
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -157,14 +157,14 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
         val parsed = json.decodeFromString<LinkData>(anime.url)
         val resp = client.newCall(GET("$baseUrl/detail?category=${parsed.category}&id=${parsed.id}")).execute()
-        val data = json.decodeFromString<AnimeInfoResponse>(resp.body!!.string()).data
+        val data = json.decodeFromString<AnimeInfoResponse>(resp.body.string()).data
         return Observable.just(
             anime.apply {
                 title = data.name
                 thumbnail_url = data.coverVerticalUrl
                 description = data.introduction
                 genre = data.tagList.joinToString(", ") { it.name }
-            }
+            },
         )
     }
 
@@ -175,7 +175,7 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
         val parsed = json.decodeFromString<LinkData>(anime.url)
         val resp = client.newCall(GET("$baseUrl/detail?category=${parsed.category}&id=${parsed.id}")).execute()
-        val data = json.decodeFromString<AnimeInfoResponse>(resp.body!!.string()).data
+        val data = json.decodeFromString<AnimeInfoResponse>(resp.body.string()).data
         val episodeList = data.episodeVo.map { ep ->
             val formattedEpNum = if (floor(ep.seriesNo) == ceil(ep.seriesNo)) {
                 ep.seriesNo.toInt()
@@ -188,8 +188,8 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
                     LinkData(
                         data.category.toString(),
                         data.id,
-                        ep.id.toString()
-                    ).toJsonString()
+                        ep.id.toString(),
+                    ).toJsonString(),
                 )
                 name = "Episode $formattedEpNum"
             }
@@ -204,7 +204,7 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val parsed = json.decodeFromString<LinkData>(episode.url)
         val resp = client.newCall(GET("$baseUrl/episode?category=${parsed.category}&id=${parsed.id}&episode=${parsed.episodeId!!}")).execute()
-        val episodeParsed = json.decodeFromString<EpisodeResponse>(resp.body!!.string())
+        val episodeParsed = json.decodeFromString<EpisodeResponse>(resp.body.string())
         val subtitleList = episodeParsed.data.subtitles.map { sub ->
             Track(sub.url, sub.language)
         }
@@ -224,7 +224,7 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
         val quality = preferences.getString("preferred_quality", "1080")!!
 
         return this.sortedWith(
-            compareBy { it.quality.contains(quality) }
+            compareBy { it.quality.contains(quality) },
         ).reversed()
     }
 

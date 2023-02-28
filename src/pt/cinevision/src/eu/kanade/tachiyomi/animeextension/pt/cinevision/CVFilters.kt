@@ -7,10 +7,10 @@ object CVFilters {
 
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
         fun toQueryPart() = vals[state].second
     }
@@ -25,11 +25,11 @@ object CVFilters {
 
     val filterList = AnimeFilterList(
         AnimeFilter.Header(CVFiltersData.IGNORE_SEARCH_MSG),
-        GenreFilter()
+        GenreFilter(),
     )
 
     data class FilterSearchParams(
-        val genre: String = ""
+        val genre: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
@@ -57,7 +57,7 @@ object CVFilters {
             Pair("Música", "musica-online"),
             Pair("Romance", "romance-online"),
             Pair("Terror", "terror-online"),
-            Pair("Thriller", "thriller-online")
+            Pair("Thriller", "thriller-online"),
         )
     }
 }

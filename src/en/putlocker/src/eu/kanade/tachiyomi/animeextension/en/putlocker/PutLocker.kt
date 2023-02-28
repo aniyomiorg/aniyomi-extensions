@@ -132,7 +132,7 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val html = json.decodeFromString<JsonObject>(response.body!!.string())["html"]!!.jsonPrimitive.content
+        val html = json.decodeFromString<JsonObject>(response.body.string())["html"]!!.jsonPrimitive.content
         val parsedHtml = Jsoup.parse(JSONUtil.unescape(html))
         val rawEpisodes = parsedHtml.select("div[id^=sv]").mapNotNull { server ->
             val linkElement = server.select("div.les-content > a")
@@ -154,7 +154,7 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 SEpisode.create().apply {
                     url = EpLinks(
                         ep_num = group.key,
-                        ids = group.value.map { it.second }
+                        ids = group.value.map { it.second },
                     ).toJson()
                     name = group.value.first().first
                     episode_number = group.key.toFloat()
@@ -190,7 +190,7 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun extractVideo(dataId: String): List<Video> {
         val url = "$baseUrl/ajax/movie_embed/$dataId"
-        val embedResp = client.newCall(GET(url)).execute().body!!.string()
+        val embedResp = client.newCall(GET(url)).execute().body.string()
         val embedUrl = json.decodeFromString<JsonObject>(embedResp)["src"]!!.jsonPrimitive.content
         val vidReferer = Headers.headersOf("Referer", embedUrl)
         val vidResponse = extractVideoEmbed(embedUrl, vidReferer)
@@ -217,8 +217,8 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                 bakSource,
                                 bakReferer,
                                 bakSubsList,
-                                bakserverId
-                            )
+                                bakserverId,
+                            ),
                         )
                     }
                 }
@@ -235,8 +235,8 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     subsList.add(
                         Track(
                             sub.file,
-                            sub.label
-                        )
+                            sub.label,
+                        ),
                     )
                 }
             }
@@ -260,7 +260,7 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .addQueryParameter("t", cipher.salt)
             .build().toString()
         val resp = client.newCall(GET(vidUrl, vidReferer)).execute()
-        return resp.body!!.string()
+        return resp.body.string()
     }
 
     private fun extractVideoLinks(source: VidSource, vidReferer: Headers, subsList: List<Track>, serverId: String): List<Video> {
@@ -268,7 +268,7 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (source.file.endsWith(".m3u8")) {
             val videoLink = source.file
             val resp = client.newCall(GET(videoLink, vidReferer)).execute()
-            val masterPlaylist = resp.body!!.string()
+            val masterPlaylist = resp.body.string()
             if (resp.code == 200) {
                 masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
                     .split("#EXT-X-STREAM-INF:").map {
@@ -364,14 +364,14 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     @Serializable
     data class EpLinks(
         val ep_num: Int,
-        val ids: List<String>
+        val ids: List<String>,
     )
 
     @Serializable
     data class VidSource(
         val file: String,
         val label: String?,
-        val type: String?
+        val type: String?,
     )
 
     @Serializable
@@ -379,14 +379,14 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val default: Boolean,
         val file: String,
         val label: String,
-        val kind: String
+        val kind: String,
     )
 
     @Serializable
     data class Sources(
         val sources: List<VidSource>,
         val tracks: List<SubTrack>?,
-        val backupLink: String?
+        val backupLink: String?,
     )
 
     // From Dopebox

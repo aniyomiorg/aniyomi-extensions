@@ -63,9 +63,9 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a").attr("href").toHttpUrl().encodedPath)
-            thumbnail_url = element.selectFirst("img").attr("src")
-            title = element.selectFirst("header").text()
+            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").toHttpUrl().encodedPath)
+            thumbnail_url = element.selectFirst("img")!!.attr("src")
+            title = element.selectFirst("header")!!.text()
         }
     }
 
@@ -101,8 +101,8 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         if (isExact) {
             val anime = SAnime.create()
-            anime.title = document.selectFirst("div.single_post > header > h1").text()
-            anime.thumbnail_url = document.selectFirst("div.imdbwp img").attr("src")
+            anime.title = document.selectFirst("div.single_post > header > h1")!!.text()
+            anime.thumbnail_url = document.selectFirst("div.imdbwp img")!!.attr("src")
             anime.setUrlWithoutDomain(response.request.url.encodedPath)
             return AnimesPage(listOf(anime), false)
         }
@@ -112,7 +112,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
 
         val hasNextPage = searchAnimeNextPageSelector()?.let { selector ->
-            document.select(selector).first()
+            document.selectFirst(selector)
         } != null
 
         return AnimesPage(animes, hasNextPage)
@@ -169,8 +169,8 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Comedy", "comedy"),
             Pair("Fantasy", "fantasy"),
             Pair("Horror", "horror"),
-            Pair("Yaoi", "yaoi")
-        )
+            Pair("Yaoi", "yaoi"),
+        ),
     )
 
     private class SubPageFilter : UriPartFilter(
@@ -180,7 +180,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Ongoing", "ongoing"),
             Pair("Latest Release", "latest-release"),
             Pair("Movies", "movies"),
-        )
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -194,7 +194,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         return SAnime.create().apply {
-            title = document.selectFirst("div.single_post > header > h1").text()
+            title = document.selectFirst("div.single_post > header > h1")!!.text()
             val animeInfo = document.select("div.thecontent h3:contains(Anime Info) ~ ul li").joinToString("\n") { it.text() }
             description = document.select("div.thecontent h3:contains(Summary) ~ p:not(:has(*)):not(:empty)").joinToString("\n\n") { it.ownText() } + "\n\n$animeInfo"
         }
@@ -211,8 +211,8 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         document.select("div.thecontent p:has(span:contains(Gdrive))").forEach {
             val qualityRegex = """(\d+)p""".toRegex()
-            val quality = qualityRegex.find(it.previousElementSibling().text())!!.groupValues[1]
-            driveList.add(Pair(it.selectFirst("a").attr("href"), quality))
+            val quality = qualityRegex.find(it.previousElementSibling()!!.text())!!.groupValues[1]
+            driveList.add(Pair(it.selectFirst("a")!!.attr("href"), quality))
         }
 
         // Load episodes
@@ -221,7 +221,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             serversList.add(
                 episodesDocument.select("div.entry-content > h3 > a").map {
                     EpUrl(drive.second, it.attr("href"), it.text())
-                }
+                },
             )
         }
 
@@ -231,9 +231,9 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     name = serverList.first().name
                     episode_number = (index + 1).toFloat()
                     setUrlWithoutDomain(
-                        json.encodeToString(serverList)
+                        json.encodeToString(serverList),
                     )
-                }
+                },
             )
         }
 
@@ -253,9 +253,9 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val leechUrls = urls.map {
             val firstLeech = client.newCall(GET(it.url)).execute().asJsoup().selectFirst(
-                "script:containsData(downlaod_button)"
-            ).data().substringAfter("<a href=\"").substringBefore("\">")
-            val link = "https://" + firstLeech.toHttpUrl().host + client.newCall(GET(firstLeech)).execute().body!!.string()
+                "script:containsData(downlaod_button)",
+            )!!.data().substringAfter("<a href=\"").substringBefore("\">")
+            val link = "https://" + firstLeech.toHttpUrl().host + client.newCall(GET(firstLeech)).execute().body.string()
                 .substringAfter("replace(\"").substringBefore("\"")
             EpUrl(it.quality, link, it.name)
         }
@@ -270,7 +270,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }.getOrNull()
             }
                 .filterNotNull()
-                .flatten()
+                .flatten(),
         )
 
         videoList.addAll(
@@ -278,7 +278,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 runCatching {
                     extractGDriveLink(url, quality)
                 }.getOrNull()
-            }.flatten()
+            }.flatten(),
         )
         return Observable.just(videoList.sort())
     }
@@ -305,7 +305,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         for (type in 1..3) {
             videoList.addAll(
-                extractWorkerLinks(epUrl.url, quality, type)
+                extractWorkerLinks(epUrl.url, quality, type),
             )
         }
         return Pair(videoList, epUrl.url)
@@ -329,7 +329,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Video(
                 url = decodedLink,
                 quality = "$quality - CF $type Worker ${index + 1}$size",
-                videoUrl = decodedLink
+                videoUrl = decodedLink,
             )
         }
     }
@@ -337,7 +337,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun extractGDriveLink(mediaUrl: String, quality: String): List<Video> {
         val tokenClient = client.newBuilder().addInterceptor(TokenInterceptor()).build()
         val response = tokenClient.newCall(GET(mediaUrl)).execute().asJsoup()
-        val gdBtn = response.selectFirst("div.card-body a.btn")
+        val gdBtn = response.selectFirst("div.card-body a.btn")!!
         val gdLink = gdBtn.attr("href")
         val sizeMatch = sizeRegex.find(gdBtn.text())
         val size = sizeMatch?.groups?.get(1)?.value?.let { " - $it" } ?: ""
@@ -355,7 +355,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val quality = preferences.getString("preferred_quality", "1080")!!
 
         return this.sortedWith(
-            compareBy { it.quality.contains(quality) }
+            compareBy { it.quality.contains(quality) },
         ).reversed()
     }
 
@@ -396,7 +396,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     data class EpUrl(
         val quality: String,
         val url: String,
-        val name: String
+        val name: String,
     )
 
     // From Dopebox

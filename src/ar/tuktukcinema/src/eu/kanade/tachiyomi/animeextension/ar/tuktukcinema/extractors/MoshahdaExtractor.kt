@@ -9,7 +9,7 @@ import okhttp3.OkHttpClient
 class MoshahdaExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(link: String, headers: Headers): List<Video> {
         val request = client.newCall(GET(link, headers)).execute().asJsoup()
-        val element = request.selectFirst("script:containsData(sources)")
+        val element = request.selectFirst("script:containsData(sources)")!!
         val videoList = mutableListOf<Video>()
         val qualityMap = mapOf("l" to "240p", "n" to "360p", "h" to "480p", "x" to "720p", "o" to "1080p")
         val data2 = element.data().substringAfter(", file: \"").substringBefore("\"}],")

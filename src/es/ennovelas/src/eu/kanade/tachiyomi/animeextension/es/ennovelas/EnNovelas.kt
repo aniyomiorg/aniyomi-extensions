@@ -65,11 +65,11 @@ class EnNovelas : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         document.select("#col3 div.videobox").forEach { element ->
             val ep = SEpisode.create()
             val noEpisode = getNumberFromEpsString(
-                element.selectFirst("a:nth-child(2)").text().substringAfter("Cap")
-                    .substringBefore("FIN").substringBefore("fin")
+                element.selectFirst("a:nth-child(2)")!!.text().substringAfter("Cap")
+                    .substringBefore("FIN").substringBefore("fin"),
             )
-            ep.setUrlWithoutDomain(element.selectFirst("a.video200").attr("href"))
-            ep.name = "Cap" + element.selectFirst("a:nth-child(2)").text().substringAfter("Cap")
+            ep.setUrlWithoutDomain(element.selectFirst("a.video200")!!.attr("href"))
+            ep.name = "Cap" + element.selectFirst("a:nth-child(2)")!!.text().substringAfter("Cap")
             ep.episode_number = noEpisode.toFloat()
             episodeList.add(ep)
         }
@@ -137,12 +137,12 @@ class EnNovelas : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeSelector(): String = popularAnimeSelector()
 
     override fun animeDetailsParse(document: Document): SAnime {
-        val descriptionElement = document.selectFirst("#inwg").text()
+        val descriptionElement = document.selectFirst("#inwg")!!.text()
             .substringAfter("Notifications:")
             .substringBefore("Capitulo")
             .substringBefore("Capítulo")
         val anime = SAnime.create()
-        val title = document.selectFirst("#inwg h3 span.first-word").text()
+        val title = document.selectFirst("#inwg h3 span.first-word")!!.text()
         val idx = idxDescription(descriptionElement, title)
         val description = descriptionElement.substring(0, idx).trim()
 

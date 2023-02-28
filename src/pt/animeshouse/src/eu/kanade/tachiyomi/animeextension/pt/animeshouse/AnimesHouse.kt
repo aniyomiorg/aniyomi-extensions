@@ -106,15 +106,17 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .add("type", player.attr("data-type"))
             .build()
         val doc = client.newCall(
-            POST("$baseUrl/wp-admin/admin-ajax.php", headers, body)
+            POST("$baseUrl/wp-admin/admin-ajax.php", headers, body),
         )
             .execute()
             .asJsoup()
         val iframe = doc.selectFirst("iframe")!!
         return iframe.attr("src").let {
-            if (it.startsWith("/redplay"))
+            if (it.startsWith("/redplay")) {
                 RedplayBypasser(client, headers).fromUrl(baseUrl + it)
-            else it
+            } else {
+                it
+            }
         }
     }
 
@@ -129,7 +131,7 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun getPlayerVideos(url: String): List<Video> {
         val iframeBody = client.newCall(GET(url, headers)).execute()
-            .body?.string() ?: throw Exception(MSG_ERR_BODY)
+            .body.string()
 
         val unpackedBody = JsUnpacker.unpack(iframeBody)
 
@@ -298,13 +300,12 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
         return sortedWith(
-            compareBy { it.quality.contains(quality) }
+            compareBy { it.quality.contains(quality) },
         ).reversed()
     }
 
     companion object {
         const val PREFIX_SEARCH = "slug:"
-        const val MSG_ERR_BODY = "Erro ao obter dados do episódio."
 
         private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
         private const val USER_AGENT = "Mozilla/5.0 (Linux; Android 10; SM-A307GT Build/QP1A.190711.020;) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/103.0.5060.71 Mobile Safari/537.36"
@@ -313,8 +314,11 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Qualidade preferida"
         private val PREF_QUALITY_ENTRIES = arrayOf(
-            "SD - 240p", "SD - 360p", "SD - 480p",
-            "HD - 720p", "FULLHD - 1080p"
+            "SD - 240p",
+            "SD - 360p",
+            "SD - 480p",
+            "HD - 720p",
+            "FULLHD - 1080p",
         )
         private val PREF_QUALITY_VALUES = arrayOf("240p", "360p", "480p", "720p", "1080p")
     }

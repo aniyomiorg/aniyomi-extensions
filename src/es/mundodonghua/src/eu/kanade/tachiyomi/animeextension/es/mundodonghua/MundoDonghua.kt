@@ -58,11 +58,11 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.thumbnail_url = getExternalOrInternalUrl(
-            document.selectFirst("div.col-md-4.col-xs-12.mb-10 div.row.sm-row > div.side-banner > div.banner-side-serie")
-                .attr("style").substringAfter("background-image: url(").substringBefore(")")
+            document.selectFirst("div.col-md-4.col-xs-12.mb-10 div.row.sm-row > div.side-banner > div.banner-side-serie")!!
+                .attr("style").substringAfter("background-image: url(").substringBefore(")"),
         )
-        anime.title = document.selectFirst("div.col-md-4.col-xs-12.mb-10 div.row.sm-row div div.sf.fc-dark.ls-title-serie").html()
-        anime.description = document.selectFirst("section div.row div.col-md-8 div.sm-row p.text-justify").text().removeSurrounding("\"")
+        anime.title = document.selectFirst("div.col-md-4.col-xs-12.mb-10 div.row.sm-row div div.sf.fc-dark.ls-title-serie")!!.html()
+        anime.description = document.selectFirst("section div.row div.col-md-8 div.sm-row p.text-justify")!!.text().removeSurrounding("\"")
         anime.genre = document.select("div.col-md-8.col-xs-12 div.sm-row a.generos span.label").joinToString { it.text() }
         anime.status = parseStatus(document.select("div.col-md-4.col-xs-12.mb-10 div.row.sm-row div:nth-child(2) div:nth-child(2) p span.badge").text())
         return anime
@@ -93,8 +93,9 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (url.startsWith("http")) return url
         if (url.isEmpty()) return ""
         val startsWithNoHttp = url.startsWith("//")
-        if (startsWithNoHttp) return "https:$url"
-        else {
+        if (startsWithNoHttp) {
+            return "https:$url"
+        } else {
             if (url.startsWith('/')) return baseUrl + url
             return "$baseUrl/$url"
         }
@@ -114,7 +115,7 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         if (url.contains("diasfem")) {
                             var serverUrl = url.replace("diasfem", "embedsito")
                             videoList.addAll(
-                                FembedExtractor(client).videosFromUrl(serverUrl)
+                                FembedExtractor(client).videosFromUrl(serverUrl),
                             )
                         }
                     }
@@ -156,7 +157,7 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         return try {
             val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
             val userPreferredQuality = preferences.getString("preferred_quality", "Fembed:720p")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
@@ -187,7 +188,7 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
-        GenreFilter()
+        GenreFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -233,8 +234,8 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Vampiros", "Vampiros"),
             Pair("Viaje a Otro Mundo", "Viaje a Otro Mundo"),
             Pair("Videojuegos", "Videojuegos"),
-            Pair("Zombis", "Zombis")
-        )
+            Pair("Zombis", "Zombis"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -273,7 +274,7 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
             "Protea:1080p", "Protea:720p", "Protea:480p", "Protea:380p", "Protea:360p",
-            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:380p", "Fembed:360p"
+            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:380p", "Fembed:360p",
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"

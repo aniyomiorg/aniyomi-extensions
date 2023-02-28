@@ -33,8 +33,8 @@ class AOAPIInterceptor(client: OkHttpClient) : Interceptor {
                     "https://auth.animeonsen.xyz/oauth/token",
                     headers,
                     body,
-                )
-            ).execute().body!!.string()
+                ),
+            ).execute().body.string()
 
             val tokenObject = Json.decodeFromString<JsonObject>(tokenResponse)
 

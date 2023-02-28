@@ -153,7 +153,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.title = element.select("div.BlockName h4").text()
-        anime.thumbnail_url = element.select("img").first().attr("data-src")
+        anime.thumbnail_url = element.selectFirst("img")!!.attr("data-src")
         return anime
     }
 
@@ -174,6 +174,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             return GET(typeUrl.toString(), headers)
                         }
                     }
+                    else -> {}
                 }
             }
             throw Exception("اختر فلتر")
@@ -185,7 +186,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.select("div.Poster img").first().attr("data-src")
+        anime.thumbnail_url = document.selectFirst("div.Poster img")!!.attr("data-src")
         anime.title = document.select("div.BreadCrumbs ol li:last-child a span").text().replace(" مترجم", "").replace("فيلم ", "")
         anime.genre = document.select("div.MetaTermsInfo  > li:contains(النوع) > a").joinToString(", ") { it.text() }
         anime.description = document.select("div.StoryLine p").text()
@@ -225,7 +226,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Type("مسلسلات رمضان 2019", "%d9%85%d8%b3%d9%84%d8%b3%d9%84%d8%a7%d8%aa-%d8%b1%d9%85%d8%b6%d8%a7%d9%86-2019/"),
         Type("مسلسلات رمضان 2020", "%d9%85%d8%b3%d9%84%d8%b3%d9%84%d8%a7%d8%aa-%d8%b1%d9%85%d8%b6%d8%a7%d9%86-2020-hd/"),
         Type("مسلسلات رمضان 2021", "%d9%85%d8%b3%d9%84%d8%b3%d9%84%d8%a7%d8%aa-%d8%b1%d9%85%d8%b6%d8%a7%d9%86-2021/"),
-        Type("مسلسلات Netfilx", "netfilx/%d9%85%d8%b3%d9%84%d8%b3%d9%84%d8%a7%d8%aa-netfilz/")
+        Type("مسلسلات Netfilx", "netfilx/%d9%85%d8%b3%d9%84%d8%b3%d9%84%d8%a7%d8%aa-netfilz/"),
 
     )
 

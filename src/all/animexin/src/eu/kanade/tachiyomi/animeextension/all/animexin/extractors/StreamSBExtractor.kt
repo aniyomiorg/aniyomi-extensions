@@ -50,7 +50,7 @@ class StreamSBExtractor(private val client: OkHttpClient) {
             val master = fixUrl(url, common)
             val json = Json.decodeFromString<JsonObject>(
                 client.newCall(GET(master, newHeaders))
-                    .execute().body!!.string()
+                    .execute().body.string(),
             )
             val subtitleList = mutableListOf<Track>()
             val subsList = json["stream_data"]!!.jsonObject["subs"]
@@ -62,7 +62,7 @@ class StreamSBExtractor(private val client: OkHttpClient) {
                                 it.jsonObject["file"]!!.jsonPrimitive.content,
                                 it.jsonObject["label"]!!.jsonPrimitive.content,
                             )
-                        }
+                        },
                     )
                 } catch (a: Exception) { }
             }
@@ -70,7 +70,7 @@ class StreamSBExtractor(private val client: OkHttpClient) {
             val masterUrl = json["stream_data"]!!.jsonObject["file"].toString().trim('"')
             val masterPlaylist = client.newCall(GET(masterUrl, newHeaders))
                 .execute()
-                .body!!.string()
+                .body.string()
             val separator = "#EXT-X-STREAM-INF"
             masterPlaylist.substringAfter(separator).split(separator).map {
                 val resolution = it.substringAfter("RESOLUTION=")
@@ -78,11 +78,17 @@ class StreamSBExtractor(private val client: OkHttpClient) {
                     .substringAfter("x")
                     .substringBefore(",") + "p"
                 val quality = ("StreamSB:" + resolution).let {
-                    if (prefix.isNotBlank()) "$prefix $it"
-                    else it
+                    if (prefix.isNotBlank()) {
+                        "$prefix $it"
+                    } else {
+                        it
+                    }
                 }.let {
-                    if (suffix.isNotBlank()) "$it $suffix"
-                    else it
+                    if (suffix.isNotBlank()) {
+                        "$it $suffix"
+                    } else {
+                        it
+                    }
                 }
                 val videoUrl = it.substringAfter("\n").substringBefore("\n")
                 try {
@@ -98,9 +104,9 @@ class StreamSBExtractor(private val client: OkHttpClient) {
 
     fun videosFromDecryptedUrl(realUrl: String, headers: Headers, prefix: String = "", suffix: String = ""): List<Video> {
         return try {
-            val json = Json.decodeFromString<JsonObject>(client.newCall(GET(realUrl, headers)).execute().body!!.string())
+            val json = Json.decodeFromString<JsonObject>(client.newCall(GET(realUrl, headers)).execute().body.string())
             val masterUrl = json["stream_data"]!!.jsonObject["file"].toString().trim('"')
-            val masterPlaylist = client.newCall(GET(masterUrl, headers)).execute().body!!.string()
+            val masterPlaylist = client.newCall(GET(masterUrl, headers)).execute().body.string()
             val separator = "#EXT-X-STREAM-INF"
             masterPlaylist.substringAfter(separator).split(separator).map {
                 val resolution = it.substringAfter("RESOLUTION=")
@@ -108,11 +114,17 @@ class StreamSBExtractor(private val client: OkHttpClient) {
                     .substringAfter("x")
                     .substringBefore(",") + "p"
                 val quality = ("StreamSB:$resolution").let {
-                    if (prefix.isNotBlank()) "$prefix $it"
-                    else it
+                    if (prefix.isNotBlank()) {
+                        "$prefix $it"
+                    } else {
+                        it
+                    }
                 }.let {
-                    if (suffix.isNotBlank()) "$it $suffix"
-                    else it
+                    if (suffix.isNotBlank()) {
+                        "$it $suffix"
+                    } else {
+                        it
+                    }
                 }
                 val videoUrl = it.substringAfter("\n").substringBefore("\n")
                 Video(videoUrl, quality, videoUrl, headers = headers)

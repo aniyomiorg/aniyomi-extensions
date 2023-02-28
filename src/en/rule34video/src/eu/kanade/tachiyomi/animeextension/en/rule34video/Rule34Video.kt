@@ -183,7 +183,7 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val tagValue = it.select("input").attr("value")
                 val tagName = it.select("label").text()
                 Pair(tagName, tagValue)
-            }
+            },
         )
         return tagList.toTypedArray()
     }
@@ -194,14 +194,14 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         AnimeFilter.Separator(),
         AnimeFilter.Header("Entered a \"tag\", click on \"filter\" then Click \"reset\" to load tags."),
         TagFilter(),
-        TagSearch(tagsResults(tagDocument))
+        TagSearch(tagsResults(tagDocument)),
     )
 
     private class TagFilter : AnimeFilter.Text("Click \"reset\" without any text to load all A-Z tags.", "")
 
     private class TagSearch(results: Array<Pair<String, String>>) : UriPartFilter(
         "Tag Filter ",
-        results
+        results,
     )
 
     private class CategoryBy : UriPartFilter(
@@ -210,7 +210,7 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("All", ""),
             Pair("Futa", "15"),
             Pair("Gay", "192"),
-        )
+        ),
     )
 
     private class OrderFilter : UriPartFilter(
@@ -219,7 +219,7 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Latest", "latest-updates"),
             Pair("Most Viewed", "most-popular"),
             Pair("Top Rated", "top-rated"),
-        )
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

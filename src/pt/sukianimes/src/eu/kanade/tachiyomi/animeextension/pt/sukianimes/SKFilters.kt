@@ -7,10 +7,10 @@ object SKFilters {
 
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
 
         fun toQueryPart() = vals[state].second
@@ -37,7 +37,7 @@ object SKFilters {
 
     class GenresFilter : CheckBoxFilterList(
         "Gêneros",
-        SKFiltersData.genres.map { CheckBoxVal(it.first, false) }
+        SKFiltersData.genres.map { CheckBoxVal(it.first, false) },
     )
 
     // Mimicking the order of filters on the source
@@ -46,7 +46,7 @@ object SKFilters {
         StatusFilter(),
         AdultFilter(),
         FormatFilter(),
-        GenresFilter()
+        GenresFilter(),
     )
 
     data class FilterSearchParams(
@@ -58,7 +58,6 @@ object SKFilters {
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
-
         if (filters.isEmpty()) return FilterSearchParams()
 
         val genres = filters.getFirst<GenresFilter>().state
@@ -73,7 +72,7 @@ object SKFilters {
             filters.asQueryPart<FormatFilter>(),
             genres,
             filters.asQueryPart<StatusFilter>(),
-            filters.asQueryPart<TypeFilter>()
+            filters.asQueryPart<TypeFilter>(),
         )
     }
 
@@ -83,19 +82,19 @@ object SKFilters {
         val types = arrayOf(
             every,
             Pair("Legendado", "1"),
-            Pair("Dublado", "2")
+            Pair("Dublado", "2"),
         )
 
         val status = arrayOf(
             every,
             Pair("Completo", "Completo"),
-            Pair("Em lançamento", "Lançamento")
+            Pair("Em lançamento", "Lançamento"),
         )
 
         val formats = arrayOf(
             every,
             Pair("Anime", "Anime"),
-            Pair("Filme", "Filme")
+            Pair("Filme", "Filme"),
         )
 
         val genres = arrayOf(
@@ -167,7 +166,7 @@ object SKFilters {
             Pair("Vida Escolar", "29"),
             Pair("Violência", "440"),
             Pair("Yaoi", "612"),
-            Pair("Yuri", "1497")
+            Pair("Yuri", "1497"),
         )
     }
 }

@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.en.nineanime.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -12,7 +13,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
-import eu.kanade.tachiyomi.animeextension.en.nineanime.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
@@ -125,7 +125,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return GET(
             "$url&sort=${filters.sort}&vrf=${java.net.URLEncoder.encode(vrf, "utf-8")}&page=$page",
-            headers = Headers.headersOf("Referer", "$baseUrl/")
+            headers = Headers.headersOf("Referer", "$baseUrl/"),
         )
     }
 
@@ -168,11 +168,11 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListRequest(anime: SAnime): Request {
         val id = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup()
-            .selectFirst("div[data-id]").attr("data-id")
+            .selectFirst("div[data-id]")!!.attr("data-id")
         val vrf = vrfInterceptor.getVrf(id)
         return GET(
             "$baseUrl/ajax/episode/list/$id?vrf=${java.net.URLEncoder.encode(vrf, "utf-8")}",
-            headers = Headers.headersOf("url", anime.url)
+            headers = Headers.headersOf("url", anime.url),
         )
     }
 
@@ -180,7 +180,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val animeUrl = response.request.header("url").toString()
-        val responseObject = json.decodeFromString<JsonObject>(response.body!!.string())
+        val responseObject = json.decodeFromString<JsonObject>(response.body.string())
         val document = Jsoup.parse(JSONUtil.unescape(responseObject["result"]!!.jsonPrimitive.content))
         val episodeElements = document.select(episodeListSelector())
         return episodeElements.parallelMap { episodeFromElements(it, animeUrl) }.reversed()
@@ -216,7 +216,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val epurl = response.request.header("url").toString()
-        val responseObject = json.decodeFromString<JsonObject>(response.body!!.string())
+        val responseObject = json.decodeFromString<JsonObject>(response.body.string())
         val document = Jsoup.parse(JSONUtil.unescape(responseObject["result"]!!.jsonPrimitive.content))
         val videoList = mutableListOf<Video>()
 
@@ -248,12 +248,12 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         // If the above fail fallback to webview method
         // Sub
-        document.select("div[data-type=sub] > ul > li[data-sv-id=41]")
-            .firstOrNull()?.attr("data-link-id")
+        document.selectFirst("div[data-type=sub] > ul > li[data-sv-id=41]")
+            ?.attr("data-link-id")
             ?.let { videoList.addAll(extractVizVideo("Sub", epurl)) }
         // Dub
-        document.select("div[data-type=dub] > ul > li[data-sv-id=41]")
-            .firstOrNull()?.attr("data-link-id")
+        document.selectFirst("div[data-type=dub] > ul > li[data-sv-id=41]")
+            ?.attr("data-link-id")
             ?.let { videoList.addAll(extractVizVideo("Dub", epurl)) }
         return videoList
     }
@@ -271,17 +271,17 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             client.newBuilder().addInterceptor(JsInterceptor(lang.lowercase())).build()
         val result = jsInterceptor.newCall(GET("$baseUrl$epurl")).execute()
         val masterUrl = result.request.url.toString()
-        val masterPlaylist = result.body!!.string()
+        val masterPlaylist = result.body.string()
         return parseVizPlaylist(masterPlaylist, masterUrl, "Vidstream - $lang")
     }
 
     private fun extractVideoConsumet(server: Triple<String, String, String>): List<Video> {
         val response = client.newCall(
-            GET("https://api.consumet.org/anime/9anime/watch/${server.second}?server=${server.third}")
+            GET("https://api.consumet.org/anime/9anime/watch/${server.second}?server=${server.third}"),
         ).execute()
         if (response.code != 200) return emptyList()
         val videoList = mutableListOf<Video>()
-        val parsed = json.decodeFromString<WatchResponse>(response.body!!.string())
+        val parsed = json.decodeFromString<WatchResponse>(response.body.string())
         val embedLink = parsed.embedURL ?: parsed.headers.referer
         when (server.third) {
             "vizcloud" -> {
@@ -289,10 +289,10 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val playlist = client.newCall(GET(source.url)).execute()
                     videoList.addAll(
                         parseVizPlaylist(
-                            playlist.body!!.string(),
+                            playlist.body.string(),
                             playlist.request.url.toString(),
-                            "Vidstream - ${server.first}"
-                        )
+                            "Vidstream - ${server.first}",
+                        ),
                     )
                 }
             }
@@ -332,7 +332,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return this.sortedWith(
             compareByDescending<Video> { it.quality.contains(quality) }
-                .thenBy { it.quality.contains(lang) }
+                .thenBy { it.quality.contains(lang) },
         )
     }
 
@@ -348,21 +348,21 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     data class WatchResponse(
         val headers: Header,
         val sources: List<Source>? = null,
-        val embedURL: String? = null
+        val embedURL: String? = null,
     ) {
         @Serializable
         data class Header(
             @SerialName("Referer")
             val referer: String,
             @SerialName("User-Agent")
-            val agent: String
+            val agent: String,
         )
 
         @Serializable
         data class Source(
             val url: String,
             @SerialName("isM3U8")
-            val hls: Boolean
+            val hls: Boolean,
         )
     }
 

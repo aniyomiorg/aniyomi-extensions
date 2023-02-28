@@ -104,7 +104,7 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun videosFromElement(document: Document): List<Video> {
-        val scriptData = document.select("script:containsData( = \"\"; var )").first().data()
+        val scriptData = document.selectFirst("script:containsData( = \"\"; var )")!!.data()
 
         val numberRegex = """(?<=\.replace\(/\\D/g,''\)\) - )\d+""".toRegex()
         val subtractionNumber = numberRegex.find(scriptData)!!.value.toInt()
@@ -124,9 +124,9 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val playerHtml = client.newCall(
             GET(
                 url = iframeLink,
-                headers = Headers.headersOf("Referer", document.location())
-            )
-        ).execute().body!!.string()
+                headers = Headers.headersOf("Referer", document.location()),
+            ),
+        ).execute().body.string()
 
         val getVideoLink = playerHtml.substringAfter("\$.getJSON(\"").substringBefore("\"")
 
@@ -138,9 +138,9 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             client.newCall(
                 GET(
                     url = (iframeDomain + getVideoLink),
-                    headers = head.build()
-                )
-            ).execute().body!!.string()
+                    headers = head.build(),
+                ),
+            ).execute().body.string(),
         )
 
         val server = videoJson["server"]!!.jsonPrimitive.content
@@ -217,9 +217,9 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.title = document.select("div.video-title a").first().text()
+        anime.title = document.selectFirst("div.video-title a")!!.text()
         anime.description = document.select("div#sidebar_cat p")?.first()?.text()
-        anime.thumbnail_url = "https:${document.select("div#sidebar_cat img").first().attr("src")}"
+        anime.thumbnail_url = "https:${document.selectFirst("div#sidebar_cat img")!!.attr("src")}"
         anime.genre = document.select("div#sidebar_cat > a").joinToString { it.text() }
         return anime
     }

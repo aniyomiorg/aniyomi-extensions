@@ -166,10 +166,10 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.thumbnail_url = externalOrInternalImg(
-            document.selectFirst("#anime figure img.cover").attr("src")
+            document.selectFirst("#anime figure img.cover")!!.attr("src"),
         )
-        anime.title = document.selectFirst("#anime section hgroup h1").text()
-        anime.description = document.selectFirst("#anime section p.sinopsis").text().removeSurrounding("\"")
+        anime.title = document.selectFirst("#anime section hgroup h1")!!.text()
+        anime.description = document.selectFirst("#anime section p.sinopsis")!!.text().removeSurrounding("\"")
         anime.genre = document.select("#anime section ul.tags li a").joinToString { it.text() }
         anime.status = parseStatus(document.select("div.main div section div.status-left div.cuerpo div:nth-child(2) span").text().trim())
         return anime
@@ -184,7 +184,7 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         return try {
             val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
             val userPreferredQuality = preferences.getString("preferred_quality", "StreamTape")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
@@ -222,7 +222,7 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
-        GenreFilter()
+        GenreFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -347,8 +347,8 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Violencia", "violencia"),
             Pair("Vocaloid", "vocaloid"),
             Pair("Yaoi", "yaoi"),
-            Pair("Yuri", "yuri")
-        )
+            Pair("Yuri", "yuri"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

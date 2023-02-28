@@ -16,8 +16,9 @@ object FindPassword {
             .substringBefore("||")
             .substringBeforeLast(")")
 
-        if (suspiciousPass.startsWith("'"))
+        if (suspiciousPass.startsWith("'")) {
             return suspiciousPass.trim('\'')
+        }
         return getPasswordFromJS(js, "(" + suspiciousPass.substringAfter("("))
     }
 

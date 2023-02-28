@@ -7,10 +7,10 @@ object AFFilters {
 
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
         fun toQueryPart() = vals[state].second
     }
@@ -28,18 +28,18 @@ object AFFilters {
         AnimeFilter.Header(AFFiltersData.IGNORE_SEARCH_MSG),
         SeasonFilter(),
         AnimeFilter.Header(AFFiltersData.IGNORE_SEASON_MSG),
-        GenreFilter()
+        GenreFilter(),
     )
 
     data class FilterSearchParams(
         val genre: String = "",
-        val season: String = ""
+        val season: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
         return FilterSearchParams(
             filters.asQueryPart<GenreFilter>(),
-            filters.asQueryPart<SeasonFilter>()
+            filters.asQueryPart<SeasonFilter>(),
         )
     }
 
@@ -54,7 +54,7 @@ object AFFilters {
             Pair("Outono", "outono"),
             Pair("Inverno", "inverno"),
             Pair("Primavera", "primavera"),
-            Pair("Verão", "verao")
+            Pair("Verão", "verao"),
         )
 
         val genres = arrayOf(
@@ -89,7 +89,7 @@ object AFFilters {
             Pair("Superpoder", "superpoder"),
             Pair("Suspense", "suspense"),
             Pair("Vampiros", "vampiros"),
-            Pair("Vida Escolar", "vida-escolar")
+            Pair("Vida Escolar", "vida-escolar"),
         )
     }
 }

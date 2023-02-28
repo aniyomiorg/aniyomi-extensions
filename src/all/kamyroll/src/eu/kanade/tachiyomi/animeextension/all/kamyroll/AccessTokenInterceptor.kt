@@ -22,7 +22,7 @@ import java.net.Proxy
 class AccessTokenInterceptor(
     private val crUrl: String,
     private val json: Json,
-    private val preferences: SharedPreferences
+    private val preferences: SharedPreferences,
 ) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
@@ -42,7 +42,7 @@ class AccessTokenInterceptor(
                     val refreshedToken = refreshAccessToken()
                     // Retry the request
                     return chain.proceed(
-                        newRequestWithAccessToken(chain.request(), refreshedToken)
+                        newRequestWithAccessToken(chain.request(), refreshedToken),
                     )
                 }
             }
@@ -68,8 +68,8 @@ class AccessTokenInterceptor(
             .proxy(
                 Proxy(
                     Proxy.Type.SOCKS,
-                    InetSocketAddress("cr-unblocker.us.to", 1080)
-                )
+                    InetSocketAddress("cr-unblocker.us.to", 1080),
+                ),
             )
             .build()
 
@@ -78,29 +78,31 @@ class AccessTokenInterceptor(
                 override fun getPasswordAuthentication(): PasswordAuthentication {
                     return PasswordAuthentication("crunblocker", "crunblocker".toCharArray())
                 }
-            }
+            },
         )
 
         // Thanks Stormzy
         val refreshTokenResp = client.newCall(GET("https://raw.githubusercontent.com/Samfun75/File-host/main/aniyomi/refreshToken.txt")).execute()
-        val refreshToken = refreshTokenResp.body!!.string().replace("[\n\r]".toRegex(), "")
+        val refreshToken = refreshTokenResp.body.string().replace("[\n\r]".toRegex(), "")
         val headers = Headers.headersOf(
-            "Content-Type", "application/x-www-form-urlencoded",
-            "Authorization", "Basic a3ZvcGlzdXZ6Yy0teG96Y21kMXk6R21JSTExenVPVnRnTjdlSWZrSlpibzVuLTRHTlZ0cU8="
+            "Content-Type",
+            "application/x-www-form-urlencoded",
+            "Authorization",
+            "Basic a3ZvcGlzdXZ6Yy0teG96Y21kMXk6R21JSTExenVPVnRnTjdlSWZrSlpibzVuLTRHTlZ0cU8=",
         )
         val postBody = "grant_type=refresh_token&refresh_token=$refreshToken&scope=offline_access".toRequestBody("application/x-www-form-urlencoded".toMediaType())
         val response = proxy.newCall(POST("$crUrl/auth/v1/token", headers, postBody)).execute()
-        val parsedJson = json.decodeFromString<AccessToken>(response.body!!.string())
+        val parsedJson = json.decodeFromString<AccessToken>(response.body.string())
 
         val policy = proxy.newCall(newRequestWithAccessToken(GET("$crUrl/index/v2"), parsedJson)).execute()
-        val policyJson = json.decodeFromString<Policy>(policy.body!!.string())
+        val policyJson = json.decodeFromString<Policy>(policy.body.string())
         val allTokens = AccessToken(
             parsedJson.access_token,
             parsedJson.token_type,
             policyJson.cms.policy,
             policyJson.cms.signature,
             policyJson.cms.key_pair_id,
-            policyJson.cms.bucket
+            policyJson.cms.bucket,
         )
         preferences.edit().putString(TOKEN_PREF_KEY, allTokens.toJsonString()).apply()
         return allTokens

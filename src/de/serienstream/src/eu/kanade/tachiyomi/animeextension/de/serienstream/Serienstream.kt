@@ -80,10 +80,10 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         context
         val anime = SAnime.create()
-        val linkElement = element.selectFirst("a")
+        val linkElement = element.selectFirst("a")!!
         anime.url = linkElement.attr("href")
-        anime.thumbnail_url = linkElement.selectFirst("img").attr("data-src")
-        anime.title = element.selectFirst("h3").text()
+        anime.thumbnail_url = linkElement.selectFirst("img")!!.attr("data-src")
+        anime.title = element.selectFirst("h3")!!.text()
         return anime
     }
 
@@ -96,10 +96,10 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        val linkElement = element.selectFirst("a")
+        val linkElement = element.selectFirst("a")!!
         anime.url = linkElement.attr("href")
-        anime.thumbnail_url = baseUrl + linkElement.selectFirst("img").attr("data-src")
-        anime.title = element.selectFirst("h3").text()
+        anime.thumbnail_url = baseUrl + linkElement.selectFirst("img")!!.attr("data-src")
+        anime.title = element.selectFirst("h3")!!.text()
         return anime
     }
 
@@ -125,7 +125,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeNextPageSelector() = throw UnsupportedOperationException("Not used.")
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val body = response.body!!.string()
+        val body = response.body.string()
         val results = json.decodeFromString<JsonArray>(body)
         val animes = results.filter {
             val link = it.jsonObject["link"]!!.jsonPrimitive.content
@@ -143,7 +143,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val link = result["link"]!!.jsonPrimitive.content
         anime.title = title.replace("<em>", "").replace("</em>", "")
         val thumpage = client.newCall(GET("$baseUrl$link")).execute().asJsoup()
-        anime.thumbnail_url = thumpage.selectFirst("div.seriesCoverBox img").attr("data-src")
+        anime.thumbnail_url = thumpage.selectFirst("div.seriesCoverBox img")!!.attr("data-src")
         anime.url = link
         return anime
     }
@@ -153,10 +153,10 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ===== ANIME DETAILS =====
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.title = document.selectFirst("div.series-title h1 span").text()
-        anime.thumbnail_url = document.selectFirst("div.seriesCoverBox img").attr("data-src")
+        anime.title = document.selectFirst("div.series-title h1 span")!!.text()
+        anime.thumbnail_url = document.selectFirst("div.seriesCoverBox img")!!.attr("data-src")
         anime.genre = document.select("div.genres ul li").joinToString { it.text() }
-        anime.description = document.selectFirst("p.seri_des").attr("data-full-description")
+        anime.description = document.selectFirst("p.seri_des")!!.attr("data-full-description")
         document.selectFirst("div.cast li:contains(Produzent:) ul")?.let {
             val author = it.select("li").joinToString { li -> li.text() }
             anime.author = author
@@ -206,14 +206,14 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val num = element.attr("data-episode-season-id")
             episode.name = "Film $num" + " : " + element.select("td.seasonEpisodeTitle a span").text()
             episode.episode_number = element.attr("data-episode-season-id").toFloat()
-            episode.url = element.selectFirst("td.seasonEpisodeTitle a").attr("href")
+            episode.url = element.selectFirst("td.seasonEpisodeTitle a")!!.attr("href")
         } else {
             val season = element.select("td.seasonEpisodeTitle a").attr("href")
                 .substringAfter("staffel-").substringBefore("/episode")
             val num = element.attr("data-episode-season-id")
             episode.name = "Staffel $season Folge $num" + " : " + element.select("td.seasonEpisodeTitle a span").text()
             episode.episode_number = element.select("td meta").attr("content").toFloat()
-            episode.url = element.selectFirst("td.seasonEpisodeTitle a").attr("href")
+            episode.url = element.selectFirst("td.seasonEpisodeTitle a")!!.attr("href")
         }
         return episode
     }
@@ -230,7 +230,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         redirectlink.forEach {
             val langkey = it.attr("data-lang-key")
             val language = getlanguage(langkey)
-            val redirectgs = baseUrl + it.selectFirst("a.watchEpisode").attr("href")
+            val redirectgs = baseUrl + it.selectFirst("a.watchEpisode")!!.attr("href")
             val redirects = redirectInterceptor.newCall(GET(redirectgs)).execute().request.url.toString()
             if (hosterSelection != null) {
                 when {
@@ -294,20 +294,26 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     otherList.add(video)
                 }
             }
-        } else otherList += this
+        } else {
+            otherList += this
+        }
         val newList = mutableListOf<Video>()
         var preferred = 0
         for (video in hosterList) {
             if (video.quality.contains(subPreference)) {
                 newList.add(preferred, video)
                 preferred++
-            } else newList.add(video)
+            } else {
+                newList.add(video)
+            }
         }
         for (video in otherList) {
             if (video.quality.contains(subPreference)) {
                 newList.add(preferred, video)
                 preferred++
-            } else newList.add(video)
+            } else {
+                newList.add(video)
+            }
         }
 
         return newList

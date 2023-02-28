@@ -62,13 +62,13 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a").attr("href").toHttpUrl().encodedPath)
-            thumbnail_url = if (element.selectFirst("img").hasAttr("data-wpfc-original-src")) {
-                element.selectFirst("img").attr("data-wpfc-original-src")
+            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").toHttpUrl().encodedPath)
+            thumbnail_url = if (element.selectFirst("img")!!.hasAttr("data-wpfc-original-src")) {
+                element.selectFirst("img")!!.attr("data-wpfc-original-src")
             } else {
-                element.selectFirst("img").attr("src")
+                element.selectFirst("img")!!.attr("src")
             }
-            title = element.selectFirst("div.data > h3").text()
+            title = element.selectFirst("div.data > h3")!!.text()
         }
     }
 
@@ -102,11 +102,11 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         if (isExact) {
             val anime = SAnime.create()
-            anime.title = document.selectFirst("div.data > h1").text()
-            anime.thumbnail_url = if (document.selectFirst("div.poster > img").hasAttr("data-wpfc-original-src")) {
-                document.selectFirst("div.poster > img").attr("data-wpfc-original-src")
+            anime.title = document.selectFirst("div.data > h1")!!.text()
+            anime.thumbnail_url = if (document.selectFirst("div.poster > img")!!.hasAttr("data-wpfc-original-src")) {
+                document.selectFirst("div.poster > img")!!.attr("data-wpfc-original-src")
             } else {
-                document.selectFirst("div.poster > img").attr("src")
+                document.selectFirst("div.poster > img")!!.attr("src")
             }
             anime.setUrlWithoutDomain(response.request.url.encodedPath)
             return AnimesPage(listOf(anime), false)
@@ -201,8 +201,8 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("TV Movie", "tv-movie"),
             Pair("War", "war"),
             Pair("War & Politics", "war-politics"),
-            Pair("Western", "western")
-        )
+            Pair("Western", "western"),
+        ),
     )
 
     private class RecentFilter : UriPartFilter(
@@ -211,7 +211,7 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("<select>", ""),
             Pair("Recent TV Shows", "tvshows"),
             Pair("Recent Movies", "movies"),
-        )
+        ),
     )
 
     private class YearFilter : UriPartFilter(
@@ -267,8 +267,8 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("1977", "1977"),
             Pair("1976", "1976"),
             Pair("1975", "1975"),
-            Pair("1974", "1974")
-        )
+            Pair("1974", "1974"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -282,11 +282,11 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         return SAnime.create().apply {
-            title = document.selectFirst("div.data > h1").text()
-            thumbnail_url = if (document.selectFirst("div.poster > img").hasAttr("data-wpfc-original-src")) {
-                document.selectFirst("div.poster > img").attr("data-wpfc-original-src")
+            title = document.selectFirst("div.data > h1")!!.text()
+            thumbnail_url = if (document.selectFirst("div.poster > img")!!.hasAttr("data-wpfc-original-src")) {
+                document.selectFirst("div.poster > img")!!.attr("data-wpfc-original-src")
             } else {
-                document.selectFirst("div.poster > img").attr("src")
+                document.selectFirst("div.poster > img")!!.attr("src")
             }
             status = SAnime.COMPLETED
             description = document.selectFirst("div:contains(Synopsis) > div > p")?.text() ?: ""
@@ -301,7 +301,7 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         if (response.request.url.encodedPath.startsWith("/movies/")) {
             val episode = SEpisode.create()
-            episode.name = document.selectFirst("div.data > h1").text().replace(":", "")
+            episode.name = document.selectFirst("div.data > h1")!!.text().replace(":", "")
             episode.episode_number = 1F
             episode.setUrlWithoutDomain(response.request.url.encodedPath)
             episodeList.add(episode)
@@ -313,9 +313,9 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     if (ep.childrenSize() > 0) {
                         val episode = SEpisode.create()
 
-                        episode.name = "Season ${ep.selectFirst("div.numerando").ownText()} - ${ep.selectFirst("a[href]").ownText()}"
+                        episode.name = "Season ${ep.selectFirst("div.numerando")!!.ownText()} - ${ep.selectFirst("a[href]")!!.ownText()}"
                         episode.episode_number = counter.toFloat()
-                        episode.setUrlWithoutDomain(ep.selectFirst("a[href]").attr("href").toHttpUrl().encodedPath)
+                        episode.setUrlWithoutDomain(ep.selectFirst("a[href]")!!.attr("href").toHttpUrl().encodedPath)
 
                         seasonList.add(episode)
                         counter++
@@ -337,7 +337,7 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val videoList = mutableListOf<Video>()
         val document = client.newCall(
-            GET(baseUrl + episode.url, headers = headers)
+            GET(baseUrl + episode.url, headers = headers),
         ).execute().asJsoup()
 
         val type = if (episode.url.startsWith("/tvshows/")) "tv" else "movie"
@@ -352,28 +352,32 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 "Origin", "https://uniquestreaming.net",
                 "Referer", "$baseUrl${episode.url}",
                 "User-Agent", "Mozilla/5.0 (Linux; Android 12; SM-T870 Build/SP2A.220305.013; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/106.0.5249.126 Safari/537.36",
-                "X-Requested-With", "XMLHttpRequest"
+                "X-Requested-With", "XMLHttpRequest",
             )
 
             val embedResponse = client.newCall(
-                POST("$baseUrl/wp-admin/admin-ajax.php", body = postBody, headers = postHeaders)
+                POST("$baseUrl/wp-admin/admin-ajax.php", body = postBody, headers = postHeaders),
             ).execute()
 
-            var embedUrl = json.decodeFromString<EmbedResponse>(embedResponse.body!!.string()).embed_url
+            var embedUrl = json.decodeFromString<EmbedResponse>(embedResponse.body.string()).embed_url
             if (!embedUrl.startsWith("http")) embedUrl = "https:$embedUrl"
 
             val embedHeaders = Headers.headersOf(
-                "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-                "Host", embedUrl.toHttpUrl().host,
-                "Referer", "$baseUrl/",
-                "User-Agent", "Mozilla/5.0 (Linux; Android 12; SM-T870 Build/SP2A.220305.013; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/106.0.5249.126 Safari/537.36"
+                "Accept",
+                "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                "Host",
+                embedUrl.toHttpUrl().host,
+                "Referer",
+                "$baseUrl/",
+                "User-Agent",
+                "Mozilla/5.0 (Linux; Android 12; SM-T870 Build/SP2A.220305.013; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/106.0.5249.126 Safari/537.36",
             )
 
             val embedDocument = client.newCall(
-                GET(embedUrl, headers = embedHeaders)
+                GET(embedUrl, headers = embedHeaders),
             ).execute().asJsoup()
 
-            val script = embedDocument.selectFirst("script:containsData(m3u8)").data()
+            val script = embedDocument.selectFirst("script:containsData(m3u8)")!!.data()
             val playlistUrl = script
                 .substringAfter("let url = '").substringBefore("'")
 
@@ -388,20 +392,23 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             script.substringAfter("track['label']")
                                 .substringAfter("'")
                                 .substringBefore("'"),
-                        )
+                        ),
                     )
                 } catch (a: Exception) { }
             }
 
             val playlistHeaders = Headers.headersOf(
-                "Accept", "*/*",
-                "Referer", playlistUrl,
-                "User-Agent", "Mozilla/5.0 (Linux; Android 12; SM-T870 Build/SP2A.220305.013; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/106.0.5249.126 Safari/537.36"
+                "Accept",
+                "*/*",
+                "Referer",
+                playlistUrl,
+                "User-Agent",
+                "Mozilla/5.0 (Linux; Android 12; SM-T870 Build/SP2A.220305.013; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/106.0.5249.126 Safari/537.36",
             )
 
             val masterPlaylist = client.newCall(
-                GET(playlistUrl, headers = playlistHeaders)
-            ).execute().body!!.string()
+                GET(playlistUrl, headers = playlistHeaders),
+            ).execute().body.string()
             val playlistHost = playlistUrl.toHttpUrl().host
 
             val audioList = mutableListOf<Track>()
@@ -417,8 +424,8 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     audioList.add(
                         Track(
                             audioUrl,
-                            line.substringAfter("NAME=\"").substringBefore("\"")
-                        )
+                            line.substringAfter("NAME=\"").substringBefore("\""),
+                        ),
                     )
                 } catch (a: Exception) { }
             }
@@ -438,7 +445,7 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             videoList.add(Video(videoUrl, quality, videoUrl, headers = playlistHeaders, subtitleTracks = subtitleList))
                         } else {
                             videoList.add(
-                                Video(videoUrl, quality, videoUrl, headers = playlistHeaders, subtitleTracks = subtitleList, audioTracks = audioList)
+                                Video(videoUrl, quality, videoUrl, headers = playlistHeaders, subtitleTracks = subtitleList, audioTracks = audioList),
                             )
                         }
                     } catch (a: Exception) {
@@ -462,13 +469,13 @@ class UniqueStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val quality = preferences.getString("preferred_quality", "1080")!!
 
         return this.sortedWith(
-            compareBy { it.quality.contains(quality) }
+            compareBy { it.quality.contains(quality) },
         ).reversed()
     }
 
     @Serializable
     data class EmbedResponse(
-        val embed_url: String
+        val embed_url: String,
     )
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
