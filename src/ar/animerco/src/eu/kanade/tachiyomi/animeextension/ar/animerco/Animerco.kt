@@ -81,9 +81,9 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (type.contains("animes")) {
             val seasonsHtml = client.newCall(
                 GET(
-                    seriesLink
+                    seriesLink,
                     // headers = Headers.headersOf("Referer", document.location())
-                )
+                ),
             ).execute().asJsoup()
             val seasonsElements = seasonsHtml.select("ul.chapters-list li a.title")
             seasonsElements.reversed().forEach {
@@ -107,7 +107,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodesHtml = client.newCall(
             GET(
                 episodesUrl,
-            )
+            ),
         ).execute().asJsoup()
         val episodeElements = episodesHtml.select("ul.chapters-list li")
         return episodeElements.map { episodeFromElement(it) }

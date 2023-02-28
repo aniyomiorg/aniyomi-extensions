@@ -68,11 +68,13 @@ class JellyfinAuthenticator(
     }
 
     private fun getPrefDeviceId(): String? = preferences.getString(
-        DEVICEID_KEY, null
+        DEVICEID_KEY,
+        null,
     )
 
     private fun setPrefDeviceId(value: String) = preferences.edit().putString(
-        DEVICEID_KEY, value
+        DEVICEID_KEY,
+        value,
     ).apply()
 }
 

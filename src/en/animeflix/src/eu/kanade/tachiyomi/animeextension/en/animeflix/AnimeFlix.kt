@@ -169,8 +169,8 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Comedy", "comedy"),
             Pair("Fantasy", "fantasy"),
             Pair("Horror", "horror"),
-            Pair("Yaoi", "yaoi")
-        )
+            Pair("Yaoi", "yaoi"),
+        ),
     )
 
     private class SubPageFilter : UriPartFilter(
@@ -180,7 +180,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Ongoing", "ongoing"),
             Pair("Latest Release", "latest-release"),
             Pair("Movies", "movies"),
-        )
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -221,7 +221,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             serversList.add(
                 episodesDocument.select("div.entry-content > h3 > a").map {
                     EpUrl(drive.second, it.attr("href"), it.text())
-                }
+                },
             )
         }
 
@@ -231,9 +231,9 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     name = serverList.first().name
                     episode_number = (index + 1).toFloat()
                     setUrlWithoutDomain(
-                        json.encodeToString(serverList)
+                        json.encodeToString(serverList),
                     )
-                }
+                },
             )
         }
 
@@ -253,7 +253,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val leechUrls = urls.map {
             val firstLeech = client.newCall(GET(it.url)).execute().asJsoup().selectFirst(
-                "script:containsData(downlaod_button)"
+                "script:containsData(downlaod_button)",
             )!!.data().substringAfter("<a href=\"").substringBefore("\">")
             val link = "https://" + firstLeech.toHttpUrl().host + client.newCall(GET(firstLeech)).execute().body.string()
                 .substringAfter("replace(\"").substringBefore("\"")
@@ -270,7 +270,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }.getOrNull()
             }
                 .filterNotNull()
-                .flatten()
+                .flatten(),
         )
 
         videoList.addAll(
@@ -278,7 +278,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 runCatching {
                     extractGDriveLink(url, quality)
                 }.getOrNull()
-            }.flatten()
+            }.flatten(),
         )
         return Observable.just(videoList.sort())
     }
@@ -305,7 +305,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         for (type in 1..3) {
             videoList.addAll(
-                extractWorkerLinks(epUrl.url, quality, type)
+                extractWorkerLinks(epUrl.url, quality, type),
             )
         }
         return Pair(videoList, epUrl.url)
@@ -329,7 +329,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Video(
                 url = decodedLink,
                 quality = "$quality - CF $type Worker ${index + 1}$size",
-                videoUrl = decodedLink
+                videoUrl = decodedLink,
             )
         }
     }
@@ -355,7 +355,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val quality = preferences.getString("preferred_quality", "1080")!!
 
         return this.sortedWith(
-            compareBy { it.quality.contains(quality) }
+            compareBy { it.quality.contains(quality) },
         ).reversed()
     }
 
@@ -396,7 +396,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     data class EpUrl(
         val quality: String,
         val url: String,
-        val name: String
+        val name: String,
     )
 
     // From Dopebox

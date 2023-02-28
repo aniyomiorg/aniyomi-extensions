@@ -203,8 +203,8 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             super.episodeListParse(response).sortedWith(
                 compareBy(
                     { it.episode_number },
-                    { it.name }
-                )
+                    { it.name },
+                ),
             ).reversed()
         } else {
             super.episodeListParse(response)
@@ -241,8 +241,8 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             serverList.add(
                 Server(
                     redirected,
-                    it.groupValues[1]
-                )
+                    it.groupValues[1],
+                ),
             )
         }
 
@@ -294,7 +294,7 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         else -> null
                     }
                 }.getOrNull()
-            }.filterNotNull().flatten()
+            }.filterNotNull().flatten(),
         )
 
         return videoList
@@ -315,14 +315,14 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this.sortedWith(
             compareBy(
                 { it.quality.contains(quality) },
-                { it.quality.contains(server) }
-            )
+                { it.quality.contains(server) },
+            ),
         ).reversed()
     }
 
     data class Server(
         val url: String,
-        val name: String
+        val name: String,
     )
 
     private fun parseDate(dateStr: String): Long {
@@ -394,7 +394,8 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             key = "preferred_episode_sorting"
             title = "Attempt episode sorting"
             summary = """AnimeDao displays the episodes in either ascending or descending order,
-                | enable to attempt order or disable to set same as website.""".trimMargin()
+                | enable to attempt order or disable to set same as website.
+            """.trimMargin()
             setDefaultValue(true)
 
             setOnPreferenceChangeListener { _, newValue ->

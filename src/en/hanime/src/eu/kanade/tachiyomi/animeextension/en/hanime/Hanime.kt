@@ -141,7 +141,7 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
                         url = streamObject["url"]!!.jsonPrimitive.content,
                         quality = streamObject["height"]!!.jsonPrimitive.content + "p",
                         videoUrl = streamObject["url"]!!.jsonPrimitive.content,
-                    )
+                    ),
                 )
             }
         }
@@ -201,12 +201,13 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
         val responseString = response.body.string()
         return parseSearchJson(responseString)
     }
+
     // Filters
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         TagList(getTags()),
         BrandList(getBrands()),
         SortFilter(sortableList.map { it.first }.toTypedArray()),
-        TagInclusionMode()
+        TagInclusionMode(),
 
     )
     internal class Tag(val id: String, name: String) : AnimeFilter.TriState(name)
@@ -222,7 +223,7 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
         val brands: ArrayList<String>,
         val tagsMode: String,
         val orderBy: String,
-        val ordering: String
+        val ordering: String,
     )
 
     private fun getSearchParameters(filters: AnimeFilterList): SearchParameters {
@@ -239,14 +240,14 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
                         if (tag.isIncluded()) {
                             includedTags.add(
                                 "\"" + tag.id.toLowerCase(
-                                    Locale.US
-                                ) + "\""
+                                    Locale.US,
+                                ) + "\"",
                             )
                         } else if (tag.isExcluded()) {
                             blackListedTags.add(
                                 "\"" + tag.id.toLowerCase(
-                                    Locale.US
-                                ) + "\""
+                                    Locale.US,
+                                ) + "\"",
                             )
                         }
                     }
@@ -270,8 +271,8 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
                         if (brand.state) {
                             brands.add(
                                 "\"" + brand.id.toLowerCase(
-                                    Locale.US
-                                ) + "\""
+                                    Locale.US,
+                                ) + "\"",
                             )
                         }
                     }
@@ -436,7 +437,7 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
         Brand("X City", "x-city"),
         Brand("yosino", "yosino"),
         Brand("Y.O.U.C.", "y-o-u-c"),
-        Brand("ZIZ", "ziz")
+        Brand("ZIZ", "ziz"),
     )
 
     private fun getTags() = listOf(

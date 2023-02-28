@@ -124,8 +124,8 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val playerHtml = client.newCall(
             GET(
                 url = iframeLink,
-                headers = Headers.headersOf("Referer", document.location())
-            )
+                headers = Headers.headersOf("Referer", document.location()),
+            ),
         ).execute().body.string()
 
         val getVideoLink = playerHtml.substringAfter("\$.getJSON(\"").substringBefore("\"")
@@ -138,9 +138,9 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             client.newCall(
                 GET(
                     url = (iframeDomain + getVideoLink),
-                    headers = head.build()
-                )
-            ).execute().body.string()
+                    headers = head.build(),
+                ),
+            ).execute().body.string(),
         )
 
         val server = videoJson["server"]!!.jsonPrimitive.content

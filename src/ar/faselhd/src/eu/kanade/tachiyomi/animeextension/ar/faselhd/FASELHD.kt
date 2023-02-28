@@ -77,9 +77,9 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             return episode
         }
         fun addEpisodes(document: Document) {
-            if (document.select(episodeListSelector()).isNullOrEmpty())
+            if (document.select(episodeListSelector()).isNullOrEmpty()) {
                 document.select("div.shortLink").map { episodes.add(episodeExtract(it)) }
-            else {
+            } else {
                 document.select(episodeListSelector()).map { episodes.add(episodeFromElement(it)) }
                 document.selectFirst(seasonsNextPageSelector(seasonNumber))?.let {
                     seasonNumber++
@@ -88,9 +88,9 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             GET(
                                 "$baseUrl/?p=" + it.select("div.seasonDiv")
                                     .attr("data-href"),
-                                headers
-                            )
-                        ).execute().asJsoup()
+                                headers,
+                            ),
+                        ).execute().asJsoup(),
                     )
                 }
             }
@@ -229,7 +229,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun getFilterList() = AnimeFilterList(
         AnimeFilter.Header("NOTE: Ignored if using text search!"),
         AnimeFilter.Separator(),
-        GenreFilter(getGenreList())
+        GenreFilter(getGenreList()),
     )
 
     private class GenreFilter(vals: Array<Pair<String, String>>) : UriPartFilter("تصنيف المسلسلات", vals)
@@ -251,7 +251,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("المسلسلات القصيرة", "short_series"),
         Pair("المسلسلات الاسيوية", "asian-series"),
         Pair("المسلسلات الاسيوية الاعلي مشاهدة", "asian_top_views"),
-        Pair("الانمي الاعلي مشاهدة", "anime_top_views")
+        Pair("الانمي الاعلي مشاهدة", "anime_top_views"),
     )
 
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :

@@ -169,7 +169,7 @@ open class Pelisflix(override val name: String, override val baseUrl: String) : 
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
-        GenreFilter()
+        GenreFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -186,8 +186,8 @@ open class Pelisflix(override val name: String, override val baseUrl: String) : 
             Pair("Crimen", "genero/crimen"),
             Pair("Drama", "genero/drama"),
             Pair("Romance", "genero/romance"),
-            Pair("Terror", "genero/terror")
-        )
+            Pair("Terror", "genero/terror"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

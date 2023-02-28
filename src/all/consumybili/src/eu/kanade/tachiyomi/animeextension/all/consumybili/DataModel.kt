@@ -4,20 +4,20 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AnilistResponse(
-    val data: DataObject
+    val data: DataObject,
 ) {
     @Serializable
     data class DataObject(
-        val Page: PageObject
+        val Page: PageObject,
     ) {
         @Serializable
         data class PageObject(
             val pageInfo: PageInfoObject,
-            val media: List<AnimeMedia>
+            val media: List<AnimeMedia>,
         ) {
             @Serializable
             data class PageInfoObject(
-                val hasNextPage: Boolean
+                val hasNextPage: Boolean,
             )
 
             @Serializable
@@ -28,25 +28,25 @@ data class AnilistResponse(
                 val studios: StudioNode,
                 val genres: List<String>,
                 val description: String,
-                val status: String
+                val status: String,
             ) {
                 @Serializable
                 data class TitleObject(
-                    val romaji: String
+                    val romaji: String,
                 )
 
                 @Serializable
                 data class ImageObject(
-                    val extraLarge: String
+                    val extraLarge: String,
                 )
 
                 @Serializable
                 data class StudioNode(
-                    val nodes: List<Node>
+                    val nodes: List<Node>,
                 ) {
                     @Serializable
                     data class Node(
-                        val name: String
+                        val name: String,
                     )
                 }
             }
@@ -56,7 +56,7 @@ data class AnilistResponse(
 
 @Serializable
 data class EpisodeResponse(
-    val episodes: List<EpisodeObject>? = null
+    val episodes: List<EpisodeObject>? = null,
 ) {
     @Serializable
     data class EpisodeObject(
@@ -70,18 +70,18 @@ data class EpisodeResponse(
 @Serializable
 data class SourcesResponse(
     val sources: List<SourceObject>,
-    val subtitles: List<SubtitleObject>
+    val subtitles: List<SubtitleObject>,
 ) {
     @Serializable
     data class SourceObject(
         val file: String,
-        val type: String
+        val type: String,
     )
 
     @Serializable
     data class SubtitleObject(
         val file: String,
         val lang: String,
-        val language: String
+        val language: String,
     )
 }

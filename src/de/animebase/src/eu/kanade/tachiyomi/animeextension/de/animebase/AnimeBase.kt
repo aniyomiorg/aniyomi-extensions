@@ -73,7 +73,7 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             } else {
                 "data-dubbed=\"0\""
             }
-            }][data-hoster=\"1\"], div.tab-content #specials div.panel button[data-dubbed=\"0\"][data-hoster=\"1\"]"
+            }][data-hoster=\"1\"], div.tab-content #specials div.panel button[data-dubbed=\"0\"][data-hoster=\"1\"]",
         )
         episodeElement.forEach {
             val episode = episodeFromElement(it)

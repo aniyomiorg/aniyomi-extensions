@@ -9,7 +9,7 @@ data class ResponseDto<T>(
     @SerialName("data")
     val items: List<T>,
     val lastPage: Int,
-    val page: Int
+    val page: Int,
 )
 
 @Serializable
@@ -20,7 +20,7 @@ data class AnimeDto(
     val synopsis: String,
     val tags: List<TagDto>,
     val title: String,
-    val year: Int?
+    val year: Int?,
 ) {
     val status by lazy {
         when (releaseStatus) {
@@ -44,20 +44,20 @@ data class EpisodeDto(
     val created_at: String,
     val number: String,
     val slug: String,
-    val title: String
+    val title: String,
 )
 
 @Serializable
 data class VideoDto(
     val id: Int,
-    val links: VideoLinksDto
+    val links: VideoLinksDto,
 ) {
     @Serializable
     data class VideoLinksDto(
         val low: List<VideoLink> = emptyList(),
         val medium: List<VideoLink> = emptyList(),
         val high: List<VideoLink> = emptyList(),
-        val online: List<String>? = null
+        val online: List<String>? = null,
     )
 
     @Serializable
@@ -70,7 +70,7 @@ data class VideoDto(
 
 @Serializable
 data class CoverDto(
-    val originalName: String
+    val originalName: String,
 ) {
     val url by lazy { "https://stc.animestc.com/$originalName" }
 }

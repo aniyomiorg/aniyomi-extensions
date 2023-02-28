@@ -114,7 +114,7 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         return try {
             val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
             val userPreferredQuality = preferences.getString("preferred_quality", "Fembed:720p")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
@@ -190,7 +190,7 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         GenreFilter(),
         AnimeFilter.Separator(),
         YearFilter(),
-        LetterFilter()
+        LetterFilter(),
     )
 
     private class YearFilter : AnimeFilter.Text("Año", "2022")
@@ -244,8 +244,8 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Aenime", "aenime"),
             Pair("Donghua", "donghua"),
             Pair("Blu-ray", "blu-ray"),
-            Pair("Monogatari", "monogatari")
-        )
+            Pair("Monogatari", "monogatari"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -257,7 +257,7 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val qualities = arrayOf(
             "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", // Fembed
             "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", // Okru
-            "SolidFiles", "Upload" // video servers without resolution
+            "SolidFiles", "Upload", // video servers without resolution
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"

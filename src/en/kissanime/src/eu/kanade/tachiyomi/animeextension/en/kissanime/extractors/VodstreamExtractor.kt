@@ -18,13 +18,17 @@ class VodstreamExtractor(private val client: OkHttpClient) {
     fun getVideosFromUrl(url: String, referer: String, prefix: String): List<Video> {
         val videoList = mutableListOf<Video>()
         val getIframeHeaders = Headers.headersOf(
-            "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-            "Host", url.toHttpUrl().host,
-            "Referer", referer,
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0"
+            "Accept",
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+            "Host",
+            url.toHttpUrl().host,
+            "Referer",
+            referer,
+            "User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
         )
         val iframe = client.newCall(
-            GET(url, headers = getIframeHeaders)
+            GET(url, headers = getIframeHeaders),
         ).execute().asJsoup()
 
         val sourcesData = iframe.selectFirst("script:containsData(playerInstance)")!!.data()
@@ -37,7 +41,7 @@ class VodstreamExtractor(private val client: OkHttpClient) {
                 "Host", source.file.toHttpUrl().host,
                 "Origin", "https://${url.toHttpUrl().host}",
                 "Referer", "https://${url.toHttpUrl().host}/",
-                "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0"
+                "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
             )
 
             if (source.file.contains(".m3u8")) {
@@ -56,8 +60,8 @@ class VodstreamExtractor(private val client: OkHttpClient) {
                         source.file,
                         prefix + source.label,
                         source.file,
-                        headers = videoHeaders
-                    )
+                        headers = videoHeaders,
+                    ),
                 )
             }
         }
@@ -68,6 +72,6 @@ class VodstreamExtractor(private val client: OkHttpClient) {
     @Serializable
     data class Source(
         val file: String,
-        val label: String
+        val label: String,
     )
 }

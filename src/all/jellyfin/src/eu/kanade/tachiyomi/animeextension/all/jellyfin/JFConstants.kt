@@ -17,22 +17,28 @@ object JFConstants {
     const val HOSTURL_DEFAULT = "http://127.0.0.1:8096"
 
     fun getPrefApiKey(preferences: SharedPreferences): String? = preferences.getString(
-        APIKEY_KEY, null
+        APIKEY_KEY,
+        null,
     )
     fun getPrefUserId(preferences: SharedPreferences): String? = preferences.getString(
-        USERID_KEY, null
+        USERID_KEY,
+        null,
     )
     fun getPrefHostUrl(preferences: SharedPreferences): String = preferences.getString(
-        HOSTURL_KEY, HOSTURL_DEFAULT
+        HOSTURL_KEY,
+        HOSTURL_DEFAULT,
     )!!
     fun getPrefUsername(preferences: SharedPreferences): String = preferences.getString(
-        USERNAME_KEY, ""
+        USERNAME_KEY,
+        "",
     )!!
     fun getPrefPassword(preferences: SharedPreferences): String = preferences.getString(
-        PASSWORD_KEY, ""
+        PASSWORD_KEY,
+        "",
     )!!
     fun getPrefParentId(preferences: SharedPreferences): String = preferences.getString(
-        MEDIALIB_KEY, ""
+        MEDIALIB_KEY,
+        "",
     )!!
 
     const val PREF_AUDIO_KEY = "preferred_audioLang"
@@ -54,7 +60,7 @@ object JFConstants {
         Quality(1920, 1080, 39808000, 192000, "1080p - 40 Mbps"),
         Quality(1920, 1080, 59808000, 192000, "1080p - 60 Mbps"),
         Quality(3840, 2160, 80000000, 192000, "4K - 80 Mbps"),
-        Quality(3840, 2160, 120000000, 192000, "4K - 120 Mbps")
+        Quality(3840, 2160, 120000000, 192000, "4K - 120 Mbps"),
     )
 
     data class Quality(
@@ -91,7 +97,7 @@ object JFConstants {
         "tem", "ter", "tet", "tgk", "tgl", "tha", "tig", "tir", "tiv", "tkl", "tlh", "tli", "tmh", "tog", "ton", "tpi", "tsi",
         "tsn", "tso", "tuk", "tum", "tup", "tur", "tvl", "twi", "tyv", "udm", "uga", "uig", "ukr", "umb", "urd", "uzb", "vai",
         "ven", "vie", "vol", "vot", "wal", "war", "was", "wen", "wln", "wol", "xal", "xho", "yao", "yap", "yid", "yor", "zap",
-        "zbl", "zen", "zgh", "zha", "zho", "zul", "zun", "zza"
+        "zbl", "zen", "zgh", "zha", "zho", "zul", "zun", "zza",
     )
 
     val PREF_ENTRIES = arrayOf(
@@ -163,6 +169,6 @@ object JFConstants {
         "ꕙꔤ", "Tshivenḓa", "Tiếng Việt", "Volapük", "vađđa ceeli", "Wolaitta; Wolaytta", "Winaray; Samareño; Lineyte-Samarnon; Binisayâ nga Winaray; Binisayâ nga Samar-Leyte; “Binisayâ nga Waray”",
         "wá:šiw ʔítlu", "Serbsce / Serbski", "Walon", "Wolof", "Хальмг келн / Xaľmg keln", "isiXhosa", "Yao", "Yapese",
         "ייִדיש; יידיש; אידיש Yidiš", "èdè Yorùbá", "Diidxazá/Dizhsa", "Blissymbols; Blissymbolics; Bliss", "Tuḍḍungiyya",
-        "ⵜⴰⵎⴰⵣⵉⵖⵜ ⵜⴰⵏⴰⵡⴰⵢⵜ", "Vahcuengh / 話僮", "中文 Zhōngwén; 汉语; 漢語 Hànyǔ", "isiZulu", "Shiwi'ma", "kirmanckî; dimilkî; kirdkî; zazakî"
+        "ⵜⴰⵎⴰⵣⵉⵖⵜ ⵜⴰⵏⴰⵡⴰⵢⵜ", "Vahcuengh / 話僮", "中文 Zhōngwén; 汉语; 漢語 Hànyǔ", "isiZulu", "Shiwi'ma", "kirmanckî; dimilkî; kirdkî; zazakî",
     )
 }

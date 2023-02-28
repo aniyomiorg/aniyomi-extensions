@@ -6,10 +6,10 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 object AnimeDaoFilters {
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
         fun toQueryPart() = vals[state].second
     }
@@ -33,40 +33,45 @@ object AnimeDaoFilters {
     ): String {
         return (this.getFirst<R>() as CheckBoxFilterList).state
             .mapNotNull { checkbox ->
-                if (checkbox.state)
+                if (checkbox.state) {
                     options.find { it.first == checkbox.name }!!.second
-                else null
+                } else {
+                    null
+                }
             }.joinToString("&$name[]=").let {
-                if (it.isBlank()) ""
-                else "$name[]=$it"
+                if (it.isBlank()) {
+                    ""
+                } else {
+                    "$name[]=$it"
+                }
             }
     }
 
     class GenreFilter : CheckBoxFilterList(
         "Genre",
-        AnimeDaoFiltersData.genre.map { CheckBoxVal(it.first, false) }
+        AnimeDaoFiltersData.genre.map { CheckBoxVal(it.first, false) },
     )
 
     class RatingFilter : CheckBoxFilterList(
         "Rating",
-        AnimeDaoFiltersData.rating.map { CheckBoxVal(it.first, false) }
+        AnimeDaoFiltersData.rating.map { CheckBoxVal(it.first, false) },
     )
 
     class LetterFilter : CheckBoxFilterList(
         "Letter",
-        AnimeDaoFiltersData.letter.map { CheckBoxVal(it.first, false) }
+        AnimeDaoFiltersData.letter.map { CheckBoxVal(it.first, false) },
     )
 
     class YearFilter : CheckBoxFilterList(
         "Year",
-        AnimeDaoFiltersData.year.map { CheckBoxVal(it.first, false) }
+        AnimeDaoFiltersData.year.map { CheckBoxVal(it.first, false) },
     )
 
     class StatusFilter : QueryPartFilter("Status", AnimeDaoFiltersData.status)
 
     class ScoreFilter : CheckBoxFilterList(
         "Score",
-        AnimeDaoFiltersData.score.map { CheckBoxVal(it.first, false) }
+        AnimeDaoFiltersData.score.map { CheckBoxVal(it.first, false) },
     )
 
     class OrderFilter : QueryPartFilter("Order", AnimeDaoFiltersData.order)
@@ -79,7 +84,7 @@ object AnimeDaoFilters {
         ScoreFilter(),
         AnimeFilter.Separator(),
         StatusFilter(),
-        OrderFilter()
+        OrderFilter(),
     )
 
     data class FilterSearchParams(
@@ -89,7 +94,7 @@ object AnimeDaoFilters {
         val year: String = "",
         val status: String = "",
         val score: String = "",
-        val order: String = ""
+        val order: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
@@ -155,7 +160,7 @@ object AnimeDaoFilters {
             Pair("Team Sports", "Team Sports"),
             Pair("Time Travel", "Time Travel"),
             Pair("Vampire", "Vampire"),
-            Pair("Video Game", "Video Game")
+            Pair("Video Game", "Video Game"),
         )
 
         val rating = arrayOf(
@@ -163,7 +168,7 @@ object AnimeDaoFilters {
             Pair("PG - Children", "children"),
             Pair("PG-13 - Teens 13 or older", "pg13"),
             Pair("R - 17+ (violence & profanity)", "r17"),
-            Pair("R+ - Mild Nudity", "rplus")
+            Pair("R+ - Mild Nudity", "rplus"),
         )
 
         val letter = arrayOf(
@@ -192,7 +197,7 @@ object AnimeDaoFilters {
             Pair("W", "W"),
             Pair("X", "X"),
             Pair("Y", "Y"),
-            Pair("Z", "Z")
+            Pair("Z", "Z"),
         )
 
         val year = arrayOf(
@@ -223,13 +228,13 @@ object AnimeDaoFilters {
             Pair("1990 - 1999", "1990"),
             Pair("1980 - 1989", "1980"),
             Pair("1970 - 1979", "1970"),
-            Pair("1960 - 1969", "1960")
+            Pair("1960 - 1969", "1960"),
         )
 
         val status = arrayOf(
             Pair("Status", ""),
             Pair("Ongoing", "Ongoing"),
-            Pair("Completed", "Completed")
+            Pair("Completed", "Completed"),
         )
 
         val score = arrayOf(
@@ -240,7 +245,7 @@ object AnimeDaoFilters {
             Pair("Average (5+)", "average"),
             Pair("Poor (4+)", "poor"),
             Pair("Bad (3+)", "bad"),
-            Pair("Dont Watch (2+)", "dontwatch")
+            Pair("Dont Watch (2+)", "dontwatch"),
         )
 
         val order = arrayOf(
@@ -250,7 +255,7 @@ object AnimeDaoFilters {
             Pair("Date New -> Old", "datenewold"),
             Pair("Date Old -> New", "dateoldnew"),
             Pair("Score", "score"),
-            Pair("Most Watched", "mostwatched")
+            Pair("Most Watched", "mostwatched"),
         )
     }
 }

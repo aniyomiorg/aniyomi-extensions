@@ -153,7 +153,7 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = POST(
         url = "$baseUrl/api/show/search",
         headers = refererHeader,
-        body = "{\"search\":\"$query\"}".toRequestBody("application/json".toMediaType())
+        body = "{\"search\":\"$query\"}".toRequestBody("application/json".toMediaType()),
     )
 
     override fun searchAnimeParse(response: Response) = parseAnimePage(response, singlePage = true)
@@ -170,8 +170,8 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
                 val seasonPart = json.decodeFromString(
                     Season.serializer(),
                     client.newCall(
-                        GET("$baseUrl/api/show/$animeUrl/${season.id!!}/$page")
-                    ).execute().body.string()
+                        GET("$baseUrl/api/show/$animeUrl/${season.id!!}/$page"),
+                    ).execute().body.string(),
                 )
                 page++
                 episodes.addAll(seasonPart.episodes!!)
@@ -236,20 +236,26 @@ class Aniflix : ConfigurableAnimeSource, AnimeHttpSource() {
                     otherList.add(video)
                 }
             }
-        } else otherList += this
+        } else {
+            otherList += this
+        }
         val newList = mutableListOf<Video>()
         var preferred = 0
         for (video in hosterList) {
             if (video.quality.contains(subPreference)) {
                 newList.add(preferred, video)
                 preferred++
-            } else newList.add(video)
+            } else {
+                newList.add(video)
+            }
         }
         for (video in otherList) {
             if (video.quality.contains(subPreference)) {
                 newList.add(preferred, video)
                 preferred++
-            } else newList.add(video)
+            } else {
+                newList.add(video)
+            }
         }
         return newList
     }

@@ -118,8 +118,8 @@ class pactedanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     Video(
                         video.select("source").attr("src"),
                         video.select("source").attr("label"),
-                        video.select("source").attr("src")
-                    )
+                        video.select("source").attr("src"),
+                    ),
                 )
             }
         }
@@ -247,7 +247,7 @@ class pactedanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun getFilterList() = AnimeFilterList(
         AnimeFilter.Header("NOTE: Ignored if using text search!"),
         AnimeFilter.Separator(),
-        GenreFilter(getGenreList())
+        GenreFilter(getGenreList()),
     )
 
     private class GenreFilter(vals: Array<Pair<String, String>>) : UriPartFilter("Genres", vals)

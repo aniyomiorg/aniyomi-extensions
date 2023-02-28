@@ -241,8 +241,10 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         return if (preferences.getBoolean("preferred_link_type", false)) {
             val videoUrl = KwikExtractor(client).getHlsStreamUrl(kwikUrl, referer = baseUrl)
             Video(
-                videoUrl, quality, videoUrl,
-                headers = Headers.headersOf("referer", "https://kwik.cx")
+                videoUrl,
+                quality,
+                videoUrl,
+                headers = Headers.headersOf("referer", "https://kwik.cx"),
             )
         } else {
             val videoUrl = KwikExtractor(client).getStreamUrlFromKwik(paheUrl)
@@ -259,7 +261,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             compareBy(
                 { it.quality.contains(quality) },
                 { it.quality.endsWith("eng", true) == shouldEndWithEng },
-            )
+            ),
         ).reversed()
     }
 
@@ -313,7 +315,8 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             key = "preferred_link_type"
             title = "Use HLS links"
             summary = """Enable this if you are having Cloudflare issues.
-                |Note that this will break the ability to seek inside of the video unless the episode is downloaded in advance.""".trimMargin()
+                |Note that this will break the ability to seek inside of the video unless the episode is downloaded in advance.
+            """.trimMargin()
             setDefaultValue(false)
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -325,7 +328,8 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             key = "preferred_cover_type"
             title = "Use Snapshot as Cover"
             summary = """Enable this if you are experiencing lag loading pages.
-                |To get real cover click on the anime to fetch the details""".trimMargin()
+                |To get real cover click on the anime to fetch the details
+            """.trimMargin()
             setDefaultValue(false)
 
             setOnPreferenceChangeListener { _, newValue ->

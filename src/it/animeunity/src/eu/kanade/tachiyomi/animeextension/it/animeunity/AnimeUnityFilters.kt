@@ -7,10 +7,10 @@ object AnimeUnityFilters {
 
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
         fun toQueryPart() = vals[state].second
     }
@@ -28,7 +28,7 @@ object AnimeUnityFilters {
 
     class GenreFilter : CheckBoxFilterList(
         "Genere",
-        AnimeUnityFiltersData.genere.map { CheckBoxVal(it.first, false) }
+        AnimeUnityFiltersData.genere.map { CheckBoxVal(it.first, false) },
     )
 
     class YearFilter : QueryPartFilter("Anno", AnimeUnityFiltersData.year)
@@ -54,7 +54,7 @@ object AnimeUnityFilters {
         StateFilter(),
         TypeFilter(),
         SeasonFilter(),
-        DubFilter()
+        DubFilter(),
     )
 
     data class FilterSearchParams(
@@ -65,7 +65,7 @@ object AnimeUnityFilters {
         val state: String = "",
         val type: String = "",
         val season: String = "",
-        val dub: String = ""
+        val dub: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
@@ -110,7 +110,7 @@ object AnimeUnityFilters {
             Pair("Special", "top-anime?type=Special"),
             Pair("Popolari", "top-anime?popular=true"),
             Pair("Preferiti", "top-anime?order=favorites"),
-            Pair("Più visti", "top-anime?order=most_viewed")
+            Pair("Più visti", "top-anime?order=most_viewed"),
         )
 
         val genere = arrayOf(
@@ -157,7 +157,7 @@ object AnimeUnityFilters {
             Pair("Thriller", "48"),
             Pair("Vampire", "20"),
             Pair("Yaoi", "28"),
-            Pair("Yuri", "36")
+            Pair("Yuri", "36"),
         )
 
         val order = arrayOf(
@@ -190,12 +190,12 @@ object AnimeUnityFilters {
             Pair("Inverno", "Inverno"),
             Pair("Primavera", "Primavera"),
             Pair("Estate", "Estate"),
-            Pair("Autunno", "Autunno")
+            Pair("Autunno", "Autunno"),
         )
 
         val dub = arrayOf(
             Pair("No", ""),
-            Pair("Sì", "true")
+            Pair("Sì", "true"),
         )
 
         val year = arrayOf(any) + (1969..2024).map {

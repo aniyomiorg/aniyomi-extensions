@@ -9,7 +9,6 @@ class FilemoonExtractor(private val client: OkHttpClient) {
 
     fun videoFromUrl(url: String): MutableList<Video>? {
         try {
-
             val jsE = client.newCall(GET(url)).execute().asJsoup().selectFirst("script:containsData(eval)")!!.data()
             val masterUrl = JsUnpacker(jsE).unpack().toString()
                 .substringAfter("{file:\"").substringBefore("\"}")

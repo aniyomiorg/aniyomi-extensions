@@ -109,7 +109,7 @@ class AnimeForce : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun getFilterList() = AnimeFilterList(
         AnimeFilter.Header("Nota: ignora la query di ricerca"),
         AnimeFilter.Separator(),
-        GenreFilter(getGenreList())
+        GenreFilter(getGenreList()),
     )
 
     private class GenreFilter(vals: Array<Pair<String, String>>) : UriPartFilter("Generi", vals)
@@ -165,7 +165,7 @@ class AnimeForce : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("Thriller", "thriller"),
         Pair("Vampiri", "vampiri"),
         Pair("Visual Novel", "visual-novel"),
-        Pair("Yaoi", "yaoi")
+        Pair("Yaoi", "yaoi"),
     )
 
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :
@@ -218,9 +218,13 @@ class AnimeForce : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val tabCElement = document.selectFirst("div.servers-container > div.tab-content > div.active")!!
         val selector = if (
             tabCElement.selectFirst(
-                "div > div[id=pills-tabContent]"
+                "div > div[id=pills-tabContent]",
             ) == null
-        ) "div.m-2 > a" else "div[id=pills-tabContent] > div > a"
+        ) {
+            "div.m-2 > a"
+        } else {
+            "div[id=pills-tabContent] > div > a"
+        }
 
         episodeList.addAll(
             tabCElement.select(selector).map { ani ->
@@ -229,12 +233,12 @@ class AnimeForce : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     episode_number = ani.text().substringBefore("-").toFloatOrNull() ?: 0F
                     url = ani.attr("href").substringAfter(baseUrl)
                 }
-            }
+            },
         )
 
         document.select("div.servers-container > div.tab-content > div[role=tabpanel]").not(".active").forEach {
             episodeList.addAll(
-                specialEpisodesFromElement(it, it.attr("id").substringAfter("-"), episodeList.size.toFloat())
+                specialEpisodesFromElement(it, it.attr("id").substringAfter("-"), episodeList.size.toFloat()),
             )
         }
 
@@ -264,10 +268,14 @@ class AnimeForce : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val headers = Headers.headersOf(
-            "Accept", "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5",
-            "Accept-Language", "en-US,en;q=0.5",
-            "Referer", "$baseUrl/",
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0"
+            "Accept",
+            "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5",
+            "Accept-Language",
+            "en-US,en;q=0.5",
+            "Referer",
+            "$baseUrl/",
+            "User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
         )
 
         val sourceElement = response.asJsoup().selectFirst("video > source")
@@ -279,8 +287,8 @@ class AnimeForce : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     response.request.url.toString(),
                     "Best",
                     sourceElement.attr("src"),
-                    headers = headers
-                )
+                    headers = headers,
+                ),
             )
         }
     }

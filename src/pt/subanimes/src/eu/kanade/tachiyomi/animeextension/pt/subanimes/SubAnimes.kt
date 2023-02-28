@@ -135,8 +135,10 @@ class SubAnimes : ParsedAnimeHttpSource() {
         } else {
             val params = SBFilters.getSearchParameters(filters)
 
-            if (params == SBFilters.FilterSearchParams()) // no filters
+            if (params == SBFilters.FilterSearchParams()) {
+                // no filters
                 return super.fetchSearchAnime(page, query, filters)
+            }
 
             client.newCall(searchAnimeRequest(page, query, params))
                 .asObservableSuccess()
@@ -154,10 +156,11 @@ class SubAnimes : ParsedAnimeHttpSource() {
         val body = FormBody.Builder().apply {
             add("action", "anime_search")
             add("posts_per_page", "12")
-            if (filters.adult)
+            if (filters.adult) {
                 add("age", "yes")
-            else
+            } else {
                 add("age", "no")
+            }
             add("format", filters.format)
             add("name", query)
             add("paged", "$page")

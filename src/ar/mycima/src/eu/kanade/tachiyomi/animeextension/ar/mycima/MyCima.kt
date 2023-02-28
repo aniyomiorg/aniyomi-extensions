@@ -73,14 +73,15 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (document.select(episodeListSelector()).isNullOrEmpty()) {
                 if (!document.select("mycima singlerelated.hasdivider ${popularAnimeSelector()}").isNullOrEmpty()) {
                     document.select("mycima singlerelated.hasdivider ${popularAnimeSelector()}").map { episodes.add(newEpisodeFromElement(it, "mSeries")) }
-                } else
+                } else {
                     episodes.add(newEpisodeFromElement(document.selectFirst("div.Poster--Single-begin > a")!!, "movie"))
+                }
             } else {
                 document.select(episodeListSelector()).map { episodes.add(newEpisodeFromElement(it)) }
                 document.selectFirst(seasonsNextPageSelector(seasonNumber))?.let {
                     seasonNumber++
                     addEpisodes(
-                        client.newCall(GET(it.attr("abs:href"), headers)).execute().asJsoup()
+                        client.newCall(GET(it.attr("abs:href"), headers)).execute().asJsoup(),
                     )
                 }
             }
@@ -93,11 +94,12 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         val epNum = getNumberFromEpsString(element.text())
         episode.setUrlWithoutDomain(if (type == "mSeries") element.select("a").attr("href") else element.attr("abs:href"))
-        if (type == "series")
+        if (type == "series") {
             episode.episode_number = when {
                 (epNum.isNotEmpty()) -> epNum.toFloat()
                 else -> 1F
             }
+        }
         episode.name = when (type) {
             "movie" -> "مشاهدة"
             "mSeries" -> element.select("a").attr("title")
@@ -256,7 +258,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         SearchCategoryList(searchCategoryNames),
         AnimeFilter.Separator(),
         AnimeFilter.Header("اقسام الموقع (تعمل فقط اذا كان البحث فارغ)"),
-        CategoryList(categoryNames)
+        CategoryList(categoryNames),
     )
 
     private class SearchCategoryList(categories: Array<String>) : AnimeFilter.Select<String>("بحث عن", categories)
@@ -273,7 +275,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         CatUnit("فيلم", "/page/"),
         CatUnit("مسلسل", "list/series/?page_number="),
         CatUnit("انمى", "list/anime/?page_number="),
-        CatUnit("برنامج", "list/tv/?page_number=")
+        CatUnit("برنامج", "list/tv/?page_number="),
     )
     private fun getCategoryList() = listOf(
         CatUnit("اختر", ""),

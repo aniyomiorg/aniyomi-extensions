@@ -114,7 +114,8 @@ class AnimesUp : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 when {
                     videoUrl.contains("/Player/Play") -> {
                         val newHeaders = Headers.headersOf(
-                            "referer", response.request.url.toString()
+                            "referer",
+                            response.request.url.toString(),
                         )
                         AnimesUpExtractor(client)
                             .videoFromUrl(videoUrl, quality, newHeaders)

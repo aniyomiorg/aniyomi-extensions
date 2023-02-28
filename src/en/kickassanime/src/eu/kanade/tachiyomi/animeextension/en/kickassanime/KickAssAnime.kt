@@ -56,7 +56,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     override val baseUrl by lazy {
         preferences.getString(
             "preferred_domain",
-            "https://www2.kickassanime.ro"
+            "https://www2.kickassanime.ro",
         )!!
     }
 
@@ -80,13 +80,16 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // Add non working server names here
     private val deadServers = listOf(
-        "BETASERVER1", "BETASERVER3", "DEVSTREAM",
-        "THETA-ORIGINAL-V4", "KICKASSANIME1"
+        "BETASERVER1",
+        "BETASERVER3",
+        "DEVSTREAM",
+        "THETA-ORIGINAL-V4",
+        "KICKASSANIME1",
     )
 
     private val workingServers = arrayOf(
         "StreamSB", "PINK-BIRD", "Doodstream", "MAVERICKKI", "BETA-SERVER", "DAILYMOTION",
-        "BETAPLAYER", "Vidstreaming", "SAPPHIRE-DUCK", "KICKASSANIMEV2", "ORIGINAL-QUALITY-V2"
+        "BETAPLAYER", "Vidstreaming", "SAPPHIRE-DUCK", "KICKASSANIMEV2", "ORIGINAL-QUALITY-V2",
     )
 
     override fun popularAnimeRequest(page: Int): Request =
@@ -99,8 +102,8 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             SAnime.create().apply {
                 setUrlWithoutDomain(
                     item.jsonObject["slug"]!!.jsonPrimitive.content.substringBefore(
-                        "/episode"
-                    )
+                        "/episode",
+                    ),
                 )
                 thumbnail_url =
                     "$baseUrl/uploads/" + item.jsonObject["poster"]!!.jsonPrimitive.content
@@ -152,7 +155,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         when {
             link.contains("gogoplay4.com") -> {
                 videoList.addAll(
-                    extractGogoVideo(link)
+                    extractGogoVideo(link),
                 )
             }
             link.contains("betaplayer.life") -> {
@@ -161,7 +164,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                     url = "https:$url"
                 }
                 videoList.addAll(
-                    extractBetaVideo(url, "BETAPLAYER")
+                    extractBetaVideo(url, "BETAPLAYER"),
                 )
             }
             else -> {
@@ -196,7 +199,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                                 else -> null
                             }
                         }.getOrNull()
-                    }.filterNotNull().flatten()
+                    }.filterNotNull().flatten(),
                 )
             }
         }
@@ -256,7 +259,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             val quality = it.jsonObject["label"]!!.jsonPrimitive.content + " $server"
             val videoUrl = it.jsonObject["file"]!!.jsonPrimitive.content
             playlist.add(
-                Video(videoUrl, quality, videoUrl, headers = headers)
+                Video(videoUrl, quality, videoUrl, headers = headers),
             )
         }
         return playlist
@@ -268,8 +271,11 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         var playlistArray = JsonArray(arrayListOf())
 
         document.selectFirst("script:containsData(document.write)")?.data()?.let {
-            val pattern = if (server.contains("Beta", true)) Pattern.compile(".*decode\\(\"(.*)\"\\)")
-            else Pattern.compile(".*atob\\(\"(.*)\"\\)")
+            val pattern = if (server.contains("Beta", true)) {
+                Pattern.compile(".*decode\\(\"(.*)\"\\)")
+            } else {
+                Pattern.compile(".*atob\\(\"(.*)\"\\)")
+            }
             val matcher = pattern.matcher(it)
             if (matcher.find()) {
                 val player = matcher.group(1)!!.toString().decodeBase64()
@@ -287,7 +293,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             val quality = it.jsonObject["label"]!!.jsonPrimitive.content + " $server"
             val videoUrl = it.jsonObject["file"]!!.jsonPrimitive.content
             playlist.add(
-                Video(videoUrl, quality, videoUrl, headers = headers)
+                Video(videoUrl, quality, videoUrl, headers = headers),
             )
         }
         return playlist
@@ -392,8 +398,8 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         return this.sortedWith(
             compareBy(
                 { it.quality.contains(quality) },
-                { it.quality.contains(server) }
-            )
+                { it.quality.contains(server) },
+            ),
         ).reversed()
     }
 
@@ -554,22 +560,22 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             Pair("uk-UK", "Ukrainian"),
             Pair("he-IL", "Hebrew"),
             Pair("ro-RO", "Romanian"),
-            Pair("sv-SE", "Swedish")
+            Pair("sv-SE", "Swedish"),
         ).firstOrNull { it.first == this }?.second ?: ""
     }
 
     @Serializable
     data class DailyQuality(
-        val qualities: Auto
+        val qualities: Auto,
     ) {
         @Serializable
         data class Auto(
-            val auto: List<Item>
+            val auto: List<Item>,
         ) {
             @Serializable
             data class Item(
                 val type: String,
-                val url: String
+                val url: String,
             )
         }
     }
@@ -577,13 +583,13 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     @Serializable
     data class Sapphire(
         val subtitles: List<Subtitle>,
-        val streams: List<Stream>
+        val streams: List<Stream>,
     ) {
 
         @Serializable
         data class Subtitle(
             val language: String,
-            val url: String
+            val url: String,
         )
 
         @Serializable
@@ -593,7 +599,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             @SerialName("hardsub_lang")
             val hardSub: String,
             val url: String,
-            val format: String
+            val format: String,
         )
     }
 

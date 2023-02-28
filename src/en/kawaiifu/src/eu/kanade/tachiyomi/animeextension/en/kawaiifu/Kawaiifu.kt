@@ -53,7 +53,7 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         element.select("a.mv-namevn").attr("href").toHttpUrlOrNull()?.let {
             anime.setUrlWithoutDomain(
-                it.encodedPath
+                it.encodedPath,
             )
         }
         anime.title = element.select("a.mv-namevn").text()
@@ -110,7 +110,7 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     it.select("source").attr("src"),
                     "${it.select("source").attr("data-quality")}p ($serverName)",
                     it.select("source").attr("src"),
-                )
+                ),
             )
         }
 
@@ -130,7 +130,7 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         it.select("source").attr("src"),
                         "${it.select("source").attr("data-quality")}p ($serverName)",
                         it.select("source").attr("src"),
-                    )
+                    ),
                 )
             }
         }
@@ -171,7 +171,7 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         element.select("a.thumb").attr("href").toHttpUrlOrNull()?.let {
             anime.setUrlWithoutDomain(
-                it.encodedPath
+                it.encodedPath,
             )
         }
         anime.title = element.select("div.info h4 a:last-child").text()

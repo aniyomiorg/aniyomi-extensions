@@ -150,7 +150,9 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 !genre.isBlank() -> GET("$baseUrl/genero/$genre/page/$page/${char.replace("todos", "")}")
                 else -> GET("$baseUrl/anime/page/$page/letra/$char")
             }
-        } else GET("$baseUrl/busca.php?s=$query&submit=Buscar")
+        } else {
+            GET("$baseUrl/busca.php?s=$query&submit=Buscar")
+        }
     }
 
     // Anime Details

@@ -69,8 +69,8 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val seasonsHtml = client.newCall(
                 GET(
                     seriesLink,
-                    headers = Headers.headersOf("Referer", document.location())
-                )
+                    headers = Headers.headersOf("Referer", document.location()),
+                ),
             ).execute().asJsoup()
             val seasonsElements = seasonsHtml.select("section.SeasonBx.AACrdn a")
             seasonsElements.forEach {
@@ -185,8 +185,8 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoUrlStart = client.newCall(
             GET(
                 "https://dood.$doodTld/pass_md5/$md5",
-                Headers.headersOf("referer", url)
-            )
+                Headers.headersOf("referer", url),
+            ),
         ).execute().body.string()
         return "$videoUrlStart$randomString?token=$token&expiry=$expiry"
     }
@@ -283,7 +283,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun getFilterList() = AnimeFilterList(
         AnimeFilter.Header("NOTE: Ignored if using text search!"),
         AnimeFilter.Separator(),
-        GenreFilter(getGenreList())
+        GenreFilter(getGenreList()),
     )
 
     private class GenreFilter(vals: Array<Pair<String, String>>) : UriPartFilter("Genres", vals)
@@ -310,7 +310,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("Thriller", "thriller"),
         Pair("War", "war"),
         Pair("War & Politics", "war-politics"),
-        Pair("Western", "western")
+        Pair("Western", "western"),
     )
 
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :

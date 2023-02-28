@@ -182,7 +182,7 @@ class AnimeXin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             document.select("select.mirror > option[value~=.]").parallelMap { source ->
                 runCatching {
                     var decoded = Jsoup.parse(
-                        String(Base64.decode(source.attr("value"), Base64.DEFAULT))
+                        String(Base64.decode(source.attr("value"), Base64.DEFAULT)),
                     ).select("iframe[src~=.]").attr("src")
                     if (!decoded.startsWith("http")) decoded = "https:$decoded"
                     val prefix = "${source.text()} - "
@@ -246,7 +246,7 @@ class AnimeXin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         else -> null
                     }
                 }.getOrNull()
-            }.filterNotNull().flatten()
+            }.filterNotNull().flatten(),
         )
 
         return videoList.sort()
@@ -268,7 +268,7 @@ class AnimeXin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             compareBy(
                 { it.quality.contains(quality) },
                 { it.quality.contains(language, true) },
-            )
+            ),
         ).reversed()
     }
 

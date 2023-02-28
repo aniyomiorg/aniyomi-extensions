@@ -14,7 +14,7 @@ class HxFileExtractor(private val client: OkHttpClient) {
         val unpacked = JsUnpacker.unpackAndCombine(packed) ?: return emptyList()
         val videoUrl = unpacked.substringAfter("\"type\":\"video").substringAfter("\"file\":\"").substringBefore("\"")
         return listOf(
-            Video(videoUrl, "Original - $name", videoUrl, headers = Headers.headersOf("Referer", "https://hxfile.co/"))
+            Video(videoUrl, "Original - $name", videoUrl, headers = Headers.headersOf("Referer", "https://hxfile.co/")),
         )
     }
 }

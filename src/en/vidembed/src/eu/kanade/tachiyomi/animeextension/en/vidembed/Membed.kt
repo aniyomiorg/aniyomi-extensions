@@ -140,7 +140,7 @@ class Membed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                 url,
                                 parsedQuality,
                                 videoUrlParse(url, location),
-                                headers = videoHeaders
+                                headers = videoHeaders,
                             ).let {
                                 listOf(it)
                             }

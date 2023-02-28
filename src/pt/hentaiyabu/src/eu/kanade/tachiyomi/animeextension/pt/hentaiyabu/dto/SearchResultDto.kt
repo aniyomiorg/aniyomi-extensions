@@ -14,7 +14,7 @@ data class SearchResultDto(
     val videos: Int,
     val cover: String,
     val type: String,
-    val slug: String
+    val slug: String,
 )
 
 object IntSerializer : JsonTransformingSerializer<Int>(Int.serializer()) {

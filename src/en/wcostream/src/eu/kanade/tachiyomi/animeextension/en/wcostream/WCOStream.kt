@@ -109,7 +109,7 @@ class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             (String(Base64.decode(it, Base64.DEFAULT)).replace("""\D""".toRegex(), "").toInt() - shiftNumber).toChar().toString()
         }
         val iframeUrl = Jsoup.parse(
-            iframeStuff
+            iframeStuff,
         ).selectFirst("iframe")!!.attr("src")
 
         val iframeHeaders = Headers.headersOf(
@@ -121,10 +121,10 @@ class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "Sec-Fetch-Mode", "navigate",
             "Sec-Fetch-Site", "cross-site",
             "Upgrade-Insecure-Requests", "1",
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36 Edg/88.0.705.63"
+            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36 Edg/88.0.705.63",
         )
         val iframeSoup = client.newCall(
-            GET(iframeUrl, headers = iframeHeaders)
+            GET(iframeUrl, headers = iframeHeaders),
         ).execute().asJsoup()
         val getVideoLinkScript = iframeSoup.selectFirst("script:containsData(getJSON)")!!.data()
         val getVideoLinkUrl = getVideoLinkScript.substringAfter("getJSON(\"").substringBefore("\"")
@@ -134,21 +134,25 @@ class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "Host", iframeUrl.toHttpUrl().host,
             "Referer", iframeUrl,
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36 Edg/88.0.705.63",
-            "X-Requested-With", "XMLHttpRequest"
+            "X-Requested-With", "XMLHttpRequest",
         )
 
         val getVideoLinkBody = client.newCall(
-            GET("https://${iframeUrl.toHttpUrl().host}$getVideoLinkUrl", headers = getVideoHeaders)
+            GET("https://${iframeUrl.toHttpUrl().host}$getVideoLinkUrl", headers = getVideoHeaders),
         ).execute().body.string()
 
         val parsed = json.decodeFromString<GetVideoResponse>(getVideoLinkBody)
         val videoUrl = "${parsed.server}/getvid?evid=${parsed.enc}"
 
         val videoHeaders = Headers.headersOf(
-            "Accept", "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5",
-            "Host", videoUrl.toHttpUrl().host,
-            "Referer", iframeUrl.toHttpUrl().host,
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36 Edg/88.0.705.63",
+            "Accept",
+            "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5",
+            "Host",
+            videoUrl.toHttpUrl().host,
+            "Referer",
+            iframeUrl.toHttpUrl().host,
+            "User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36 Edg/88.0.705.63",
         )
         videoList.add(Video(videoUrl, "Video 480p", videoUrl, headers = videoHeaders))
 
@@ -156,8 +160,11 @@ class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val videoUrl = "${parsed.server}/getvid?evid=${parsed.hd}"
             videoList.add(
                 Video(
-                    videoUrl, "Video 720p", videoUrl, headers = videoHeaders
-                )
+                    videoUrl,
+                    "Video 720p",
+                    videoUrl,
+                    headers = videoHeaders,
+                ),
             )
         }
 
@@ -165,8 +172,11 @@ class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val videoUrl = "${parsed.server}/getvid?evid=${parsed.fhd}"
             videoList.add(
                 Video(
-                    videoUrl, "Video 1080p", videoUrl, headers = videoHeaders
-                )
+                    videoUrl,
+                    "Video 1080p",
+                    videoUrl,
+                    headers = videoHeaders,
+                ),
             )
         }
 
@@ -178,7 +188,7 @@ class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val enc: String,
         val server: String,
         val hd: String? = null,
-        val fhd: String? = null
+        val fhd: String? = null,
     )
 
     override fun videoListSelector() = throw Exception("not used")
@@ -190,7 +200,7 @@ class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             compareBy(
                 { it.quality.contains(quality) },
                 { it.quality.contains("720") },
-            )
+            ),
         ).reversed()
     }
 
@@ -221,7 +231,7 @@ class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "Host", baseUrl.substringAfter("https://"),
             "Origin", baseUrl,
             "Referer", "$baseUrl/search",
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0"
+            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
         )
         return POST("$baseUrl/search", body = body, headers = headers)
     }
@@ -277,7 +287,7 @@ class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     data class LinkData(
         val title: String,
         val url: String,
-        val thumbnailUrl: String
+        val thumbnailUrl: String,
     )
 
     private fun LinkData.toJsonString(): String {

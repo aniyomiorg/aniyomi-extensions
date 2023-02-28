@@ -75,7 +75,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         name = "Episodio 0"
                         episode_number = 0f
                         setUrlWithoutDomain("$episodeLink/0/")
-                    }
+                    },
                 )
             }
         }
@@ -233,7 +233,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
-            element.select("div.row.g-0 div.col-md-5.custom_thumb2 a").attr("href")
+            element.select("div.row.g-0 div.col-md-5.custom_thumb2 a").attr("href"),
         )
         anime.title = element.select("div.row.g-0 div.col-md-7 div.card-body h5.card-title a").text()
         anime.thumbnail_url = element.select("div.row.g-0 div.col-md-5.custom_thumb2 a img").attr("src")
@@ -255,7 +255,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Tags("Año"),
         AnimeFilter.Header("Filtros de ordenamiento"),
         OrderByFilter(),
-        SortModifiers()
+        SortModifiers(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -301,8 +301,8 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Policial", "policial"),
             Pair("Psicologico", "psicologico"),
             Pair("Thriller", "thriller"),
-            Pair("Isekai", "isekai")
-        )
+            Pair("Isekai", "isekai"),
+        ),
     )
 
     private class TypeFilter : UriPartFilter(
@@ -313,8 +313,8 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Películas", "peliculas"),
             Pair("Especiales", "especiales"),
             Pair("OVAS", "ovas"),
-            Pair("ONAS", "onas")
-        )
+            Pair("ONAS", "onas"),
+        ),
     )
 
     private class StateFilter : UriPartFilter(
@@ -323,8 +323,8 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("<Cualquiera>", ""),
             Pair("En emisión", "emision"),
             Pair("Finalizado", "finalizados"),
-            Pair("Por Estrenar", "estrenos")
-        )
+            Pair("Por Estrenar", "estrenos"),
+        ),
     )
 
     private class SeasonFilter : UriPartFilter(
@@ -335,7 +335,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Verano", "verano"),
             Pair("Otoño", "otoño"),
             Pair("Invierno", "invierno"),
-        )
+        ),
     )
 
     private class OrderByFilter : UriPartFilter(
@@ -343,7 +343,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         arrayOf(
             Pair("Por fecha", "fecha"),
             Pair("Por nombre", "nombre"),
-        )
+        ),
     )
 
     private class SortModifiers : UriPartFilter(
@@ -351,7 +351,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         arrayOf(
             Pair("Descendente", "desc"),
             Pair("Ascendente", "asc"),
-        )
+        ),
     )
 
     private class Tags(name: String) : AnimeFilter.Text(name)
@@ -365,7 +365,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val qualities = arrayOf(
             "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", // Fembed
             "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", // Okru
-            "Xtreme S", "HentaiJk", "Nozomi", "Desu" // video servers without resolution
+            "Xtreme S", "HentaiJk", "Nozomi", "Desu", // video servers without resolution
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"

@@ -90,7 +90,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
         """.trimIndent().toRequestBody("application/json".toMediaType())
 
         val response = client.newCall(
-            POST("$baseUrl/user/login", body = body, headers = headers)
+            POST("$baseUrl/user/login", body = body, headers = headers),
         ).execute()
         if (response.code != 200) throw Exception("Failed to log in")
         val parsed = json.decodeFromString<LoginResponse>(response.body.string())
@@ -243,11 +243,11 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
     private open class SelectFilter(
         displayName: String,
         val vals: Array<Pair<String, String>>,
-        defaultValue: String? = null
+        defaultValue: String? = null,
     ) : AnimeFilter.Select<String>(
         displayName,
         vals.map { it.first }.toTypedArray(),
-        vals.indexOfFirst { it.second == defaultValue }.takeIf { it != -1 } ?: 0
+        vals.indexOfFirst { it.second == defaultValue }.takeIf { it != -1 } ?: 0,
     ) {
         fun selectedValue(): String = vals[state].second
     }
@@ -262,7 +262,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
             Pair("Kids", "kids"),
             // Pair("Sala VVVVID (Sperimentale)", "tvod"),
         ),
-        defaultOrder
+        defaultOrder,
     )
 
     override fun getFilterList(): AnimeFilterList {
@@ -274,7 +274,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
             AnimeFilter.Header("Sottotipo (selezionane uno)"),
             SubPageFilter(getSubPageList()),
             GenreFilter(getGenreList()),
-            AZFilter(getAZList())
+            AZFilter(getAZList()),
         )
 
         return AnimeFilterList(filters)
@@ -283,39 +283,42 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
     // Mutable filters
 
     private class SubPageFilter(values: Array<Pair<String, String>>, defaultOrder: String? = null) : SelectFilter(
-        "Seleziona la sottopagina", values,
-        defaultOrder
+        "Seleziona la sottopagina",
+        values,
+        defaultOrder,
     )
 
     private var subPageList: Array<Pair<String, String>>? = null
 
     private fun getSubPageList(): Array<Pair<String, String>> {
         return subPageList ?: arrayOf(
-            Pair("Premere reset per aggiornare i filtri", "")
+            Pair("Premere reset per aggiornare i filtri", ""),
         )
     }
 
     private class GenreFilter(values: Array<Pair<String, String>>) : SelectFilter(
-        "Generi", values
+        "Generi",
+        values,
     )
 
     private var genreList: Array<Pair<String, String>>? = null
 
     private fun getGenreList(): Array<Pair<String, String>> {
         return genreList ?: arrayOf(
-            Pair("Premere reset per aggiornare i filtri", "")
+            Pair("Premere reset per aggiornare i filtri", ""),
         )
     }
 
     private class AZFilter(values: Array<Pair<String, String>>) : SelectFilter(
-        "A - Z", values
+        "A - Z",
+        values,
     )
 
     private var azList: Array<Pair<String, String>>? = null
 
     private fun getAZList(): Array<Pair<String, String>> {
         return azList ?: arrayOf(
-            Pair("Premere reset per aggiornare i filtri", "")
+            Pair("Premere reset per aggiornare i filtri", ""),
         )
     }
 
@@ -438,9 +441,9 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
         return Pair(
             GET(
                 "$baseUrl/vvvvid/ondemand/${mediaId.show_id}/season/${mediaId.season_id}?video_id=${mediaId.video_id}&conn_id=$connId",
-                headers = headers
+                headers = headers,
             ),
-            mediaId.video_id
+            mediaId.video_id,
         )
     }
 
@@ -456,7 +459,6 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
 
         when {
             realUrl.endsWith(".mpd") -> {
-
                 videoList.add(videoFromDash(realUrl, "HD"))
 
                 if (video.embed_info_sd != null) {
@@ -473,7 +475,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun updateFilters(channelName: String, setId: String = "") {
         val channels = client.newCall(
-            GET("$baseUrl/vvvvid/ondemand/$channelName/channels?conn_id=$connId")
+            GET("$baseUrl/vvvvid/ondemand/$channelName/channels?conn_id=$connId"),
         ).execute()
         val channelsJson = json.decodeFromString<ChannelsResponse>(channels.body.string())
 
@@ -507,14 +509,14 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
                     genrePages.addAll(
                         it.category!!.map { t ->
                             Pair(t.name, "${it.id},${t.id}")
-                        }
+                        },
                     )
                 }
                 "A - Z" -> {
                     azPages.addAll(
                         it.filter!!.filter { s -> s[0].isLetter() }.map { t ->
                             Pair(t.uppercase(), "${it.id},$t")
-                        }
+                        },
                     )
                 }
             }
@@ -531,11 +533,11 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
             "Accept", "*/*",
             "Accept-Language", "en-US,en;q=0.5",
             "Origin", "https://www.vvvvid.it",
-            "Referer", "https://www.vvvvid.it/"
+            "Referer", "https://www.vvvvid.it/",
         )
 
         val dashContents = client.newCall(
-            GET(url, headers = dashHeaders)
+            GET(url, headers = dashHeaders),
         ).execute().body.string()
 
         val baseVideoUrl = url.substringBeforeLast("/")
@@ -552,13 +554,13 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
                 baseVideoUrl,
                 name,
                 "$baseVideoUrl/$videoUrl",
-                audioTracks = audioTracks
+                audioTracks = audioTracks,
             )
         } catch (_: Error) {
             Video(
                 baseVideoUrl,
                 name,
-                "$baseVideoUrl/$videoUrl"
+                "$baseVideoUrl/$videoUrl",
             )
         }
     }
@@ -578,7 +580,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
         val quality = preferences.getString("preferred_quality", "HD")!!
 
         return this.sortedWith(
-            compareBy { it.quality.contains(quality) }
+            compareBy { it.quality.contains(quality) },
         ).reversed()
     }
 

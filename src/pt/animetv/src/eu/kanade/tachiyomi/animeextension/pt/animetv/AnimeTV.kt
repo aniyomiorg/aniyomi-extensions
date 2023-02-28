@@ -90,6 +90,7 @@ class AnimeTV : AnimeHttpSource() {
         anime.initialized = true
         return anime
     }
+
     // == PARSE EPISODES ==
     override fun episodeListRequest(anime: SAnime): Request = GET("$baseUrl?cat_id=" + anime.url.substring(42))
 
@@ -113,6 +114,7 @@ class AnimeTV : AnimeHttpSource() {
         for (ova in ovas) { episodes.add(0, ova) }
         return episodes
     }
+
     // == PARSE VIDEOS ==
     override fun videoListRequest(episode: SEpisode): Request {
         return GET("$baseUrl?episodios=" + episode.url.substring(47))

@@ -7,7 +7,7 @@ import okhttp3.OkHttpClient
 
 class GenericExtractor(
     private val client: OkHttpClient,
-    private val headers: Headers
+    private val headers: Headers,
 ) {
 
     fun getVideoList(url: String, qualityStr: String): List<Video> {

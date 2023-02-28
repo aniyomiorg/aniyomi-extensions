@@ -227,7 +227,7 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Type("Recently Added Raw", "recently-added-raw"),
         Type("Drama Movie", "movies"),
         Type("KShow", "kshow"),
-        Type("Ongoing Series", "ongoing-series")
+        Type("Ongoing Series", "ongoing-series"),
     )
 
     // Preferences

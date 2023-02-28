@@ -19,8 +19,8 @@ class EvoloadExtractor(private val client: OkHttpClient) {
         val file = client.newCall(
             POST(
                 "https://evoload.io/SecurePlayer",
-                body = "{\"code\":\"$id\",\"token\":\"ok\",\"csrv_token\":\"$csrv_token\",\"pass\":\"$captchaPass\",\"reff\":\"https://filmpalast.to/\"}".toRequestBody("application/json".toMediaType())
-            )
+                body = "{\"code\":\"$id\",\"token\":\"ok\",\"csrv_token\":\"$csrv_token\",\"pass\":\"$captchaPass\",\"reff\":\"https://filmpalast.to/\"}".toRequestBody("application/json".toMediaType()),
+            ),
         ).execute().body.string()
 
         if (file.contains("backup")) {

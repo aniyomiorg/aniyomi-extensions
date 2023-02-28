@@ -19,7 +19,9 @@ class MixDropExtractor(private val client: OkHttpClient) {
         val quality = ("MixDrop").let {
             if (lang.isNotBlank()) {
                 "$it($lang)"
-            } else it
+            } else {
+                it
+            }
         }
         val referer = Headers.headersOf("Referer", "https://mixdrop.co/")
         return listOf(Video(url, quality, videoUrl, headers = referer))

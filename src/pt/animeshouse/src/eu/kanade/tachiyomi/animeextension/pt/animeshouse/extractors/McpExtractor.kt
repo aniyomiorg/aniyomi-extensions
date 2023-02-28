@@ -7,7 +7,7 @@ import okhttp3.OkHttpClient
 
 class McpExtractor(
     private val client: OkHttpClient,
-    private val headers: Headers
+    private val headers: Headers,
 ) {
 
     private val REGEX_EP_ID = Regex("ss,\"(\\d+)\"")

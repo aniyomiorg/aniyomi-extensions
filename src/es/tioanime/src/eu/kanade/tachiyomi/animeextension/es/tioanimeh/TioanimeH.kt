@@ -80,7 +80,7 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
         val serverList = document.selectFirst("script:containsData(var videos =)")!!.data().substringAfter("var videos = [[").substringBefore("]];")
             .replace("\"", "").split("],[")
 
-        serverList.forEach() {
+        serverList.forEach {
             val servers = it.split(",")
             val serverName = servers[0]
             val serverUrl = servers[1].replace("\\/", "/")

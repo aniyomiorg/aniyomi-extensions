@@ -104,8 +104,10 @@ class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
         val videoUrl = videoData.uri.stream
         val subtitleLangs = videoData.metadata.subtitles
         val headers = Headers.headersOf(
-            "referer", baseUrl,
-            "user-agent", AO_USER_AGENT,
+            "referer",
+            baseUrl,
+            "user-agent",
+            AO_USER_AGENT,
         )
         val video = try {
             val subtitles = videoData.uri.subtitles.keys.toList().sortSubs().map {
@@ -223,10 +225,10 @@ private const val PREF_SUB_TITLE = "Preferred sub language"
 private val PREF_SUB_ENTRIES = arrayOf(
     "العربية", "Deutsch", "English", "Español (Spain)",
     "Español (Latin)", "Français", "Italiano",
-    "Português (Brasil)", "Русский"
+    "Português (Brasil)", "Русский",
 )
 private val PREF_SUB_VALUES = arrayOf(
     "ar-ME", "de-DE", "en-US", "es-ES",
     "es-LA", "fr-FR", "it-IT",
-    "pt-BR", "ru-RU"
+    "pt-BR", "ru-RU",
 )

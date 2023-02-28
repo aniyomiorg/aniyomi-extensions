@@ -15,12 +15,12 @@ import okhttp3.OkHttpClient
 data class FembedResponse(
     val success: Boolean,
     val data: List<FembedVideo> = emptyList(),
-    val captions: List<Caption> = emptyList()
+    val captions: List<Caption> = emptyList(),
 ) {
     @Serializable
     data class FembedVideo(
         val file: String,
-        val label: String
+        val label: String,
     )
 
     @Serializable
@@ -64,16 +64,19 @@ class FembedExtractor(private val client: OkHttpClient) {
                     jsonResponse.captions.map {
                         Track(
                             "https://${url.toHttpUrl().host}/asset/userdata/$userId/caption/${it.hash}/${it.id}.${it.extension}",
-                            it.language
+                            it.language,
                         )
-                    }
+                    },
                 )
             } catch (a: Exception) { }
 
             jsonResponse.data.map {
                 val quality = ("Fembed:${it.label}").let {
-                    if (prefix.isNotBlank()) "$prefix $it"
-                    else it
+                    if (prefix.isNotBlank()) {
+                        "$prefix $it"
+                    } else {
+                        it
+                    }
                 }
                 try {
                     Video(it.file, quality, it.file, subtitleTracks = subtitleList)

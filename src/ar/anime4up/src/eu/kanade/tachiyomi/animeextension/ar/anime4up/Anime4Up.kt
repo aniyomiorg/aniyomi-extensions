@@ -422,7 +422,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Genre("مغامرات", "%d9%85%d8%ba%d8%a7%d9%85%d8%b1%d8%a7%d8%aa/"),
         Genre("موسيقي", "%d9%85%d9%88%d8%b3%d9%8a%d9%82%d9%8a/"),
         Genre("ميكا", "%d9%85%d9%8a%d9%83%d8%a7/"),
-        Genre("نفسي", "%d9%86%d9%81%d8%b3%d9%8a/")
+        Genre("نفسي", "%d9%86%d9%81%d8%b3%d9%8a/"),
     )
 
     private fun getTypeList() = listOf(
@@ -431,7 +431,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Type("ONA", "ona1"),
         Type("OVA", "ova1"),
         Type("Special", "special1"),
-        Type("TV", "tv2")
+        Type("TV", "tv2"),
 
     )
 
@@ -439,7 +439,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Status("أختر", ""),
         Status("لم يعرض بعد", "%d9%84%d9%85-%d9%8a%d8%b9%d8%b1%d8%b6-%d8%a8%d8%b9%d8%af"),
         Status("مكتمل", "complete"),
-        Status("يعرض الان", "%d9%8a%d8%b9%d8%b1%d8%b6-%d8%a7%d9%84%d8%a7%d9%86-1")
+        Status("يعرض الان", "%d9%8a%d8%b9%d8%b1%d8%b6-%d8%a7%d9%84%d8%a7%d9%86-1"),
 
     )
 }

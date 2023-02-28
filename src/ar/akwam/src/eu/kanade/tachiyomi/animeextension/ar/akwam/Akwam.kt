@@ -229,13 +229,13 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private class RatingSFilter(vals: Array<Pair<String?, String>>) : UriPartFilter("التقييم", vals)
     private fun getTypeFilter(): Array<Pair<String?, String>> = arrayOf(
         Pair("movies", "افلام"),
-        Pair("series", "مسلسلات")
+        Pair("series", "مسلسلات"),
     )
     private fun getSectionFilter(): Array<Pair<String?, String>> = arrayOf(
         Pair("0", "الكل"),
         Pair("movie", "افلام"),
         Pair("series", "مسلسلات"),
-        Pair("show", "تلفزيون")
+        Pair("show", "تلفزيون"),
     )
 
     private fun getRatingFilter(): Array<Pair<String?, String>> = arrayOf(
@@ -248,7 +248,7 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("6", "6+"),
         Pair("7", "7+"),
         Pair("8", "8+"),
-        Pair("9", "9+")
+        Pair("9", "9+"),
     )
 
     private fun getFormatFilter(): Array<Pair<String?, String>> = arrayOf(
@@ -266,7 +266,7 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("HDTC", "HDTC"),
         Pair("BDRIP", "BDRIP"),
         Pair("HDRIP", "HDRIP"),
-        Pair("HC+HDRIP", "HC HDRIP")
+        Pair("HC+HDRIP", "HC HDRIP"),
     )
 
     private fun getQualityFilter(): Array<Pair<String?, String>> = arrayOf(
@@ -286,7 +286,7 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("30", "اجنبي"),
         Pair("31", "هندي"),
         Pair("32", "تركي"),
-        Pair("33", "اسيوي")
+        Pair("33", "اسيوي"),
     )
 
     private fun getCategorySFilter(): Array<Pair<String?, String>> = arrayOf(
@@ -315,7 +315,7 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("22", "رعب"),
         Pair("21", "جريمة"),
         Pair("19", "مغامرة"),
-        Pair("91", "غربي")
+        Pair("91", "غربي"),
     )
 
     private fun getRatingSFilter(): Array<Pair<String?, String>> = arrayOf(
@@ -328,7 +328,7 @@ class Akwam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("6", "6+"),
         Pair("7", "7+"),
         Pair("8", "8+"),
-        Pair("9", "9+")
+        Pair("9", "9+"),
     )
 
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String?, String>>) :

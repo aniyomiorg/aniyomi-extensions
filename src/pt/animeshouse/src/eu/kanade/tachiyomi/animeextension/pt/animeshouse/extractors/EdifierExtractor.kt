@@ -7,7 +7,7 @@ import okhttp3.OkHttpClient
 
 class EdifierExtractor(
     private val client: OkHttpClient,
-    private val headers: Headers
+    private val headers: Headers,
 ) {
 
     private val REGEX_EDIFIER = Regex(""""file":"(.*?)","label":"(\S+?)"""")

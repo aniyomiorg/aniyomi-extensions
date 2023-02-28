@@ -106,15 +106,17 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .add("type", player.attr("data-type"))
             .build()
         val doc = client.newCall(
-            POST("$baseUrl/wp-admin/admin-ajax.php", headers, body)
+            POST("$baseUrl/wp-admin/admin-ajax.php", headers, body),
         )
             .execute()
             .asJsoup()
         val iframe = doc.selectFirst("iframe")!!
         return iframe.attr("src").let {
-            if (it.startsWith("/redplay"))
+            if (it.startsWith("/redplay")) {
                 RedplayBypasser(client, headers).fromUrl(baseUrl + it)
-            else it
+            } else {
+                it
+            }
         }
     }
 
@@ -298,7 +300,7 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
         return sortedWith(
-            compareBy { it.quality.contains(quality) }
+            compareBy { it.quality.contains(quality) },
         ).reversed()
     }
 
@@ -312,8 +314,11 @@ class AnimesHouse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Qualidade preferida"
         private val PREF_QUALITY_ENTRIES = arrayOf(
-            "SD - 240p", "SD - 360p", "SD - 480p",
-            "HD - 720p", "FULLHD - 1080p"
+            "SD - 240p",
+            "SD - 360p",
+            "SD - 480p",
+            "HD - 720p",
+            "FULLHD - 1080p",
         )
         private val PREF_QUALITY_VALUES = arrayOf("240p", "360p", "480p", "720p", "1080p")
     }

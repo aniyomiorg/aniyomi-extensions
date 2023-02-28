@@ -74,8 +74,8 @@ class Movies4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val seasonsHtml = client.newCall(
                 GET(
                     seasonUrl,
-                    headers = Headers.headersOf("Referer", document.location())
-                )
+                    headers = Headers.headersOf("Referer", document.location()),
+                ),
             ).execute().asJsoup()
             val seasonsElements = seasonsHtml.select("div.col-6.col-sm-4.col-md-3.col-xl-2 div.card")
             seasonsElements.forEach {
@@ -101,7 +101,7 @@ class Movies4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodesHtml = client.newCall(
             GET(
                 seasonId,
-            )
+            ),
         ).execute().asJsoup()
         val episodeElements = episodesHtml.select("div.col-6.col-sm-4.col-md-3.col-xl-2")
         return episodeElements.map { episodeFromElement(it, seasonName) }
@@ -322,6 +322,6 @@ class Movies4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Genre("كوميديا", "38"),
         Genre("مغامرة", "39"),
         Genre("موسيقية", "40"),
-        Genre("وثائقية", "41")
+        Genre("وثائقية", "41"),
     )
 }

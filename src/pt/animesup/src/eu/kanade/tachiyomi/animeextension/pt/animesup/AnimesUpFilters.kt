@@ -7,10 +7,10 @@ object AnimesUpFilters {
 
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
         fun toQueryPart() = vals[state].second
     }
@@ -25,11 +25,11 @@ object AnimesUpFilters {
 
     val filterList = AnimeFilterList(
         AnimeFilter.Header(AnimesUpFiltersData.IGNORE_SEARCH_MSG),
-        GenreFilter()
+        GenreFilter(),
     )
 
     data class FilterSearchParams(
-        val genre: String = ""
+        val genre: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
@@ -70,7 +70,7 @@ object AnimesUpFilters {
             Pair("Superpoderes", "superpoderes"),
             Pair("Vampiro", "vampiro"),
             Pair("Yaoi", "yaoi"),
-            Pair("Yuri", "yuri")
+            Pair("Yuri", "yuri"),
         )
     }
 }

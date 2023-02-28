@@ -49,7 +49,7 @@ object MarinMoeConstants {
         "Virus123", "Vivid Subs", "Vodes", "Waku", "Wasurenai Fansubs", "Wasurenai Fansubs & Anime-Himitsu", "WAVE",
         "WhoBeDaPlaya", "WhyNot?", "WIP", "Wyse", "Xanth", "xCryptic", "xKrptonicz", "Xonline", "xPearse", "xxon", "YA",
         "Yameii", "Yami-Fansubs", "YamiWheeler", "Yellow-Flash", "Yousoro", "YURI", "Z4ST1N", "zangafan", "ZetaRebel",
-        "Zurako Subs"
+        "Zurako Subs",
     )
 
     val groupEntryValues = arrayOf(
@@ -84,6 +84,6 @@ object MarinMoeConstants {
         "Tsundere", "T-N", "Underwater", "UTW", "UTW-Mazui", "UDF", "Ureshii", "Vanilla", "Virus123", "Vivid", "Vodes",
         "Waku", "Wasurenai", "Wasurenai-Himitsu", "WAVE", "WBDP", "WhyNot", "WIP", "WSE", "Xanth", "CyC", "KRP", "Xonline",
         "xPearse", "xxon", "YA", "Yameii", "Yami", "None", "Yellow-Flash", "Yousoro", "YURI", "Z4ST1N", "zang",
-        "ZetaRebel", "Zurako"
+        "ZetaRebel", "Zurako",
     )
 }

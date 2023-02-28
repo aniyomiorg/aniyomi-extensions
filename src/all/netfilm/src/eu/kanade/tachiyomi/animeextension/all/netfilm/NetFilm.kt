@@ -67,8 +67,8 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
                 setUrlWithoutDomain(
                     LinkData(
                         ani.domainType.toString(),
-                        ani.id
-                    ).toJsonString()
+                        ani.id,
+                    ).toJsonString(),
                 )
             }
         }
@@ -116,8 +116,8 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
                     setUrlWithoutDomain(
                         LinkData(
                             ani.domainType.toString(),
-                            ani.id
-                        ).toJsonString()
+                            ani.id,
+                        ).toJsonString(),
                     )
                 }
             }
@@ -144,7 +144,7 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
             Pair("Recent TV Series", "/category?area=&category=1&order=up&params=TV,SETI,MINISERIES,VARIETY,TALK,DOCUMENTARY&size=30"),
             Pair("Popular Anime", "/category?area=&category=1&order=count&params=COMIC&size=30"),
             Pair("Recent Anime", "/category?area=&category=1&order=up&params=COMIC&size=30"),
-        )
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -164,7 +164,7 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
                 thumbnail_url = data.coverVerticalUrl
                 description = data.introduction
                 genre = data.tagList.joinToString(", ") { it.name }
-            }
+            },
         )
     }
 
@@ -188,8 +188,8 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
                     LinkData(
                         data.category.toString(),
                         data.id,
-                        ep.id.toString()
-                    ).toJsonString()
+                        ep.id.toString(),
+                    ).toJsonString(),
                 )
                 name = "Episode $formattedEpNum"
             }
@@ -224,7 +224,7 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
         val quality = preferences.getString("preferred_quality", "1080")!!
 
         return this.sortedWith(
-            compareBy { it.quality.contains(quality) }
+            compareBy { it.quality.contains(quality) },
         ).reversed()
     }
 

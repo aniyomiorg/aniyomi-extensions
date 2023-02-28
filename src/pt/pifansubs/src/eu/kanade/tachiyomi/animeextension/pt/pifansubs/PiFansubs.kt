@@ -112,9 +112,11 @@ class PiFansubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val players = document.select("div.source-box:not(#source-player-trailer) iframe")
         return players.flatMap { player ->
             val url = player.attr("data-src").ifEmpty { player.attr("src") }.let {
-                if (!it.startsWith("http"))
+                if (!it.startsWith("http")) {
                     "https:" + it
-                else it
+                } else {
+                    it
+                }
             }
             getPlayerVideos(url)
         }

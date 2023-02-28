@@ -15,9 +15,9 @@ class HinataSoulExtractor(private val headers: Headers) {
         return regex.findAll(html).mapNotNull {
             val videoUrl = it.groupValues[1]
             // prevent some http 404 due to the source returning false-positives
-            if ("appfullhd" in videoUrl && !hasFHD)
+            if ("appfullhd" in videoUrl && !hasFHD) {
                 null
-            else {
+            } else {
                 val quality = videoUrl.substringAfter("app")
                     .substringBefore("/")
                     .substringBefore("2") // prevents "HD2", "SD2" etc

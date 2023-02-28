@@ -168,10 +168,11 @@ class SukiAnimes : ParsedAnimeHttpSource() {
                 .substringBefore("'")
 
             add("action", "show_animes_ajax")
-            if (filters.adult)
+            if (filters.adult) {
                 add("adulto", "yes")
-            else
+            } else {
                 add("adulto", "no")
+            }
             add("formato", filters.format)
             add("nome", query)
             add("paged", "$page")

@@ -151,7 +151,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     Triple(
                         season + "_$episode",
                         linkElement.attr("href") ?: return@mapIndexed null,
-                        quality
+                        quality,
                     )
                 }.filterNotNull()
             }.flatten().groupBy { it.first }.map { group ->
@@ -161,11 +161,11 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         url = EpLinks(
                             urls = group.value.map {
                                 EpUrl(url = it.second, quality = it.third)
-                            }
+                            },
                         ).toJson()
                         name = "Season $season Ep $episode"
                         episode_number = episode.toFloat()
-                    }
+                    },
                 )
             }
         } else {
@@ -195,11 +195,11 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         url = EpLinks(
                             urls = group.value.map {
                                 EpUrl(url = it.first, quality = it.second)
-                            }
+                            },
                         ).toJson()
                         name = group.key
                         episode_number = collectionIdx
-                    }
+                    },
                 )
             }
             if (episodeList.isEmpty()) throw Exception("Only Zip Pack Available")
@@ -226,7 +226,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }.getOrNull()
             }
                 .filterNotNull()
-                .flatten()
+                .flatten(),
         )
 
         videoList.addAll(
@@ -234,7 +234,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 runCatching {
                     extractGDriveLink(url, quality)
                 }.getOrNull()
-            }.flatten()
+            }.flatten(),
         )
         return Observable.just(videoList.sort())
     }
@@ -274,7 +274,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         for (type in 1..3) {
             videoList.addAll(
-                extractWorkerLinks(mediaUrl, epUrl.quality, type)
+                extractWorkerLinks(mediaUrl, epUrl.quality, type),
             )
         }
         return Pair(videoList, mediaUrl)
@@ -298,7 +298,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Video(
                 url = decodedLink,
                 quality = "$quality - CF $type Worker ${index + 1}$size",
-                videoUrl = decodedLink
+                videoUrl = decodedLink,
             )
         }
     }
@@ -377,13 +377,13 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     @Serializable
     data class EpLinks(
-        val urls: List<EpUrl>
+        val urls: List<EpUrl>,
     )
 
     @Serializable
     data class EpUrl(
         val quality: String,
-        val url: String
+        val url: String,
     )
 
     private fun EpLinks.toJson(): String {

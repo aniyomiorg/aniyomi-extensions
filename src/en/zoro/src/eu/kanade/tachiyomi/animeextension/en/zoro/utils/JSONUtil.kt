@@ -21,8 +21,11 @@ object JSONUtil {
                 '\\' -> "\\\\"
                 '"' -> "\\\""
                 else -> {
-                    if (charInt > 127) String.format("\\u%04x", charInt)
-                    else ch
+                    if (charInt > 127) {
+                        String.format("\\u%04x", charInt)
+                    } else {
+                        ch
+                    }
                 }
             }
             output.append(escapedChar)

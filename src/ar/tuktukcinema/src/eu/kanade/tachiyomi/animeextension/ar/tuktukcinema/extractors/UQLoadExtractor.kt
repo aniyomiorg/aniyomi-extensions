@@ -10,9 +10,10 @@ class UQLoadExtractor(private val client: OkHttpClient) {
         val document = client.newCall(GET(url)).execute().asJsoup()
         val check = document.selectFirst("script:containsData(sources)")!!.data()
         val videoUrl = check.substringAfter("sources: [\"").substringBefore("\"")
-        return if (check.contains("sources"))
+        return if (check.contains("sources")) {
             Video(url, quality, videoUrl)
-        else
+        } else {
             null
+        }
     }
 }

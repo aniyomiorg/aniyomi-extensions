@@ -122,8 +122,8 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this.sortedWith(
             compareBy(
                 { it.quality.contains(quality) },
-                { it.quality.contains(server) }
-            )
+                { it.quality.contains(server) },
+            ),
         ).reversed()
     }
 
@@ -254,7 +254,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         AnimeFilter.Header("Text search ignores filters"),
         GenreFilter(),
         RecentFilter(),
-        SeasonFilter()
+        SeasonFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -339,8 +339,8 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Work Life", "work-life"),
             Pair("Workplace", "workplace"),
             Pair("Yaoi", "yaoi"),
-            Pair("Yuri", "yuri")
-        )
+            Pair("Yuri", "yuri"),
+        ),
     )
 
     private class RecentFilter : UriPartFilter(
@@ -349,8 +349,8 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("<select>", ""),
             Pair("Recent Release", "1"),
             Pair("Recent Dub", "2"),
-            Pair("Recent Chinese", "3")
-        )
+            Pair("Recent Chinese", "3"),
+        ),
     )
 
     private class SeasonFilter : UriPartFilter(
@@ -394,8 +394,8 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Fall 2014", "sub-category/fall-2014-anime"),
             Pair("Summer 2014", "sub-category/summer-2014-anime"),
             Pair("Spring 2014", "sub-category/spring-2014-anime"),
-            Pair("Winter 2014", "sub-category/winter-2014-anime")
-        )
+            Pair("Winter 2014", "sub-category/winter-2014-anime"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

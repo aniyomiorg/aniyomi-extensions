@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ItemsResponse(
     val TotalRecordCount: Int,
-    val Items: List<Item>
+    val Items: List<Item>,
 ) {
     @Serializable
     data class Item(
@@ -24,7 +24,7 @@ data class ItemsResponse(
     ) {
         @Serializable
         data class ImageObject(
-            val Primary: String? = null
+            val Primary: String? = null,
         )
     }
 }
@@ -36,7 +36,7 @@ data class SessionResponse(
 ) {
     @Serializable
     data class MediaObject(
-        val MediaStreams: List<MediaStream>
+        val MediaStreams: List<MediaStream>,
     ) {
         @Serializable
         data class MediaStream(
@@ -47,7 +47,7 @@ data class SessionResponse(
             val Language: String? = null,
             val DisplayTitle: String? = null,
             val Height: Int? = null,
-            val Width: Int? = null
+            val Width: Int? = null,
         )
     }
 }

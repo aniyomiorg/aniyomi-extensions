@@ -89,7 +89,7 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun fetchSearchAnime(
         page: Int,
         query: String,
-        filters: AnimeFilterList
+        filters: AnimeFilterList,
     ): Observable<AnimesPage> {
         val limit = 30
         val mediaType = "application/json; charset=utf-8".toMediaType()
@@ -189,11 +189,11 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 sources.mapNotNull { source ->
                     if (source.text() == "No Ads") {
                         videoList.addAll(
-                            extractOwlVideo(source.attr("data-source"), fileInterceptor.files, key)
+                            extractOwlVideo(source.attr("data-source"), fileInterceptor.files, key),
                         )
                     } else {
                         videoList.addAll(
-                            extractGogoVideo(source.attr("data-source"), key)
+                            extractGogoVideo(source.attr("data-source"), key),
                         )
                     }
                 }
@@ -243,7 +243,7 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 Pair("origin", "https://portablegaming.co"),
                 Pair("host", zoroUrl.toHttpUrl().host),
                 Pair("Accept-Language", "en-US,en;q=0.9"),
-                Pair("User-Agent", " Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36")
+                Pair("User-Agent", " Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"),
             )
             val zoroResponse = Jsoup.connect(zoroUrl).headers(zoroHeaders).execute().body()
 
@@ -266,9 +266,11 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         GogoCdnExtractor(network.client, json).videosFromUrl(url).map {
             videoList.add(
                 Video(
-                    it.url, it.quality + " $lang",
-                    it.videoUrl, headers = it.headers
-                )
+                    it.url,
+                    it.quality + " $lang",
+                    it.videoUrl,
+                    headers = it.headers,
+                ),
             )
         }
 
@@ -279,9 +281,11 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 DoodExtractor(client).videosFromUrl(link).map {
                     videoList.add(
                         Video(
-                            it.url, it.quality + " $lang",
-                            it.videoUrl, headers = it.headers
-                        )
+                            it.url,
+                            it.quality + " $lang",
+                            it.videoUrl,
+                            headers = it.headers,
+                        ),
                     )
                 }
             }
@@ -293,9 +297,11 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 StreamSBExtractor(client).videosFromUrl(link, headers).map {
                     videoList.add(
                         Video(
-                            it.url, it.quality + " $lang",
-                            it.videoUrl, headers = it.headers
-                        )
+                            it.url,
+                            it.quality + " $lang",
+                            it.videoUrl,
+                            headers = it.headers,
+                        ),
                     )
                 }
             }

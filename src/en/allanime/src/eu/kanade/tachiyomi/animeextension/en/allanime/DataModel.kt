@@ -4,19 +4,19 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class PopularResult(
-    val data: PopularResultData
+    val data: PopularResultData,
 ) {
     @Serializable
     data class PopularResultData(
-        val queryPopular: QueryPopularData
+        val queryPopular: QueryPopularData,
     ) {
         @Serializable
         data class QueryPopularData(
-            val recommendations: List<Recommendation>
+            val recommendations: List<Recommendation>,
         ) {
             @Serializable
             data class Recommendation(
-                val anyCard: Card? = null
+                val anyCard: Card? = null,
             ) {
                 @Serializable
                 data class Card(
@@ -24,7 +24,7 @@ data class PopularResult(
                     val name: String,
                     val thumbnail: String,
                     val englishName: String? = null,
-                    val nativeName: String? = null
+                    val nativeName: String? = null,
                 )
             }
         }
@@ -33,15 +33,15 @@ data class PopularResult(
 
 @Serializable
 data class SearchResult(
-    val data: SearchResultData
+    val data: SearchResultData,
 ) {
     @Serializable
     data class SearchResultData(
-        val shows: SearchResultShows
+        val shows: SearchResultShows,
     ) {
         @Serializable
         data class SearchResultShows(
-            val edges: List<SearchResultEdge>
+            val edges: List<SearchResultEdge>,
         ) {
             @Serializable
             data class SearchResultEdge(
@@ -57,11 +57,11 @@ data class SearchResult(
 
 @Serializable
 data class SeriesResult(
-    val data: DataShow
+    val data: DataShow,
 ) {
     @Serializable
     data class DataShow(
-        val show: SeriesShows
+        val show: SeriesShows,
     ) {
         @Serializable
         data class SeriesShows(
@@ -75,17 +75,18 @@ data class SeriesResult(
             val score: Float? = null,
             val type: String? = null,
             val description: String? = null,
-            val availableEpisodesDetail: AvailableEps
+            val availableEpisodesDetail: AvailableEps,
         ) {
             @Serializable
             data class AvailableEps(
                 val sub: List<String>? = null,
                 val dub: List<String>? = null,
             )
+
             @Serializable
             data class AirSeason(
                 val quarter: String,
-                val year: Int
+                val year: Int,
             )
         }
     }
@@ -93,22 +94,22 @@ data class SeriesResult(
 
 @Serializable
 data class EpisodeResult(
-    val data: DataEpisode
+    val data: DataEpisode,
 ) {
     @Serializable
     data class DataEpisode(
-        val episode: Episode
+        val episode: Episode,
     ) {
         @Serializable
         data class Episode(
-            val sourceUrls: List<SourceUrl>
+            val sourceUrls: List<SourceUrl>,
         ) {
             @Serializable
             data class SourceUrl(
                 val sourceUrl: String,
                 val type: String,
                 val sourceName: String,
-                val priority: Float = 0F
+                val priority: Float = 0F,
             )
         }
     }

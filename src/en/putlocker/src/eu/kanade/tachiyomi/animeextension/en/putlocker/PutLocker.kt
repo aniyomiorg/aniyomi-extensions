@@ -154,7 +154,7 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 SEpisode.create().apply {
                     url = EpLinks(
                         ep_num = group.key,
-                        ids = group.value.map { it.second }
+                        ids = group.value.map { it.second },
                     ).toJson()
                     name = group.value.first().first
                     episode_number = group.key.toFloat()
@@ -217,8 +217,8 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                 bakSource,
                                 bakReferer,
                                 bakSubsList,
-                                bakserverId
-                            )
+                                bakserverId,
+                            ),
                         )
                     }
                 }
@@ -235,8 +235,8 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     subsList.add(
                         Track(
                             sub.file,
-                            sub.label
-                        )
+                            sub.label,
+                        ),
                     )
                 }
             }
@@ -364,14 +364,14 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     @Serializable
     data class EpLinks(
         val ep_num: Int,
-        val ids: List<String>
+        val ids: List<String>,
     )
 
     @Serializable
     data class VidSource(
         val file: String,
         val label: String?,
-        val type: String?
+        val type: String?,
     )
 
     @Serializable
@@ -379,14 +379,14 @@ class PutLocker : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val default: Boolean,
         val file: String,
         val label: String,
-        val kind: String
+        val kind: String,
     )
 
     @Serializable
     data class Sources(
         val sources: List<VidSource>,
         val tracks: List<SubTrack>?,
-        val backupLink: String?
+        val backupLink: String?,
     )
 
     // From Dopebox

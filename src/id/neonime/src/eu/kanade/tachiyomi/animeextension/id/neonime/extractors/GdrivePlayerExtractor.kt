@@ -20,10 +20,14 @@ class GdrivePlayerExtractor(private val client: OkHttpClient) {
 
     fun videosFromUrl(url: String, name: String): List<Video> {
         val headers = Headers.headersOf(
-            "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-            "Host", "gdriveplayer.to",
-            "Referer", "https://neonime.fun/",
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0"
+            "Accept",
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+            "Host",
+            "gdriveplayer.to",
+            "Referer",
+            "https://neonime.fun/",
+            "User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
         )
 
         val body = client.newCall(GET(url.replace(".me", ".to"), headers = headers)).execute()
@@ -70,9 +74,8 @@ class GdrivePlayerExtractor(private val client: OkHttpClient) {
         hashAlgorithm: String = "MD5",
         keyLength: Int = 32,
         ivLength: Int = 16,
-        iterations: Int = 1
+        iterations: Int = 1,
     ): List<ByteArray>? {
-
         val md = MessageDigest.getInstance(hashAlgorithm)
         val digestLength = md.getDigestLength()
         val targetKeySize = keyLength + ivLength
@@ -84,12 +87,13 @@ class GdrivePlayerExtractor(private val client: OkHttpClient) {
             md.reset()
 
             while (generatedLength < targetKeySize) {
-                if (generatedLength > 0)
+                if (generatedLength > 0) {
                     md.update(
                         generatedData,
                         generatedLength - digestLength,
-                        digestLength
+                        digestLength,
                     )
+                }
 
                 md.update(password)
                 md.update(salt, 0, 8)
@@ -104,7 +108,7 @@ class GdrivePlayerExtractor(private val client: OkHttpClient) {
             }
             val result = listOf(
                 generatedData.copyOfRange(0, keyLength),
-                generatedData.copyOfRange(keyLength, targetKeySize)
+                generatedData.copyOfRange(keyLength, targetKeySize),
             )
             return result
         } catch (e: DigestException) {

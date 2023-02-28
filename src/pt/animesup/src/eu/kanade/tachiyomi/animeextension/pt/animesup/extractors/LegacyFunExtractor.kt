@@ -24,9 +24,11 @@ class LegacyFunExtractor(private val client: OkHttpClient) {
                     return getVideoFromDocument(body, quality)
                 } else {
                     val newUrl = form.attr("action").let {
-                        if (!it.startsWith("http"))
+                        if (!it.startsWith("http")) {
                             "https://legacyfun.site/$it"
-                        else it
+                        } else {
+                            it
+                        }
                     }
                     val token = form.selectFirst("input")!!.attr("value")!!
                     val formBody = FormBody.Builder().apply {
@@ -43,8 +45,10 @@ class LegacyFunExtractor(private val client: OkHttpClient) {
     private fun getVideoFromDocument(document: Document, quality: String): Video? {
         val iframeUrl = document.selectFirst("iframe#iframeidv")!!.attr("src")
         val newHeaders = Headers.headersOf(
-            "referer", document.location(),
-            "user-agent", USER_AGENT
+            "referer",
+            document.location(),
+            "user-agent",
+            USER_AGENT,
         )
         val newDoc = client.newCall(GET(iframeUrl, newHeaders)).execute().asJsoup()
         val body = newDoc.let { doc ->
@@ -57,8 +61,10 @@ class LegacyFunExtractor(private val client: OkHttpClient) {
                 .substringAfter("\"https")
                 .substringBefore("\"")
             val videoHeaders = Headers.headersOf(
-                "referer", iframeUrl,
-                "user-agent", USER_AGENT
+                "referer",
+                iframeUrl,
+                "user-agent",
+                USER_AGENT,
             )
             Video(url, quality, url, videoHeaders)
         }

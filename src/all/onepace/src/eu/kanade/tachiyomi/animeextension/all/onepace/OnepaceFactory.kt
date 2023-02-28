@@ -7,7 +7,7 @@ class OnepaceFactory : AnimeSourceFactory {
     override fun createSources(): List<AnimeSource> = listOf(
         OnepaceEspa(),
         OnepaceFr(),
-        OnepaceEn()
+        OnepaceEn(),
     )
 }
 

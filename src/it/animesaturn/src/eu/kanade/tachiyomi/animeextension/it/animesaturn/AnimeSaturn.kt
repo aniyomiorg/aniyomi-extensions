@@ -115,7 +115,7 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 Video(
                     link,
                     qualities[i],
-                    link
+                    link,
                 )
             }
         } else {
@@ -124,8 +124,8 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     url,
                     "Qualità predefinita",
                     url,
-                    headers = Headers.headersOf("Referer", referer)
-                )
+                    headers = Headers.headersOf("Referer", referer),
+                ),
             )
         }
     }
@@ -168,8 +168,11 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private var filterSearch = false
 
     override fun searchAnimeSelector(): String {
-        return if (filterSearch) "div.anime-card-newanime.main-anime-card" // filter search
-        else "ul.list-group" // regular search
+        return if (filterSearch) {
+            "div.anime-card-newanime.main-anime-card" // filter search
+        } else {
+            "ul.list-group" // regular search
+        }
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -200,7 +203,7 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .joinToString { it.text() }
         anime.thumbnail_url = document.selectFirst("img.img-fluid.cover-anime.rounded")!!.attr("src")
         val alterTitle = formatTitle(
-            document.selectFirst("div.box-trasparente-alternativo.rounded")!!.text()
+            document.selectFirst("div.box-trasparente-alternativo.rounded")!!.text(),
         ).replace("Dub ITA", "").trim()
         val description1 = document.selectFirst("div#trama div#shown-trama")?.ownText()
         val description2 = document.selectFirst("div#full-trama.d-none")?.ownText()
@@ -294,7 +297,7 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Genre("Vampiri"),
         Genre("Veicoli"),
         Genre("Yaoi"),
-        Genre("Yuri")
+        Genre("Yuri"),
     )
 
     internal class Year(val id: String) : AnimeFilter.CheckBox(id)
@@ -344,7 +347,7 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Year("2019"),
         Year("2020"),
         Year("2021"),
-        Year("2022")
+        Year("2022"),
     )
 
     internal class State(val id: String, name: String) : AnimeFilter.CheckBox(name)
@@ -353,14 +356,14 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         State("0", "In corso"),
         State("1", "Finito"),
         State("2", "Non rilasciato"),
-        State("3", "Droppato")
+        State("3", "Droppato"),
     )
 
     internal class Lang(val id: String, name: String) : AnimeFilter.CheckBox(name)
     private class LangList(langs: List<Lang>) : AnimeFilter.Group<Lang>("Lingua", langs)
     private fun getLangs() = listOf(
         Lang("0", "Subbato"),
-        Lang("1", "Doppiato")
+        Lang("1", "Doppiato"),
     )
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
@@ -368,7 +371,7 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         GenreList(getGenres()),
         YearList(getYears()),
         StateList(getStates()),
-        LangList(getLangs())
+        LangList(getLangs()),
     )
 
     private fun getSearchParameters(filters: AnimeFilterList): String {

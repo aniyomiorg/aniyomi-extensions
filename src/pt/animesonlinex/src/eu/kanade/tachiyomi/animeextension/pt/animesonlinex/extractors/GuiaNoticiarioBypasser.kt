@@ -7,7 +7,7 @@ import okhttp3.OkHttpClient
 
 class GuiaNoticiarioBypasser(
     private val client: OkHttpClient,
-    private val headers: Headers
+    private val headers: Headers,
 ) {
 
     private val REGEX_LINK = Regex("link\\.href = \"(\\S+?)\"")

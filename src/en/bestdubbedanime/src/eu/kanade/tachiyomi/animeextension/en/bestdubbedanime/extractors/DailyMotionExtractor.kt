@@ -23,7 +23,7 @@ class DailyMotionExtractor(private val client: OkHttpClient) {
         val jsonUrl = "https://www.dailymotion.com/player/metadata/video/${url.toHttpUrl().encodedPath}?locale=en-US&dmV1st=$v1st&dmTs=$ts&is_native_app=0"
         val json = Json.decodeFromString<JsonObject>(
             client.newCall(GET(jsonUrl))
-                .execute().body.string()
+                .execute().body.string(),
         )
 
         val masterUrl = json["qualities"]!!

@@ -70,8 +70,8 @@ class Aniking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             GET(
                 "$baseUrl${anime.url}",
                 headers =
-                Headers.headersOf("user-agent", "Mozilla/5.0 (Linux; Android 12; SM-T870 Build/SP2A.220305.013; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/106.0.5249.126 Safari/537.36")
-            )
+                Headers.headersOf("user-agent", "Mozilla/5.0 (Linux; Android 12; SM-T870 Build/SP2A.220305.013; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/106.0.5249.126 Safari/537.36"),
+            ),
         )
             .execute().request.headers
         return GET("$baseUrl${anime.url}", headers = headers)
@@ -283,8 +283,8 @@ class Aniking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             GET(
                 "$baseUrl${anime.url}",
                 headers =
-                Headers.headersOf("user-agent", "Mozilla/5.0 (Linux; Android 12; SM-T870 Build/SP2A.220305.013; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/106.0.5249.126 Safari/537.36")
-            )
+                Headers.headersOf("user-agent", "Mozilla/5.0 (Linux; Android 12; SM-T870 Build/SP2A.220305.013; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/106.0.5249.126 Safari/537.36"),
+            ),
         )
             .execute().request.headers
         return GET("$baseUrl${anime.url}", headers = headers)

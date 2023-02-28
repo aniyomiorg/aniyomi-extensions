@@ -21,7 +21,8 @@ class PlayerOneExtractor(private val client: OkHttpClient? = null) {
 
     fun videoListFromKanraUrl(url: String): List<Video> {
         val headers = Headers.headersOf(
-            "User-Agent", HYConstants.USER_AGENT,
+            "User-Agent",
+            HYConstants.USER_AGENT,
         )
         val res = client!!.newCall(GET(url, headers)).execute()
         val html = res.body.string()

@@ -141,7 +141,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         var descInfo = ""
         document.selectFirst("div.entry-content > h2 + p + p")!!.childNodes().filter {
-            s ->
+                s ->
             s.nodeName() != "br"
         }.forEach {
             if (it.nodeName() == "span") {
@@ -164,7 +164,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "Nessuna descrizione disponibile\n\n$descInfo"
         } else {
             descElement.childNodes().filter {
-                s ->
+                    s ->
                 s.nodeName() == "#text"
             }.joinToString(separator = "\n\n") { it.toString() }.trim() + "\n\n" + descInfo
         }
@@ -221,7 +221,6 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 var isValid = false
                 for (child in it.childNodes()) {
                     if (child.nodeName() == "br" || (child.nextSibling() == null && child.nodeName() == "a")) {
-
                         episode.url = response.request.url.toString() + "#$counter"
                         if (isValid) {
                             episodeList.add(episode)
@@ -284,7 +283,6 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         // Select single seasons episodes
         val singleEpisode = document.select("div.entry-content > h3:contains(Episodi) + p")
         if (singleEpisode.isNotEmpty() && singleEpisode.text().isNotEmpty()) {
-
             var counter = 1
             for (child in singleEpisode.first()!!.childNodes()) {
                 if (child.nodeName() == "a" && counter == episodeNumber) {
@@ -377,7 +375,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun getFilterList() = AnimeFilterList(
         AnimeFilter.Header("NOTA: ignorato se si utilizza la ricerca di testo!"),
         AnimeFilter.Separator(),
-        IndexFilter(getIndexList())
+        IndexFilter(getIndexList()),
     )
 
     private class IndexFilter(vals: Array<Pair<String, String>>) : UriPartFilter("Indice", vals)
@@ -387,7 +385,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("Anime", "anime"),
         Pair("Anime Sub-ita", "anime-sub-ita"),
         Pair("Serie Tv", "serie-tv"),
-        Pair("Film Animazione", "film-animazione")
+        Pair("Film Animazione", "film-animazione"),
     )
 
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :
@@ -402,7 +400,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this.sortedWith(
             compareBy(
                 { it.quality.contains(server) },
-                { it.quality.contains(quality) }
+                { it.quality.contains(quality) },
             ),
         ).reversed()
     }

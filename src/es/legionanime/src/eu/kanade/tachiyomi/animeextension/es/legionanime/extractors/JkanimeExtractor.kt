@@ -11,7 +11,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 
 class JkanimeExtractor(
-    private val client: OkHttpClient
+    private val client: OkHttpClient,
 ) {
 
     fun getNozomiFromUrl(url: String): Video {

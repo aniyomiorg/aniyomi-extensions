@@ -132,9 +132,11 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val zippy = document.select(patternZippy).mapNotNull {
             runCatching { zippyFromElement(it) }.getOrNull()
         }
-        val google = if (iframe == null) { mutableListOf() } else try {
-            googleLinkFromElement(iframe)
-        } catch (e: Exception) { mutableListOf() }
+        val google = if (iframe == null) { mutableListOf() } else {
+            try {
+                googleLinkFromElement(iframe)
+            } catch (e: Exception) { mutableListOf() }
+        }
 
         return google + zippy
     }
@@ -250,15 +252,24 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val delimiter = input[i]
             i++ // consume letter or backslash
             if (delimiter == '\\' && i < input.length) {
-
                 // consume first after backslash
                 val ch = input[i]
                 i++
                 if (ch == '\\' || ch == '/' || ch == '"' || ch == '\'') {
                     builder.append(ch)
-                } else if (ch == 'n') builder.append('\n') else if (ch == 'r') builder.append('\r') else if (ch == 't') builder.append(
-                    '\t'
-                ) else if (ch == 'b') builder.append('\b') else if (ch == 'f') builder.append('\u000C') else if (ch == 'u') {
+                } else if (ch == 'n') {
+                    builder.append('\n')
+                } else if (ch == 'r') {
+                    builder.append('\r')
+                } else if (ch == 't') {
+                    builder.append(
+                        '\t',
+                    )
+                } else if (ch == 'b') {
+                    builder.append('\b')
+                } else if (ch == 'f') {
+                    builder.append('\u000C')
+                } else if (ch == 'u') {
                     val hex = StringBuilder()
 
                     // expect 4 digits

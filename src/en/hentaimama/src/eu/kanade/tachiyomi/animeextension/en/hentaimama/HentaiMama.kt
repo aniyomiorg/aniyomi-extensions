@@ -96,7 +96,7 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .add("action", "get_player_contents")
             .add(
                 "a",
-                (document.select("#post_report  input:nth-child(5)").attr("value")).toString()
+                (document.select("#post_report  input:nth-child(5)").attr("value")).toString(),
             )
             .build()
 
@@ -104,7 +104,7 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val newHeaders = Headers.headersOf("referer", "$baseUrl/")
 
         val listOfVideos = client.newCall(
-            POST("$baseUrl/wp-admin/admin-ajax.php", newHeaders, body)
+            POST("$baseUrl/wp-admin/admin-ajax.php", newHeaders, body),
         )
             .execute().asJsoup()
             .body().select("iframe")
@@ -235,7 +235,6 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // Settings
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred Mirror"

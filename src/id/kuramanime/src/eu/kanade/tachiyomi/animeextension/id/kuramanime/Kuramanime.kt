@@ -124,7 +124,7 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         document.select("select#changeServer > option").forEach {
             videoList.addAll(
-                videosFromServer(response.request.url.toString(), it.attr("value"), it.text())
+                videosFromServer(response.request.url.toString(), it.attr("value"), it.text()),
             )
         }
 
@@ -133,7 +133,7 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun videosFromServer(episodeUrl: String, server: String, name: String): List<Video> {
         val document = client.newCall(
-            GET("$episodeUrl?activate_stream=1&stream_server=$server", headers = headers)
+            GET("$episodeUrl?activate_stream=1&stream_server=$server", headers = headers),
         ).execute().asJsoup()
         return document.select(videoListSelector()).map { videoFromElement(it, name, episodeUrl) }
     }

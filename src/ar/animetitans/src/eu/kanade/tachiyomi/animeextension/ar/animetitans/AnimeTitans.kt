@@ -256,7 +256,7 @@ class AnimeTitans : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return fetchAnimeDetails(
             SAnime.create()
-                .apply { this.url = "$AnimeUrlDirectory/$AnimePath" }
+                .apply { this.url = "$AnimeUrlDirectory/$AnimePath" },
         )
             .map {
                 // Isn't set in returned Anime
@@ -371,8 +371,11 @@ class AnimeTitans : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             seriesDetails.selectFirst(seriesTypeSelector)?.ownText().takeIf { it.isNullOrBlank().not() }?.let { genres.add(it) }
             genre = genres.map { genre ->
                 genre.lowercase(Locale.forLanguageTag(lang)).replaceFirstChar { char ->
-                    if (char.isLowerCase()) char.titlecase(Locale.forLanguageTag(lang))
-                    else char.toString()
+                    if (char.isLowerCase()) {
+                        char.titlecase(Locale.forLanguageTag(lang))
+                    } else {
+                        char.toString()
+                    }
                 }
             }
                 .joinToString { it.trim() }
@@ -402,11 +405,11 @@ class AnimeTitans : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     open class SelectFilter(
         displayName: String,
         val vals: Array<Pair<String, String>>,
-        defaultValue: String? = null
+        defaultValue: String? = null,
     ) : AnimeFilter.Select<String>(
         displayName,
         vals.map { it.first }.toTypedArray(),
-        vals.indexOfFirst { it.second == defaultValue }.takeIf { it != -1 } ?: 0
+        vals.indexOfFirst { it.second == defaultValue }.takeIf { it != -1 } ?: 0,
     ) {
         fun selectedValue() = vals[state].second
     }
@@ -418,8 +421,8 @@ class AnimeTitans : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Ongoing", "ongoing"),
             Pair("Completed", "completed"),
             Pair("Hiatus", "hiatus"),
-            Pair("UpComing", "upcoming")
-        )
+            Pair("UpComing", "upcoming"),
+        ),
     )
 
     protected class TypeFilter : SelectFilter(
@@ -430,8 +433,8 @@ class AnimeTitans : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Movie", "movie"),
             Pair("OVA", "ova"),
             Pair("ONA", "ona"),
-            Pair("Special", "special")
-        )
+            Pair("Special", "special"),
+        ),
     )
 
     protected class OrderByFilter(defaultOrder: String? = null) : SelectFilter(
@@ -442,9 +445,9 @@ class AnimeTitans : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Z-A", "titlereverse"),
             Pair("Latest Update", "update"),
             Pair("Latest Added", "latest"),
-            Pair("Popular", "popular")
+            Pair("Popular", "popular"),
         ),
-        defaultOrder
+        defaultOrder,
     )
 
     protected class Genre(name: String, val value: String) : AnimeFilter.TriState(name)
@@ -533,7 +536,7 @@ class AnimeTitans : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return document.selectFirst("div.filter:contains(التصنيف) ul.scrollz")?.select("li")?.map { li ->
             Genre(
                 li.selectFirst("label")!!.text(),
-                li.selectFirst("input[type=checkbox]")!!.attr("value")
+                li.selectFirst("input[type=checkbox]")!!.attr("value"),
             )
         }
     }
@@ -542,7 +545,7 @@ class AnimeTitans : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return document.selectFirst("div.filter:contains(الموسم) ul.scrollz")?.select("li")?.map { li ->
             Season(
                 li.selectFirst("label")!!.text(),
-                li.selectFirst("input[type=checkbox]")!!.attr("value")
+                li.selectFirst("input[type=checkbox]")!!.attr("value"),
             )
         }
     }
@@ -551,7 +554,7 @@ class AnimeTitans : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return document.selectFirst("div.filter:contains(الاستديو) ul.scrollz")?.select("li")?.map { li ->
             Studio(
                 li.selectFirst("label")!!.text(),
-                li.selectFirst("input[type=checkbox]")!!.attr("value")
+                li.selectFirst("input[type=checkbox]")!!.attr("value"),
             )
         }
     }

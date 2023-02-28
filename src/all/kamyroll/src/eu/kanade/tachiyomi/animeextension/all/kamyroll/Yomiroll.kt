@@ -142,8 +142,11 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
         val mediaId = json.decodeFromString<LinkData>(anime.url)
         val resp = client.newCall(
-            if (mediaId.media_type == "series") GET("$crUrl/content/v2/cms/series/${mediaId.id}?locale=en-US")
-            else GET("$crUrl/content/v2/cms/movie_listings/${mediaId.id}?locale=en-US")
+            if (mediaId.media_type == "series") {
+                GET("$crUrl/content/v2/cms/series/${mediaId.id}?locale=en-US")
+            } else {
+                GET("$crUrl/content/v2/cms/movie_listings/${mediaId.id}?locale=en-US")
+            },
         ).execute()
         val info = json.decodeFromString<AnimeResult>(resp.body.string())
         return Observable.just(
@@ -153,7 +156,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                 if (genre.isNullOrBlank()) {
                     genre = info.data.first().genres?.joinToString { gen -> gen.replaceFirstChar { it.uppercase() } }
                 }
-            }
+            },
         )
     }
 
@@ -193,9 +196,9 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                                                 Pair(
                                                     ep.streams_link.substringAfter("videos/")
                                                         .substringBefore("/streams"),
-                                                    ep.audio_locale
-                                                )
-                                            )
+                                                    ep.audio_locale,
+                                                ),
+                                            ),
                                     ),
                                     name = if (ep.episode_number > 0 && ep.episode.isNumeric()) {
                                         "Season ${seasonData.season_number} Ep ${df.format(ep.episode_number)}: " + ep.title
@@ -206,7 +209,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                                     date_upload = ep.airDate?.let { parseDate(it) } ?: 0L,
                                     scanlator = ep.versions?.sortedBy { it.audio_locale }
                                         ?.joinToString { it.audio_locale.substringBefore("-") }
-                                        ?: ep.audio_locale.substringBefore("-")
+                                        ?: ep.audio_locale.substringBefore("-"),
                                 )
                             }
                         }.getOrNull()
@@ -268,8 +271,8 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
             }.sortedWith(
                 compareBy(
                     { it.lang },
-                    { it.lang.contains(subLocale) }
-                )
+                    { it.lang.contains(subLocale) },
+                ),
             )
         } catch (_: Error) {}
 
@@ -294,7 +297,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                                 videoUrl,
                                 quality,
                                 videoUrl,
-                                subtitleTracks = if (hardsub.isNotBlank()) emptyList() else subsList
+                                subtitleTracks = if (hardsub.isNotBlank()) emptyList() else subsList,
                             )
                         } catch (_: Error) {
                             Video(videoUrl, quality, videoUrl)
@@ -341,7 +344,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         Pair("ro-RO", "Romanian"),
         Pair("sv-SE", "Swedish"),
         Pair("zh-CN", "Chinese (PRC)"),
-        Pair("zh-HK", "Chinese (Hong Kong)")
+        Pair("zh-HK", "Chinese (Hong Kong)"),
     )
 
     private fun LinkData.toJsonString(): String {
@@ -372,12 +375,20 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                     if (this@toSAnime.series_metadata?.subtitle_locales?.any() == true ||
                         this@toSAnime.movie_metadata?.subtitle_locales?.any() == true ||
                         this@toSAnime.series_metadata?.is_subbed == true
-                    ) " Sub" else ""
+                    ) {
+                        " Sub"
+                    } else {
+                        ""
+                    }
                     ) +
                 (
                     if (this@toSAnime.series_metadata?.audio_locales?.any() == true ||
                         this@toSAnime.movie_metadata?.is_dubbed == true
-                    ) " Dub" else ""
+                    ) {
+                        " Dub"
+                    } else {
+                        ""
+                    }
                     )
             desc += "\nMaturity Ratings: " +
                 (
@@ -410,8 +421,8 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                 { it.quality.contains(quality) },
                 { it.quality.contains("Aud: ${dubLocale.getLocale()}") },
                 { it.quality.contains("HardSub") == shouldContainHard },
-                { it.quality.contains(subLocale) }
-            )
+                { it.quality.contains(subLocale) },
+            ),
         ).reversed()
     }
 

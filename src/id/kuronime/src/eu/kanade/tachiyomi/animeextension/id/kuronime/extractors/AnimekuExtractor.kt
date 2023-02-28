@@ -13,7 +13,7 @@ import uy.kohesive.injekt.injectLazy
 @Serializable
 data class Source(
     val file: String,
-    val label: String
+    val label: String,
 )
 
 class AnimekuExtractor(private val client: OkHttpClient) {
@@ -26,7 +26,7 @@ class AnimekuExtractor(private val client: OkHttpClient) {
 
         val quickJs = QuickJs.create()
         val decryped = quickJs.evaluate(
-            script.data().trim().split("\n")[0].replace("eval(function", "function a").replace("decodeURIComponent(escape(r))}(", "r};a(").substringBeforeLast(")")
+            script.data().trim().split("\n")[0].replace("eval(function", "function a").replace("decodeURIComponent(escape(r))}(", "r};a(").substringBeforeLast(")"),
         ).toString()
         quickJs.close()
 
@@ -35,7 +35,7 @@ class AnimekuExtractor(private val client: OkHttpClient) {
             Video(
                 src.file,
                 "${src.label} - $name",
-                src.file
+                src.file,
             )
         }
     }

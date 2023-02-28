@@ -96,8 +96,8 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val seasonsHtml = client.newCall(
                 GET(
                     seasonUrl,
-                    headers = Headers.headersOf("Referer", document.location())
-                )
+                    headers = Headers.headersOf("Referer", document.location()),
+                ),
             ).execute().asJsoup()
             val seasonsElements = seasonsHtml.select("a.dropdown-item.ss-item")
             seasonsElements.forEach {
@@ -216,7 +216,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 Video(masterUrl, "$name - Default", masterUrl, subtitleTracks = subs)
             } catch (e: Error) {
                 Video(masterUrl, "$name - Default", masterUrl)
-            }
+            },
         )
         return defaultVideoList
     }
@@ -445,7 +445,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private val PREF_SUB_LANGUAGES = arrayOf(
             "Arabic", "English", "French", "German", "Hungarian",
             "Italian", "Japanese", "Portuguese", "Romanian", "Russian",
-            "Spanish"
+            "Spanish",
         )
 
         private const val PREF_LATEST_KEY = "preferred_latest_page"

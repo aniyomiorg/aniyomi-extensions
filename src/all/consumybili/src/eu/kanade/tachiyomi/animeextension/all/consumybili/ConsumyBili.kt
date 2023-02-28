@@ -659,7 +659,7 @@ class ConsumyBili : ConfigurableAnimeSource, AnimeHttpSource() {
                 author = ani.studios.nodes.firstOrNull()?.name ?: ""
                 genre = ani.genres.joinToString(", ")
                 description = Jsoup.parse(
-                    ani.description.replace("<br>", "br2n")
+                    ani.description.replace("<br>", "br2n"),
                 ).text().replace("br2n", "\n")
                 status = parseStatus(ani.status)
                 setUrlWithoutDomain(ani.id.toString())
@@ -745,7 +745,7 @@ class ConsumyBili : ConfigurableAnimeSource, AnimeHttpSource() {
                         episode_number = it.episodeNumber
                         setUrlWithoutDomain("/server/source?episode_id=${it.sourceEpisodeId}&source_media_id=${it.sourceMediaId}&source_id=${it.sourceId}")
                     }
-                }
+                },
             )
         }
 
@@ -759,19 +759,19 @@ class ConsumyBili : ConfigurableAnimeSource, AnimeHttpSource() {
         val subtitleList = mutableListOf<Track>()
         val audioList = mutableListOf<Track>()
         val sources = json.decodeFromString<SourcesResponse>(
-            client.newCall(GET(baseUrl + episode.url)).execute().body.string()
+            client.newCall(GET(baseUrl + episode.url)).execute().body.string(),
         )
         subtitleList.addAll(
             sources.subtitles.map {
                 Track(it.file, "${it.language} - ${it.lang}")
-            }
+            },
         )
 
         sources.sources.forEach { source ->
             if (source.type == "dash") {
                 // Parsing dash with Jsoup :YEP:
                 val document = client.newCall(
-                    GET(source.file)
+                    GET(source.file),
                 ).execute().asJsoup()
                 document.select("Representation[mimetype~=audio]").forEach { audioSrc ->
                     audioList.add(Track(audioSrc.text(), formatBits(audioSrc.attr("bandwidth").toLongOrNull() ?: 0L) ?: "audio"))
@@ -783,8 +783,8 @@ class ConsumyBili : ConfigurableAnimeSource, AnimeHttpSource() {
                             "${videoSrc.attr("height")}p - ${formatBits(videoSrc.attr("bandwidth").toLongOrNull() ?: 0L)}",
                             videoSrc.text(),
                             audioTracks = audioList,
-                            subtitleTracks = subtitleList
-                        )
+                            subtitleTracks = subtitleList,
+                        ),
                     )
                 }
             }
@@ -826,7 +826,7 @@ class ConsumyBili : ConfigurableAnimeSource, AnimeHttpSource() {
             compareBy(
                 { it.quality.contains(quality) },
                 { it.quality.substringBefore("p ").toIntOrNull() ?: 0 },
-            )
+            ),
         ).reversed()
     }
 

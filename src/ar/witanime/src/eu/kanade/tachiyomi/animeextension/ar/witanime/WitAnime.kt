@@ -136,8 +136,9 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
                 url.contains("dood") -> {
                     val video = DoodExtractor(client).videoFromUrl(url, "Dood mirror")
-                    if (video != null)
+                    if (video != null) {
                         videoList.add(video)
+                    }
                 }
                 url.contains("4shared") -> {
                     val video = SharedExtractor(client).videosFromUrl(url)
@@ -196,10 +197,11 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        val doc = if (!document.select("div.anime-page-link").isNullOrEmpty())
+        val doc = if (!document.select("div.anime-page-link").isNullOrEmpty()) {
             client.newCall(GET(document.select("div.anime-page-link a").attr("href"), headers)).execute().asJsoup()
-        else
+        } else {
             document
+        }
         anime.thumbnail_url = doc.selectFirst("img.thumbnail")!!.attr("src")
         anime.title = doc.select("h1.anime-details-title").text()
         anime.genre = doc.select("ul.anime-genres > li > a, div.anime-info > a").joinToString(", ") { it.text() }

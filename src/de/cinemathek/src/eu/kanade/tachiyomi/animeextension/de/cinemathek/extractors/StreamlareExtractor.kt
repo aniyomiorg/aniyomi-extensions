@@ -15,8 +15,8 @@ class StreamlareExtractor(private val client: OkHttpClient) {
             POST(
                 "https://slwatch.co/api/video/stream/get",
                 body = "{\"id\":\"$id\"}"
-                    .toRequestBody("application/json".toMediaType())
-            )
+                    .toRequestBody("application/json".toMediaType()),
+            ),
         )
             .execute().body.string()
 

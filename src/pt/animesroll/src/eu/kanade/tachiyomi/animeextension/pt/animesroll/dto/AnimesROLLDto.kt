@@ -15,14 +15,14 @@ data class DataPropDto<T>(val data: T)
 @Serializable
 data class LatestAnimeDto(
     @SerialName("data_releases")
-    val animes: List<AnimeDataDto>
+    val animes: List<AnimeDataDto>,
 )
 
 @Serializable
 data class AnimeInfoDto(
     @JsonNames("data_anime", "data_movie")
     val animeData: AnimeDataDto,
-    val pages: Int = 0
+    val pages: Int = 0,
 )
 
 @Serializable
@@ -42,14 +42,14 @@ data class AnimeDataDto(
     @SerialName("generate_id")
     val id: String = "",
     val animeCalendar: String? = null,
-    val od: String = ""
+    val od: String = "",
 )
 
 @Serializable
 data class EpisodeDto(
     @SerialName("data_anime")
     val anime: AnimeDataDto,
-    val total_ep: Int
+    val total_ep: Int,
 )
 
 @Serializable
@@ -57,5 +57,5 @@ data class SearchResultsDto(
     @SerialName("data_anime")
     val animes: List<AnimeDataDto>,
     @SerialName("data_filme")
-    val movies: List<AnimeDataDto>
+    val movies: List<AnimeDataDto>,
 )

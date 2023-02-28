@@ -60,7 +60,7 @@ object CryptoAES {
             String(bEncode).toHex(),
             password.toHex(),
             saltBytes.toHex(),
-            iv.toHex()
+            iv.toHex(),
         )
     }
 
@@ -72,7 +72,7 @@ object CryptoAES {
         val cipherText: String,
         val password: String,
         val salt: String,
-        val iv: String
+        val iv: String,
     )
 
     /**
@@ -101,7 +101,7 @@ object CryptoAES {
         ivSize: Int,
         salt: ByteArray,
         resultKey: ByteArray,
-        resultIv: ByteArray
+        resultIv: ByteArray,
     ): ByteArray {
         return EvpKDF(password, keySize, ivSize, salt, 1, KDF_DIGEST, resultKey, resultIv)
     }
@@ -114,7 +114,7 @@ object CryptoAES {
         iterations: Int,
         hashAlgorithm: String,
         resultKey: ByteArray,
-        resultIv: ByteArray
+        resultIv: ByteArray,
     ): ByteArray {
         val keySize = keySize / 32
         val ivSize = ivSize / 32
@@ -136,8 +136,11 @@ object CryptoAES {
                 hash.reset()
             }
             System.arraycopy(
-                block!!, 0, derivedBytes, numberOfDerivedWords * 4,
-                min(block.size, (targetKeySize - numberOfDerivedWords) * 4)
+                block!!,
+                0,
+                derivedBytes,
+                numberOfDerivedWords * 4,
+                min(block.size, (targetKeySize - numberOfDerivedWords) * 4),
             )
             numberOfDerivedWords += block.size / 4
         }

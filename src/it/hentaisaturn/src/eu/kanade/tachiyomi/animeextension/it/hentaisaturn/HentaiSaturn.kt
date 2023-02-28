@@ -115,7 +115,7 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 Video(
                     link,
                     qualities[i],
-                    link
+                    link,
                 )
             }
         } else {
@@ -124,8 +124,8 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     url,
                     "Qualità predefinita",
                     url,
-                    headers = Headers.headersOf("Referer", referer)
-                )
+                    headers = Headers.headersOf("Referer", referer),
+                ),
             )
         }
     }
@@ -168,8 +168,11 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private var filterSearch = false
 
     override fun searchAnimeSelector(): String {
-        return if (filterSearch) "div.hentai-card-newhentai.main-hentai-card" // filter search
-        else "div.item-archivio" // regular search
+        return if (filterSearch) {
+            "div.hentai-card-newhentai.main-hentai-card" // filter search
+        } else {
+            "div.item-archivio" // regular search
+        }
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -311,7 +314,7 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Genre("Watersports"),
         Genre("X-Ray"),
         Genre("Yaoi"),
-        Genre("Yuri")
+        Genre("Yuri"),
     )
 
     internal class Year(val id: String) : AnimeFilter.CheckBox(id)
@@ -341,7 +344,7 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Year("2018"),
         Year("2019"),
         Year("2020"),
-        Year("2021")
+        Year("2021"),
     )
 
     internal class State(val id: String, name: String) : AnimeFilter.CheckBox(name)
@@ -350,14 +353,14 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         State("0", "In corso"),
         State("1", "Finito"),
         State("2", "Non rilasciato"),
-        State("3", "Droppato")
+        State("3", "Droppato"),
     )
 
     internal class Lang(val id: String, name: String) : AnimeFilter.CheckBox(name)
     private class LangList(langs: List<Lang>) : AnimeFilter.Group<Lang>("Lingua", langs)
     private fun getLangs() = listOf(
         Lang("0", "Subbato"),
-        Lang("1", "Doppiato")
+        Lang("1", "Doppiato"),
     )
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
@@ -365,7 +368,7 @@ class HentaiSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         GenreList(getGenres()),
         YearList(getYears()),
         StateList(getStates()),
-        LangList(getLangs())
+        LangList(getLangs()),
     )
 
     private fun getSearchParameters(filters: AnimeFilterList): String {

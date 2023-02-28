@@ -66,7 +66,7 @@ class EnNovelas : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val ep = SEpisode.create()
             val noEpisode = getNumberFromEpsString(
                 element.selectFirst("a:nth-child(2)")!!.text().substringAfter("Cap")
-                    .substringBefore("FIN").substringBefore("fin")
+                    .substringBefore("FIN").substringBefore("fin"),
             )
             ep.setUrlWithoutDomain(element.selectFirst("a.video200")!!.attr("href"))
             ep.name = "Cap" + element.selectFirst("a:nth-child(2)")!!.text().substringAfter("Cap")

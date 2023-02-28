@@ -7,10 +7,10 @@ object AniPlayFilters {
 
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
         fun toQueryPart() = vals[state].second
     }
@@ -26,27 +26,27 @@ object AniPlayFilters {
 
     class GenereFilter : CheckBoxFilterList(
         "Genere",
-        AniPlayFiltersData.genere.map { CheckBoxVal(it.first, false) }
+        AniPlayFiltersData.genere.map { CheckBoxVal(it.first, false) },
     )
 
     class TipologiaFilter : CheckBoxFilterList(
         "Tipologia anime",
-        AniPlayFiltersData.tipologia.map { CheckBoxVal(it.first, false) }
+        AniPlayFiltersData.tipologia.map { CheckBoxVal(it.first, false) },
     )
 
     class StatoFilter : CheckBoxFilterList(
         "Stato",
-        AniPlayFiltersData.stato.map { CheckBoxVal(it.first, false) }
+        AniPlayFiltersData.stato.map { CheckBoxVal(it.first, false) },
     )
 
     class OrigineFilter : CheckBoxFilterList(
         "Origine",
-        AniPlayFiltersData.origine.map { CheckBoxVal(it.first, false) }
+        AniPlayFiltersData.origine.map { CheckBoxVal(it.first, false) },
     )
 
     class StudioFilter : CheckBoxFilterList(
         "Studio",
-        AniPlayFiltersData.studio.map { CheckBoxVal(it.first, false) }
+        AniPlayFiltersData.studio.map { CheckBoxVal(it.first, false) },
     )
 
     class InizioFilter : QueryPartFilter("Inizio", AniPlayFiltersData.anni)
@@ -75,7 +75,7 @@ object AniPlayFilters {
         AnimeFilter.Header("Anime stagionali"),
         AnimeFilter.Header("(ignora altri filtri tranne l'ordinamento per)"),
         AnniFilter(),
-        StagioneFilter()
+        StagioneFilter(),
 
     )
 
@@ -89,7 +89,7 @@ object AniPlayFilters {
         val inizio: String = "",
         val fine: String = "",
         val anni: String = "",
-        val stagione: String = ""
+        val stagione: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
@@ -219,7 +219,7 @@ object AniPlayFilters {
             Pair("Vampiri", "67"),
             Pair("Videogame", "85"),
             Pair("Yaoi", "51"),
-            Pair("Yuri", "50")
+            Pair("Yuri", "50"),
         )
 
         val tipologia = arrayOf(
@@ -227,7 +227,7 @@ object AniPlayFilters {
             Pair("ONA", "4"),
             Pair("OVA", "3"),
             Pair("Serie", "1"),
-            Pair("Special", "5")
+            Pair("Special", "5"),
         )
 
         val stato = arrayOf(
@@ -235,7 +235,7 @@ object AniPlayFilters {
             Pair("Completato", "1"),
             Pair("In corso", "2"),
             Pair("Non rilasciato", "5"),
-            Pair("Sospeso", "3")
+            Pair("Sospeso", "3"),
         )
 
         val origine = arrayOf(
@@ -249,7 +249,7 @@ object AniPlayFilters {
             Pair("Videogioco", "7"),
             Pair("Visual novel", "8"),
             Pair("Web Manga", "11"),
-            Pair("Web Novel", "12")
+            Pair("Web Novel", "12"),
         )
 
         val studio = arrayOf(
@@ -565,7 +565,7 @@ object AniPlayFilters {
             Pair("Yostar Pictures", "551"),
             Pair("Yumeta Company", "222"),
             Pair("Zero-G", "242"),
-            Pair("Zexcs", "259")
+            Pair("Zexcs", "259"),
         )
 
         val stagione = arrayOf(

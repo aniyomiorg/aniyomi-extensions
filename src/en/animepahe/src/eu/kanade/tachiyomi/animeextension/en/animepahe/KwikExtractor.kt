@@ -84,16 +84,17 @@ class KwikExtractor(private val client: OkHttpClient) {
             .build()
 
         while (code != 302 && tries < 20) {
-
             content = noRedirectClient.newCall(
                 POST(
                     uri,
                     Headers.headersOf(
-                        "referer", fContent.request.url.toString(),
-                        "cookie", fContent.header("set-cookie")!!.replace("path=/;", "")
+                        "referer",
+                        fContent.request.url.toString(),
+                        "cookie",
+                        fContent.header("set-cookie")!!.replace("path=/;", ""),
                     ),
-                    FormBody.Builder().add("_token", tok).build()
-                )
+                    FormBody.Builder().add("_token", tok).build(),
+                ),
             ).execute()
             code = content.code
             ++tries

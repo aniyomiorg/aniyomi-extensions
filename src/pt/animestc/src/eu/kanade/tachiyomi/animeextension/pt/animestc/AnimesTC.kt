@@ -284,7 +284,7 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
             compareBy(
                 { it.quality.contains(player) },
                 { it.quality.contains("- $quality") },
-            )
+            ),
         ).reversed()
     }
 

@@ -50,7 +50,7 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
-            element.select("div.anithumb a").attr("href")
+            element.select("div.anithumb a").attr("href"),
         )
         anime.title = element.select("div.animedtls p").text()
         anime.thumbnail_url = element.select(" div.anithumb a img").attr("src")
@@ -132,7 +132,7 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         return try {
             val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
             val userPreferredQuality = preferences.getString("preferred_quality", "Fembed:720p")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
@@ -164,7 +164,7 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
-            element.selectFirst("a")!!.attr("href")
+            element.selectFirst("a")!!.attr("href"),
         )
         anime.title = element.select("div.animedtls p").text()
         anime.thumbnail_url = element.select("a img").attr("src")
@@ -202,7 +202,7 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
-            element.selectFirst("a")!!.attr("href")
+            element.selectFirst("a")!!.attr("href"),
         )
         anime.title = element.selectFirst("a div.chapter p")!!.text()
         anime.thumbnail_url = element.select("a div.chapter img").attr("src")
@@ -216,7 +216,7 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
-        GenreFilter()
+        GenreFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -267,8 +267,8 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Time Travel", "time-travel"),
             Pair("TW-Drama", "tw-drama"),
             Pair("Yaoi", "yaoi"),
-            Pair("Yuri", "yuri")
-        )
+            Pair("Yuri", "yuri"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

@@ -165,7 +165,7 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
         if (animeJson.seasons.isNotEmpty()) {
             for (season in animeJson.seasons) {
                 val episodesResponse = client.newCall(
-                    GET("$baseUrl/api/anime/${animeJson.id}/season/${season.id}")
+                    GET("$baseUrl/api/anime/${animeJson.id}/season/${season.id}"),
                 ).execute()
                 val episodesJson = json.decodeFromString<List<AnimeResult.Episode>>(episodesResponse.body.string())
 
@@ -217,13 +217,14 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
                     "Best (mp4)",
                     videoUrl,
                     headers = Headers.headersOf(
-                        "Referer", "https://aniplay.it/play/${videoJson.id}"
-                    )
-                )
+                        "Referer",
+                        "https://aniplay.it/play/${videoJson.id}",
+                    ),
+                ),
             )
         } else if (videoUrl.contains(".m3u8")) {
             val masterPlaylist = client.newCall(
-                GET(videoUrl, headers = Headers.headersOf("Referer", "https://aniplay.it/play/${videoJson.id}"))
+                GET(videoUrl, headers = Headers.headersOf("Referer", "https://aniplay.it/play/${videoJson.id}")),
             ).execute().body.string()
 
             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:")
@@ -253,8 +254,7 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
-    private fun HttpUrl.Builder.addIfNotBlank(query: String, value: String):
-        HttpUrl.Builder {
+    private fun HttpUrl.Builder.addIfNotBlank(query: String, value: String): HttpUrl.Builder {
         if (value.isNotBlank()) {
             addQueryParameter(query, value)
         }
@@ -265,7 +265,7 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
         val quality = preferences.getString("preferred_quality", "1080")!!
 
         return this.sortedWith(
-            compareBy { it.quality.contains(quality) }
+            compareBy { it.quality.contains(quality) },
         ).reversed()
     }
 
@@ -292,7 +292,7 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
     @Serializable
     data class VideoResult(
         val id: Int,
-        val videoUrl: String
+        val videoUrl: String,
     )
 
     @Serializable
@@ -300,11 +300,11 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
         val id: Int,
         val title: String,
         val storyline: String,
-        val verticalImages: List<Image>
+        val verticalImages: List<Image>,
     ) {
         @Serializable
         data class Image(
-            val imageFull: String
+            val imageFull: String,
         )
     }
 
@@ -320,11 +320,11 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
         val studio: String,
         val verticalImages: List<Image>,
         val seasons: List<Season>,
-        val episodes: List<Episode>
+        val episodes: List<Episode>,
     ) {
         @Serializable
         data class Season(
-            val id: Int
+            val id: Int,
         )
 
         @Serializable
@@ -332,12 +332,12 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
             val id: Int,
             val episodeNumber: String,
             val title: String? = null,
-            val airingDate: String? = null
+            val airingDate: String? = null,
         )
 
         @Serializable
         data class Image(
-            val imageFull: String
+            val imageFull: String,
         )
     }
 }

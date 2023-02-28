@@ -225,7 +225,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Type(" قائمة الأفلام ", "movie-list"),
         Type(" قائمة الأوفا ", "ova-list"),
         Type(" قائمة الأونا ", "ona-list"),
-        Type(" قائمة الحلقات خاصة ", "special-list")
+        Type(" قائمة الحلقات خاصة ", "special-list"),
     )
 
     // preferred quality settings

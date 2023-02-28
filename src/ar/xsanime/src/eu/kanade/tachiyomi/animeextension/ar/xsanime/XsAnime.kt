@@ -165,7 +165,7 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun getStatusFilters(): Array<Pair<String?, String>> = arrayOf(
         Pair("", "<اختر>"),
         Pair("مستمر", "مستمر"),
-        Pair("منتهي", "منتهي")
+        Pair("منتهي", "منتهي"),
     )
 
     private fun getGenreFilters(): Array<Pair<String?, String>> = arrayOf(
@@ -188,7 +188,7 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("مدرسي", "مدرسي"),
         Pair("مغامرات", "مغامرات"),
         Pair("موسيقي", "موسيقي"),
-        Pair("نفسي", "نفسي")
+        Pair("نفسي", "نفسي"),
     )
 
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String?, String>>) :

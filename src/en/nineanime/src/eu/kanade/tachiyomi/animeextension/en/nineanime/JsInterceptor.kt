@@ -36,7 +36,6 @@ class JsInterceptor(private val lang: String) : Interceptor {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun resolveWithWebView(request: Request): Request? {
-
         val latch = CountDownLatch(1)
 
         var webView: WebView? = null
@@ -70,12 +69,14 @@ class JsInterceptor(private val lang: String) : Interceptor {
                     override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                         if (!request?.url.toString().contains("vidstream") &&
                             !request?.url.toString().contains("vizcloud")
-                        ) return null
+                        ) {
+                            return null
+                        }
 
                         if (request?.url.toString().contains("/simple/")) {
                             newRequest = GET(
                                 request?.url.toString(),
-                                Headers.headersOf("referer", "/orp.maertsdiv//:sptth".reversed())
+                                Headers.headersOf("referer", "/orp.maertsdiv//:sptth".reversed()),
                             )
                             latch.countDown()
                             return null

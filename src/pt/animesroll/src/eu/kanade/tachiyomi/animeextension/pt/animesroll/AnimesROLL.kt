@@ -165,8 +165,11 @@ class AnimesROLL : AnimeHttpSource() {
             val ismovie = slug == ""
             url = if (ismovie) "/f/$id" else "/anime/$slug"
             thumbnail_url = "https://static.anroll.net/images/".let {
-                if (ismovie) it + "filmes/capas/$slug_movie.jpg"
-                else it + "animes/capas/$slug.jpg"
+                if (ismovie) {
+                    it + "filmes/capas/$slug_movie.jpg"
+                } else {
+                    it + "animes/capas/$slug.jpg"
+                }
             }
             title = anititle
         }

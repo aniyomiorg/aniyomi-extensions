@@ -56,7 +56,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val parsed = json.decodeFromString<AnimeResponse>(
-            response.body.string().substringAfter("top-anime animes=\"").substringBefore("\"></top-anime>").replace("&quot;", "\"")
+            response.body.string().substringAfter("top-anime animes=\"").substringBefore("\"></top-anime>").replace("&quot;", "\""),
         )
 
         val animeList = parsed.data.map { ani ->
@@ -107,7 +107,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun searchAnimeRequest(page: Int, query: String, filters: AnimeUnityFilters.FilterSearchParams): Request {
         val archivioResponse = client.newCall(
-            GET("$baseUrl/archivio", headers = headers)
+            GET("$baseUrl/archivio", headers = headers),
         ).execute()
 
         val document = archivioResponse.asJsoup()
@@ -164,7 +164,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun searchAnimeParse(response: Response, page: Int): AnimesPage {
         return if (response.request.method == "POST") {
             val data = json.decodeFromString<SearchResponse>(
-                response.body.string()
+                response.body.string(),
             )
 
             val animeList = data.records.map {
@@ -196,7 +196,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
         val videoPlayer = document.selectFirst("video-player[episodes_count]")!!
 
         val animeDetails = json.decodeFromString<AnimeInfo>(
-            videoPlayer.attr("anime").replace("&quot;", "\"")
+            videoPlayer.attr("anime").replace("&quot;", "\""),
         )
 
         anime.title = animeDetails.title_eng
@@ -249,7 +249,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
         val animeId = response.request.url.toString().substringAfter("/anime/").substringBefore("-")
 
         val episodes = json.decodeFromString<List<Episode>>(
-            videoPlayer.attr("episodes").replace("&quot;", "\"")
+            videoPlayer.attr("episodes").replace("&quot;", "\""),
         )
 
         episodeList.addAll(
@@ -262,7 +262,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
                     date_upload = parseDate(it.created_at)
                     episode_number = it.number.split("-")[0].toFloatOrNull() ?: 0F
                 }
-            }
+            },
         )
 
         if (episodeCount > 120) {
@@ -271,7 +271,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
 
             while (end < episodeCount) {
                 episodeList.addAll(
-                    addFromApi(start, end, animeId, newHeaders)
+                    addFromApi(start, end, animeId, newHeaders),
                 )
                 start += 120
                 end += 120
@@ -279,7 +279,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
 
             if (episodeCount >= start) {
                 episodeList.addAll(
-                    addFromApi(start, episodeCount, animeId, newHeaders)
+                    addFromApi(start, episodeCount, animeId, newHeaders),
                 )
             }
         }
@@ -296,14 +296,14 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
             "Host", "scws.work",
             "Origin", baseUrl,
             "Referer", "$baseUrl/",
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0"
+            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
         )
 
         val mediaId = json.decodeFromString<LinkData>(episode.url)
         val videoList = mutableListOf<Video>()
 
         val serverJson = json.decodeFromString<ServerResponse>(
-            client.newCall(GET("https://scws.work/videos/${mediaId.id}", headers = newHeaders)).execute().body.string()
+            client.newCall(GET("https://scws.work/videos/${mediaId.id}", headers = newHeaders)).execute().body.string(),
         )
 
         val appJs = client.newCall(GET("$baseUrl/js/app.js", headers = headers)).execute().body.string()
@@ -318,13 +318,13 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
         val downloadToken = getToken(pMultiplier.toInt(), serverJson.client_ip, pKey)
 
         val masterPlaylist = client.newCall(
-            GET("$workerUrl/master/${mediaId.id}?token=$playListToken", headers = headers)
+            GET("$workerUrl/master/${mediaId.id}?token=$playListToken", headers = headers),
         ).execute().body.string()
 
         val qualities = mutableListOf<String>()
         masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
             qualities.add(
-                it.substringAfter("\n").substringBefore("\n").substringBefore("p/").substringAfterLast("/")
+                it.substringAfter("\n").substringBefore("\n").substringBefore("p/").substringAfterLast("/"),
             )
         }
 
@@ -346,8 +346,8 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
                     "https://au-d1-0${serverJson.proxy_download}.scws-content.net",
                     "${it}p",
                     url,
-                    headers = headers
-                )
+                    headers = headers,
+                ),
             )
         }
 
@@ -370,7 +370,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun addFromApi(start: Int, end: Int, animeId: String, headers: Headers): List<SEpisode> {
         val response = client.newCall(
-            GET("$baseUrl/info_api/$animeId/1?start_range=$start&end_range=$end", headers = headers)
+            GET("$baseUrl/info_api/$animeId/1?start_range=$start&end_range=$end", headers = headers),
         ).execute()
         val json = json.decodeFromString<ApiResponse>(response.body.string())
         return json.episodes.filter {
@@ -419,8 +419,8 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
         return this.sortedWith(
             compareBy(
                 { it.quality.contains(quality) },
-                { it.quality.substringBefore("p").toIntOrNull() ?: 0 }
-            )
+                { it.quality.substringBefore("p").toIntOrNull() ?: 0 },
+            ),
         ).reversed()
     }
 

@@ -294,20 +294,26 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     otherList.add(video)
                 }
             }
-        } else otherList += this
+        } else {
+            otherList += this
+        }
         val newList = mutableListOf<Video>()
         var preferred = 0
         for (video in hosterList) {
             if (video.quality.contains(subPreference)) {
                 newList.add(preferred, video)
                 preferred++
-            } else newList.add(video)
+            } else {
+                newList.add(video)
+            }
         }
         for (video in otherList) {
             if (video.quality.contains(subPreference)) {
                 newList.add(preferred, video)
                 preferred++
-            } else newList.add(video)
+            } else {
+                newList.add(video)
+            }
         }
 
         return newList

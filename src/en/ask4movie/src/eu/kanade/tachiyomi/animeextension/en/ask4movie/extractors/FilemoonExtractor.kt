@@ -13,7 +13,7 @@ import okhttp3.OkHttpClient
 data class CaptionElement(
     val file: String,
     val label: String,
-    val kind: String
+    val kind: String,
 )
 
 class FilemoonExtractor(private val client: OkHttpClient) {
@@ -30,7 +30,7 @@ class FilemoonExtractor(private val client: OkHttpClient) {
                 try {
                     if (subtitleString.isNotEmpty()) {
                         val subResponse = client.newCall(
-                            GET(subtitleString)
+                            GET(subtitleString),
                         ).execute()
 
                         val subtitles = Json.decodeFromString<List<CaptionElement>>(subResponse.body.string())
@@ -53,9 +53,9 @@ class FilemoonExtractor(private val client: OkHttpClient) {
                     subtitleRegex.findAll(masterPlaylist).map {
                         Track(
                             it.groupValues[2],
-                            it.groupValues[1]
+                            it.groupValues[1],
                         )
-                    }
+                    },
                 )
             } catch (e: Error) {}
 

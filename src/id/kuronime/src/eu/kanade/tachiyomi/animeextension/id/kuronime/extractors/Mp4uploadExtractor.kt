@@ -15,7 +15,7 @@ class Mp4uploadExtractor(private val client: OkHttpClient) {
         val unpacked = JsUnpacker.unpackAndCombine("eval(function(p,a,c,k,e,d)" + packed) ?: return emptyList()
         val videoUrl = unpacked.substringAfter("player.src(\"").substringBefore("\");")
         return listOf(
-            Video(videoUrl, "Original - $name", videoUrl, headers = Headers.headersOf("Referer", "https://www.mp4upload.com/"))
+            Video(videoUrl, "Original - $name", videoUrl, headers = Headers.headersOf("Referer", "https://www.mp4upload.com/")),
         )
     }
 }

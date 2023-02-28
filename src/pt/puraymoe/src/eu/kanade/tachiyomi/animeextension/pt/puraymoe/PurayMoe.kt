@@ -370,10 +370,11 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
                 .substringBefore("\n")
                 .substringBefore(",") + "p"
             val videoUrl = it.substringAfter("\n").substringBefore("\n")
-            if (isStable)
+            if (isStable) {
                 Video(videoUrl, quality + " - $lang", videoUrl, headers = headers)
-            else
+            } else {
                 Video(videoUrl, quality, videoUrl, headers = headers, subtitleTracks = subs)
+            }
         }
     }
 
@@ -387,7 +388,7 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun List<Video>.sortBy(item: String): List<Video> {
         return sortedWith(
-            compareBy { it.quality.contains(item) }
+            compareBy { it.quality.contains(item) },
         )
     }
 
@@ -395,15 +396,18 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         val quality = preferences.getString(PREF_QUALITY_KEY, "720p")!!
         val lang = preferences.getString(PREF_SUB_KEY, lang)!!
         return this.sortBy(quality).let {
-            if (isStable) it.sortBy(lang)
-            else it
+            if (isStable) {
+                it.sortBy(lang)
+            } else {
+                it
+            }
         }.reversed()
     }
 
     private fun List<Track>.sortSubs(): List<Track> {
         val language = preferences.getString(PREF_SUB_KEY, lang)!!
         return sortedWith(
-            compareBy { it.lang.contains(language) }
+            compareBy { it.lang.contains(language) },
         ).reversed()
     }
 
@@ -418,19 +422,32 @@ class PurayMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Qualidade preferida"
         private val PREF_QUALITY_VALUES = arrayOf(
-            "240p", "360p",
-            "480p", "720p", "1080p"
+            "240p",
+            "360p",
+            "480p",
+            "720p",
+            "1080p",
         )
 
         private const val PREF_SUB_KEY = "preferred_subLang"
         private const val PREF_SUB_TITLE = "Linguagem preferida na sub"
         private val PREF_SUB_ENTRIES = arrayOf(
-            "Arabic", "English", "French", "German", "Portuguese",
-            "Spanish(Latin America)", "Spanish"
+            "Arabic",
+            "English",
+            "French",
+            "German",
+            "Portuguese",
+            "Spanish(Latin America)",
+            "Spanish",
         )
         private val PREF_SUB_VALUES = arrayOf(
-            "ar-SA", "en-US", "fr-FR", "de-DE", "pt-BR",
-            "es-419", "es-ES"
+            "ar-SA",
+            "en-US",
+            "fr-FR",
+            "de-DE",
+            "pt-BR",
+            "es-419",
+            "es-ES",
         )
 
         private const val PREF_SHOW_ONLY_KEY = "show_only"

@@ -140,8 +140,9 @@ class AnimeYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (iframe != null) {
             val playerUrl = iframe.attr("src")
             val video = PlayerTwoExtractor(client).videoFromPlayerUrl(playerUrl)
-            if (video != null)
+            if (video != null) {
                 videoList.add(video)
+            }
         }
         return videoList
     }
@@ -247,7 +248,6 @@ class AnimeYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-
         val videoPlayerPref = ListPreference(screen.context).apply {
             key = AYConstants.PREFERRED_PLAYER
             title = "Player preferido"

@@ -7,7 +7,7 @@ import okhttp3.OkHttpClient
 
 class GenericExtractor(
     private val client: OkHttpClient,
-    private val headers: Headers
+    private val headers: Headers,
 ) {
 
     private val REGEX_CLP_PLAYER = Regex("player\\('(\\S+)',")
@@ -29,8 +29,9 @@ class GenericExtractor(
                 val videoUrl = it.groupValues.get(2)
                 Video(videoUrl, quality, videoUrl, headers)
             }.toList()
-            if (videos.size > 0)
+            if (videos.size > 0) {
                 return videos
+            }
         }
 
         return listOf(Video(playlistUrl, player, playlistUrl, headers))

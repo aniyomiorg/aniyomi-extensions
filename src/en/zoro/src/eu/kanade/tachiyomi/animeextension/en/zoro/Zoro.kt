@@ -263,7 +263,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun searchAnimeRequest(
         page: Int,
         query: String,
-        filters: ZoroFilters.FilterSearchParams
+        filters: ZoroFilters.FilterSearchParams,
     ): Request {
         val url = if (query.isEmpty()) {
             "$baseUrl/filter".toHttpUrlOrNull()!!.newBuilder()
@@ -325,7 +325,6 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
@@ -391,7 +390,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun Element.getInfo(
         tag: String,
         isList: Boolean = false,
-        full: Boolean = false
+        full: Boolean = false,
     ): String? {
         if (isList) {
             val elements = select("div.item-list:contains($tag) > a")
@@ -403,8 +402,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return if (full) "\n$tag $value" else value
     }
 
-    private fun HttpUrl.Builder.addIfNotBlank(query: String, value: String):
-        HttpUrl.Builder {
+    private fun HttpUrl.Builder.addIfNotBlank(query: String, value: String): HttpUrl.Builder {
         if (value.isNotBlank()) {
             addQueryParameter(query, value)
         }
@@ -429,8 +427,14 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_SUB_KEY = "preferred_subLang"
         private const val PREF_SUB_TITLE = "Preferred sub language"
         private val PREF_SUB_ENTRIES = arrayOf(
-            "English", "Spanish", "Portuguese", "French",
-            "German", "Italian", "Japanese", "Russian"
+            "English",
+            "Spanish",
+            "Portuguese",
+            "French",
+            "German",
+            "Italian",
+            "Japanese",
+            "Russian",
         )
     }
 }

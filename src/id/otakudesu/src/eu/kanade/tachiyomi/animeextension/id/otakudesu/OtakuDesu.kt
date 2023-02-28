@@ -136,7 +136,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 "search" -> element.selectFirst("h2 > a")!!.attr("href")
                 "genres" -> element.select(".col-anime-title > a").attr("href")
                 else -> element.selectFirst("div.thumb > a")!!.attr("href")
-            }
+            },
         )
 
         anime.thumbnail_url = when (ui) {
@@ -255,7 +255,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // filter
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("Text search ignores filters"),
-        GenreFilter()
+        GenreFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -298,7 +298,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Supernatural", "supernatural"),
             Pair("Thriller", "thriller"),
             Pair("Vampire", "vampire"),
-        )
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

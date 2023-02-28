@@ -95,8 +95,8 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             POST(
                 postUrl,
                 headers,
-                body
-            )
+                body,
+            ),
         ).execute().asJsoup()
         val episodesElements = epListResponse.select("li")
         episodesElements.map {

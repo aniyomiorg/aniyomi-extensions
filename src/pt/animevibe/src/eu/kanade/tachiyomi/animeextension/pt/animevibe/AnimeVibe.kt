@@ -177,7 +177,9 @@ class AnimeVibe : AnimeHttpSource() {
                     }
                     Video(url, quality, url, null, headers)
                 }
-        } else throw Exception("UNKOWN VIDEO SOURCE")
+        } else {
+            throw Exception("UNKOWN VIDEO SOURCE")
+        }
     }
 
     override fun videoListParse(response: Response): List<Video> {
@@ -225,6 +227,7 @@ class AnimeVibe : AnimeHttpSource() {
         private const val API_PATH = "animevibe/api/v1"
         private const val CDN_URL = "https://animefire.net"
         private const val VIDEO_URL = "https://akumaharu.org"
+
         // blogger.com videos needs an user agent to work
         private const val USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"
 

@@ -222,7 +222,6 @@ class HentaiYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Settings ==============================
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-
         val videoQualityPref = ListPreference(screen.context).apply {
             key = HYConstants.PREFERRED_QUALITY
             title = "Qualidade preferida"

@@ -29,13 +29,16 @@ class DailymotionExtractor(private val client: OkHttpClient) {
 
         var parsed = json.decodeFromString<DailyQuality>(
             client.newCall(GET(jsonUrl))
-                .execute().body.string()
+                .execute().body.string(),
         )
         var playlistHeaders = Headers.headersOf()
         val videoHeaders = Headers.headersOf(
-            "Accept", "*/*",
-            "Origin", "https://www.dailymotion.com",
-            "Referer", "https://www.dailymotion.com/"
+            "Accept",
+            "*/*",
+            "Origin",
+            "https://www.dailymotion.com",
+            "Referer",
+            "https://www.dailymotion.com/",
         )
 
         if (parsed.error != null) {
@@ -46,14 +49,18 @@ class DailymotionExtractor(private val client: OkHttpClient) {
                 val scope = htmlString.substringAfter("client_scope\":\"").substringBefore("\"")
 
                 val tokenHeaders = Headers.headersOf(
-                    "Accept", "application/json, text/plain, */*",
-                    "Content-Type", "application/x-www-form-urlencoded",
-                    "Origin", "https://www.dailymotion.com",
-                    "Referer", "https://www.dailymotion.com/"
+                    "Accept",
+                    "application/json, text/plain, */*",
+                    "Content-Type",
+                    "application/x-www-form-urlencoded",
+                    "Origin",
+                    "https://www.dailymotion.com",
+                    "Referer",
+                    "https://www.dailymotion.com/",
                 )
                 val tokenBody = "client_id=$clientId&client_secret=$clientSecret&traffic_segment=$ts&visitor_id=$v1st&grant_type=client_credentials&scope=$scope".toRequestBody("application/x-www-form-urlencoded".toMediaType())
                 val tokenResponse = client.newCall(
-                    POST(postUrl, body = tokenBody, headers = tokenHeaders)
+                    POST(postUrl, body = tokenBody, headers = tokenHeaders),
                 ).execute()
                 val tokenParsed = json.decodeFromString<TokenResponse>(tokenResponse.body.string())
 
@@ -63,7 +70,7 @@ class DailymotionExtractor(private val client: OkHttpClient) {
                     "Authorization", "${tokenParsed.token_type} ${tokenParsed.access_token}",
                     "Content-Type", "application/json",
                     "Origin", "https://www.dailymotion.com",
-                    "Referer", "https://www.dailymotion.com/"
+                    "Referer", "https://www.dailymotion.com/",
                 )
 
                 val idData = """
@@ -77,21 +84,27 @@ class DailymotionExtractor(private val client: OkHttpClient) {
                 """.trimIndent().toRequestBody("application/json".toMediaType())
 
                 val idResponse = client.newCall(
-                    POST(idUrl, body = idData, headers = idHeaders)
+                    POST(idUrl, body = idData, headers = idHeaders),
                 ).execute()
                 val idParsed = json.decodeFromString<ProtectedResponse>(idResponse.body.string()).data.video
 
                 val dmvk = htmlString.substringAfter("\"dmvk\":\"").substringBefore("\"")
                 val getVideoIdUrl = "https://www.dailymotion.com/player/metadata/video/${idParsed.xid}?embedder=${"$baseUrl/"}&locale=en-US&dmV1st=$v1st&dmTs=$ts&is_native_app=0"
                 val getVideoIdHeaders = Headers.headersOf(
-                    "Accept", "*/*",
-                    "Cookie", "dmvk=$dmvk; ts=$ts; v1st=$v1st; usprivacy=1---; client_token=${tokenParsed.access_token}",
-                    "Referer", url
+                    "Accept",
+                    "*/*",
+                    "Cookie",
+                    "dmvk=$dmvk; ts=$ts; v1st=$v1st; usprivacy=1---; client_token=${tokenParsed.access_token}",
+                    "Referer",
+                    url,
                 )
                 playlistHeaders = Headers.headersOf(
-                    "Accept", "*/*",
-                    "Cookie", "dmvk=$dmvk; ts=$ts; v1st=$v1st; usprivacy=1---; client_token=${tokenParsed.access_token}",
-                    "Referer", url
+                    "Accept",
+                    "*/*",
+                    "Cookie",
+                    "dmvk=$dmvk; ts=$ts; v1st=$v1st; usprivacy=1---; client_token=${tokenParsed.access_token}",
+                    "Referer",
+                    url,
                 )
                 val getVideoIdResponse = client.newCall(GET(getVideoIdUrl, headers = getVideoIdHeaders)).execute()
                 val videoQualityBody = getVideoIdResponse.body.string()
@@ -122,16 +135,16 @@ class DailymotionExtractor(private val client: OkHttpClient) {
 
     @Serializable
     data class ProtectedResponse(
-        val data: DataObject
+        val data: DataObject,
     ) {
         @Serializable
         data class DataObject(
-            val video: VideoObject
+            val video: VideoObject,
         ) {
             @Serializable
             data class VideoObject(
                 val id: String,
-                val xid: String
+                val xid: String,
             )
         }
     }
@@ -144,17 +157,17 @@ class DailymotionExtractor(private val client: OkHttpClient) {
     ) {
         @Serializable
         data class Error(
-            val type: String
+            val type: String,
         )
 
         @Serializable
         data class Auto(
-            val auto: List<Item>
+            val auto: List<Item>,
         ) {
             @Serializable
             data class Item(
                 val type: String,
-                val url: String
+                val url: String,
             )
         }
     }

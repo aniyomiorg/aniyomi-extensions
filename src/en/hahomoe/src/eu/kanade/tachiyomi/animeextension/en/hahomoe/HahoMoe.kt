@@ -846,7 +846,7 @@ class HahoMoe : ParsedAnimeHttpSource() {
         val includedTags: ArrayList<String>,
         val blackListedTags: ArrayList<String>,
         val orderBy: String,
-        val ordering: String
+        val ordering: String,
     )
     internal class Brand(val id: String, name: String) : AnimeFilter.CheckBox(name)
     private val sortableList = listOf(
@@ -875,14 +875,14 @@ class HahoMoe : ParsedAnimeHttpSource() {
                         if (tag.isIncluded()) {
                             includedTags.add(
                                 "\"" + tag.id.toLowerCase(
-                                    Locale.US
-                                ) + "\""
+                                    Locale.US,
+                                ) + "\"",
                             )
                         } else if (tag.isExcluded()) {
                             blackListedTags.add(
                                 "\"" + tag.id.toLowerCase(
-                                    Locale.US
-                                ) + "\""
+                                    Locale.US,
+                                ) + "\"",
                             )
                         }
                     }

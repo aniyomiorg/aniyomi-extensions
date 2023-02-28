@@ -136,7 +136,6 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun getPlayerVideos(url: String, qualityStr: String): List<Video> {
-
         return when {
             "/vplayer/?source" in url || "embed.redecine.org" in url -> {
                 val videoUrl = url.getParam("source") ?: url.getParam("url")!!
@@ -300,7 +299,7 @@ class AnimesOnlineX : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     Toast.makeText(
                         screen.context,
                         RESTART_ANIYOMI,
-                        Toast.LENGTH_LONG
+                        Toast.LENGTH_LONG,
                     ).show()
                     res
                 }.getOrNull() ?: false
