@@ -572,8 +572,8 @@ class Hanime : ConfigurableAnimeSource, AnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("720p", "480p", "360p")
-            entryValues = arrayOf("720", "480", "360")
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
             setDefaultValue("720")
             summary = "%s"
 
