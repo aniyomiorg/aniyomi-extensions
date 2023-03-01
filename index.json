@@ -879,10 +879,10 @@
   {
     "name": "Aniyomi: AllAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.allanime",
-    "apk": "aniyomi-en.allanime-v13.10.apk",
+    "apk": "aniyomi-en.allanime-v13.11.apk",
     "lang": "en",
-    "code": 10,
-    "version": "13.10",
+    "code": 11,
+    "version": "13.11",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -891,7 +891,7 @@
         "name": "AllAnime",
         "lang": "en",
         "id": "4709139914729853090",
-        "baseUrl": "https://api.allanime.co",
+        "baseUrl": "https://api.allanime.to",
         "versionId": 1,
         "hasCloudflare": 1
       }
