@@ -1,9 +1,9 @@
-package eu.kanade.tachiyomi.animeextension.en.dopebox
+package eu.kanade.tachiyomi.multisrc.dopeflix
 
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 
-object DopeBoxFilters {
+object DopeFlixFilters {
 
     open class QueryPartFilter(
         displayName: String,
@@ -46,17 +46,17 @@ object DopeBoxFilters {
             }
     }
 
-    class TypeFilter : QueryPartFilter("Type", DopeBoxFiltersData.types)
-    class QualityFilter : QueryPartFilter("Quality", DopeBoxFiltersData.qualities)
-    class ReleaseYearFilter : QueryPartFilter("Released at", DopeBoxFiltersData.years)
+    class TypeFilter : QueryPartFilter("Type", DopeFlixFiltersData.types)
+    class QualityFilter : QueryPartFilter("Quality", DopeFlixFiltersData.qualities)
+    class ReleaseYearFilter : QueryPartFilter("Released at", DopeFlixFiltersData.years)
 
     class GenresFilter : CheckBoxFilterList(
         "Genres",
-        DopeBoxFiltersData.genres.map { CheckBoxVal(it.first, false) },
+        DopeFlixFiltersData.genres.map { CheckBoxVal(it.first, false) },
     )
     class CountriesFilter : CheckBoxFilterList(
         "Countries",
-        DopeBoxFiltersData.countries.map { CheckBoxVal(it.first, false) },
+        DopeFlixFiltersData.countries.map { CheckBoxVal(it.first, false) },
     )
 
     val filterList = AnimeFilterList(
@@ -83,12 +83,12 @@ object DopeBoxFilters {
             filters.asQueryPart<TypeFilter>(),
             filters.asQueryPart<QualityFilter>(),
             filters.asQueryPart<ReleaseYearFilter>(),
-            filters.parseCheckbox<GenresFilter>(DopeBoxFiltersData.genres),
-            filters.parseCheckbox<CountriesFilter>(DopeBoxFiltersData.countries),
+            filters.parseCheckbox<GenresFilter>(DopeFlixFiltersData.genres),
+            filters.parseCheckbox<CountriesFilter>(DopeFlixFiltersData.countries),
         )
     }
 
-    private object DopeBoxFiltersData {
+    private object DopeFlixFiltersData {
         val all = Pair("All", "all")
 
         val types = arrayOf(

@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.en.dopebox.utils
+package eu.kanade.tachiyomi.multisrc.dopeflix.utils
 
 import android.util.Base64
 import java.security.DigestException
