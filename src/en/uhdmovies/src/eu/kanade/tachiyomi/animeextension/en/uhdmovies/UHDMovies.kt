@@ -111,7 +111,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val resp = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
         val episodeElements = resp.select("p:has(a[href*=?id])[style*=center],p:has(a[href*=?id]):has(span.maxbutton-1-center)")
-        val qualityRegex = "[0-9]{3,4}p".toRegex(RegexOption.IGNORE_CASE)
+        val qualityRegex = "\\d{3,4}p".toRegex(RegexOption.IGNORE_CASE)
         val firstText = episodeElements.first()!!.text()
         if (firstText.contains("Episode", true) ||
             firstText.contains("Zip", true) ||
@@ -119,16 +119,16 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ) {
             episodeElements.map { row ->
                 val prevP = row.previousElementSibling()!!
-                val seasonRegex = "[ .]S(?:eason)?[ .]?([0-9]{1,2})[ .]".toRegex(RegexOption.IGNORE_CASE)
+                val seasonRegex = "[ .]S(?:eason)?[ .]?(\\d{1,2})[ .]".toRegex(RegexOption.IGNORE_CASE)
                 val result = seasonRegex.find(prevP.text())
 
                 val season = (
                     result?.groups?.get(1)?.value ?: let {
-                        val prevPre = row.previousElementSiblings()!!.prev("pre,div.mks_separator")
+                        val prevPre = row.previousElementSiblings().prev("pre,div.mks_separator")
                         val preResult = seasonRegex.find(prevPre.first()!!.text())
                         preResult?.groups?.get(1)?.value ?: let {
                             val title = resp.select("h1.entry-title")
-                            val titleResult = "[ .\\[(]S(?:eason)?[ .]?([0-9]{1,2})[ .\\])]".toRegex(RegexOption.IGNORE_CASE).find(title.text())
+                            val titleResult = "[ .\\[(]S(?:eason)?[ .]?(\\d{1,2})[ .\\])]".toRegex(RegexOption.IGNORE_CASE).find(title.text())
                             titleResult?.groups?.get(1)?.value ?: "-1"
                         }
                     }
@@ -182,11 +182,17 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     qualityMatchOwn?.value ?: "HD"
                 }
 
-                val collectionName = row.previousElementSiblings()!!.prev("h1,h2,h3,pre").first()!!.text()
-                    .replace("Download", "", true).trim()
+                val collectionName = row.previousElementSiblings().prev("h1,h2,h3,pre").first()!!.text()
+                    .replace("Download", "", true).trim().let {
+                        if (it.contains("Collection", true)) {
+                            row.previousElementSibling()!!.ownText()
+                        } else {
+                            it
+                        }
+                    }
 
                 row.select("a").map { linkElement ->
-                    Triple(linkElement.attr("href")!!, quality, collectionName)
+                    Triple(linkElement.attr("href"), quality, collectionName)
                 }
             }.flatten().groupBy { it.third }.map { group ->
                 collectionIdx++
@@ -236,6 +242,9 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }.getOrNull()
             }.flatten(),
         )
+
+        if (videoList.isEmpty()) throw Exception("No working links found")
+
         return Observable.just(videoList.sort())
     }
 
@@ -269,6 +278,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val mediaResponse = client.newBuilder().followRedirects(false).build()
             .newCall(GET(redirectUrl)).execute()
         val path = mediaResponse.body.string().substringAfter("replace(\"").substringBefore("\"")
+        if (path == "/404") return Pair(emptyList(), "")
         val mediaUrl = "https://" + mediaResponse.request.url.host + path
         val videoList = mutableListOf<Video>()
 
@@ -280,26 +290,30 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return Pair(videoList, mediaUrl)
     }
 
-    private val sizeRegex = "\\[((?:.(?!\\[))+)][ ]*\$".toRegex(RegexOption.IGNORE_CASE)
+    private val sizeRegex = "\\[((?:.(?!\\[))+)] *\$".toRegex(RegexOption.IGNORE_CASE)
 
     private fun extractWorkerLinks(mediaUrl: String, quality: String, type: Int): List<Video> {
         val reqLink = mediaUrl.replace("/file/", "/wfile/") + "?type=$type"
         val resp = client.newCall(GET(reqLink)).execute().asJsoup()
         val sizeMatch = sizeRegex.find(resp.select("div.card-header").text().trim())
         val size = sizeMatch?.groups?.get(1)?.value?.let { " - $it" } ?: ""
-        return resp.select("div.card-body div.mb-4 > a").mapIndexed { index, linkElement ->
-            val link = linkElement.attr("href")
-            val decodedLink = if (link.contains("workers.dev")) {
-                link
-            } else {
-                String(Base64.decode(link.substringAfter("download?url="), Base64.DEFAULT))
-            }
+        return try {
+            resp.select("div.card-body div.mb-4 > a").mapIndexed { index, linkElement ->
+                val link = linkElement.attr("href")
+                val decodedLink = if (link.contains("workers.dev")) {
+                    link
+                } else {
+                    String(Base64.decode(link.substringAfter("download?url="), Base64.DEFAULT))
+                }
 
-            Video(
-                url = decodedLink,
-                quality = "$quality - CF $type Worker ${index + 1}$size",
-                videoUrl = decodedLink,
-            )
+                Video(
+                    url = decodedLink,
+                    quality = "$quality - CF $type Worker ${index + 1}$size",
+                    videoUrl = decodedLink,
+                )
+            }
+        } catch (_: Exception) {
+            emptyList()
         }
     }
 
@@ -334,10 +348,16 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this.sortedWith(comparator)
     }
 
-    private fun String.fixQuality(): Float = this.substringAfterLast("-").trim()
-        .replace("GB", "", true)
-        .replace("MB", "", true)
-        .toFloat()
+    private fun String.fixQuality(): Float {
+        val size = this.substringAfterLast("-").trim()
+        return if (size.contains("GB", true)) {
+            size.replace("GB", "", true)
+                .toFloat() * 1000
+        } else {
+            size.replace("MB", "", true)
+                .toFloat()
+        }
+    }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
