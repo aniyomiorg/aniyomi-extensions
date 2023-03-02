@@ -7,10 +7,10 @@ object AOXFilters {
 
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
         fun toQueryPart() = vals[state].second
     }
@@ -25,11 +25,11 @@ object AOXFilters {
 
     val filterList = AnimeFilterList(
         AnimeFilter.Header(AOXFiltersData.IGNORE_SEARCH_MSG),
-        GenreFilter()
+        GenreFilter(),
     )
 
     data class FilterSearchParams(
-        val genre: String = ""
+        val genre: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
@@ -65,7 +65,7 @@ object AOXFilters {
             Pair("Shounen Ai", "shounen-ai"),
             Pair("Shounen", "shounen"),
             Pair("Slice of Life", "slice-of-life"),
-            Pair("Terror", "terror")
+            Pair("Terror", "terror"),
         )
     }
 }

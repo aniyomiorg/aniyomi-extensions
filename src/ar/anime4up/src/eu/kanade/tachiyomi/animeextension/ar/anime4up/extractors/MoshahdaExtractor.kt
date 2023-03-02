@@ -17,7 +17,7 @@ class MoshahdaExtractor(private val client: OkHttpClient) {
         val videoList = mutableListOf<Video>()
         for (source in sources) {
             val masterUrl = source.substringBefore("\"}")
-            val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
+            val masterPlaylist = client.newCall(GET(masterUrl)).execute().body.string()
             val videoList = mutableListOf<Video>()
             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:")
                 .forEach {

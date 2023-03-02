@@ -63,7 +63,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
-            element.select("div.info a").attr("href")
+            element.select("div.info a").attr("href"),
         )
         anime.title = element.select("div.info a div").text()
         val thumb1 = element.select("div.cover a div img:not(.placeholder)").attr("data-src")
@@ -76,7 +76,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val pageBody = response.asJsoup()
-        val episodesJson = pageBody.selectFirst("script:containsData(var episodes =)").data()
+        val episodesJson = pageBody.selectFirst("script:containsData(var episodes =)")!!.data()
             .substringAfter("var episodes = ").substringBefore(";")
         val json = json.decodeFromString<List<EpisodesJson>>(episodesJson)
 
@@ -98,7 +98,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
         // probably exists a better way to make this idk
-        val script = document.selectFirst("script:containsData(var video = [];)").data()
+        val script = document.selectFirst("script:containsData(var video = [];)")!!.data()
 
         val firstVideo = script.substringBefore("else {").substringAfter("video[0] = '").substringBefore("'").lowercase()
         val secondVideo = script.substringAfter("else {").substringAfter("video[0] = '").substringBefore("'").lowercase()
@@ -130,8 +130,8 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this.sortedWith(
             compareBy(
                 { it.quality.contains(quality) },
-                { it.quality.contains(server, true) }
-            )
+                { it.quality.contains(server, true) },
+            ),
         ).reversed()
     }
 
@@ -180,12 +180,14 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                 }
                 AnimesPage(
-                    animes, false
+                    animes,
+                    false,
                 )
             }
             else -> {
                 AnimesPage(
-                    response.asJsoup().select(popularAnimeSelector()).map { popularAnimeFromElement(it) }, true
+                    response.asJsoup().select(popularAnimeSelector()).map { popularAnimeFromElement(it) },
+                    true,
                 )
             }
         }
@@ -199,19 +201,19 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.title = document.selectFirst("div.col.offset-lg-3.offset-md-4 h1").ownText()
+        anime.title = document.selectFirst("div.col.offset-lg-3.offset-md-4 h1")!!.ownText()
         var description = document.select("div.synopsis p").text() + "\n\n"
 
-        val scoreElement = document.selectFirst("div#anime-info-list div.item:contains(Score)")
+        val scoreElement = document.selectFirst("div#anime-info-list div.item:contains(Score)")!!
         if (scoreElement.ownText().isNotEmpty()) description += "Score moyen: ★${scoreElement.ownText().trim()}"
 
-        val statusElement = document.selectFirst("div#anime-info-list div.item:contains(Status)")
+        val statusElement = document.selectFirst("div#anime-info-list div.item:contains(Status)")!!
         if (statusElement.ownText().isNotEmpty()) description += "\nStatus: ${statusElement.ownText().trim()}"
 
-        val formatElement = document.selectFirst("div#anime-info-list div.item:contains(Format)")
+        val formatElement = document.selectFirst("div#anime-info-list div.item:contains(Format)")!!
         if (formatElement.ownText().isNotEmpty()) description += "\nFormat: ${formatElement.ownText().trim()}"
 
-        val diffusionElement = document.selectFirst("div#anime-info-list div.item:contains(Diffusion)")
+        val diffusionElement = document.selectFirst("div#anime-info-list div.item:contains(Diffusion)")!!
         if (diffusionElement.ownText().isNotEmpty()) description += "\nDiffusion: ${diffusionElement.ownText().trim()}"
 
         anime.status = parseStatus(statusElement.ownText().trim())
@@ -241,7 +243,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val animeList = mutableListOf<SAnime>()
 
         val jsonLatest = json.decodeFromString<List<SearchJson>>(
-            response.body!!.string().substringAfter("var lastEpisodes = ").substringBefore(";\n")
+            response.body.string().substringAfter("var lastEpisodes = ").substringBefore(";\n"),
         )
 
         for (item in jsonLatest) {
@@ -273,8 +275,8 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         arrayOf(
             Pair("<sélectionner>", "none"),
             Pair("VOSTFR", "anime"),
-            Pair("VF", "anime-vf")
-        )
+            Pair("VF", "anime-vf"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -326,8 +328,8 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 "Accept" to "*/*",
                 "Accept-Encoding" to "gzip, deflate, br",
                 "Accept-Language" to "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
-                "Connection" to "keep-alive"
-            )
+                "Connection" to "keep-alive",
+            ),
         ).get()
         document.select("script").forEach { Script ->
             if (Script.attr("src").contains("https://www.pstream.net/u/player-script") || Script.attr("src").contains("https://veestream.net/u/player-script")) {
@@ -336,8 +338,8 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         "Accept" to "*/*",
                         "Accept-Encoding" to "gzip, deflate, br",
                         "Accept-Language" to "fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7",
-                        "Connection" to "keep-alive"
-                    )
+                        "Connection" to "keep-alive",
+                    ),
                 ).ignoreContentType(true).execute().body()
 
                 val base64Data = playerScript.substringAfter("e.parseJSON(atob(t).slice(2))}(\"").substringBefore("\"")
@@ -357,7 +359,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                 val masterPlaylist = client.newCall(GET(videoUrlDecoded, headers))
                     .execute()
-                    .body!!.string()
+                    .body.string()
 
                 val separator = "#EXT-X-STREAM-INF"
                 masterPlaylist.substringAfter(separator).split(separator).map {
@@ -365,7 +367,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         .substringBefore("\"") + "p"
                     val videoUrl = it.substringAfter("\n").substringBefore("\n")
                     videoList.add(
-                        Video(videoUrl, "$resolution (Pstream)", videoUrl, headers = headers)
+                        Video(videoUrl, "$resolution (Pstream)", videoUrl, headers = headers),
                     )
                 }
                 return videoList
@@ -377,48 +379,56 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun extractFuse(videoUrl: String): List<Video> {
         val videoList = mutableListOf<Video>()
         val iframeHeaders = Headers.headersOf(
-            "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-            "Accept-Language", "en-US,en;q=0.5",
-            "Host", videoUrl.toHttpUrl().host,
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36 Edg/88.0.705.63"
+            "Accept",
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+            "Accept-Language",
+            "en-US,en;q=0.5",
+            "Host",
+            videoUrl.toHttpUrl().host,
+            "User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36 Edg/88.0.705.63",
         )
 
         val soup = client.newCall(
-            GET(videoUrl, headers = iframeHeaders)
+            GET(videoUrl, headers = iframeHeaders),
         ).execute().asJsoup()
 
-        val jsUrl = soup.selectFirst("script[src~=player-script]").attr("src")
+        val jsUrl = soup.selectFirst("script[src~=player-script]")!!.attr("src")
 
         val jsHeaders = Headers.headersOf(
             "Accept", "*/*",
             "Accept-Language", "en-US,en;q=0.5",
             "Host", videoUrl.toHttpUrl().host,
             "Referer", videoUrl,
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36 Edg/88.0.705.63"
+            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36 Edg/88.0.705.63",
         )
         val jsString = client.newCall(
-            GET(jsUrl, headers = jsHeaders)
-        ).execute().body!!.string()
+            GET(jsUrl, headers = jsHeaders),
+        ).execute().body.string()
         val base64Data = jsString.substringAfter("e.parseJSON(atob(t).slice(2))}(\"").substringBefore("\"")
         val base64Decoded = Base64.decode(base64Data, Base64.DEFAULT).toString(Charsets.UTF_8)
         val playlistUrl = "https:" + base64Decoded.substringAfter("https:").substringBefore("\"}").replace("\\", "")
 
         val masterPlaylist = client.newCall(
-            GET(playlistUrl, headers = jsHeaders)
-        ).execute().body!!.string()
+            GET(playlistUrl, headers = jsHeaders),
+        ).execute().body.string()
 
         masterPlaylist.substringAfter("#EXT-X-STREAM-INF").split("#EXT-X-STREAM-INF").map {
             val resolution = it.substringAfter("NAME=\"")
                 .substringBefore("\"") + "p"
             val newUrl = it.substringAfter("\n").substringBefore("\n")
             val videoHeaders = Headers.headersOf(
-                "Accept", "*/*",
-                "Accept-Language", "en-US,en;q=0.5",
-                "Host", videoUrl.toHttpUrl().host,
-                "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36 Edg/88.0.705.63",
+                "Accept",
+                "*/*",
+                "Accept-Language",
+                "en-US,en;q=0.5",
+                "Host",
+                videoUrl.toHttpUrl().host,
+                "User-Agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36 Edg/88.0.705.63",
             )
             videoList.add(
-                Video(videoUrl, "$resolution (fusevideo)", newUrl, headers = videoHeaders)
+                Video(videoUrl, "$resolution (fusevideo)", newUrl, headers = videoHeaders),
             )
         }
 
@@ -431,7 +441,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         var episode: String? = null,
         var title: String? = null,
         var url: String? = null,
-        var url_image: String? = null
+        var url_image: String? = null,
 
     )
 
@@ -451,7 +461,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         var url_image: String? = null,
         var score: String? = null,
         var startDateYear: String? = null,
-        var nbEps: String? = null
+        var nbEps: String? = null,
 
     )
 }

@@ -101,8 +101,8 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("div.thumb > a").first().attr("href"))
-        anime.thumbnail_url = element.select("div.thumb > a > div.thumbz > img").first().attr("src")
+        anime.setUrlWithoutDomain(element.selectFirst("div.thumb > a")!!.attr("href"))
+        anime.thumbnail_url = element.selectFirst("div.thumb > a > div.thumbz > img")!!.attr("src")
         anime.title = element.select("div.thumb > a > div.thumbz > h2").text()
         return anime
     }
@@ -115,8 +115,8 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("div.thumb > a").first().attr("href"))
-        anime.thumbnail_url = element.select("div.thumb > a > div.thumbz > img").first().attr("src")
+        anime.setUrlWithoutDomain(element.selectFirst("div.thumb > a")!!.attr("href"))
+        anime.thumbnail_url = element.selectFirst("div.thumb > a > div.thumbz > img")!!.attr("src")
         anime.title = element.select("div.thumb > a > div.thumbz > h2").text()
         return anime
     }
@@ -133,16 +133,16 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
             when (ui) {
-                "search" -> element.select("h2 > a").first().attr("href")
+                "search" -> element.selectFirst("h2 > a")!!.attr("href")
                 "genres" -> element.select(".col-anime-title > a").attr("href")
-                else -> element.select("div.thumb > a").first().attr("href")
-            }
+                else -> element.selectFirst("div.thumb > a")!!.attr("href")
+            },
         )
 
         anime.thumbnail_url = when (ui) {
-            "search" -> element.select("img").first().attr("src")
+            "search" -> element.selectFirst("img")!!.attr("src")
             "genres" -> element.select(".col-anime-cover > img").attr("src")
-            else -> element.select("div.thumb > a > div.thumbz > img").first().attr("src")
+            else -> element.selectFirst("div.thumb > a > div.thumbz > img")!!.attr("src")
         }
         anime.title = when (ui) {
             "search" -> element.select("h2 > a").text().replace(" Subtitle Indonesia", "")
@@ -255,7 +255,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // filter
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("Text search ignores filters"),
-        GenreFilter()
+        GenreFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -298,7 +298,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Supernatural", "supernatural"),
             Pair("Thriller", "thriller"),
             Pair("Vampire", "vampire"),
-        )
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

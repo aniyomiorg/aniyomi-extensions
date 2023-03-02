@@ -42,7 +42,6 @@ class JsInterceptor : Interceptor {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun resolveWithWebView(request: Request): Request? {
-
         val latch = CountDownLatch(1)
 
         var webView: WebView? = null

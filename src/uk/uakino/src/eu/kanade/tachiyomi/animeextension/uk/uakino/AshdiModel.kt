@@ -5,13 +5,13 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AshdiModel(
     val title: String,
-    val folder: List<Ashdi>
+    val folder: List<Ashdi>,
 )
 
 @Serializable
 data class Ashdi(
     val title: String,
-    val folder: List<Video>
+    val folder: List<Video>,
 )
 
 @Serializable
@@ -20,5 +20,5 @@ data class Video(
     val file: String,
     val id: String,
     val poster: String,
-    val subtitle: String
+    val subtitle: String,
 )

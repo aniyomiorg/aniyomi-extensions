@@ -6,12 +6,11 @@ ext {
     extName = 'AllAnime'
     pkgNameSuffix = 'en.allanime'
     extClass = '.AllAnime'
-    extVersionCode = 10
+    extVersionCode = 11
     libVersion = '13'
 }
 
 dependencies {
-    compileOnly libs.bundles.coroutines
     implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation(project(':lib-okru-extractor'))

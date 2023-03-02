@@ -6,10 +6,10 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 object KissAnimeFilters {
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
         fun toQueryPart() = vals[state].second
     }
@@ -27,7 +27,7 @@ object KissAnimeFilters {
 
     class GenreFilter : CheckBoxFilterList(
         "Genre",
-        KissAnimeFiltersData.genre.map { CheckBoxVal(it.first, false) }
+        KissAnimeFiltersData.genre.map { CheckBoxVal(it.first, false) },
     )
 
     class SubPageFilter : QueryPartFilter("Sub-page", KissAnimeFiltersData.subpage)
@@ -40,14 +40,14 @@ object KissAnimeFilters {
         AnimeFilter.Separator(),
         AnimeFilter.Header("Ignores other filters & text search"),
         SubPageFilter(),
-        ScheduleFilter()
+        ScheduleFilter(),
     )
 
     data class FilterSearchParams(
         val status: String = "",
         val genre: String = "",
         val subpage: String = "",
-        val schedule: String = ""
+        val schedule: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
@@ -123,7 +123,7 @@ object KissAnimeFilters {
             Pair("Supernatural", "Supernatural_"),
             Pair("Thriller", "Thriller_"),
             Pair("Vampire", "Vampire_"),
-            Pair("Yuri", "Yuri_")
+            Pair("Yuri", "Yuri_"),
         )
 
         val subpage = arrayOf(

@@ -107,7 +107,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val newHeaders = Headers.headersOf("referer", baseUrl + referer)
             val iframeResponse = client.newCall(GET(iframe, newHeaders))
                 .execute().asJsoup()
-            return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
+            return videosFromElement(iframeResponse.selectFirst(videoListSelector())!!)
         } else {
             val postUrl = document.select("form[method=post]").attr("action")
             val ur = document.select("input[name=ur]").attr("value")
@@ -141,7 +141,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         val elements = element.select(videoListSelector())
         for (element in elements) {
-            val location = element.ownerDocument().location()
+            val location = element.ownerDocument()!!.location()
             val embedUrl = element.attr("data-ep-url")
             val qualityy = element.text()
             Log.i("embedUrl", "$embedUrl")
@@ -297,6 +297,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             return GET(typeUrl.toString(), headers)
                         }
                     }
+                    else -> {}
                 }
             }
             throw Exception("اختر فلتر")
@@ -308,7 +309,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.select("img.thumbnail").first().attr("src")
+        anime.thumbnail_url = document.selectFirst("img.thumbnail")!!.attr("src")
         anime.title = document.select("h1.anime-details-title").text()
         anime.genre = document.select("ul.anime-genres > li > a, div.anime-info > a").joinToString(", ") { it.text() }
         anime.description = document.select("p.anime-story").text()
@@ -421,7 +422,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Genre("مغامرات", "%d9%85%d8%ba%d8%a7%d9%85%d8%b1%d8%a7%d8%aa/"),
         Genre("موسيقي", "%d9%85%d9%88%d8%b3%d9%8a%d9%82%d9%8a/"),
         Genre("ميكا", "%d9%85%d9%8a%d9%83%d8%a7/"),
-        Genre("نفسي", "%d9%86%d9%81%d8%b3%d9%8a/")
+        Genre("نفسي", "%d9%86%d9%81%d8%b3%d9%8a/"),
     )
 
     private fun getTypeList() = listOf(
@@ -430,7 +431,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Type("ONA", "ona1"),
         Type("OVA", "ova1"),
         Type("Special", "special1"),
-        Type("TV", "tv2")
+        Type("TV", "tv2"),
 
     )
 
@@ -438,7 +439,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Status("أختر", ""),
         Status("لم يعرض بعد", "%d9%84%d9%85-%d9%8a%d8%b9%d8%b1%d8%b6-%d8%a8%d8%b9%d8%af"),
         Status("مكتمل", "complete"),
-        Status("يعرض الان", "%d9%8a%d8%b9%d8%b1%d8%b6-%d8%a7%d9%84%d8%a7%d9%86-1")
+        Status("يعرض الان", "%d9%8a%d8%b9%d8%b1%d8%b6-%d8%a7%d9%84%d8%a7%d9%86-1"),
 
     )
 }

@@ -49,7 +49,7 @@ class JellyfinAuthenticator(
         """.trimIndent()
             .toRequestBody("application/json".toMediaType())
         val request = POST("$baseUrl/Users/authenticatebyname", headers = authHeader, body = body)
-        val response = client.newCall(request).execute().body?.string()
+        val response = client.newCall(request).execute().body.string()
         return response?.let { Json.decodeFromString<JsonObject>(it) }
     }
 
@@ -68,11 +68,13 @@ class JellyfinAuthenticator(
     }
 
     private fun getPrefDeviceId(): String? = preferences.getString(
-        DEVICEID_KEY, null
+        DEVICEID_KEY,
+        null,
     )
 
     private fun setPrefDeviceId(value: String) = preferences.edit().putString(
-        DEVICEID_KEY, value
+        DEVICEID_KEY,
+        value,
     ).apply()
 }
 

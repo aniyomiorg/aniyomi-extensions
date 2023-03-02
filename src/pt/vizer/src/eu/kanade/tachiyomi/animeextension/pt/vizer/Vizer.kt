@@ -67,8 +67,11 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
             initialUrl + "&saga=0&categoriesListMovies=all"
         } else {
             (initialUrl + "&categoriesListSeries=all").let {
-                if ("anime" in pageType) it + "&anime=1"
-                else it + "&anime=0"
+                if ("anime" in pageType) {
+                    it + "&anime=1"
+                } else {
+                    it + "&anime=0"
+                }
             }
         }
         return GET(finalUrl)
@@ -101,13 +104,15 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
         val sname = seasonElement.text()
         val response = client.newCall(apiRequest("getEpisodes=$id")).execute()
         val episodes = response.parseAs<EpisodeListDto>().episodes.mapNotNull {
-            if (it.released)
+            if (it.released) {
                 SEpisode.create().apply {
                     name = "Temp $sname: Ep ${it.name} - ${it.title}"
                     episode_number = it.name.toFloatOrNull() ?: 0F
                     url = it.id
                 }
-            else null
+            } else {
+                null
+            }
         }
         return episodes
     }
@@ -123,7 +128,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
                     name = "Filme"
                     episode_number = 1F
                     url = response.request.url.toString()
-                }
+                },
             )
         }
     }
@@ -143,7 +148,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val body = response.body?.string().orEmpty()
+        val body = response.body.string()
         val videoObjectList = if (body.startsWith("{")) {
             json.decodeFromString<VideoLanguagesDto>(body).videos
         } else {
@@ -222,12 +227,14 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
             .addQueryParameter("categoryFilterOrderBy", filters.orderBy)
             .addQueryParameter("categoryFilterOrderWay", filters.orderWay)
 
-        if (filters.type == "Movies")
+        if (filters.type == "Movies") {
             urlBuilder.addQueryParameter("categoriesListMovies", filters.genre)
-        else
+        } else {
             urlBuilder.addQueryParameter("categoriesListSeries", filters.genre)
-        if (filters.type == "anime")
+        }
+        if (filters.type == "anime") {
             urlBuilder.addQueryParameter("anime", "1")
+        }
         return GET(urlBuilder.build().toString(), headers)
     }
 
@@ -236,9 +243,9 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun animeDetailsParse(response: Response): SAnime {
         val doc = response.asJsoup()
         return SAnime.create().apply {
-            title = doc.selectFirst("section.ai > h2").text()
-            thumbnail_url = doc.selectFirst("meta[property=og:image]").attr("content")
-            var desc = doc.selectFirst("span.desc").text() + "\n"
+            title = doc.selectFirst("section.ai > h2")!!.text()
+            thumbnail_url = doc.selectFirst("meta[property=og:image]")!!.attr("content")
+            var desc = doc.selectFirst("span.desc")!!.text() + "\n"
             doc.selectFirst("div.year")?.let { desc += "\nAno: ${it.text()}" }
             doc.selectFirst("div.tm")?.let { desc += "\nDuração: ${it.text()}" }
             doc.selectFirst("a.rating")?.let { desc += "\nNota: ${it.text()}" }
@@ -313,7 +320,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun getPlayerUrl(id: String, name: String): String {
         val req = GET("$baseUrl/embed/getPlay.php?id=$id&sv=$name")
-        val body = client.newCall(req).execute().body?.string().orEmpty()
+        val body = client.newCall(req).execute().body.string()
         return body.substringAfter("location.href=\"").substringBefore("\";")
     }
 
@@ -346,7 +353,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private inline fun <reified T> Response.parseAs(): T {
-        val responseBody = body?.string().orEmpty()
+        val responseBody = body.string()
         return json.decodeFromString(responseBody)
     }
 
@@ -354,16 +361,22 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_POPULAR_PAGE_KEY = "pref_popular_page"
         private const val PREF_POPULAR_PAGE_TITLE = "Página de Populares"
         private val PREF_POPULAR_PAGE_ENTRIES = arrayOf(
-            "Animes", "Filmes", "Séries"
+            "Animes",
+            "Filmes",
+            "Séries",
         )
         private val PREF_POPULAR_PAGE_VALUES = arrayOf(
-            "anime", "movie", "serie"
+            "anime",
+            "movie",
+            "serie",
         )
 
         private const val PREF_PLAYER_KEY = "pref_player"
         private const val PREF_PLAYER_TITLE = "Player/Server favorito"
         private val PREF_PLAYER_ARRAY = arrayOf(
-            "MixDrop", "StreamTape", "Fembed"
+            "MixDrop",
+            "StreamTape",
+            "Fembed",
         )
 
         private const val PREF_LANGUAGE_KEY = "pref_language"

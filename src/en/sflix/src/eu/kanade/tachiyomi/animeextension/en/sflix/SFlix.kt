@@ -73,9 +73,9 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
-        anime.thumbnail_url = element.selectFirst("img").attr("data-src")
-        anime.title = element.selectFirst("a").attr("title")
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        anime.thumbnail_url = element.selectFirst("img")!!.attr("data-src")
+        anime.title = element.selectFirst("a")!!.attr("title")
         return anime
     }
 
@@ -96,8 +96,8 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val seasonsHtml = client.newCall(
                 GET(
                     seasonUrl,
-                    headers = Headers.headersOf("Referer", document.location())
-                )
+                    headers = Headers.headersOf("Referer", document.location()),
+                ),
             ).execute().asJsoup()
             val seasonsElements = seasonsHtml.select("a.dropdown-item.ss-item")
             seasonsElements.forEach {
@@ -130,8 +130,8 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun episodeFromElement(element: Element, seasonName: String): SEpisode {
         val episodeId = element.attr("data-id")
-        val epNum = element.selectFirst("div.episode-number").text()
-        val epName = element.selectFirst("h3.film-name a").text()
+        val epNum = element.selectFirst("div.episode-number")!!.text()
+        val epName = element.selectFirst("h3.film-name a")!!.text()
         val episode = SEpisode.create().apply {
             name = "$seasonName $epNum $epName"
             setUrlWithoutDomain("$baseUrl/ajax/v2/episode/servers/$episodeId")
@@ -151,11 +151,11 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val extractor = SFlixExtractor(client)
         val videoList = doc.select("ul.fss-list a.btn-play")
             .parallelMap { server ->
-                val name = server.selectFirst("span").text()
+                val name = server.selectFirst("span")!!.text()
                 val id = server.attr("data-id")
                 val url = "$baseUrl/ajax/sources/$id"
                 val reqBody = client.newCall(GET(url, episodeReferer)).execute()
-                    .body!!.string()
+                    .body.string()
                 val sourceUrl = reqBody.substringAfter("\"link\":\"")
                     .substringBefore("\"")
                 runCatching {
@@ -195,7 +195,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (masterUrl.contains("playlist.m3u8")) {
             val prefix = "#EXT-X-STREAM-INF:"
             val playlist = client.newCall(GET(masterUrl)).execute()
-                .body!!.string()
+                .body.string()
             val videoList = playlist.substringAfter(prefix).split(prefix).map {
                 val quality = "$name - " + it.substringAfter("RESOLUTION=")
                     .substringAfter("x")
@@ -216,7 +216,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 Video(masterUrl, "$name - Default", masterUrl, subtitleTracks = subs)
             } catch (e: Error) {
                 Video(masterUrl, "$name - Default", masterUrl)
-            }
+            },
         )
         return defaultVideoList
     }
@@ -306,11 +306,11 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create().apply {
-            thumbnail_url = document.selectFirst("img.film-poster-img").attr("src")
-            title = document.selectFirst("img.film-poster-img").attr("title")
+            thumbnail_url = document.selectFirst("img.film-poster-img")!!.attr("src")
+            title = document.selectFirst("img.film-poster-img")!!.attr("title")
             genre = document.select("div.row-line:contains(Genre) a")
                 .joinToString(", ") { it.text() }
-            description = document.selectFirst("div.detail_page-watch div.description")
+            description = document.selectFirst("div.detail_page-watch div.description")!!
                 .text().replace("Overview:", "")
             author = document.select("div.row-line:contains(Production) a")
                 .joinToString(", ") { it.text() }
@@ -445,7 +445,7 @@ class SFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private val PREF_SUB_LANGUAGES = arrayOf(
             "Arabic", "English", "French", "German", "Hungarian",
             "Italian", "Japanese", "Portuguese", "Romanian", "Russian",
-            "Spanish"
+            "Spanish",
         )
 
         private const val PREF_LATEST_KEY = "preferred_latest_page"

@@ -62,10 +62,10 @@ class HentaiYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime: SAnime = SAnime.create()
-        val img = element.selectFirst("img")
-        val elementA = element.selectFirst("a")
+        val img = element.selectFirst("img")!!
+        val elementA = element.selectFirst("a")!!
         anime.setUrlWithoutDomain(elementA.attr("href"))
-        anime.title = element.selectFirst("h3").text()
+        anime.title = element.selectFirst("h3")!!.text()
         anime.thumbnail_url = img.attr("src")
         return anime
     }
@@ -96,9 +96,9 @@ class HentaiYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-        val elementA = element.selectFirst("a")
+        val elementA = element.selectFirst("a")!!
         episode.setUrlWithoutDomain(elementA.attr("href"))
-        val name = element.selectFirst("h3").text()
+        val name = element.selectFirst("h3")!!.text()
         val epName = name.substringAfterLast("– ")
         episode.name = epName
         episode.episode_number = try {
@@ -175,7 +175,7 @@ class HentaiYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (searchJson == null) {
             val body = client.newCall(GET("$baseUrl/api/show.php"))
                 .execute()
-                .body?.string().orEmpty()
+                .body.string()
             searchJson = json.decodeFromString<List<SearchResultDto>>(body)
         }
         val mutableJson = searchJson!!.toMutableList()
@@ -196,15 +196,15 @@ class HentaiYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         val doc = getRealDoc(document)
 
-        val img = doc.selectFirst("div.anime-cover")
-        val infos = img.selectFirst("div.anime-info-right")
+        val img = doc.selectFirst("div.anime-cover")!!
+        val infos = img.selectFirst("div.anime-info-right")!!
 
-        anime.thumbnail_url = img.selectFirst("img").attr("src")
-        anime.title = infos.selectFirst("h1").text()
+        anime.thumbnail_url = img.selectFirst("img")!!.attr("src")
+        anime.title = infos.selectFirst("h1")!!.text()
         anime.genre = infos.getInfo("Generos")
             ?.replace(".", "") // Prevents things like "Yuri."
         anime.status = parseStatus(infos.getInfo("Status"))
-        anime.description = doc.selectFirst("div.anime-description").text()
+        anime.description = doc.selectFirst("div.anime-description")!!.text()
 
         return anime
     }
@@ -222,7 +222,6 @@ class HentaiYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Settings ==============================
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-
         val videoQualityPref = ListPreference(screen.context).apply {
             key = HYConstants.PREFERRED_QUALITY
             title = "Qualidade preferida"
@@ -256,7 +255,7 @@ class HentaiYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun Element.getInfo(tag: String): String? {
-        val item = this.selectFirst("div:contains($tag) > i").parent()
+        val item = this.selectFirst("div:contains($tag) > i")!!.parent()
         val text = item?.text()
         val info = text?.substringAfter(tag + ": ") ?: ""
         return when {

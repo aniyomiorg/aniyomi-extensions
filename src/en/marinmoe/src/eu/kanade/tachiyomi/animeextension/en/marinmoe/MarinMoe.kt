@@ -129,7 +129,7 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         anime.status = parseStatus(details.status.name)
 
         var description = Jsoup.parse(
-            details.description.replace("<br />", "br2n")
+            details.description.replace("<br />", "br2n"),
         ).text().replace("br2n", "\n") + "\n"
         description += "\nContent Rating: ${details.content_rating.name}"
         description += "\nRelease Date: ${details.release_date}"
@@ -204,7 +204,7 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
 
         newHeaders.add(
             "X-XSRF-TOKEN",
-            ddosCookies.substringAfter("XSRF-TOKEN=").substringBefore(";").replace("%3D", "=")
+            ddosCookies.substringAfter("XSRF-TOKEN=").substringBefore(";").replace("%3D", "="),
         )
 
         newHeaders.add("Cookie", ddosCookies)
@@ -228,13 +228,12 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         val videos = json.decodeFromString<EpisodeData>(dataPage).props.video_list.data
 
         for (video in videos) {
-
             val dataStr = """{"video":"${video.slug}"}"""
 
             newHeaders.add("Content-Length", dataStr.length.toString())
 
             val videoJson = client.newCall(
-                POST(response.request.url.toString(), body = dataStr.toRequestBody("application/json".toMediaType()), headers = newHeaders.build())
+                POST(response.request.url.toString(), body = dataStr.toRequestBody("application/json".toMediaType()), headers = newHeaders.build()),
             ).execute().asJsoup().select("div#app").attr("data-page").replace("&quot;", "\"")
 
             val src = json.decodeFromString<EpisodeResponse>(videoJson).props.video.data
@@ -246,10 +245,10 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
                             response.request.url.toString(),
                             "${src.title} ${link.resolution} (${if (src.audio.code == "jp") "Sub" else "Dub"} - ${src.source.name})",
                             link.code.file,
-                            headers = videoHeaders.build()
+                            headers = videoHeaders.build(),
                         ),
-                        src.sort
-                    )
+                        src.sort,
+                    ),
                 )
             }
         }
@@ -269,7 +268,7 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
                 { it.first.quality.lowercase().contains(subOrDub) },
                 { it.first.quality.contains(quality) },
                 { if (prefGroup == "site_default") -it.second else it.first.quality.contains(prefGroup) },
-            )
+            ),
         ).reversed().map { t -> t.first }
     }
 

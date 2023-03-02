@@ -12,12 +12,12 @@ data class AccessToken(
     val signature: String? = null,
     val key_pair_id: String? = null,
     val bucket: String? = null,
-    val policyExpire: Long? = null
+    val policyExpire: Long? = null,
 )
 
 @Serializable
 data class Policy(
-    val cms: Tokens
+    val cms: Tokens,
 ) {
     @Serializable
     data class Tokens(
@@ -25,26 +25,26 @@ data class Policy(
         val signature: String,
         val key_pair_id: String,
         val bucket: String,
-        val expires: String
+        val expires: String,
     )
 }
 
 @Serializable
 data class LinkData(
     val id: String,
-    val media_type: String
+    val media_type: String,
 )
 
 @Serializable
 data class Images(
-    val poster_tall: List<ArrayList<Image>>? = null
+    val poster_tall: List<ArrayList<Image>>? = null,
 ) {
     @Serializable
     data class Image(
         val width: Int,
         val height: Int,
         val type: String,
-        val source: String
+        val source: String,
     )
 }
 
@@ -60,7 +60,7 @@ data class Anime(
     val series_metadata: Metadata? = null,
     @SerialName("movie_listing_metadata")
     val movie_metadata: MovieMeta? = null,
-    val content_provider: String? = null
+    val content_provider: String? = null,
 ) {
     @Serializable
     data class Metadata(
@@ -71,7 +71,7 @@ data class Anime(
         val is_dubbed: Boolean,
         val is_subbed: Boolean,
         @SerialName("tenant_categories")
-        val genres: ArrayList<String>? = null
+        val genres: ArrayList<String>? = null,
     )
 
     @Serializable
@@ -81,14 +81,14 @@ data class Anime(
         val maturity_ratings: ArrayList<String>,
         val subtitle_locales: ArrayList<String>,
         @SerialName("tenant_categories")
-        val genres: ArrayList<String>? = null
+        val genres: ArrayList<String>? = null,
     )
 }
 
 @Serializable
 data class AnimeResult(
     val total: Int,
-    val data: ArrayList<Anime>
+    val data: ArrayList<Anime>,
 )
 
 @Serializable
@@ -99,28 +99,28 @@ data class SearchAnimeResult(
     data class SearchAnime(
         val type: String,
         val count: Int,
-        val items: ArrayList<Anime>
+        val items: ArrayList<Anime>,
     )
 }
 
 @Serializable
 data class SeasonResult(
     val total: Int,
-    val data: ArrayList<Season>
+    val data: ArrayList<Season>,
 ) {
     @Serializable
     data class Season(
         val id: String,
         val season_number: Int? = null,
         @SerialName("premium_available_date")
-        val date: String? = null
+        val date: String? = null,
     )
 }
 
 @Serializable
 data class EpisodeResult(
     val total: Int,
-    val data: ArrayList<Episode>
+    val data: ArrayList<Episode>,
 ) {
     @Serializable
     data class Episode(
@@ -132,13 +132,13 @@ data class EpisodeResult(
         @SerialName("episode_air_date")
         val airDate: String? = null,
         val versions: ArrayList<Version>? = null,
-        val streams_link: String
+        val streams_link: String,
     ) {
         @Serializable
         data class Version(
             val audio_locale: String,
             @SerialName("media_guid")
-            val mediaId: String
+            val mediaId: String,
         )
     }
 }
@@ -148,19 +148,19 @@ data class TempEpisode(
     var name: String,
     var episode_number: Float,
     var date_upload: Long,
-    var scanlator: String?
+    var scanlator: String?,
 )
 
 @Serializable
 data class EpisodeData(
-    val ids: List<Pair<String, String>>
+    val ids: List<Pair<String, String>>,
 )
 
 @Serializable
 data class VideoStreams(
     val streams: Stream? = null,
     val subtitles: JsonObject? = null,
-    val audio_locale: String? = null
+    val audio_locale: String? = null,
 ) {
     @Serializable
     data class Stream(
@@ -171,13 +171,13 @@ data class VideoStreams(
 @Serializable
 data class HlsLinks(
     val hardsub_locale: String,
-    val url: String
+    val url: String,
 )
 
 @Serializable
 data class Subtitle(
     val locale: String,
-    val url: String
+    val url: String,
 )
 
 fun <T> List<T>.thirdLast(): T? {

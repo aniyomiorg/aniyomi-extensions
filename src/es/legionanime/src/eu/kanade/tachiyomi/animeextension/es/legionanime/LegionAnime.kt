@@ -262,7 +262,7 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun amazonExtractor(url: String): String {
         val document = client.newCall(GET(url.replace(".com", ".tv"))).execute().asJsoup()
-        val videoURl = document.selectFirst("script:containsData(sources: [)").data()
+        val videoURl = document.selectFirst("script:containsData(sources: [)")!!.data()
             .substringAfter("[{\"file\":\"")
             .substringBefore("\",").replace("\\", "")
         return try {

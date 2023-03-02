@@ -221,7 +221,6 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun getPrefBaseUrl(): String = preferences.getString(BASE_URL_PREF, defaultBaseUrl)!!
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-
         val baseUrlPref = androidx.preference.EditTextPreference(screen.context).apply {
             key = BASE_URL_PREF_TITLE
             title = BASE_URL_PREF_TITLE

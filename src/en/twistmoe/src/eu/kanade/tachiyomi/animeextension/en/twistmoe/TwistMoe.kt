@@ -54,7 +54,7 @@ class TwistMoe : AnimeHttpSource() {
         GET("https://api.twist.moe/api/anime#$page", requestHeaders)
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         val array = json.decodeFromString<JsonArray>(responseString)
         val list = mutableListOf<JsonElement>()
         array.toCollection(list)
@@ -85,7 +85,7 @@ class TwistMoe : AnimeHttpSource() {
         GET("https://api.twist.moe/api/anime#query=$query;page=$page", requestHeaders)
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         val array = json.decodeFromString<JsonArray>(responseString)
         val list = mutableListOf<JsonElement>()
         array.toCollection(list)
@@ -115,7 +115,7 @@ class TwistMoe : AnimeHttpSource() {
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         val jObject = json.decodeFromString<JsonObject>(responseString)
         val anime = SAnime.create()
         anime.title = jObject["title"]!!.jsonPrimitive.content
@@ -145,7 +145,7 @@ class TwistMoe : AnimeHttpSource() {
                 val bodyString = "{\"query\":\"query(\$id: Int){Media(type:ANIME,idMal:\$id){coverImage{large}}}\",\"variables\":{\"id\":$malID}}"
                 val body = bodyString.toRequestBody("application/json".toMediaType())
                 val coverResponse = client.newCall(POST("https://graphql.anilist.co", headers, body)).execute()
-                val imageUrl = json.decodeFromString<JsonObject>(coverResponse.body!!.string())["data"]!!
+                val imageUrl = json.decodeFromString<JsonObject>(coverResponse.body.string())["data"]!!
                     .jsonObject["Media"]!!
                     .jsonObject["coverImage"]!!
                     .jsonObject["large"]!!.jsonPrimitive.content
@@ -159,7 +159,7 @@ class TwistMoe : AnimeHttpSource() {
                 val bodyString = "{\"query\":\"query(\$query: String){Media(type:ANIME,search:\$query){coverImage{large}}}\",\"variables\":{\"query\":\"$query\"}}"
                 val body = bodyString.toRequestBody("application/json".toMediaType())
                 val coverResponse = client.newCall(POST("https://graphql.anilist.co", headers, body)).execute()
-                val imageUrl = json.decodeFromString<JsonObject>(coverResponse.body!!.string())["data"]!!
+                val imageUrl = json.decodeFromString<JsonObject>(coverResponse.body.string())["data"]!!
                     .jsonObject["Media"]!!
                     .jsonObject["coverImage"]!!
                     .jsonObject["large"]!!.jsonPrimitive.content
@@ -174,7 +174,7 @@ class TwistMoe : AnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         val array = json.decodeFromString<JsonArray>(responseString)
         val list = mutableListOf<JsonElement>()
         array.toCollection(list)
@@ -201,7 +201,7 @@ class TwistMoe : AnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         val array = json.decodeFromString<JsonArray>(responseString)
         val list = mutableListOf<JsonElement>()
         array.toCollection(list)

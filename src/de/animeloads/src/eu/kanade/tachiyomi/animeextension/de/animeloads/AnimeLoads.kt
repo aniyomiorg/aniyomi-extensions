@@ -137,9 +137,16 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             "$baseUrl/files/captcha",
                             body = "cID=0&rT=1".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
                             headers = Headers.headersOf(
-                                "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#$id$epnum", ""), "Accept", "application/json, text/javascript, */*; q=0.01", "cache-control", "max-age=15"
-                            )
-                        )
+                                "X-Requested-With",
+                                "XMLHttpRequest",
+                                "Referer",
+                                url.replace("#$id$epnum", ""),
+                                "Accept",
+                                "application/json, text/javascript, */*; q=0.01",
+                                "cache-control",
+                                "max-age=15",
+                            ),
+                        ),
                     ).execute().asJsoup()
 
                     val hashes = capfiles.toString().substringAfter("[").substringBefore("]").split(",")
@@ -156,11 +163,15 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             GET(
                                 "$baseUrl/files/captcha?cid=0&hash=$hash",
                                 headers = Headers.headersOf(
-                                    "Referer", url.replace("#$id$epnum", ""),
-                                    "Accept", "image/avif,image/webp,*/*", "cache-control", "max-age=15"
-                                )
-                            )
-                        ).execute().body?.byteString()
+                                    "Referer",
+                                    url.replace("#$id$epnum", ""),
+                                    "Accept",
+                                    "image/avif,image/webp,*/*",
+                                    "cache-control",
+                                    "max-age=15",
+                                ),
+                            ),
+                        ).execute().body.byteString()
                         val size = png.toString()
                             .substringAfter("[size=").substringBefore(" hex")
                         pnglist.add("$size | $hash")
@@ -194,9 +205,9 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                     "$baseUrl/files/captcha",
                                                     body = "cID=0&pC=$maxhash&rT=2".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
                                                     headers = Headers.headersOf(
-                                                        "Origin", baseUrl, "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#$id$epnum", ""), "Accept", "*/*", "cache-control", "max-age=15"
-                                                    )
-                                                )
+                                                        "Origin", baseUrl, "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#$id$epnum", ""), "Accept", "*/*", "cache-control", "max-age=15",
+                                                    ),
+                                                ),
                                             ).execute()
                                             val maxdoc = client.newCall(
                                                 POST(
@@ -204,9 +215,9 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                     body = "enc=${enc.replace("=", "%3D")}&response=captcha&captcha-idhf=0&captcha-hf=$maxhash".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
                                                     headers = Headers.headersOf(
                                                         "Origin", baseUrl, "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#$id$epnum", ""),
-                                                        "Accept", "application/json, text/javascript, */*; q=0.01", "cache-control", "max-age=15"
-                                                    )
-                                                )
+                                                        "Accept", "application/json, text/javascript, */*; q=0.01", "cache-control", "max-age=15",
+                                                    ),
+                                                ),
                                             ).execute().asJsoup().toString()
                                             if (maxdoc.substringAfter("\"code\":\"").substringBefore("\",").contains("error")) {
                                                 throw Exception("Captcha bypass failed! Clear Cookies & Webview data. Or wait some time.")
@@ -277,19 +288,32 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                     "$baseUrl/files/captcha",
                                                     body = "cID=0&pC=$minhash&rT=2".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
                                                     headers = Headers.headersOf(
-                                                        "Origin", baseUrl, "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#$id$epnum", ""), "Accept", "*/*"
-                                                    )
-                                                )
+                                                        "Origin",
+                                                        baseUrl,
+                                                        "X-Requested-With",
+                                                        "XMLHttpRequest",
+                                                        "Referer",
+                                                        url.replace("#$id$epnum", ""),
+                                                        "Accept",
+                                                        "*/*",
+                                                    ),
+                                                ),
                                             ).execute()
                                             val mindoc = client.newCall(
                                                 POST(
                                                     "$baseUrl/ajax/captcha",
                                                     body = "enc=${enc.replace("=", "%3D")}&response=captcha&captcha-idhf=0&captcha-hf=$minhash".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
                                                     headers = Headers.headersOf(
-                                                        "Origin", baseUrl, "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#$id$epnum", ""),
-                                                        "Accept", "application/json, text/javascript, */*; q=0.01"
-                                                    )
-                                                )
+                                                        "Origin",
+                                                        baseUrl,
+                                                        "X-Requested-With",
+                                                        "XMLHttpRequest",
+                                                        "Referer",
+                                                        url.replace("#$id$epnum", ""),
+                                                        "Accept",
+                                                        "application/json, text/javascript, */*; q=0.01",
+                                                    ),
+                                                ),
                                             ).execute().asJsoup().toString()
                                             if (mindoc.substringAfter("\"code\":\"").substringBefore("\",").contains("error")) {
                                                 throw Exception("Captcha bypass failed! Clear Cookies & Webview data. Or wait some time.")
@@ -367,9 +391,16 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             "$baseUrl/files/captcha",
                             body = "cID=0&rT=1".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
                             headers = Headers.headersOf(
-                                "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#$id$epnum", ""), "Accept", "application/json, text/javascript, */*; q=0.01", "cache-control", "max-age=15"
-                            )
-                        )
+                                "X-Requested-With",
+                                "XMLHttpRequest",
+                                "Referer",
+                                url.replace("#$id$epnum", ""),
+                                "Accept",
+                                "application/json, text/javascript, */*; q=0.01",
+                                "cache-control",
+                                "max-age=15",
+                            ),
+                        ),
                     ).execute().asJsoup()
 
                     val hashes = capfiles.toString().substringAfter("[").substringBefore("]").split(",")
@@ -386,11 +417,15 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             GET(
                                 "$baseUrl/files/captcha?cid=0&hash=$hash",
                                 headers = Headers.headersOf(
-                                    "Referer", url.replace("#$id$epnum", ""),
-                                    "Accept", "image/avif,image/webp,*/*", "cache-control", "max-age=15"
-                                )
-                            )
-                        ).execute().body?.byteString()
+                                    "Referer",
+                                    url.replace("#$id$epnum", ""),
+                                    "Accept",
+                                    "image/avif,image/webp,*/*",
+                                    "cache-control",
+                                    "max-age=15",
+                                ),
+                            ),
+                        ).execute().body.byteString()
                         val size = png.toString()
                             .substringAfter("[size=").substringBefore(" hex")
                         pnglist.add("$size | $hash")
@@ -424,9 +459,9 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                     "$baseUrl/files/captcha",
                                                     body = "cID=0&pC=$maxhash&rT=2".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
                                                     headers = Headers.headersOf(
-                                                        "Origin", baseUrl, "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#$id$epnum", ""), "Accept", "*/*", "cache-control", "max-age=15"
-                                                    )
-                                                )
+                                                        "Origin", baseUrl, "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#$id$epnum", ""), "Accept", "*/*", "cache-control", "max-age=15",
+                                                    ),
+                                                ),
                                             ).execute()
                                             val maxdoc = client.newCall(
                                                 POST(
@@ -434,9 +469,9 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                     body = "enc=${enc.replace("=", "%3D")}&response=captcha&captcha-idhf=0&captcha-hf=$maxhash".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
                                                     headers = Headers.headersOf(
                                                         "Origin", baseUrl, "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#$id$epnum", ""),
-                                                        "Accept", "application/json, text/javascript, */*; q=0.01", "cache-control", "max-age=15"
-                                                    )
-                                                )
+                                                        "Accept", "application/json, text/javascript, */*; q=0.01", "cache-control", "max-age=15",
+                                                    ),
+                                                ),
                                             ).execute().asJsoup().toString()
                                             if (maxdoc.substringAfter("\"code\":\"").substringBefore("\",").contains("error")) {
                                                 throw Exception("Captcha bypass failed! Clear Cookies & Webview data. Or wait some time.")
@@ -507,19 +542,32 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                     "$baseUrl/files/captcha",
                                                     body = "cID=0&pC=$minhash&rT=2".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
                                                     headers = Headers.headersOf(
-                                                        "Origin", baseUrl, "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#$id$epnum", ""), "Accept", "*/*"
-                                                    )
-                                                )
+                                                        "Origin",
+                                                        baseUrl,
+                                                        "X-Requested-With",
+                                                        "XMLHttpRequest",
+                                                        "Referer",
+                                                        url.replace("#$id$epnum", ""),
+                                                        "Accept",
+                                                        "*/*",
+                                                    ),
+                                                ),
                                             ).execute()
                                             val mindoc = client.newCall(
                                                 POST(
                                                     "$baseUrl/ajax/captcha",
                                                     body = "enc=${enc.replace("=", "%3D")}&response=captcha&captcha-idhf=0&captcha-hf=$minhash".toRequestBody("application/x-www-form-urlencoded".toMediaType()),
                                                     headers = Headers.headersOf(
-                                                        "Origin", baseUrl, "X-Requested-With", "XMLHttpRequest", "Referer", url.replace("#$id$epnum", ""),
-                                                        "Accept", "application/json, text/javascript, */*; q=0.01"
-                                                    )
-                                                )
+                                                        "Origin",
+                                                        baseUrl,
+                                                        "X-Requested-With",
+                                                        "XMLHttpRequest",
+                                                        "Referer",
+                                                        url.replace("#$id$epnum", ""),
+                                                        "Accept",
+                                                        "application/json, text/javascript, */*; q=0.01",
+                                                    ),
+                                                ),
                                             ).execute().asJsoup().toString()
                                             if (mindoc.substringAfter("\"code\":\"").substringBefore("\",").contains("error")) {
                                                 throw Exception("Captcha bypass failed! Clear Cookies & Webview data. Or wait some time.")

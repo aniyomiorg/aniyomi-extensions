@@ -54,7 +54,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        anime.thumbnail_url = element.select("img").first().attr("src")
+        anime.thumbnail_url = element.selectFirst("img")!!.attr("src")
         anime.title = element.attr("title")
         return anime
     }
@@ -65,7 +65,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
-        val totalEpisodes = document.select(episodeListSelector()).last().attr("ep_end")
+        val totalEpisodes = document.select(episodeListSelector()).last()!!.attr("ep_end")
         val id = document.select("input#movie_id").attr("value")
         return episodesRequest(totalEpisodes, id)
     }
@@ -80,7 +80,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(baseUrl + element.attr("href").substringAfter(" "))
-        val ep = element.selectFirst("div.name").ownText().substringAfter(" ")
+        val ep = element.selectFirst("div.name")!!.ownText().substringAfter(" ")
         episode.episode_number = ep.toFloat()
         episode.name = "Episode $ep"
         return episode
@@ -122,15 +122,15 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this.sortedWith(
             compareBy(
                 { it.quality.contains(quality) },
-                { it.quality.contains(server) }
-            )
+                { it.quality.contains(server) },
+            ),
         ).reversed()
     }
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        anime.thumbnail_url = element.select("img").first().attr("src")
+        anime.thumbnail_url = element.selectFirst("img")!!.attr("src")
         anime.title = element.attr("title")
         return anime
     }
@@ -158,12 +158,12 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.title = document.select("div.anime_info_body_bg h1").text()
         anime.genre = document.select("p.type:eq(5) a").joinToString("") { it.text() }
-        anime.description = document.select("p.type:eq(4)").first().ownText()
+        anime.description = document.selectFirst("p.type:eq(4)")!!.ownText()
         anime.status = parseStatus(document.select("p.type:eq(7) a").text())
 
         // add alternative name to anime description
         val altName = "Other name(s): "
-        document.select("p.type:eq(8)").firstOrNull()?.ownText()?.let {
+        document.selectFirst("p.type:eq(8)")?.ownText()?.let {
             if (it.isBlank().not()) {
                 anime.description = when {
                     anime.description.isNullOrBlank() -> altName + it
@@ -254,7 +254,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         AnimeFilter.Header("Text search ignores filters"),
         GenreFilter(),
         RecentFilter(),
-        SeasonFilter()
+        SeasonFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -339,8 +339,8 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Work Life", "work-life"),
             Pair("Workplace", "workplace"),
             Pair("Yaoi", "yaoi"),
-            Pair("Yuri", "yuri")
-        )
+            Pair("Yuri", "yuri"),
+        ),
     )
 
     private class RecentFilter : UriPartFilter(
@@ -349,8 +349,8 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("<select>", ""),
             Pair("Recent Release", "1"),
             Pair("Recent Dub", "2"),
-            Pair("Recent Chinese", "3")
-        )
+            Pair("Recent Chinese", "3"),
+        ),
     )
 
     private class SeasonFilter : UriPartFilter(
@@ -394,8 +394,8 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Fall 2014", "sub-category/fall-2014-anime"),
             Pair("Summer 2014", "sub-category/summer-2014-anime"),
             Pair("Spring 2014", "sub-category/spring-2014-anime"),
-            Pair("Winter 2014", "sub-category/winter-2014-anime")
-        )
+            Pair("Winter 2014", "sub-category/winter-2014-anime"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

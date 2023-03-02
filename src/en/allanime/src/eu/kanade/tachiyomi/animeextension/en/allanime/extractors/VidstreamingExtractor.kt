@@ -37,7 +37,9 @@ class VidstreamingExtractor(private val client: OkHttpClient, private val json: 
             val encryptAjaxParams = cryptoHandler(
                 document.select("script[data-value]")
                     .attr("data-value"),
-                iv, secretKey, false
+                iv,
+                secretKey,
+                false,
             ).substringAfter("&")
 
             val httpUrl = serverUrl.toHttpUrl()
@@ -51,10 +53,11 @@ class VidstreamingExtractor(private val client: OkHttpClient, private val json: 
                 GET(
                     "${host}encrypt-ajax.php?id=$encryptedId&$encryptAjaxParams&alias=$id",
                     Headers.headersOf(
-                        "X-Requested-With", "XMLHttpRequest"
-                    )
-                )
-            ).execute().body!!.string()
+                        "X-Requested-With",
+                        "XMLHttpRequest",
+                    ),
+                ),
+            ).execute().body.string()
             val data = json.decodeFromString<JsonObject>(jsonResponse)["data"]!!.jsonPrimitive.content
             val decryptedData = cryptoHandler(data, iv, decryptionKey, false)
             val videoList = mutableListOf<Video>()
@@ -62,7 +65,7 @@ class VidstreamingExtractor(private val client: OkHttpClient, private val json: 
             val array = json.decodeFromString<JsonObject>(decryptedData)["source"]!!.jsonArray
             if (array.size == 1 && array[0].jsonObject["type"]!!.jsonPrimitive.content == "hls") {
                 val fileURL = array[0].jsonObject["file"].toString().trim('"')
-                val masterPlaylist = client.newCall(GET(fileURL)).execute().body!!.string()
+                val masterPlaylist = client.newCall(GET(fileURL)).execute().body.string()
                 masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
                     .split("#EXT-X-STREAM-INF:").forEach {
                         val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",").substringBefore("\n") + "p"
@@ -72,20 +75,25 @@ class VidstreamingExtractor(private val client: OkHttpClient, private val json: 
                         }
                         videoList.add(Video(videoUrl, quality + qualitySuffix, videoUrl))
                     }
-            } else array.forEach {
-                val label = it.jsonObject["label"].toString().lowercase(Locale.ROOT)
-                    .trim('"').replace(" ", "")
-                val fileURL = it.jsonObject["file"].toString().trim('"')
-                val videoHeaders = Headers.headersOf("Referer", serverUrl)
-                if (label == "auto") autoList.add(
-                    Video(
-                        fileURL,
-                        label + qualitySuffix,
-                        fileURL,
-                        headers = videoHeaders
-                    )
-                )
-                else videoList.add(Video(fileURL, label + qualitySuffix, fileURL, headers = videoHeaders))
+            } else {
+                array.forEach {
+                    val label = it.jsonObject["label"].toString().lowercase(Locale.ROOT)
+                        .trim('"').replace(" ", "")
+                    val fileURL = it.jsonObject["file"].toString().trim('"')
+                    val videoHeaders = Headers.headersOf("Referer", serverUrl)
+                    if (label == "auto") {
+                        autoList.add(
+                            Video(
+                                fileURL,
+                                label + qualitySuffix,
+                                fileURL,
+                                headers = videoHeaders,
+                            ),
+                        )
+                    } else {
+                        videoList.add(Video(fileURL, label + qualitySuffix, fileURL, headers = videoHeaders))
+                    }
+                }
             }
             return videoList.sortedByDescending {
                 it.quality.substringBefore(qualitySuffix).substringBefore("p").toIntOrNull() ?: -1
@@ -99,7 +107,7 @@ class VidstreamingExtractor(private val client: OkHttpClient, private val json: 
         string: String,
         iv: ByteArray,
         secretKeyString: ByteArray,
-        encrypt: Boolean = true
+        encrypt: Boolean = true,
     ): String {
         val ivParameterSpec = IvParameterSpec(iv)
         val secretKey = SecretKeySpec(secretKeyString, "AES")

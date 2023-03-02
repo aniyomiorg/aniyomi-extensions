@@ -7,10 +7,10 @@ object DopeBoxFilters {
 
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
         fun toQueryPart() = vals[state].second
     }
@@ -28,16 +28,21 @@ object DopeBoxFilters {
     }
 
     private inline fun <reified R> AnimeFilterList.parseCheckbox(
-        options: Array<Pair<String, String>>
+        options: Array<Pair<String, String>>,
     ): String {
         return (this.getFirst<R>() as CheckBoxFilterList).state
             .mapNotNull { checkbox ->
-                if (checkbox.state)
+                if (checkbox.state) {
                     options.find { it.first == checkbox.name }!!.second
-                else null
+                } else {
+                    null
+                }
             }.joinToString("-").let {
-                if (it.isBlank()) "all"
-                else it
+                if (it.isBlank()) {
+                    "all"
+                } else {
+                    it
+                }
             }
     }
 
@@ -47,11 +52,11 @@ object DopeBoxFilters {
 
     class GenresFilter : CheckBoxFilterList(
         "Genres",
-        DopeBoxFiltersData.genres.map { CheckBoxVal(it.first, false) }
+        DopeBoxFiltersData.genres.map { CheckBoxVal(it.first, false) },
     )
     class CountriesFilter : CheckBoxFilterList(
         "Countries",
-        DopeBoxFiltersData.countries.map { CheckBoxVal(it.first, false) }
+        DopeBoxFiltersData.countries.map { CheckBoxVal(it.first, false) },
     )
 
     val filterList = AnimeFilterList(
@@ -60,7 +65,7 @@ object DopeBoxFilters {
         ReleaseYearFilter(),
         AnimeFilter.Separator(),
         GenresFilter(),
-        CountriesFilter()
+        CountriesFilter(),
     )
 
     data class FilterSearchParams(
@@ -68,7 +73,7 @@ object DopeBoxFilters {
         val quality: String = "",
         val releaseYear: String = "",
         val genres: String = "",
-        val countries: String = ""
+        val countries: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
@@ -79,7 +84,7 @@ object DopeBoxFilters {
             filters.asQueryPart<QualityFilter>(),
             filters.asQueryPart<ReleaseYearFilter>(),
             filters.parseCheckbox<GenresFilter>(DopeBoxFiltersData.genres),
-            filters.parseCheckbox<CountriesFilter>(DopeBoxFiltersData.countries)
+            filters.parseCheckbox<CountriesFilter>(DopeBoxFiltersData.countries),
         )
     }
 
@@ -89,14 +94,14 @@ object DopeBoxFilters {
         val types = arrayOf(
             all,
             Pair("Movies", "movies"),
-            Pair("TV Shows", "tv")
+            Pair("TV Shows", "tv"),
         )
 
         val qualities = arrayOf(
             all,
             Pair("HD", "HD"),
             Pair("SD", "SD"),
-            Pair("CAM", "CAM")
+            Pair("CAM", "CAM"),
         )
 
         val years = arrayOf(
@@ -137,7 +142,7 @@ object DopeBoxFilters {
             Pair("TV Movie", "8"),
             Pair("War", "17"),
             Pair("War & Politics", "28"),
-            Pair("Western", "6")
+            Pair("Western", "6"),
         )
 
         val countries = arrayOf(
@@ -176,7 +181,7 @@ object DopeBoxFilters {
             Pair("Taiwan", "119"),
             Pair("Thailand", "57"),
             Pair("United Kingdom", "180"),
-            Pair("United States of America", "129")
+            Pair("United States of America", "129"),
         )
     }
 }

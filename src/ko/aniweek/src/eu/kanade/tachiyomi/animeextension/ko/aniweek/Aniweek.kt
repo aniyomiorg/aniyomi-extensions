@@ -66,15 +66,15 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector(): String = "ul.pagination > li.active ~ li:not(.disabled):matches(.)"
 
     override fun popularAnimeFromElement(element: Element): SAnime {
-        val thumbnailUrl = element.selectFirst("img").attr("src")
+        val thumbnailUrl = element.selectFirst("img")!!.attr("src")
         return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a").attr("href"))
+            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
             thumbnail_url = if (thumbnailUrl.startsWith("..")) {
                 baseUrl + thumbnailUrl.substringAfter("..")
             } else {
                 thumbnailUrl
             }
-            title = element.selectFirst("div.post-title").text()
+            title = element.selectFirst("div.post-title")!!.text()
         }
     }
 
@@ -120,7 +120,7 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         AnimeFilter.Header("텍스트 검색은 필터를 무시합니다"),
         AiringFilter(),
         YearFilter(),
-        OtherFilter()
+        OtherFilter(),
     )
 
     private class AiringFilter : UriPartFilter(
@@ -135,8 +135,8 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("목요일", "bo_table=ing&sca=목요일"),
             Pair("금요일", "bo_table=ing&sca=금요일"),
             Pair("토요일", "bo_table=ing&sca=토요일"),
-            Pair("기타", "bo_table=ing&sca=기타")
-        )
+            Pair("기타", "bo_table=ing&sca=기타"),
+        ),
     )
 
     private class YearFilter : UriPartFilter(
@@ -158,7 +158,7 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("2012", "bo_table=fin&sca=2012"),
             Pair("2011", "bo_table=fin&sca=2011"),
             Pair("기타", "bo_table=fin&sca=기타"),
-        )
+        ),
     )
 
     private class OtherFilter : UriPartFilter(
@@ -171,7 +171,7 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("종영", "bo_table=s&sca=종영"),
             Pair("극장판", "bo_table=s&sca=극장판"),
             Pair("기타", "bo_table=s&sca=기타"),
-        )
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -182,9 +182,9 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =========================== Anime Details ============================
 
     override fun animeDetailsParse(document: Document): SAnime {
-        val thumbnailUrl = document.selectFirst("div.view-info > div.image img").attr("src")
+        val thumbnailUrl = document.selectFirst("div.view-info > div.image img")!!.attr("src")
         return SAnime.create().apply {
-            title = document.selectFirst("div.view-title").text()
+            title = document.selectFirst("div.view-title")!!.text()
             thumbnail_url = if (thumbnailUrl.startsWith("..")) {
                 baseUrl + thumbnailUrl.substringAfter("..")
             } else {
@@ -205,7 +205,7 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         episode.episode_number = element.selectFirst("div.wr-num")?.let { it.text()?.toFloatOrNull() ?: 1F } ?: 1F
         episode.name = element.selectFirst("a")!!.text()
-        episode.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
+        episode.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
         episode.date_upload = element.selectFirst("div.wr-date")?.let { parseDate(it.text()) } ?: 0L
 
         return episode
@@ -217,7 +217,7 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
 
-        val iframeUrl = document.selectFirst("iframe").attr("src")
+        val iframeUrl = document.selectFirst("iframe")!!.attr("src")
 
         val iframeHeaders = Headers.headersOf(
             "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
@@ -227,10 +227,10 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "Sec-Fetch-Mode", "navigate",
             "Sec-Fetch-Site", "cross-site",
             "Upgrade-Insecure-Requests", "1",
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0"
+            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
         )
         var iframeResponse = client.newCall(
-            GET(iframeUrl, headers = iframeHeaders)
+            GET(iframeUrl, headers = iframeHeaders),
         ).execute()
 
         val subtitleList = mutableListOf<Track>()
@@ -242,8 +242,8 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     subtitleList.add(
                         Track(
                             "https:" + string.substringAfter("https:"),
-                            string.substringBefore("https:")
-                        )
+                            string.substringBefore("https:"),
+                        ),
                     )
                 } catch (a: Exception) { }
             }
@@ -271,17 +271,17 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "Referer", iframeUrl,
             "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
             "X-Requested-With", "XMLHttpRequest",
-            "Cookie", cookieValue.substringBefore(";")
+            "Cookie", cookieValue.substringBefore(";"),
         )
 
         val postBody = "hash=$hash&r=${java.net.URLEncoder.encode("$baseUrl/", "utf-8")}"
             .toRequestBody("application/x-www-form-urlencoded".toMediaType())
 
         val postResponse = client.newCall(
-            POST("https://${iframeUrl.toHttpUrl().host}/player/index.php?data=$hash&do=getVideo", body = postBody, headers = postHeaders)
+            POST("https://${iframeUrl.toHttpUrl().host}/player/index.php?data=$hash&do=getVideo", body = postBody, headers = postHeaders),
         ).execute()
 
-        val parsed = json.decodeFromString<IframeResponse>(postResponse.body!!.string())
+        val parsed = json.decodeFromString<IframeResponse>(postResponse.body.string())
 
         if (parsed.hls) {
             val playlistHeaders = Headers.headersOf(
@@ -293,12 +293,12 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 "Sec-Fetch-Mode", "cors",
                 "Sec-Fetch-Site", "same-origin",
                 "TE", "trailers",
-                "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0"
+                "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
             )
 
             val masterPlaylist = client.newCall(
-                GET(parsed.videoSource, headers = playlistHeaders)
-            ).execute().body!!.string()
+                GET(parsed.videoSource, headers = playlistHeaders),
+            ).execute().body.string()
 
             val videoHeaders = Headers.headersOf(
                 "Accept", "*/*",
@@ -307,7 +307,7 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 "Sec-Fetch-Dest", "empty",
                 "Sec-Fetch-Mode", "cors",
                 "Sec-Fetch-Site", "same-origin",
-                "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0"
+                "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
             )
 
             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:")
@@ -341,15 +341,15 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this.sortedWith(
             compareBy(
                 { it.quality.contains(quality) },
-                { it.quality.substringBefore("p").toIntOrNull() ?: 0 }
-            )
+                { it.quality.substringBefore("p").toIntOrNull() ?: 0 },
+            ),
         ).reversed()
     }
 
     @Serializable
     data class IframeResponse(
         val hls: Boolean,
-        val videoSource: String
+        val videoSource: String,
     )
 
     private fun parseDate(dateStr: String): Long {

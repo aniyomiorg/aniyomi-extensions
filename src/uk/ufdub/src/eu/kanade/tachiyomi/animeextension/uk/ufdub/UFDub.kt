@@ -44,7 +44,7 @@ class UFDub : ParsedAnimeHttpSource() {
 
         someInfo.select(".full-info div.fi-col-item")
             .forEach {
-                ele ->
+                    ele ->
                 when (ele.select("span").text()) {
                     "Студія:" -> anime.author = ele.select("a").text()
                     "Жанр:" -> anime.genre = ele.select("a").text().replace(" ", ", ")

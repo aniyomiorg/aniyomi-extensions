@@ -53,7 +53,7 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         element.select("a.mv-namevn").attr("href").toHttpUrlOrNull()?.let {
             anime.setUrlWithoutDomain(
-                it.encodedPath
+                it.encodedPath,
             )
         }
         anime.title = element.select("a.mv-namevn").text()
@@ -110,7 +110,7 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     it.select("source").attr("src"),
                     "${it.select("source").attr("data-quality")}p ($serverName)",
                     it.select("source").attr("src"),
-                )
+                ),
             )
         }
 
@@ -130,7 +130,7 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         it.select("source").attr("src"),
                         "${it.select("source").attr("data-quality")}p ($serverName)",
                         it.select("source").attr("src"),
-                    )
+                    ),
                 )
             }
         }
@@ -171,7 +171,7 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         element.select("a.thumb").attr("href").toHttpUrlOrNull()?.let {
             anime.setUrlWithoutDomain(
-                it.encodedPath
+                it.encodedPath,
             )
         }
         anime.title = element.select("div.info h4 a:last-child").text()
@@ -214,7 +214,7 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         anime.genre = document.select("div.sub-desc h3 ~ a").eachText().joinToString(separator = ", ")
         anime.title = document.select("div.desc h2.title").text()
-        anime.description = document.select("div.wrap-desc div.sub-desc p").filter {
+        anime.description = document.select("div.wrap-desc div.sub-desc p").filter { it ->
             it.select("a").isEmpty() && it.select("iframe").isEmpty()
         }.joinToString(separator = "\n\n") { t -> t.text() }
 

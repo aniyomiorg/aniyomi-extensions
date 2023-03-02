@@ -7,10 +7,10 @@ object AnimeXinFilters {
 
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
         fun toQueryPart() = vals[state].second
     }
@@ -33,28 +33,33 @@ object AnimeXinFilters {
     ): String {
         return (this.getFirst<R>() as CheckBoxFilterList).state
             .mapNotNull { checkbox ->
-                if (checkbox.state)
+                if (checkbox.state) {
                     options.find { it.first == checkbox.name }!!.second
-                else null
+                } else {
+                    null
+                }
             }.joinToString("&$name[]=").let {
-                if (it.isBlank()) ""
-                else "$name[]=$it"
+                if (it.isBlank()) {
+                    ""
+                } else {
+                    "$name[]=$it"
+                }
             }
     }
 
     class GenresFilter : CheckBoxFilterList(
         "Genres",
-        AnimeXinFiltersData.genres.map { CheckBoxVal(it.first, false) }
+        AnimeXinFiltersData.genres.map { CheckBoxVal(it.first, false) },
     )
 
     class SeasonsFilter : CheckBoxFilterList(
         "Seasons",
-        AnimeXinFiltersData.seasons.map { CheckBoxVal(it.first, false) }
+        AnimeXinFiltersData.seasons.map { CheckBoxVal(it.first, false) },
     )
 
     class StudiosFilter : CheckBoxFilterList(
         "Studios",
-        AnimeXinFiltersData.studios.map { CheckBoxVal(it.first, false) }
+        AnimeXinFiltersData.studios.map { CheckBoxVal(it.first, false) },
     )
 
     class StatusFilter : QueryPartFilter("Status", AnimeXinFiltersData.status)
@@ -80,7 +85,7 @@ object AnimeXinFilters {
         val status: String = "",
         val type: String = "",
         val sub: String = "",
-        val order: String = ""
+        val order: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
@@ -119,7 +124,7 @@ object AnimeXinFilters {
             Pair("School", "school"),
             Pair("Sci-fi", "sci-fi"),
             Pair("Supernatural", "supernatural"),
-            Pair("War", "war")
+            Pair("War", "war"),
         )
 
         val seasons = arrayOf(
@@ -133,7 +138,7 @@ object AnimeXinFilters {
             Pair("Season 7", "season-7"),
             Pair("Season 8", "season-8"),
             Pair("season1", "season1"),
-            Pair("Winter 2023", "winter-2023")
+            Pair("Winter 2023", "winter-2023"),
         )
 
         val studios = arrayOf(
@@ -178,7 +183,7 @@ object AnimeXinFilters {
             Pair("Wonder Cat Animation", "wonder-cat-animation"),
             Pair("Xing Yi Kai Chen", "xing-yi-kai-chen"),
             Pair("Xuan Yuan", "xuan-yuan"),
-            Pair("Year Young Culture", "year-young-culture")
+            Pair("Year Young Culture", "year-young-culture"),
         )
 
         val status = arrayOf(
@@ -198,7 +203,7 @@ object AnimeXinFilters {
             Pair("Special", "special"),
             Pair("BD", "bd"),
             Pair("ONA", "ona"),
-            Pair("Music", "music")
+            Pair("Music", "music"),
         )
 
         val sub = arrayOf(

@@ -15,7 +15,7 @@ data class SearchResultDto(
     val quantity: Int = 0,
     @Serializable(with = GenericListSerializer::class)
     @EncodeDefault
-    val list: List<SearchItemDto> = emptyList()
+    val list: List<SearchItemDto> = emptyList(),
 )
 
 @Serializable
@@ -24,14 +24,14 @@ data class SearchItemDto(
     val title: String,
     val url: String,
     @EncodeDefault
-    val status: String = ""
+    val status: String = "",
 )
 
 @Serializable
 data class EpisodeListDto(
     @Serializable(with = GenericListSerializer::class)
     @SerialName("list")
-    val episodes: List<EpisodeItemDto>
+    val episodes: List<EpisodeItemDto>,
 )
 
 @Serializable
@@ -40,39 +40,39 @@ data class EpisodeItemDto(
     val img: String,
     val name: String,
     val released: Boolean,
-    val title: String
+    val title: String,
 )
 
 @Serializable
 data class VideoLanguagesDto(
     @SerialName("list")
     @Serializable(with = GenericListSerializer::class)
-    val videos: List<VideoDto>
+    val videos: List<VideoDto>,
 )
 
 @Serializable
 data class VideoDto(
     val id: String,
-    val lang: String
+    val lang: String,
 )
 
 @Serializable
 data class PlayersDto(
     val mixdrop: String = "0",
     val streamtape: String = "0",
-    val fembed: String = "0"
+    val fembed: String = "0",
 ) {
     operator fun iterator(): List<Pair<String, String>> {
         return listOf(
             "mixdrop" to mixdrop,
             "streamtape" to streamtape,
-            "fembed" to fembed
+            "fembed" to fembed,
         )
     }
 }
 
 class GenericListSerializer<T>(
-    private val itemSerializer: KSerializer<T>
+    private val itemSerializer: KSerializer<T>,
 ) : JsonTransformingSerializer<List<T>>(ListSerializer(itemSerializer)) {
     override fun transformDeserialize(element: JsonElement): JsonElement {
         val jsonObj = element as JsonObject

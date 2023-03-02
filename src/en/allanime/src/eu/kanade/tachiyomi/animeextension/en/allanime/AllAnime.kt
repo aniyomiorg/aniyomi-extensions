@@ -41,7 +41,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     override val name = "AllAnime"
 
     // allanime.to
-    override val baseUrl = "https://api.allanime.co"
+    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://api.allanime.to")!! }
 
     override val lang = "en"
 
@@ -51,10 +51,10 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private val json: Json by injectLazy()
 
-    private val popularHash = "6f6fe5663e3e9ea60bdfa693f878499badab83e7f18b56acdba5f8e8662002aa"
-    private val searchHash = "9c7a8bc1e095a34f2972699e8105f7aaf9082c6e1ccd56eab99c2f1a971152c6"
-    private val _idHash = "f73a8347df0e3e794f8955a18de6e85ac25dfc6b74af8ad613edf87bb446a854"
-    private val episodeHash = "1f0a5d6c9ce6cd3127ee4efd304349345b0737fbf5ec33a60bbc3d18e3bb7c61"
+    private val popularHash = "563c9c7c7fb5218aaf5562ad5d7cabb9ece03a36b4bc94f1384ba70709bd61da"
+    private val searchHash = "c4305f3918591071dfecd081da12243725364f6b7dd92072df09d915e390b1b7"
+    private val _idHash = "259ae45c19ceff2f855215bb82d377fe7b0ab661f9abcd41538bda935e9cb299"
+    private val episodeHash = "919e327075ac9e249d003aa3f804a48bbdf22d7b1d107ffe659accd54283ce48"
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -72,7 +72,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val parsed = json.decodeFromString<PopularResult>(response.body!!.string())
+        val parsed = json.decodeFromString<PopularResult>(response.body.string())
         val animeList = mutableListOf<SAnime>()
 
         val titleStyle = preferences.getString("preferred_title_style", "romaji")!!
@@ -88,7 +88,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                         }
                         thumbnail_url = it.anyCard.thumbnail
                         url = it.anyCard._id
-                    }
+                    },
                 )
             }
         }
@@ -133,7 +133,6 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 .build()
             GET("$baseUrl/allanimeapi?variables=$variables&extensions=$extensions", headers = headers)
         } else {
-
             val seasonString = if (filters.season == "all") "" else ""","season":"${filters.season}""""
             val yearString = if (filters.releaseYear == "all") "" else ""","year":${filters.releaseYear}"""
             val genresString = if (filters.genres == "all") "" else ""","genres":${filters.genres},"excludeGenres":[]"""
@@ -169,13 +168,13 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
-        val show = json.decodeFromString<SeriesResult>(response.body!!.string()).data.show
+        val show = json.decodeFromString<SeriesResult>(response.body.string()).data.show
         val anime = SAnime.create()
 
         anime.title = show.name
 
         anime.description = Jsoup.parse(
-            show.description?.replace("<br>", "br2n") ?: ""
+            show.description?.replace("<br>", "br2n") ?: "",
         ).text().replace("br2n", "\n") + "\n\n"
         anime.description += "Type: ${show.type ?: "Unknown"}"
         anime.description += "\nAired: ${show.season?.quarter ?: "-"} ${show.season?.year ?: "-"}"
@@ -202,7 +201,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val medias = json.decodeFromString<SeriesResult>(response.body!!.string())
+        val medias = json.decodeFromString<SeriesResult>(response.body.string())
         val episodeList = mutableListOf<SEpisode>()
 
         val subOrDub = preferences.getString("preferred_sub", "sub")!!
@@ -246,7 +245,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val body = response.body!!.string()
+        val body = response.body.string()
 
         val videoJson = json.decodeFromString<EpisodeResult>(body)
         val videoList = mutableListOf<Pair<Video, Float>>()
@@ -254,12 +253,12 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
         val altHosterSelection = preferences.getStringSet(
             "alt_hoster_selection",
-            setOf("player", "vidstreaming", "okru", "mp4upload", "streamlare", "doodstream")
+            setOf("player", "vidstreaming", "okru", "mp4upload", "streamlare", "doodstream"),
         )!!
 
         val hosterSelection = preferences.getStringSet(
             "hoster_selection",
-            setOf("default", "ac", "luf-mp4", "si-hls", "s-mp4", "ac-hls")
+            setOf("default", "ac", "luf-mp4", "si-hls", "s-mp4", "ac-hls"),
         )!!
 
         for (video in videoJson.data.episode.sourceUrls) {
@@ -322,10 +321,10 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                                     Video(
                                         server.sourceUrl,
                                         "Original (player ${server.sourceName})",
-                                        server.sourceUrl
+                                        server.sourceUrl,
                                     ),
-                                    server.priority
-                                )
+                                    server.priority,
+                                ),
                             )
                         }
                         "streamsb" -> {
@@ -385,7 +384,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                         else -> null
                     }
                 }.getOrNull()
-            }.filterNotNull().flatten()
+            }.filterNotNull().flatten(),
         )
 
         return prioritySort(videoList)
@@ -400,10 +399,10 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
         return pList.sortedWith(
             compareBy(
-                { if (prefServer == "site_default") it.second else it.first.quality.lowercase().contains(prefServer) },
-                { it.first.quality.lowercase().contains(quality) },
-                { it.first.quality.lowercase().contains(subOrDub) }
-            )
+                { if (prefServer == "site_default") it.second else it.first.quality.contains(prefServer, true) },
+                { it.first.quality.contains(quality, true) },
+                { it.first.quality.contains(subOrDub, true) },
+            ),
         ).reversed().map { t -> t.first }
     }
 
@@ -423,7 +422,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun ParseAnime(response: Response): AnimesPage {
-        val parsed = json.decodeFromString<SearchResult>(response.body!!.string())
+        val parsed = json.decodeFromString<SearchResult>(response.body.string())
         val titleStyle = preferences.getString("preferred_title_style", "romaji")!!
 
         val animeList = parsed.data.shows.edges.map { ani ->
@@ -442,6 +441,22 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val domainPref = ListPreference(screen.context).apply {
+            key = "preferred_domain"
+            title = "Preferred domain (requires app restart)"
+            entries = arrayOf("api.allanime.to", "api.allanime.co")
+            entryValues = arrayOf("https://api.allanime.to", "https://api.allanime.co")
+            setDefaultValue("https://api.allanime.to")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
         val serverPref = ListPreference(screen.context).apply {
             key = "preferred_server"
             title = "Preferred Video Server"
@@ -530,6 +545,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
+        screen.addPreference(domainPref)
         screen.addPreference(serverPref)
         screen.addPreference(hostSelection)
         screen.addPreference(altHostSelection)

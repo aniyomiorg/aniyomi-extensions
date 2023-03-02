@@ -100,7 +100,7 @@ class AnimeLek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         for (element in elements) {
             val url = element.attr("data-ep-url")
             val qualityy = element.text()
-            val location = element.ownerDocument().location()
+            val location = element.ownerDocument()!!.location()
             val videoHeaders = Headers.headersOf("Referer", location)
             when {
                 url.contains("sbembed.com") || url.contains("sbembed1.com") || url.contains("sbplay.org") ||

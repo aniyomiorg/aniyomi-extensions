@@ -6,10 +6,10 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 object MarinMoeFilters {
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
         fun toQueryPart() = vals[state].second
     }
@@ -27,27 +27,27 @@ object MarinMoeFilters {
 
     class TypeFilter : CheckBoxFilterList(
         "Type",
-        MarinMoeFiltersData.types.map { CheckBoxVal(it.first, true) }
+        MarinMoeFiltersData.types.map { CheckBoxVal(it.first, true) },
     )
 
     class StatusFilter : CheckBoxFilterList(
         "Status",
-        MarinMoeFiltersData.status.map { CheckBoxVal(it.first, true) }
+        MarinMoeFiltersData.status.map { CheckBoxVal(it.first, true) },
     )
 
     class ContentRatingFilter : CheckBoxFilterList(
         "Content Rating",
-        MarinMoeFiltersData.contentRating.map { CheckBoxVal(it.first, true) }
+        MarinMoeFiltersData.contentRating.map { CheckBoxVal(it.first, true) },
     )
 
     class SourceFilter : CheckBoxFilterList(
         "Source",
-        MarinMoeFiltersData.source.map { CheckBoxVal(it.first, false) }
+        MarinMoeFiltersData.source.map { CheckBoxVal(it.first, false) },
     )
 
     class GenreFilter : CheckBoxFilterList(
         "Genre",
-        MarinMoeFiltersData.genre.map { CheckBoxVal(it.first, false) }
+        MarinMoeFiltersData.genre.map { CheckBoxVal(it.first, false) },
     )
 
     class GroupFilter : QueryPartFilter("Group", MarinMoeFiltersData.groups)
@@ -64,7 +64,7 @@ object MarinMoeFilters {
         AnimeFilter.Separator(),
         GenreFilter(),
         GroupFilter(),
-        StudioFilter()
+        StudioFilter(),
     )
 
     data class FilterSearchParams(
@@ -75,7 +75,7 @@ object MarinMoeFilters {
         val source: String = "",
         val genre: String = "",
         val group: String = "",
-        val studio: String = ""
+        val studio: String = "",
     )
 
     private fun getExclusions(type: String, inputList: List<String>): String {
@@ -95,7 +95,7 @@ object MarinMoeFilters {
                     if (!format.state) {
                         MarinMoeFiltersData.types.find { it.first == format.name }!!.second
                     } else { null }
-                }
+                },
         )
 
         val status: String = getExclusions(
@@ -106,7 +106,7 @@ object MarinMoeFilters {
                     if (!format.state) {
                         MarinMoeFiltersData.status.find { it.first == format.name }!!.second
                     } else { null }
-                }
+                },
         )
 
         val contentRating: String = getExclusions(
@@ -117,7 +117,7 @@ object MarinMoeFilters {
                     if (!format.state) {
                         MarinMoeFiltersData.contentRating.find { it.first == format.name }!!.second
                     } else { null }
-                }
+                },
         )
 
         val source: String = filters.filterIsInstance<SourceFilter>()
@@ -169,7 +169,7 @@ object MarinMoeFilters {
             Pair("Least Popular This Month", "vmt-a"),
             Pair("Most Popular This Month", "vmt-d"),
             Pair("Least Popular This Year", "vyr-a"),
-            Pair("Most Popular This Year", "vyr-d")
+            Pair("Most Popular This Year", "vyr-d"),
         )
 
         val types = arrayOf(
@@ -180,14 +180,14 @@ object MarinMoeFilters {
             Pair("Web", "5"),
             Pair("Music Video", "6"),
             Pair("TV Special", "7"),
-            Pair("Other", "8")
+            Pair("Other", "8"),
         )
 
         val status = arrayOf(
             Pair("Unknown", "1"),
             Pair("Ongoing", "2"),
             Pair("Completed", "3"),
-            Pair("Stalled", "4")
+            Pair("Stalled", "4"),
         )
 
         val contentRating = arrayOf(
@@ -208,7 +208,7 @@ object MarinMoeFilters {
             Pair("TV", "2"),
             Pair("VCD", "7"),
             Pair("VHS", "6"),
-            Pair("Web", "3")
+            Pair("Web", "3"),
         )
 
         val genre = arrayOf(
@@ -284,7 +284,7 @@ object MarinMoeFilters {
             Pair("Vampire", "5"),
             Pair("Video Game", "70"),
             Pair("Visual Arts", "66"),
-            Pair("Workplace", "42")
+            Pair("Workplace", "42"),
         )
 
         val groups = arrayOf(
@@ -627,7 +627,7 @@ object MarinMoeFilters {
             Pair("Z4ST1N", "31"),
             Pair("zangafan", "153"),
             Pair("ZetaRebel", "147"),
-            Pair("Zurako Subs", "283")
+            Pair("Zurako Subs", "283"),
         )
 
         val studios = arrayOf(
@@ -1319,7 +1319,7 @@ object MarinMoeFilters {
             Pair("Yuewen Animation & Comics", "647"),
             Pair("Yumeta Company", "445"),
             Pair("Zero-G", "203"),
-            Pair("Zexcs", "200")
+            Pair("Zexcs", "200"),
         )
     }
 }

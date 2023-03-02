@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.pt.animeshouse.extractors
 
-import eu.kanade.tachiyomi.animeextension.pt.animeshouse.AnimesHouse
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.Headers
@@ -8,7 +7,7 @@ import okhttp3.OkHttpClient
 
 class McpExtractor(
     private val client: OkHttpClient,
-    private val headers: Headers
+    private val headers: Headers,
 ) {
 
     private val REGEX_EP_ID = Regex("ss,\"(\\d+)\"")
@@ -19,7 +18,7 @@ class McpExtractor(
         val epId = REGEX_EP_ID.find(js)!!.groupValues[1]
         val req = client.newCall(GET("$API_URL/s_control.php?mid=$epId", headers))
             .execute()
-        val reqBody = req.body?.string() ?: throw Exception(AnimesHouse.MSG_ERR_BODY)
+        val reqBody = req.body.string()
         val videoUrl = REGEX_VIDEO_URL.find(reqBody)!!.groupValues
             .get(1)
             .replace("\\", "")

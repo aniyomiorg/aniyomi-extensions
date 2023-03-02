@@ -7,10 +7,10 @@ object AYFilters {
 
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
         fun toQueryPart() = vals[state].second
     }
@@ -36,12 +36,12 @@ object AYFilters {
     class SortFilter : AnimeFilter.Sort(
         "Ordenar",
         AYFiltersData.orders.map { it.first }.toTypedArray(),
-        Selection(0, true)
+        Selection(0, true),
     )
 
     class GenresFilter : TriStateFilterList(
         "Gêneros",
-        AYFiltersData.genres.map { TriStateVal(it) }
+        AYFiltersData.genres.map { TriStateVal(it) },
     )
 
     val filterList = AnimeFilterList(
@@ -64,7 +64,7 @@ object AYFilters {
         var sortBy: String = "",
         val blackListedGenres: ArrayList<String> = ArrayList(),
         val includedGenres: ArrayList<String> = ArrayList(),
-        var animeName: String = ""
+        var animeName: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
@@ -125,14 +125,16 @@ object AYFilters {
         this.removeAll { anime -> mustRemove(anime, params) }
         when (params.sortBy) {
             "A-Z" -> {
-                if (!params.orderAscending)
+                if (!params.orderAscending) {
                     this.reverse()
+                }
             }
             "num" -> {
-                if (params.orderAscending)
+                if (params.orderAscending) {
                     this.sortBy { it.videos }
-                else
+                } else {
                     this.sortByDescending { it.videos }
+                }
             }
         }
     }
@@ -142,12 +144,12 @@ object AYFilters {
         val languages = arrayOf(
             Pair("Todos", ""),
             Pair("Legendado", "Leg"),
-            Pair("Dublado", "Dub")
+            Pair("Dublado", "Dub"),
         )
 
         val orders = arrayOf(
             Pair("Alfabeticamente", "A-Z"),
-            Pair("Por número de eps", "num")
+            Pair("Por número de eps", "num"),
         )
 
         val initialLetter = arrayOf(Pair("Qualquer uma", "")) + ('A'..'Z').map {
@@ -224,7 +226,7 @@ object AYFilters {
             "Vampiro",
             "Vida Escolar",
             "Yaoi",
-            "Yuri"
+            "Yuri",
         )
     }
 }

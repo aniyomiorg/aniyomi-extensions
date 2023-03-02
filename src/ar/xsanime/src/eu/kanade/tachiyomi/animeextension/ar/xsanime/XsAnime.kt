@@ -49,7 +49,7 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.title = element.attr("title")
-        anime.thumbnail_url = element.select("div.itemtype_anime_poster img").first().attr("data-src")
+        anime.thumbnail_url = element.selectFirst("div.itemtype_anime_poster img")!!.attr("data-src")
         return anime
     }
 
@@ -103,7 +103,7 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.title = element.attr("title")
-        anime.thumbnail_url = element.select("div.itemtype_anime_poster img").first().attr("data-src")
+        anime.thumbnail_url = element.selectFirst("div.itemtype_anime_poster img")!!.attr("data-src")
         return anime
     }
 
@@ -122,6 +122,7 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     is GenreFilter -> url.addQueryParameter("genre", filter.toUriPart())
                     is StatusFilter -> url.addQueryParameter("status", filter.toUriPart())
                     // is LetterFilter -> url.addQueryParameter("letter", filter.toUriPart())
+                    else -> {}
                 }
             }
             GET(url.build().toString(), headers)
@@ -132,7 +133,7 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.select("div.inner--image img").first().attr("src")
+        anime.thumbnail_url = document.selectFirst("div.inner--image img")!!.attr("src")
         anime.title = document.select("h1.post--inner-title").text()
         anime.genre = document.select("ul.terms--and--metas > li:contains(تصنيفات الأنمي) > a").joinToString(", ") { it.text() }
         anime.description = document.select("div.post--content--inner").text()
@@ -164,7 +165,7 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun getStatusFilters(): Array<Pair<String?, String>> = arrayOf(
         Pair("", "<اختر>"),
         Pair("مستمر", "مستمر"),
-        Pair("منتهي", "منتهي")
+        Pair("منتهي", "منتهي"),
     )
 
     private fun getGenreFilters(): Array<Pair<String?, String>> = arrayOf(
@@ -187,7 +188,7 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("مدرسي", "مدرسي"),
         Pair("مغامرات", "مغامرات"),
         Pair("موسيقي", "موسيقي"),
-        Pair("نفسي", "نفسي")
+        Pair("نفسي", "نفسي"),
     )
 
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String?, String>>) :

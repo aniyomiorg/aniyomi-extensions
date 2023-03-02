@@ -13,10 +13,6 @@ android {
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     compileOnly(libs.kotlin.stdlib)
     compileOnly(libs.kotlin.json)

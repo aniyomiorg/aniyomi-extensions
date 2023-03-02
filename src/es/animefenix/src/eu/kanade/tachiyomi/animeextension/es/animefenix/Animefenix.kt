@@ -50,7 +50,7 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create().apply {
             setUrlWithoutDomain(
-                element.select("figure.image a").attr("href")
+                element.select("figure.image a").attr("href"),
             )
             title = element.select("div.title h3 a").text()
             thumbnail_url = element.select("figure.image a img").attr("src")
@@ -81,14 +81,14 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-        val servers = document.selectFirst("script:containsData(var tabsArray)").data()
+        val servers = document.selectFirst("script:containsData(var tabsArray)")!!.data()
             .split("tabsArray").map { it.substringAfter("src='").substringBefore("'").replace("amp;", "") }
             .filter { it.contains("https") }
 
         servers.forEach { server ->
             val decodedUrl = URLDecoder.decode(server, "UTF-8")
             val realUrl = try {
-                client.newCall(GET(decodedUrl)).execute().asJsoup().selectFirst("script")
+                client.newCall(GET(decodedUrl)).execute().asJsoup().selectFirst("script")!!
                     .data().substringAfter("src=\"").substringBefore("\"")
             } catch (e: Exception) { "" }
             /*
@@ -100,7 +100,7 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             the "code" part in the url represents represents what comes after the main domain like /embed/ or /v/ or /e/
             ex of full url: $baseUrl/redirect.php?player=2&amp;code=4mdmxtzmpe8768k&amp;
             in this case the playerId represent fembed and the full url is : https://www.fembed.com/v/4mdmxtzmpe8768k
-            */
+             */
 
             when {
                 realUrl.contains("ok.ru") -> {
@@ -137,7 +137,7 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
                 realUrl.contains("sbthe") -> {
                     videoList.addAll(
-                        StreamSBExtractor(client).videosFromUrl(realUrl, headers)
+                        StreamSBExtractor(client).videosFromUrl(realUrl, headers),
                     )
                 }
                 realUrl.contains("mp4upload") -> {
@@ -159,7 +159,7 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         return try {
             val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
             val userPreferredQuality = preferences.getString("preferred_quality", "Amazon")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
@@ -243,7 +243,7 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun amazonExtractor(url: String): String {
         val document = client.newCall(GET(url)).execute().asJsoup()
-        val videoURl = document.selectFirst("script:containsData(sources: [)").data()
+        val videoURl = document.selectFirst("script:containsData(sources: [)")!!.data()
             .substringAfter("[{\"file\":\"")
             .substringBefore("\",").replace("\\", "")
 
@@ -308,7 +308,7 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("SuperPoder", "superpoder"),
         Pair("Vampiros", "vampiros"),
         Pair("Yaoi", "yaoi"),
-        Pair("Yuri", "yuri")
+        Pair("Yuri", "yuri"),
     )
 
     private fun checkboxesFrom(tagArray: Array<Pair<String, String>>): List<TagCheckBox> = tagArray.map { TagCheckBox(it.second) }
@@ -324,8 +324,8 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Emision", "1"),
             Pair("Finalizado", "2"),
             Pair("Proximamente", "3"),
-            Pair("En Cuarentena", "4")
-        )
+            Pair("En Cuarentena", "4"),
+        ),
     )
     private class TypeFilter : UriPartFilter(
         "Tipo",
@@ -334,8 +334,8 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("TV", "tv"),
             Pair("Pelicula", "movie"),
             Pair("Especial", "special"),
-            Pair("OVA", "ova")
-        )
+            Pair("OVA", "ova"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -344,7 +344,6 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
@@ -352,13 +351,13 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
                 "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
                 "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
-                "Amazon", "AmazonES", "StreamTape", "Fireload", "Mp4upload"
+                "Amazon", "AmazonES", "StreamTape", "Fireload", "Mp4upload",
             )
             entryValues = arrayOf(
                 "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
                 "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
                 "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
-                "Amazon", "AmazonES", "StreamTape", "Fireload", "Mp4upload"
+                "Amazon", "AmazonES", "StreamTape", "Fireload", "Mp4upload",
             )
             setDefaultValue("Amazon")
             summary = "%s"

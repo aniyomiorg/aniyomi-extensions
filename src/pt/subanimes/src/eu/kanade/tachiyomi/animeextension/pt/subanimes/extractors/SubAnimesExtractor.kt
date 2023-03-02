@@ -12,7 +12,7 @@ class SubAnimesExtractor(private val client: OkHttpClient) {
         val playerUrl = url.replace("&p=true", "")
         val iframeBody = client.newCall(GET(playerUrl)).execute().asJsoup()
         val newHeaders = headers.newBuilder().set("Referer", playerUrl).build()
-        val script = iframeBody.selectFirst("script:containsData(addButton)").data()
+        val script = iframeBody.selectFirst("script:containsData(addButton)")!!.data()
         return if (script.contains("vSources")) {
             val sources = script.substringAfter("vSources").substringBefore(";")
             sources.split("src\":").drop(1).map {

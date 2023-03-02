@@ -69,8 +69,8 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val seasonsHtml = client.newCall(
                 GET(
                     seriesLink,
-                    headers = Headers.headersOf("Referer", document.location())
-                )
+                    headers = Headers.headersOf("Referer", document.location()),
+                ),
             ).execute().asJsoup()
             val seasonsElements = seasonsHtml.select("section.SeasonBx.AACrdn a")
             seasonsElements.forEach {
@@ -90,7 +90,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.episode_number = element.select("td > span.Num").text().toFloat()
-        val seasonNum = element.ownerDocument().select("div.Title span").text()
+        val seasonNum = element.ownerDocument()!!.select("div.Title span").text()
         episode.name = "Season $seasonNum" + "x" + element.select("td span.Num").text() + " : " + element.select("td.MvTbTtl > a").text()
         episode.setUrlWithoutDomain(element.select("td.MvTbPly > a.ClA").attr("abs:href"))
         return episode
@@ -123,7 +123,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val elements = document.select(videoListSelector())
         for (element in elements) {
             val url = element.attr("abs:src")
-            val location = element.ownerDocument().location()
+            val location = element.ownerDocument()!!.location()
             val videoHeaders = Headers.headersOf("Referer", location)
             when {
                 url.contains("https://dood") -> {
@@ -133,10 +133,10 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
                 url.contains("streamhub") -> {
                     val response = client.newCall(GET(url, videoHeaders)).execute().asJsoup()
-                    val script = response.selectFirst("script:containsData(m3u8)")
+                    val script = response.selectFirst("script:containsData(m3u8)")!!
                     val data = script.data()
                     val masterUrl = masterExtractor(data)
-                    val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
+                    val masterPlaylist = client.newCall(GET(masterUrl)).execute().body.string()
                     masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
                         val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
                         val videoUrl = it.substringAfter("\n").substringBefore("\n")
@@ -175,7 +175,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun doodUrlParse(url: String): String? {
         val response = client.newCall(GET(url.replace("/d/", "/e/"))).execute()
-        val content = response.body!!.string()
+        val content = response.body.string()
         if (!content.contains("'/pass_md5/")) return null
         val md5 = content.substringAfter("'/pass_md5/").substringBefore("',")
         val token = md5.substringAfterLast("/")
@@ -185,9 +185,9 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoUrlStart = client.newCall(
             GET(
                 "https://dood.$doodTld/pass_md5/$md5",
-                Headers.headersOf("referer", url)
-            )
-        ).execute().body!!.string()
+                Headers.headersOf("referer", url),
+            ),
+        ).execute().body.string()
         return "$videoUrlStart$randomString?token=$token&expiry=$expiry"
     }
 
@@ -283,7 +283,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun getFilterList() = AnimeFilterList(
         AnimeFilter.Header("NOTE: Ignored if using text search!"),
         AnimeFilter.Separator(),
-        GenreFilter(getGenreList())
+        GenreFilter(getGenreList()),
     )
 
     private class GenreFilter(vals: Array<Pair<String, String>>) : UriPartFilter("Genres", vals)
@@ -310,7 +310,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("Thriller", "thriller"),
         Pair("War", "war"),
         Pair("War & Politics", "war-politics"),
-        Pair("Western", "western")
+        Pair("Western", "western"),
     )
 
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :

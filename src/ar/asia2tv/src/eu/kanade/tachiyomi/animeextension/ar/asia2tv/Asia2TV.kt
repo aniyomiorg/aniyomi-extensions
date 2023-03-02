@@ -54,7 +54,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        // anime.thumbnail_url = element.select("div.image img").first().attr("data-src")
+        // anime.thumbnail_url = element.selectFirst("div.image img")!!.attr("data-src")
         anime.title = element.attr("title")
         return anime
     }
@@ -80,7 +80,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListRequest(episode: SEpisode): Request {
         val document = client.newCall(GET(baseUrl + episode.url)).execute().asJsoup()
-        val link = document.selectFirst("div.loop-episode a.current").attr("href")
+        val link = document.selectFirst("div.loop-episode a.current")!!.attr("href")
         return GET(link)
     }
 
@@ -104,8 +104,9 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             } else if (url.contains("yodbox")) {
                 val html = client.newCall(GET(url)).execute().asJsoup()
                 val videoFromURL = html.select("source").attr("src")
-                if (videoFromURL.isNotEmpty())
+                if (videoFromURL.isNotEmpty()) {
                     videoList.add(Video(videoFromURL, "Yodbox: mirror", videoFromURL))
+                }
             }
         }
         return videoList
@@ -142,7 +143,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        // anime.thumbnail_url = element.select("div.image img").first().attr("data-src")
+        // anime.thumbnail_url = element.selectFirst("div.image img")!!.attr("data-src")
         anime.title = element.attr("title")
         return anime
     }
@@ -223,14 +224,14 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Type("الدراما اليابانية", "japanese"),
         Type("الدراما الصينية والتايوانية", "chinese-taiwanese"),
         Type("الدراما التايلاندية", "thai"),
-        Type("برامج الترفيه", "kshow")
+        Type("برامج الترفيه", "kshow"),
     )
 
     private fun getStatusList() = listOf(
         Status("أختر", ""),
         Status("يبث حاليا", "status/ongoing-drama"),
         Status("الدراما المكتملة", "completed-dramas"),
-        Status("الدراما القادمة", "status/upcoming-drama")
+        Status("الدراما القادمة", "status/upcoming-drama"),
 
     )
 

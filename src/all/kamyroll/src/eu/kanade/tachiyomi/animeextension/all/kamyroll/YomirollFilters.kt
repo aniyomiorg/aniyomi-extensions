@@ -7,10 +7,10 @@ object YomirollFilters {
 
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
         fun toQueryPart() = vals[state].second
     }
@@ -28,13 +28,15 @@ object YomirollFilters {
     }
 
     private inline fun <reified R> AnimeFilterList.parseCheckbox(
-        options: Array<Pair<String, String>>
+        options: Array<Pair<String, String>>,
     ): String {
         return (this.getFirst<R>() as CheckBoxFilterList).state
             .mapNotNull { checkbox ->
-                if (checkbox.state)
+                if (checkbox.state) {
                     options.find { it.first == checkbox.name }!!.second
-                else null
+                } else {
+                    null
+                }
             }.joinToString("")
     }
 
@@ -45,7 +47,7 @@ object YomirollFilters {
 
     class LanguageFilter : CheckBoxFilterList(
         "Language",
-        CrunchyFiltersData.language.map { CheckBoxVal(it.first, false) }
+        CrunchyFiltersData.language.map { CheckBoxVal(it.first, false) },
     )
 
     val filterList = AnimeFilterList(
@@ -56,7 +58,7 @@ object YomirollFilters {
         CategoryFilter(),
         SortFilter(),
         MediaFilter(),
-        LanguageFilter()
+        LanguageFilter(),
     )
 
     data class FilterSearchParams(
@@ -64,7 +66,7 @@ object YomirollFilters {
         val category: String = "",
         val sort: String = "",
         val language: String = "",
-        val media: String = ""
+        val media: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
@@ -83,7 +85,7 @@ object YomirollFilters {
         val searchType = arrayOf(
             Pair("Top Results", "top_results"),
             Pair("Series", "series"),
-            Pair("Movies", "movie_listing")
+            Pair("Movies", "movie_listing"),
         )
 
         val categories = arrayOf(
@@ -176,24 +178,24 @@ object YomirollFilters {
             Pair("Thriller, Drama", "&categories=thriller,drama"),
             Pair("Thriller, Fantasy", "&categories=thriller,fantasy"),
             Pair("Thriller, Sci-Fi", "&categories=thriller,sci-fi"),
-            Pair("Thriller, Supernatural", "&categories=thriller,supernatural")
+            Pair("Thriller, Supernatural", "&categories=thriller,supernatural"),
         )
 
         val sortType = arrayOf(
             Pair("Popular", "popularity"),
             Pair("New", "newly_added"),
-            Pair("Alphabetical", "alphabetical")
+            Pair("Alphabetical", "alphabetical"),
         )
 
         val language = arrayOf(
             Pair("Sub", "&is_subbed=true"),
-            Pair("Dub", "&is_dubbed=true")
+            Pair("Dub", "&is_dubbed=true"),
         )
 
         val mediaType = arrayOf(
             Pair("All", ""),
             Pair("Series", "&type=series"),
-            Pair("Movies", "&type=movie_listing")
+            Pair("Movies", "&type=movie_listing"),
         )
     }
 }

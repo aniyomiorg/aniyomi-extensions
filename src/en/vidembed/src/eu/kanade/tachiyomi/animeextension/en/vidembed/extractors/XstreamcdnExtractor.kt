@@ -13,7 +13,7 @@ class XstreamcdnExtractor(private val client: OkHttpClient, private val json: Js
         val headers = Headers.Builder().set("referer", url.substringBefore("#")).build()
         val apiUrl = url.replace("/e/", "/api/source/")
         val resp = json.decodeFromString<LinkData>(
-            client.newCall(POST(apiUrl, headers)).execute().body!!.string()
+            client.newCall(POST(apiUrl, headers)).execute().body.string(),
         )
         val videoList = mutableListOf<Video>()
 
@@ -22,8 +22,8 @@ class XstreamcdnExtractor(private val client: OkHttpClient, private val json: Js
                 Video(
                     url = it.file,
                     quality = "Xstreamcdn: " + it.label + if (lang != "") " - $lang" else "",
-                    videoUrl = it.file
-                )
+                    videoUrl = it.file,
+                ),
             )
         }
         return videoList
@@ -34,7 +34,7 @@ class XstreamcdnExtractor(private val client: OkHttpClient, private val json: Js
 data class LinkData(
     val success: Boolean,
     val is_vr: Boolean,
-    val data: List<VideoData>?
+    val data: List<VideoData>?,
 )
 
 @Serializable

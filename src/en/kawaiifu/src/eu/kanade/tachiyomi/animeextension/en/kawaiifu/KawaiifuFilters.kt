@@ -6,10 +6,10 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 object KawaiifuFilters {
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
         fun toQueryPart() = vals[state].second
     }
@@ -27,23 +27,28 @@ object KawaiifuFilters {
     }
 
     private inline fun <reified R> AnimeFilterList.parseCheckbox(
-        options: Array<Pair<String, String>>
+        options: Array<Pair<String, String>>,
     ): String {
         return (this.getFirst<R>() as CheckBoxFilterList).state
             .mapNotNull { checkbox ->
-                if (checkbox.state)
+                if (checkbox.state) {
                     options.find { it.first == checkbox.name }!!.second
-                else null
+                } else {
+                    null
+                }
             }.joinToString("&tag-get[]=").let {
-                if (it.isBlank()) ""
-                else "&tag-get[]=$it"
+                if (it.isBlank()) {
+                    ""
+                } else {
+                    "&tag-get[]=$it"
+                }
             }
     }
 
     class CategoryFilter : QueryPartFilter("Category", KawaiifuFiltersData.categories)
     class TagsFilter : CheckBoxFilterList(
         "Tags",
-        KawaiifuFiltersData.tags.map { CheckBoxVal(it.first, false) }
+        KawaiifuFiltersData.tags.map { CheckBoxVal(it.first, false) },
     )
 
     val filterList = AnimeFilterList(
@@ -54,7 +59,7 @@ object KawaiifuFilters {
 
     data class FilterSearchParams(
         val category: String = "",
-        val tags: String = ""
+        val tags: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
@@ -185,7 +190,7 @@ object KawaiifuFilters {
             Pair("Winter 2020", "winter-2020"),
             Pair("Winter 2021", "winter-2021"),
             Pair("Winter 2022", "winter-2022"),
-            Pair("Winter 2023", "winter-2023")
+            Pair("Winter 2023", "winter-2023"),
         )
 
         val tags = arrayOf(
@@ -297,7 +302,7 @@ object KawaiifuFilters {
             Pair("Work Life", "work-life"),
             Pair("Yaoi", "yaoi"),
             Pair("Youkai", "Youkai"),
-            Pair("Yuri", "yuri")
+            Pair("Yuri", "yuri"),
         )
     }
 }

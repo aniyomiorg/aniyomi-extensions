@@ -57,7 +57,7 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
-            element.select("a").attr("href")
+            element.select("a").attr("href"),
         )
         anime.title = element.select("header.h-header h2").text()
         anime.thumbnail_url = baseUrl + element.select("div.h-thumb figure img").attr("src")
@@ -91,11 +91,10 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-        val videoServers = document.selectFirst("script:containsData(var videos = [)").data().substringAfter("videos = ").substringBefore(";")
+        val videoServers = document.selectFirst("script:containsData(var videos = [)")!!.data().substringAfter("videos = ").substringBefore(";")
             .replace("[[", "").replace("]]", "")
         val videoServerList = videoServers.split("],[")
         videoServerList.forEach {
-
             val server = it.split(",").map { a -> a.replace("\"", "") }
             val urlServer = server[1].replace("\\/", "/")
             val nameServer = server[0]
@@ -122,7 +121,7 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         return try {
             val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
             val userPreferredQuality = preferences.getString("preferred_quality", "Fembed:1080p")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
@@ -188,8 +187,8 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = baseUrl + document.selectFirst("div.h-thumb figure img").attr("src")
-        anime.title = document.selectFirst("article.hentai-single header.h-header h1").text()
+        anime.thumbnail_url = baseUrl + document.selectFirst("div.h-thumb figure img")!!.attr("src")
+        anime.title = document.selectFirst("article.hentai-single header.h-header h1")!!.text()
         anime.description = document.select("article.hentai-single div.h-content p").text()
         anime.genre = document.select("article.hentai-single footer.h-footer nav.genres a.btn.sm").joinToString { it.text() }
         anime.status = SAnime.COMPLETED
@@ -206,7 +205,7 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
-        GenreFilter()
+        GenreFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -244,8 +243,8 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Virgenes(como tu)", "virgenes"),
             Pair("Yaoi", "Yaoi"),
             Pair("Yuri", "yuri"),
-            Pair("Bondage", "bondage")
-        )
+            Pair("Bondage", "bondage"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -255,8 +254,12 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
-            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", // Fembed
-            "Arc" // video servers without resolution
+            "Fembed:1080p",
+            "Fembed:720p",
+            "Fembed:480p",
+            "Fembed:360p",
+            "Fembed:240p", // Fembed
+            "Arc", // video servers without resolution
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"

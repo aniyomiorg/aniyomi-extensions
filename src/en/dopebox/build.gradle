@@ -10,7 +10,6 @@ ext {
 }
 
 dependencies {
-    compileOnly libs.bundles.coroutines
     implementation(project(':lib-dood-extractor'))
 }
 

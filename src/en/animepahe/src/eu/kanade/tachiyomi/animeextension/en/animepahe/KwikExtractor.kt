@@ -51,7 +51,7 @@ class KwikExtractor(private val client: OkHttpClient) {
     fun getHlsStreamUrl(kwikUrl: String, referer: String): String {
         val eContent = client.newCall(GET(kwikUrl, Headers.headersOf("referer", referer)))
             .execute().asJsoup()
-        val script = eContent.selectFirst("script:containsData(eval\\(function)").data().substringAfterLast("eval(function(")
+        val script = eContent.selectFirst("script:containsData(eval\\(function)")!!.data().substringAfterLast("eval(function(")
         val unpacked = JsUnpacker.unpackAndCombine("eval(function($script")!!
         return unpacked.substringAfter("const source=\\'").substringBefore("\\';")
     }
@@ -66,7 +66,7 @@ class KwikExtractor(private val client: OkHttpClient) {
         val fContent =
             client.newCall(GET(kwikUrl, Headers.headersOf("referer", "https://kwik.cx/"))).execute()
         cookies += (fContent.header("set-cookie")!!)
-        val fContentString = fContent.body!!.string()
+        val fContentString = fContent.body.string()
 
         val (fullString, key, v1, v2) = kwikParamsRegex.find(fContentString)!!.destructured
         val decrypted = decrypt(fullString, key, v1.toInt(), v2.toInt())
@@ -84,16 +84,17 @@ class KwikExtractor(private val client: OkHttpClient) {
             .build()
 
         while (code != 302 && tries < 20) {
-
             content = noRedirectClient.newCall(
                 POST(
                     uri,
                     Headers.headersOf(
-                        "referer", fContent.request.url.toString(),
-                        "cookie", fContent.header("set-cookie")!!.replace("path=/;", "")
+                        "referer",
+                        fContent.request.url.toString(),
+                        "cookie",
+                        fContent.header("set-cookie")!!.replace("path=/;", ""),
                     ),
-                    FormBody.Builder().add("_token", tok).build()
-                )
+                    FormBody.Builder().add("_token", tok).build(),
+                ),
             ).execute()
             code = content.code
             ++tries

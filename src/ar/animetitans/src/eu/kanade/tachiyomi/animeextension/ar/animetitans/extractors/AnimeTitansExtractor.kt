@@ -11,7 +11,7 @@ class AnimeTitansExtractor(private val client: OkHttpClient) {
         val callPlayer = client.newCall(GET(url)).execute().asJsoup()
         val masterUrl = callPlayer.data().substringAfter("source: \"").substringBefore("\",")
         val domain = masterUrl.substringBefore("/videowl") // .replace("https", "http")
-        val masterPlaylist = client.newCall(GET(masterUrl)).execute().body!!.string()
+        val masterPlaylist = client.newCall(GET(masterUrl)).execute().body.string()
         val videoList = mutableListOf<Video>()
         masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
             val quality = "AnimeTitans: " + it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n") + "p"

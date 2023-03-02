@@ -74,8 +74,8 @@ class Movies4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val seasonsHtml = client.newCall(
                 GET(
                     seasonUrl,
-                    headers = Headers.headersOf("Referer", document.location())
-                )
+                    headers = Headers.headersOf("Referer", document.location()),
+                ),
             ).execute().asJsoup()
             val seasonsElements = seasonsHtml.select("div.col-6.col-sm-4.col-md-3.col-xl-2 div.card")
             seasonsElements.forEach {
@@ -101,7 +101,7 @@ class Movies4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodesHtml = client.newCall(
             GET(
                 seasonId,
-            )
+            ),
         ).execute().asJsoup()
         val episodeElements = episodesHtml.select("div.col-6.col-sm-4.col-md-3.col-xl-2")
         return episodeElements.map { episodeFromElement(it, seasonName) }
@@ -110,7 +110,7 @@ class Movies4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun episodeFromElement(element: Element, seasonName: String): SEpisode {
         val episode = SEpisode.create()
         episode.episode_number = element.select("h3.card__title a").attr("abs:href").substringAfter("episode-").toFloat()
-        // val SeasonNum = element.ownerDocument().select("div.Title span").text()
+        // val SeasonNum = element.ownerDocument()!!.select("div.Title span").text()
         episode.name = "$seasonName" + ": " + element.select("h3.card__title a").text()
         episode.setUrlWithoutDomain(element.select("h3.card__title a").attr("abs:href"))
         return episode
@@ -120,15 +120,15 @@ class Movies4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val iframe1 = client.newCall(GET(document.selectFirst("iframe#video").attr("data-src")))
+        val iframe1 = client.newCall(GET(document.selectFirst("iframe#video")!!.attr("data-src")))
             .execute().asJsoup()
-        val iframe = iframe1.selectFirst("iframe").attr("src")
+        val iframe = iframe1.selectFirst("iframe")!!.attr("src")
 
         val referer = response.request.url.encodedPath
         val newHeaders = Headers.headersOf("referer", baseUrl + referer)
         val iframeResponse = client.newCall(GET(iframe, newHeaders))
             .execute().asJsoup()
-        return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
+        return videosFromElement(iframeResponse.selectFirst(videoListSelector())!!)
     }
 
     override fun videoListSelector() = "script:containsData(source)"
@@ -217,6 +217,7 @@ class Movies4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             return GET(genreUrl, headers)
                         }
                     }
+                    else -> {}
                 }
             }
             throw Exception("اختر فلتر")
@@ -321,6 +322,6 @@ class Movies4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Genre("كوميديا", "38"),
         Genre("مغامرة", "39"),
         Genre("موسيقية", "40"),
-        Genre("وثائقية", "41")
+        Genre("وثائقية", "41"),
     )
 }

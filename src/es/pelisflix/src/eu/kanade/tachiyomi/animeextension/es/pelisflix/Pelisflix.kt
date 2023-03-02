@@ -48,7 +48,7 @@ open class Pelisflix(override val name: String, override val baseUrl: String) : 
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("a").attr("href"))
         anime.title = element.select("a h2.Title").text()
-        anime.thumbnail_url = externalOrInternalImg(element.selectFirst("a div.Image figure.Objf img.imglazy").attr("data-src"))
+        anime.thumbnail_url = externalOrInternalImg(element.selectFirst("a div.Image figure.Objf img.imglazy")!!.attr("data-src"))
         anime.description = element.select("div.TPMvCn div.Description p:nth-child(1)").text().removeSurrounding("\"")
         return anime
     }
@@ -82,7 +82,7 @@ open class Pelisflix(override val name: String, override val baseUrl: String) : 
             if (request.isSuccessful) {
                 val document = request.asJsoup()
                 document.select("div.TPTblCn table tbody tr.Viewed")!!.forEach { epContainer ->
-                    val urlEp = epContainer.selectFirst("td.MvTbPly > a").attr("href")
+                    val urlEp = epContainer.selectFirst("td.MvTbPly > a")!!.attr("href")
                     val ep = SEpisode.create()
                     ep.name = "T$noTemp - Episodio $noEp"
                     ep.episode_number = noEp
@@ -105,7 +105,7 @@ open class Pelisflix(override val name: String, override val baseUrl: String) : 
         val videoList = mutableListOf<Video>()
         document.select("div.TPost.A.D div.Container div.optns-bx div.drpdn button.bstd").forEach { serverList ->
             serverList.select("ul.optnslst li div[data-url]").forEach {
-                val langTag = it.selectFirst("span:nth-child(2)")
+                val langTag = it.selectFirst("span:nth-child(2)")!!
                     .text().substringBefore("HD")
                     .substringBefore("SD")
                     .trim()
@@ -169,7 +169,7 @@ open class Pelisflix(override val name: String, override val baseUrl: String) : 
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
-        GenreFilter()
+        GenreFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -186,8 +186,8 @@ open class Pelisflix(override val name: String, override val baseUrl: String) : 
             Pair("Crimen", "genero/crimen"),
             Pair("Drama", "genero/drama"),
             Pair("Romance", "genero/romance"),
-            Pair("Terror", "genero/terror")
-        )
+            Pair("Terror", "genero/terror"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -206,20 +206,20 @@ open class Pelisflix(override val name: String, override val baseUrl: String) : 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         var description = try {
-            document!!.selectFirst("article.TPost header.Container div.TPMvCn div.Description")
+            document.selectFirst("article.TPost header.Container div.TPMvCn div.Description")!!
                 .text().removeSurrounding("\"")
                 .substringAfter("Online:")
                 .substringBefore("Recuerda ")
                 .substringBefore("Director:")
                 .trim()
         } catch (e: Exception) {
-            document.selectFirst("article.TPost header div.TPMvCn div.Description p:nth-child(1)").text().removeSurrounding("\"").trim()
+            document.selectFirst("article.TPost header div.TPMvCn div.Description p:nth-child(1)")!!.text().removeSurrounding("\"").trim()
         }
 
         var title = try {
-            document.selectFirst("article.TPost header.Container div.TPMvCn h1.Title").text().removePrefix("Serie").trim()
+            document.selectFirst("article.TPost header.Container div.TPMvCn h1.Title")!!.text().removePrefix("Serie").trim()
         } catch (e: Exception) {
-            document.selectFirst("article.TPost header.Container div.TPMvCn a h1.Title").text().removePrefix("Serie").trim()
+            document.selectFirst("article.TPost header.Container div.TPMvCn a h1.Title")!!.text().removePrefix("Serie").trim()
         }
 
         anime.title = title

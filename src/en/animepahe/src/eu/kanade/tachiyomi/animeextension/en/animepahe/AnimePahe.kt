@@ -66,7 +66,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         return runBlocking {
             withContext(Dispatchers.IO) {
                 client.newCall(GET("$baseUrl/api?m=search&q=$title"))
-                    .execute().body!!.string()
+                    .execute().body.string()
             }
         }.substringAfter("\"id\":$animeId")
             .substringAfter("\"session\":\"").substringBefore("\"")
@@ -77,11 +77,11 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         val anime = SAnime.create()
         val animeId = response.request.url.toString().substringAfterLast("?anime_id=")
         anime.setUrlWithoutDomain("$baseUrl/anime/?anime_id=$animeId")
-        anime.title = jsoup.selectFirst("div.title-wrapper > h1 > span").text()
+        anime.title = jsoup.selectFirst("div.title-wrapper > h1 > span")!!.text()
         anime.author = jsoup.select("div.col-sm-4.anime-info p:contains(Studio:)")
             .firstOrNull()?.text()?.replace("Studio: ", "")
-        anime.status = parseStatus(jsoup.selectFirst("div.col-sm-4.anime-info p:contains(Status:) a").text())
-        anime.thumbnail_url = jsoup.selectFirst("div.anime-poster a").attr("href")
+        anime.status = parseStatus(jsoup.selectFirst("div.col-sm-4.anime-info p:contains(Status:) a")!!.text())
+        anime.thumbnail_url = jsoup.selectFirst("div.anime-poster a")!!.attr("href")
         anime.genre = jsoup.select("div.anime-genre ul li").joinToString { it.text() }
         val synonyms = jsoup.select("div.col-sm-4.anime-info p:contains(Synonyms:)")
             .firstOrNull()?.text()
@@ -98,7 +98,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         GET("$baseUrl/api?m=search&l=8&q=$query")
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         return parseSearchJson(responseString)
     }
 
@@ -122,7 +122,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/api?m=airing&page=$page")
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         return parsePopularAnimeJson(responseString)
     }
 
@@ -205,7 +205,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun recursivePages(response: Response, animeSession: String): List<SEpisode> {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         val jObject = json.decodeFromString<JsonObject>(responseString)
         val lastPage = jObject["last_page"]!!.jsonPrimitive.int
         val page = jObject["current_page"]!!.jsonPrimitive.int
@@ -241,8 +241,10 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         return if (preferences.getBoolean("preferred_link_type", false)) {
             val videoUrl = KwikExtractor(client).getHlsStreamUrl(kwikUrl, referer = baseUrl)
             Video(
-                videoUrl, quality, videoUrl,
-                headers = Headers.headersOf("referer", "https://kwik.cx")
+                videoUrl,
+                quality,
+                videoUrl,
+                headers = Headers.headersOf("referer", "https://kwik.cx"),
             )
         } else {
             val videoUrl = KwikExtractor(client).getStreamUrlFromKwik(paheUrl)
@@ -259,7 +261,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             compareBy(
                 { it.quality.contains(quality) },
                 { it.quality.endsWith("eng", true) == shouldEndWithEng },
-            )
+            ),
         ).reversed()
     }
 
@@ -313,7 +315,8 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             key = "preferred_link_type"
             title = "Use HLS links"
             summary = """Enable this if you are having Cloudflare issues.
-                |Note that this will break the ability to seek inside of the video unless the episode is downloaded in advance.""".trimMargin()
+                |Note that this will break the ability to seek inside of the video unless the episode is downloaded in advance.
+            """.trimMargin()
             setDefaultValue(false)
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -325,7 +328,8 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             key = "preferred_cover_type"
             title = "Use Snapshot as Cover"
             summary = """Enable this if you are experiencing lag loading pages.
-                |To get real cover click on the anime to fetch the details""".trimMargin()
+                |To get real cover click on the anime to fetch the details
+            """.trimMargin()
             setDefaultValue(false)
 
             setOnPreferenceChangeListener { _, newValue ->

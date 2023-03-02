@@ -11,7 +11,7 @@ class DoodExtractor(private val client: OkHttpClient) {
     fun videoFromUrl(
         url: String,
         quality: String? = null,
-        redirect: Boolean = true
+        redirect: Boolean = true,
     ): Video? {
         val newQuality = quality ?: "Doodstream" + if (redirect) " mirror" else ""
 
@@ -20,7 +20,7 @@ class DoodExtractor(private val client: OkHttpClient) {
             val newUrl = if (redirect) response.request.url.toString() else url
 
             val doodTld = newUrl.substringAfter("https://dood.").substringBefore("/")
-            val content = response.body!!.string()
+            val content = response.body.string()
 
             val subtitleList = mutableListOf<Track>()
             val subtitleRegex = """src:'//(srt[^']*?)',\s*label:'([^']*?)'""".toRegex()
@@ -29,9 +29,9 @@ class DoodExtractor(private val client: OkHttpClient) {
                     subtitleRegex.findAll(content).map {
                         Track(
                             "https://" + it.groupValues[1],
-                            it.groupValues[2]
+                            it.groupValues[2],
                         )
-                    }
+                    },
                 )
             } catch (a: Exception) { }
 
@@ -43,9 +43,9 @@ class DoodExtractor(private val client: OkHttpClient) {
             val videoUrlStart = client.newCall(
                 GET(
                     "https://dood.$doodTld/pass_md5/$md5",
-                    Headers.headersOf("referer", newUrl)
-                )
-            ).execute().body!!.string()
+                    Headers.headersOf("referer", newUrl),
+                ),
+            ).execute().body.string()
             val videoUrl = "$videoUrlStart$randomString?token=$token&expiry=$expiry"
             try {
                 Video(newUrl, newQuality, videoUrl, headers = doodHeaders(doodTld), subtitleTracks = subtitleList)
@@ -60,7 +60,7 @@ class DoodExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(
         url: String,
         quality: String? = null,
-        redirect: Boolean = true
+        redirect: Boolean = true,
     ): List<Video> {
         val video = videoFromUrl(url, quality, redirect)
         return video?.let { listOf(it) } ?: emptyList<Video>()

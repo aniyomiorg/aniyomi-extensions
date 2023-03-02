@@ -47,9 +47,9 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.selectFirst("div.msebox div.headsebox div.tisebox h2 a").attr("href"))
-        anime.title = formatTitle(element.selectFirst("div.msebox div.headsebox div.tisebox h2 a").text())
-        anime.thumbnail_url = element.selectFirst("div.msebox div.bigsebox div.l img.attachment-post-thumbnail.size-post-thumbnail.wp-post-image").attr("src")
+        anime.setUrlWithoutDomain(element.selectFirst("div.msebox div.headsebox div.tisebox h2 a")!!.attr("href"))
+        anime.title = formatTitle(element.selectFirst("div.msebox div.headsebox div.tisebox h2 a")!!.text())
+        anime.thumbnail_url = element.selectFirst("div.msebox div.bigsebox div.l img.attachment-post-thumbnail.size-post-thumbnail.wp-post-image")!!.attr("src")
         return anime
     }
 
@@ -64,8 +64,8 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-        episode.setUrlWithoutDomain(element.selectFirst("a.btn.btn-dark.mb-1.bottone-ep").attr("href"))
-        val epText = element.selectFirst("a.btn.btn-dark.mb-1.bottone-ep").text()
+        episode.setUrlWithoutDomain(element.selectFirst("a.btn.btn-dark.mb-1.bottone-ep")!!.attr("href"))
+        val epText = element.selectFirst("a.btn.btn-dark.mb-1.bottone-ep")!!.text()
         val epNumber = epText.substringAfter("Episodio ")
         if (epNumber.contains("-", true)) {
             episode.episode_number = epNumber.substringBefore("-").toFloat()
@@ -102,7 +102,7 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         val referer = document.location()
         return if (url.endsWith("playlist.m3u8")) {
-            val playlist = client.newCall(GET(url)).execute().body!!.string()
+            val playlist = client.newCall(GET(url)).execute().body.string()
             val linkRegex = """(?<=\n)./.+""".toRegex()
             val qualityRegex = """(?<=RESOLUTION=)\d+x\d+""".toRegex()
             val qualities = qualityRegex.findAll(playlist).map {
@@ -115,7 +115,7 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 Video(
                     link,
                     qualities[i],
-                    link
+                    link,
                 )
             }
         } else {
@@ -124,8 +124,8 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     url,
                     "Qualità predefinita",
                     url,
-                    headers = Headers.headersOf("Referer", referer)
-                )
+                    headers = Headers.headersOf("Referer", referer),
+                ),
             )
         }
     }
@@ -151,13 +151,13 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         if (filterSearch) {
             // filter search
-            anime.setUrlWithoutDomain(element.selectFirst("div.card.mb-4.shadow-sm a").attr("href"))
-            anime.title = formatTitle(element.selectFirst("div.card.mb-4.shadow-sm a").attr("title"))
-            anime.thumbnail_url = element.selectFirst("div.card.mb-4.shadow-sm a img.new-anime").attr("src")
+            anime.setUrlWithoutDomain(element.selectFirst("div.card.mb-4.shadow-sm a")!!.attr("href"))
+            anime.title = formatTitle(element.selectFirst("div.card.mb-4.shadow-sm a")!!.attr("title"))
+            anime.thumbnail_url = element.selectFirst("div.card.mb-4.shadow-sm a img.new-anime")!!.attr("src")
         } else {
             // word search
-            anime.setUrlWithoutDomain(element.selectFirst("li.list-group-item.bg-dark-as-box-shadow div.item-archivio div.info-archivio h3 a.badge.badge-archivio.badge-light").attr("href"))
-            anime.title = formatTitle(element.selectFirst("li.list-group-item.bg-dark-as-box-shadow div.item-archivio div.info-archivio h3 a.badge.badge-archivio.badge-light").text())
+            anime.setUrlWithoutDomain(element.selectFirst("li.list-group-item.bg-dark-as-box-shadow div.item-archivio div.info-archivio h3 a.badge.badge-archivio.badge-light")!!.attr("href"))
+            anime.title = formatTitle(element.selectFirst("li.list-group-item.bg-dark-as-box-shadow div.item-archivio div.info-archivio h3 a.badge.badge-archivio.badge-light")!!.text())
             anime.thumbnail_url = element.select("li.list-group-item.bg-dark-as-box-shadow div.item-archivio a.thumb.image-wrapper img.rounded.locandina-archivio").attr("src")
         }
         return anime
@@ -168,8 +168,11 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private var filterSearch = false
 
     override fun searchAnimeSelector(): String {
-        return if (filterSearch) "div.anime-card-newanime.main-anime-card" // filter search
-        else "ul.list-group" // regular search
+        return if (filterSearch) {
+            "div.anime-card-newanime.main-anime-card" // filter search
+        } else {
+            "ul.list-group" // regular search
+        }
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -198,12 +201,12 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.genre =
             document.select("div.container.shadow.rounded.bg-dark-as-box.mb-3.p-3.w-100 a.badge.badge-dark.generi-as.mb-1")
                 .joinToString { it.text() }
-        anime.thumbnail_url = document.selectFirst("img.img-fluid.cover-anime.rounded").attr("src")
+        anime.thumbnail_url = document.selectFirst("img.img-fluid.cover-anime.rounded")!!.attr("src")
         val alterTitle = formatTitle(
-            document.selectFirst("div.box-trasparente-alternativo.rounded").text()
+            document.selectFirst("div.box-trasparente-alternativo.rounded")!!.text(),
         ).replace("Dub ITA", "").trim()
-        val description1 = document.select("div#trama div#shown-trama").firstOrNull()?.ownText()
-        val description2 = document.select("div#full-trama.d-none").firstOrNull()?.ownText()
+        val description1 = document.selectFirst("div#trama div#shown-trama")?.ownText()
+        val description2 = document.selectFirst("div#full-trama.d-none")?.ownText()
         when {
             description1 == null -> {
                 anime.description = description2
@@ -238,9 +241,9 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
-        anime.title = formatTitle(element.selectFirst("a").attr("title"))
-        anime.thumbnail_url = element.selectFirst("a img.new-anime").attr("src")
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        anime.title = formatTitle(element.selectFirst("a")!!.attr("title"))
+        anime.thumbnail_url = element.selectFirst("a img.new-anime")!!.attr("src")
         return anime
     }
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/newest?page=$page")
@@ -294,7 +297,7 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Genre("Vampiri"),
         Genre("Veicoli"),
         Genre("Yaoi"),
-        Genre("Yuri")
+        Genre("Yuri"),
     )
 
     internal class Year(val id: String) : AnimeFilter.CheckBox(id)
@@ -344,7 +347,7 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Year("2019"),
         Year("2020"),
         Year("2021"),
-        Year("2022")
+        Year("2022"),
     )
 
     internal class State(val id: String, name: String) : AnimeFilter.CheckBox(name)
@@ -353,14 +356,14 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         State("0", "In corso"),
         State("1", "Finito"),
         State("2", "Non rilasciato"),
-        State("3", "Droppato")
+        State("3", "Droppato"),
     )
 
     internal class Lang(val id: String, name: String) : AnimeFilter.CheckBox(name)
     private class LangList(langs: List<Lang>) : AnimeFilter.Group<Lang>("Lingua", langs)
     private fun getLangs() = listOf(
         Lang("0", "Subbato"),
-        Lang("1", "Doppiato")
+        Lang("1", "Doppiato"),
     )
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
@@ -368,7 +371,7 @@ class AnimeSaturn : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         GenreList(getGenres()),
         YearList(getYears()),
         StateList(getStates()),
-        LangList(getLangs())
+        LangList(getLangs()),
     )
 
     private fun getSearchParameters(filters: AnimeFilterList): String {

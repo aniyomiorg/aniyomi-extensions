@@ -54,7 +54,7 @@ class AnimesUp : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        val img = element.selectFirst("img")
+        val img = element.selectFirst("img")!!
         val url = element.selectFirst("a")?.attr("href") ?: element.attr("href")
         anime.setUrlWithoutDomain(url)
         anime.title = img.attr("alt")
@@ -90,13 +90,13 @@ class AnimesUp : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-        val origName = element.selectFirst("div.numerando").text()
+        val origName = element.selectFirst("div.numerando")!!.text()
 
         episode.episode_number = origName.substringAfter("- ")
             .replace("-", "")
             .toFloat()
         episode.name = "Temp " + origName.replace(" - ", ": Ep ")
-        episode.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
+        episode.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
         return episode
     }
 
@@ -108,13 +108,14 @@ class AnimesUp : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .map { it.attr("href").ifEmpty { it.attr("src") } }
         val resolutions = document.select("ul#playeroptionsul > li:not(#player-option-trailer)")
             .mapIndexed { index, it ->
-                val quality = it.selectFirst("span:not(.loader)").text()
+                val quality = it.selectFirst("span:not(.loader)")!!.text()
 
                 val videoUrl = urls.get(index)!!
                 when {
                     videoUrl.contains("/Player/Play") -> {
                         val newHeaders = Headers.headersOf(
-                            "referer", response.request.url.toString()
+                            "referer",
+                            response.request.url.toString(),
                         )
                         AnimesUpExtractor(client)
                             .videoFromUrl(videoUrl, quality, newHeaders)
@@ -211,11 +212,11 @@ class AnimesUp : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         val doc = getRealDoc(document)
-        val sheader = doc.selectFirst("div.sheader")
-        val img = sheader.selectFirst("div.poster img")
+        val sheader = doc.selectFirst("div.sheader")!!
+        val img = sheader.selectFirst("div.poster img")!!
         anime.thumbnail_url = img.attr("src")
         anime.title = img.attr("alt")
-        val info = sheader.selectFirst("div.data")
+        val info = sheader.selectFirst("div.data")!!
         anime.genre = info.select("div.sgeneros > a")
             .joinToString(", ") { it.text() }
         var description = doc.select("div.sinopse > div.texto")
@@ -266,7 +267,7 @@ class AnimesUp : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun getRealDoc(document: Document): Document {
         val menu = document.selectFirst(animeMenuSelector)
         if (menu != null) {
-            val originalUrl = menu.parent().attr("href")
+            val originalUrl = menu.parent()!!.attr("href")
             val req = client.newCall(GET(originalUrl, headers)).execute()
             return req.asJsoup()
         } else {
@@ -284,8 +285,8 @@ class AnimesUp : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun Element.getInfo(substring: String): String? {
         val target = this.selectFirst("div.custom_fields:contains($substring)")
             ?: return null
-        val key = target.selectFirst("b").text()
-        val value = target.selectFirst("span").text()
+        val key = target.selectFirst("b")!!.text()
+        val value = target.selectFirst("span")!!.text()
         return "\n$key $value"
     }
 

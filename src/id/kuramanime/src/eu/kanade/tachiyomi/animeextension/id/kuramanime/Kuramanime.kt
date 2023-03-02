@@ -86,8 +86,8 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun parseShortInfo(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a").first().attr("href"))
-        anime.thumbnail_url = element.select("a > div").first().attr("data-setbg")
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        anime.thumbnail_url = element.selectFirst("a > div")!!.attr("data-setbg")
         anime.title = element.select("div.product__item__text > h5").text()
         return anime
     }
@@ -124,7 +124,7 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         document.select("select#changeServer > option").forEach {
             videoList.addAll(
-                videosFromServer(response.request.url.toString(), it.attr("value"), it.text())
+                videosFromServer(response.request.url.toString(), it.attr("value"), it.text()),
             )
         }
 
@@ -133,7 +133,7 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun videosFromServer(episodeUrl: String, server: String, name: String): List<Video> {
         val document = client.newCall(
-            GET("$episodeUrl?activate_stream=1&stream_server=$server", headers = headers)
+            GET("$episodeUrl?activate_stream=1&stream_server=$server", headers = headers),
         ).execute().asJsoup()
         return document.select(videoListSelector()).map { videoFromElement(it, name, episodeUrl) }
     }

@@ -72,7 +72,7 @@ open class Onepace(override val lang: String, override val name: String) : Confi
                     }
                 }
             },
-            false
+            false,
         )
     }
 

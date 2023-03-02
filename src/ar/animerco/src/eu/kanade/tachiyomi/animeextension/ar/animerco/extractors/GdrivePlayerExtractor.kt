@@ -19,7 +19,7 @@ class GdrivePlayerExtractor(private val client: OkHttpClient) {
 
     fun videosFromUrl(url: String): List<Video> {
         val body = client.newCall(GET(url.replace(".me", ".to"))).execute()
-            .body!!.string()
+            .body.string()
         val eval = JsUnpacker.unpackAndCombine(body)!!.replace("\\", "")
         val json = Json.decodeFromString<JsonObject>(REGEX_DATAJSON.getFirst(eval))
         val sojson = REGEX_SOJSON.getFirst(eval)
@@ -61,9 +61,8 @@ class GdrivePlayerExtractor(private val client: OkHttpClient) {
         hashAlgorithm: String = "MD5",
         keyLength: Int = 32,
         ivLength: Int = 16,
-        iterations: Int = 1
+        iterations: Int = 1,
     ): List<ByteArray>? {
-
         val md = MessageDigest.getInstance(hashAlgorithm)
         val digestLength = md.getDigestLength()
         val targetKeySize = keyLength + ivLength
@@ -75,12 +74,13 @@ class GdrivePlayerExtractor(private val client: OkHttpClient) {
             md.reset()
 
             while (generatedLength < targetKeySize) {
-                if (generatedLength > 0)
+                if (generatedLength > 0) {
                     md.update(
                         generatedData,
                         generatedLength - digestLength,
-                        digestLength
+                        digestLength,
                     )
+                }
 
                 md.update(password)
                 md.update(salt, 0, 8)
@@ -95,7 +95,7 @@ class GdrivePlayerExtractor(private val client: OkHttpClient) {
             }
             val result = listOf(
                 generatedData.copyOfRange(0, keyLength),
-                generatedData.copyOfRange(keyLength, targetKeySize)
+                generatedData.copyOfRange(keyLength, targetKeySize),
             )
             return result
         } catch (e: DigestException) {

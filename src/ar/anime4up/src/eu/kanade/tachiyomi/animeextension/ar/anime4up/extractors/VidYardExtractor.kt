@@ -7,7 +7,7 @@ import okhttp3.OkHttpClient
 
 class VidYardExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String, headers: Headers): List<Video> {
-        val callPlayer = client.newCall(GET(url)).execute().body!!.string()
+        val callPlayer = client.newCall(GET(url)).execute().body.string()
         val data = callPlayer.substringAfter("hls\":[").substringBefore("]")
         val sources = data.split("profile\":\"").drop(1)
         val videoList = mutableListOf<Video>()

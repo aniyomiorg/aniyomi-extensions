@@ -10,7 +10,7 @@ import org.jsoup.Jsoup
 class ZippyExtractor {
     fun getVideoUrl(url: String, json: Json): String {
         val document = Jsoup.connect(url).get()
-        val jscript = document.selectFirst("script:containsData(dlbutton)").data()
+        val jscript = document.selectFirst("script:containsData(dlbutton)")!!.data()
             .replace("document.getElementById('dlbutton').href", "a")
             .replace("document.getElementById('fimage').href", "b")
             .replace("document.getElementById('fimage')", "false")

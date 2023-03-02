@@ -19,7 +19,7 @@ class DoodExtractor(private val client: OkHttpClient) {
             val newUrl = if(redirect) response.request.url.toString() else url
             
             val doodTld = newUrl.substringAfter("https://dood.").substringBefore("/")
-            val content = response.body!!.string()
+            val content = response.body.string()
             if (!content.contains("'/pass_md5/")) return null
             val md5 = content.substringAfter("'/pass_md5/").substringBefore("',")
             val token = md5.substringAfterLast("/")
@@ -30,7 +30,7 @@ class DoodExtractor(private val client: OkHttpClient) {
                     "https://dood.$doodTld/pass_md5/$md5",
                     Headers.headersOf("referer", newUrl)
                 )
-            ).execute().body!!.string()
+            ).execute().body.string()
             val videoUrl = "$videoUrlStart$randomString?token=$token&expiry=$expiry"
             Video(newUrl, newQuality, videoUrl, headers = doodHeaders(doodTld))
         } catch (e: Exception) {

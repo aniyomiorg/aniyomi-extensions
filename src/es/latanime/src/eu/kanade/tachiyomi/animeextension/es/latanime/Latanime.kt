@@ -58,9 +58,9 @@ class Latanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
 
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href").toHttpUrl().encodedPath)
-        anime.title = element.selectFirst("div.seriedetails > h3").text()
-        anime.thumbnail_url = element.selectFirst("img").attr("src")
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").toHttpUrl().encodedPath)
+        anime.title = element.selectFirst("div.seriedetails > h3")!!.text()
+        anime.thumbnail_url = element.selectFirst("img")!!.attr("src")
 
         return anime
     }
@@ -256,7 +256,7 @@ class Latanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.title = document.select("div.row > div > h2").text()
         anime.genre = document.select("div.row > div > a:has(div.btn)").eachText().joinToString(separator = ", ")
-        anime.description = document.selectFirst("div.row > div > p.my-2").text()
+        anime.description = document.selectFirst("div.row > div > p.my-2")!!.text()
         return anime
     }
 

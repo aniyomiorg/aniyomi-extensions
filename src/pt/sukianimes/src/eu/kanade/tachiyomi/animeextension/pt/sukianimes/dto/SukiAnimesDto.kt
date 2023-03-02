@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 data class SearchResultDto(
     val animes: List<AnimeDto> = emptyList(),
     @SerialName("total_pages")
-    val pages: Int = 0
+    val pages: Int = 0,
 )
 
 @Serializable
@@ -17,5 +17,5 @@ data class AnimeDto(
     @SerialName("anime_capa")
     val thumbnail_url: String,
     @SerialName("anime_title")
-    val title: String
+    val title: String,
 )

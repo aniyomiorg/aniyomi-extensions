@@ -7,7 +7,7 @@ typealias AnimeVibeEpisodeListDto = AnimeVibeResultDto<List<AnimeVibeEpisodeDto>
 
 @Serializable
 data class AnimeVibeResultDto<T>(
-    val data: T? = null
+    val data: T? = null,
 )
 
 /*
@@ -43,7 +43,7 @@ data class AnimeVibeAnimeDto(
     val views: Int = -1,
     val genres: List<String>? = emptyList(),
     val status: String? = "",
-    val description: String? = ""
+    val description: String? = "",
 )
 
 /*
@@ -65,5 +65,5 @@ data class AnimeVibeEpisodeDto(
     val number: Float = -1f,
     val mediaID: Int = -1,
     val videoSource: List<String> = emptyList(),
-    val datePublished: String = ""
+    val datePublished: String = "",
 )

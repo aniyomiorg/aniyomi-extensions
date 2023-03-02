@@ -58,9 +58,9 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.selectFirst("header div.Image figure img").attr("src").trim().replace("//", "https://")
-        anime.title = document.selectFirst("header div.asia-post-header h1.Title").text()
-        anime.description = document.selectFirst("header div.asia-post-main div.Description p:nth-child(2)").text().removeSurrounding("\"")
+        anime.thumbnail_url = document.selectFirst("header div.Image figure img")!!.attr("src").trim().replace("//", "https://")
+        anime.title = document.selectFirst("header div.asia-post-header h1.Title")!!.text()
+        anime.description = document.selectFirst("header div.asia-post-main div.Description p:nth-child(2)")!!.text().removeSurrounding("\"")
         anime.genre = document.select("div.asia-post-main p.Info span.tags a").joinToString { it.text() }
         val year = document.select("header div.asia-post-main p.Info span.Date a").text().toInt()
         val currentYear = Calendar.getInstance().get(Calendar.YEAR)
@@ -130,7 +130,7 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         return try {
             val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
             val userPreferredQuality = preferences.getString("preferred_quality", "Fembed:1080p")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
@@ -161,7 +161,7 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
-        GenreFilter()
+        GenreFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -187,8 +187,8 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Romance", "romance"),
             Pair("Sobrenatural", "sobrenatural"),
             Pair("Yaoi / BL", "yaoi-bl"),
-            Pair("Yuri / GL", "yuri-gl")
-        )
+            Pair("Yuri / GL", "yuri-gl"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -216,7 +216,7 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val qualities = arrayOf(
             "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", // Fembed
             "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", // Okru
-            "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p" // StreamSB
+            "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", // StreamSB
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"

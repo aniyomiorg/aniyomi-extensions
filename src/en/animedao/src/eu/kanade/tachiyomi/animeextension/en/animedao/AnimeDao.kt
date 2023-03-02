@@ -74,16 +74,16 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector(): String? = null
 
     override fun popularAnimeFromElement(element: Element): SAnime {
-        val thumbnailUrl = element.selectFirst("img").attr("data-src")
+        val thumbnailUrl = element.selectFirst("img")!!.attr("data-src")
 
         return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a").attr("href"))
+            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
             thumbnail_url = if (thumbnailUrl.contains(baseUrl.toHttpUrl().host)) {
                 thumbnailUrl
             } else {
                 baseUrl + thumbnailUrl
             }
-            title = element.selectFirst("span.animename").text()
+            title = element.selectFirst("span.animename")!!.text()
         }
     }
 
@@ -96,16 +96,16 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesNextPageSelector(): String? = popularAnimeNextPageSelector()
 
     override fun latestUpdatesFromElement(element: Element): SAnime {
-        val thumbnailUrl = element.selectFirst("img").attr("data-src")
+        val thumbnailUrl = element.selectFirst("img")!!.attr("data-src")
 
         return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a.animeparent").attr("href"))
+            setUrlWithoutDomain(element.selectFirst("a.animeparent")!!.attr("href"))
             thumbnail_url = if (thumbnailUrl.contains(baseUrl.toHttpUrl().host)) {
                 thumbnailUrl
             } else {
                 baseUrl + thumbnailUrl
             }
-            title = element.selectFirst("span.animename").text()
+            title = element.selectFirst("span.animename")!!.text()
         }
     }
 
@@ -178,11 +178,11 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =========================== Anime Details ============================
 
     override fun animeDetailsParse(document: Document): SAnime {
-        val thumbnailUrl = document.selectFirst("div.card-body img").attr("data-src")
+        val thumbnailUrl = document.selectFirst("div.card-body img")!!.attr("data-src")
         val moreInfo = document.select("div.card-body table > tbody > tr").joinToString("\n") { it.text() }
 
         return SAnime.create().apply {
-            title = document.selectFirst("div.card-body h2").text()
+            title = document.selectFirst("div.card-body h2")!!.text()
             thumbnail_url = if (thumbnailUrl.contains(baseUrl.toHttpUrl().host)) {
                 thumbnailUrl
             } else {
@@ -203,8 +203,8 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             super.episodeListParse(response).sortedWith(
                 compareBy(
                     { it.episode_number },
-                    { it.name }
-                )
+                    { it.name },
+                ),
             ).reversed()
         } else {
             super.episodeListParse(response)
@@ -214,7 +214,7 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListSelector(): String = "div#episodes-tab-pane > div.row > div > div.card"
 
     override fun episodeFromElement(element: Element): SEpisode {
-        val episodeName = element.selectFirst("span.animename").text()
+        val episodeName = element.selectFirst("span.animename")!!.text()
         val episodeTitle = element.selectFirst("div.animetitle")?.text() ?: ""
 
         return SEpisode.create().apply {
@@ -223,7 +223,7 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 episodeName.substringAfter("Episode ").substringBefore(" ").toFloatOrNull() ?: 0F
             } else { 0F }
             date_upload = element.selectFirst("span.date")?.let { parseDate(it.text()) } ?: 0L
-            setUrlWithoutDomain(element.selectFirst("a[href]").attr("href"))
+            setUrlWithoutDomain(element.selectFirst("a[href]")!!.attr("href"))
         }
     }
 
@@ -233,7 +233,7 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
         val serverList = mutableListOf<Server>()
-        val script = document.selectFirst("script:containsData(videowrapper)").data()
+        val script = document.selectFirst("script:containsData(videowrapper)")!!.data()
         val frameRegex = """function (\w+).*?iframe src=\"(.*?)\"""".toRegex()
 
         frameRegex.findAll(script).forEach {
@@ -241,8 +241,8 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             serverList.add(
                 Server(
                     redirected,
-                    it.groupValues[1]
-                )
+                    it.groupValues[1],
+                ),
             )
         }
 
@@ -294,7 +294,7 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         else -> null
                     }
                 }.getOrNull()
-            }.filterNotNull().flatten()
+            }.filterNotNull().flatten(),
         )
 
         return videoList
@@ -315,14 +315,14 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this.sortedWith(
             compareBy(
                 { it.quality.contains(quality) },
-                { it.quality.contains(server) }
-            )
+                { it.quality.contains(server) },
+            ),
         ).reversed()
     }
 
     data class Server(
         val url: String,
-        val name: String
+        val name: String,
     )
 
     private fun parseDate(dateStr: String): Long {
@@ -394,7 +394,8 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             key = "preferred_episode_sorting"
             title = "Attempt episode sorting"
             summary = """AnimeDao displays the episodes in either ascending or descending order,
-                | enable to attempt order or disable to set same as website.""".trimMargin()
+                | enable to attempt order or disable to set same as website.
+            """.trimMargin()
             setDefaultValue(true)
 
             setOnPreferenceChangeListener { _, newValue ->

@@ -42,7 +42,7 @@ class SerienstreamInterceptor(private val client: OkHttpClient, private val pref
             originalRequest
                 .newBuilder()
                 .addHeader("cookie", newCookieHeader)
-                .build()
+                .build(),
         )
     }
 
