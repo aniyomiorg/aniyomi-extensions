@@ -227,7 +227,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             urlJson.urls.parallelMap { url ->
                 runCatching {
                     val (videos, mediaUrl) = extractVideo(url)
-                    if (videos.isEmpty()) failedMediaUrl.add(Pair(mediaUrl, url.quality))
+                    if (videos.isEmpty() && mediaUrl.isNotBlank()) failedMediaUrl.add(Pair(mediaUrl, url.quality))
                     return@runCatching videos
                 }.getOrNull()
             }

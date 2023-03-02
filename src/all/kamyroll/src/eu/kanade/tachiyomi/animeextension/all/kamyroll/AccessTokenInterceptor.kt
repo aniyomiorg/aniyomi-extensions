@@ -144,7 +144,7 @@ class AccessTokenInterceptor(
 
     companion object {
         private const val TOKEN_PREF_KEY = "access_token_data"
-        private const val LOCAL_TOKEN_PREF_KEY = "local_access_token_data_test_adwa"
+        private const val LOCAL_TOKEN_PREF_KEY = "local_access_token_data"
         private const val PREF_FETCH_LOCAL_SUBS = "preferred_local_subs"
 
         private val DateFormatter by lazy {

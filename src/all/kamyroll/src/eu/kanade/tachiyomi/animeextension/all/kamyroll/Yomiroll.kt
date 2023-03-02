@@ -19,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -71,6 +72,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_AUD = "preferred_audio"
         private const val PREF_SUB = "preferred_sub"
         private const val PREF_SUB_TYPE = "preferred_sub_type"
+
         // there is one in AccessTokenInterceptor too for below
         private const val PREF_FETCH_LOCAL_SUBS = "preferred_local_subs"
     }
@@ -548,38 +550,24 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                     this.apply {
                         key = PREF_FETCH_LOCAL_SUBS
                         title = "Fetch Local Subs (Don't Spam this please!)"
-                        Thread {
-                            summary = try {
-                                val storedToken = tokenInterceptor.getLocalToken()
-                                """Token location: ${storedToken?.bucket?.substringAfter("/")?.substringBefore("/")}
-                                |Expires: ${storedToken?.policyExpire?.let { DateFormatter.format(it) } ?: "---"}
-                                """.trimMargin()
-                            } catch (e: Exception) {
-                                ""
-                            }
-                        }.start()
+                        runBlocking {
+                            withContext(Dispatchers.IO) { summary = getTokenDetail() }
+                        }
                         setDefaultValue(false)
-
                         setOnPreferenceChangeListener { _, newValue ->
                             val new = newValue as Boolean
-                            if (new) {
-                                Thread {
-                                    summary = try {
-                                        val storedToken = tokenInterceptor.getLocalToken(true)!!
-                                        """Token location: ${storedToken.bucket?.substringAfter("/")?.substringBefore("/") ?: ""}
-                                            |Expires: ${storedToken.policyExpire?.let { DateFormatter.format(it) } ?: ""}
+                            Thread {
+                                runBlocking {
+                                    if (new) {
+                                        withContext(Dispatchers.IO) { summary = getTokenDetail(true) }
+                                    } else {
+                                        tokenInterceptor.removeLocalToken()
+                                        summary = """Token location:
+                                            |Expires:
                                         """.trimMargin()
-                                    } catch (e: Exception) {
-                                        ""
                                     }
-                                }.start()
-                            } else {
-                                Thread {
-                                    tokenInterceptor.removeLocalToken()
-                                    summary = """Token location:
-                                        |Expires:""".trimMargin()
-                                }.start()
-                            }
+                                }
+                            }.start()
                             preferences.edit().putBoolean(key, new).commit()
                         }
                     }
@@ -592,4 +580,15 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         runBlocking {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
+
+    private fun getTokenDetail(force: Boolean = false): String {
+        return try {
+            val storedToken = tokenInterceptor.getLocalToken(force)
+            """Token location: ${storedToken?.bucket?.substringAfter("/")?.substringBefore("/") ?: ""}
+            |Expires: ${storedToken?.policyExpire?.let { DateFormatter.format(it) } ?: ""}
+            """.trimMargin()
+        } catch (e: Exception) {
+            ""
+        }
+    }
 }
