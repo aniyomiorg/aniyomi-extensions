@@ -153,7 +153,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         // add alternative name to anime description
         val altName = "Other name(s): "
-        document.select("h1.title").attr("data-jp")?.let {
+        document.select("h1.title").attr("data-jp").let {
             if (it.isBlank().not()) {
                 anime.description = when {
                     anime.description.isNullOrBlank() -> altName + it
@@ -227,7 +227,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ids.getOrNull(0)?.let { subId ->
             document.select("li[data-ep-id=$subId]").map { serverElement ->
                 val server = serverElement.text().let {
-                    if (it == "Vidstream") "vizcloud" else it?.lowercase() ?: "vizcloud"
+                    if (it == "Vidstream") "vizcloud" else it.lowercase()
                 }
                 servers.add(Triple("Sub", subId, server))
             }
@@ -235,7 +235,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ids.getOrNull(1)?.let { dubId ->
             document.select("li[data-ep-id=$dubId]").map { serverElement ->
                 val server = serverElement.text().let {
-                    if (it == "Vidstream") "vizcloud" else it?.lowercase() ?: "vizcloud"
+                    if (it == "Vidstream") "vizcloud" else it.lowercase()
                 }
                 servers.add(Triple("Dub", dubId, server))
             }
@@ -285,7 +285,9 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val embedLink = parsed.embedURL ?: parsed.headers.referer
         when (server.third) {
             "vizcloud" -> {
-                parsed.sources?.map { source ->
+                parsed.sources?.filter {
+                    if (it.quality.isNullOrBlank()) true else it.quality == "auto"
+                }?.map { source ->
                     val playlist = client.newCall(GET(source.url)).execute()
                     videoList.addAll(
                         parseVizPlaylist(
@@ -332,7 +334,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return this.sortedWith(
             compareByDescending<Video> { it.quality.contains(quality) }
-                .thenBy { it.quality.contains(lang) },
+                .thenByDescending { it.quality.contains(lang) },
         )
     }
 
@@ -363,6 +365,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val url: String,
             @SerialName("isM3U8")
             val hls: Boolean,
+            val quality: String? = null,
         )
     }
 
