@@ -12,6 +12,7 @@ data class AccessToken(
     val signature: String? = null,
     val key_pair_id: String? = null,
     val bucket: String? = null,
+    val policyExpire: Long? = null,
 )
 
 @Serializable
@@ -24,6 +25,7 @@ data class Policy(
         val signature: String,
         val key_pair_id: String,
         val bucket: String,
+        val expires: String,
     )
 }
 
@@ -156,9 +158,9 @@ data class EpisodeData(
 
 @Serializable
 data class VideoStreams(
-    val streams: Stream,
-    val subtitles: JsonObject,
-    val audio_locale: String,
+    val streams: Stream? = null,
+    val subtitles: JsonObject? = null,
+    val audio_locale: String? = null,
 ) {
     @Serializable
     data class Stream(

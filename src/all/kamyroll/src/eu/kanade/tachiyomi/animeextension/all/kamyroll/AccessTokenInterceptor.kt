@@ -18,6 +18,8 @@ import java.net.HttpURLConnection
 import java.net.InetSocketAddress
 import java.net.PasswordAuthentication
 import java.net.Proxy
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class AccessTokenInterceptor(
     private val crUrl: String,
@@ -39,7 +41,7 @@ class AccessTokenInterceptor(
                     if (accessTokenN != newAccessToken) {
                         return chain.proceed(newRequestWithAccessToken(request, newAccessToken))
                     }
-                    val refreshedToken = refreshAccessToken()
+                    val refreshedToken = refreshAccessToken(TOKEN_PREF_KEY)
                     // Retry the request
                     return chain.proceed(
                         newRequestWithAccessToken(chain.request(), refreshedToken),
@@ -58,21 +60,28 @@ class AccessTokenInterceptor(
 
     fun getAccessToken(): AccessToken {
         return preferences.getString(TOKEN_PREF_KEY, null)?.toAccessToken()
-            ?: refreshAccessToken()
+            ?: refreshAccessToken(TOKEN_PREF_KEY)
     }
 
-    private fun refreshAccessToken(): AccessToken {
-        val client = OkHttpClient()
-            .newBuilder().build()
-        val proxy = client.newBuilder()
-            .proxy(
-                Proxy(
-                    Proxy.Type.SOCKS,
-                    InetSocketAddress("cr-unblocker.us.to", 1080),
-                ),
-            )
-            .build()
+    fun getLocalToken(force: Boolean = false): AccessToken? {
+        if (!preferences.getBoolean(PREF_FETCH_LOCAL_SUBS, false) && !force) return null
+        synchronized(this) {
+            val now = System.currentTimeMillis() + 1800000 // add 30 minutes for safety
+            val localToken = preferences.getString(LOCAL_TOKEN_PREF_KEY, null)?.toAccessToken()
+            return if (force || localToken == null || localToken.policyExpire!! < now) {
+                refreshAccessToken(LOCAL_TOKEN_PREF_KEY, false)
+            } else {
+                localToken
+            }
+        }
+    }
 
+    fun removeLocalToken() {
+        preferences.edit().putString(LOCAL_TOKEN_PREF_KEY, null).apply()
+    }
+
+    private fun refreshAccessToken(PREF_KEY: String, useProxy: Boolean = true): AccessToken {
+        val client = OkHttpClient().newBuilder().build()
         Authenticator.setDefault(
             object : Authenticator() {
                 override fun getPasswordAuthentication(): PasswordAuthentication {
@@ -80,21 +89,22 @@ class AccessTokenInterceptor(
                 }
             },
         )
-
-        // Thanks Stormzy
-        val refreshTokenResp = client.newCall(GET("https://raw.githubusercontent.com/Samfun75/File-host/main/aniyomi/refreshToken.txt")).execute()
-        val refreshToken = refreshTokenResp.body.string().replace("[\n\r]".toRegex(), "")
-        val headers = Headers.headersOf(
-            "Content-Type",
-            "application/x-www-form-urlencoded",
-            "Authorization",
-            "Basic a3ZvcGlzdXZ6Yy0teG96Y21kMXk6R21JSTExenVPVnRnTjdlSWZrSlpibzVuLTRHTlZ0cU8=",
-        )
-        val postBody = "grant_type=refresh_token&refresh_token=$refreshToken&scope=offline_access".toRequestBody("application/x-www-form-urlencoded".toMediaType())
-        val response = proxy.newCall(POST("$crUrl/auth/v1/token", headers, postBody)).execute()
+        val usedClient = if (useProxy) {
+            client.newBuilder()
+                .proxy(
+                    Proxy(
+                        Proxy.Type.SOCKS,
+                        InetSocketAddress("cr-unblocker.us.to", 1080),
+                    ),
+                )
+                .build()
+        } else {
+            client
+        }
+        val response = usedClient.newCall(getRequest(client)).execute()
         val parsedJson = json.decodeFromString<AccessToken>(response.body.string())
 
-        val policy = proxy.newCall(newRequestWithAccessToken(GET("$crUrl/index/v2"), parsedJson)).execute()
+        val policy = usedClient.newCall(newRequestWithAccessToken(GET("$crUrl/index/v2"), parsedJson)).execute()
         val policyJson = json.decodeFromString<Policy>(policy.body.string())
         val allTokens = AccessToken(
             parsedJson.access_token,
@@ -103,9 +113,25 @@ class AccessTokenInterceptor(
             policyJson.cms.signature,
             policyJson.cms.key_pair_id,
             policyJson.cms.bucket,
+            DateFormatter.parse(policyJson.cms.expires)?.time,
         )
-        preferences.edit().putString(TOKEN_PREF_KEY, allTokens.toJsonString()).apply()
+        preferences.edit().putString(PREF_KEY, allTokens.toJsonString()).apply()
         return allTokens
+    }
+
+    private fun getRequest(client: OkHttpClient): Request {
+        val refreshTokenResp = client.newCall(
+            GET("https://raw.githubusercontent.com/Samfun75/File-host/main/aniyomi/refreshToken.txt"),
+        ).execute()
+        val refreshToken = refreshTokenResp.body.string().replace("[\n\r]".toRegex(), "")
+        val headers = Headers.headersOf(
+            "Content-Type", "application/x-www-form-urlencoded",
+            "Authorization", "Basic a3ZvcGlzdXZ6Yy0teG96Y21kMXk6R21JSTExenVPVnRnTjdlSWZrSlpibzVuLTRHTlZ0cU8="
+        )
+        val postBody = "grant_type=refresh_token&refresh_token=$refreshToken&scope=offline_access".toRequestBody(
+            "application/x-www-form-urlencoded".toMediaType(),
+        )
+        return POST("$crUrl/auth/v1/token", headers, postBody)
     }
 
     private fun AccessToken.toJsonString(): String {
@@ -117,6 +143,12 @@ class AccessTokenInterceptor(
     }
 
     companion object {
-        val TOKEN_PREF_KEY = "access_token_data"
+        private const val TOKEN_PREF_KEY = "access_token_data"
+        private const val LOCAL_TOKEN_PREF_KEY = "local_access_token_data_test_adwa"
+        private const val PREF_FETCH_LOCAL_SUBS = "preferred_local_subs"
+
+        private val DateFormatter by lazy {
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ENGLISH)
+        }
     }
 }
