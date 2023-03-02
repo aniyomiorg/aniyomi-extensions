@@ -1,9 +1,11 @@
 package eu.kanade.tachiyomi.animeextension.all.kamyroll
 
 import android.app.Application
+import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -64,6 +66,13 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         private val DateFormatter by lazy {
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ENGLISH)
         }
+
+        private const val PREF_QLT = "preferred_quality"
+        private const val PREF_AUD = "preferred_audio"
+        private const val PREF_SUB = "preferred_sub"
+        private const val PREF_SUB_TYPE = "preferred_sub_type"
+        // there is one in AccessTokenInterceptor too for below
+        private const val PREF_FETCH_LOCAL_SUBS = "preferred_local_subs"
     }
 
     // ============================== Popular ===============================
@@ -240,12 +249,13 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val urlJson = json.decodeFromString<EpisodeData>(episode.url)
         val dubLocale = preferences.getString("preferred_audio", "en-US")!!
-        val policyJson = tokenInterceptor.getAccessToken()
+        val proxyToken = tokenInterceptor.getAccessToken()
+        val localToken = tokenInterceptor.getLocalToken()
         val videoList = urlJson.ids.filter {
             it.second == dubLocale || it.second == "ja-JP" || it.second == "en-US" || it.second == ""
         }.parallelMap { media ->
             runCatching {
-                extractVideo(media, policyJson)
+                extractVideo(media, proxyToken, localToken)
             }.getOrNull()
         }.filterNotNull().flatten()
 
@@ -254,31 +264,58 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================= Utilities ==============================
 
-    private fun extractVideo(media: Pair<String, String>, policyJson: AccessToken): List<Video> {
+    private fun extractVideo(media: Pair<String, String>, proxyToken: AccessToken, localToken: AccessToken?): List<Video> {
         val (mediaId, aud) = media
-        val response = client.newCall(GET("$crUrl/cms/v2${policyJson.bucket}/videos/$mediaId/streams?Policy=${policyJson.policy}&Signature=${policyJson.signature}&Key-Pair-Id=${policyJson.key_pair_id}")).execute()
+        val response = client.newCall(getVideoRequest(mediaId, proxyToken)).execute()
         val streams = json.decodeFromString<VideoStreams>(response.body!!.string())
+
+        val localStreams = if (aud == "ja-JP" && preferences.getBoolean(PREF_FETCH_LOCAL_SUBS, false)) {
+            val localResponse = client.newCall(getVideoRequest(mediaId, localToken!!)).execute()
+            json.decodeFromString<VideoStreams>(localResponse.body!!.string())
+        } else {
+            VideoStreams()
+        }
 
         var subsList = emptyList<Track>()
         val subLocale = preferences.getString("preferred_sub", "en-US")!!.getLocale()
         try {
-            subsList = streams.subtitles.entries.map { (_, value) ->
+            val tempSubs = mutableListOf<Track>()
+            streams.subtitles?.entries?.map { (_, value) ->
                 val sub = json.decodeFromString<Subtitle>(value.jsonObject.toString())
-                Track(sub.url, sub.locale.getLocale())
-            }.sortedWith(
+                tempSubs.add(Track(sub.url, sub.locale.getLocale()))
+            }
+            localStreams.subtitles?.entries?.map { (_, value) ->
+                val sub = json.decodeFromString<Subtitle>(value.jsonObject.toString())
+                tempSubs.add(Track(sub.url, sub.locale.getLocale()))
+            }
+            subsList = tempSubs.sortedWith(
                 compareBy(
                     { it.lang },
                     { it.lang.contains(subLocale) }
                 )
             )
-        } catch (_: Error) {}
+        } catch (_: Error) {
+        }
 
-        val audLang = aud.ifBlank { streams.audio_locale }
-        return streams.streams.adaptive_hls.entries.parallelMap { (_, value) ->
+        val audLang = aud.ifBlank { streams.audio_locale } ?: localStreams.audio_locale ?: "ja-JP"
+        val videoList = mutableListOf<Video>()
+        videoList.addAll(
+            getStreams(streams, audLang, subsList)
+        )
+        videoList.addAll(
+            getStreams(localStreams, audLang, subsList)
+        )
+
+        return videoList.distinctBy { it.quality }
+    }
+
+    private fun getStreams(streams: VideoStreams, audLang: String, subsList: List<Track>): List<Video> {
+        return streams.streams?.adaptive_hls?.entries?.parallelMap { (_, value) ->
             val stream = json.decodeFromString<HlsLinks>(value.jsonObject.toString())
             runCatching {
-                val playlist = client.newCall(GET(stream.url)).execute().body!!.string()
-                playlist.substringAfter("#EXT-X-STREAM-INF:")
+                val playlist = client.newCall(GET(stream.url)).execute()
+                if (playlist.code != 200) return@parallelMap null
+                playlist.body!!.string().substringAfter("#EXT-X-STREAM-INF:")
                     .split("#EXT-X-STREAM-INF:").map {
                         val hardsub = stream.hardsub_locale.let { hs ->
                             if (hs.isNotBlank()) " - HardSub: $hs" else ""
@@ -301,9 +338,11 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                         }
                     }
             }.getOrNull()
-        }
-            .filterNotNull()
-            .flatten()
+        }?.filterNotNull()?.flatten() ?: emptyList()
+    }
+
+    private fun getVideoRequest(mediaId: String, token: AccessToken): Request {
+        return GET("$crUrl/cms/v2${token.bucket}/videos/$mediaId/streams?Policy=${token.policy}&Signature=${token.signature}&Key-Pair-Id=${token.key_pair_id}")
     }
 
     private val df = DecimalFormat("0.#")
@@ -417,7 +456,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
+            key = PREF_QLT
             title = "Preferred quality"
             entries = arrayOf("1080p", "720p", "480p", "360p", "240p", "80p")
             entryValues = arrayOf("1080", "720", "480", "360", "240", "80")
@@ -433,7 +472,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         val audLocalePref = ListPreference(screen.context).apply {
-            key = "preferred_audio"
+            key = PREF_AUD
             title = "Preferred Audio Language"
             entries = locale.map { it.second }.toTypedArray()
             entryValues = locale.map { it.first }.toTypedArray()
@@ -449,7 +488,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         val subLocalePref = ListPreference(screen.context).apply {
-            key = "preferred_sub"
+            key = PREF_SUB
             title = "Preferred Sub Language"
             entries = locale.map { it.second }.toTypedArray()
             entryValues = locale.map { it.first }.toTypedArray()
@@ -465,7 +504,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         val subTypePref = ListPreference(screen.context).apply {
-            key = "preferred_sub_type"
+            key = PREF_SUB_TYPE
             title = "Preferred Sub Type"
             entries = arrayOf("Softsub", "Hardsub")
             entryValues = arrayOf("soft", "hard")
@@ -479,11 +518,62 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+
         screen.addPreference(videoQualityPref)
         screen.addPreference(audLocalePref)
         screen.addPreference(subLocalePref)
         screen.addPreference(subTypePref)
+        screen.addPreference(localSubsPreference(screen))
     }
+
+    // From Jellyfin
+    private abstract class LocalSubsPreference(context: Context) : SwitchPreferenceCompat(context) {
+        abstract fun reload()
+    }
+
+    private fun localSubsPreference(screen: PreferenceScreen) =
+        (
+            object : LocalSubsPreference(screen.context) {
+                override fun reload() {
+                    this.apply {
+                        key = PREF_FETCH_LOCAL_SUBS
+                        title = "Fetch Local Subs (Don't Spam this please!)"
+                        Thread {
+                            summary = try {
+                                val storedToken = tokenInterceptor.getLocalToken()
+                                """Token location: ${storedToken?.bucket?.substringAfter("/")?.substringBefore("/")}
+                                |Expires: ${storedToken?.policyExpire?.let { DateFormatter.format(it) } ?: "---"}""".trimMargin()
+                            } catch (e: Exception) {
+                                ""
+                            }
+                        }.start()
+                        setDefaultValue(false)
+
+                        setOnPreferenceChangeListener { _, newValue ->
+                            val new = newValue as Boolean
+                            if (new) {
+                                Thread {
+                                    summary = try {
+                                        val storedToken = tokenInterceptor.getLocalToken(true)!!
+                                        """Token location: ${storedToken.bucket?.substringAfter("/")?.substringBefore("/") ?: ""}
+                                            |Expires: ${storedToken.policyExpire?.let { DateFormatter.format(it) } ?: ""}""".trimMargin()
+                                    } catch (e: Exception) {
+                                        ""
+                                    }
+                                }.start()
+                            } else {
+                                Thread {
+                                    tokenInterceptor.removeLocalToken()
+                                    summary = """Token location:
+                                        |Expires:""".trimMargin()
+                                }.start()
+                            }
+                            preferences.edit().putBoolean(key, new).commit()
+                        }
+                    }
+                }
+            }
+            ).apply { reload() }
 
     // From Dopebox
     private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
