@@ -864,7 +864,7 @@ class SuperStreamAPI(val json: Json) {
     // Free Tibet, The Tienanmen Square protests of 1989
     private val iv = base64Decode("d0VpcGhUbiE=")
     private val key = base64Decode("MTIzZDZjZWRmNjI2ZHk1NDIzM2FhMXc2")
-    private val ip = base64Decode("aHR0cHM6Ly8xNTIuMzIuMTQ5LjE2MA==")
+    private val ip = base64Decode("aHR0cHM6Ly9zaG93Ym94LnNoZWd1Lm5ldA==")
     val apiUrl = "$ip${base64Decode("L2FwaS9hcGlfY2xpZW50L2luZGV4Lw==")}"
 
     // Thanks @Blatzar and his dream from cloudstream for the secondurl
