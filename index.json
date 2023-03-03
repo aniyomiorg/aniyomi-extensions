@@ -1446,10 +1446,10 @@
   {
     "name": "Aniyomi: Rule34Video",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.rule34video",
-    "apk": "aniyomi-en.rule34video-v13.4.apk",
+    "apk": "aniyomi-en.rule34video-v13.5.apk",
     "lang": "en",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1460,7 +1460,7 @@
         "id": "9212790518101043860",
         "baseUrl": "https://rule34video.com",
         "versionId": 1,
-        "hasCloudflare": 1
+        "hasCloudflare": 0
       }
     ]
   },
@@ -2378,6 +2378,27 @@
         "lang": "it",
         "id": "6914258679503108111",
         "baseUrl": "https://www.animeforce.it",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: AnimeLove",
+    "pkg": "eu.kanade.tachiyomi.animeextension.it.animelove",
+    "apk": "aniyomi-it.animelove-v13.1.apk",
+    "lang": "it",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimeLove",
+        "lang": "it",
+        "id": "5377344835942349737",
+        "baseUrl": "https://www.animelove.tv",
         "versionId": 1,
         "hasCloudflare": 1
       }
