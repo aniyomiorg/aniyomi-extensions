@@ -67,7 +67,7 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // episodes
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        return super.episodeListParse(response).reversed()
+        return super.episodeListParse(response)
     }
 
     override fun episodeListSelector() = "div.series div.items article"
