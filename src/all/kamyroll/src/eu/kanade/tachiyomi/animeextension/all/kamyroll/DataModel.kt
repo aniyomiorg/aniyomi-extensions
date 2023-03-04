@@ -132,7 +132,7 @@ data class EpisodeResult(
         @SerialName("episode_air_date")
         val airDate: String? = null,
         val versions: ArrayList<Version>? = null,
-        val streams_link: String,
+        val streams_link: String? = null,
     ) {
         @Serializable
         data class Version(
@@ -142,14 +142,6 @@ data class EpisodeResult(
         )
     }
 }
-
-data class TempEpisode(
-    var epData: EpisodeData,
-    var name: String,
-    var episode_number: Float,
-    var date_upload: Long,
-    var scanlator: String?,
-)
 
 @Serializable
 data class EpisodeData(
