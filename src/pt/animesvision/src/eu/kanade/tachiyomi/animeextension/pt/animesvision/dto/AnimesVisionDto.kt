@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 data class PayloadItem(
     val payload: PayloadData,
     @EncodeDefault
-    val type: String = "callMethod"
+    val type: String = "callMethod",
 )
 
 @Serializable
@@ -16,18 +16,18 @@ data class PayloadData(
     @EncodeDefault
     val method: String = "mudarPlayer",
     @EncodeDefault
-    val id: String = ""
+    val id: String = "",
 )
 
 @Serializable
 data class AVResponseDto(
     val effects: AVResponseEffects? = null,
-    val serverMemo: AVResponseMemo? = null
+    val serverMemo: AVResponseMemo? = null,
 )
 
 @Serializable
 data class AVResponseEffects(
-    val html: String? = null
+    val html: String? = null,
 )
 
 @Serializable
