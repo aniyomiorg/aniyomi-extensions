@@ -26,7 +26,6 @@ import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -59,7 +58,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun headersBuilder(): Headers.Builder = Headers.Builder()
+    override fun headersBuilder() = super.headersBuilder()
         .add("Referer", baseUrl)
         .add("Accept-Language", ACCEPT_LANGUAGE)
 
@@ -78,15 +77,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun popularAnimeNextPageSelector() = throw Exception("not used")
-
-    override fun popularAnimeParse(response: Response): AnimesPage {
-        val document = response.asJsoup()
-        val animes = document.select(popularAnimeSelector()).map { element ->
-            popularAnimeFromElement(element)
-        }
-        return AnimesPage(animes, false)
-    }
+    override fun popularAnimeNextPageSelector() = null
 
     // ============================== Episodes ==============================
     override fun episodeListSelector(): String = "div.container div.screen-items > div.item"
@@ -237,19 +228,19 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun searchAnimeRequest(page: Int, query: String, filters: AVFilters.FilterSearchParams): Request {
         val url = "$baseUrl/search?".toHttpUrlOrNull()!!.newBuilder()
-        url.addQueryParameter("page", page.toString())
-        url.addQueryParameter("nome", query)
-        url.addQueryParameter("tipo", filters.type)
-        url.addQueryParameter("idioma", filters.language)
-        url.addQueryParameter("ordenar", filters.sort)
-        url.addQueryParameter("ano_inicial", filters.initial_year)
-        url.addQueryParameter("ano_final", filters.last_year)
-        url.addQueryParameter("fansub", filters.fansub)
-        url.addQueryParameter("status", filters.status)
-        url.addQueryParameter("temporada", filters.season)
-        url.addQueryParameter("estudios", filters.studio)
-        url.addQueryParameter("produtores", filters.producer)
-        url.addQueryParameter("generos", filters.genres)
+            .addQueryParameter("page", page.toString())
+            .addQueryParameter("nome", query)
+            .addQueryParameter("tipo", filters.type)
+            .addQueryParameter("idioma", filters.language)
+            .addQueryParameter("ordenar", filters.sort)
+            .addQueryParameter("ano_inicial", filters.initial_year)
+            .addQueryParameter("ano_final", filters.last_year)
+            .addQueryParameter("fansub", filters.fansub)
+            .addQueryParameter("status", filters.status)
+            .addQueryParameter("temporada", filters.season)
+            .addQueryParameter("estudios", filters.studio)
+            .addQueryParameter("produtores", filters.producer)
+            .addQueryParameter("generos", filters.genres)
 
         return GET(url.build().toString())
     }
@@ -300,11 +291,11 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = PREFERRED_QUALITY
-            title = "Qualidade preferida (Válido apenas no GlobalVision)"
-            entries = QUALITY_LIST
-            entryValues = QUALITY_LIST
-            setDefaultValue(QUALITY_LIST.last())
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_VALUES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -313,7 +304,6 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
-
         screen.addPreference(videoQualityPref)
     }
 
@@ -339,49 +329,41 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    private fun Element.hasNextPage(): Boolean =
-        this.selectFirst(nextPageSelector()) != null
+    private fun Element.hasNextPage() = selectFirst(nextPageSelector()) != null
 
     private fun Element.getInfo(key: String): String? {
-        val div: Element? = this.selectFirst("div.item:contains($key)")
+        val div = selectFirst("div.item:contains($key)")
         if (div == null) return div
+
         val elementsA = div.select("a[href]")
         val text = if (elementsA.size == 0) {
-            if (div.hasClass("w-hide")) {
-                div.selectFirst("div.text")!!.text().trim()
-            } else {
-                div.selectFirst("span.name")!!.text().trim()
+            val selector = when {
+                div.hasClass("w-hide") -> "div.text"
+                else -> "span.name"
             }
+            div.selectFirst(selector)!!.text().trim()
         } else {
-            elementsA.map { it.text().trim() }.joinToString(", ")
+            elementsA.joinToString(", ") { it.text().trim() }
         }
-        if (text == "") return null
+
+        if (text.isBlank()) return null
         return text
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(PREFERRED_QUALITY, null)
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (quality in video.quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-
-            return newList
-        }
-        return this
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        return sortedWith(
+            compareByDescending { it.quality.contains(quality) },
+        )
     }
 
     companion object {
-        private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
-        private const val PREFERRED_QUALITY = "preferred_quality"
-        private val QUALITY_LIST = arrayOf("480p", "720p", "1080p", "4K")
         const val PREFIX_SEARCH = "path:"
+        private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Qualidade preferida"
+        private const val PREF_QUALITY_DEFAULT = "720p"
+        private val PREF_QUALITY_VALUES = arrayOf("480p", "720p", "1080p", "4K")
     }
 }
