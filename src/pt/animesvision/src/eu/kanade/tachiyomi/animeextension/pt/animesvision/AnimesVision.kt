@@ -8,7 +8,6 @@ import eu.kanade.tachiyomi.animeextension.pt.animesvision.dto.AVResponseDto
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.dto.PayloadData
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.dto.PayloadItem
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.GlobalVisionExtractor
-import eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors.VisionExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -23,6 +22,10 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -118,11 +121,16 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val document: Document = response.asJsoup()
-        return videosFromEpisode(document)
+        val body = response.body.string()
+        val internalVideos = GlobalVisionExtractor()
+            .videoListFromHtml(body)
+            .toMutableList()
+
+        val externalVideos = externalVideosFromEpisode(response.asJsoup(body))
+        return internalVideos + externalVideos
     }
 
-    private fun videosFromEpisode(doc: Document): List<Video> {
+    private fun externalVideosFromEpisode(doc: Document): List<Video> {
         val wireDiv: Element = doc.selectFirst("div[wire:id]")!!
         val initialData: String = wireDiv.attr("wire:initial-data").dropLast(1)
         val wireToken: String = doc.html()
@@ -138,7 +146,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val players = doc.select("div.server-item > a.btn")
 
-        val videos = players.mapNotNull {
+        val videos = players.parallelMap {
             val id = it.attr("wire:click")
                 .substringAfter("(")
                 .substringBefore(")")
@@ -153,11 +161,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val resJson = json.decodeFromString<AVResponseDto>(responseBody)
             (resJson.serverMemo?.data?.framePlay ?: resJson.effects?.html)
                 ?.let(::parsePlayerData)
-        }.flatten().toMutableList()
-
-        if ("/filmes/" in doc.location()) {
-            parsePlayerData(doc.outerHtml())?.let { videos.addAll(it) }
-        }
+        }.filterNotNull().flatten()
 
         return videos
     }
@@ -170,12 +174,6 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 DoodExtractor(client).videoFromUrl(data)?.let(::listOf)
             "voe.sx" in data ->
                 VoeExtractor(client).videoFromUrl(data)?.let(::listOf)
-            "<div" in data ->
-                if ("const playerGlobalVideo" in data) {
-                    GlobalVisionExtractor().videoListFromHtml(data)
-                } else {
-                    VisionExtractor().videoFromHtml(data)?.let(::listOf)
-                }
             else -> null
         }
         return videoList
@@ -310,6 +308,12 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun getFilterList(): AnimeFilterList = AVFilters.filterList
 
     // ============================= Utilities ==============================
+
+    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
+
     private fun getRealDoc(document: Document): Document {
         val player = document.selectFirst("div.player-frame")
         if (player != null) {
