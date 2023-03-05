@@ -30,6 +30,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -39,6 +40,7 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.io.IOException
 import java.lang.Exception
 
 class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -51,7 +53,9 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .addInterceptor(::loginInterceptor)
+        .build()
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -308,6 +312,16 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun getFilterList(): AnimeFilterList = AVFilters.filterList
 
     // ============================= Utilities ==============================
+    private fun loginInterceptor(chain: Interceptor.Chain): Response {
+        val response = chain.proceed(chain.request())
+
+        if ("/login" in response.request.url.toString()) {
+            response.close()
+            throw IOException(ERROR_LOGIN_MISSING)
+        }
+
+        return response
+    }
 
     private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
         runBlocking {
@@ -364,6 +378,9 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     companion object {
         const val PREFIX_SEARCH = "path:"
         private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
+
+        private const val ERROR_LOGIN_MISSING = "Login necessário. " +
+            "Abra a WebView, insira os dados de sua conta e realize o login."
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Qualidade preferida"
