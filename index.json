@@ -2720,6 +2720,27 @@
     ]
   },
   {
+    "name": "Aniyomi: AnimesVision",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesvision",
+    "apk": "aniyomi-pt.animesvision-v13.16.apk",
+    "lang": "pt-BR",
+    "code": 16,
+    "version": "13.16",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimesVision",
+        "lang": "pt-BR",
+        "id": "7211886220891821251",
+        "baseUrl": "https://animes.vision",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: AnimeTV",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animetv",
     "apk": "aniyomi-pt.animetv-v12.1.apk",
