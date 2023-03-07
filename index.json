@@ -2344,10 +2344,10 @@
   {
     "name": "Aniyomi: OtakuDesu",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.otakudesu",
-    "apk": "aniyomi-id.otakudesu-v13.16.apk",
+    "apk": "aniyomi-id.otakudesu-v13.17.apk",
     "lang": "id",
-    "code": 16,
-    "version": "13.16",
+    "code": 17,
+    "version": "13.17",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2356,7 +2356,7 @@
         "name": "OtakuDesu",
         "lang": "id",
         "id": "3428487071093013526",
-        "baseUrl": "https://otakudesu.asia",
+        "baseUrl": "https://otakudesu.ltd",
         "versionId": 1,
         "hasCloudflare": 1
       }
