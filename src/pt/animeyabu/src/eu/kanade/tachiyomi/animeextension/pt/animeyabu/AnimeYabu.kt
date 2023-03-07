@@ -66,7 +66,7 @@ class AnimeYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime: SAnime = SAnime.create()
 
-        val img = element.selectFirst("img")
+        val img = element.selectFirst("img")!!
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.title = img.attr("title")
         anime.thumbnail_url = "$baseUrl/${img.attr("src")}"
@@ -140,8 +140,9 @@ class AnimeYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (iframe != null) {
             val playerUrl = iframe.attr("src")
             val video = PlayerTwoExtractor(client).videoFromPlayerUrl(playerUrl)
-            if (video != null)
+            if (video != null) {
                 videoList.add(video)
+            }
         }
         return videoList
     }
@@ -193,7 +194,7 @@ class AnimeYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (searchJson == null) {
             val body = client.newCall(GET("$baseUrl/api/show.php"))
                 .execute()
-                .body?.string().orEmpty()
+                .body.string()
             searchJson = json.decodeFromString<List<SearchResultDto>>(body)
         }
         val mutableJson = searchJson!!.toMutableList()
@@ -213,15 +214,15 @@ class AnimeYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         val doc = getRealDoc(document)
 
-        val infos = doc.selectFirst("div.anime-info")
-        val img = infos.selectFirst("img")
+        val infos = doc.selectFirst("div.anime-info")!!
+        val img = infos.selectFirst("img")!!
 
         anime.thumbnail_url = img.attr("src")
         anime.title = img.attr("title")
         anime.genre = infos.getInfo("div.anime-genres")
         anime.status = parseStatus(infos.getInfo("div.anime-status"))
 
-        var desc = doc.selectFirst("div.anime-synopsis").text() + "\n"
+        var desc = doc.selectFirst("div.anime-synopsis")!!.text() + "\n"
         desc += "\nTítulo alternativo: ${infos.getInfo("div.anime-alt-title")}"
         desc += "\nÚltima atualização: ${infos.getInfo("div.anime-last-updated")}"
         desc += "\nEpisódios: ${infos.getInfo("div.anime-counter")}"
@@ -236,7 +237,7 @@ class AnimeYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        val img = element.selectFirst("img")
+        val img = element.selectFirst("img")!!
         anime.setUrlWithoutDomain(element.attr("href"))
         anime.title = img.attr("title")
         anime.thumbnail_url = "$baseUrl/${img.attr("src")}"
@@ -247,7 +248,6 @@ class AnimeYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-
         val videoPlayerPref = ListPreference(screen.context).apply {
             key = AYConstants.PREFERRED_PLAYER
             title = "Player preferido"
@@ -287,7 +287,7 @@ class AnimeYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun getRealDoc(document: Document): Document {
         val player = document.selectFirst("div#video-content")
         if (player != null) {
-            val url = document.selectFirst("div.user-box-txt > a").attr("href")
+            val url = document.selectFirst("div.user-box-txt > a")!!.attr("href")
             val req = client.newCall(GET(url)).execute()
             return req.asJsoup()
         } else {
@@ -296,7 +296,7 @@ class AnimeYabu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun Element.getInfo(selector: String): String {
-        return this.selectFirst("$selector > b").nextSibling().toString()
+        return this.selectFirst("$selector > b")!!.nextSibling().toString()
     }
 
     private fun parseStatus(statusString: String?): Int {

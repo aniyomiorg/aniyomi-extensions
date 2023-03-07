@@ -612,7 +612,7 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         element.select("p.channel-name a").attr("href").toHttpUrlOrNull()?.let {
             anime.setUrlWithoutDomain(
-                it.encodedPath
+                it.encodedPath,
             )
         }
         anime.title = element.select("p.channel-name a").text()
@@ -627,13 +627,13 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     data class EpisodeUrl(
         val name: String,
-        val url: String
+        val url: String,
     )
 
     override fun episodeListSelector() = throw Exception("not used")
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val bodyString = response.body!!.string()
+        val bodyString = response.body.string()
 
         val document = Jsoup.parse(bodyString)
         val episodeList = mutableListOf<SEpisode>()
@@ -643,9 +643,16 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             var counter = 1
             for (season in document.select("div.cactus-sub-wrap div.item")) {
                 val bodyString = client.newCall(
-                    GET(season.select("div.top-item a").attr("href"))
-                ).execute().body!!.string()
-                val episodeUrlList = episodeListFromSeason(bodyString).reversed()
+                    GET(season.select("div.top-item a").attr("href")),
+                ).execute().body.string()
+                val document = Jsoup.parse(bodyString)
+
+                val episodeUrlList = if (document.selectFirst("ul.group-links-list") == null) {
+                    episodeListFromSeason(bodyString).reversed()
+                } else {
+                    episodeListFromList(document).reversed()
+                }
+
                 for (ep in episodeUrlList) {
                     val episode = SEpisode.create()
                     episode.name = ep.name
@@ -673,6 +680,18 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episodeList
     }
 
+    private fun episodeListFromList(document: Document): List<EpisodeUrl> {
+        val seasonNumber = document.selectFirst("div.top-bar-video > a.video-title")!!.text()
+            .substringAfterLast("(").substringBeforeLast(")")
+
+        return document.select("ul.group-links-list > li").map {
+            EpisodeUrl(
+                "$seasonNumber Episode ${it.selectFirst("a")!!.text()}",
+                it.selectFirst("a")!!.attr("data-embed-src"),
+            )
+        }
+    }
+
     // https://github.com/recloudstream/cloudstream-extensions/blob/master/Ask4Movie/src/main/kotlin/com/lagradost/Ask4MovieProvider.kt
     private fun episodeListFromSeason(bodyString: String): List<EpisodeUrl> {
         var soup = Jsoup.parse(bodyString)
@@ -681,6 +700,7 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodeList = mutableListOf<EpisodeUrl>()
 
         // Get Episodes
+
         val playlistDoc = client.newCall(GET(iframeUrl)).execute().asJsoup()
 
         val episodeRegex = Regex("""([^\n\t]+) S(\d+).E(\d+)""")
@@ -702,8 +722,9 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             episode.name = "$seasonName S${seasonIndex}E$episodeIndex"
             episodeList.add(
                 EpisodeUrl(
-                    "$seasonName S${seasonIndex}E$episodeIndex", "https://${URI(iframeUrl).rawAuthority}$partialUrl"
-                )
+                    "$seasonName S${seasonIndex}E$episodeIndex",
+                    "https://${URI(iframeUrl).rawAuthority}$partialUrl",
+                ),
             )
         }
 
@@ -719,7 +740,6 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-
         val url = response.request.url.toString()
         return when {
             url.contains("fembed") ||
@@ -744,7 +764,7 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 url.contains("diampokusy.com") || url.contains("diampokusy.com") || url.contains("i18n.pw") ||
                 url.contains("vanfem.com") || url.contains("fembed9hd.com") || url.contains("votrefilms.xyz") || url.contains("watchjavnow.xyz") ->
                 {
-                    val userId = Regex("""USER_ID.*?(\d+)""").find(response.body!!.string())?.groupValues?.getOrNull(1) ?: ""
+                    val userId = Regex("""USER_ID.*?(\d+)""").find(response.body.string())?.groupValues?.getOrNull(1) ?: ""
                     CinegrabberExtractor(client).videosFromUrl(url, userId).sort()
                 }
             "filemoon" in url -> {
@@ -809,7 +829,7 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         element.select("div.top-item a").attr("href").toHttpUrlOrNull()?.let {
             anime.setUrlWithoutDomain(
-                it.encodedPath
+                it.encodedPath,
             )
         }
         anime.title = element.select("div.main-item div.description p a").text()
@@ -868,7 +888,7 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         AnimeFilter.Header("NOTE: Ignored if using text search!"),
         AnimeFilter.Separator(),
         MovieGenreFilter(getMovieGenreList()),
-        SeriesGenreFilter(getSeriesGenreList())
+        SeriesGenreFilter(getSeriesGenreList()),
     )
 
     private class MovieGenreFilter(vals: Array<Pair<String, String>>) : UriPartFilter("Movie Genres", vals)
@@ -895,7 +915,7 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("Sport", "sport"),
         Pair("Thriller", "thriller"),
         Pair("War", "war"),
-        Pair("Western", "western")
+        Pair("Western", "western"),
     )
 
     private fun getSeriesGenreList() = arrayOf(
@@ -923,7 +943,7 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("War", "channel_cat/war"),
         Pair("Biography", "channel_cat/biography"),
         Pair("History", "channel_cat/history"),
-        Pair("Sci-Fi", "channel_cat/sci-fi")
+        Pair("Sci-Fi", "channel_cat/sci-fi"),
     )
 
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :

@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.it.toonitalia.extractors.StreamSBExtractor
 import eu.kanade.tachiyomi.animeextension.it.toonitalia.extractors.StreamZExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -14,6 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -54,8 +54,8 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.title = element.select("h2 > a").text()
-        anime.thumbnail_url = element.selectFirst("img").attr("src")
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href").substringAfter(baseUrl))
+        anime.thumbnail_url = element.selectFirst("img")!!.attr("src")
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").substringAfter(baseUrl))
         return anime
     }
 
@@ -118,15 +118,15 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.title = element.selectFirst("h2").text()
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href").substringAfter(baseUrl))
+        anime.title = element.selectFirst("h2")!!.text()
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").substringAfter(baseUrl))
         return anime
     }
 
     private fun searchIndexAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.title = element.select("a").text()
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href").substringAfter(baseUrl))
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").substringAfter(baseUrl))
         return anime
     }
 
@@ -140,8 +140,8 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.title = document.select("header.entry-header > h1.entry-title").text()
 
         var descInfo = ""
-        document.selectFirst("div.entry-content > h2 + p + p").childNodes().filter {
-            s ->
+        document.selectFirst("div.entry-content > h2 + p + p")!!.childNodes().filter {
+                s ->
             s.nodeName() != "br"
         }.forEach {
             if (it.nodeName() == "span") {
@@ -164,7 +164,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "Nessuna descrizione disponibile\n\n$descInfo"
         } else {
             descElement.childNodes().filter {
-                s ->
+                    s ->
                 s.nodeName() == "#text"
             }.joinToString(separator = "\n\n") { it.toString() }.trim() + "\n\n" + descInfo
         }
@@ -189,7 +189,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
             var isValid = false
             var counter = 1
-            for (child in singleEpisode.first().childNodes()) {
+            for (child in singleEpisode.first()!!.childNodes()) {
                 if (child.nodeName() == "br" || (child.nextSibling() == null && child.nodeName() == "a")) {
                     episode.url = response.request.url.toString() + "#$counter"
 
@@ -221,7 +221,6 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 var isValid = false
                 for (child in it.childNodes()) {
                     if (child.nodeName() == "br" || (child.nextSibling() == null && child.nodeName() == "a")) {
-
                         episode.url = response.request.url.toString() + "#$counter"
                         if (isValid) {
                             episodeList.add(episode)
@@ -246,7 +245,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val movie = document.select("div.entry-content > p:contains(Link Streaming)")
         if (movie.isNotEmpty()) {
             val episode = SEpisode.create()
-            for (child in movie.first().childNodes()) {
+            for (child in movie.first()!!.childNodes()) {
                 if (child.nodeName() == "br" || (child.nextSibling() == null && child.nodeName() == "a")) {
                     // episode.url = links.joinToString(separator = "///")
                     episode.url = response.request.url.toString() + "#1"
@@ -284,9 +283,8 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         // Select single seasons episodes
         val singleEpisode = document.select("div.entry-content > h3:contains(Episodi) + p")
         if (singleEpisode.isNotEmpty() && singleEpisode.text().isNotEmpty()) {
-
             var counter = 1
-            for (child in singleEpisode.first().childNodes()) {
+            for (child in singleEpisode.first()!!.childNodes()) {
                 if (child.nodeName() == "a" && counter == episodeNumber) {
                     videoList.addAll(extractVideos(child.attr("href"), child.childNode(0).toString()))
                 }
@@ -317,7 +315,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         // Select movie
         val movie = document.select("div.entry-content > p:contains(Link Streaming)")
         if (movie.isNotEmpty()) {
-            for (child in movie.first().childNodes()) {
+            for (child in movie.first()!!.childNodes()) {
                 if (child.nodeName() == "a") {
                     videoList.addAll(extractVideos(child.attr("href"), child.childNode(0).toString()))
                 }
@@ -345,7 +343,8 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
                 url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com") ||
                 url.contains("sbchill.com") || url.contains("sblongvu.com") || url.contains("sbanh.com") ||
-                url.contains("sblanh.com")
+                url.contains("sblanh.com") || url.contains("sbhight.com") || url.contains("sbbrisk.com") ||
+                url.contains("sbspeed.com")
             -> {
                 val videos = StreamSBExtractor(client).videosFromUrl(url, headers, suffix = name, common = false)
                 videos
@@ -376,7 +375,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun getFilterList() = AnimeFilterList(
         AnimeFilter.Header("NOTA: ignorato se si utilizza la ricerca di testo!"),
         AnimeFilter.Separator(),
-        IndexFilter(getIndexList())
+        IndexFilter(getIndexList()),
     )
 
     private class IndexFilter(vals: Array<Pair<String, String>>) : UriPartFilter("Indice", vals)
@@ -386,7 +385,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("Anime", "anime"),
         Pair("Anime Sub-ita", "anime-sub-ita"),
         Pair("Serie Tv", "serie-tv"),
-        Pair("Film Animazione", "film-animazione")
+        Pair("Film Animazione", "film-animazione"),
     )
 
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :
@@ -401,7 +400,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this.sortedWith(
             compareBy(
                 { it.quality.contains(server) },
-                { it.quality.contains(quality) }
+                { it.quality.contains(quality) },
             ),
         ).reversed()
     }

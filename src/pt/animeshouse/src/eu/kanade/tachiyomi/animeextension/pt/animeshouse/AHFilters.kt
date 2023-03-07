@@ -7,10 +7,10 @@ object AHFilters {
 
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
         fun toQueryPart() = vals[state].second
     }
@@ -25,11 +25,11 @@ object AHFilters {
 
     val filterList = AnimeFilterList(
         AnimeFilter.Header(AHFiltersData.IGNORE_SEARCH_MSG),
-        GenreFilter()
+        GenreFilter(),
     )
 
     data class FilterSearchParams(
-        val genre: String = ""
+        val genre: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
@@ -59,7 +59,7 @@ object AHFilters {
             Pair("Shounen", "shounen"),
             Pair("Slice Of Life", "slice-of-life"),
             Pair("Sobrenatural", "sobrenatural"),
-            Pair("Superpoderes", "superpoderes")
+            Pair("Superpoderes", "superpoderes"),
         )
     }
 }

@@ -6,12 +6,11 @@ ext {
     extName = 'KickAssAnime'
     pkgNameSuffix = 'en.kickassanime'
     extClass = '.KickAssAnime'
-    extVersionCode = 14
+    extVersionCode = 18
     libVersion = '13'
 }
 
 dependencies {
-    compileOnly libs.bundles.coroutines
     implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
 }

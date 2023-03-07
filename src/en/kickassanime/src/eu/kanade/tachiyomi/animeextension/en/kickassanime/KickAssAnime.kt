@@ -7,6 +7,7 @@ import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.extractors.GogoCdnExtractor
+import eu.kanade.tachiyomi.animeextension.en.kickassanime.extractors.PinkBird
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -55,7 +56,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     override val baseUrl by lazy {
         preferences.getString(
             "preferred_domain",
-            "https://www2.kickassanime.ro"
+            "https://www2.kickassanime.ro",
         )!!
     }
 
@@ -79,27 +80,30 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // Add non working server names here
     private val deadServers = listOf(
-        "BETASERVER1", "BETASERVER3", "DEVSTREAM",
-        "THETA-ORIGINAL-V4", "KICKASSANIME1"
+        "BETASERVER1",
+        "BETASERVER3",
+        "DEVSTREAM",
+        "THETA-ORIGINAL-V4",
+        "KICKASSANIME1",
     )
 
     private val workingServers = arrayOf(
         "StreamSB", "PINK-BIRD", "Doodstream", "MAVERICKKI", "BETA-SERVER", "DAILYMOTION",
-        "BETAPLAYER", "Vidstreaming", "SAPPHIRE-DUCK", "KICKASSANIMEV2", "ORIGINAL-QUALITY-V2"
+        "BETAPLAYER", "Vidstreaming", "SAPPHIRE-DUCK", "KICKASSANIMEV2", "ORIGINAL-QUALITY-V2",
     )
 
     override fun popularAnimeRequest(page: Int): Request =
         GET("$baseUrl/api/get_anime_list/all/$page")
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val responseObject = json.decodeFromString<JsonObject>(response.body!!.string())
+        val responseObject = json.decodeFromString<JsonObject>(response.body.string())
         val data = responseObject["data"]!!.jsonArray
         val animes = data.map { item ->
             SAnime.create().apply {
                 setUrlWithoutDomain(
                     item.jsonObject["slug"]!!.jsonPrimitive.content.substringBefore(
-                        "/episode"
-                    )
+                        "/episode",
+                    ),
                 )
                 thumbnail_url =
                     "$baseUrl/uploads/" + item.jsonObject["poster"]!!.jsonPrimitive.content
@@ -151,7 +155,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         when {
             link.contains("gogoplay4.com") -> {
                 videoList.addAll(
-                    extractGogoVideo(link)
+                    extractGogoVideo(link),
                 )
             }
             link.contains("betaplayer.life") -> {
@@ -160,7 +164,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                     url = "https:$url"
                 }
                 videoList.addAll(
-                    extractBetaVideo(url, "BETAPLAYER")
+                    extractBetaVideo(url, "BETAPLAYER"),
                 )
             }
             else -> {
@@ -170,74 +174,57 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 videoList.addAll(
                     sources.parallelMap { source ->
                         runCatching {
-                            when (source.jsonObject["name"]!!.jsonPrimitive.content) {
+                            val src = source.jsonObject["src"]!!.jsonPrimitive.content
+                            val name = source.jsonObject["name"]!!.jsonPrimitive.content
+                            when (name) {
                                 in deadServers -> { null }
                                 "SAPPHIRE-DUCK" -> {
-                                    extractSapphireVideo(
-                                        source.jsonObject["src"]!!.jsonPrimitive.content,
-                                        source.jsonObject["name"]!!.jsonPrimitive.content
-                                    )
+                                    extractSapphireVideo(src, name)
+                                }
+                                "PINK-BIRD" -> {
+                                    PinkBird(client, json).videosFromUrl(src, name)
                                 }
                                 "BETAPLAYER" -> {
-                                    extractBetaVideo(
-                                        source.jsonObject["src"]!!.jsonPrimitive.content,
-                                        source.jsonObject["name"]!!.jsonPrimitive.content
-                                    )
+                                    extractBetaVideo(src, name)
                                 }
                                 "KICKASSANIMEV2", "ORIGINAL-QUALITY-V2", "BETA-SERVER" -> {
-                                    extractKickasssVideo(
-                                        source.jsonObject["src"]!!.jsonPrimitive.content,
-                                        source.jsonObject["name"]!!.jsonPrimitive.content
-                                    )
+                                    extractKickasssVideo(src, name)
                                 }
                                 "DAILYMOTION" -> {
-                                    extractDailymotion(
-                                        source.jsonObject["src"]!!.jsonPrimitive.content,
-                                        source.jsonObject["name"]!!.jsonPrimitive.content
-                                    )
+                                    extractDailymotion(src, name)
                                 }
-                                else -> {
-                                    extractVideo(
-                                        source.jsonObject["src"]!!.jsonPrimitive.content,
-                                        source.jsonObject["name"]!!.jsonPrimitive.content
-                                    )
+                                "MAVERICKKI" -> {
+                                    extractMavrick(src, name)
                                 }
+                                else -> null
                             }
                         }.getOrNull()
-                    }.filterNotNull().flatten()
+                    }.filterNotNull().flatten(),
                 )
             }
         }
         return videoList
     }
 
-    private fun extractVideo(serverLink: String, server: String): List<Video> {
+    private fun extractMavrick(serverLink: String, server: String): List<Video> {
         val playlist = mutableListOf<Video>()
         val subsList = mutableListOf<Track>()
-        var vidHeader = headers
+        val apiLink = serverLink.replace("embed", "api/source")
+        val embedHeader = Headers.headersOf("referer", serverLink)
+        val apiResponse = client.newCall(GET(apiLink, embedHeader)).execute()
+        val json = Json.decodeFromString<JsonObject>(apiResponse.body.string())
+        val uri = Uri.parse(serverLink)
 
-        val resp = if (server == "MAVERICKKI") {
-            val apiLink = serverLink.replace("embed", "api/source")
-            val embedHeader = Headers.headersOf("referer", serverLink)
-            val apiResponse = client.newCall(GET(apiLink, embedHeader)).execute()
-            val json = Json.decodeFromString<JsonObject>(apiResponse.body!!.string())
-            val uri = Uri.parse(serverLink)
-
-            json["subtitles"]!!.jsonArray.forEach {
-                val subLang = it.jsonObject["name"]!!.jsonPrimitive.content
-                val subUrl = "${uri.scheme}://${uri.host}" + it.jsonObject["src"]!!.jsonPrimitive.content
-                try {
-                    subsList.add(Track(subUrl, subLang))
-                } catch (_: Error) {}
-            }
-            vidHeader = embedHeader
-            client.newCall(GET("${uri.scheme}://${uri.host}" + json["hls"]!!.jsonPrimitive.content, embedHeader)).execute()
-        } else {
-            val kickAssClient = client.newBuilder().addInterceptor(MasterPlaylistInterceptor()).build()
-            kickAssClient.newCall(GET(serverLink, headers)).execute()
+        json["subtitles"]!!.jsonArray.forEach {
+            val subLang = it.jsonObject["name"]!!.jsonPrimitive.content
+            val subUrl = "${uri.scheme}://${uri.host}" + it.jsonObject["src"]!!.jsonPrimitive.content
+            try {
+                subsList.add(Track(subUrl, subLang))
+            } catch (_: Error) {}
         }
+        val resp = client.newCall(GET("${uri.scheme}://${uri.host}" + json["hls"]!!.jsonPrimitive.content, embedHeader)).execute()
 
-        resp.body!!.string().substringAfter("#EXT-X-STREAM-INF:")
+        resp.body.string().substringAfter("#EXT-X-STREAM-INF:")
             .split("#EXT-X-STREAM-INF:").map {
                 val quality = it.substringAfter("RESOLUTION=").split(",")[0].split("\n")[0].substringAfter("x") + "p $server" +
                     if (subsList.size > 0) { " (Toggleable Sub Available)" } else { "" }
@@ -246,12 +233,11 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                     videoUrl = resp.request.url.toString().substringBeforeLast("/") + "/$videoUrl"
                 }
                 try {
-                    playlist.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subsList, headers = vidHeader))
+                    playlist.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subsList, headers = embedHeader))
                 } catch (e: Error) {
-                    playlist.add(Video(videoUrl, quality, videoUrl, headers = vidHeader))
+                    playlist.add(Video(videoUrl, quality, videoUrl, headers = embedHeader))
                 }
             }
-
         return playlist
     }
 
@@ -273,7 +259,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             val quality = it.jsonObject["label"]!!.jsonPrimitive.content + " $server"
             val videoUrl = it.jsonObject["file"]!!.jsonPrimitive.content
             playlist.add(
-                Video(videoUrl, quality, videoUrl, headers = headers)
+                Video(videoUrl, quality, videoUrl, headers = headers),
             )
         }
         return playlist
@@ -285,8 +271,11 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         var playlistArray = JsonArray(arrayListOf())
 
         document.selectFirst("script:containsData(document.write)")?.data()?.let {
-            val pattern = if (server.contains("Beta", true)) Pattern.compile(".*decode\\(\"(.*)\"\\)")
-            else Pattern.compile(".*atob\\(\"(.*)\"\\)")
+            val pattern = if (server.contains("Beta", true)) {
+                Pattern.compile(".*decode\\(\"(.*)\"\\)")
+            } else {
+                Pattern.compile(".*atob\\(\"(.*)\"\\)")
+            }
             val matcher = pattern.matcher(it)
             if (matcher.find()) {
                 val player = matcher.group(1)!!.toString().decodeBase64()
@@ -304,7 +293,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             val quality = it.jsonObject["label"]!!.jsonPrimitive.content + " $server"
             val videoUrl = it.jsonObject["file"]!!.jsonPrimitive.content
             playlist.add(
-                Video(videoUrl, quality, videoUrl, headers = headers)
+                Video(videoUrl, quality, videoUrl, headers = headers),
             )
         }
         return playlist
@@ -320,10 +309,10 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 .substringAfter("src=\"").substringBefore("\"").substringBefore("?")
                 .replace("/embed/", "/player/metadata/")
             val response = client.newCall(GET(embedUrl, headers)).execute()
-            val decodedJson = json.decodeFromString<DailyQuality>(response.body!!.string())
+            val decodedJson = json.decodeFromString<DailyQuality>(response.body.string())
             masterPlaylist = decodedJson.qualities.auto.parallelMap { item ->
                 runCatching {
-                    val resp = client.newCall(GET(item.url)).execute().body!!.string()
+                    val resp = client.newCall(GET(item.url)).execute().body.string()
                     resp.substringAfter("#EXT-X-STREAM-INF:")
                         .split("#EXT-X-STREAM-INF:").map {
                             val videoUrl = it.substringAfter("\n").substringBefore("\n")
@@ -346,7 +335,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun extractSapphireVideo(serverLink: String, server: String): List<Video> {
         val url = serverLink.toHttpUrl().newBuilder().addQueryParameter("action", "config").build()
         val response = client.newCall(GET(url.toString(), Headers.headersOf("referer", serverLink))).execute()
-        val rawJson = response.body!!.string().let {
+        val rawJson = response.body.string().let {
             var decoded = it
             while (!decoded.startsWith("{\"id")) decoded = decoded.decodeBase64()
             return@let decoded
@@ -362,7 +351,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
         return decodedJson.streams.filter { it.format == "adaptive_hls" }.parallelMap { stream ->
             runCatching {
-                val playlist = client.newCall(GET(stream.url)).execute().body!!.string()
+                val playlist = client.newCall(GET(stream.url)).execute().body.string()
                 playlist.substringAfter("#EXT-X-STREAM-INF:")
                     .split("#EXT-X-STREAM-INF:").map {
                         val quality = it.substringAfter("RESOLUTION=").split(",")[0].split("\n")[0].substringAfter("x") + "p $server" +
@@ -409,8 +398,8 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         return this.sortedWith(
             compareBy(
                 { it.quality.contains(quality) },
-                { it.quality.contains(server) }
-            )
+                { it.quality.contains(server) },
+            ),
         ).reversed()
     }
 
@@ -571,22 +560,22 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             Pair("uk-UK", "Ukrainian"),
             Pair("he-IL", "Hebrew"),
             Pair("ro-RO", "Romanian"),
-            Pair("sv-SE", "Swedish")
+            Pair("sv-SE", "Swedish"),
         ).firstOrNull { it.first == this }?.second ?: ""
     }
 
     @Serializable
     data class DailyQuality(
-        val qualities: Auto
+        val qualities: Auto,
     ) {
         @Serializable
         data class Auto(
-            val auto: List<Item>
+            val auto: List<Item>,
         ) {
             @Serializable
             data class Item(
                 val type: String,
-                val url: String
+                val url: String,
             )
         }
     }
@@ -594,13 +583,13 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     @Serializable
     data class Sapphire(
         val subtitles: List<Subtitle>,
-        val streams: List<Stream>
+        val streams: List<Stream>,
     ) {
 
         @Serializable
         data class Subtitle(
             val language: String,
-            val url: String
+            val url: String,
         )
 
         @Serializable
@@ -610,7 +599,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             @SerialName("hardsub_lang")
             val hardSub: String,
             val url: String,
-            val format: String
+            val format: String,
         )
     }
 

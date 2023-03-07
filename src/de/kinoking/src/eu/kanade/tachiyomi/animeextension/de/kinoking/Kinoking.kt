@@ -117,7 +117,7 @@ class Kinoking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val post = it.attr("data-post")
             val nume = it.attr("data-nume")
             val type = it.attr("data-type")
-            val videodoc = client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", body = "action=doo_player_ajax&post=$post&nume=$nume&type=$type".toRequestBody("application/x-www-form-urlencoded".toMediaType()))).execute().body!!.string()
+            val videodoc = client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", body = "action=doo_player_ajax&post=$post&nume=$nume&type=$type".toRequestBody("application/x-www-form-urlencoded".toMediaType()))).execute().body.string()
             val link = videodoc.substringAfter("\"embed_url\":\"").substringBefore("\",").replace("\\", "")
             val hosterSelection = preferences.getStringSet("hoster_selection", setOf("dood", "watchsb", "voe"))
             when {

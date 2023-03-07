@@ -27,7 +27,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "MY Cima"
 
-    override val baseUrl = "https://mycima.pw"
+    override val baseUrl = "https://weciima.autos"
 
     override val lang = "ar"
 
@@ -41,7 +41,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== popular ==============================
 
-    override fun popularAnimeSelector(): String = "div.Grid--MycimaPosts div.GridItem div.Thumb--GridItem"
+    override fun popularAnimeSelector(): String = "div.Grid--WecimaPosts div.GridItem div.Thumb--GridItem"
 
     override fun popularAnimeNextPageSelector(): String = "ul.page-numbers li a.next"
 
@@ -73,14 +73,15 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (document.select(episodeListSelector()).isNullOrEmpty()) {
                 if (!document.select("mycima singlerelated.hasdivider ${popularAnimeSelector()}").isNullOrEmpty()) {
                     document.select("mycima singlerelated.hasdivider ${popularAnimeSelector()}").map { episodes.add(newEpisodeFromElement(it, "mSeries")) }
-                } else
-                    episodes.add(newEpisodeFromElement(document.select("div.Poster--Single-begin > a").first(), "movie"))
+                } else {
+                    episodes.add(newEpisodeFromElement(document.selectFirst("div.Poster--Single-begin > a")!!, "movie"))
+                }
             } else {
                 document.select(episodeListSelector()).map { episodes.add(newEpisodeFromElement(it)) }
-                document.select(seasonsNextPageSelector(seasonNumber)).firstOrNull()?.let {
+                document.selectFirst(seasonsNextPageSelector(seasonNumber))?.let {
                     seasonNumber++
                     addEpisodes(
-                        client.newCall(GET(it.attr("abs:href"), headers)).execute().asJsoup()
+                        client.newCall(GET(it.attr("abs:href"), headers)).execute().asJsoup(),
                     )
                 }
             }
@@ -93,15 +94,16 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         val epNum = getNumberFromEpsString(element.text())
         episode.setUrlWithoutDomain(if (type == "mSeries") element.select("a").attr("href") else element.attr("abs:href"))
-        if (type == "series")
+        if (type == "series") {
             episode.episode_number = when {
                 (epNum.isNotEmpty()) -> epNum.toFloat()
                 else -> 1F
             }
+        }
         episode.name = when (type) {
             "movie" -> "مشاهدة"
             "mSeries" -> element.select("a").attr("title")
-            else -> element.ownerDocument().select("div.List--Seasons--Episodes a.selected").text() + element.text()
+            else -> element.ownerDocument()!!.select("div.List--Seasons--Episodes a.selected").text() + element.text()
         }
         return episode
     }
@@ -116,13 +118,13 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val iframe = document.selectFirst("iframe").attr("data-lazy-src")
+        val iframe = document.selectFirst("iframe")!!.attr("data-lazy-src")
         val referer = response.request.url.encodedPath
         val newHeaderList = mutableMapOf(Pair("referer", baseUrl + referer))
         headers.forEach { newHeaderList[it.first] = it.second }
         val iframeResponse = client.newCall(GET(iframe, newHeaderList.toHeaders()))
             .execute().asJsoup()
-        return videosFromElement(iframeResponse.selectFirst(videoListSelector()))
+        return videosFromElement(iframeResponse.selectFirst(videoListSelector())!!)
     }
 
     override fun videoListSelector() = "body"
@@ -143,7 +145,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             return videoList
         }
-        val sourceTag = element.ownerDocument().select("source").firstOrNull()!!
+        val sourceTag = element.ownerDocument()!!.select("source").firstOrNull()!!
         return listOf(Video(sourceTag.attr("src"), "Default", sourceTag.attr("src")))
     }
 
@@ -181,7 +183,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeNextPageSelector(): String = "ul.page-numbers li a.next"
 
-    override fun searchAnimeSelector(): String = "div.Grid--MycimaPosts div.GridItem div.Thumb--GridItem"
+    override fun searchAnimeSelector(): String = "div.Grid--WecimaPosts div.GridItem div.Thumb--GridItem"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         if (query.isNotBlank()) {
@@ -235,7 +237,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== latest ==============================
 
-    override fun latestUpdatesSelector(): String = "div.Grid--MycimaPosts div.GridItem div.Thumb--GridItem"
+    override fun latestUpdatesSelector(): String = "div.Grid--WecimaPosts div.GridItem div.Thumb--GridItem"
 
     override fun latestUpdatesNextPageSelector(): String = "ul.page-numbers li a.next"
 
@@ -256,7 +258,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         SearchCategoryList(searchCategoryNames),
         AnimeFilter.Separator(),
         AnimeFilter.Header("اقسام الموقع (تعمل فقط اذا كان البحث فارغ)"),
-        CategoryList(categoryNames)
+        CategoryList(categoryNames),
     )
 
     private class SearchCategoryList(categories: Array<String>) : AnimeFilter.Select<String>("بحث عن", categories)
@@ -273,7 +275,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         CatUnit("فيلم", "/page/"),
         CatUnit("مسلسل", "list/series/?page_number="),
         CatUnit("انمى", "list/anime/?page_number="),
-        CatUnit("برنامج", "list/tv/?page_number=")
+        CatUnit("برنامج", "list/tv/?page_number="),
     )
     private fun getCategoryList() = listOf(
         CatUnit("اختر", ""),

@@ -7,12 +7,12 @@ import okhttp3.OkHttpClient
 
 class QualitiesExtractor(
     private val client: OkHttpClient,
-    private val headers: Headers
+    private val headers: Headers,
 ) {
 
     fun getVideoList(url: String, qualityStr: String): List<Video> {
         val playlistBody = client.newCall(GET(url, headers)).execute()
-            .body!!.string()
+            .body.string()
 
         val separator = "#EXT-X-STREAM-INF:"
         val playerName = qualityStr.substringBefore(" -")
@@ -25,7 +25,9 @@ class QualitiesExtractor(
 
             val videoUrl = if (!path.startsWith("https:")) {
                 url.substringBeforeLast("/") + "/$path"
-            } else path
+            } else {
+                path
+            }
             Video(videoUrl, "$playerName - $quality", videoUrl, headers)
         }
     }

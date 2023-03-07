@@ -68,7 +68,7 @@ class GetSourcesInterceptor(private val getSources: String, private val client: 
             webview.webViewClient = object : WebViewClient() {
                 override fun shouldInterceptRequest(
                     view: WebView,
-                    request: WebResourceRequest
+                    request: WebResourceRequest,
                 ): WebResourceResponse? {
                     val url = request.url.toString()
                     if (url.contains(getSources)) {

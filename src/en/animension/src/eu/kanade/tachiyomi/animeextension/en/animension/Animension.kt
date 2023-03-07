@@ -53,7 +53,7 @@ class Animension() : ConfigurableAnimeSource, AnimeHttpSource() {
         GET("$apiUrl/search.php?dub=0&sort=popular-week&page=$page")
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val responseJson = json.decodeFromString<JsonArray>(response.body!!.string())
+        val responseJson = json.decodeFromString<JsonArray>(response.body.string())
         val animes = responseJson.map { anime ->
             val data = anime.jsonArray
 
@@ -74,7 +74,7 @@ class Animension() : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val responseJson = json.decodeFromString<JsonArray>(response.body!!.string())
+        val responseJson = json.decodeFromString<JsonArray>(response.body.string())
         val episodes = responseJson.map { episode ->
             val data = episode.jsonArray
 
@@ -93,7 +93,7 @@ class Animension() : ConfigurableAnimeSource, AnimeHttpSource() {
         GET("$apiUrl/episode.php?id=${episode.url}", headers)
 
     override fun videoListParse(response: Response): List<Video> {
-        val responseJson = json.decodeFromString<JsonArray>(response.body!!.string())
+        val responseJson = json.decodeFromString<JsonArray>(response.body.string())
         val videos = json.decodeFromString<JsonObject>(responseJson[3].jsonPrimitive.content)
         val videoList = mutableListOf<Video>()
 
@@ -160,7 +160,7 @@ class Animension() : ConfigurableAnimeSource, AnimeHttpSource() {
         GET("$apiUrl/index.php?page=$page&mode=sub")
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
-        val responseJson = json.decodeFromString<JsonArray>(response.body!!.string())
+        val responseJson = json.decodeFromString<JsonArray>(response.body.string())
         val animes = responseJson.map { anime ->
             val data = anime.jsonArray
             SAnime.create().apply {
@@ -179,7 +179,7 @@ class Animension() : ConfigurableAnimeSource, AnimeHttpSource() {
         GET("$apiUrl/search.php?search_text=$query&page=$page", headers)
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val responseJson = json.decodeFromString<JsonArray>(response.body!!.string())
+        val responseJson = json.decodeFromString<JsonArray>(response.body.string())
         val animes = responseJson.map { anime ->
             val data = anime.jsonArray
 

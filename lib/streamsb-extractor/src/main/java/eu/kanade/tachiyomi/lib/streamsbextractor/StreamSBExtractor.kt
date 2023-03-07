@@ -8,6 +8,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 
 class StreamSBExtractor(private val client: OkHttpClient) {
@@ -26,15 +27,18 @@ class StreamSBExtractor(private val client: OkHttpClient) {
 
     // animension, asianload and dramacool uses "common = false"
     private fun fixUrl(url: String, common: Boolean): String {
-        val sbUrl = url.substringBefore("/e/")
-        val id = url.substringAfter("/e/")
+        val sbUrl = "https://${url.toHttpUrl().host}"
+        val id = url.substringAfter("${url.toHttpUrl().host}")
+            .substringAfter("/e/")
+            .substringAfter("/embed-")
             .substringBefore("?")
             .substringBefore(".html")
+            .substringAfter("/")
         return if (common) {
             val hexBytes = bytesToHex(id.toByteArray())
-            "$sbUrl/sources50/625a364258615242766475327c7c${hexBytes}7c7c4761574550654f7461566d347c7c73747265616d7362"
+            "$sbUrl/sources51/625a364258615242766475327c7c${hexBytes}7c7c4761574550654f7461566d347c7c73747265616d7362"
         } else {
-            "$sbUrl/sources50/${bytesToHex("||$id||||streamsb".toByteArray())}/"
+            "$sbUrl/sources51/${bytesToHex("||$id||||streamsb".toByteArray())}/"
         }
     }
 
@@ -48,12 +52,12 @@ class StreamSBExtractor(private val client: OkHttpClient) {
             val master = fixUrl(url, common)
             val json = Json.decodeFromString<JsonObject>(
                 client.newCall(GET(master, newHeaders))
-                    .execute().body!!.string()
+                    .execute().body.string()
             )
             val masterUrl = json["stream_data"]!!.jsonObject["file"].toString().trim('"')
             val masterPlaylist = client.newCall(GET(masterUrl, newHeaders))
                 .execute()
-                .body!!.string()
+                .body.string()
             val separator = "#EXT-X-STREAM-INF"
             masterPlaylist.substringAfter(separator).split(separator).map {
                 val resolution = it.substringAfter("RESOLUTION=")
@@ -77,9 +81,9 @@ class StreamSBExtractor(private val client: OkHttpClient) {
 
     fun videosFromDecryptedUrl(realUrl: String, headers: Headers, prefix: String = "", suffix: String = ""): List<Video> {
         return try {
-            val json = Json.decodeFromString<JsonObject>(client.newCall(GET(realUrl, headers)).execute().body!!.string())
+            val json = Json.decodeFromString<JsonObject>(client.newCall(GET(realUrl, headers)).execute().body.string())
             val masterUrl = json["stream_data"]!!.jsonObject["file"].toString().trim('"')
-            val masterPlaylist = client.newCall(GET(masterUrl, headers)).execute().body!!.string()
+            val masterPlaylist = client.newCall(GET(masterUrl, headers)).execute().body.string()
             val separator = "#EXT-X-STREAM-INF"
             masterPlaylist.substringAfter(separator).split(separator).map {
                 val resolution = it.substringAfter("RESOLUTION=")

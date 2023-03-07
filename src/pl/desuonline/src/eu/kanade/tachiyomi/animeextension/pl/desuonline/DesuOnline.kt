@@ -111,7 +111,7 @@ class DesuOnline : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val videoList = mutableListOf<Video>()
         val document = response.asJsoup()
-        document.select("select.mirror > option").filter {
+        document.select("select.mirror > option").filter { it ->
             it.text().contains("CDA")
         }.map {
             val mirror = it.text().trim()
@@ -138,7 +138,7 @@ class DesuOnline : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val body = cdaBody(videoId, qualityId, timeStamp, hash)
                 val videoResponse = json.decodeFromString<JsonObject>(
                     client.newCall(POST("https://www.cda.pl/", body = body))
-                        .execute().body!!.string()
+                        .execute().body.string(),
                 )
                 val videoUrl = videoResponse["result"]!!.jsonObject["resp"]!!.jsonPrimitive.content
                 videoList.add(Video(videoUrl, "$mirror: $quality", videoUrl))

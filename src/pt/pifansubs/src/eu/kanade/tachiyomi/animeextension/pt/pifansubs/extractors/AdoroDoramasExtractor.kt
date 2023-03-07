@@ -11,7 +11,7 @@ class AdoroDoramasExtractor(private val client: OkHttpClient) {
 
     fun videosFromUrl(url: String): List<Video> {
         val body = client.newCall(GET(url)).execute()
-            .body?.string().orEmpty()
+            .body.string()
         val unpacked = JsUnpacker.unpackAndCombine(body)
             ?.replace("\\", "")
             ?: return emptyList<Video>()

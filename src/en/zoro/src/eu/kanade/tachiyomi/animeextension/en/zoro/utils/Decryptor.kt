@@ -30,9 +30,8 @@ object Decryptor {
         hashAlgorithm: String = "MD5",
         keyLength: Int = 32,
         ivLength: Int = 16,
-        iterations: Int = 1
+        iterations: Int = 1,
     ): List<ByteArray>? {
-
         val md = MessageDigest.getInstance(hashAlgorithm)
         val digestLength = md.getDigestLength()
         val targetKeySize = keyLength + ivLength
@@ -44,12 +43,13 @@ object Decryptor {
             md.reset()
 
             while (generatedLength < targetKeySize) {
-                if (generatedLength > 0)
+                if (generatedLength > 0) {
                     md.update(
                         generatedData,
                         generatedLength - digestLength,
-                        digestLength
+                        digestLength,
                     )
+                }
 
                 md.update(password)
                 md.update(salt, 0, 8)
@@ -64,7 +64,7 @@ object Decryptor {
             }
             val result = listOf(
                 generatedData.copyOfRange(0, keyLength),
-                generatedData.copyOfRange(keyLength, targetKeySize)
+                generatedData.copyOfRange(keyLength, targetKeySize),
             )
             return result
         } catch (e: DigestException) {

@@ -13,8 +13,9 @@ object JsUnpacker {
     private fun convert(base: Int, num: Int): String {
         val firstPart = if (num < base) "" else (num / base).toString()
         val calc = num % base
-        if (calc > 35)
+        if (calc > 35) {
             return firstPart + (calc + 29).toChar().toString()
+        }
         return firstPart + calc.toString(36)
     }
 

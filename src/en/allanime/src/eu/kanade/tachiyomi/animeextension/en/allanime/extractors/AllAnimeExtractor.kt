@@ -7,13 +7,14 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import uy.kohesive.injekt.injectLazy
 import java.util.Locale
 
 @Serializable
 data class VideoLink(
-    val links: List<Link>
+    val links: List<Link>,
 ) {
     @Serializable
     data class Link(
@@ -29,12 +30,12 @@ data class VideoLink(
         data class Subtitles(
             val lang: String,
             val src: String,
-            val label: String? = null
+            val label: String? = null,
         )
 
         @Serializable
         data class Stream(
-            val streams: List<StreamObject>
+            val streams: List<StreamObject>,
         ) {
             @Serializable
             data class StreamObject(
@@ -75,14 +76,14 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
         val videoList = mutableListOf<Video>()
 
         val resp = client.newCall(
-            GET("https://blog.allanime.pro" + url.replace("/clock?", "/clock.json?"))
+            GET("https://blog.allanime.pro" + url.replace("/clock?", "/clock.json?")),
         ).execute()
 
         if (resp.code != 200) {
             return emptyList()
         }
 
-        val body = resp.body!!.string()
+        val body = resp.body.string()
         val linkJson = json.decodeFromString<VideoLink>(body)
 
         for (link in linkJson.links) {
@@ -107,28 +108,28 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
                             link.link,
                             "Original ($name - ${link.resolutionStr})",
                             link.link,
-                            subtitleTracks = subtitles
-                        )
+                            subtitleTracks = subtitles,
+                        ),
                     )
                 } catch (_: Error) {
                     videoList.add(
                         Video(
                             link.link,
                             "Original ($name - ${link.resolutionStr})",
-                            link.link
-                        )
+                            link.link,
+                        ),
                     )
                 }
             } else if (link.hls == true) {
                 val newClient = OkHttpClient()
                 val resp = runCatching {
                     newClient.newCall(
-                        GET(link.link, headers = Headers.headersOf("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0"))
+                        GET(link.link, headers = Headers.headersOf("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")),
                     ).execute()
                 }.getOrNull()
 
                 if (resp != null && resp.code == 200) {
-                    val masterPlaylist = resp.body!!.string()
+                    val masterPlaylist = resp.body.string()
 
                     val audioList = mutableListOf<Track>()
                     if (masterPlaylist.contains("#EXT-X-MEDIA:TYPE=AUDIO")) {
@@ -137,8 +138,30 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
                         val language = audioInfo.substringAfter("NAME=\"").substringBefore("\"")
                         val url = audioInfo.substringAfter("URI=\"").substringBefore("\"")
                         audioList.add(
-                            Track(url, language)
+                            Track(url, language),
                         )
+                    }
+
+                    if (!masterPlaylist.contains("#EXT-X-STREAM-INF:")) {
+                        val headers = Headers.headersOf(
+                            "Accept",
+                            "*/*",
+                            "Host",
+                            link.link.toHttpUrl().host,
+                            "Origin",
+                            "https://allanimenews.com",
+                            "User-Agent",
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
+                        )
+                        return try {
+                            if (audioList.isEmpty()) {
+                                listOf(Video(link.link, "$name - ${link.resolutionStr}", link.link, subtitleTracks = subtitles, headers = headers))
+                            } else {
+                                listOf(Video(link.link, "$name - ${link.resolutionStr}", link.link, subtitleTracks = subtitles, audioTracks = audioList, headers = headers))
+                            }
+                        } catch (_: Error) {
+                            listOf(Video(link.link, "$name - ${link.resolutionStr}", link.link, headers = headers))
+                        }
                     }
 
                     masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:")
@@ -176,27 +199,27 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
                                     it.url,
                                     "Original (AC - Dash${if (it.hardsub_lang.isEmpty()) "" else " - Hardsub: ${it.hardsub_lang}"})",
                                     it.url,
-                                    subtitleTracks = subtitles
-                                )
+                                    subtitleTracks = subtitles,
+                                ),
                             )
                         } catch (a: Error) {
                             videoList.add(
                                 Video(
                                     it.url,
                                     "Original (AC - Dash${if (it.hardsub_lang.isEmpty()) "" else " - Hardsub: ${it.hardsub_lang}"})",
-                                    it.url
-                                )
+                                    it.url,
+                                ),
                             )
                         }
                     } else if (it.format == "adaptive_hls") {
                         val resp = runCatching {
                             client.newCall(
-                                GET(it.url, headers = Headers.headersOf("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0"))
+                                GET(it.url, headers = Headers.headersOf("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")),
                             ).execute()
                         }.getOrNull()
 
                         if (resp != null && resp.code == 200) {
-                            val masterPlaylist = resp.body!!.string()
+                            val masterPlaylist = resp.body.string()
                             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:")
                                 .forEach { t ->
                                     val quality = t.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p (AC - HLS${if (it.hardsub_lang.isEmpty()) "" else " - Hardsub: ${it.hardsub_lang}"})"

@@ -7,10 +7,10 @@ object VizerFilters {
 
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
 
         fun toQueryPart() = vals[state].second
@@ -34,7 +34,7 @@ object VizerFilters {
     class SortFilter : AnimeFilter.Sort(
         "Ordernar por",
         VizerFiltersData.orders.map { it.first }.toTypedArray(),
-        Selection(0, true)
+        Selection(0, false),
     )
 
     val filterList = AnimeFilterList(
@@ -42,7 +42,7 @@ object VizerFilters {
         MinYearFilter(),
         MaxYearFilter(),
         GenreFilter(),
-        SortFilter()
+        SortFilter(),
     )
 
     data class FilterSearchParams(
@@ -51,7 +51,7 @@ object VizerFilters {
         val maxYear: String = "2022",
         val genre: String = "all",
         var orderBy: String = "rating",
-        var orderWay: String = "desc"
+        var orderWay: String = "desc",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
@@ -59,7 +59,7 @@ object VizerFilters {
             filters.asQueryPart<TypeFilter>(),
             filters.asQueryPart<MinYearFilter>(),
             filters.asQueryPart<MaxYearFilter>(),
-            filters.asQueryPart<GenreFilter>()
+            filters.asQueryPart<GenreFilter>(),
         )
         filters.getFirst<SortFilter>().state?.let {
             val order = VizerFiltersData.orders[it.index].second
@@ -74,7 +74,7 @@ object VizerFilters {
         val types = arrayOf(
             Pair("Animes", "anime"),
             Pair("Filmes", "Movies"),
-            Pair("Series", "Series")
+            Pair("Series", "Series"),
         )
         val maxYears = (2022 downTo 1890).map {
             Pair(it.toString(), it.toString())
@@ -86,7 +86,7 @@ object VizerFilters {
             Pair("Popularidade", "vzViews"),
             Pair("Ano", "year"),
             Pair("Título", "title"),
-            Pair("Rating", "rating")
+            Pair("Rating", "rating"),
         )
 
         val genres = arrayOf(

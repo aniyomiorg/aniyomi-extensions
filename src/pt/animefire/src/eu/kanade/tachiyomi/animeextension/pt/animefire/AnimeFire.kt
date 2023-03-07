@@ -133,17 +133,17 @@ class AnimeFire : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        val content = document.selectFirst("div.divDivAnimeInfo")
-        val names = content.selectFirst("div.div_anime_names")
-        val infos = content.selectFirst("div.divAnimePageInfo")
-        anime.thumbnail_url = content.selectFirst("div.sub_animepage_img > img")
+        val content = document.selectFirst("div.divDivAnimeInfo")!!
+        val names = content.selectFirst("div.div_anime_names")!!
+        val infos = content.selectFirst("div.divAnimePageInfo")!!
+        anime.thumbnail_url = content.selectFirst("div.sub_animepage_img > img")!!
             .attr("data-src")
-        anime.title = names.selectFirst("h1").text()
+        anime.title = names.selectFirst("h1")!!.text()
         anime.genre = infos.select("a.spanGeneros").joinToString(", ") { it.text() }
         anime.author = infos.getInfo("Estúdios")
         anime.status = parseStatus(infos.getInfo("Status"))
 
-        var desc = content.selectFirst("div.divSinopse > span").text() + "\n"
+        var desc = content.selectFirst("div.divSinopse > span")!!.text() + "\n"
         names.selectFirst("h6")?.let { desc += "\nNome alternativo: ${it.text()}" }
         infos.getInfo("Dia de")?.let { desc += "\nDia de lançamento: $it" }
         infos.getInfo("Áudio")?.let { desc += "\nTipo: $it" }
@@ -168,8 +168,8 @@ class AnimeFire : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             anime.setUrlWithoutDomain(newUrl)
         } else { anime.setUrlWithoutDomain(url) }
 
-        anime.title = element.selectFirst("h3.animeTitle").text()
-        anime.thumbnail_url = element.selectFirst("img").attr("data-src")
+        anime.title = element.selectFirst("h3.animeTitle")!!.text()
+        anime.thumbnail_url = element.selectFirst("img")!!.attr("data-src")
         return anime
     }
 
@@ -211,7 +211,7 @@ class AnimeFire : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val div = this.selectFirst("div.animeInfo:contains($key)")
         if (div == null) return div
         val span = div.selectFirst("span")
-        return span.text()
+        return span?.text()
     }
 
     override fun List<Video>.sort(): List<Video> {

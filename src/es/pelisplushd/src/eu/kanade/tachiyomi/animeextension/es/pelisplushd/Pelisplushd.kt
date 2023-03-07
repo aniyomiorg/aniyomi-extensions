@@ -6,7 +6,6 @@ import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamlareExtractor
-import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -19,6 +18,7 @@ import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
+import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
@@ -52,7 +52,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
-            element.select("a").attr("href")
+            element.select("a").attr("href"),
         )
         anime.title = element.select("a div.listing-content p").text()
         anime.thumbnail_url = element.select("a img").attr("src").replace("/w154/", "/w200/")
@@ -93,7 +93,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
 
-        val data = document.selectFirst("script:containsData(video[1] = )").data()
+        val data = document.selectFirst("script:containsData(video[1] = )")!!.data()
         val apiUrl = data.substringAfter("video[1] = '", "").substringBefore("';", "")
         val alternativeServers = document.select("ul.TbVideoNv.nav.nav-tabs li:not(:first-child)")
         if (apiUrl.isNotEmpty()) {
@@ -173,7 +173,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         .isNotBlank()
                     ) {
                         val shareId =
-                            body.selectFirst("script:containsData(var shareId)").data()
+                            body.selectFirst("script:containsData(var shareId)")!!.data()
                                 .substringAfter("shareId = \"").substringBefore("\"")
                         val amazonApiJson =
                             client.newCall(GET("https://www.amazon.com/drive/v1/shares/$shareId?resourceVersion=V2&ContentType=JSON&asset=ALL"))
@@ -196,7 +196,6 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val url2 = url.replace("https://doodstream.com/e/", "https://dood.to/e/")
                 DoodExtractor(client).videoFromUrl(url2, "DoodStream", false)?.let { videoList.add(it) }
             } else if (server.lowercase() == "upload") {
-                val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
                 return YourUploadExtractor(client).videoFromUrl(url, headers = headers)
             }
         } catch (_: Exception) {}
@@ -212,7 +211,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         return try {
             val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
             val userPreferredQuality = preferences.getString("preferred_quality", "Voex")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
@@ -252,10 +251,10 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.title = document.selectFirst("h1.m-b-5").text()
-        anime.thumbnail_url = document.selectFirst("div.card-body div.row div.col-sm-3 img.img-fluid")
+        anime.title = document.selectFirst("h1.m-b-5")!!.text()
+        anime.thumbnail_url = document.selectFirst("div.card-body div.row div.col-sm-3 img.img-fluid")!!
             .attr("src").replace("/w154/", "/w500/")
-        anime.description = document.selectFirst("div.col-sm-4 div.text-large").ownText()
+        anime.description = document.selectFirst("div.col-sm-4 div.text-large")!!.ownText()
         anime.genre = document.select("div.p-v-20.p-h-15.text-center a span").joinToString { it.text() }
         anime.status = SAnime.COMPLETED
         return anime
@@ -273,7 +272,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         AnimeFilter.Header("La busqueda por texto ignora el filtro de año"),
         GenreFilter(),
         AnimeFilter.Header("Busqueda por año"),
-        Tags("Año")
+        Tags("Año"),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -301,8 +300,8 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Romance", "generos/romance"),
             Pair("Suspense", "generos/suspense"),
             Pair("Terror", "generos/terror"),
-            Pair("Western", "generos/western")
-        )
+            Pair("Western", "generos/western"),
+        ),
     )
 
     private class Tags(name: String) : AnimeFilter.Text(name)
@@ -317,7 +316,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
             "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
             "Streamlare:1080p", "Streamlare:720p", "Streamlare:480p", "Streamlare:360p", "Streamlare:240p", // Streamlare
-            "StreamTape", "Amazon", "Voex", "DoodStream", "YourUpload"
+            "StreamTape", "Amazon", "Voex", "DoodStream", "YourUpload",
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"

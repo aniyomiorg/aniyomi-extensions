@@ -5,14 +5,13 @@ ext {
     extName = 'zoro.to (experimental)'
     pkgNameSuffix = 'en.zoro'
     extClass = '.Zoro'
-    extVersionCode = 18
+    extVersionCode = 22
     libVersion = '13'
 }
 
 dependencies {
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-streamsb-extractor'))
-    compileOnly libs.bundles.coroutines
 }
 
 apply from: "$rootDir/common.gradle"

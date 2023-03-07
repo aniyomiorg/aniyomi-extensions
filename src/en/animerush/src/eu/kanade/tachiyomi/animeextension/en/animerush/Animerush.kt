@@ -98,7 +98,6 @@ class Animerush : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val script = emdoc.substringAfter("eval(function").substringBefore("</script>")
             val videoUrlstring = JsUnpacker("eval(function$script").unpack().toString()
             when {
-
                 videoUrlstring.contains("player.src") -> {
                     val videoUrl = videoUrlstring.substringAfter("player.src(\"").substringBefore("\")")
                     val videoHeaders = Headers.headersOf("Referer", "https://www.mp4upload.com/", "Accept", "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5")
@@ -201,7 +200,7 @@ class Animerush : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun getFilterList() = AnimeFilterList(
         AnimeFilter.Header("NOTE: Ignored if using text search!"),
         AnimeFilter.Separator(),
-        GenreFilter(getGenreList())
+        GenreFilter(getGenreList()),
     )
 
     private class GenreFilter(vals: Array<Pair<String, String>>) : UriPartFilter("Genres", vals)

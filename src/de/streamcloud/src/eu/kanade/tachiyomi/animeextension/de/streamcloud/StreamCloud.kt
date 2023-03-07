@@ -32,7 +32,7 @@ class StreamCloud : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "de"
 
-    override val supportsLatest = true
+    override val supportsLatest = false
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -99,7 +99,7 @@ class StreamCloud : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     try {
                         with(
                             client.newCall(GET(url, headers = Headers.headersOf("Referer", baseUrl, "Cookie", "Fuck Streamtape because they add concatenation to fuck up scrapers")))
-                                .execute().asJsoup()
+                                .execute().asJsoup(),
                         ) {
                             linkRegex.find(this.select("script:containsData(document.getElementById('robotlink'))").toString())?.let {
                                 val quality = "Streamtape"
@@ -141,20 +141,26 @@ class StreamCloud : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     otherList.add(video)
                 }
             }
-        } else otherList += this
+        } else {
+            otherList += this
+        }
         val newList = mutableListOf<Video>()
         var preferred = 0
         for (video in hosterList) {
             if (hoster?.let { video.quality.contains(it) } == true) {
                 newList.add(preferred, video)
                 preferred++
-            } else newList.add(video)
+            } else {
+                newList.add(video)
+            }
         }
         for (video in otherList) {
             if (hoster?.let { video.quality.contains(it) } == true) {
                 newList.add(preferred, video)
                 preferred++
-            } else newList.add(video)
+            } else {
+                newList.add(video)
+            }
         }
         return newList
     }

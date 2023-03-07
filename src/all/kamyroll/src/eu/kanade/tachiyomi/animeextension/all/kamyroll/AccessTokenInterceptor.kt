@@ -2,76 +2,153 @@ package eu.kanade.tachiyomi.animeextension.all.kamyroll
 
 import android.content.SharedPreferences
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.Headers
 import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import java.net.Authenticator
 import java.net.HttpURLConnection
+import java.net.InetSocketAddress
+import java.net.PasswordAuthentication
+import java.net.Proxy
+import java.text.SimpleDateFormat
+import java.util.Locale
 
-class AccessTokenInterceptor(val baseUrl: String, val json: Json, val preferences: SharedPreferences) : Interceptor {
-    private val deviceId = randomId()
-    private var accessToken = preferences.getString("access_token", null) ?: ""
+class AccessTokenInterceptor(
+    private val crUrl: String,
+    private val json: Json,
+    private val preferences: SharedPreferences,
+) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        if (accessToken.isBlank()) accessToken = refreshAccessToken()
+        val accessTokenN = getAccessToken()
 
-        val request = if (chain.request().url.toString().contains("kamyroll")) {
-            chain.request().newBuilder()
-                .header("authorization", accessToken)
-                .build()
-        } else {
-            chain.request()
-        }
+        val request = newRequestWithAccessToken(chain.request(), accessTokenN)
         val response = chain.proceed(request)
-
-        if (response.code == HttpURLConnection.HTTP_UNAUTHORIZED) {
-            synchronized(this) {
-                response.close()
-                val newAccessToken = refreshAccessToken()
-                // Access token is refreshed in another thread.
-                if (accessToken != newAccessToken) {
-                    accessToken = newAccessToken
-                    return chain.proceed(newRequestWithAccessToken(chain.request(), newAccessToken))
+        when (response.code) {
+            HttpURLConnection.HTTP_UNAUTHORIZED -> {
+                synchronized(this) {
+                    response.close()
+                    // Access token is refreshed in another thread. Check if it has changed.
+                    val newAccessToken = getAccessToken()
+                    if (accessTokenN != newAccessToken) {
+                        return chain.proceed(newRequestWithAccessToken(request, newAccessToken))
+                    }
+                    val refreshedToken = refreshAccessToken(TOKEN_PREF_KEY)
+                    // Retry the request
+                    return chain.proceed(
+                        newRequestWithAccessToken(chain.request(), refreshedToken),
+                    )
                 }
+            }
+            else -> return response
+        }
+    }
 
-                // Need to refresh an access token
-                val updatedAccessToken = refreshAccessToken()
-                accessToken = updatedAccessToken
-                // Retry the request
-                return chain.proceed(newRequestWithAccessToken(chain.request(), updatedAccessToken))
+    private fun newRequestWithAccessToken(request: Request, tokenData: AccessToken): Request {
+        return request.newBuilder()
+            .header("authorization", "${tokenData.token_type} ${tokenData.access_token}")
+            .build()
+    }
+
+    fun getAccessToken(): AccessToken {
+        return preferences.getString(TOKEN_PREF_KEY, null)?.toAccessToken()
+            ?: refreshAccessToken(TOKEN_PREF_KEY)
+    }
+
+    fun getLocalToken(force: Boolean = false): AccessToken? {
+        if (!preferences.getBoolean(PREF_FETCH_LOCAL_SUBS, false) && !force) return null
+        synchronized(this) {
+            val now = System.currentTimeMillis() + 1800000 // add 30 minutes for safety
+            val localToken = preferences.getString(LOCAL_TOKEN_PREF_KEY, null)?.toAccessToken()
+            return if (force || localToken == null || localToken.policyExpire!! < now) {
+                refreshAccessToken(LOCAL_TOKEN_PREF_KEY, false)
+            } else {
+                localToken
             }
         }
-
-        return response
     }
 
-    private fun newRequestWithAccessToken(request: Request, accessToken: String): Request {
-        return request.newBuilder()
-            .header("authorization", accessToken)
-            .build()
+    fun removeLocalToken() {
+        preferences.edit().putString(LOCAL_TOKEN_PREF_KEY, null).apply()
     }
 
-    private fun refreshAccessToken(): String {
+    private fun refreshAccessToken(PREF_KEY: String, useProxy: Boolean = true): AccessToken {
         val client = OkHttpClient().newBuilder().build()
-        val url = "$baseUrl/auth/v1/token".toHttpUrlOrNull()!!.newBuilder()
-            .addQueryParameter("device_id", deviceId)
-            .addQueryParameter("device_type", "aniyomi")
-            .addQueryParameter("access_token", "HMbQeThWmZq4t7w")
-            .build()
-        val response = client.newCall(GET(url.toString())).execute()
-        val parsedJson = json.decodeFromString<AccessToken>(response.body!!.string())
-        val token = "${parsedJson.token_type} ${parsedJson.access_token}"
-        preferences.edit().putString("access_token", token).apply()
-        return token
+        Authenticator.setDefault(
+            object : Authenticator() {
+                override fun getPasswordAuthentication(): PasswordAuthentication {
+                    return PasswordAuthentication("crunblocker", "crunblocker".toCharArray())
+                }
+            },
+        )
+        val usedClient = if (useProxy) {
+            client.newBuilder()
+                .proxy(
+                    Proxy(
+                        Proxy.Type.SOCKS,
+                        InetSocketAddress("cr-unblocker.us.to", 1080),
+                    ),
+                )
+                .build()
+        } else {
+            client
+        }
+        val response = usedClient.newCall(getRequest(client)).execute()
+        val parsedJson = json.decodeFromString<AccessToken>(response.body.string())
+
+        val policy = usedClient.newCall(newRequestWithAccessToken(GET("$crUrl/index/v2"), parsedJson)).execute()
+        val policyJson = json.decodeFromString<Policy>(policy.body.string())
+        val allTokens = AccessToken(
+            parsedJson.access_token,
+            parsedJson.token_type,
+            policyJson.cms.policy,
+            policyJson.cms.signature,
+            policyJson.cms.key_pair_id,
+            policyJson.cms.bucket,
+            DateFormatter.parse(policyJson.cms.expires)?.time,
+        )
+        preferences.edit().putString(PREF_KEY, allTokens.toJsonString()).apply()
+        return allTokens
     }
 
-    // Random 15 length string
-    private fun randomId(): String {
-        return (0..14).joinToString("") {
-            (('0'..'9') + ('a'..'f')).random().toString()
+    private fun getRequest(client: OkHttpClient): Request {
+        val refreshTokenResp = client.newCall(
+            GET("https://raw.githubusercontent.com/Samfun75/File-host/main/aniyomi/refreshToken.txt"),
+        ).execute()
+        val refreshToken = refreshTokenResp.body.string().replace("[\n\r]".toRegex(), "")
+        val headers = Headers.headersOf(
+            "Content-Type", "application/x-www-form-urlencoded",
+            "Authorization", "Basic a3ZvcGlzdXZ6Yy0teG96Y21kMXk6R21JSTExenVPVnRnTjdlSWZrSlpibzVuLTRHTlZ0cU8="
+        )
+        val postBody = "grant_type=refresh_token&refresh_token=$refreshToken&scope=offline_access".toRequestBody(
+            "application/x-www-form-urlencoded".toMediaType(),
+        )
+        return POST("$crUrl/auth/v1/token", headers, postBody)
+    }
+
+    private fun AccessToken.toJsonString(): String {
+        return json.encodeToString(this)
+    }
+
+    private fun String.toAccessToken(): AccessToken {
+        return json.decodeFromString(this)
+    }
+
+    companion object {
+        private const val TOKEN_PREF_KEY = "access_token_data"
+        private const val LOCAL_TOKEN_PREF_KEY = "local_access_token_data"
+        private const val PREF_FETCH_LOCAL_SUBS = "preferred_local_subs"
+
+        private val DateFormatter by lazy {
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ENGLISH)
         }
     }
 }

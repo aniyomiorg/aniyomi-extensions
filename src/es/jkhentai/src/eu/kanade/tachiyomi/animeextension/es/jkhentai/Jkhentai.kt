@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.jkhentai.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -13,6 +12,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
@@ -47,7 +47,7 @@ class Jkhentai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
-            element.select("div.imagen a").attr("href")
+            element.select("div.imagen a").attr("href"),
         )
         anime.title = element.select("h2").text()
         anime.thumbnail_url = element.select("div.imagen img").attr("src")
@@ -84,18 +84,16 @@ class Jkhentai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         document.select("div#contenedor div.items.ptts div#movie div.post div#player-container ul.player-menu li").forEach { it ->
             val server = it.select("a").text()
-            document.select("div#contenedor div.items.ptts div#movie div.post div#player-container div.play-c").forEach() {
-                if (server == "StreamTape") {
-                    val url = it.select("div.player-content iframe").attr("src")
-                    val video = StreamTapeExtractor(client).videoFromUrl(url, server)
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
-                if (server == "Upload") {
-                    val url = it.select("div.player-content iframe").attr("src")
-                    val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
-                    YourUploadExtractor(client).videoFromUrl(url, headers = headers).map { vid -> videoList.add(vid) }
+            document.select("div#contenedor div.items.ptts div#movie div.post div#player-container div.play-c").forEach {
+                val url = it.select("div.player-content iframe").attr("src")
+                when (server) {
+                    "StreamTape" ->
+                        StreamTapeExtractor(client).videoFromUrl(url, server)
+                            ?.also { videoList.add(it) }
+                    "Upload" ->
+                        YourUploadExtractor(client).videoFromUrl(url, headers = headers)
+                            .also { videoList.addAll(it) }
+                    else -> null
                 }
             }
         }
@@ -111,7 +109,7 @@ class Jkhentai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         return try {
             val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
             val userPreferredQuality = preferences.getString("preferred_quality", "StreamTape")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
@@ -149,9 +147,9 @@ class Jkhentai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.selectFirst("div#contenedor div.items.ptts div#movie div.post div.headingder div.datos div.imgs.tsll a img").attr("src")
-        anime.title = document.selectFirst("div#contenedor div.items.ptts div#movie div.post div.headingder div.datos div.dataplus h1").text()
-        anime.description = "Titulo Original: " + document.select("div#contenedor div.items.ptts div#movie div.post div.headingder div.datos div.dataplus span.original").first().ownText()
+        anime.thumbnail_url = document.selectFirst("div#contenedor div.items.ptts div#movie div.post div.headingder div.datos div.imgs.tsll a img")!!.attr("src")
+        anime.title = document.selectFirst("div#contenedor div.items.ptts div#movie div.post div.headingder div.datos div.dataplus h1")!!.text()
+        anime.description = "Titulo Original: " + document.selectFirst("div#contenedor div.items.ptts div#movie div.post div.headingder div.datos div.dataplus span.original")!!.ownText()
         anime.genre = document.select("div.items.ptts div#movie div.post div.headingder div.datos div.dataplus div#dato-1.data-content div.xmll p.xcsd strong a").joinToString { it.text() }
         anime.status = SAnime.COMPLETED
         return anime
@@ -167,7 +165,7 @@ class Jkhentai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
-        GenreFilter()
+        GenreFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -215,8 +213,8 @@ class Jkhentai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Maids", "maids"),
             Pair("Netorase", "netorase"),
             Pair("Shota", "shota"),
-            Pair("Succubus", "succubus")
-        )
+            Pair("Succubus", "succubus"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

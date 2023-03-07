@@ -162,7 +162,7 @@ class LocoPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         return try {
             val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
             val userPreferredQuality = preferences.getString("preferred_quality", "DoodStream")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
@@ -193,7 +193,7 @@ class LocoPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
-        GenreFilter()
+        GenreFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -229,8 +229,8 @@ class LocoPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Terror", "terror"),
             Pair("Vampiros", "vampiros"),
             Pair("Western", "western"),
-            Pair("Zombies", "zombies")
-        )
+            Pair("Zombies", "zombies"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -248,8 +248,8 @@ class LocoPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = externalOrInternalImg(document.selectFirst("div.intsd div.peli_img_int img").attr("src"))
-        anime.description = document.selectFirst("div.content span div.sinoptxt strong").text().removeSurrounding("\"")
+        anime.thumbnail_url = externalOrInternalImg(document.selectFirst("div.intsd div.peli_img_int img")!!.attr("src"))
+        anime.description = document.selectFirst("div.content span div.sinoptxt strong")!!.text().removeSurrounding("\"")
         document.select("div.content div.details ul.dtalist li").map {
             val textContent = it.text()
             val tempContent = textContent.lowercase()
@@ -288,13 +288,13 @@ class LocoPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
                 "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
                 "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
-                "YourUpload", "DoodStream", "StreamTape"
+                "YourUpload", "DoodStream", "StreamTape",
             ) // video servers without resolution
             entryValues = arrayOf(
                 "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
                 "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
                 "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
-                "DoodStream", "StreamTape"
+                "DoodStream", "StreamTape",
             ) // video servers without resolution
             setDefaultValue("DoodStream")
             summary = "%s"

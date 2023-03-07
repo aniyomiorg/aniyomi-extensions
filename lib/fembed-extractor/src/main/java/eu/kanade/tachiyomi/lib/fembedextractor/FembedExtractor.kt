@@ -16,7 +16,7 @@ class FembedExtractor(private val client: OkHttpClient) {
             url.replace("/v/", "/api/source/")
         }
         val body = runCatching {
-            client.newCall(POST(videoApi)).execute().body?.string().orEmpty()
+            client.newCall(POST(videoApi)).execute().body.string()
         }.getOrNull() ?: return emptyList<Video>()
 
         val jsonResponse = try{ Json { ignoreUnknownKeys = true }.decodeFromString<FembedResponse>(body) } catch (e: Exception) { FembedResponse(false, emptyList()) }

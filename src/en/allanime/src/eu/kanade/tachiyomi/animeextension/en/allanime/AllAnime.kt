@@ -21,6 +21,10 @@ import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
@@ -36,7 +40,8 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "AllAnime"
 
-    override val baseUrl = "https://allanime.site"
+    // allanime.to
+    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://api.allanime.to")!! }
 
     override val lang = "en"
 
@@ -46,6 +51,11 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private val json: Json by injectLazy()
 
+    private val popularHash = "563c9c7c7fb5218aaf5562ad5d7cabb9ece03a36b4bc94f1384ba70709bd61da"
+    private val searchHash = "c4305f3918591071dfecd081da12243725364f6b7dd92072df09d915e390b1b7"
+    private val _idHash = "259ae45c19ceff2f855215bb82d377fe7b0ab661f9abcd41538bda935e9cb299"
+    private val episodeHash = "919e327075ac9e249d003aa3f804a48bbdf22d7b1d107ffe659accd54283ce48"
+
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
@@ -54,7 +64,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun popularAnimeRequest(page: Int): Request {
         val variables = """{"type":"anime","size":30,"dateRange":7,"page":$page,"allowAdult":false,"allowUnknown":false}"""
-        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"6f6fe5663e3e9ea60bdfa693f878499badab83e7f18b56acdba5f8e8662002aa"}}"""
+        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$popularHash"}}"""
         val headers = headers.newBuilder()
             .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
             .build()
@@ -62,7 +72,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val parsed = json.decodeFromString<PopularResult>(response.body!!.string())
+        val parsed = json.decodeFromString<PopularResult>(response.body.string())
         val animeList = mutableListOf<SAnime>()
 
         val titleStyle = preferences.getString("preferred_title_style", "romaji")!!
@@ -78,7 +88,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                         }
                         thumbnail_url = it.anyCard.thumbnail
                         url = it.anyCard._id
-                    }
+                    },
                 )
             }
         }
@@ -90,7 +100,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun latestUpdatesRequest(page: Int): Request {
         val variables = """{"search":{"allowAdult":false,"allowUnknown":false},"limit":26,"page":$page,"translationType":"${preferences.getString("preferred_sub", "sub")!!}","countryOrigin":"ALL"}"""
-        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"9c7a8bc1e095a34f2972699e8105f7aaf9082c6e1ccd56eab99c2f1a971152c6"}}"""
+        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$searchHash"}}"""
         val headers = headers.newBuilder()
             .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
             .build()
@@ -117,13 +127,12 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun searchAnimeRequest(page: Int, query: String, filters: AllAnimeFilters.FilterSearchParams): Request {
         return if (query.isNotEmpty()) {
             val variables = """{"search":{"query":"$query","allowAdult":false,"allowUnknown":false},"limit":26,"page":$page,"translationType":"${preferences.getString("preferred_sub", "sub")!!}","countryOrigin":"ALL"}"""
-            val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"9c7a8bc1e095a34f2972699e8105f7aaf9082c6e1ccd56eab99c2f1a971152c6"}}"""
+            val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$searchHash"}}"""
             val headers = headers.newBuilder()
                 .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
                 .build()
             GET("$baseUrl/allanimeapi?variables=$variables&extensions=$extensions", headers = headers)
         } else {
-
             val seasonString = if (filters.season == "all") "" else ""","season":"${filters.season}""""
             val yearString = if (filters.releaseYear == "all") "" else ""","year":${filters.releaseYear}"""
             val genresString = if (filters.genres == "all") "" else ""","genres":${filters.genres},"excludeGenres":[]"""
@@ -133,7 +142,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             var variables = """{"search":{"allowAdult":false,"allowUnknown":false$seasonString$yearString$genresString$typesString$sortByString"""
             variables += """},"limit":26,"page":$page,"translationType":"${preferences.getString("preferred_sub", "sub")!!}","countryOrigin":"${filters.origin}"}"""
 
-            val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"9c7a8bc1e095a34f2972699e8105f7aaf9082c6e1ccd56eab99c2f1a971152c6"}}"""
+            val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$searchHash"}}"""
             val headers = headers.newBuilder()
                 .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
                 .build()
@@ -151,7 +160,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun animeDetailsRequest(anime: SAnime): Request {
         val variables = """{"_id":"${anime.url}"}"""
-        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"f73a8347df0e3e794f8955a18de6e85ac25dfc6b74af8ad613edf87bb446a854"}}"""
+        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$_idHash"}}"""
         val headers = headers.newBuilder()
             .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
             .build()
@@ -159,13 +168,13 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
-        val show = json.decodeFromString<SeriesResult>(response.body!!.string()).data.show
+        val show = json.decodeFromString<SeriesResult>(response.body.string()).data.show
         val anime = SAnime.create()
 
         anime.title = show.name
 
         anime.description = Jsoup.parse(
-            show.description?.replace("<br>", "br2n") ?: ""
+            show.description?.replace("<br>", "br2n") ?: "",
         ).text().replace("br2n", "\n") + "\n\n"
         anime.description += "Type: ${show.type ?: "Unknown"}"
         anime.description += "\nAired: ${show.season?.quarter ?: "-"} ${show.season?.year ?: "-"}"
@@ -184,7 +193,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun episodeListRequest(anime: SAnime): Request {
         val variables = """{"_id":"${anime.url}"}"""
-        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"f73a8347df0e3e794f8955a18de6e85ac25dfc6b74af8ad613edf87bb446a854"}}"""
+        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$_idHash"}}"""
         val headers = headers.newBuilder()
             .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
             .build()
@@ -192,7 +201,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val medias = json.decodeFromString<SeriesResult>(response.body!!.string())
+        val medias = json.decodeFromString<SeriesResult>(response.body.string())
         val episodeList = mutableListOf<SEpisode>()
 
         val subOrDub = preferences.getString("preferred_sub", "sub")!!
@@ -205,7 +214,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 episode.name = "Episode $numName (sub)"
 
                 val variables = """{"showId":"${medias.data.show._id}","translationType":"sub","episodeString":"$ep"}"""
-                val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"bfda9b479f7a4810bfeb9e3c8d462c6d09a33f918328b0688eb370e1778f272f"}}"""
+                val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$episodeHash"}}"""
                 episode.setUrlWithoutDomain("/allanimeapi?variables=$variables&extensions=$extensions")
                 episodeList.add(episode)
             }
@@ -217,7 +226,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 episode.name = "Episode $numName (dub)"
 
                 val variables = """{"showId":"${medias.data.show._id}","translationType":"dub","episodeString":"$ep"}"""
-                val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"bfda9b479f7a4810bfeb9e3c8d462c6d09a33f918328b0688eb370e1778f272f"}}"""
+                val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$episodeHash"}}"""
                 episode.setUrlWithoutDomain("/allanimeapi?variables=$variables&extensions=$extensions")
                 episodeList.add(episode)
             }
@@ -236,19 +245,20 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val body = response.body!!.string()
+        val body = response.body.string()
 
         val videoJson = json.decodeFromString<EpisodeResult>(body)
         val videoList = mutableListOf<Pair<Video, Float>>()
+        val serverList = mutableListOf<Server>()
 
         val altHosterSelection = preferences.getStringSet(
             "alt_hoster_selection",
-            setOf("player", "vidstreaming", "okru", "mp4upload", "streamlare", "doodstream")
+            setOf("player", "vidstreaming", "okru", "mp4upload", "streamlare", "doodstream"),
         )!!
 
         val hosterSelection = preferences.getStringSet(
             "hoster_selection",
-            setOf("default", "ac", "luf-mp4", "si-hls", "s-mp4", "ac-hls")
+            setOf("default", "ac", "luf-mp4", "si-hls", "s-mp4", "ac-hls"),
         )!!
 
         for (video in videoJson.data.episode.sourceUrls) {
@@ -263,83 +273,119 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                         (hosterSelection.contains("uv-mp4") && video.sourceName.lowercase().contains("uv-mp4")) ||
                         (hosterSelection.contains("pn-hls") && video.sourceName.lowercase().contains("pn-hls"))
                     ) -> {
-                    val extractor = AllAnimeExtractor(client)
-                    val videos = runCatching {
-                        extractor.videoFromUrl(video.sourceUrl, video.sourceName)
-                    }.getOrNull() ?: emptyList()
-                    for (v in videos) {
-                        videoList.add(Pair(v, video.priority))
-                    }
+                    serverList.add(Server(video.sourceUrl, "internal", video.priority))
                 }
                 altHosterSelection.contains("player") && video.type == "player" -> {
-                    videoList.add(
-                        Pair(
-                            Video(
-                                video.sourceUrl,
-                                "Original (player ${video.sourceName})",
-                                video.sourceUrl
-                            ),
-                            video.priority
-                        )
-
-                    )
+                    serverList.add(Server(video.sourceUrl, "player", video.priority))
                 }
                 altHosterSelection.contains("streamsb") && video.sourceUrl.contains("streamsb") -> {
-                    val extractor = StreamSBExtractor(client)
-                    val videos = runCatching {
-                        extractor.videosFromUrl(video.sourceUrl, headers)
-                    }.getOrNull() ?: emptyList()
-                    for (v in videos) {
-                        videoList.add(Pair(v, video.priority))
-                    }
+                    serverList.add(Server(video.sourceUrl, "streamsb", video.priority))
                 }
-                altHosterSelection.contains("vidstreaming") && (video.sourceUrl.contains("vidstreaming") || video.sourceUrl.contains("https://gogo")) -> {
-                    val extractor = VidstreamingExtractor(client, json)
-                    val videos = runCatching {
-                        extractor.videosFromUrl(video.sourceUrl.replace(Regex("^//"), "https://"))
-                    }.getOrNull() ?: emptyList()
-                    for (v in videos) {
-                        videoList.add(Pair(v, video.priority))
-                    }
+                altHosterSelection.contains("vidstreaming") && (
+                    video.sourceUrl.contains("vidstreaming") || video.sourceUrl.contains("https://gogo") ||
+                        video.sourceUrl.contains("playgo1.cc")
+                    ) -> {
+                    serverList.add(Server(video.sourceUrl, "gogo", video.priority))
                 }
                 altHosterSelection.contains("doodstream") && video.sourceUrl.contains("dood") -> {
-                    val extractor = DoodExtractor(client)
-                    val videos = runCatching {
-                        extractor.videosFromUrl(video.sourceUrl)
-                    }.getOrNull() ?: emptyList()
-                    for (v in videos) {
-                        videoList.add(Pair(v, video.priority))
-                    }
+                    serverList.add(Server(video.sourceUrl, "dood", video.priority))
                 }
                 altHosterSelection.contains("okru") && video.sourceUrl.contains("ok.ru") -> {
-                    val extractor = OkruExtractor(client)
-                    val videos = runCatching {
-                        extractor.videosFromUrl(video.sourceUrl)
-                    }.getOrNull() ?: emptyList()
-                    for (v in videos) {
-                        videoList.add(Pair(v, video.priority))
-                    }
+                    serverList.add(Server(video.sourceUrl, "okru", video.priority))
                 }
                 altHosterSelection.contains("mp4upload") && video.sourceUrl.contains("mp4upload.com") -> {
-                    val headers = headers.newBuilder().set("referer", "https://mp4upload.com/").build()
-                    val videos = runCatching {
-                        Mp4uploadExtractor(client).getVideoFromUrl(video.sourceUrl, headers)
-                    }.getOrNull() ?: emptyList()
-                    for (v in videos) {
-                        videoList.add(Pair(v, video.priority))
-                    }
+                    serverList.add(Server(video.sourceUrl, "mp4upload", video.priority))
                 }
                 altHosterSelection.contains("streamlare") && video.sourceUrl.contains("streamlare.com") -> {
-                    val extractor = StreamlareExtractor(client)
-                    val videos = runCatching {
-                        extractor.videosFromUrl(video.sourceUrl)
-                    }.getOrNull() ?: emptyList()
-                    for (v in videos) {
-                        videoList.add(Pair(v, video.priority))
-                    }
+                    serverList.add(Server(video.sourceUrl, "streamlare", video.priority))
                 }
             }
         }
+
+        videoList.addAll(
+            serverList.parallelMap { server ->
+                runCatching {
+                    when (server.sourceName) {
+                        "internal" -> {
+                            val extractor = AllAnimeExtractor(client)
+                            val videos = runCatching {
+                                extractor.videoFromUrl(server.sourceUrl, server.sourceName)
+                            }.getOrNull() ?: emptyList()
+                            videos.map {
+                                Pair(it, server.priority)
+                            }
+                        }
+                        "player" -> {
+                            listOf(
+                                Pair(
+                                    Video(
+                                        server.sourceUrl,
+                                        "Original (player ${server.sourceName})",
+                                        server.sourceUrl,
+                                    ),
+                                    server.priority,
+                                ),
+                            )
+                        }
+                        "streamsb" -> {
+                            val extractor = StreamSBExtractor(client)
+                            val videos = runCatching {
+                                extractor.videosFromUrl(server.sourceUrl, headers)
+                            }.getOrNull() ?: emptyList()
+                            videos.map {
+                                Pair(it, server.priority)
+                            }
+                        }
+                        "gogo" -> {
+                            val extractor = VidstreamingExtractor(client, json)
+                            val videos = runCatching {
+                                extractor.videosFromUrl(server.sourceUrl.replace(Regex("^//"), "https://"))
+                            }.getOrNull() ?: emptyList()
+                            videos.map {
+                                Pair(it, server.priority)
+                            }
+                        }
+                        "dood" -> {
+                            val extractor = DoodExtractor(client)
+                            val videos = runCatching {
+                                extractor.videosFromUrl(server.sourceUrl)
+                            }.getOrNull() ?: emptyList()
+                            videos.map {
+                                Pair(it, server.priority)
+                            }
+                        }
+                        "okru" -> {
+                            val extractor = OkruExtractor(client)
+                            val videos = runCatching {
+                                extractor.videosFromUrl(server.sourceUrl)
+                            }.getOrNull() ?: emptyList()
+                            videos.map {
+                                Pair(it, server.priority)
+                            }
+                        }
+                        "mp4upload" -> {
+                            val headers = headers.newBuilder().set("referer", "https://mp4upload.com/").build()
+                            val videos = runCatching {
+                                Mp4uploadExtractor(client).getVideoFromUrl(server.sourceUrl, headers)
+                            }.getOrNull() ?: emptyList()
+                            videos.map {
+                                Pair(it, server.priority)
+                            }
+                        }
+                        "streamlare" -> {
+                            val extractor = StreamlareExtractor(client)
+                            val videos = runCatching {
+                                extractor.videosFromUrl(server.sourceUrl)
+                            }.getOrNull() ?: emptyList()
+                            videos.map {
+                                Pair(it, server.priority)
+                            }
+                        }
+                        else -> null
+                    }
+                }.getOrNull()
+            }.filterNotNull().flatten(),
+        )
 
         return prioritySort(videoList)
     }
@@ -353,12 +399,18 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
         return pList.sortedWith(
             compareBy(
-                { if (prefServer == "site_default") it.second else it.first.quality.lowercase().contains(prefServer) },
-                { it.first.quality.lowercase().contains(quality) },
-                { it.first.quality.lowercase().contains(subOrDub) }
-            )
+                { if (prefServer == "site_default") it.second else it.first.quality.contains(prefServer, true) },
+                { it.first.quality.contains(quality, true) },
+                { it.first.quality.contains(subOrDub, true) },
+            ),
         ).reversed().map { t -> t.first }
     }
+
+    data class Server(
+        val sourceUrl: String,
+        val sourceName: String,
+        val priority: Float,
+    )
 
     private fun parseStatus(string: String?): Int {
         return when (string) {
@@ -370,7 +422,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun ParseAnime(response: Response): AnimesPage {
-        val parsed = json.decodeFromString<SearchResult>(response.body!!.string())
+        val parsed = json.decodeFromString<SearchResult>(response.body.string())
         val titleStyle = preferences.getString("preferred_title_style", "romaji")!!
 
         val animeList = parsed.data.shows.edges.map { ani ->
@@ -389,6 +441,22 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val domainPref = ListPreference(screen.context).apply {
+            key = "preferred_domain"
+            title = "Preferred domain (requires app restart)"
+            entries = arrayOf("api.allanime.to", "api.allanime.co")
+            entryValues = arrayOf("https://api.allanime.to", "https://api.allanime.co")
+            setDefaultValue("https://api.allanime.to")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
         val serverPref = ListPreference(screen.context).apply {
             key = "preferred_server"
             title = "Preferred Video Server"
@@ -477,6 +545,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
+        screen.addPreference(domainPref)
         screen.addPreference(serverPref)
         screen.addPreference(hostSelection)
         screen.addPreference(altHostSelection)
@@ -484,4 +553,10 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         screen.addPreference(titleStylePref)
         screen.addPreference(subPref)
     }
+
+    // From Dopebox
+    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 }

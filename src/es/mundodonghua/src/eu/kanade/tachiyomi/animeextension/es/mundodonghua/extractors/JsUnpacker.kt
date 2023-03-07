@@ -154,7 +154,7 @@ object JsUnpacker {
     }
 
     internal data class Unbaser(
-        private val base: Int
+        private val base: Int,
     ) {
         private val selector: Int = when {
             base > 62 -> 95
@@ -186,7 +186,7 @@ object JsUnpacker {
                 52 to "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOP",
                 54 to "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR",
                 62 to "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
-                95 to " !\"#\$%&\\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
+                95 to " !\"#\$%&\\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~",
             )
         }
     }

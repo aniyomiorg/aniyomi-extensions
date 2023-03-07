@@ -16,6 +16,8 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           duplicate-check-enabled: true
           duplicate-check-label: Source request
+          existing-check-enabled: true
+          existing-check-label: Source request
           auto-close-rules: |
             [
               {
@@ -31,7 +33,13 @@ jobs:
               {
                 "type": "title",
                 "regex": ".*(Source name|Short description).*",
-                "message": "You did not fill out the description in the title"
+                "message": "You did not fill out the description in the title."
+              },
+              {
+                "type": "both",
+                "regex": ".*(?:fail(?:ed|ure)?|can\\s*(?:no|')?t|unable|get past|(?<!n[o']?t )blocked by|error) (?:to )?(?:bypass|penetrate)?.*cloudfl?are.*",
+                "ignoreCase": true,
+                "message": "Refer to the **Solving Cloudflare issues** section at https://aniyomi.org/help/guides/troubleshooting/#solving-cloudflare-issues. If it doesn't work, migrate to other sources or wait until they lower their protection."
               }
             ]
           auto-close-ignore-label: do-not-autoclose

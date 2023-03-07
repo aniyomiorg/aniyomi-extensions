@@ -18,7 +18,9 @@ class MixDropExtractor(private val client: OkHttpClient) {
         val quality = ("MixDrop").let {
             if (lang.isNotBlank()) {
                 "$it($lang)"
-            } else it
+            } else {
+                it
+            }
         }
         return Video(url, quality, videoUrl)
     }

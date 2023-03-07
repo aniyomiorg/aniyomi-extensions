@@ -52,7 +52,7 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
-            element.select("div.movie-poster div.play a").attr("href")
+            element.select("div.movie-poster div.play a").attr("href"),
         )
         anime.title = element.select("div.movie-poster div.info.hidden div.title").text()
         anime.thumbnail_url = baseUrl + element.select("div.movie-poster span.image img").attr("src")
@@ -99,7 +99,7 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         val allPlayerIds = document.select("div.tab-content div div.new_player_top div.new_player_bottom div.button_box")[epNum.toInt()]
 
-        allPlayerIds.select("div").forEach() {
+        allPlayerIds.select("div").forEach {
             val server = it.text()
             if (server.lowercase() == "vudeo") {
                 val headers = headers.newBuilder()
@@ -205,7 +205,7 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun searchPopularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
-            element.select("div.search-result div.info div.title a").attr("href")
+            element.select("div.search-result div.info div.title a").attr("href"),
         )
         anime.title = element.select("div.search-result div.info div.title a").text()
         anime.thumbnail_url = baseUrl + element.select("div.search-result span.image img").attr("src")
@@ -219,7 +219,7 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.select("div.slide-middle h1").text()
-        anime.description = document.select("div.slide-desc").first().ownText()
+        anime.description = document.selectFirst("div.slide-desc")!!.ownText()
         anime.genre = document.select("div.image-bg-content div.slide-block div.slide-middle ul.slide-top li.right a").joinToString { it.text() }
         return anime
     }
@@ -234,7 +234,7 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         TypeFilter(),
-        GenreFilter()
+        GenreFilter(),
     )
 
     private class TypeFilter : UriPartFilter(
@@ -243,8 +243,8 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("<pour sélectionner>", ""),
             Pair("Animes VF", "animes-vf"),
             Pair("Animes VOSTFR", "animes-vostfr"),
-            Pair("FILMS", "films-vf-vostfr")
-        )
+            Pair("FILMS", "films-vf-vostfr"),
+        ),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -261,8 +261,8 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Fantasy", "Fantasy"),
             Pair("Mystère", "Mystère"),
             Pair("Psychologique", "Psychologique"),
-            Pair("Sci-Fi", "Sci-Fi")
-        )
+            Pair("Sci-Fi", "Sci-Fi"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

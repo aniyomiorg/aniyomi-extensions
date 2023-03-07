@@ -13,7 +13,7 @@ class PlayerTwoExtractor(private val client: OkHttpClient) {
     fun videoFromPlayerUrl(url: String): Video? {
         val headers = Headers.headersOf("User-Agent", AYConstants.USER_AGENT)
         val res = client.newCall(GET(url, headers)).execute()
-        val html = res.body?.string().orEmpty()
+        val html = res.body.string()
         val match = AYConstants.PLAYER_REGEX.find(html)
         if (match == null) {
             return match

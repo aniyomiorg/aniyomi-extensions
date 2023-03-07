@@ -5,11 +5,12 @@ ext {
     extName = 'Pelisplushd'
     pkgNameSuffix = 'es.pelisplushd'
     extClass = '.Pelisplushd'
-    extVersionCode = 25
+    extVersionCode = 28
     libVersion = '13'
 }
 
 dependencies {
+    implementation(project(':lib-yourupload-extractor'))
     implementation(project(':lib-fembed-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-streamsb-extractor'))

@@ -1,12 +1,18 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
 
 ext {
     extName = 'Kuronime'
     pkgNameSuffix = 'id.kuronime'
     extClass = '.Kuronime'
-    extVersionCode = 4
+    extVersionCode = 5
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-yourupload-extractor'))
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
 
 apply from: "$rootDir/common.gradle"

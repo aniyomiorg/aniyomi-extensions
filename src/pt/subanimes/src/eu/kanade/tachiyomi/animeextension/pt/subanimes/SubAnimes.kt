@@ -23,6 +23,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.api.get
+import java.util.concurrent.TimeUnit
 import kotlin.Exception
 
 class SubAnimes : ParsedAnimeHttpSource() {
@@ -36,7 +37,12 @@ class SubAnimes : ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.client
+    // Sometimes the site is slow.
+    override val client: OkHttpClient = network.client.newBuilder()
+        .connectTimeout(1, TimeUnit.MINUTES)
+        .readTimeout(1, TimeUnit.MINUTES)
+        .writeTimeout(1, TimeUnit.MINUTES)
+        .build()
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -98,7 +104,7 @@ class SubAnimes : ParsedAnimeHttpSource() {
             val url = it.attr("data-player-url")
             Pair(it.text(), url)
         }.ifEmpty {
-            val defaultPlayer = doc.selectFirst("div.playerBoxInfra > iframe")
+            val defaultPlayer = doc.selectFirst("div.playerBoxInfra > iframe")!!
             listOf(Pair("Default", defaultPlayer.attr("src")))
         }
 
@@ -113,12 +119,10 @@ class SubAnimes : ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     // =============================== Search ===============================
-    // We'll be using serialization in the search system,
-    // so those functions won't be used.
-    override fun searchAnimeFromElement(element: Element) = throw Exception("not used")
-    override fun searchAnimeSelector() = throw Exception("not used")
-    override fun searchAnimeNextPageSelector() = throw Exception("not used")
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
+    override fun searchAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
+    override fun searchAnimeSelector() = "div.aniItem > a"
+    override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = GET("$baseUrl/page/$page/?s=$query")
 
     override fun getFilterList(): AnimeFilterList = SBFilters.filterList
 
@@ -130,6 +134,12 @@ class SubAnimes : ParsedAnimeHttpSource() {
                 .map { searchAnimeBySlugParse(it, slug) }
         } else {
             val params = SBFilters.getSearchParameters(filters)
+
+            if (params == SBFilters.FilterSearchParams()) {
+                // no filters
+                return super.fetchSearchAnime(page, query, filters)
+            }
+
             client.newCall(searchAnimeRequest(page, query, params))
                 .asObservableSuccess()
                 .map { searchAnimeParse(it, page) }
@@ -146,10 +156,11 @@ class SubAnimes : ParsedAnimeHttpSource() {
         val body = FormBody.Builder().apply {
             add("action", "anime_search")
             add("posts_per_page", "12")
-            if (filters.adult)
+            if (filters.adult) {
                 add("age", "yes")
-            else
+            } else {
                 add("age", "no")
+            }
             add("format", filters.format)
             add("name", query)
             add("paged", "$page")
@@ -187,19 +198,19 @@ class SubAnimes : ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val doc = getRealDoc(document)
         return SAnime.create().apply {
-            val div = doc.selectFirst("div.leftAnime")
-            thumbnail_url = div.selectFirst("img").attr("src")
-            title = doc.selectFirst("section.page_title").text()
-            status = parseStatus(div.selectFirst("div.anime_status"))
+            val div = doc.selectFirst("div.leftAnime")!!
+            thumbnail_url = div.selectFirst("img")!!.attr("src")
+            title = doc.selectFirst("section.page_title")!!.text()
+            status = parseStatus(div.selectFirst("div.anime_status")!!)
 
-            val container = doc.selectFirst("div.sinopse_container")
+            val container = doc.selectFirst("div.sinopse_container")!!
             genre = container.select("div.genders_container > span")
                 .joinToString(", ") { it.text() }
 
-            var desc = container.selectFirst("div.sinopse_content").text()
+            var desc = container.selectFirst("div.sinopse_content")!!.text()
             desc += "\n\n" + div.select("div.animeInfosItemSingle").joinToString("\n") {
-                val key = it.selectFirst("b").text()
-                val value = it.selectFirst("span").text()
+                val key = it.selectFirst("b")!!.text()
+                val value = it.selectFirst("span")!!.text()
                 "$key: $value"
             }
             description = desc
@@ -214,7 +225,7 @@ class SubAnimes : ParsedAnimeHttpSource() {
         return SAnime.create().apply {
             setUrlWithoutDomain(element.attr("href"))
             title = element.attr("title")
-            thumbnail_url = element.selectFirst("img").attr("src")
+            thumbnail_url = element.selectFirst("img")!!.attr("src")
         }
     }
 
@@ -242,7 +253,7 @@ class SubAnimes : ParsedAnimeHttpSource() {
     }
 
     private inline fun <reified T> Response.parseAs(): T {
-        val responseBody = body?.string().orEmpty()
+        val responseBody = body.string()
         return json.decodeFromString(responseBody)
     }
 

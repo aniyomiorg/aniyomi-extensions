@@ -2,18 +2,27 @@ package eu.kanade.tachiyomi.animeextension.id.kuronime
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Base64
 import androidx.preference.ListPreference
+import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.id.kuronime.extractors.AnimekuExtractor
+import eu.kanade.tachiyomi.animeextension.id.kuronime.extractors.HxFileExtractor
+import eu.kanade.tachiyomi.animeextension.id.kuronime.extractors.LinkBoxExtractor
+import eu.kanade.tachiyomi.animeextension.id.kuronime.extractors.Mp4uploadExtractor
+import eu.kanade.tachiyomi.animeextension.id.kuronime.extractors.StreamlareExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
@@ -55,7 +64,7 @@ class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         val epsNum = getNumberFromEpsString(element.select("span.lchx").text())
-        episode.setUrlWithoutDomain(element.select("a").first().attr("href"))
+        episode.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
         episode.episode_number = when {
             (epsNum.isNotEmpty()) -> epsNum.toFloat()
             else -> 1F
@@ -75,8 +84,15 @@ class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun getAnimeFromAnimeElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("div > a").first().attr("href"))
-        anime.thumbnail_url = element.select("div > a > div.limit > img").first().attr("src")
+        anime.setUrlWithoutDomain(element.selectFirst("div > a")!!.attr("href"))
+
+        val thumbnailElement = element.selectFirst("div > a > div.limit > img")!!
+        val thumbnail = thumbnailElement.attr("src")
+        anime.thumbnail_url = if (thumbnail.startsWith("https:")) {
+            thumbnail
+        } else {
+            if (thumbnailElement.hasAttr("data-src")) thumbnailElement.attr("data-src") else ""
+        }
         anime.title = element.select("div > a > div.tt > h4").text()
         return anime
     }
@@ -90,7 +106,7 @@ class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeNextPageSelector(): String = "div.pagination > a.next"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/anime/?page=$page")
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/anime/page/$page")
 
     override fun popularAnimeSelector(): String = "div.listupd > article"
 
@@ -107,38 +123,49 @@ class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val patternZippy = "div.soraddl > div > a:nth-child(3)"
+        val videoList = mutableListOf<Video>()
 
-        val zippy = document.select(patternZippy).mapNotNull {
-            runCatching { zippyFromElement(it) }.getOrNull()
+        val hosterSelection = preferences.getStringSet(
+            "hoster_selection",
+            setOf("animeku", "mp4upload", "yourupload", "streamlare", "linkbox"),
+        )!!
+
+        document.select("select.mirror > option[value]").forEach { opt ->
+            val decoded = if (opt.attr("value").isEmpty()) {
+                document.selectFirst("iframe")!!.attr("data-src")
+            } else {
+                Jsoup.parse(
+                    String(Base64.decode(opt.attr("value"), Base64.DEFAULT)),
+                ).select("iframe[data-src~=.]").attr("data-src")
+            }
+
+            when {
+                hosterSelection.contains("animeku") && decoded.contains("animeku.org") -> {
+                    videoList.addAll(AnimekuExtractor(client).getVideosFromUrl(decoded, opt.text()))
+                }
+                hosterSelection.contains("mp4upload") && decoded.contains("mp4upload.com") -> {
+                    val headers = headers.newBuilder().set("referer", "https://mp4upload.com/").build()
+                    videoList.addAll(Mp4uploadExtractor(client).getVideoFromUrl(decoded, headers, opt.text()))
+                }
+                hosterSelection.contains("yourupload") && decoded.contains("yourupload.com") -> {
+                    videoList.addAll(YourUploadExtractor(client).videoFromUrl(decoded, headers, opt.text(), "Original - "))
+                }
+                hosterSelection.contains("streamlare") && decoded.contains("streamlare.com") -> {
+                    videoList.addAll(StreamlareExtractor(client).videosFromUrl(decoded, opt.text()))
+                }
+                hosterSelection.contains("hxfile") && decoded.contains("hxfile.co") -> {
+                    videoList.addAll(HxFileExtractor(client).getVideoFromUrl(decoded, opt.text()))
+                }
+                hosterSelection.contains("linkbox") && decoded.contains("linkbox.to") -> {
+                    videoList.addAll(LinkBoxExtractor(client).videosFromUrl(decoded, opt.text()))
+                }
+            }
         }
 
-        return zippy
+        return videoList.sort()
     }
 
     override fun videoFromElement(element: Element): Video = throw Exception("not used")
-
-    private fun zippyFromElement(element: Element): Video {
-        val res = client.newCall(GET(element.attr("href"))).execute().asJsoup()
-        val scr = res.select("script:containsData(dlbutton)").html()
-        var url = element.attr("href").substringBefore("/v/")
-        val numbs = scr.substringAfter("\" + (").substringBefore(") + \"")
-        val firstString = scr.substringAfter(" = \"").substringBefore("\" + (")
-        val num = numbs.substringBefore(" % ").toInt()
-        val lastString = scr.substringAfter("913) + \"").substringBefore("\";")
-        val nums = num % 51245 + num % 913
-        url += firstString + nums.toString() + lastString
-        val quality = with(lastString) {
-            when {
-                contains("1080p") -> "ZippyShare - 1080p"
-                contains("720p") -> "ZippyShare - 720p"
-                contains("480p") -> "ZippyShare - 480p"
-                contains("360p") -> "ZippyShare - 360p"
-                else -> "ZippyShare - Unknown Resolution"
-            }
-        }
-        return Video(url, quality, url)
-    }
 
     override fun videoListSelector(): String = throw Exception("not used")
 
@@ -163,11 +190,22 @@ class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val hostSelection = MultiSelectListPreference(screen.context).apply {
+            key = "hoster_selection"
+            title = "Enable/Disable Hosts"
+            entries = arrayOf("Animeku", "Mp4Upload", "YourUpload", "Streamlare", "Hxfile", "Linkbox")
+            entryValues = arrayOf("animeku", "mp4upload", "yourupload", "streamlare", "hxfile", "linkbox")
+            setDefaultValue(setOf("animeku", "mp4upload", "yourupload", "streamlare", "linkbox"))
+
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
+            entries = arrayOf("1080p", "720p", "480p", "360p", "HD", "SD")
+            entryValues = arrayOf("1080", "720", "480", "360", "HD", "SD")
             setDefaultValue("1080")
             summary = "%s"
 
@@ -178,6 +216,7 @@ class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        screen.addPreference(hostSelection)
         screen.addPreference(videoQualityPref)
     }
 }

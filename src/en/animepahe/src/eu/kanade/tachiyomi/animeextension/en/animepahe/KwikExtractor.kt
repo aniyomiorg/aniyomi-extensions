@@ -27,8 +27,10 @@ SOFTWARE.
 
 package eu.kanade.tachiyomi.animeextension.en.animepahe
 
+import dev.datlag.jsunpacker.JsUnpacker
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.OkHttpClient
@@ -48,13 +50,10 @@ class KwikExtractor(private val client: OkHttpClient) {
 
     fun getHlsStreamUrl(kwikUrl: String, referer: String): String {
         val eContent = client.newCall(GET(kwikUrl, Headers.headersOf("referer", referer)))
-            .execute().body!!.string()
-        val substring = eContent.substringAfterLast("m3u8|uwu|").substringBefore("'")
-        val urlParts = substring.split("|").reversed()
-        assert(urlParts.lastIndex == 8)
-        return urlParts[0] + "://" + urlParts[1] + "-" + urlParts[2] + "." + urlParts[3] + "." +
-            urlParts[4] + "." + urlParts[5] + "/" + urlParts[6] + "/" + urlParts[7] + "/" +
-            urlParts[8] + "/uwu.m3u8"
+            .execute().asJsoup()
+        val script = eContent.selectFirst("script:containsData(eval\\(function)")!!.data().substringAfterLast("eval(function(")
+        val unpacked = JsUnpacker.unpackAndCombine("eval(function($script")!!
+        return unpacked.substringAfter("const source=\\'").substringBefore("\\';")
     }
 
     fun getStreamUrlFromKwik(paheUrl: String): String {
@@ -67,7 +66,7 @@ class KwikExtractor(private val client: OkHttpClient) {
         val fContent =
             client.newCall(GET(kwikUrl, Headers.headersOf("referer", "https://kwik.cx/"))).execute()
         cookies += (fContent.header("set-cookie")!!)
-        val fContentString = fContent.body!!.string()
+        val fContentString = fContent.body.string()
 
         val (fullString, key, v1, v2) = kwikParamsRegex.find(fContentString)!!.destructured
         val decrypted = decrypt(fullString, key, v1.toInt(), v2.toInt())
@@ -85,16 +84,17 @@ class KwikExtractor(private val client: OkHttpClient) {
             .build()
 
         while (code != 302 && tries < 20) {
-
             content = noRedirectClient.newCall(
                 POST(
                     uri,
                     Headers.headersOf(
-                        "referer", fContent.request.url.toString(),
-                        "cookie", fContent.header("set-cookie")!!.replace("path=/;", "")
+                        "referer",
+                        fContent.request.url.toString(),
+                        "cookie",
+                        fContent.header("set-cookie")!!.replace("path=/;", ""),
                     ),
-                    FormBody.Builder().add("_token", tok).build()
-                )
+                    FormBody.Builder().add("_token", tok).build(),
+                ),
             ).execute()
             code = content.code
             ++tries

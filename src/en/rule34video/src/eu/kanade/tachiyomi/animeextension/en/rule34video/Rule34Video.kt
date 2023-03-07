@@ -32,7 +32,12 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = false
 
-    override val client: OkHttpClient = network.cloudflareClient
+    private val ddgInterceptor = DdosGuardInterceptor(network.client)
+
+    override val client: OkHttpClient = network.client
+        .newBuilder()
+        .addInterceptor(ddgInterceptor)
+        .build()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -75,12 +80,27 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element) = throw Exception("not used")
 
     override fun videoListParse(response: Response): List<Video> {
+        val headersBuilder = headers.newBuilder()
+            .apply {
+                val cookies = client.cookieJar.loadForRequest(response.request.url)
+                    .filterNot { it.name in listOf("__ddgid_", "__ddgmark_") }
+                    .map { "${it.name}=${it.value}" }
+                    .joinToString("; ")
+                val xsrfToken = cookies.split("XSRF-TOKEN=").getOrNull(1)?.substringBefore(";")?.replace("%3D", "=")
+                xsrfToken?.let { add("X-XSRF-TOKEN", it) }
+                add("Cookie", cookies)
+                add("Accept", "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5")
+                add("Referer", response.request.url.toString())
+                add("Accept-Language", "en-US,en;q=0.5")
+            }
+
         val document = response.asJsoup()
+
         return document.select("div.video_tools div:nth-child(3) div a.tag_item")
             .map { element ->
                 val url = element.attr("href")
                 val quality = element.text().substringAfter(" ")
-                Video(url, quality, url)
+                Video(url, quality, url, headers = headersBuilder.build())
             }
     }
 
@@ -183,7 +203,7 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val tagValue = it.select("input").attr("value")
                 val tagName = it.select("label").text()
                 Pair(tagName, tagValue)
-            }
+            },
         )
         return tagList.toTypedArray()
     }
@@ -194,14 +214,14 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         AnimeFilter.Separator(),
         AnimeFilter.Header("Entered a \"tag\", click on \"filter\" then Click \"reset\" to load tags."),
         TagFilter(),
-        TagSearch(tagsResults(tagDocument))
+        TagSearch(tagsResults(tagDocument)),
     )
 
     private class TagFilter : AnimeFilter.Text("Click \"reset\" without any text to load all A-Z tags.", "")
 
     private class TagSearch(results: Array<Pair<String, String>>) : UriPartFilter(
         "Tag Filter ",
-        results
+        results,
     )
 
     private class CategoryBy : UriPartFilter(
@@ -210,7 +230,7 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("All", ""),
             Pair("Futa", "15"),
             Pair("Gay", "192"),
-        )
+        ),
     )
 
     private class OrderFilter : UriPartFilter(
@@ -219,7 +239,7 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Latest", "latest-updates"),
             Pair("Most Viewed", "most-popular"),
             Pair("Top Rated", "top-rated"),
-        )
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

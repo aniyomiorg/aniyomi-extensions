@@ -11,7 +11,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 
 class JkanimeExtractor(
-    private val client: OkHttpClient
+    private val client: OkHttpClient,
 ) {
 
     fun getNozomiFromUrl(url: String, prefix: String = ""): Video? {
@@ -26,7 +26,7 @@ class JkanimeExtractor(
 
         val nozomiBody = "v=$postKey".toRequestBody("application/x-www-form-urlencoded".toMediaTypeOrNull())
         val nozomiResponse = client.newCall(POST("https://jkanime.net/gsplay/api.php", body = nozomiBody)).execute()
-        val nozomiUrl = JSONObject(nozomiResponse.body!!.string()).getString("file")
+        val nozomiUrl = JSONObject(nozomiResponse.body.string()).getString("file")
         if (nozomiResponse.isSuccessful && nozomiUrl.isNotBlank()) {
             return Video(nozomiUrl, "${prefix}Nozomi", nozomiUrl)
         }
@@ -35,7 +35,7 @@ class JkanimeExtractor(
 
     fun getDesuFromUrl(url: String, prefix: String = ""): Video? {
         val document = client.newCall(GET(url)).execute()
-        val script = document.asJsoup().selectFirst("script:containsData(var parts = {)").data()
+        val script = document.asJsoup().selectFirst("script:containsData(var parts = {)")!!.data()
         val streamUrl = script.substringAfter("url: '").substringBefore("'")
         if (document.isSuccessful && streamUrl.isNotBlank()) {
             return Video(streamUrl, "${prefix}Desu", streamUrl)

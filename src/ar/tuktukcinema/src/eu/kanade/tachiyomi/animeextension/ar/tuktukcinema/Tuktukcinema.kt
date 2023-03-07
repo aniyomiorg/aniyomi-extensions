@@ -59,13 +59,16 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun titleEdit(title: String, details: Boolean = false): String {
         return if (title.contains("فيلم")) {
-            if (Regex("فيلم (.*?) مترجم").containsMatchIn(title))
+            if (Regex("فيلم (.*?) مترجم").containsMatchIn(title)) {
                 Regex("فيلم (.*?) مترجم").find(title)!!.groupValues[1] + if (details) " (فيلم)" else "" // افلام اجنبيه مترجمه
-            else if (Regex("فيلم (.*?) مدبلج").containsMatchIn(title))
+            } else if (Regex("فيلم (.*?) مدبلج").containsMatchIn(title)) {
                 Regex("فيلم (.*?) مدبلج").find(title)!!.groupValues[1] + if (details) " (مدبلج)(فيلم)" else "" // افلام اجنبيه مدبلجه
-            else if (Regex("فيلم ([^a-zA-Z]+) ([0-9]+)").containsMatchIn(title)) // افلام عربى
+            } else if (Regex("فيلم ([^a-zA-Z]+) ([0-9]+)").containsMatchIn(title)) {
+                // افلام عربى
                 Regex("فيلم ([^a-zA-Z]+) ([0-9]+)").find(title)!!.groupValues[1] + if (details) " (فيلم)" else ""
-            else title
+            } else {
+                title
+            }
         } else if (title.contains("مسلسل")) {
             if (title.contains("الموسم")) {
                 val newTitle = Regex("مسلسل (.*?) الموسم (.*?) الحلقة ([0-9]+)").find(title)
@@ -73,13 +76,16 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             } else if (title.contains("الحلقة")) {
                 val newTitle = Regex("مسلسل (.*?) الحلقة ([0-9]+)").find(title)
                 newTitle!!.groupValues[1] + if (details) " (${newTitle.groupValues[2]}ح)" else ""
-            } else Regex(if (title.contains("الموسم")) "مسلسل (.*?) الموسم" else "مسلسل (.*?) الحلقة").find(title)!!.groupValues[1] + if (details) " (مسلسل)" else ""
-        } else if (title.contains("انمي"))
+            } else {
+                Regex(if (title.contains("الموسم")) "مسلسل (.*?) الموسم" else "مسلسل (.*?) الحلقة").find(title)!!.groupValues[1] + if (details) " (مسلسل)" else ""
+            }
+        } else if (title.contains("انمي")) {
             return Regex(if (title.contains("الموسم"))"انمي (.*?) الموسم" else "انمي (.*?) الحلقة").find(title)!!.groupValues[1] + if (details) " (انمى)" else ""
-        else if (title.contains("برنامج"))
+        } else if (title.contains("برنامج")) {
             Regex(if (title.contains("الموسم"))"برنامج (.*?) الموسم" else "برنامج (.*?) الحلقة").find(title)!!.groupValues[1] + if (details) " (برنامج)" else ""
-        else
+        } else {
             title
+        }
     }
 
     override fun popularAnimeNextPageSelector(): String = "div.pagination ul.page-numbers li a.next"
@@ -99,22 +105,26 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         fun addEpisodes(response: Response) {
             val document = response.asJsoup()
             val url = response.request.url.toString()
-            if (document.select(seasonsNextPageSelector()).isNullOrEmpty())
+            if (document.select(seasonsNextPageSelector()).isNullOrEmpty()) {
                 addEpisodeNew(url, "مشاهدة")
-            else
+            } else {
                 document.select(seasonsNextPageSelector()).reversed().forEach { season ->
                     val seasonNum = season.select("h3").text()
                     (
-                        if (seasonNum == document.selectFirst("div#mpbreadcrumbs a span:contains(الموسم)").text())
-                            document else client.newCall(GET(season.selectFirst("a").attr("href"))).execute().asJsoup()
+                        if (seasonNum == document.selectFirst("div#mpbreadcrumbs a span:contains(الموسم)")!!.text()) {
+                            document
+                        } else {
+                            client.newCall(GET(season.selectFirst("a")!!.attr("href"))).execute().asJsoup()
+                        }
                         )
                         .select("section.allepcont a").forEach { episode ->
                             addEpisodeNew(
                                 episode.attr("href") + "watch/",
-                                seasonNum + " : الحلقة " + episode.select("div.epnum").text().filter { it.isDigit() }
+                                seasonNum + " : الحلقة " + episode.select("div.epnum").text().filter { it.isDigit() },
                             )
                         }
                 }
+            }
         }
         addEpisodes(response)
         return episodes
@@ -207,7 +217,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.title = titleEdit(element.select("h3").text(), true).trim()
-        anime.thumbnail_url = element.select("img").attr(if (element.ownerDocument().location().contains("?s="))"src" else "data-src")
+        anime.thumbnail_url = element.select("img").attr(if (element.ownerDocument()!!.location().contains("?s="))"src" else "data-src")
         anime.setUrlWithoutDomain(element.select("a").attr("href") + "watch/")
         return anime
     }
@@ -266,7 +276,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         CatUnit("مسلسلات انمى", "category/anime-6/انمي-مترجم/"),
         CatUnit("مسلسلات تركى", "category/series-9/مسلسلات-تركي/"),
         CatUnit("مسلسلات اسيوى", "category/series-9/مسلسلات-أسيوي/"),
-        CatUnit("مسلسلات هندى", "category/series-9/مسلسلات-هندي/")
+        CatUnit("مسلسلات هندى", "category/series-9/مسلسلات-هندي/"),
     )
 
     // preferred quality settings

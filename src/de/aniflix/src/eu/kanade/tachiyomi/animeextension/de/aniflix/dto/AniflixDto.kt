@@ -24,7 +24,7 @@ data class AnimeDto(
     @SerialName("name")
     val name: String? = null,
     @SerialName("url")
-    val url: String? = null
+    val url: String? = null,
 )
 
 object IntSerializer : JsonTransformingSerializer<Int>(Int.serializer()) {
@@ -57,7 +57,7 @@ data class AnimeDetailsDto(
     @SerialName("url")
     val url: String? = null,
     @SerialName("seasons")
-    val seasons: List<Season>? = null
+    val seasons: List<Season>? = null,
 )
 
 @Serializable
@@ -69,7 +69,7 @@ data class Season(
     @SerialName("id")
     val id: Int? = null,
     @SerialName("length")
-    val length: Int? = null
+    val length: Int? = null,
 )
 
 @Serializable
@@ -81,19 +81,19 @@ data class Episode(
     @SerialName("name")
     val name: String? = null,
     @SerialName("streams")
-    val streams: List<Stream>? = null
+    val streams: List<Stream>? = null,
 )
 
 @Serializable
 data class Release(
     @SerialName("season")
-    val season: ShortSeason? = null
+    val season: ShortSeason? = null,
 )
 
 @Serializable
 data class ShortSeason(
     @SerialName("show")
-    val anime: AnimeDto? = null
+    val anime: AnimeDto? = null,
 )
 
 @Serializable
@@ -103,13 +103,13 @@ data class Stream(
     @SerialName("lang")
     val lang: String? = null,
     @SerialName("hoster")
-    val hoster: Hoster? = null
+    val hoster: Hoster? = null,
 )
 
 @Serializable
 data class Hoster(
     @SerialName("name")
-    val name: String? = null
+    val name: String? = null,
 )
 
 @Serializable
@@ -117,5 +117,5 @@ data class Genre(
     @SerialName("name")
     val name: String? = null,
     @SerialName("id")
-    val id: Int? = null
+    val id: Int? = null,
 )

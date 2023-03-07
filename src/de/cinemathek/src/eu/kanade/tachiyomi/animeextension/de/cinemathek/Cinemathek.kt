@@ -93,7 +93,7 @@ class Cinemathek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         player.forEach {
             val id = it.attr("data-post")
             val nume = it.attr("data-nume")
-            val ajax = client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", body = "action=doo_player_ajax&post=$id&nume=$nume&type=movie".toRequestBody("application/x-www-form-urlencoded".toMediaType()))).execute().body!!.string()
+            val ajax = client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", body = "action=doo_player_ajax&post=$id&nume=$nume&type=movie".toRequestBody("application/x-www-form-urlencoded".toMediaType()))).execute().body.string()
             val url = ajax.substringAfter("embed_url\":\"").substringBefore("\",").replace("\\", "")
             when {
                 url.contains("https://streamlare.com") && hosterSelection?.contains("slare") == true -> {
@@ -126,20 +126,26 @@ class Cinemathek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     otherList.add(video)
                 }
             }
-        } else otherList += this
+        } else {
+            otherList += this
+        }
         val newList = mutableListOf<Video>()
         var preferred = 0
         for (video in hosterList) {
             if (video.quality.contains(quality)) {
                 newList.add(preferred, video)
                 preferred++
-            } else newList.add(video)
+            } else {
+                newList.add(video)
+            }
         }
         for (video in otherList) {
             if (video.quality.contains(quality)) {
                 newList.add(preferred, video)
                 preferred++
-            } else newList.add(video)
+            } else {
+                newList.add(video)
+            }
         }
         return newList
     }

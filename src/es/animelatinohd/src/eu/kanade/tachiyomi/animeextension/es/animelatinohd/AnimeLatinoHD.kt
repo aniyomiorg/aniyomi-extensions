@@ -167,8 +167,8 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         val request = client.newCall(
                             GET(
                                 url = "https://api.animelatinohd.com/stream/${item["id"]!!.jsonPrimitive.content}",
-                                headers = headers.newBuilder().add("Referer", "https://www.animelatinohd.com/").build()
-                            )
+                                headers = headers.newBuilder().add("Referer", "https://www.animelatinohd.com/").build(),
+                            ),
                         ).execute()
                         val locationsDdh = request!!.networkResponse.toString()
                         fetchUrls(locationsDdh).map { url ->
@@ -257,7 +257,7 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         return try {
             val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
             val userPreferredQuality = preferences.getString("preferred_quality", "[Sub] Fembed:720p")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
@@ -287,7 +287,7 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
-        GenreFilter()
+        GenreFilter(),
     )
 
     override fun searchAnimeFromElement(element: Element): SAnime {
@@ -372,8 +372,8 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Terror", "terror"),
             Pair("Vampiros", "vampiros"),
             Pair("Yaoi", "yaoi"),
-            Pair("Yuri", "yuri")
-        )
+            Pair("Yuri", "yuri"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -413,7 +413,7 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "[Sub] DoodStream", "[Lat] DoodStream", // video servers without resolution
             "[Sub] SolidFiles", "[Lat] SolidFiles", // video servers without resolution
             "[Sub] Od.lk", "[Lat] Od.lk", // video servers without resolution
-            "[Sub] CldUp", "[Lat] CldUp"
+            "[Sub] CldUp", "[Lat] CldUp",
         ) // video servers without resolution
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"

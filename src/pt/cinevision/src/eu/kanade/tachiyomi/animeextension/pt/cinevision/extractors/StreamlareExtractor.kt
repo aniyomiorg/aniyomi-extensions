@@ -12,8 +12,8 @@ class StreamlareExtractor(private val client: OkHttpClient) {
         val id = url.substringAfter("/e/").substringBefore("/")
         val body = "{\"id\":\"$id\"}".toRequestBody("application/json".toMediaType())
         val playlist = client.newCall(
-            POST("https://sltube.org/api/video/stream/get", body = body)
-        ).execute().body!!.string()
+            POST("https://sltube.org/api/video/stream/get", body = body),
+        ).execute().body.string()
         val separator = "\"label\":\""
         return playlist.substringAfter(separator).split(separator).map {
             val quality = "$name - " + it.substringAfter(separator).substringBefore("\",")

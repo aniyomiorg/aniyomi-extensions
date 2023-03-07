@@ -2,10 +2,8 @@ package eu.kanade.tachiyomi.animeextension.es.animeflv
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.animeflv.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -18,6 +16,7 @@ import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
@@ -62,7 +61,7 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
             baseUrl + element.select("div.Description a.Button")
-                .attr("href")
+                .attr("href"),
         )
         anime.title = element.select("a h3").text()
         anime.thumbnail_url = try {
@@ -83,7 +82,8 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         document.select("script").forEach { script ->
             if (script.data().contains("var anime_info =")) {
                 val animeInfo = script.data().substringAfter("var anime_info = [").substringBefore("];")
-                val arrInfo = animeInfo.split(",")
+                val arrInfo = json.decodeFromString<List<String>>("[$animeInfo]")
+
                 val animeUri = arrInfo[2]!!.replace("\"", "")
                 val episodes = script.data().substringAfter("var episodes = [").substringBefore("];").trim()
                 val arrEpisodes = episodes.split("],[")
@@ -116,45 +116,24 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val json = servers!!.jsonObject
                     val quality = json!!["title"]!!.jsonPrimitive!!.content
                     var url = json!!["code"]!!.jsonPrimitive!!.content
-                    if (quality == "SB") {
-                        try {
-                            videoList.addAll(
-                                StreamSBExtractor(client).videosFromUrl(url, headers)
-                            )
-                        } catch (_: Exception) {}
-                    }
-                    if (quality == "Fembed") {
-                        try {
-                            videoList.addAll(
-                                FembedExtractor(client).videosFromUrl(url)
-                            )
-                        } catch (_: Exception) {}
-                    }
-                    if (quality == "Stape") {
-                        try {
-                            val url1 = json!!["url"]!!.jsonPrimitive!!.content
-                            val video = StreamTapeExtractor(client).videoFromUrl(url1)
-                            if (video != null) videoList.add(video)
-                        } catch (_: Exception) {}
-                    }
-                    if (quality == "Doodstream") {
-                        try {
-                            val video = DoodExtractor(client).videoFromUrl(url, "DoodStream", false)
-                            if (video != null) videoList.add(video)
-                        } catch (_: Exception) {}
-                    }
-                    if (quality == "Okru") {
-                        try {
-                            val videos = OkruExtractor(client).videosFromUrl(url)
-                            videoList.addAll(videos)
-                        } catch (_: Exception) {}
-                    }
-                    if (quality == "YourUpload") {
-                        try {
-                            val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
-                            YourUploadExtractor(client).videoFromUrl(url, headers = headers).map { videoList.add(it) }
-                        } catch (_: Exception) {}
-                    }
+                    val extractedVideos = runCatching {
+                        when (quality) {
+                            "SB" -> StreamSBExtractor(client).videosFromUrl(url, headers)
+                            "Fembed" -> FembedExtractor(client).videosFromUrl(url)
+                            "Stape" -> {
+                                val stapeUrl = json!!["url"]!!.jsonPrimitive!!.content
+                                StreamTapeExtractor(client).videoFromUrl(stapeUrl)
+                                    ?.let(::listOf)
+                            }
+                            "Doodstream" ->
+                                DoodExtractor(client).videoFromUrl(url, "DoodStream", false)
+                                    ?.let(::listOf)
+                            "Okru" -> OkruExtractor(client).videosFromUrl(url)
+                            "YourUpload" -> YourUploadExtractor(client).videoFromUrl(url, headers = headers)
+                            else -> null
+                        }
+                    }.getOrNull() ?: emptyList<Video>()
+                    videoList.addAll(extractedVideos)
                 }
             }
         }
@@ -170,7 +149,7 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         return try {
             val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
             val userPreferredQuality = preferences.getString("preferred_quality", "Fembed:720p")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
@@ -212,7 +191,7 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         GenreFilter(),
         StateFilter(),
         TypeFilter(),
-        OrderByFilter()
+        OrderByFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -259,8 +238,8 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Terror", "terror"),
             Pair("Vampiros", "vampiros"),
             Pair("Yaoi", "yaoi"),
-            Pair("Yuri", "yuri")
-        )
+            Pair("Yuri", "yuri"),
+        ),
     )
 
     private class StateFilter : UriPartFilter(
@@ -269,8 +248,8 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("<Seleccionar>", ""),
             Pair("En emisión", "1"),
             Pair("Finalizado", "2"),
-            Pair("Próximamente", "3")
-        )
+            Pair("Próximamente", "3"),
+        ),
     )
 
     private class TypeFilter : UriPartFilter(
@@ -280,8 +259,8 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("TV", "tv"),
             Pair("Película", "movie"),
             Pair("Especial", "special"),
-            Pair("OVA", "ova")
-        )
+            Pair("OVA", "ova"),
+        ),
     )
 
     private class OrderByFilter : UriPartFilter(
@@ -291,8 +270,8 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Recientemente Actualizados", "updated"),
             Pair("Recientemente Agregados", "added"),
             Pair("Nombre A-Z", "title"),
-            Pair("Calificación", "rating")
-        )
+            Pair("Calificación", "rating"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -310,9 +289,9 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = externalOrInternalImg(document.selectFirst("div.AnimeCover div.Image figure img").attr("src"))
-        anime.title = document.selectFirst("div.Ficha.fchlt div.Container .Title").text()
-        anime.description = document.selectFirst("div.Description").text().removeSurrounding("\"")
+        anime.thumbnail_url = externalOrInternalImg(document.selectFirst("div.AnimeCover div.Image figure img")!!.attr("src"))
+        anime.title = document.selectFirst("div.Ficha.fchlt div.Container .Title")!!.text()
+        anime.description = document.selectFirst("div.Description")!!.text().removeSurrounding("\"")
         anime.genre = document.select("nav.Nvgnrs a").joinToString { it.text() }
         anime.status = parseStatus(document.select("span.fa-tv").text())
         return anime
@@ -346,13 +325,13 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
                 "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
                 "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
-                "YourUpload", "DoodStream", "StreamTape"
+                "YourUpload", "DoodStream", "StreamTape",
             ) // video servers without resolution
             entryValues = arrayOf(
                 "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
                 "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
                 "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
-                "YourUpload", "DoodStream", "StreamTape"
+                "YourUpload", "DoodStream", "StreamTape",
             ) // video servers without resolution
             setDefaultValue("Fembed:720p")
             summary = "%s"

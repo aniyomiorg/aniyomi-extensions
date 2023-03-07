@@ -42,7 +42,7 @@ data class AnimeDto(
 
 @Serializable
 data class AnimeDetailsWrapperDto(
-    val response: AnimeDetailsDto
+    val response: AnimeDetailsDto,
 )
 
 @Serializable
@@ -92,7 +92,7 @@ data class AiringEpisodeDto(
 
 @Serializable
 data class EpisodeListingWrapperDto(
-    val response: List<EpisodeListingDto>
+    val response: List<EpisodeListingDto>,
 )
 
 @Serializable
@@ -117,7 +117,7 @@ data class EpisodeSourcesDto(
 @Serializable
 data class VideoLinkDto(
     @SerialName("response")
-    val url: String
+    val url: String,
 )
 
 abstract class AbsSourceBaseDto {

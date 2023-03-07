@@ -56,7 +56,7 @@ class DdosGuardInterceptor(private val client: OkHttpClient) : Interceptor {
             return ddg2Cookie
         }
         val wellKnown = client.newCall(GET("https://check.ddos-guard.net/check.js"))
-            .execute().body!!.string()
+            .execute().body.string()
             .substringAfter("'", "")
             .substringBefore("'", "")
         val checkUrl = "${url.scheme}://${url.host + wellKnown}"

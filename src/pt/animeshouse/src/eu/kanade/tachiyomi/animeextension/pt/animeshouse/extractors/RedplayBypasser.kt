@@ -10,26 +10,26 @@ import okhttp3.OkHttpClient
 
 class RedplayBypasser(
     private val client: OkHttpClient,
-    private val headers: Headers
+    private val headers: Headers,
 ) {
 
     fun fromUrl(url: String): String {
         val firstDoc = client.newCall(GET(url, headers)).execute().asJsoup()
-        val next = firstDoc.selectFirst("a").attr("href")
+        val next = firstDoc.selectFirst("a")!!.attr("href")
         var nextPage = client.newCall(GET(next, headers)).execute()
         var iframeUrl = ""
         var formUrl = next
         while (iframeUrl == "") {
-            val nextDoc = nextPage.asJsoup(decodeAtob(nextPage.body!!.string()))
+            val nextDoc = nextPage.asJsoup(decodeAtob(nextPage.body.string()))
             val iframe = nextDoc.selectFirst("iframe")
-            if (iframe != null)
+            if (iframe != null) {
                 iframeUrl = iframe.attr("src")
-            else {
+            } else {
                 val newHeaders = headers.newBuilder()
                     .set("Referer", formUrl)
                     .build()
                 val formBody = FormBody.Builder()
-                formUrl = nextDoc.selectFirst("form").attr("action")
+                formUrl = nextDoc.selectFirst("form")!!.attr("action")
                 nextDoc.select("input[name]").forEach {
                     formBody.add(it.attr("name"), it.attr("value"))
                 }

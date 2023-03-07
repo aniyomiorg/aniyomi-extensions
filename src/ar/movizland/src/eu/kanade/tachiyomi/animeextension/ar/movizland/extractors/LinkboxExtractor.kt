@@ -23,8 +23,8 @@ class LinkboxExtractor(private val client: OkHttpClient) {
                 Video(
                     it.jsonObject["url"].toString().replace("\"", ""),
                     "Linkbox: ${it.jsonObject["resolution"].toString().replace("\"", "")}",
-                    it.jsonObject["url"].toString().replace("\"", "")
-                )
+                    it.jsonObject["url"].toString().replace("\"", ""),
+                ),
             )
         }
         return videoList

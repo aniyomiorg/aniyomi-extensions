@@ -3,15 +3,11 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlinx-serialization'
 
 ext {
-    extName = 'UHD Movies (Experimental)'
+    extName = 'UHD Movies'
     pkgNameSuffix = 'en.uhdmovies'
     extClass = '.UHDMovies'
-    extVersionCode = 2
+    extVersionCode = 10
     libVersion = '13'
-}
-
-dependencies {
-    compileOnly libs.bundles.coroutines
 }
 
 apply from: "$rootDir/common.gradle"
