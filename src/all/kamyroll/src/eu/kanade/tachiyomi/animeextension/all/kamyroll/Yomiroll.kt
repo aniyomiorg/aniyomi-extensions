@@ -167,7 +167,12 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         return Observable.just(
             anime.apply {
                 author = info.data.first().content_provider
-                status = SAnime.COMPLETED
+                // Assumes simulcast as on going series, otherwise is completed
+                if (info.data.first().is_simulcast) {
+                    status = SAnime.ONGOING
+                } else {
+                    status = SAnime.COMPLETED
+                }
                 if (genre.isNullOrBlank()) {
                     genre =
                         info.data.first().genres?.joinToString { gen -> gen.replaceFirstChar { it.uppercase() } }
