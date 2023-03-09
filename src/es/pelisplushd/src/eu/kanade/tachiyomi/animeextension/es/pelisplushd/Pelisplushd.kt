@@ -97,23 +97,36 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val apiUrl = data.substringAfter("video[1] = '", "").substringBefore("';", "")
         val alternativeServers = document.select("ul.TbVideoNv.nav.nav-tabs li:not(:first-child)")
         if (apiUrl.isNotEmpty()) {
+            val domainRegex = Regex("^(?:https?:\\/\\/)?(?:[^@\\/\\n]+@)?(?:www\\.)?([^:\\/?\\n]+)")
+            val domainUrl = domainRegex.findAll(apiUrl).firstOrNull()?.value
+
             val apiResponse = client.newCall(GET(apiUrl)).execute().asJsoup()
-            var encryptedList = apiResponse!!.select("#PlayerDisplay div[class*=\"OptionsLangDisp\"] div[class*=\"ODDIV\"] div[class*=\"OD\"] li[data-r]")
-            var decryptedList = apiResponse!!.select("#PlayerDisplay div[class*=\"OptionsLangDisp\"] div[class*=\"ODDIV\"] div[class*=\"OD\"] li:not([data-r])")
+            val encryptedList = apiResponse!!.select("#PlayerDisplay div[class*=\"OptionsLangDisp\"] div[class*=\"ODDIV\"] div[class*=\"OD\"] li[data-r]")
+            val decryptedList = apiResponse!!.select("#PlayerDisplay div[class*=\"OptionsLangDisp\"] div[class*=\"ODDIV\"] div[class*=\"OD\"] li:not([data-r])")
             encryptedList.forEach {
                 val url = String(Base64.decode(it.attr("data-r"), Base64.DEFAULT))
                 val server = it.select("span").text()
-                serverVideoResolver(url, server.toString())?.forEach { video -> videoList.add(video) }
+                serverVideoResolver(url, server)?.forEach { video -> videoList.add(video) }
             }
             decryptedList.forEach {
+                val server = it.select("span").text()
                 val url = it.attr("onclick")
                     .substringAfter("go_to_player('")
                     .substringBefore("?cover_url=")
                     .substringBefore("')")
+                    .substringBefore("',")
                     .substringBefore("?poster")
                     .substringBefore("#poster=")
-                val server = it.select("span").text()
-                serverVideoResolver(url, server.toString())?.forEach { video -> videoList.add(video) }
+                val regIsUrl = "https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)".toRegex()
+                if (regIsUrl.containsMatchIn(url)) {
+                    serverVideoResolver(url, server)?.forEach { video -> videoList.add(video) }
+                } else {
+                    val apiPageSoup = client.newCall(GET("$domainUrl/player/?id=$url")).execute().asJsoup()
+                    val realUrl = apiPageSoup.selectFirst("iframe")?.attr("src")
+                    if (realUrl != null) {
+                        serverVideoResolver(realUrl, server)?.forEach { video -> videoList.add(video) }
+                    }
+                }
             }
         }
 
@@ -132,7 +145,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         "upload" -> { serverUrl = "https://uqload.com/embed-$urlId.html" }
                     }
                 }
-                serverVideoResolver(serverUrl, serverName.toString())?.forEach { video -> videoList.add(video) }
+                serverVideoResolver(serverUrl, serverName)?.forEach { video -> videoList.add(video) }
             }
         }
         return videoList
@@ -153,14 +166,18 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val sbUrl = url.substringBefore("/e/")
         val id = url.substringAfter("/e/").substringBefore("?").substringBefore(".html")
         val hexBytes = bytesToHex(id.toByteArray())
-        return "$sbUrl/sources49/316751675854774a53316b777c7c${hexBytes}7c7c744548764f5a666a315547577c7c73747265616d7362"
+        return "$sbUrl/sources51/33436f7a4d3656496f4973597c7c${hexBytes}7c7c6877624978704c39796936737c7c73747265616d7362"
     }
 
     private fun serverVideoResolver(url: String, server: String): List<Video>? {
         val videoList = mutableListOf<Video>()
         try {
             if (server.lowercase() == "sbfast") {
-                val newHeaders = headers.newBuilder().set("referer", url).set("watchsb", "sbstream").set("authority", url.substringBefore("/e/")).build()
+                val newHeaders = headers.newBuilder()
+                    .set("referer", url)
+                    .set("watchsb", "sbstream")
+                    .set("authority", url.substringBefore("/e/").substringAfter("https://"))
+                    .build()
                 return StreamSBExtractor(client).videosFromDecryptedUrl(fixUrl(url), headers = newHeaders)
             } else if (server.lowercase() == "plusto") {
                 return FembedExtractor(client).videosFromUrl(url)
