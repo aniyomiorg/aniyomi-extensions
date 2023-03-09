@@ -167,8 +167,9 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         return Observable.just(
             anime.apply {
                 author = info.data.first().content_provider
+                // Mostly useless (CR doesn't update is_simulcast in info but only per season)
                 // Assumes simulcast as on going series, otherwise is completed
-                if (info.data.first().is_simulcast) {
+                if (info.data.first().series_metadata?.is_simulcast == false) {
                     status = SAnime.ONGOING
                 } else {
                     status = SAnime.COMPLETED
