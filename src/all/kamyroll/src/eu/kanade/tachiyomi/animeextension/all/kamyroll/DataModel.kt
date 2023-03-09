@@ -111,6 +111,8 @@ data class SeasonResult(
     @Serializable
     data class Season(
         val id: String,
+        val is_complete: Boolean,
+        val is_simulcast: Boolean,
         val season_number: Int? = null,
         @SerialName("premium_available_date")
         val date: String? = null,
