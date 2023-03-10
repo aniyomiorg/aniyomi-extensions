@@ -70,7 +70,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return GET("$baseUrl/filter?sort=trending&page=$page")
     }
 
-    override fun popularAnimeSelector(): String = "div.ani.items > div"
+    override fun popularAnimeSelector(): String = "div.ani.items > div.item"
 
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.select("a.name").attr("href").substringBefore("?"))
@@ -283,34 +283,38 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         val parsed = json.decodeFromString<WatchResponse>(response.body.string())
         val embedLink = parsed.embedURL ?: parsed.headers.referer
-        when (server.third) {
-            "vizcloud" -> {
-                parsed.sources?.filter {
-                    if (it.quality.isNullOrBlank()) true else it.quality == "auto"
-                }?.map { source ->
-                    val playlist = client.newCall(GET(source.url)).execute()
-                    videoList.addAll(
-                        parseVizPlaylist(
-                            playlist.body.string(),
-                            playlist.request.url.toString(),
-                            "Vidstream - ${server.first}",
-                        ),
-                    )
+        val headers = Headers.headersOf("Referer", parsed.headers.referer)
+        runCatching {
+            when (server.third) {
+                "vizcloud" -> {
+                    parsed.sources?.filter {
+                        if (it.quality.isNullOrBlank()) true else it.quality == "auto"
+                    }?.map { source ->
+                        val playlist = client.newCall(GET(source.url, headers)).execute()
+                        videoList.addAll(
+                            parseVizPlaylist(
+                                playlist.body.string(),
+                                playlist.request.url.toString(),
+                                "Vidstream - ${server.first}",
+                            ),
+                        )
+                    }
                 }
+                "filemoon" -> FilemoonExtractor(client)
+                    .videoFromUrl(embedLink, "Filemoon - ${server.first}").let {
+                        videoList.addAll(it)
+                    }
+                "streamtape" -> StreamTapeExtractor(client)
+                    .videoFromUrl(embedLink, "StreamTape - ${server.first}")?.let {
+                        videoList.add(it)
+                    }
+                // For later use if we can get the embed link
+                "mp4upload" -> Mp4uploadExtractor(client)
+                    .videoFromUrl(embedLink, "Mp4Upload - ${server.first}").let {
+                        videoList.addAll(it)
+                    }
+                else -> null
             }
-            "filemoon" -> FilemoonExtractor(client)
-                .videoFromUrl(embedLink, "Filemoon - ${server.first}").let {
-                    videoList.addAll(it)
-                }
-            "streamtape" -> StreamTapeExtractor(client)
-                .videoFromUrl(embedLink, "StreamTape - ${server.first}")?.let {
-                    videoList.add(it)
-                }
-            // For later use if we can get the embed link
-            "mp4upload" -> Mp4uploadExtractor(client)
-                .videoFromUrl(embedLink, "Mp4Upload - ${server.first}").let {
-                    videoList.addAll(it)
-                }
         }
         return videoList
     }
