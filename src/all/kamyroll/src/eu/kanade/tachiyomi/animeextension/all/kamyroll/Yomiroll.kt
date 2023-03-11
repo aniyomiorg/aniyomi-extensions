@@ -163,16 +163,23 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                 GET("$crUrl/content/v2/cms/movie_listings/${mediaId.id}?locale=en-US")
             },
         ).execute()
+        // info has a slightly different json response (series_metadata doesn't exist for example)
         val info = json.decodeFromString<AnimeResult>(resp.body.string())
         return Observable.just(
             anime.apply {
                 author = info.data.first().content_provider
-                // Mostly useless (CR doesn't update is_simulcast in info but only per season)
-                // Assumes simulcast as on going series, otherwise is completed
-                if (info.data.first().series_metadata?.is_simulcast == false) {
-                    status = SAnime.ONGOING
-                } else {
-                    status = SAnime.COMPLETED
+                if (mediaId.media_type == "series") {
+                    status = when (info.data.first().is_simulcast) {
+                        true -> {
+                            SAnime.ONGOING
+                        }
+                        false -> {
+                            SAnime.COMPLETED
+                        }
+                        else -> {
+                            SAnime.UNKNOWN
+                        }
+                    }
                 }
                 if (genre.isNullOrBlank()) {
                     genre =
@@ -417,7 +424,13 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
             url = LinkData(this@toSAnime.id, this@toSAnime.type!!).toJsonString()
             genre = this@toSAnime.series_metadata?.genres?.joinToString()
                 ?: this@toSAnime.movie_metadata?.genres?.joinToString() ?: ""
-            status = SAnime.COMPLETED
+            // Mostly inaccurate (CR doesn't update is_simulcast in info but only per season)
+            // Assumes simulcast as on going series, otherwise is completed
+            status = if (this@toSAnime.series_metadata?.is_simulcast == true) {
+                SAnime.ONGOING
+            } else {
+                SAnime.COMPLETED
+            }
             var desc = this@toSAnime.description + "\n"
             desc += "\nLanguage:" +
                 (
