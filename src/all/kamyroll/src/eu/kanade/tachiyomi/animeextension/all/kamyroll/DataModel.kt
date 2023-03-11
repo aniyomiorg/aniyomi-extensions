@@ -69,8 +69,8 @@ data class Anime(
         val is_simulcast: Boolean,
         val audio_locales: ArrayList<String>,
         val subtitle_locales: ArrayList<String>,
-        val is_complete: Boolean? = null,
-        val is_simulcast: Boolean? = null,
+        val is_dubbed: Boolean,
+        val is_subbed: Boolean,
         @SerialName("tenant_categories")
         val genres: ArrayList<String>? = null,
     )
@@ -112,8 +112,8 @@ data class SeasonResult(
     @Serializable
     data class Season(
         val id: String,
-        val is_complete: Boolean,
-        val is_simulcast: Boolean,
+        val is_complete: Boolean? = null,
+        val is_simulcast: Boolean? = null,
         val season_number: Int? = null,
         @SerialName("premium_available_date")
         val date: String? = null,
