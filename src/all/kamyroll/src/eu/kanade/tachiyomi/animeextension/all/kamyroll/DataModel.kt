@@ -58,6 +58,7 @@ data class Anime(
     @SerialName("keywords")
     val genres: ArrayList<String>? = null,
     val series_metadata: Metadata? = null,
+    val is_simulcast: Boolean? = null,
     @SerialName("movie_listing_metadata")
     val movie_metadata: MovieMeta? = null,
     val content_provider: String? = null,
