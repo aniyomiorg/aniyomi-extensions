@@ -69,8 +69,8 @@ data class Anime(
         val is_simulcast: Boolean,
         val audio_locales: ArrayList<String>,
         val subtitle_locales: ArrayList<String>,
-        val is_dubbed: Boolean,
-        val is_subbed: Boolean,
+        val is_complete: Boolean? = null,
+        val is_simulcast: Boolean? = null,
         @SerialName("tenant_categories")
         val genres: ArrayList<String>? = null,
     )
