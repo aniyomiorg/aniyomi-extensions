@@ -2084,19 +2084,27 @@
   {
     "name": "Aniyomi: Pelisplushd",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.pelisplushd",
-    "apk": "aniyomi-es.pelisplushd-v13.29.apk",
+    "apk": "aniyomi-es.pelisplushd-v13.30.apk",
     "lang": "es",
-    "code": 29,
-    "version": "13.29",
+    "code": 30,
+    "version": "13.30",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
     "sources": [
       {
-        "name": "Pelisplushd",
+        "name": "PelisPlusHD",
         "lang": "es",
         "id": "1400819034564144238",
         "baseUrl": "https://ww1.pelisplushd.nu",
+        "versionId": 1,
+        "hasCloudflare": 1
+      },
+      {
+        "name": "PelisPlusTo",
+        "lang": "es",
+        "id": "1705636111422561130",
+        "baseUrl": "https://ww3.pelisplus.to",
         "versionId": 1,
         "hasCloudflare": 1
       }
