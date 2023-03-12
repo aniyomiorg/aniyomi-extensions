@@ -29,11 +29,7 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
-class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
-
-    override val name = "Pelisplushd"
-
-    override val baseUrl = "https://ww1.pelisplushd.nu"
+open class Pelisplushd(override val name: String, override val baseUrl: String) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "es"
 
@@ -41,7 +37,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val preferences: SharedPreferences by lazy {
+    val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -162,14 +158,14 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return String(hexChars)
     }
 
-    private fun fixUrl(url: String): String {
+    public fun fixUrl(url: String): String {
         val sbUrl = url.substringBefore("/e/")
         val id = url.substringAfter("/e/").substringBefore("?").substringBefore(".html")
         val hexBytes = bytesToHex(id.toByteArray())
         return "$sbUrl/sources51/33436f7a4d3656496f4973597c7c${hexBytes}7c7c6877624978704c39796936737c7c73747265616d7362"
     }
 
-    private fun serverVideoResolver(url: String, server: String): List<Video>? {
+    public fun serverVideoResolver(url: String, server: String): List<Video>? {
         val videoList = mutableListOf<Video>()
         try {
             if (server.lowercase() == "sbfast") {
@@ -323,7 +319,7 @@ class Pelisplushd : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private class Tags(name: String) : AnimeFilter.Text(name)
 
-    private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
+    public open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
         AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
     }
