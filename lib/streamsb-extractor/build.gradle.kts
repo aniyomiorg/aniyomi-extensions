@@ -1,5 +1,6 @@
 plugins {
     id("com.android.library")
+    id("kotlinx-serialization") // for the DTO
     kotlin("android")
 }
 

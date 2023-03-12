@@ -5,8 +5,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonObject
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -50,14 +48,30 @@ class StreamSBExtractor(private val client: OkHttpClient) {
             .build()
         return try {
             val master = fixUrl(url, common)
-            val json = Json.decodeFromString<JsonObject>(
+            val json = Json { ignoreUnknownKeys = true }.decodeFromString<Response>(
                 client.newCall(GET(master, newHeaders))
                     .execute().body.string()
             )
-            val masterUrl = json["stream_data"]!!.jsonObject["file"].toString().trim('"')
+            val masterUrl = json.stream_data.file.trim('"')
+            val subtitleList = json.stream_data.subs?.let {
+                it.map { s -> Track(s.file, s.label) }
+            } ?: emptyList()
+
             val masterPlaylist = client.newCall(GET(masterUrl, newHeaders))
                 .execute()
                 .body.string()
+
+            val audioList = mutableListOf<Track>()
+            val audioRegex = Regex("""#EXT-X-MEDIA:TYPE=AUDIO.*?NAME="(.*?)".*?URI="(.*?)"""")
+            audioList.addAll(
+                audioRegex.findAll(masterPlaylist).map {
+                    Track(
+                        it.groupValues[2],
+                        it.groupValues[1]
+                    )
+                }
+            )
+
             val separator = "#EXT-X-STREAM-INF"
             masterPlaylist.substringAfter(separator).split(separator).map {
                 val resolution = it.substringAfter("RESOLUTION=")
@@ -72,7 +86,11 @@ class StreamSBExtractor(private val client: OkHttpClient) {
                     else it
                 }
                 val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                Video(videoUrl, quality, videoUrl, headers = newHeaders)
+                if (audioList.isEmpty()) {
+                    Video(videoUrl, quality, videoUrl, headers = newHeaders, subtitleTracks = subtitleList)
+                } else {
+                    Video(videoUrl, quality, videoUrl, headers = newHeaders, subtitleTracks = subtitleList, audioTracks = audioList)
+                }
             }
         } catch (e: Exception) {
             emptyList<Video>()
@@ -81,9 +99,25 @@ class StreamSBExtractor(private val client: OkHttpClient) {
 
     fun videosFromDecryptedUrl(realUrl: String, headers: Headers, prefix: String = "", suffix: String = ""): List<Video> {
         return try {
-            val json = Json.decodeFromString<JsonObject>(client.newCall(GET(realUrl, headers)).execute().body.string())
-            val masterUrl = json["stream_data"]!!.jsonObject["file"].toString().trim('"')
+            val json = Json { ignoreUnknownKeys = true }.decodeFromString<Response>(client.newCall(GET(realUrl, headers)).execute().body.string())
+            val masterUrl = json.stream_data.file.trim('"')
+            val subtitleList = json.stream_data.subs?.let {
+                it.map { s -> Track(s.file, s.label) }
+            } ?: emptyList()
+
             val masterPlaylist = client.newCall(GET(masterUrl, headers)).execute().body.string()
+
+            val audioList = mutableListOf<Track>()
+            val audioRegex = Regex("""#EXT-X-MEDIA:TYPE=AUDIO.*?NAME="(.*?)".*?URI="(.*?)"""")
+            audioList.addAll(
+                audioRegex.findAll(masterPlaylist).map {
+                    Track(
+                        it.groupValues[2],
+                        it.groupValues[1]
+                    )
+                }
+            )
+
             val separator = "#EXT-X-STREAM-INF"
             masterPlaylist.substringAfter(separator).split(separator).map {
                 val resolution = it.substringAfter("RESOLUTION=")
@@ -98,7 +132,11 @@ class StreamSBExtractor(private val client: OkHttpClient) {
                     else it
                 }
                 val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                Video(videoUrl, quality, videoUrl, headers = headers)
+                if (audioList.isEmpty()) {
+                    Video(videoUrl, quality, videoUrl, headers = headers, subtitleTracks = subtitleList)
+                } else {
+                    Video(videoUrl, quality, videoUrl, headers = headers, subtitleTracks = subtitleList, audioTracks = audioList)
+                }
             }
         } catch (e: Exception) {
             emptyList()
