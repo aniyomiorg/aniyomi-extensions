@@ -27,7 +27,7 @@ class JsInterceptor(private val lang: String) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
         handler.post {
-            context.let { Toast.makeText(it, "This might take a while, Don't close me", Toast.LENGTH_LONG).show() }
+            context.let { Toast.makeText(it, "Getting $lang. This might take a while, Don't close me", Toast.LENGTH_LONG).show() }
         }
         val newRequest = resolveWithWebView(originalRequest) ?: throw Exception("Someting went wrong")
 
