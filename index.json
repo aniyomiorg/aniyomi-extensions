@@ -2665,27 +2665,6 @@
     ]
   },
   {
-    "name": "Aniyomi: AnimesOnlineX",
-    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesonlinex",
-    "apk": "aniyomi-pt.animesonlinex-v13.4.apk",
-    "lang": "pt-BR",
-    "code": 4,
-    "version": "13.4",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "AnimesOnlineX",
-        "lang": "pt-BR",
-        "id": "2832317321836275023",
-        "baseUrl": "https://animesonlinex.nz",
-        "versionId": 1,
-        "hasCloudflare": 0
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: AnimesROLL",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesroll",
     "apk": "aniyomi-pt.animesroll-v13.1.apk",
@@ -2722,27 +2701,6 @@
         "lang": "pt-BR",
         "id": "3010449287201563287",
         "baseUrl": "https://api2.animestc.com",
-        "versionId": 1,
-        "hasCloudflare": 0
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: AnimesUP",
-    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesup",
-    "apk": "aniyomi-pt.animesup-v13.4.apk",
-    "lang": "pt-BR",
-    "code": 4,
-    "version": "13.4",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "AnimesUp",
-        "lang": "pt-BR",
-        "id": "3726267765371591423",
-        "baseUrl": "https://animesup.cx",
         "versionId": 1,
         "hasCloudflare": 0
       }
@@ -2812,27 +2770,6 @@
     ]
   },
   {
-    "name": "Aniyomi: AnimeYabu!",
-    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animeyabu",
-    "apk": "aniyomi-pt.animeyabu-v13.5.apk",
-    "lang": "pt-BR",
-    "code": 5,
-    "version": "13.5",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "AnimeYabu!",
-        "lang": "pt-BR",
-        "id": "3364322731815838571",
-        "baseUrl": "https://animeyabu.com",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: Anitube",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.anitube",
     "apk": "aniyomi-pt.anitube-v13.8.apk",
@@ -2871,48 +2808,6 @@
         "baseUrl": "https://cinevision.app",
         "versionId": 1,
         "hasCloudflare": 0
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: Goyabu",
-    "pkg": "eu.kanade.tachiyomi.animeextension.pt.goyabu",
-    "apk": "aniyomi-pt.goyabu-v13.4.apk",
-    "lang": "pt-BR",
-    "code": 4,
-    "version": "13.4",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "Goyabu",
-        "lang": "pt-BR",
-        "id": "191823841242368911",
-        "baseUrl": "https://goyabu.com",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: HentaiYabu",
-    "pkg": "eu.kanade.tachiyomi.animeextension.pt.hentaiyabu",
-    "apk": "aniyomi-pt.hentaiyabu-v13.3.apk",
-    "lang": "pt-BR",
-    "code": 3,
-    "version": "13.3",
-    "nsfw": 1,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "HentaiYabu",
-        "lang": "pt-BR",
-        "id": "5182608806321880756",
-        "baseUrl": "https://hentaiyabu.com",
-        "versionId": 1,
-        "hasCloudflare": 1
       }
     ]
   },
@@ -2974,69 +2869,6 @@
         "lang": "pt-BR",
         "id": "2457282111412357647",
         "baseUrl": "https://pifansubs.org",
-        "versionId": 1,
-        "hasCloudflare": 0
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: Puray.moe",
-    "pkg": "eu.kanade.tachiyomi.animeextension.pt.puraymoe",
-    "apk": "aniyomi-pt.puraymoe-v13.7.apk",
-    "lang": "pt-BR",
-    "code": 7,
-    "version": "13.7",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "Puray.moe",
-        "lang": "pt-BR",
-        "id": "2196130263076310215",
-        "baseUrl": "https://puray.moe",
-        "versionId": 1,
-        "hasCloudflare": 0
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: SubAnimes",
-    "pkg": "eu.kanade.tachiyomi.animeextension.pt.subanimes",
-    "apk": "aniyomi-pt.subanimes-v13.2.apk",
-    "lang": "pt-BR",
-    "code": 2,
-    "version": "13.2",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "SubAnimes",
-        "lang": "pt-BR",
-        "id": "5033656201243774661",
-        "baseUrl": "https://subanimes.cc",
-        "versionId": 1,
-        "hasCloudflare": 0
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: SukiAnimes",
-    "pkg": "eu.kanade.tachiyomi.animeextension.pt.sukianimes",
-    "apk": "aniyomi-pt.sukianimes-v13.1.apk",
-    "lang": "pt-BR",
-    "code": 1,
-    "version": "13.1",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "SukiAnimes",
-        "lang": "pt-BR",
-        "id": "8515141728996680917",
-        "baseUrl": "https://sukianimes.com",
         "versionId": 1,
         "hasCloudflare": 0
       }
