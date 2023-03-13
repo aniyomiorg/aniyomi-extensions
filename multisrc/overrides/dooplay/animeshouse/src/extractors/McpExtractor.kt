@@ -16,12 +16,15 @@ class McpExtractor(
 
     fun getVideoList(js: String): List<Video> {
         val epId = REGEX_EP_ID.find(js)!!.groupValues[1]
-        val req = client.newCall(GET("$API_URL/s_control.php?mid=$epId", headers))
+        val videoUrl = client.newCall(GET("$API_URL/s_control.php?mid=$epId", headers))
             .execute()
-        val reqBody = req.body.string()
-        val videoUrl = REGEX_VIDEO_URL.find(reqBody)!!.groupValues
-            .get(1)
-            .replace("\\", "")
+            .use { req ->
+                val reqBody = req.body.string()
+                REGEX_VIDEO_URL.find(reqBody)!!.groupValues
+                    .get(1)
+                    .replace("\\", "")
+            }
+
         return listOf(Video(videoUrl, "default_mcp", videoUrl, headers))
     }
 }

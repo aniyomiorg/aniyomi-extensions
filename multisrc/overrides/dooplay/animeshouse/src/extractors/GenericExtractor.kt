@@ -22,15 +22,16 @@ class GenericExtractor(
 
         val playlistUrl = regex.find(js)!!.groupValues.get(1)
         if ("m3u8.php" in playlistUrl) {
-            val req = client.newCall(GET(playlistUrl, headers)).execute()
-            val body = req.body.string()
-            val videos = REGEX_QUALITY.findAll(body).map {
-                val quality = "$player: " + it.groupValues.get(1) + "p"
-                val videoUrl = it.groupValues.get(2)
-                Video(videoUrl, quality, videoUrl, headers)
-            }.toList()
-            if (videos.size > 0) {
-                return videos
+            client.newCall(GET(playlistUrl, headers)).execute().use { req ->
+                val body = req.body.string()
+                val videos = REGEX_QUALITY.findAll(body).map {
+                    val quality = "$player: " + it.groupValues.get(1) + "p"
+                    val videoUrl = it.groupValues.get(2)
+                    Video(videoUrl, quality, videoUrl, headers)
+                }.toList()
+                if (videos.size > 0) {
+                    return videos
+                }
             }
         }
 
