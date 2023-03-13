@@ -6,6 +6,7 @@ plugins {
 
 android {
     compileSdk = AndroidConfig.compileSdk
+    namespace = "eu.kanade.tachiyomi.lib.streamsbextractor"
 
     defaultConfig {
         minSdk = AndroidConfig.minSdk
