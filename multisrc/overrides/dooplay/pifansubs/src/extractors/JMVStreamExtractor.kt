@@ -11,14 +11,18 @@ class JMVStreamExtractor(private val client: OkHttpClient) {
 
     fun videosFromUrl(iframeUrl: String): List<Video> {
         val iframeBody = client.newCall(GET(iframeUrl)).execute()
-            .body.string()
+            .use { it.body.string() }
+
         val playlistUrl = REGEX_PLAYLIST.find(iframeBody)!!.groupValues.get(1)
         val playlistData = client.newCall(GET(playlistUrl)).execute()
-            .body.string()
+            .use { it.body.string() }
 
         val separator = "#EXT-X-STREAM-INF:"
         return playlistData.substringAfter(separator).split(separator).map {
-            val quality = it.substringAfterLast("x") + "p"
+            val quality = it.substringAfter("RESOLUTION=")
+                .substringAfter("x")
+                .substringBefore("\n")
+                .substringBefore(",") + "p"
             val path = it.substringAfter("\n").substringBefore("\n")
             val url = playlistUrl.replace("playlist.m3u8", path)
             Video(url, "$PLAYER_NAME - $quality", url)

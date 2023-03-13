@@ -13,6 +13,7 @@ class DooPlayGenerator : ThemeSourceGenerator {
     override val sources = listOf(
         SingleLang("Animes House", "https://animeshouse.net", "pt-BR", isNsfw = false, overrideVersionCode = 4),
         SingleLang("pactedanime", "https://pactedanime.com", "en", isNsfw = false, overrideVersionCode = 4),
+        SingleLang("Pi Fansubs", "https://pifansubs.org", "pt-BR", isNsfw = true, overrideVersionCode = 11),
     )
 
     companion object {

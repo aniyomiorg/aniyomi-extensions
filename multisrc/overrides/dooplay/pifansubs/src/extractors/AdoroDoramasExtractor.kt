@@ -11,7 +11,7 @@ class AdoroDoramasExtractor(private val client: OkHttpClient) {
 
     fun videosFromUrl(url: String): List<Video> {
         val body = client.newCall(GET(url)).execute()
-            .body.string()
+            .use { it.body.string() }
         val unpacked = JsUnpacker.unpackAndCombine(body)
             ?.replace("\\", "")
             ?: return emptyList<Video>()
@@ -19,7 +19,7 @@ class AdoroDoramasExtractor(private val client: OkHttpClient) {
         return listStr.split("}").filter { it.isNotBlank() }.map {
             val quality = it.substringAfter("label':'").substringBefore("'")
             val videoUrl = it.substringAfter("file':'").substringBefore("'")
-            Video(url, "$PLAYER_NAME:$quality", videoUrl)
+            Video(url, "$PLAYER_NAME - $quality", videoUrl)
         }
     }
 }

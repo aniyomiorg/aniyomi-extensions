@@ -1,0 +1,5 @@
+dependencies {
+    implementation(project(':lib-streamsb-extractor'))
+    implementation("dev.datlag.jsunpacker:jsunpacker:1.0.1")
+}
+
