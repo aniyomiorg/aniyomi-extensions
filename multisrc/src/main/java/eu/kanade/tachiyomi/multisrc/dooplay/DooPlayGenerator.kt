@@ -10,7 +10,9 @@ class DooPlayGenerator : ThemeSourceGenerator {
 
     override val baseVersionCode = 1
 
-    override val sources = emptyList<SingleLang>()
+    override val sources = listOf(
+        SingleLang("pactedanime", "https://pactedanime.com", "en", isNsfw = false, overrideVersionCode = 4),
+    )
 
     companion object {
         @JvmStatic
