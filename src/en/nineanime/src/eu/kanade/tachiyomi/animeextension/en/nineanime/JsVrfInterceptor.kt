@@ -18,8 +18,6 @@ class JsVrfInterceptor(private val baseUrl: String) {
     private val handler by lazy { Handler(Looper.getMainLooper()) }
     private val vrfWebView = createWebView()
 
-    fun wake() = ""
-
     fun getVrf(query: String): String {
         if (query.isBlank()) return ""
         val jscript = getJs(query)
