@@ -1425,10 +1425,10 @@
   {
     "name": "Aniyomi: pactedanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.pactedanime",
-    "apk": "aniyomi-en.pactedanime-v13.4.apk",
+    "apk": "aniyomi-en.pactedanime-v13.5.apk",
     "lang": "en",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1439,7 +1439,7 @@
         "id": "7022823521622280270",
         "baseUrl": "https://pactedanime.com",
         "versionId": 1,
-        "hasCloudflare": 1
+        "hasCloudflare": 0
       }
     ]
   },
@@ -2646,10 +2646,10 @@
   {
     "name": "Aniyomi: Animes House",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animeshouse",
-    "apk": "aniyomi-pt.animeshouse-v13.4.apk",
+    "apk": "aniyomi-pt.animeshouse-v13.5.apk",
     "lang": "pt-BR",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2793,10 +2793,10 @@
   {
     "name": "Aniyomi: CineVision",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.cinevision",
-    "apk": "aniyomi-pt.cinevision-v13.3.apk",
+    "apk": "aniyomi-pt.cinevision-v13.4.apk",
     "lang": "pt-BR",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2805,7 +2805,7 @@
         "name": "CineVision",
         "lang": "pt-BR",
         "id": "4986568999330167770",
-        "baseUrl": "https://cinevision.app",
+        "baseUrl": "https://cinevisionv6.net",
         "versionId": 1,
         "hasCloudflare": 0
       }
@@ -2856,10 +2856,10 @@
   {
     "name": "Aniyomi: Pi Fansubs",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.pifansubs",
-    "apk": "aniyomi-pt.pifansubs-v13.11.apk",
+    "apk": "aniyomi-pt.pifansubs-v13.12.apk",
     "lang": "pt-BR",
-    "code": 11,
-    "version": "13.11",
+    "code": 12,
+    "version": "13.12",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
