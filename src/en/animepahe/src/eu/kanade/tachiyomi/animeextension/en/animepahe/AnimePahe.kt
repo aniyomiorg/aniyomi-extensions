@@ -15,9 +15,6 @@ import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -56,27 +53,11 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    override fun animeDetailsRequest(anime: SAnime): Request {
-        val animeId = anime.url.substringAfterLast("?anime_id=").substringBefore("\"")
-        val session = getSession(anime.title, animeId)
-        return GET("$baseUrl/anime/$session?anime_id=$animeId")
-    }
-
-    private fun getSession(title: String, animeId: String): String {
-        return runBlocking {
-            withContext(Dispatchers.IO) {
-                client.newCall(GET("$baseUrl/api?m=search&q=$title"))
-                    .execute().body.string()
-            }
-        }.substringAfter("\"id\":$animeId")
-            .substringAfter("\"session\":\"").substringBefore("\"")
-    }
-
     override fun animeDetailsParse(response: Response): SAnime {
         val jsoup = response.asJsoup()
         val anime = SAnime.create()
-        val animeId = response.request.url.toString().substringAfterLast("?anime_id=")
-        anime.setUrlWithoutDomain("$baseUrl/anime/?anime_id=$animeId")
+        val animeUrl = response.request.url.toString()
+        anime.setUrlWithoutDomain(animeUrl)
         anime.title = jsoup.selectFirst("div.title-wrapper > h1 > span")!!.text()
         anime.author = jsoup.select("div.col-sm-4.anime-info p:contains(Studio:)")
             .firstOrNull()?.text()?.replace("Studio: ", "")
@@ -113,7 +94,9 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             anime.title = item.jsonObject["title"]!!.jsonPrimitive.content
             anime.thumbnail_url = item.jsonObject["poster"]!!.jsonPrimitive.content
             val animeId = item.jsonObject["id"]!!.jsonPrimitive.int
-            anime.setUrlWithoutDomain("$baseUrl/anime/?anime_id=$animeId")
+            val session = item.jsonObject["session"]!!.jsonPrimitive.content
+
+            anime.setUrlWithoutDomain("$baseUrl/anime/$session?anime_id=$animeId")
             animeList.add(anime)
         }
         return AnimesPage(animeList, false)
@@ -141,7 +124,9 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
                 anime.thumbnail_url = item.jsonObject["snapshot"]!!.jsonPrimitive.content
             }
             val animeId = item.jsonObject["anime_id"]!!.jsonPrimitive.int
-            anime.setUrlWithoutDomain("$baseUrl/anime/?anime_id=$animeId")
+            val session = item.jsonObject["anime_session"]!!.jsonPrimitive.content
+
+            anime.setUrlWithoutDomain("$baseUrl/anime/$session?anime_id=$animeId")
             anime.artist = item.jsonObject["fansub"]!!.jsonPrimitive.content
             animeList.add(anime)
         }
@@ -157,8 +142,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
-        val id = anime.url.substringAfter("?anime_id=").substringBefore("\"")
-        val session = getSession(anime.title, id)
+        val session = anime.url.substringBefore("?anime_id=").substringAfterLast("/")
 
         return if (anime.status != SAnime.LICENSED) {
             client.newCall(episodeListRequest(anime))
@@ -172,8 +156,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun episodeListRequest(anime: SAnime): Request {
-        val animeId = anime.url.substringAfterLast("?anime_id=").substringBefore("\"")
-        val session = getSession(anime.title, animeId)
+        val session = anime.url.substringBefore("?anime_id=").substringAfterLast("/")
         return GET("$baseUrl/api?m=release&id=$session&sort=episode_desc&page=1")
     }
 
@@ -330,7 +313,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             summary = """Enable this if you are experiencing lag loading pages.
                 |To get real cover click on the anime to fetch the details
             """.trimMargin()
-            setDefaultValue(false)
+            setDefaultValue(true)
 
             setOnPreferenceChangeListener { _, newValue ->
                 val new = newValue as Boolean
