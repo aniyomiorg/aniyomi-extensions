@@ -5,6 +5,10 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
+import eu.kanade.tachiyomi.animeextension.en.animepahe.dto.EpisodeDto
+import eu.kanade.tachiyomi.animeextension.en.animepahe.dto.LatestAnimeDto
+import eu.kanade.tachiyomi.animeextension.en.animepahe.dto.ResponseDto
+import eu.kanade.tachiyomi.animeextension.en.animepahe.dto.SearchResultDto
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -16,19 +20,12 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.float
-import kotlinx.serialization.json.int
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -48,7 +45,9 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val supportsLatest = true
 
-    private val json: Json by injectLazy()
+    private val json = Json {
+        ignoreUnknownKeys = true
+    }
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -76,20 +75,16 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/api?m=airing&page=$page")
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
-        val responseString = response.use { it.body.string() }
-        val jObject = json.decodeFromString<JsonObject>(responseString)
-        val lastPage = jObject["last_page"]!!.jsonPrimitive.int
-        val page = jObject["current_page"]!!.jsonPrimitive.int
-        val hasNextPage = page < lastPage
-        val animeList = jObject["data"]!!.jsonArray.map { item ->
-            val itemObj = item.jsonObject
+        val latestData = response.parseAs<ResponseDto<LatestAnimeDto>>()
+        val hasNextPage = latestData.currentPage < latestData.lastPage
+        val animeList = latestData.items.map { anime ->
             SAnime.create().apply {
-                title = itemObj["anime_title"]!!.jsonPrimitive.content
-                thumbnail_url = itemObj["snapshot"]!!.jsonPrimitive.content
-                val animeId = itemObj["anime_id"]!!.jsonPrimitive.int
-                val session = itemObj["anime_session"]!!.jsonPrimitive.content
-                setUrlWithoutDomain("$baseUrl/anime/$session?anime_id=$animeId")
-                artist = itemObj["fansub"]!!.jsonPrimitive.content
+                title = anime.title
+                thumbnail_url = anime.snapshot
+                val animeId = anime.id
+                val session = anime.animeSession
+                setUrlWithoutDomain("/anime/$session?anime_id=$animeId")
+                artist = anime.fansub
             }
         }
         return AnimesPage(animeList, hasNextPage)
@@ -100,17 +95,14 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         GET("$baseUrl/api?m=search&l=8&q=$query")
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val responseString = response.use { it.body.string() }
-        val jObject = json.decodeFromString<JsonObject>(responseString)
-        val data = jObject["data"] ?: return AnimesPage(emptyList(), false)
-        val animeList = data.jsonArray.map { item ->
-            val itemObj = item.jsonObject
+        val searchData = response.parseAs<ResponseDto<SearchResultDto>>()
+        val animeList = searchData.items.map { anime ->
             SAnime.create().apply {
-                title = itemObj["title"]!!.jsonPrimitive.content
-                thumbnail_url = itemObj["poster"]!!.jsonPrimitive.content
-                val animeId = itemObj["id"]!!.jsonPrimitive.int
-                val session = itemObj["session"]!!.jsonPrimitive.content
-                setUrlWithoutDomain("$baseUrl/anime/$session?anime_id=$animeId")
+                title = anime.title
+                thumbnail_url = anime.poster
+                val animeId = anime.id
+                val session = anime.session
+                setUrlWithoutDomain("/anime/$session?anime_id=$animeId")
             }
         }
         return AnimesPage(animeList, false)
@@ -135,29 +127,24 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         return recursivePages(response, session)
     }
 
-    private fun parseEpisodePage(jsonLine: String, animeSession: String): MutableList<SEpisode> {
-        val jObject = json.decodeFromString<JsonObject>(jsonLine)
-        return jObject["data"]!!.jsonArray.map { item ->
-            val itemObj = item.jsonObject
+    private fun parseEpisodePage(episodes: List<EpisodeDto>, animeSession: String): MutableList<SEpisode> {
+        return episodes.map { episode ->
             SEpisode.create().apply {
-                date_upload = itemObj["created_at"]!!.jsonPrimitive.content.toDate()
-                val session = itemObj["session"]!!.jsonPrimitive.content
-                setUrlWithoutDomain("$baseUrl/play/$animeSession/$session")
-                val epNum = itemObj["episode"]!!.jsonPrimitive.float
-                episode_number = epNum
-                val epNumString = if (epNum % 1F == 0F) epNum.toInt().toString() else epNum.toString()
-                name = "Episode $epNumString"
+                date_upload = episode.createdAt.toDate()
+                val session = episode.session
+                setUrlWithoutDomain("/play/$animeSession/$session")
+                val epNum = episode.episodeNumber
+                episode_number = epNum.toFloat()
+                name = "Episode $epNum"
             }
         }.toMutableList()
     }
 
     private fun recursivePages(response: Response, animeSession: String): List<SEpisode> {
-        val responseString = response.use { it.body.string() }
-        val jObject = json.decodeFromString<JsonObject>(responseString)
-        val lastPage = jObject["last_page"]!!.jsonPrimitive.int
-        val page = jObject["current_page"]!!.jsonPrimitive.int
-        val hasNextPage = page < lastPage
-        val returnList = parseEpisodePage(responseString, animeSession)
+        val episodesData = response.parseAs<ResponseDto<EpisodeDto>>()
+        val page = episodesData.currentPage
+        val hasNextPage = page < episodesData.lastPage
+        val returnList = parseEpisodePage(episodesData.items, animeSession)
         if (hasNextPage) {
             val nextPage = nextPageRequest(response.request.url.toString(), page + 1)
             returnList += recursivePages(nextPage, animeSession)
@@ -287,6 +274,11 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         return runCatching {
             DATE_FORMATTER.parse(this)?.time ?: 0L
         }.getOrNull() ?: 0L
+    }
+
+    private inline fun <reified T> Response.parseAs(): T {
+        val responseBody = use { it.body.string() }
+        return json.decodeFromString(responseBody)
     }
 
     companion object {
