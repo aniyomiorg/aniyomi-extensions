@@ -80,5 +80,6 @@ data class EpisodeResponse(
 data class LinkData(
     val category: String,
     val id: String,
+    val url: String,
     val episodeId: String? = null,
 )
