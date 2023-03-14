@@ -43,7 +43,9 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "AnimePahe"
 
-    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://animepahe.com")!! }
+    override val baseUrl by lazy {
+        preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!!
+    }
 
     override val lang = "en"
 
@@ -219,7 +221,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun getVideo(paheUrl: String, kwikUrl: String, quality: String): Video {
-        return if (preferences.getBoolean("preferred_link_type", false)) {
+        return if (preferences.getBoolean(PREF_LINK_TYPE_KEY, PREF_LINK_TYPE_DEFAULT)) {
             val videoUrl = KwikExtractor(client).getHlsStreamUrl(kwikUrl, referer = baseUrl)
             Video(
                 videoUrl,
@@ -234,8 +236,8 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val subPreference = preferences.getString("preferred_sub", "jpn")!!
-        val quality = preferences.getString("preferred_quality", "1080")!!
+        val subPreference = preferences.getString(PREF_SUB_KEY, PREF_SUB_DEFAULT)!!
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
         val shouldEndWithEng = (subPreference == "eng")
 
         return this.sortedWith(
@@ -248,11 +250,11 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "360p")
-            entryValues = arrayOf("1080", "720", "360")
-            setDefaultValue("1080")
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_VALUES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -263,11 +265,11 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
         val domainPref = ListPreference(screen.context).apply {
-            key = "preferred_domain"
-            title = "Preferred domain (requires app restart)"
-            entries = arrayOf("animepahe.com", "animepahe.ru", "animepahe.org")
-            entryValues = arrayOf("https://animepahe.com", "https://animepahe.ru", "https://animepahe.org")
-            setDefaultValue("https://animepahe.com")
+            key = PREF_DOMAIN_KEY
+            title = PREF_DOMAIN_TITLE
+            entries = PREF_DOMAIN_ENTRIES
+            entryValues = PREF_DOMAIN_VALUES
+            setDefaultValue(PREF_DOMAIN_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -278,11 +280,11 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
         val subPref = ListPreference(screen.context).apply {
-            key = "preferred_sub"
-            title = "Prefer subs or dubs?"
-            entries = arrayOf("sub", "dub")
-            entryValues = arrayOf("jpn", "eng")
-            setDefaultValue("jpn")
+            key = PREF_SUB_KEY
+            title = PREF_SUB_TITLE
+            entries = PREF_SUB_ENTRIES
+            entryValues = PREF_SUB_VALUES
+            setDefaultValue(PREF_SUB_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -293,12 +295,10 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
         val linkPref = SwitchPreferenceCompat(screen.context).apply {
-            key = "preferred_link_type"
-            title = "Use HLS links"
-            summary = """Enable this if you are having Cloudflare issues.
-                |Note that this will break the ability to seek inside of the video unless the episode is downloaded in advance.
-            """.trimMargin()
-            setDefaultValue(false)
+            key = PREF_LINK_TYPE_KEY
+            title = PREF_LINK_TYPE_TITLE
+            summary = PREF_LINK_TYPE_SUMMARY
+            setDefaultValue(PREF_LINK_TYPE_DEFAULT)
 
             setOnPreferenceChangeListener { _, newValue ->
                 val new = newValue as Boolean
@@ -309,5 +309,35 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         screen.addPreference(domainPref)
         screen.addPreference(subPref)
         screen.addPreference(linkPref)
+    }
+
+    companion object {
+        private const val PREF_QUALITY_KEY = "preffered_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "1080p"
+        private val PREF_QUALITY_VALUES = arrayOf("1080p", "720p", "360p")
+
+        private const val PREF_DOMAIN_KEY = "preffered_domain"
+        private const val PREF_DOMAIN_TITLE = "Preferred domain (requires app restart)"
+        private const val PREF_DOMAIN_DEFAULT = "https://animepahe.com"
+        private val PREF_DOMAIN_ENTRIES = arrayOf("animepahe.com", "animepahe.ru", "animepahe.org")
+        private val PREF_DOMAIN_VALUES by lazy {
+            PREF_DOMAIN_ENTRIES.map { "https://" + it }.toTypedArray()
+        }
+
+        private const val PREF_SUB_KEY = "preffered_sub"
+        private const val PREF_SUB_TITLE = "Prefer subs or dubs?"
+        private const val PREF_SUB_DEFAULT = "jpn"
+        private val PREF_SUB_ENTRIES = arrayOf("sub", "dub")
+        private val PREF_SUB_VALUES = arrayOf("jpn", "eng")
+
+        private const val PREF_LINK_TYPE_KEY = "preffered_link_type"
+        private const val PREF_LINK_TYPE_TITLE = "Use HLS links"
+        private const val PREF_LINK_TYPE_DEFAULT = false
+        private val PREF_LINK_TYPE_SUMMARY by lazy {
+            """Enable this if you are having Cloudflare issues.
+            |Note that this will break the ability to seek inside of the video unless the episode is downloaded in advance.
+            """.trimMargin()
+        }
     }
 }
