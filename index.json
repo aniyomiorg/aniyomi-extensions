@@ -690,11 +690,11 @@
   {
     "name": "Aniyomi: Cinemathek",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.cinemathek",
-    "apk": "aniyomi-de.cinemathek-v13.9.apk",
+    "apk": "aniyomi-de.cinemathek-v13.10.apk",
     "lang": "de",
-    "code": 9,
-    "version": "13.9",
-    "nsfw": 0,
+    "code": 10,
+    "version": "13.10",
+    "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
     "sources": [
@@ -704,7 +704,7 @@
         "id": "7043232988624273316",
         "baseUrl": "https://cinemathek.net",
         "versionId": 1,
-        "hasCloudflare": 1
+        "hasCloudflare": 0
       }
     ]
   },
@@ -2772,10 +2772,10 @@
   {
     "name": "Aniyomi: Anitube",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.anitube",
-    "apk": "aniyomi-pt.anitube-v13.8.apk",
+    "apk": "aniyomi-pt.anitube-v13.9.apk",
     "lang": "pt-BR",
-    "code": 8,
-    "version": "13.8",
+    "code": 9,
+    "version": "13.9",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
