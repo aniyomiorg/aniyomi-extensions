@@ -52,6 +52,16 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     override val client: OkHttpClient = network.cloudflareClient
 
     // =========================== Anime Details ============================
+    override fun animeDetailsRequest(anime: SAnime): Request {
+        return if (anime.getSession().isBlank()) {
+            val animeId = anime.getId()
+            val session = fetchSession(anime.title, animeId)
+            return GET("$baseUrl/anime/$session?anime_id=$animeId")
+        } else {
+            super.animeDetailsRequest(anime)
+        }
+    }
+
     override fun animeDetailsParse(response: Response): SAnime {
         val document = response.use { it.asJsoup() }
         return SAnime.create().apply {
@@ -117,7 +127,9 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================== Episodes ==============================
     override fun episodeListRequest(anime: SAnime): Request {
-        val session = anime.url.substringBefore("?anime_id=").substringAfterLast("/")
+        val session = anime.getSession().ifEmpty {
+            fetchSession(anime.title, anime.getId())
+        }
         return GET("$baseUrl/api?m=release&id=$session&sort=episode_desc&page=1")
     }
 
@@ -262,6 +274,15 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
+    private fun fetchSession(title: String, animeId: String): String {
+        return client.newCall(GET("$baseUrl/api?m=search&q=$title"))
+            .execute()
+            .use { it.body.string() }
+            .substringAfter("\"id\":$animeId")
+            .substringAfter("\"session\":\"")
+            .substringBefore("\"")
+    }
+
     private fun parseStatus(statusString: String): Int {
         return when (statusString) {
             "Currently Airing" -> SAnime.ONGOING
@@ -269,6 +290,9 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
             else -> SAnime.UNKNOWN
         }
     }
+
+    private fun SAnime.getSession() = url.substringBefore("?anime_id=").substringAfterLast("/")
+    private fun SAnime.getId() = url.substringAfterLast("?anime_id=").substringBefore("\"")
 
     private fun String.toDate(): Long {
         return runCatching {
