@@ -1843,6 +1843,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Doramasflix",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.doramasflix",
+    "apk": "aniyomi-es.doramasflix-v13.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Doramasflix",
+        "lang": "es",
+        "id": "1955566742338181506",
+        "baseUrl": "https://doramasflix.in",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Doramasyt",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.doramasyt",
     "apk": "aniyomi-es.doramasyt-v13.7.apk",
