@@ -17,6 +17,7 @@ import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -33,6 +34,8 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val baseUrl = "https://net-film.vercel.app/api"
 
+    private val hostName = baseUrl.toHttpUrl().host
+
     override val lang = "all"
 
     private var sort = ""
@@ -47,11 +50,20 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
+    private val newHeaders = headers.newBuilder()
+        .add("Accept", "application/json, text/plain, */*")
+        .add("appid", "eyJhbGciOiJIUzI1NiJ9")
+        .add("Host", hostName)
+        .add("Sec-Fetch-Dest", "empty")
+        .add("Sec-Fetch-Mode", "cors")
+        .add("Sec-Fetch-Site", "same-origin")
+
     // ============================== Popular ===============================
 
     override fun popularAnimeRequest(page: Int): Request {
         if (page == 1) sort = ""
-        return GET("$baseUrl/category?area=&category=1&order=count&params=COMIC&size=30&sort=$sort&subtitles=&year=")
+        val popHeaders = newHeaders.add("Referer", "https://$hostName/explore").build()
+        return GET("$baseUrl/category?area=&category=1&order=count&params=COMIC&size=30&sort=$sort&subtitles=&year=", headers = popHeaders)
     }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
@@ -68,6 +80,7 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
                     LinkData(
                         ani.domainType.toString(),
                         ani.id,
+                        response.request.url.toString(),
                     ).toJsonString(),
                 )
             }
@@ -82,7 +95,8 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun latestUpdatesRequest(page: Int): Request {
         if (page == 1) sort = ""
-        return GET("$baseUrl/category?area=&category=1&order=up&params=COMIC&size=30&sort=$sort&subtitles=&year=")
+        val latestHeaders = newHeaders.add("Referer", "https://$hostName/explore").build()
+        return GET("$baseUrl/category?area=&category=1&order=up&params=COMIC&size=30&sort=$sort&subtitles=&year=", headers = latestHeaders)
     }
 
     override fun latestUpdatesParse(response: Response): AnimesPage = popularAnimeParse(response)
@@ -92,10 +106,12 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         if (page == 1) sort = ""
         return if (query.isNotEmpty()) {
-            GET("$baseUrl/search?keyword=$query&size=30")
+            val searchHeaders = newHeaders.add("Referer", "$baseUrl/search?keyword=$query&size=30").build()
+            GET("$baseUrl/search?keyword=$query&size=30", headers = searchHeaders)
         } else {
             val pageList = filters.find { it is SubPageFilter } as SubPageFilter
-            GET("$baseUrl${pageList.toUriPart()}&sort=$sort&subtitles=&year=")
+            val pageHeaders = newHeaders.add("Referer", "https://$hostName/explore").build()
+            GET("$baseUrl${pageList.toUriPart()}&sort=$sort&subtitles=&year=", headers = pageHeaders)
         }
     }
 
@@ -117,6 +133,7 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
                         LinkData(
                             ani.domainType.toString(),
                             ani.id,
+                            response.request.url.toString(),
                         ).toJsonString(),
                     )
                 }
@@ -156,7 +173,11 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
         val parsed = json.decodeFromString<LinkData>(anime.url)
-        val resp = client.newCall(GET("$baseUrl/detail?category=${parsed.category}&id=${parsed.id}")).execute()
+        val detailsHeader = newHeaders.add("Referer", parsed.url).build()
+
+        val resp = client.newCall(
+            GET("$baseUrl/detail?category=${parsed.category}&id=${parsed.id}", headers = detailsHeader),
+        ).execute()
         val data = json.decodeFromString<AnimeInfoResponse>(resp.body.string()).data
         return Observable.just(
             anime.apply {
@@ -174,7 +195,11 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
         val parsed = json.decodeFromString<LinkData>(anime.url)
-        val resp = client.newCall(GET("$baseUrl/detail?category=${parsed.category}&id=${parsed.id}")).execute()
+
+        val episodeHeader = newHeaders.add("Referer", parsed.url).build()
+        val resp = client.newCall(
+            GET("$baseUrl/detail?category=${parsed.category}&id=${parsed.id}", headers = episodeHeader),
+        ).execute()
         val data = json.decodeFromString<AnimeInfoResponse>(resp.body.string()).data
         val episodeList = data.episodeVo.map { ep ->
             val formattedEpNum = if (floor(ep.seriesNo) == ceil(ep.seriesNo)) {
@@ -188,6 +213,7 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
                     LinkData(
                         data.category.toString(),
                         data.id,
+                        "$baseUrl/detail?category=${parsed.category}&id=${parsed.id}",
                         ep.id.toString(),
                     ).toJsonString(),
                 )
@@ -203,7 +229,10 @@ class NetFilm : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val parsed = json.decodeFromString<LinkData>(episode.url)
-        val resp = client.newCall(GET("$baseUrl/episode?category=${parsed.category}&id=${parsed.id}&episode=${parsed.episodeId!!}")).execute()
+        val videoHeaders = newHeaders.add("Referer", parsed.url).build()
+        val resp = client.newCall(
+            GET("$baseUrl/episode?category=${parsed.category}&id=${parsed.id}&episode=${parsed.episodeId!!}", headers = videoHeaders),
+        ).execute()
         val episodeParsed = json.decodeFromString<EpisodeResponse>(resp.body.string())
         val subtitleList = episodeParsed.data.subtitles.map { sub ->
             Track(sub.url, sub.language)

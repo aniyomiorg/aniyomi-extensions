@@ -15,18 +15,21 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
@@ -102,7 +105,9 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         throw Exception("Not used")
 
     private fun searchAnimeRequest(page: Int, query: String, filters: NineAnimeFilters.FilterSearchParams): Request {
-        val vrf = if (query.isNotBlank()) vrfInterceptor.getVrf(query) else ""
+        val vrf = (if (query.isNotBlank()) vrfInterceptor.getVrf(query) else "").let {
+            java.net.URLEncoder.encode(it, "utf-8")
+        }
 
         var url = "$baseUrl/filter?keyword=$query"
 
@@ -116,7 +121,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (filters.rating.isNotBlank()) url += filters.rating
 
         return GET(
-            "$url&sort=${filters.sort}&vrf=${java.net.URLEncoder.encode(vrf, "utf-8")}&page=$page",
+            "$url&sort=${filters.sort}&$VRF_NAME=$vrf&page=$page",
             headers = Headers.headersOf("Referer", "$baseUrl/"),
         )
     }
@@ -155,30 +160,37 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Episodes ==============================
 
     override fun episodeListRequest(anime: SAnime): Request {
-        val link = "https://api.consumet.org/anime/9anime" + anime.url.replace("watch", "info", true)
-        return GET(link, headers = Headers.headersOf("url", anime.url))
+        val id = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup()
+            .selectFirst("div[data-id]")!!.attr("data-id")
+        val vrf = java.net.URLEncoder.encode(callConsumet(id, "vrf"), "utf-8")
+        return GET(
+            "$baseUrl/ajax/episode/list/$id?$VRF_NAME=$vrf",
+            headers = Headers.headersOf("url", anime.url),
+        )
     }
 
-    override fun episodeListSelector() = throw Exception("not used")
+    override fun episodeListSelector() = "div.episodes ul > li > a"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val animeUrl = response.request.header("url").toString()
-        val responseObject = json.decodeFromString<EpisodeResponse>(response.body.string())
-        return responseObject.episodes.parallelMap { episodeFromElements(it, animeUrl) }.reversed()
+        val responseObject = json.decodeFromString<JsonObject>(response.body.string())
+        val document = Jsoup.parse(JSONUtil.unescape(responseObject["result"]!!.jsonPrimitive.content))
+        val episodeElements = document.select(episodeListSelector())
+        return episodeElements.parallelMap { episodeFromElements(it, animeUrl) }.reversed()
     }
 
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("not Used")
 
-    private fun episodeFromElements(item: EpisodeResponse.Episode, url: String): SEpisode {
+    private fun episodeFromElements(element: Element, url: String): SEpisode {
         val episode = SEpisode.create()
-        val epNum = item.epNum
-        val ids = item.subId + if (item.dubId.isNullOrBlank()) "" else ",${item.dubId}"
-        val sub = item.subId.isNotBlank()
-        val dub = !item.dubId.isNullOrBlank()
+        val epNum = element.attr("data-num")
+        val ids = element.attr("data-ids")
+        val sub = element.attr("data-sub").toInt().toBoolean()
+        val dub = element.attr("data-dub").toInt().toBoolean()
         episode.url = "$ids&epurl=$url/ep-$epNum"
         episode.episode_number = epNum.toFloat()
         episode.scanlator = (if (sub) "Sub" else "") + if (dub) ", Dub" else ""
-        val name = item.title
+        val name = element.parent()?.select("span.d-title")?.text().orEmpty()
         val namePrefix = "Episode $epNum"
         episode.name = "Episode $epNum" +
             if (name.isNotEmpty() && name != namePrefix) ": $name" else ""
@@ -187,38 +199,43 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
-        val ids = episode.url.substringBefore("&").split(",")
+    override fun videoListRequest(episode: SEpisode): Request {
+        val ids = episode.url.substringBefore("&")
+        val vrf = java.net.URLEncoder.encode(callConsumet(ids, "vrf"), "utf-8")
+        val url = "/ajax/server/list/$ids?$VRF_NAME=$vrf"
         val epurl = episode.url.substringAfter("epurl=")
-        val videoList = mutableListOf<Video>()
-        val servers = mutableListOf<Triple<String, String, String>>()
+        return GET(baseUrl + url, headers = Headers.headersOf("url", epurl))
+    }
 
+    override fun videoListParse(response: Response): List<Video> {
+        val epurl = response.request.header("url").toString()
+        val responseObject = json.decodeFromString<JsonObject>(response.body.string())
+        val document = Jsoup.parse(JSONUtil.unescape(responseObject["result"]!!.jsonPrimitive.content))
+        val videoList = mutableListOf<Video>()
+
+        val servers = mutableListOf<Triple<String, String, String>>()
+        val ids = response.request.url.encodedPath.substringAfter("list/")
+            .substringBefore("?")
+            .split(",")
         ids.getOrNull(0)?.let { subId ->
-            val resp = client.newCall(GET("https://api.consumet.org/anime/9anime/servers/$subId")).execute()
-            val parsed = json.decodeFromString<List<Servers>>(resp.body.string())
-            parsed.map { serverElement ->
-                val server = serverElement.name.let {
-                    if (it == "vidstream") "vizcloud" else it.lowercase()
-                }
-                servers.add(Triple("Sub", subId, server))
+            document.select("li[data-ep-id=$subId]").map { serverElement ->
+                val server = serverElement.text().lowercase()
+                val serverId = serverElement.attr("data-link-id")
+                servers.add(Triple("Sub", serverId, server))
             }
         }
         ids.getOrNull(1)?.let { dubId ->
-            val resp = client.newCall(GET("https://api.consumet.org/anime/9anime/servers/$dubId")).execute()
-            val parsed = json.decodeFromString<List<Servers>>(resp.body.string())
-            parsed.map { serverElement ->
-                val server = serverElement.name.let {
-                    if (it == "vidstream") "vizcloud" else it.lowercase()
-                }
-                servers.add(Triple("Dub", dubId, server))
+            document.select("li[data-ep-id=$dubId]").map { serverElement ->
+                val server = serverElement.text().lowercase()
+                val serverId = serverElement.attr("data-link-id")
+                servers.add(Triple("Dub", serverId, server))
             }
         }
 
         servers.filter {
-            listOf("vizcloud", "filemoon", "streamtape").contains(it.third)
-        }.parallelMap { videoList.addAll(extractVideoConsumet(it)) }
-
-        if (videoList.isNotEmpty()) return Observable.just(videoList.sort())
+            listOf("vidstream", "filemoon", "streamtape", "mp4upload").contains(it.third)
+        }.parallelMap { videoList.addAll(extractVideoConsumet(it, epurl)) }
+        if (videoList.isNotEmpty()) return videoList
 
         // If the above fail fallback to webview method
         // Sub
@@ -226,7 +243,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         // Dub
         ids.getOrNull(1)?.let { videoList.addAll(extractVizVideo("Dub", epurl)) }
 
-        return Observable.just(videoList.sort())
+        return videoList
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -246,30 +263,31 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return parseVizPlaylist(masterPlaylist, masterUrl, "Vidstream - $lang")
     }
 
-    private fun extractVideoConsumet(server: Triple<String, String, String>): List<Video> {
+    private fun extractVideoConsumet(server: Triple<String, String, String>, epUrl: String): List<Video> {
+        val vrf = java.net.URLEncoder.encode(callConsumet(server.second, "vrf"), "utf-8")
+        val referer = Headers.headersOf("referer", epUrl)
         val response = client.newCall(
-            GET("https://api.consumet.org/anime/9anime/watch/${server.second}?server=${server.third}"),
+            GET("$baseUrl/ajax/server/${server.second}?$VRF_NAME=$vrf", headers = referer),
         ).execute()
         if (response.code != 200) return emptyList()
         val videoList = mutableListOf<Video>()
-        val parsed = json.decodeFromString<WatchResponse>(response.body.string())
-        val embedLink = parsed.embedURL ?: parsed.headers.referer
-        val headers = Headers.headersOf("Referer", parsed.headers.referer)
         runCatching {
+            val parsed = json.decodeFromString<ServerResponse>(response.body.string())
+            val embedLink = callConsumet(parsed.result.url, "decrypt")
+
+            val embedReferer = Headers.headersOf("Referer", embedLink)
             when (server.third) {
-                "vizcloud" -> {
-                    parsed.sources?.filter {
-                        if (it.quality.isNullOrBlank()) true else it.quality == "auto"
-                    }?.map { source ->
-                        val playlist = client.newCall(GET(source.url, headers)).execute()
-                        videoList.addAll(
-                            parseVizPlaylist(
-                                playlist.body.string(),
-                                playlist.request.url.toString(),
-                                "Vidstream - ${server.first}",
-                            ),
-                        )
-                    }
+                "vidstream" -> {
+                    val vizId = embedLink.substringAfter("embed/").substringBefore("?")
+                    val playlistUrl = callConsumet(vizId, "vizcloud")
+                    val playlist = client.newCall(GET(playlistUrl, embedReferer)).execute()
+                    videoList.addAll(
+                        parseVizPlaylist(
+                            playlist.body.string(),
+                            playlist.request.url.toString(),
+                            "Vidstream - ${server.first}",
+                        ),
+                    )
                 }
                 "filemoon" -> FilemoonExtractor(client)
                     .videoFromUrl(embedLink, "Filemoon - ${server.first}").let {
@@ -279,7 +297,6 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     .videoFromUrl(embedLink, "StreamTape - ${server.first}")?.let {
                         videoList.add(it)
                     }
-                // For later use if we can get the embed link
                 "mp4upload" -> Mp4uploadExtractor(client)
                     .videoFromUrl(embedLink, "Mp4Upload - ${server.first}").let {
                         videoList.addAll(it)
@@ -301,6 +318,20 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
     }
 
+    private fun callConsumet(query: String, action: String): String {
+        return client.newCall(
+            GET("https://api.consumet.org/anime/9anime/helper?query=$query&action=$action"),
+        ).execute().body.string().let {
+            if (action == "vizcloud") {
+                it.substringAfter("file\":\"").substringBefore("\"")
+            } else {
+                it.substringAfter("vrf\":\"").substringBefore("\"")
+            }
+        }
+    }
+
+    private fun Int.toBoolean() = this == 1
+
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", "1080")!!
         val lang = preferences.getString("preferred_language", "Sub")!!
@@ -320,45 +351,14 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     @Serializable
-    data class EpisodeResponse(
-        val episodes: List<Episode>,
+    data class ServerResponse(
+        val result: Result,
     ) {
-        @Serializable
-        data class Episode(
-            @SerialName("id")
-            val subId: String,
-            val dubId: String? = null,
-            @SerialName("number")
-            val epNum: Int,
-            val title: String,
-        )
-    }
-
-    @Serializable
-    data class Servers(
-        val name: String,
-    )
-
-    @Serializable
-    data class WatchResponse(
-        val headers: Header,
-        val sources: List<Source>? = null,
-        val embedURL: String? = null,
-    ) {
-        @Serializable
-        data class Header(
-            @SerialName("Referer")
-            val referer: String,
-            @SerialName("User-Agent")
-            val agent: String,
-        )
 
         @Serializable
-        data class Source(
+        data class Result(
             val url: String,
-            @SerialName("isM3U8")
-            val hls: Boolean,
-            val quality: String? = null,
+            val skip_data: String? = null,
         )
     }
 
@@ -415,5 +415,9 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> = runBlocking {
         map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+    }
+
+    companion object {
+        private val VRF_NAME = "vrf250"
     }
 }
