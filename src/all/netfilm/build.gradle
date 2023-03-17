@@ -6,7 +6,7 @@ ext {
     extName = 'NetFilm'
     pkgNameSuffix = 'all.netfilm'
     extClass = '.NetFilm'
-    extVersionCode = 1
+    extVersionCode = 2
     libVersion = '13'
 }
 

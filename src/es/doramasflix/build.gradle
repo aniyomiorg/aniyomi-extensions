@@ -1,0 +1,22 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Doramasflix'
+    pkgNameSuffix = 'es.doramasflix'
+    extClass = '.Doramasflix'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-fembed-extractor'))
+    implementation(project(':lib-streamtape-extractor'))
+    implementation(project(':lib-okru-extractor'))
+    implementation(project(':lib-streamsb-extractor'))
+    implementation(project(':lib-dood-extractor'))
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
+    implementation project(path: ':lib-voe-extractor')
+}
+
+apply from: "$rootDir/common.gradle"

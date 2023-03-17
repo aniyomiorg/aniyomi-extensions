@@ -5,9 +5,8 @@ ext {
     extName = 'Anitube'
     pkgNameSuffix = 'pt.anitube'
     extClass = '.Anitube'
-    extVersionCode = 8
+    extVersionCode = 9
     libVersion = '13'
 }
-
 
 apply from: "$rootDir/common.gradle"
