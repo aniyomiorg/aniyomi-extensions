@@ -26,6 +26,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -53,10 +55,6 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
-
-    override fun headersBuilder(): Headers.Builder {
-        return Headers.Builder().add("Referer", baseUrl)
     }
 
     // ============================== Popular ===============================
@@ -227,9 +225,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
-        servers.filter {
-            listOf("vidstream", "filemoon", "streamtape", "mp4upload").contains(it.third)
-        }.parallelMap { videoList.addAll(extractVideoConsumet(it, epurl)) }
+        servers.parallelMap { videoList.addAll(extractVideoConsumet(it, epurl)) }
         if (videoList.isNotEmpty()) return videoList
 
         // If the above fail fallback to webview method
@@ -253,9 +249,9 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val jsInterceptor =
             client.newBuilder().addInterceptor(JsInterceptor(lang.lowercase())).build()
         val result = jsInterceptor.newCall(GET("$baseUrl$epurl")).execute()
-        val masterUrl = result.request.url.toString()
+        val masterUrl = result.request.url
         val masterPlaylist = result.body.string()
-        return parseVizPlaylist(masterPlaylist, masterUrl, "Vidstream - $lang")
+        return parseVizPlaylist(masterPlaylist, masterUrl, "Vidstream - $lang", headers)
     }
 
     private fun extractVideoConsumet(server: Triple<String, String, String>, epUrl: String): List<Video> {
@@ -270,17 +266,26 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val parsed = json.decodeFromString<ServerResponse>(response.body.string())
             val embedLink = callConsumet(parsed.result.url, "decrypt")
 
-            val embedReferer = Headers.headersOf("Referer", embedLink)
             when (server.third) {
-                "vidstream" -> {
-                    val vizId = embedLink.substringAfter("embed/").substringBefore("?")
-                    val playlistUrl = callConsumet(vizId, "vizcloud")
+                "vidstream", "mycloud" -> {
+                    val embedReferer = Headers.headersOf(
+                        "referer",
+                        "https://" + embedLink.toHttpUrl().host + "/",
+                    )
+                    val vidId = embedLink.substringAfterLast("/").substringBefore("?")
+                    val (serverName, action) = when (server.third) {
+                        "vidstream" -> Pair("Vidstream", "vizcloud")
+                        "mycloud" -> Pair("MyCloud", "mcloud")
+                        else -> return emptyList()
+                    }
+                    val playlistUrl = callConsumet(vidId, action)
                     val playlist = client.newCall(GET(playlistUrl, embedReferer)).execute()
                     videoList.addAll(
                         parseVizPlaylist(
                             playlist.body.string(),
-                            playlist.request.url.toString(),
-                            "Vidstream - ${server.first}",
+                            playlist.request.url,
+                            "$serverName - ${server.first}",
+                            embedReferer,
                         ),
                     )
                 }
@@ -302,14 +307,19 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoList
     }
 
-    private fun parseVizPlaylist(masterPlaylist: String, masterUrl: String, prefix: String): List<Video> {
+    private fun parseVizPlaylist(masterPlaylist: String, masterUrl: HttpUrl, prefix: String, embedReferer: Headers): List<Video> {
+        val playlistHeaders = embedReferer.newBuilder()
+            .add("host", masterUrl.host)
+            .add("connection", "keep-alive")
+            .build()
+
         return masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
             .split("#EXT-X-STREAM-INF:").map {
                 val quality = "$prefix " + it.substringAfter("RESOLUTION=")
                     .substringAfter("x").substringBefore("\n") + "p"
-                val videoUrl = masterUrl.substringBeforeLast("/") + "/" +
+                val videoUrl = masterUrl.toString().substringBeforeLast("/") + "/" +
                     it.substringAfter("\n").substringBefore("\n")
-                Video(videoUrl, quality, videoUrl)
+                Video(videoUrl, quality, videoUrl, playlistHeaders)
             }
     }
 
@@ -318,7 +328,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             GET("https://api.consumet.org/anime/9anime/helper?query=$query&action=$action"),
         ).execute().body.string().let {
             when (action) {
-                "vizcloud" -> {
+                "vizcloud", "mcloud" -> {
                     it.substringAfter("file\":\"").substringBefore("\"")
                 }
                 "decrypt" -> {
