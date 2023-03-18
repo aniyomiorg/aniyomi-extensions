@@ -57,6 +57,8 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
+
     // ============================== Popular ===============================
 
     override fun popularAnimeRequest(page: Int): Request {
@@ -255,7 +257,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun extractVideoConsumet(server: Triple<String, String, String>, epUrl: String): List<Video> {
-        val vrf = callConsumet(server.second, "vrf")
+        val vrf = callConsumet(server.second, "rawVrf")
         val referer = Headers.headersOf("referer", epUrl)
         val response = client.newCall(
             GET("$baseUrl/ajax/server/${server.second}?$vrf", headers = referer),
