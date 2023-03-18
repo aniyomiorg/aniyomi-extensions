@@ -41,5 +41,5 @@ data class EpisodeDto(
     val createdAt: String,
     val session: String,
     @SerialName("episode")
-    val episodeNumber: Int,
+    val episodeNumber: Float,
 )

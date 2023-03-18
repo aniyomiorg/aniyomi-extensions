@@ -28,6 +28,8 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
 import java.util.Locale
+import kotlin.math.ceil
+import kotlin.math.floor
 
 class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
 
@@ -146,8 +148,13 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
                 val session = episode.session
                 setUrlWithoutDomain("/play/$animeSession/$session")
                 val epNum = episode.episodeNumber
-                episode_number = epNum.toFloat()
-                name = "Episode $epNum"
+                episode_number = epNum
+                val epName = if (floor(epNum) == ceil(epNum)) {
+                    epNum.toInt().toString()
+                } else {
+                    epNum.toString()
+                }
+                name = "Episode $epName"
             }
         }.toMutableList()
     }
