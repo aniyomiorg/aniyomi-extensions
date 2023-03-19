@@ -158,6 +158,16 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // =========================== Anime Details ============================
 
+    override fun animeDetailsParse(response: Response): SAnime = throw Exception("Not used")
+
+    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
+        return client.newCall(animeDetailsRequest(anime))
+            .asObservableSuccess()
+            .map { response ->
+                animeDetailsParse(response, anime).apply { initialized = true }
+            }
+    }
+
     override fun animeDetailsRequest(anime: SAnime): Request {
         val variables = """{"_id":"${anime.url}"}"""
         val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$_idHash"}}"""
@@ -167,11 +177,11 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         return GET("$baseUrl/allanimeapi?variables=$variables&extensions=$extensions", headers = headers)
     }
 
-    override fun animeDetailsParse(response: Response): SAnime {
+    private fun animeDetailsParse(response: Response, animeOld: SAnime): SAnime {
         val show = json.decodeFromString<SeriesResult>(response.body.string()).data.show
         val anime = SAnime.create()
 
-        anime.title = show.name
+        anime.title = animeOld.title
 
         anime.description = Jsoup.parse(
             show.description?.replace("<br>", "br2n") ?: "",
