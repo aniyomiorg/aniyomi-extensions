@@ -2644,6 +2644,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Wbijam",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pl.wbijam",
+    "apk": "aniyomi-pl.wbijam-v13.1.apk",
+    "lang": "pl",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Wbijam",
+        "lang": "pl",
+        "id": "3333993424729096948",
+        "baseUrl": "https://wbijam.pl",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Anime Fire",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animefire",
     "apk": "aniyomi-pt.animefire-v13.4.apk",
