@@ -13,7 +13,7 @@ import uy.kohesive.injekt.api.get
 class CineVision : DooPlay(
     "pt-BR",
     "CineVision",
-    "https://cinevisionv6.net",
+    "https://cinevision.vc",
 ) {
     // ============================== Popular ===============================
     override fun popularAnimeSelector(): String = "article.w_item_b > a"
