@@ -23,6 +23,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
+import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -34,6 +35,7 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.io.IOException
 import java.lang.Exception
 
 class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -46,7 +48,9 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .addInterceptor(::loginInterceptor)
+        .build()
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -226,6 +230,16 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun getFilterList(): AnimeFilterList = BAFilters.filterList
 
     // ============================= Utilities ==============================
+    private fun loginInterceptor(chain: Interceptor.Chain): Response {
+        val response = chain.proceed(chain.request())
+
+        if ("/dmca" in response.request.url.toString()) {
+            response.close()
+            throw IOException(ERROR_LOGIN_MISSING)
+        }
+
+        return response
+    }
     private fun getRealDoc(document: Document): Document {
         return document.selectFirst("div.anime-title a")?.let { link ->
             client.newCall(GET(link.attr("href")))
@@ -294,6 +308,9 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     companion object {
         private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
         const val PREFIX_SEARCH_PATH = "path:"
+
+        private const val ERROR_LOGIN_MISSING = "Login necessário. " +
+            "Abra a WebView, insira os dados de sua conta e realize o login."
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Qualidade preferida"
