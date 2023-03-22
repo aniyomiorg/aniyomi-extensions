@@ -7,10 +7,10 @@ object BAFilters {
 
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
 
         fun toQueryPart() = vals[state].second
@@ -34,19 +34,19 @@ object BAFilters {
 
     class GenresFilter : CheckBoxFilterList(
         "Gêneros",
-        BAFiltersData.genres.map { CheckBoxVal(it.first, false) }
+        BAFiltersData.genres.map { CheckBoxVal(it.first, false) },
     )
 
     val filterList = AnimeFilterList(
         LanguageFilter(),
         YearFilter(),
-        GenresFilter()
+        GenresFilter(),
     )
 
     data class FilterSearchParams(
         val language: String = "",
         val year: String = "",
-        val genres: List<String> = emptyList<String>()
+        val genres: List<String> = emptyList<String>(),
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
@@ -62,7 +62,7 @@ object BAFilters {
         return FilterSearchParams(
             filters.asQueryPart<LanguageFilter>(),
             filters.asQueryPart<YearFilter>(),
-            genres
+            genres,
         )
     }
 
@@ -72,7 +72,7 @@ object BAFilters {
         val languages = arrayOf(
             every,
             Pair("Legendado", "legendado"),
-            Pair("Dublado", "dublado")
+            Pair("Dublado", "dublado"),
         )
 
         val years = arrayOf(every) + (2022 downTo 1976).map {

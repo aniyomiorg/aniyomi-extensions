@@ -19,7 +19,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 class BetterAnimeExtractor(
     private val client: OkHttpClient,
     private val baseUrl: String,
-    private val json: Json
+    private val json: Json,
 ) {
 
     private val headers = Headers.headersOf("Referer", baseUrl)
@@ -47,17 +47,17 @@ class BetterAnimeExtractor(
         val request = POST("$baseUrl/changePlayer", headers, reqBody)
         return runCatching {
             val response = client.newCall(request).execute()
-            val resJson = json.decodeFromString<ChangePlayerDto>(response.body?.string().orEmpty())
+            val resJson = json.decodeFromString<ChangePlayerDto>(response.body.string())
             videoUrlFromPlayer(resJson.frameLink)
         }.getOrNull()
     }
 
     private fun videoUrlFromPlayer(url: String?): String? {
-        if (url == null)
+        if (url == null) {
             return null
+        }
 
-        val html = client.newCall(GET(url, headers)).execute().body
-            ?.string().orEmpty()
+        val html = client.newCall(GET(url, headers)).execute().body.string()
 
         val videoUrl = html.substringAfter("file\":")
             .substringAfter("\"")

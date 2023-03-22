@@ -113,7 +113,7 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val html = response.body?.string().orEmpty()
+        val html = response.body.string()
         val extractor = BetterAnimeExtractor(client, baseUrl, json)
         return extractor.videoListFromHtml(html)
     }
@@ -128,7 +128,7 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeNextPageSelector() = throw Exception("not used")
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val body = response.body?.string().orEmpty()
+        val body = response.body.string()
         val data = json.decodeFromString<LivewireResponseDto>(body)
         val html = data.effects.html?.unescape() ?: ""
         val document = Jsoup.parse(html)
@@ -165,8 +165,9 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
 
     private fun searchAnimeRequest(page: Int, query: String, filters: BAFilters.FilterSearchParams): Request {
-        if (page == 1)
+        if (page == 1) {
             updateInitialData(GET("$baseUrl/pesquisa"))
+        }
 
         val searchParams = mutableListOf<PayloadItem>()
         searchParams.add(PayloadItem(PayloadData(method = "search"), "callMethod"))
@@ -174,22 +175,26 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             PayloadItem(
                 PayloadData(
                     method = "gotoPage",
-                    params = listOf(JsonPrimitive(page), JsonPrimitive("page"))
+                    params = listOf(JsonPrimitive(page), JsonPrimitive("page")),
                 ),
-                "callMethod"
-            )
+                "callMethod",
+            ),
         )
 
         val data = mutableListOf<PayloadData>()
 
-        if (filters.genres.size > 1)
+        if (filters.genres.size > 1) {
             data.add(PayloadData(name = "byGenres", value = filters.genres))
-        if (!filters.year.isBlank())
+        }
+        if (!filters.year.isBlank()) {
             data.add(PayloadData(name = "byYear", value = listOf(filters.year)))
-        if (!filters.language.isBlank())
+        }
+        if (!filters.language.isBlank()) {
             data.add(PayloadData(name = "byLanguage", value = listOf(filters.language)))
-        if (!query.isBlank())
+        }
+        if (!query.isBlank()) {
             data.add(PayloadData(name = "searchTerm", value = listOf(query)))
+        }
 
         searchParams += data.map { PayloadItem(it, "syncInput") }
         return wireRequest("anime-search", searchParams)
@@ -200,22 +205,21 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         val doc = getRealDoc(document)
 
-        val infos = doc.selectFirst("div.infos_left > div.anime-info")
-        val img = doc.selectFirst("div.infos-img > img")
+        val infos = doc.selectFirst("div.infos_left > div.anime-info")!!
+        val img = doc.selectFirst("div.infos-img > img")!!
         anime.thumbnail_url = "https:" + img.attr("src")
         anime.title = img.attr("alt")
         val genres = infos.select("div.anime-genres > a")
-            .joinToString(", ") {
-                it.text()
-            }
+            .eachText()
+            .joinToString()
+
         anime.genre = genres
         anime.author = infos.getInfo("Produtor")
         anime.artist = infos.getInfo("Estúdio")
         anime.status = parseStatus(infos.getInfo("Estado"))
-        var desc = infos.selectFirst("div.anime-description").text() + "\n\n"
-        desc += infos.select(">p").joinToString("\n") { it.text() }
+        var desc = infos.selectFirst("div.anime-description")!!.text() + "\n\n"
+        desc += infos.select(">p").eachText().joinToString("\n")
         anime.description = desc
-
         return anime
     }
 
@@ -281,7 +285,7 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .substringAfter("livewire_token")
             .substringAfter("'")
             .substringBefore("'")
-        INITIAL_DATA = wireElement.attr("wire:initial-data")!!.dropLast(1)
+        INITIAL_DATA = wireElement!!.attr("wire:initial-data").dropLast(1)
     }
 
     private fun wireRequest(path: String, updates: List<PayloadItem>): Request {
@@ -298,8 +302,9 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun Element.getInfo(key: String): String? {
         val element = this.selectFirst("p:containsOwn($key) > span")
-        if (element == null)
+        if (element == null) {
             return element
+        }
         return element.text().trim()
     }
 
