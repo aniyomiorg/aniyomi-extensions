@@ -20,11 +20,11 @@ object BAFilters {
     private class CheckBoxVal(name: String, state: Boolean = false) : AnimeFilter.CheckBox(name, state)
 
     private inline fun <reified R> AnimeFilterList.getFirst(): R {
-        return this.filterIsInstance<R>().first()
+        return first { it is R } as R
     }
 
     private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return this.filterIsInstance<R>().joinToString("") {
+        return getFirst<R>().let {
             (it as QueryPartFilter).toQueryPart()
         }
     }
@@ -75,7 +75,7 @@ object BAFilters {
             Pair("Dublado", "dublado"),
         )
 
-        val years = arrayOf(every) + (2022 downTo 1976).map {
+        val years = arrayOf(every) + (2023 downTo 1976).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 
