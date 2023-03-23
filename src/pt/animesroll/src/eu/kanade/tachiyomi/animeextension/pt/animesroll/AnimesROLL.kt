@@ -59,7 +59,7 @@ class AnimesROLL : AnimeHttpSource() {
             listOf(episode)
         } else {
             val anime = response.asJsoup().parseAs<AnimeDataDto>()
-            val urlStart = "https://cdn-01.animesroll.com/hls/animes/${anime.slug}"
+            val urlStart = "https://cdn-01.gamabunta.xyz/hls/animes/${anime.slug}"
 
             return fetchEpisodesRecursively(anime.id).map { episode ->
                 SEpisode.create().apply {
