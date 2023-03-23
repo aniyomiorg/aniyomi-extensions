@@ -88,7 +88,11 @@ class AnimesROLL : AnimeHttpSource() {
     // =========================== Anime Details ============================
     override fun animeDetailsParse(response: Response): SAnime {
         val doc = response.asJsoup()
-        val anime = doc.parseAs<AnimeInfoDto>().animeData
+        val anime = when {
+            response.request.url.toString().contains("/f/") ->
+                doc.parseAs<AnimeInfoDto>().animeData
+            else -> doc.parseAs<AnimeDataDto>()
+        }
         return anime.toSAnime().apply {
             author = if (anime.director != "0") anime.director else null
             var desc = anime.description.ifNotEmpty { it + "\n" }
