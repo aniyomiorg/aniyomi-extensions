@@ -19,10 +19,9 @@ data class LatestAnimeDto(
 )
 
 @Serializable
-data class AnimeInfoDto(
-    @JsonNames("data_anime", "data_movie")
-    val animeData: AnimeDataDto,
-    val pages: Int = 0,
+data class MovieInfoDto(
+    @SerialName("data_movie")
+    val movieData: AnimeDataDto,
 )
 
 @Serializable

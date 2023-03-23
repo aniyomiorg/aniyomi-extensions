@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesroll
 
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.AnimeDataDto
-import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.AnimeInfoDto
+import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.MovieInfoDto
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.EpisodeDto
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.EpisodeListDto
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.LatestAnimeDto
@@ -34,7 +34,7 @@ class AnimesROLL : AnimeHttpSource() {
 
     override val supportsLatest = true
 
-    override fun headersBuilder() = Headers.Builder().add("Referer", baseUrl)
+    override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -50,13 +50,12 @@ class AnimesROLL : AnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> {
         val originalUrl = response.request.url.toString()
         return if ("/f/" in originalUrl) {
-            val od = response.asJsoup().parseAs<AnimeInfoDto>().animeData.od
-            val episode = SEpisode.create().apply {
+            val od = response.asJsoup().parseAs<MovieInfoDto>().movieData.od
+            SEpisode.create().apply {
                 url = "$OLD_API_URL/od/$od/filme.mp4"
                 name = "Filme"
                 episode_number = 0F
-            }
-            listOf(episode)
+            }.let(::listOf)
         } else {
             val anime = response.asJsoup().parseAs<AnimeDataDto>()
             val urlStart = "https://cdn-01.gamabunta.xyz/hls/animes/${anime.slug}"
@@ -108,7 +107,7 @@ class AnimesROLL : AnimeHttpSource() {
         val doc = response.asJsoup()
         val anime = when {
             response.request.url.toString().contains("/f/") ->
-                doc.parseAs<AnimeInfoDto>().animeData
+                doc.parseAs<MovieInfoDto>().movieData
             else -> doc.parseAs<AnimeDataDto>()
         }
         return anime.toSAnime().apply {
