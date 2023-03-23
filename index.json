@@ -2812,12 +2812,33 @@
     ]
   },
   {
+    "name": "Aniyomi: Better Anime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.betteranime",
+    "apk": "aniyomi-pt.betteranime-v13.6.apk",
+    "lang": "pt-BR",
+    "code": 6,
+    "version": "13.6",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Better Anime",
+        "lang": "pt-BR",
+        "id": "4877901824203895720",
+        "baseUrl": "https://betteranime.net",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: CineVision",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.cinevision",
-    "apk": "aniyomi-pt.cinevision-v13.4.apk",
+    "apk": "aniyomi-pt.cinevision-v13.5.apk",
     "lang": "pt-BR",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2826,7 +2847,7 @@
         "name": "CineVision",
         "lang": "pt-BR",
         "id": "4986568999330167770",
-        "baseUrl": "https://cinevisionv6.net",
+        "baseUrl": "https://cinevision.vc",
         "versionId": 1,
         "hasCloudflare": 0
       }
