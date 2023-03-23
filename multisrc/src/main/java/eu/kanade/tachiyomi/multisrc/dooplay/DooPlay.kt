@@ -199,10 +199,16 @@ abstract class DooPlay(
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         return when {
             query.isBlank() -> {
-                val genreUri = filters.asUriPart()
-                var url = "$baseUrl/$genreUri"
-                if (page > 1) url += "/page/$page"
-                GET(url, headers)
+                filters
+                    .firstOrNull { it.state != 0 }
+                    ?.let {
+                        val filter = it as UriPartFilter
+                        val filterUrl = buildString {
+                            append("$baseUrl/${filter.toUriPart()}")
+                            if (page > 1) append("/page/$page")
+                        }
+                        GET(filterUrl, headers)
+                    } ?: popularAnimeRequest(page)
             }
             else -> GET("$baseUrl/page/$page/?s=$query", headers)
         }
@@ -318,13 +324,13 @@ abstract class DooPlay(
     /**
      * Automatically fetched genres from the source to be used in the filters.
      */
-    protected open lateinit var genresListFilter: AnimeFilter<*>
+    protected open lateinit var genresArray: FilterItems
 
     override fun getFilterList(): AnimeFilterList {
-        return if (this::genresListFilter.isInitialized) {
+        return if (this::genresArray.isInitialized) {
             AnimeFilterList(
                 AnimeFilter.Header(genreFilterHeader),
-                genresListFilter,
+                FetchedGenresFilter(genresListMessage, genresArray),
             )
         } else if (fetchGenres) {
             AnimeFilterList(AnimeFilter.Header(genresMissingWarning))
@@ -337,15 +343,17 @@ abstract class DooPlay(
      * Fetch the genres from the source to be used in the filters.
      */
     protected open fun fetchGenresList() {
-        if (!this::genresListFilter.isInitialized && fetchGenres) {
+        if (!this::genresArray.isInitialized && fetchGenres) {
             runCatching {
-                val filter = client.newCall(genresListRequest())
+                client.newCall(genresListRequest())
                     .execute()
                     .asJsoup()
                     .let(::genresListParse)
-                if ((filter as AnimeFilter.Select<*>).values.size > 0) {
-                    genresListFilter = filter
-                }
+                    .let { items ->
+                        if (items.isNotEmpty()) {
+                            genresArray = items
+                        }
+                    }
             }.onFailure { it.printStackTrace() }
         }
     }
@@ -358,13 +366,23 @@ abstract class DooPlay(
     /**
      * Get the genres from the document.
      */
-    protected open fun genresListParse(document: Document): AnimeFilter<*> {
+    protected open fun genresListParse(document: Document): FilterItems {
         val items = document.select(genresListSelector()).map {
             val name = it.text()
             val value = it.attr("href").substringAfter("$baseUrl/")
             Pair(name, value)
         }.toTypedArray()
-        return UriPartFilter(genresListMessage, items)
+
+        return if (items.isEmpty()) {
+            items
+        } else {
+            arrayOf(Pair(selectFilterText, "")) + items
+        }
+    }
+
+    protected open val selectFilterText = when (lang) {
+        "pt-BR" -> "<Selecione>"
+        else -> "<Select>"
     }
 
     protected open val genreFilterHeader = when (lang) {
@@ -382,11 +400,13 @@ abstract class DooPlay(
         else -> "Genre"
     }
 
-    protected open fun genresListSelector() = "li:contains(${genresListMessage}s) ul.sub-menu li > a"
+    protected open fun genresListSelector() = "li:contains($genresListMessage) ul.sub-menu li > a"
+
+    class FetchedGenresFilter(title: String, items: FilterItems) : UriPartFilter(title, items)
 
     open class UriPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>,
+        val vals: FilterItems,
     ) : AnimeFilter.Select<String>(
         displayName,
         vals.map { it.first }.toTypedArray(),
@@ -394,8 +414,8 @@ abstract class DooPlay(
         fun toUriPart() = vals[state].second
     }
 
-    private fun AnimeFilterList.asUriPart(): String {
-        return this.filterIsInstance<UriPartFilter>().first().toUriPart()
+    private inline fun <reified R> AnimeFilterList.asUriPart(): String {
+        return this.first { it is R }.let { it as UriPartFilter }.toUriPart()
     }
 
     // ============================= Utilities ==============================
@@ -466,3 +486,5 @@ abstract class DooPlay(
             .getOrNull() ?: 0L
     }
 }
+
+typealias FilterItems = Array<Pair<String, String>>
