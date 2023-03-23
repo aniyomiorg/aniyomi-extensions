@@ -1906,6 +1906,27 @@
     ]
   },
   {
+    "name": "Aniyomi: FanPelis",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.fanpelis",
+    "apk": "aniyomi-es.fanpelis-v13.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "FanPelis",
+        "lang": "es",
+        "id": "1270541458457028378",
+        "baseUrl": "https://fanpelis.la",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Hentaijk",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.hentaijk",
     "apk": "aniyomi-es.hentaijk-v13.8.apk",
