@@ -149,7 +149,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 sourceUrls
             }
         }
-    """.trimIndent()
+    """.trimIndent().trim()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
