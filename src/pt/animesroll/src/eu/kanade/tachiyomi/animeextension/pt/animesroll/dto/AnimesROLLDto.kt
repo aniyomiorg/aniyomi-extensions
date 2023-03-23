@@ -46,10 +46,19 @@ data class AnimeDataDto(
 )
 
 @Serializable
+data class EpisodeListDto(
+    @SerialName("data")
+    val episodes: List<EpisodeDto>,
+    val meta: MetadataDto,
+) {
+    @Serializable
+    data class MetadataDto(val totalOfPages: Int)
+}
+
+@Serializable
 data class EpisodeDto(
-    @SerialName("data_anime")
-    val anime: AnimeDataDto,
-    val total_ep: Int,
+    @SerialName("n_episodio")
+    val episodeNumber: String,
 )
 
 @Serializable

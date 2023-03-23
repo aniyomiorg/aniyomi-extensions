@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.animeextension.pt.animesroll
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.AnimeDataDto
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.AnimeInfoDto
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.EpisodeDto
+import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.EpisodeListDto
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.LatestAnimeDto
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.PagePropDto
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.SearchResultsDto
@@ -51,27 +52,44 @@ class AnimesROLL : AnimeHttpSource() {
         return if ("/f/" in originalUrl) {
             val od = response.asJsoup().parseAs<AnimeInfoDto>().animeData.od
             val episode = SEpisode.create().apply {
-                url = "$NEW_API_URL/od/$od/filme.mp4"
+                url = "$OLD_API_URL/od/$od/filme.mp4"
                 name = "Filme"
                 episode_number = 0F
             }
             listOf(episode)
         } else {
-            val epdata = response.asJsoup().parseAs<EpisodeDto>()
-            val urlStart = "https://cdn-01.animesroll.com/hls/animes/${epdata.anime.slug}"
+            val anime = response.asJsoup().parseAs<AnimeDataDto>()
+            val urlStart = "https://cdn-01.animesroll.com/hls/animes/${anime.slug}"
 
-            (epdata.total_ep downTo 1).map {
+            return fetchEpisodesRecursively(anime.id).map { episode ->
                 SEpisode.create().apply {
-                    episode_number = it.toFloat()
-                    val fixedNum = it.toString().padStart(3, '0')
-                    name = "Episódio #$fixedNum"
-                    url = "$urlStart/$fixedNum.mp4/media-1/stream.m3u8"
+                    val epNum = episode.episodeNumber
+                    name = "Episódio #$epNum"
+                    episode_number = epNum.toFloat()
+                    url = "$urlStart/$epNum.mp4/media-1/stream.m3u8"
                 }
             }
         }
     }
-    // ============================ Video Links =============================
 
+    private fun fetchEpisodesRecursively(animeId: String, page: Int = 1): List<EpisodeDto> {
+        val response = client.newCall(episodeListRequest(animeId, page))
+            .execute()
+            .parseAs<EpisodeListDto>()
+
+        return response.episodes.let { episodes ->
+            when {
+                response.meta.totalOfPages > page ->
+                    episodes + fetchEpisodesRecursively(animeId, page + 1)
+                else -> episodes
+            }
+        }
+    }
+
+    private fun episodeListRequest(animeId: String, page: Int) =
+        GET("$NEW_API_URL/animes/$animeId/episodes?page=$page%order=desc")
+
+    // ============================ Video Links =============================
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val epUrl = episode.url
         return Observable.just(listOf(Video(epUrl, "default", epUrl)))
@@ -133,7 +151,7 @@ class AnimesROLL : AnimeHttpSource() {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        return GET("$NEW_API_URL/search?q=$query")
+        return GET("$OLD_API_URL/search?q=$query")
     }
 
     // =============================== Latest ===============================
@@ -180,7 +198,8 @@ class AnimesROLL : AnimeHttpSource() {
     }
 
     companion object {
-        private const val NEW_API_URL = "https://apiv2-prd.anroll.net"
+        private const val OLD_API_URL = "https://apiv2-prd.anroll.net"
+        private const val NEW_API_URL = "https://apiv3-prd.anroll.net"
 
         const val PREFIX_SEARCH = "path:"
     }
