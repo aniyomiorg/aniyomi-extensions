@@ -51,10 +51,105 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private val json: Json by injectLazy()
 
-    private val popularHash = "563c9c7c7fb5218aaf5562ad5d7cabb9ece03a36b4bc94f1384ba70709bd61da"
-    private val searchHash = "c4305f3918591071dfecd081da12243725364f6b7dd92072df09d915e390b1b7"
-    private val _idHash = "259ae45c19ceff2f855215bb82d377fe7b0ab661f9abcd41538bda935e9cb299"
-    private val episodeHash = "919e327075ac9e249d003aa3f804a48bbdf22d7b1d107ffe659accd54283ce48"
+    private val popularQuery = """
+        query(
+                ${'$'}type: VaildPopularTypeEnumType!
+                ${'$'}size: Int!
+                ${'$'}page: Int
+                ${'$'}dateRange: Int
+            ) {
+            queryPopular(
+                type: ${'$'}type
+                size: ${'$'}size
+                dateRange: ${'$'}dateRange
+                page: ${'$'}page
+            ) {
+                total
+                recommendations {
+                    anyCard {
+                        _id
+                        name
+                        thumbnail
+                        englishName
+                        nativeName
+                    }
+                }
+            }
+        }
+    """.trimIndent().trim()
+
+    private val searchQuery = """
+        query(
+                ${'$'}search: SearchInput
+                ${'$'}limit: Int
+                ${'$'}page: Int
+                ${'$'}translationType: VaildTranslationTypeEnumType
+                ${'$'}countryOrigin: VaildCountryOriginEnumType
+            ) {
+            shows(
+                search: ${'$'}search
+                limit: ${'$'}limit
+                page: ${'$'}page
+                translationType: ${'$'}translationType
+                countryOrigin: ${'$'}countryOrigin
+            ) {
+                pageInfo {
+                    total
+                }
+                edges {
+                    _id
+                    name
+                    thumbnail
+                    englishName
+                    nativeName
+                }
+            }
+        }
+    """.trimIndent().trim()
+
+    private val detailsQuery = """
+        query (${'$'}_id: String!) {
+            show(
+                _id: ${'$'}_id
+            ) {
+                thumbnail
+                description
+                type
+                season
+                score
+                genres
+                status
+                studios
+            }
+        }
+    """.trimIndent().trim()
+
+    private val episodesQuery = """
+        query (${'$'}_id: String!) {
+            show(
+                _id: ${'$'}_id
+            ) {
+                _id
+                availableEpisodesDetail
+            }
+        }
+    """.trimIndent().trim()
+
+    private val streamQuery = """
+        query(
+                ${'$'}showId: String!,
+                ${'$'}translationType: VaildTranslationTypeEnumType!,
+                ${'$'}episodeString: String!
+            ) {
+            episode(
+                showId: ${'$'}showId
+                translationType: ${'$'}translationType
+                episodeString: ${'$'}episodeString
+            ) {
+                sourceUrls
+            }
+        }
+    """.trimIndent().trim()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -63,12 +158,11 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================== Popular ===============================
 
     override fun popularAnimeRequest(page: Int): Request {
-        val variables = """{"type":"anime","size":30,"dateRange":7,"page":$page,"allowAdult":false,"allowUnknown":false}"""
-        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$popularHash"}}"""
+        val variables = """{"type":"anime","size":26,"dateRange":7,"page":$page}"""
         val headers = headers.newBuilder()
             .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
             .build()
-        return GET("$baseUrl/allanimeapi?variables=$variables&extensions=$extensions", headers = headers)
+        return GET("$baseUrl/allanimeapi?variables=$variables&query=$popularQuery", headers = headers)
     }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
@@ -93,18 +187,17 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
-        return AnimesPage(animeList, animeList.size == 30)
+        return AnimesPage(animeList, animeList.size == 26)
     }
 
     // =============================== Latest ===============================
 
     override fun latestUpdatesRequest(page: Int): Request {
         val variables = """{"search":{"allowAdult":false,"allowUnknown":false},"limit":26,"page":$page,"translationType":"${preferences.getString("preferred_sub", "sub")!!}","countryOrigin":"ALL"}"""
-        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$searchHash"}}"""
         val headers = headers.newBuilder()
             .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
             .build()
-        return GET("$baseUrl/allanimeapi?variables=$variables&extensions=$extensions", headers = headers)
+        return GET("$baseUrl/allanimeapi?variables=$variables&query=$searchQuery", headers = headers)
     }
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
@@ -127,11 +220,10 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun searchAnimeRequest(page: Int, query: String, filters: AllAnimeFilters.FilterSearchParams): Request {
         return if (query.isNotEmpty()) {
             val variables = """{"search":{"query":"$query","allowAdult":false,"allowUnknown":false},"limit":26,"page":$page,"translationType":"${preferences.getString("preferred_sub", "sub")!!}","countryOrigin":"ALL"}"""
-            val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$searchHash"}}"""
             val headers = headers.newBuilder()
                 .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
                 .build()
-            GET("$baseUrl/allanimeapi?variables=$variables&extensions=$extensions", headers = headers)
+            GET("$baseUrl/allanimeapi?variables=$variables&query=$searchQuery", headers = headers)
         } else {
             val seasonString = if (filters.season == "all") "" else ""","season":"${filters.season}""""
             val yearString = if (filters.releaseYear == "all") "" else ""","year":${filters.releaseYear}"""
@@ -142,11 +234,10 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             var variables = """{"search":{"allowAdult":false,"allowUnknown":false$seasonString$yearString$genresString$typesString$sortByString"""
             variables += """},"limit":26,"page":$page,"translationType":"${preferences.getString("preferred_sub", "sub")!!}","countryOrigin":"${filters.origin}"}"""
 
-            val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$searchHash"}}"""
             val headers = headers.newBuilder()
                 .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
                 .build()
-            GET("$baseUrl/allanimeapi?variables=$variables&extensions=$extensions", headers = headers)
+            GET("$baseUrl/allanimeapi?variables=$variables&query=$searchQuery", headers = headers)
         }
     }
 
@@ -170,15 +261,14 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun animeDetailsRequest(anime: SAnime): Request {
         val variables = """{"_id":"${anime.url}"}"""
-        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$_idHash"}}"""
         val headers = headers.newBuilder()
             .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
             .build()
-        return GET("$baseUrl/allanimeapi?variables=$variables&extensions=$extensions", headers = headers)
+        return GET("$baseUrl/allanimeapi?variables=$variables&query=$detailsQuery", headers = headers)
     }
 
     private fun animeDetailsParse(response: Response, animeOld: SAnime): SAnime {
-        val show = json.decodeFromString<SeriesResult>(response.body.string()).data.show
+        val show = json.decodeFromString<DetailsResult>(response.body.string()).data.show
         val anime = SAnime.create()
 
         anime.title = animeOld.title
@@ -203,11 +293,10 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun episodeListRequest(anime: SAnime): Request {
         val variables = """{"_id":"${anime.url}"}"""
-        val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$_idHash"}}"""
         val headers = headers.newBuilder()
             .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
             .build()
-        return GET("$baseUrl/allanimeapi?variables=$variables&extensions=$extensions", headers = headers)
+        return GET("$baseUrl/allanimeapi?variables=$variables&query=$episodesQuery", headers = headers)
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
@@ -224,8 +313,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 episode.name = "Episode $numName (sub)"
 
                 val variables = """{"showId":"${medias.data.show._id}","translationType":"sub","episodeString":"$ep"}"""
-                val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$episodeHash"}}"""
-                episode.setUrlWithoutDomain("/allanimeapi?variables=$variables&extensions=$extensions")
+                episode.setUrlWithoutDomain("/allanimeapi?variables=$variables&query=$streamQuery")
                 episodeList.add(episode)
             }
         } else {
@@ -236,8 +324,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 episode.name = "Episode $numName (dub)"
 
                 val variables = """{"showId":"${medias.data.show._id}","translationType":"dub","episodeString":"$ep"}"""
-                val extensions = """{"persistedQuery":{"version":1,"sha256Hash":"$episodeHash"}}"""
-                episode.setUrlWithoutDomain("/allanimeapi?variables=$variables&extensions=$extensions")
+                episode.setUrlWithoutDomain("/allanimeapi?variables=$variables&query=$streamQuery")
                 episodeList.add(episode)
             }
         }
