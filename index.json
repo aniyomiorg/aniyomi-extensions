@@ -1255,6 +1255,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Hstream",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.hstream",
+    "apk": "aniyomi-en.hstream-v13.2.apk",
+    "lang": "en",
+    "code": 2,
+    "version": "13.2",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Hstream",
+        "lang": "en",
+        "id": "5688255194676032300",
+        "baseUrl": "https://hstream.moe",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Kawaiifu",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.kawaiifu",
     "apk": "aniyomi-en.kawaiifu-v13.1.apk",
