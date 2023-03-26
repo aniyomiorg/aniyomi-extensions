@@ -1276,6 +1276,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Index1763686211",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.index1763686211",
+    "apk": "aniyomi-en.index1763686211-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Index - 176.36.86.211",
+        "lang": "en",
+        "id": "4455728957285928158",
+        "baseUrl": "http://176.36.86.211/video/anime",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Kawaiifu",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.kawaiifu",
     "apk": "aniyomi-en.kawaiifu-v13.1.apk",
