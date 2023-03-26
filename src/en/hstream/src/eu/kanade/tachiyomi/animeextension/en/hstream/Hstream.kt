@@ -197,7 +197,7 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val parameters = getSearchParameters(filters)
         return if (query.isNotEmpty()) {
             filterSearch = false
-            GET("$baseUrl/search?s=${query.replace(("[\\W]").toRegex(), " ")}") // regular search
+            GET("$baseUrl/search?s=${query.replace(("[\\.]").toRegex(), "")}") // regular search
         } else {
             filterSearch = true
             GET("$baseUrl/hentai/search?$parameters&page=$page") // filter search //work
