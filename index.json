@@ -1465,6 +1465,27 @@
     ]
   },
   {
+    "name": "Aniyomi: NoobSubs",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.noobsubs",
+    "apk": "aniyomi-en.noobsubs-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "NoobSubs",
+        "lang": "en",
+        "id": "5343978110335507456",
+        "baseUrl": "https://noobftp1.noobsubs.com",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: pactedanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.pactedanime",
     "apk": "aniyomi-en.pactedanime-v13.5.apk",
