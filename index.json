@@ -63,6 +63,27 @@
     ]
   },
   {
+    "name": "Aniyomi: GoogleDriveIndex",
+    "pkg": "eu.kanade.tachiyomi.animeextension.all.googledriveindex",
+    "apk": "aniyomi-all.googledriveindex-v13.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "GoogleDriveIndex",
+        "lang": "all",
+        "id": "7558489246571085102",
+        "baseUrl": "",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Jellyfin",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.jellyfin",
     "apk": "aniyomi-all.jellyfin-v13.6.apk",
