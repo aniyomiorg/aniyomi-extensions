@@ -23,7 +23,7 @@ class AnimesAria : ParsedAnimeHttpSource() {
 
     override val lang = "pt-BR"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     // ============================== Popular ===============================
     override fun popularAnimeFromElement(element: Element): SAnime {
@@ -107,20 +107,19 @@ class AnimesAria : ParsedAnimeHttpSource() {
 
     // =============================== Latest ===============================
     override fun latestUpdatesFromElement(element: Element): SAnime {
-        TODO("Not yet implemented")
+        return SAnime.create().apply {
+            thumbnail_url = element.selectFirst("img")!!.attr("src")
+            val ahref = element.selectFirst("a")!!
+            title = ahref.attr("title")
+            setUrlWithoutDomain(ahref.attr("href").substringBefore("/episodio/"))
+        }
     }
 
-    override fun latestUpdatesNextPageSelector(): String? {
-        TODO("Not yet implemented")
-    }
+    override fun latestUpdatesNextPageSelector() = "a:containsOwn(Próximo):not(.disabled)"
 
-    override fun latestUpdatesRequest(page: Int): Request {
-        TODO("Not yet implemented")
-    }
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/novos/episodios?page=$page")
 
-    override fun latestUpdatesSelector(): String {
-        TODO("Not yet implemented")
-    }
+    override fun latestUpdatesSelector() = "div.item > div.pos-rlt"
 
     companion object {
         const val PREFIX_SEARCH = "id:"
