@@ -124,21 +124,15 @@ class AnimesAria : ParsedAnimeHttpSource() {
     }
 
     // =============================== Search ===============================
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        TODO("Not yet implemented")
-    }
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun searchAnimeNextPageSelector(): String? {
-        TODO("Not yet implemented")
-    }
+    override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        TODO("Not yet implemented")
+        return GET("$baseUrl/anime/buscar?q=$query&page=$page")
     }
 
-    override fun searchAnimeSelector(): String {
-        TODO("Not yet implemented")
-    }
+    override fun searchAnimeSelector() = popularAnimeSelector()
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
