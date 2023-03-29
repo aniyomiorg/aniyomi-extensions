@@ -41,13 +41,20 @@ class AnimesAria : ParsedAnimeHttpSource() {
     override fun popularAnimeSelector() = "div.item > a"
 
     // ============================== Episodes ==============================
+    override fun episodeListParse(response: Response) = super.episodeListParse(response).reversed()
+
     override fun episodeFromElement(element: Element): SEpisode {
-        TODO("Not yet implemented")
+        return SEpisode.create().apply {
+            element.parent()!!.selectFirst("a > b")!!.ownText().let {
+                name = it
+                episode_number = it.substringAfter(" ").toFloat()
+            }
+            setUrlWithoutDomain(element.attr("href"))
+            scanlator = element.text().substringAfter(" ") // sub/dub
+        }
     }
 
-    override fun episodeListSelector(): String {
-        TODO("Not yet implemented")
-    }
+    override fun episodeListSelector() = "td div.clear > a.btn-xs"
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
