@@ -8,16 +8,22 @@ import okhttp3.Response
 class HinataSoulExtractor(private val headers: Headers) {
 
     fun getVideoList(response: Response): List<Video> {
-        val doc = response.asJsoup()
+        val html = response.body.string()
+        val doc = response.asJsoup(html)
         val hasFHD = doc.selectFirst("div.Aba:contains(FULLHD)") != null
-        val serverUrl = doc.selectFirst("meta[itemprop=contentURL]").attr("content")
-        val default = "appsd2"
-        val qualities = listOfNotNull("SD", "HD", if (hasFHD) "FULLHD" else null)
-        val paths = listOf(default, "apphd2", "appfullhd")
-        return qualities.mapIndexed { index, quality ->
-            val path = paths[index]
-            val url = if (index > 0) serverUrl.replace(default, path) else serverUrl
-            Video(url, quality, url, headers = headers)
-        }
+        val regex = Regex("""file: '(\S+?)',""")
+        return regex.findAll(html).mapNotNull {
+            val videoUrl = it.groupValues[1]
+            // prevent some http 404 due to the source returning false-positives
+            if ("appfullhd" in videoUrl && !hasFHD) {
+                null
+            } else {
+                val quality = videoUrl.substringAfter("app")
+                    .substringBefore("/")
+                    .substringBefore("2") // prevents "HD2", "SD2" etc
+                    .uppercase()
+                Video(videoUrl, quality, videoUrl, headers = headers)
+            }
+        }.toList()
     }
 }

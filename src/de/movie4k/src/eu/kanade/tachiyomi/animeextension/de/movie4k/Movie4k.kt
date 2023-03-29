@@ -60,7 +60,7 @@ class Movie4k : ConfigurableAnimeSource, AnimeHttpSource() {
         GET("$apiUrl/data/browse/?lang=2&keyword=&year=&rating=&votes=&genre=&country=&cast=&directors=&type=movies&order_by=trending&page=$page", headers = Headers.headersOf("if-none-match", ""))
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         return parsePopularAnimeJson(responseString)
     }
 
@@ -91,7 +91,7 @@ class Movie4k : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         return parseEpisodePage(responseString)
     }
 
@@ -140,7 +140,7 @@ class Movie4k : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun videosFromElement(response: Response, limit: Int?): List<Video> {
-        val jsonData = response.body!!.string()
+        val jsonData = response.body.string()
         val jObject = json.decodeFromString<JsonObject>(jsonData)
         val array = jObject["streams"]!!.jsonArray
         val videoList = mutableListOf<Video>()
@@ -365,7 +365,7 @@ class Movie4k : ConfigurableAnimeSource, AnimeHttpSource() {
         GET("$apiUrl/data/browse/?lang=2&keyword=$query&year=&rating=&votes=&genre=&country=&cast=&directors=&type=&order_by=&page=$page", headers = Headers.headersOf("if-none-match", ""))
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         return parseSearchAnimeJson(responseString)
     }
 
@@ -406,7 +406,7 @@ class Movie4k : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
-        val responseString = response.body!!.string()
+        val responseString = response.body.string()
         return parseAnimeDetailsParseJson(responseString)
     }
 

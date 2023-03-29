@@ -1,16 +1,13 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
 
 ext {
     extName = 'Jellyfin'
     pkgNameSuffix = 'all.jellyfin'
     extClass = '.Jellyfin'
-    extVersionCode = 2
+    extVersionCode = 6
     libVersion = '13'
-}
-
-dependencies {
-    compileOnly libs.bundles.coroutines
 }
 
 apply from: "$rootDir/common.gradle"

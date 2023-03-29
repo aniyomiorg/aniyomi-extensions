@@ -1,3 +1,19 @@
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        google()
+        maven(url = "https://jitpack.io")
+    }
+}
+
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+
 include(":core")
 
 File(rootDir, "lib").eachDir {
@@ -9,8 +25,8 @@ File(rootDir, "lib").eachDir {
 if (System.getenv("CI") == null || System.getenv("CI_MODULE_GEN") == "true") {
     // Local development (full project build)
 
-    //include(":multisrc")
-    //project(":multisrc").projectDir = File("multisrc")
+    include(":multisrc")
+    project(":multisrc").projectDir = File("multisrc")
 
     // Loads all extensions
     File(rootDir, "src").eachDir { dir ->
@@ -21,13 +37,13 @@ if (System.getenv("CI") == null || System.getenv("CI_MODULE_GEN") == "true") {
         }
     }
     // Loads generated extensions from multisrc
-    //File(rootDir, "generated-src").eachDir { dir ->
-    //    dir.eachDir { subdir ->
-    //        val name = ":extensions:multisrc:${dir.name}:${subdir.name}"
-    //        include(name)
-    //        project(name).projectDir = File("generated-src/${dir.name}/${subdir.name}")
-    //    }
-    //}
+    File(rootDir, "generated-src").eachDir { dir ->
+       dir.eachDir { subdir ->
+           val name = ":extensions:multisrc:${dir.name}:${subdir.name}"
+           include(name)
+           project(name).projectDir = File("generated-src/${dir.name}/${subdir.name}")
+       }
+    }
 
     /**
      * If you're developing locally and only want to work with a single module,
@@ -47,7 +63,7 @@ if (System.getenv("CI") == null || System.getenv("CI_MODULE_GEN") == "true") {
     val chunkSize = System.getenv("CI_CHUNK_SIZE").toInt()
     val chunk = System.getenv("CI_CHUNK_NUM").toInt()
 
-    /*if (isMultisrc) {
+    if (isMultisrc) {
         include(":multisrc")
         project(":multisrc").projectDir = File("multisrc")
 
@@ -58,15 +74,15 @@ if (System.getenv("CI") == null || System.getenv("CI_MODULE_GEN") == "true") {
             include(name)
             project(name).projectDir = File("generated-src/${it.parentFile.name}/${it.name}")
         }
-    } else {*/
-    // Loads individual extensions
-    File(rootDir, "src").getChunk(chunk, chunkSize)?.forEach {
-        val name = ":extensions:individual:${it.parentFile.name}:${it.name}"
-        println(name)
-        include(name)
-        project(name).projectDir = File("src/${it.parentFile.name}/${it.name}")
+    } else {
+        // Loads individual extensions
+        File(rootDir, "src").getChunk(chunk, chunkSize)?.forEach {
+            val name = ":extensions:individual:${it.parentFile.name}:${it.name}"
+            println(name)
+            include(name)
+            project(name).projectDir = File("src/${it.parentFile.name}/${it.name}")
         }
-    //}
+    }
 }
 
 fun File.getChunk(chunk: Int, chunkSize: Int): List<File>? {

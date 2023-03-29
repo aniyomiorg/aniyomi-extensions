@@ -6,12 +6,11 @@ ext {
     extName = 'Membed'
     pkgNameSuffix = 'en.vidembed'
     extClass = '.Membed'
-    extVersionCode = 19
+    extVersionCode = 26
     libVersion = '13'
 }
 
 dependencies {
-    compileOnly libs.bundles.coroutines
     implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"

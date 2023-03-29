@@ -120,9 +120,9 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val getSources = "master.m3u8"
         val referer = Headers.headersOf("Referer", "$baseUrl/")
-        val iframe = document.selectFirst("iframe").attr("src").substringBefore("&img")
+        val iframe = document.selectFirst("iframe")!!.attr("src").substringBefore("&img")
         val webViewIncpec = client.newBuilder().addInterceptor(GetSourcesInterceptor(getSources, client)).build()
-        val lol = webViewIncpec.newCall(GET(iframe, referer)).execute().body!!.string()
+        val lol = webViewIncpec.newCall(GET(iframe, referer)).execute().body.string()
         val videoList = mutableListOf<Video>()
         lol.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
             val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
@@ -233,7 +233,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun getFilterList() = AnimeFilterList(
         AnimeFilter.Header("NOTE: Ignored if using text search!"),
         AnimeFilter.Separator(),
-        GenreFilter(getGenreList())
+        GenreFilter(getGenreList()),
     )
 
     private class GenreFilter(vals: Array<Pair<String, String>>) : UriPartFilter("تصنيف المسلسلات", vals)
@@ -255,7 +255,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Pair("المسلسلات القصيرة", "short_series"),
         Pair("المسلسلات الاسيوية", "asian-series"),
         Pair("المسلسلات الاسيوية الاعلي مشاهدة", "asian_top_views"),
-        Pair("الانمي الاعلي مشاهدة", "anime_top_views")
+        Pair("الانمي الاعلي مشاهدة", "anime_top_views"),
     )
 
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :

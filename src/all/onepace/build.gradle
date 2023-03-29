@@ -10,8 +10,4 @@ ext {
     containsNsfw = false
 }
 
-dependencies {
-    compileOnly libs.bundles.coroutines
-}
-
 apply from: "$rootDir/common.gradle"

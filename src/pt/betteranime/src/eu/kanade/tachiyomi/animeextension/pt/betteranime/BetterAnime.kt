@@ -23,7 +23,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
-import okhttp3.Headers
+import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -35,6 +35,7 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.io.IOException
 import java.lang.Exception
 
 class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -47,7 +48,9 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .addInterceptor(::loginInterceptor)
+        .build()
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -57,63 +60,39 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun headersBuilder(): Headers.Builder = Headers.Builder()
+    override fun headersBuilder() = super.headersBuilder()
         .add("Referer", baseUrl)
         .add("Accept-Language", ACCEPT_LANGUAGE)
 
     // ============================== Popular ===============================
-    private fun nextPageSelector(): String = "ul.pagination li.page-item:contains(›)"
-    override fun popularAnimeNextPageSelector() = throw Exception("not used")
-    override fun popularAnimeSelector(): String = "div.list-animes article"
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        val img = element.selectFirst("img")!!
-        val url = element.selectFirst("a")?.attr("href")!!
-        anime.setUrlWithoutDomain(url)
-        anime.title = element.selectFirst("h3")?.text()!!
-        anime.thumbnail_url = "https:" + img.attr("src")
-        return anime
-    }
-
     // The site doesn't have a popular anime tab, so we use the latest anime page instead.
-    override fun popularAnimeRequest(page: Int): Request =
-        GET("$baseUrl/ultimosAdicionados?page=$page")
+    override fun fetchPopularAnime(page: Int) = super.fetchLatestUpdates(page)
 
-    override fun popularAnimeParse(response: Response): AnimesPage {
-        val document = response.asJsoup()
-        val animes = document.select(popularAnimeSelector()).map { element ->
-            popularAnimeFromElement(element)
-        }
-        val hasNextPage = hasNextPage(document)
-        return AnimesPage(animes, hasNextPage)
-    }
+    override fun popularAnimeSelector() = throw Exception("not used")
+    override fun popularAnimeFromElement(element: Element) = throw Exception("not used")
+    override fun popularAnimeRequest(page: Int) = throw Exception("not used")
+    override fun popularAnimeNextPageSelector() = null
 
     // ============================== Episodes ==============================
     override fun episodeListSelector(): String = "ul#episodesList > li.list-group-item-action > a"
 
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.asJsoup()
-        val episodes = document.select(episodeListSelector()).map { element ->
-            episodeFromElement(element)
-        }
-        return episodes.reversed()
-    }
+    override fun episodeListParse(response: Response) =
+        super.episodeListParse(response).reversed()
 
     override fun episodeFromElement(element: Element): SEpisode {
-        val episode = SEpisode.create()
-        val episodeName = element.text()
-        episode.setUrlWithoutDomain(element.attr("href"))
-        episode.name = episodeName
-        episode.episode_number = try {
-            episodeName.substringAfterLast(" ").toFloat()
-        } catch (e: NumberFormatException) { 0F }
-        return episode
+        return SEpisode.create().apply {
+            val episodeName = element.text()
+            setUrlWithoutDomain(element.attr("href"))
+            name = episodeName
+            episode_number = runCatching {
+                episodeName.substringAfterLast(" ").toFloat()
+            }.getOrDefault(0F)
+        }
     }
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val html = response.body?.string().orEmpty()
+        val html = response.body.string()
         val extractor = BetterAnimeExtractor(client, baseUrl, json)
         return extractor.videoListFromHtml(html)
     }
@@ -123,19 +102,20 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     // =============================== Search ===============================
-    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
-    override fun searchAnimeSelector() = popularAnimeSelector()
-    override fun searchAnimeNextPageSelector() = throw Exception("not used")
+    override fun searchAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
+    override fun searchAnimeSelector() = latestUpdatesSelector()
+    override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val body = response.body?.string().orEmpty()
+        val body = response.body.string()
         val data = json.decodeFromString<LivewireResponseDto>(body)
         val html = data.effects.html?.unescape() ?: ""
         val document = Jsoup.parse(html)
         val animes = document.select(searchAnimeSelector()).map { element ->
             searchAnimeFromElement(element)
         }
-        return AnimesPage(animes, hasNextPage(document))
+        val hasNext = document.selectFirst(searchAnimeNextPageSelector()) != null
+        return AnimesPage(animes, hasNext)
     }
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
@@ -147,12 +127,7 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     searchAnimeByPathParse(response, path)
                 }
         } else {
-            val params = BAFilters.getSearchParameters(filters)
-            client.newCall(searchAnimeRequest(page, query, params))
-                .asObservableSuccess()
-                .map { response ->
-                    searchAnimeParse(response)
-                }
+            super.fetchSearchAnime(page, query, filters)
         }
     }
 
@@ -162,81 +137,85 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return AnimesPage(listOf(details), false)
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
-
-    private fun searchAnimeRequest(page: Int, query: String, filters: BAFilters.FilterSearchParams): Request {
-        if (page == 1)
-            updateInitialData(GET("$baseUrl/pesquisa"))
-
-        val searchParams = mutableListOf<PayloadItem>()
-        searchParams.add(PayloadItem(PayloadData(method = "search"), "callMethod"))
-        searchParams.add(
-            PayloadItem(
-                PayloadData(
-                    method = "gotoPage",
-                    params = listOf(JsonPrimitive(page), JsonPrimitive("page"))
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val searchParams = buildList {
+            add(PayloadItem(PayloadData(method = "search"), "callMethod"))
+            add(
+                PayloadItem(
+                    PayloadData(
+                        method = "gotoPage",
+                        params = listOf(
+                            JsonPrimitive(page),
+                            JsonPrimitive("page"),
+                        ),
+                    ),
+                    "callMethod",
                 ),
-                "callMethod"
             )
-        )
 
-        val data = mutableListOf<PayloadData>()
+            val params = BAFilters.getSearchParameters(filters)
+            val data = buildList {
+                if (params.genres.size > 1) {
+                    add(PayloadData(name = "byGenres", value = params.genres))
+                }
+                listOf(
+                    params.year to "byYear",
+                    params.language to "byLanguage",
+                    query to "searchTerm",
+                ).forEach { it.first.toPayloadData(it.second)?.let(::add) }
+            }
 
-        if (filters.genres.size > 1)
-            data.add(PayloadData(name = "byGenres", value = filters.genres))
-        if (!filters.year.isBlank())
-            data.add(PayloadData(name = "byYear", value = listOf(filters.year)))
-        if (!filters.language.isBlank())
-            data.add(PayloadData(name = "byLanguage", value = listOf(filters.language)))
-        if (!query.isBlank())
-            data.add(PayloadData(name = "searchTerm", value = listOf(query)))
-
-        searchParams += data.map { PayloadItem(it, "syncInput") }
+            addAll(data.map { PayloadItem(it, "syncInput") })
+        }
         return wireRequest("anime-search", searchParams)
     }
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
-        val doc = getRealDoc(document)
+        return SAnime.create().apply {
+            val doc = getRealDoc(document)
 
-        val infos = doc.selectFirst("div.infos_left > div.anime-info")
-        val img = doc.selectFirst("div.infos-img > img")
-        anime.thumbnail_url = "https:" + img.attr("src")
-        anime.title = img.attr("alt")
-        val genres = infos.select("div.anime-genres > a")
-            .joinToString(", ") {
-                it.text()
-            }
-        anime.genre = genres
-        anime.author = infos.getInfo("Produtor")
-        anime.artist = infos.getInfo("Estúdio")
-        anime.status = parseStatus(infos.getInfo("Estado"))
-        var desc = infos.selectFirst("div.anime-description").text() + "\n\n"
-        desc += infos.select(">p").joinToString("\n") { it.text() }
-        anime.description = desc
-
-        return anime
+            val infos = doc.selectFirst("div.infos_left > div.anime-info")!!
+            val img = doc.selectFirst("div.infos-img > img")!!
+            thumbnail_url = "https:" + img.attr("src")
+            title = img.attr("alt")
+            genre = infos.select("div.anime-genres > a")
+                .eachText()
+                .joinToString()
+            author = infos.getInfo("Produtor")
+            artist = infos.getInfo("Estúdio")
+            status = parseStatus(infos.getInfo("Estado"))
+            var desc = infos.selectFirst("div.anime-description")!!.text() + "\n\n"
+            desc += infos.select(">p").eachText().joinToString("\n")
+            description = desc
+        }
     }
 
     // =============================== Latest ===============================
-    override fun latestUpdatesNextPageSelector() = throw Exception("not used")
-    override fun latestUpdatesSelector() = throw Exception("not used")
-    override fun latestUpdatesFromElement(element: Element) = throw Exception("not used")
+    override fun latestUpdatesNextPageSelector() = "ul.pagination li.page-item:contains(›):not(.disabled)"
+    override fun latestUpdatesSelector() = "div.list-animes article"
 
     override fun latestUpdatesRequest(page: Int): Request =
         GET("$baseUrl/ultimosLancamentos?page=$page")
 
-    override fun latestUpdatesParse(response: Response) = popularAnimeParse(response)
+    override fun latestUpdatesFromElement(element: Element): SAnime {
+        return SAnime.create().apply {
+            val img = element.selectFirst("img")!!
+            val url = element.selectFirst("a")?.attr("href")!!
+            setUrlWithoutDomain(url)
+            title = element.selectFirst("h3")?.text()!!
+            thumbnail_url = "https:" + img.attr("src")
+        }
+    }
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = PREFERRED_QUALITY
-            title = "Qualidade preferida"
-            entries = QUALITY_LIST
-            entryValues = QUALITY_LIST
-            setDefaultValue(QUALITY_LIST.last())
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_VALUES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -251,14 +230,22 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun getFilterList(): AnimeFilterList = BAFilters.filterList
 
     // ============================= Utilities ==============================
-    private fun getRealDoc(document: Document): Document {
-        val link = document.selectFirst("div.anime-title a")
-        if (link != null) {
-            val req = client.newCall(GET(link.attr("href"))).execute()
-            return req.asJsoup()
-        } else {
-            return document
+    private fun loginInterceptor(chain: Interceptor.Chain): Response {
+        val response = chain.proceed(chain.request())
+
+        if ("/dmca" in response.request.url.toString()) {
+            response.close()
+            throw IOException(ERROR_LOGIN_MISSING)
         }
+
+        return response
+    }
+    private fun getRealDoc(document: Document): Document {
+        return document.selectFirst("div.anime-title a")?.let { link ->
+            client.newCall(GET(link.attr("href")))
+                .execute()
+                .asJsoup()
+        } ?: document
     }
 
     private fun parseStatus(statusString: String?): Int {
@@ -268,11 +255,8 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    private fun hasNextPage(document: Document): Boolean {
-        val next = document.selectFirst(nextPageSelector())
-        if (next == null) return false
-        return !next.hasClass("disabled")
-    }
+    private var INITIAL_DATA: String = ""
+    private var WIRE_TOKEN: String = ""
 
     private fun updateInitialData(request: Request) {
         val document = client.newCall(request).execute().asJsoup()
@@ -281,14 +265,19 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .substringAfter("livewire_token")
             .substringAfter("'")
             .substringBefore("'")
-        INITIAL_DATA = wireElement.attr("wire:initial-data")!!.dropLast(1)
+        INITIAL_DATA = wireElement!!.attr("wire:initial-data").dropLast(1)
     }
 
     private fun wireRequest(path: String, updates: List<PayloadItem>): Request {
+        if (WIRE_TOKEN.isBlank()) {
+            updateInitialData(GET("$baseUrl/pesquisa"))
+        }
+
         val url = "$baseUrl/livewire/message/$path"
         val items = updates.joinToString(",") { json.encodeToString(it) }
         val data = "$INITIAL_DATA, \"updates\": [$items]}"
         val reqBody = data.toRequestBody("application/json".toMediaType())
+
         val headers = headersBuilder()
             .add("x-livewire", "true")
             .add("x-csrf-token", WIRE_TOKEN)
@@ -297,36 +286,35 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun Element.getInfo(key: String): String? {
-        val element = this.selectFirst("p:containsOwn($key) > span")
-        if (element == null)
-            return element
-        return element.text().trim()
+        return selectFirst("p:containsOwn($key) > span")
+            ?.text()
+            ?.trim()
+    }
+
+    private inline fun String.toPayloadData(name: String): PayloadData? {
+        return when {
+            isNotBlank() -> PayloadData(name = name, value = listOf(this))
+            else -> null
+        }
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(PREFERRED_QUALITY, null)
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.equals(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
     }
 
     companion object {
         private const val ACCEPT_LANGUAGE = "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7"
-        private const val PREFERRED_QUALITY = "preferred_quality"
-        private val QUALITY_LIST = arrayOf("480p", "720p", "1080p")
         const val PREFIX_SEARCH_PATH = "path:"
-        private var INITIAL_DATA: String = ""
-        private var WIRE_TOKEN: String = ""
+
+        private const val ERROR_LOGIN_MISSING = "Login necessário. " +
+            "Abra a WebView, insira os dados de sua conta e realize o login."
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Qualidade preferida"
+        private const val PREF_QUALITY_DEFAULT = "720p"
+        private val PREF_QUALITY_VALUES = arrayOf("480p", "720p", "1080p")
     }
 }

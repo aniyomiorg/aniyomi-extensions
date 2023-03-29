@@ -143,6 +143,12 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return list
     }
 
+    private fun fetchUrls(text: String?): List<String> {
+        if (text.isNullOrEmpty()) return listOf()
+        val linkRegex = "(https?://(www\\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_+.~#?&/=]*))".toRegex()
+        return linkRegex.findAll(text).map { it.value.trim().removeSurrounding("\"") }.toList()
+    }
+
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
@@ -158,45 +164,82 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val servers = player!!.jsonArray
                     servers.forEach { server ->
                         val item = server!!.jsonObject
-                        val url = item["code"]!!.jsonPrimitive!!.content
-                        val language = if (item["languaje"]!!.jsonPrimitive!!.content == "1") "[Lat] " else "[Sub] "
-                        if (url.lowercase().contains("streamsb")) {
-                            val videos = StreamSBExtractor(client).videosFromUrl(url, headers, language)
-                            videoList.addAll(videos)
-                        }
-                        if (url.lowercase().contains("www.fembed.com")) {
-                            val videos = FembedExtractor(client).videosFromUrl(url, language)
-                            videoList.addAll(videos)
-                        }
-                        if (url.lowercase().contains("streamtape")) {
-                            val video = StreamTapeExtractor(client).videoFromUrl(url, language + "Streamtape")
-                            if (video != null) {
-                                videoList.add(video)
+                        val request = client.newCall(
+                            GET(
+                                url = "https://api.animelatinohd.com/stream/${item["id"]!!.jsonPrimitive.content}",
+                                headers = headers.newBuilder().add("Referer", "https://www.animelatinohd.com/").build(),
+                            ),
+                        ).execute()
+                        val locationsDdh = request!!.networkResponse.toString()
+                        fetchUrls(locationsDdh).map { url ->
+                            val language = if (item["languaje"]!!.jsonPrimitive!!.content == "1") "[Lat] " else "[Sub] "
+                            val embedUrl = url.lowercase()
+                            if (embedUrl.contains("sbembed.com") || embedUrl.contains("sbembed1.com") || embedUrl.contains("sbplay.org") ||
+                                embedUrl.contains("sbvideo.net") || embedUrl.contains("streamsb.net") || embedUrl.contains("sbplay.one") ||
+                                embedUrl.contains("cloudemb.com") || embedUrl.contains("playersb.com") || embedUrl.contains("tubesb.com") ||
+                                embedUrl.contains("sbplay1.com") || embedUrl.contains("embedsb.com") || embedUrl.contains("watchsb.com") ||
+                                embedUrl.contains("sbplay2.com") || embedUrl.contains("japopav.tv") || embedUrl.contains("viewsb.com") ||
+                                embedUrl.contains("sbfast") || embedUrl.contains("sbfull.com") || embedUrl.contains("javplaya.com") ||
+                                embedUrl.contains("ssbstream.net") || embedUrl.contains("p1ayerjavseen.com") || embedUrl.contains("sbthe.com") ||
+                                embedUrl.contains("vidmovie.xyz") || embedUrl.contains("sbspeed.com") || embedUrl.contains("streamsss.net") ||
+                                embedUrl.contains("sblanh.com")
+                            ) {
+                                val videos = StreamSBExtractor(client).videosFromUrl(url, headers, language)
+                                videoList.addAll(videos)
                             }
-                        }
-                        if (url.lowercase().contains("doodstream")) {
-                            val video = try {
-                                DoodExtractor(client).videoFromUrl(url, language + "DoodStream")
-                            } catch (e: Exception) {
-                                null
+                            if (embedUrl.contains("fembed") || embedUrl.contains("anime789.com") || embedUrl.contains("24hd.club") ||
+                                embedUrl.contains("fembad.org") || embedUrl.contains("vcdn.io") || embedUrl.contains("sharinglink.club") ||
+                                embedUrl.contains("moviemaniac.org") || embedUrl.contains("votrefiles.club") || embedUrl.contains("femoload.xyz") ||
+                                embedUrl.contains("albavido.xyz") || embedUrl.contains("feurl.com") || embedUrl.contains("dailyplanet.pw") ||
+                                embedUrl.contains("ncdnstm.com") || embedUrl.contains("jplayer.net") || embedUrl.contains("xstreamcdn.com") ||
+                                embedUrl.contains("fembed-hd.com") || embedUrl.contains("gcloud.live") || embedUrl.contains("vcdnplay.com") ||
+                                embedUrl.contains("superplayxyz.club") || embedUrl.contains("vidohd.com") || embedUrl.contains("vidsource.me") ||
+                                embedUrl.contains("cinegrabber.com") || embedUrl.contains("votrefile.xyz") || embedUrl.contains("zidiplay.com") ||
+                                embedUrl.contains("ndrama.xyz") || embedUrl.contains("fcdn.stream") || embedUrl.contains("mediashore.org") ||
+                                embedUrl.contains("suzihaza.com") || embedUrl.contains("there.to") || embedUrl.contains("femax20.com") ||
+                                embedUrl.contains("javstream.top") || embedUrl.contains("viplayer.cc") || embedUrl.contains("sexhd.co") ||
+                                embedUrl.contains("fembed.net") || embedUrl.contains("mrdhan.com") || embedUrl.contains("votrefilms.xyz") ||
+                                embedUrl.contains("embedsito.com") || embedUrl.contains("dutrag.com") || embedUrl.contains("youvideos.ru") ||
+                                embedUrl.contains("streamm4u.club") || embedUrl.contains("moviepl.xyz") || embedUrl.contains("asianclub.tv") ||
+                                embedUrl.contains("vidcloud.fun") || embedUrl.contains("fplayer.info") || embedUrl.contains("diasfem.com") ||
+                                embedUrl.contains("javpoll.com") || embedUrl.contains("reeoov.tube") || embedUrl.contains("suzihaza.com") ||
+                                embedUrl.contains("ezsubz.com") || embedUrl.contains("vidsrc.xyz") || embedUrl.contains("diampokusy.com") ||
+                                embedUrl.contains("diampokusy.com") || embedUrl.contains("i18n.pw") || embedUrl.contains("vanfem.com") ||
+                                embedUrl.contains("fembed9hd.com") || embedUrl.contains("votrefilms.xyz") || embedUrl.contains("watchjavnow.xyz")
+                            ) {
+                                val videos = FembedExtractor(client).videosFromUrl(url, language)
+                                videoList.addAll(videos)
                             }
-                            if (video != null) {
-                                videoList.add(video)
+                            if (url.lowercase().contains("streamtape")) {
+                                val video = StreamTapeExtractor(client).videoFromUrl(url, language + "Streamtape")
+                                if (video != null) {
+                                    videoList.add(video)
+                                }
                             }
-                        }
-                        if (url.lowercase().contains("okru")) {
-                            val videos = OkruExtractor(client).videosFromUrl(url, language)
-                            videoList.addAll(videos)
-                        }
-                        if (url.lowercase().contains("www.solidfiles.com")) {
-                            val videos = SolidFilesExtractor(client).videosFromUrl(url, language)
-                            videoList.addAll(videos)
-                        }
-                        if (url.lowercase().contains("od.lk")) {
-                            videoList.add(Video(url, language + "Od.lk", url))
-                        }
-                        if (url.lowercase().contains("cldup.com")) {
-                            videoList.add(Video(url, language + "CldUp", url))
+                            if (url.lowercase().contains("dood")) {
+                                val video = try {
+                                    DoodExtractor(client).videoFromUrl(url, language + "DoodStream")
+                                } catch (e: Exception) {
+                                    null
+                                }
+                                if (video != null) {
+                                    videoList.add(video)
+                                }
+                            }
+                            if (url.lowercase().contains("okru")) {
+                                val videos = OkruExtractor(client).videosFromUrl(url, language)
+                                videoList.addAll(videos)
+                            }
+                            if (url.lowercase().contains("www.solidfiles.com")) {
+                                val videos = SolidFilesExtractor(client).videosFromUrl(url, language)
+                                videoList.addAll(videos)
+                            }
+                            if (url.lowercase().contains("od.lk")) {
+                                videoList.add(Video(url, language + "Od.lk", url))
+                            }
+                            if (url.lowercase().contains("cldup.com")) {
+                                videoList.add(Video(url, language + "CldUp", url))
+                            }
                         }
                     }
                 }
@@ -214,7 +257,7 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         return try {
             val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
             val userPreferredQuality = preferences.getString("preferred_quality", "[Sub] Fembed:720p")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
@@ -244,7 +287,7 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
-        GenreFilter()
+        GenreFilter(),
     )
 
     override fun searchAnimeFromElement(element: Element): SAnime {
@@ -329,8 +372,8 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Terror", "terror"),
             Pair("Vampiros", "vampiros"),
             Pair("Yaoi", "yaoi"),
-            Pair("Yuri", "yuri")
-        )
+            Pair("Yuri", "yuri"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -370,7 +413,7 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "[Sub] DoodStream", "[Lat] DoodStream", // video servers without resolution
             "[Sub] SolidFiles", "[Lat] SolidFiles", // video servers without resolution
             "[Sub] Od.lk", "[Lat] Od.lk", // video servers without resolution
-            "[Sub] CldUp", "[Lat] CldUp"
+            "[Sub] CldUp", "[Lat] CldUp",
         ) // video servers without resolution
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"

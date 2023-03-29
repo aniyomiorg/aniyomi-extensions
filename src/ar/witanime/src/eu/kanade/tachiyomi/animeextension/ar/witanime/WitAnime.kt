@@ -13,8 +13,8 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
+import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
@@ -54,7 +54,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("div.anime-card-poster a").attr("href"))
         anime.title = element.select("div.anime-card-poster div.ehover6 img").attr("alt")
-        anime.thumbnail_url = element.select("div.anime-card-poster div.ehover6 img").first().attr("abs:src")
+        anime.thumbnail_url = element.selectFirst("div.anime-card-poster div.ehover6 img")!!.attr("abs:src")
         return anime
     }
 
@@ -136,8 +136,9 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
                 url.contains("dood") -> {
                     val video = DoodExtractor(client).videoFromUrl(url, "Dood mirror")
-                    if (video != null)
+                    if (video != null) {
                         videoList.add(video)
+                    }
                 }
                 url.contains("4shared") -> {
                     val video = SharedExtractor(client).videosFromUrl(url)
@@ -182,7 +183,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("div.anime-card-poster a").attr("href"))
         anime.title = element.select("div.anime-card-poster div.ehover6 img").attr("alt")
-        anime.thumbnail_url = element.select("div.anime-card-poster div.ehover6 img").first().attr("abs:src")
+        anime.thumbnail_url = element.selectFirst("div.anime-card-poster div.ehover6 img")!!.attr("abs:src")
         return anime
     }
 
@@ -196,11 +197,12 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        val doc = if (!document.select("div.anime-page-link").isNullOrEmpty())
+        val doc = if (!document.select("div.anime-page-link").isNullOrEmpty()) {
             client.newCall(GET(document.select("div.anime-page-link a").attr("href"), headers)).execute().asJsoup()
-        else
+        } else {
             document
-        anime.thumbnail_url = doc.select("img.thumbnail").first().attr("src")
+        }
+        anime.thumbnail_url = doc.selectFirst("img.thumbnail")!!.attr("src")
         anime.title = doc.select("h1.anime-details-title").text()
         anime.genre = doc.select("ul.anime-genres > li > a, div.anime-info > a").joinToString(", ") { it.text() }
         anime.description = doc.select("p.anime-story").text()
@@ -227,7 +229,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("div.anime-card-poster a").attr("href"))
         anime.title = element.select("div.anime-card-poster div.ehover6 img").attr("alt")
-        anime.thumbnail_url = element.select("div.anime-card-poster div.ehover6 img").first().attr("abs:src")
+        anime.thumbnail_url = element.selectFirst("div.anime-card-poster div.ehover6 img")!!.attr("abs:src")
         return anime
     }
 

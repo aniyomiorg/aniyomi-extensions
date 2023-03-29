@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.cuevana.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -16,6 +15,7 @@ import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
+import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
@@ -59,7 +59,7 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href"))
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
         anime.title = element.select("a .Title").text()
         anime.thumbnail_url = element.select("a .Image figure.Objf img").attr("data-src")
         return anime
@@ -110,16 +110,17 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         document.select("div.TPlayer.embed_div iframe").map {
             val langPrefix = try {
-                val optLanguage = it.parent().attr("id")
-                val languageTag = document.selectFirst("li[data-tplayernv=$optLanguage]").closest(".open_submenu").selectFirst("div:first-child").text()
-                if (languageTag.lowercase().contains("latino"))
+                val optLanguage = it.parent()!!.attr("id")
+                val languageTag = document.selectFirst("li[data-tplayernv=$optLanguage]")!!.closest(".open_submenu")!!.selectFirst("div:first-child")!!.text()
+                if (languageTag.lowercase().contains("latino")) {
                     "[LAT]"
-                else if (languageTag.lowercase().contains("españa"))
+                } else if (languageTag.lowercase().contains("españa")) {
                     "[CAST]"
-                else if (languageTag.lowercase().contains("subtitulado"))
+                } else if (languageTag.lowercase().contains("subtitulado")) {
                     "[SUB]"
-                else
+                } else {
                     ""
+                }
             } catch (e: Exception) { "" }
             val iframe = urlServerSolver(it.attr("data-src"))
             if (iframe.contains("api.cuevana3.me/fembed/")) {
@@ -255,12 +256,12 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             } catch (e: Exception) { }
         }
         if (normalizeUrl.contains("yourupload")) {
-            val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
             val videos = YourUploadExtractor(client).videoFromUrl(url, headers = headers)
-            videos.map { videoList.add(it) }
+            videoList.addAll(videos)
         }
         if (normalizeUrl.contains("doodstream") || normalizeUrl.contains("dood.")) {
             DoodExtractor(client).videoFromUrl(url, "$prefix DoodStream", false)
+                ?.let { videoList.add(it) }
         }
         if (normalizeUrl.contains("sbstream")) {
             runCatching {
@@ -268,7 +269,9 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }.getOrNull()?.let { videoList.addAll(it) }
         }
         if (normalizeUrl.contains("okru")) {
-            OkruExtractor(client).videosFromUrl(url, prefix, true)
+            videoList.addAll(
+                OkruExtractor(client).videosFromUrl(url, prefix, true),
+            )
         }
         return videoList
     }
@@ -290,7 +293,7 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         return try {
             val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
             val userPreferredQuality = preferences.getString("preferred_quality", "Voex")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
@@ -329,9 +332,9 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.title = document.selectFirst("#top-single div.backdrop article.TPost header .Title").text()
-        anime.thumbnail_url = document.selectFirst("#top-single div.backdrop article div.Image figure img").attr("data-src")
-        anime.description = document.selectFirst("#top-single div.backdrop article.TPost div.Description").text().trim()
+        anime.title = document.selectFirst("#top-single div.backdrop article.TPost header .Title")!!.text()
+        anime.thumbnail_url = document.selectFirst("#top-single div.backdrop article div.Image figure img")!!.attr("data-src")
+        anime.description = document.selectFirst("#top-single div.backdrop article.TPost div.Description")!!.text().trim()
         anime.genre = document.select("#MvTb-Info ul.InfoList li:nth-child(2) > a").joinToString { it.text() }
         anime.status = SAnime.UNKNOWN
         return anime
@@ -347,7 +350,7 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
-        GenreFilter()
+        GenreFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -370,8 +373,8 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Musical", "musical"),
             Pair("Romance", "romance"),
             Pair("Terror", "terror"),
-            Pair("Thriller", "thriller")
-        )
+            Pair("Thriller", "thriller"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -384,7 +387,7 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
             "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
             "Streamlare:1080p", "Streamlare:720p", "Streamlare:480p", "Streamlare:360p", "Streamlare:240p", // Streamlare
-            "StreamTape", "Amazon", "Voex", "DoodStream", "YourUpload"
+            "StreamTape", "Amazon", "Voex", "DoodStream", "YourUpload",
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"

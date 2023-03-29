@@ -11,6 +11,7 @@ ext {
 }
 
 dependencies {
+    implementation(project(':lib-yourupload-extractor'))
     implementation(project(':lib-streamtape-extractor'))
 }
 

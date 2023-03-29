@@ -1,0 +1,22 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'AnimeDao'
+    pkgNameSuffix = 'en.animedao'
+    extClass = '.AnimeDao'
+    extVersionCode = 7
+    libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-streamtape-extractor'))
+    implementation(project(':lib-streamsb-extractor'))
+    implementation(project(':lib-fembed-extractor'))
+    implementation(project(':lib-dood-extractor'))
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
+}
+
+
+apply from: "$rootDir/common.gradle"

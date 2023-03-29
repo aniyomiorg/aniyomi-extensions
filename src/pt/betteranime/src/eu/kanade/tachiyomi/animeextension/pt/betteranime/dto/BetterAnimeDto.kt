@@ -11,24 +11,24 @@ import kotlinx.serialization.json.JsonTransformingSerializer
 
 @Serializable
 data class ChangePlayerDto(
-    val frameLink: String? = null
+    val frameLink: String? = null,
 )
 
 @Serializable
 data class LivewireResponseDto(
-    val effects: LivewireEffects
+    val effects: LivewireEffects,
 )
 
 @Serializable
 data class LivewireEffects(
-    val html: String? = null
+    val html: String? = null,
 )
 
 @ExperimentalSerializationApi
 @Serializable
 data class PayloadItem(
     val payload: PayloadData,
-    val type: String
+    val type: String,
 )
 
 @ExperimentalSerializationApi
@@ -39,16 +39,17 @@ data class PayloadData(
     @Serializable(with = ValueSerializer::class)
     val value: List<String> = emptyList<String>(),
     @EncodeDefault val params: List<JsonElement> = emptyList<JsonElement>(),
-    @EncodeDefault val id: String = ""
+    @EncodeDefault val id: String = "",
 )
 
 object ValueSerializer : JsonTransformingSerializer<List<String>>(
-    ListSerializer(String.serializer())
+    ListSerializer(String.serializer()),
 ) {
     override fun transformSerialize(element: JsonElement): JsonElement {
         require(element is JsonArray)
-        if (element.size > 1)
+        if (element.size > 1) {
             return JsonArray(element.drop(1))
+        }
         return element.first()
     }
 }

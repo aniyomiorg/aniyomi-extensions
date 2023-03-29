@@ -63,8 +63,8 @@ class Membed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        anime.thumbnail_url = element.select("img").first().attr("src")
-        anime.title = element.select(".name").first().text().split("Episode").first()
+        anime.thumbnail_url = element.selectFirst("img")!!.attr("src")
+        anime.title = element.selectFirst(".name")!!.text().split("Episode").first()
         return anime
     }
 
@@ -80,7 +80,7 @@ class Membed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(baseUrl + element.attr("href"))
-        val epName = element.selectFirst("div.name").ownText()
+        val epName = element.selectFirst("div.name")!!.ownText()
         val ep = epName.substringAfter("Episode ")
         val epNo = try {
             ep.substringBefore(" ").toFloat()
@@ -94,7 +94,7 @@ class Membed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListRequest(episode: SEpisode): Request {
         val document = client.newCall(GET(baseUrl + episode.url)).execute().asJsoup()
-        val link = document.selectFirst(".play-video iframe").attr("src")
+        val link = document.selectFirst(".play-video iframe")!!.attr("src")
         val id = Uri.parse(link).getQueryParameter("id").toString()
         return GET(downloadLink + id)
     }
@@ -111,7 +111,7 @@ class Membed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val serverName = element.text()
             val quality = serverName.substringAfter("Download (").replace("P - mp4)", "p")
             val url = element.attr("href").replace("/d/", "/e/").replace("/f/", "/e/")
-            val location = element.ownerDocument().location()
+            val location = element.ownerDocument()!!.location()
             val videoHeaders = Headers.headersOf("Referer", location)
             runCatching {
                 when {
@@ -140,7 +140,7 @@ class Membed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                 url,
                                 parsedQuality,
                                 videoUrlParse(url, location),
-                                headers = videoHeaders
+                                headers = videoHeaders,
                             ).let {
                                 listOf(it)
                             }
@@ -192,8 +192,8 @@ class Membed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        anime.thumbnail_url = element.select("img").first().attr("src")
-        anime.title = element.select(".name").first().text().split("Episode").first()
+        anime.thumbnail_url = element.selectFirst("img")!!.attr("src")
+        anime.title = element.selectFirst(".name")!!.text().split("Episode").first()
         return anime
     }
 

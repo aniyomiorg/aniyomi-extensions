@@ -50,7 +50,7 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
-            element.select("div#conb a").attr("href")
+            element.select("div#conb a").attr("href"),
         )
         anime.title = element.select("div#conb a").attr("title")
         anime.thumbnail_url = element.select("div#conb a img").attr("src")
@@ -64,7 +64,7 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodes = mutableListOf<SEpisode>()
         val episodeLink = response.request.url
         val pageBody = response.asJsoup()
-        val scriptText = pageBody.selectFirst("script:containsData(var invertir =)").data()
+        val scriptText = pageBody.selectFirst("script:containsData(var invertir =)")!!.data()
         val animeId = scriptText.substringAfter("'/ajax/last_episode/", "")
             .substringBefore("/',", "")
             .ifEmpty { throw Exception("no video links found.") }
@@ -160,7 +160,7 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                 "TE" to "trailers",
                                 "Pragma" to "no-cache",
                                 "Cache-Control" to "no-cache",
-                            )
+                            ),
                         ).data(mapOf("data" to dataKey)).method(Connection.Method.POST).followRedirects(false)
                             .execute().headers("location").forEach { loc ->
                                 val postkey = loc.replace("/gsplay/player.html#", "")
@@ -207,7 +207,7 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         return try {
             val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
             val userPreferredQuality = preferences.getString("preferred_quality", "Sabrosio")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
@@ -239,7 +239,7 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
-            element.select("div.anime__item a").attr("href")
+            element.select("div.anime__item a").attr("href"),
         )
         anime.title = element.select("div.anime__item div#ainfo div.title").text()
         anime.thumbnail_url = element.select("div.anime__item a div").attr("data-setbg")
@@ -291,9 +291,9 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.selectFirst("div.col-lg-3 div.anime__details__pic.set-bg").attr("data-setbg")
-        anime.title = document.selectFirst("div.anime__details__text div.anime__details__title h3").text()
-        anime.description = document.select("div.col-lg-9 div.anime__details__text p").first().ownText()
+        anime.thumbnail_url = document.selectFirst("div.col-lg-3 div.anime__details__pic.set-bg")!!.attr("data-setbg")
+        anime.title = document.selectFirst("div.anime__details__text div.anime__details__title h3")!!.text()
+        anime.description = document.selectFirst("div.col-lg-9 div.anime__details__text p")!!.ownText()
         document.select("div.row div.col-lg-6.col-md-6 ul li").forEach { animeData ->
             val data = animeData.select("span").text()
             if (data.contains("Genero")) {
@@ -324,7 +324,7 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(
-            element.select("div.row.g-0 div.col-md-5.custom_thumb2 a").attr("href")
+            element.select("div.row.g-0 div.col-md-5.custom_thumb2 a").attr("href"),
         )
         anime.title = element.select("div.row.g-0 div.col-md-7 div.card-body h5.card-title a").text()
         anime.thumbnail_url = element.select("div.row.g-0 div.col-md-5.custom_thumb2 a img").attr("src")
@@ -338,7 +338,7 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
-        GenreFilter()
+        GenreFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -431,7 +431,7 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Vampiros", "vampiros"),
             Pair("Yaoi", "yaoi"),
             Pair("Yuri", "yuri"),
-        )
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -443,7 +443,7 @@ class Hentaijk : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val qualities = arrayOf(
             "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", // Fembed
             "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", // Okru
-            "Xtreme S", "HentaiJk", "Nozomi", "Desu" // video servers without resolution
+            "Xtreme S", "HentaiJk", "Nozomi", "Desu", // video servers without resolution
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"

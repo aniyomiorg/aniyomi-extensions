@@ -7,7 +7,7 @@ import kotlinx.serialization.json.JsonObject
 @Serializable
 data class AnimeListResponse(
     val content: List<AnimeListItem>,
-    val cursor: AnimeListCursor
+    val cursor: AnimeListCursor,
 )
 
 @Serializable
@@ -19,7 +19,7 @@ data class AnimeListItem(
 
 @Serializable
 data class AnimeListCursor(
-    val next: JsonArray
+    val next: JsonArray,
 )
 
 @Serializable

@@ -1,0 +1,47 @@
+name: 🔗 URL change report
+description: Report a URL change for an existing source
+labels: [Bug,Domain changed]
+body:
+  - type: input
+    id: source
+    attributes:
+      label: Source information and language
+      description: |
+        You can find the extension name and version in **Browse → Extensions**.
+      placeholder: |
+        Example: "NotRealSource 13.1 (English)"
+    validations:
+      required: true
+
+  - type: input
+    id: link
+    attributes:
+      label: Source new URL
+      placeholder: |
+        Example: "https://notrealsource.org"
+    validations:
+      required: true
+
+  - type: textarea
+    id: other-details
+    attributes:
+      label: Other details
+      placeholder: |
+        Additional details and attachments.
+
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Acknowledgements
+      description: Your issue will be closed if you haven't done these steps.
+      options:
+        - label: I have searched the existing issues and this is a new ticket, **NOT** a duplicate or related to another open or closed issue.
+          required: true
+        - label: I have written a short but informative title.
+          required: true
+        - label: I have updated all installed extensions.
+          required: true
+        - label: I have checked if the source URL is not already updated by opening WebView.
+          required: true
+        - label: I will fill out all of the requested information in this form.
+          required: true

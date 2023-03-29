@@ -3,7 +3,11 @@ package eu.kanade.tachiyomi.animeextension.id.neonime
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
+import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.id.neonime.extractors.BloggerExtractor
+import eu.kanade.tachiyomi.animeextension.id.neonime.extractors.GdrivePlayerExtractor
+import eu.kanade.tachiyomi.animeextension.id.neonime.extractors.LinkBoxExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -11,9 +15,13 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -27,7 +35,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
-    override val baseUrl: String = "https://neonime.watch"
+    override val baseUrl: String = "https://neonime.fun"
     override val lang: String = "id"
     override val name: String = "NeoNime"
     override val supportsLatest: Boolean = true
@@ -53,28 +61,28 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun getAnimeFromAnimeElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a").first().attr("href"))
-        anime.thumbnail_url = element.select("a > div.image > img").first().attr("data-src")
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        anime.thumbnail_url = element.selectFirst("a > div.image > img")!!.attr("data-src")
         anime.title = element.select("div.fixyear > div > h2").text()
         return anime
     }
 
     private fun getAnimeFromEpisodeElement(element: Element): SAnime {
-        val animepage = client.newCall(GET(element.select("td.bb > a").first().attr("href"))).execute().asJsoup()
+        val animepage = client.newCall(GET(element.selectFirst("td.bb > a")!!.attr("href"))).execute().asJsoup()
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(animepage.select("#fixar > div.imagen > a").first().attr("href"))
-        anime.thumbnail_url = animepage.select("#fixar > div.imagen > a > img").first().attr("data-src")
-        anime.title = animepage.select("#fixar > div.imagen > a > img").first().attr("alt")
+        anime.setUrlWithoutDomain(animepage.selectFirst("#fixar > div.imagen > a")!!.attr("href"))
+        anime.thumbnail_url = animepage.selectFirst("#fixar > div.imagen > a > img")!!.attr("data-src")
+        anime.title = animepage.selectFirst("#fixar > div.imagen > a > img")!!.attr("alt")
         return anime
     }
 
     private fun getAnimeFromSearchElement(element: Element): SAnime {
-        val url = element.select("a").first().attr("href")
+        val url = element.selectFirst("a")!!.attr("href")
         val animepage = client.newCall(GET(url)).execute().asJsoup()
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(url)
         anime.title = animepage.select("#info > div:nth-child(2) > span").text()
-        anime.thumbnail_url = animepage.select("div.imagen > img").first().attr("data-src")
+        anime.thumbnail_url = animepage.selectFirst("div.imagen > img")!!.attr("data-src")
         anime.status = parseStatus(animepage.select("#info > div:nth-child(13) > span").text())
         anime.genre = animepage.select("#info > div:nth-child(3) > span > a").joinToString(", ") { it.text() }
         // this site didnt provide artist and author
@@ -161,7 +169,7 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.select("#info > div:nth-child(2) > span").text()
-        anime.thumbnail_url = document.select("div.imagen > img").first().attr("data-src")
+        anime.thumbnail_url = document.selectFirst("div.imagen > img")!!.attr("data-src")
         anime.status = parseStatus(document.select("#info > div:nth-child(13) > span").text())
         anime.genre = document.select("#info > div:nth-child(3) > span > a").joinToString(", ") { it.text() }
         // this site didnt provide artist and author
@@ -191,9 +199,74 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // Video
+
     override fun videoListSelector() = "div > ul >ul > li >a:nth-child(6)"
 
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
+
+    override fun videoListParse(response: Response): List<Video> {
+        val document = response.asJsoup()
+        val videoList = mutableListOf<Video>()
+
+        val hosterSelection = preferences.getStringSet(
+            "hoster_selection",
+            setOf("blogger", "linkbox", "fembed", "okru", "yourupload", "gdriveplayer"),
+        )!!
+
+        document.select("div.player2 > div.embed2 > div").forEach {
+            val iframe = it.selectFirst("iframe") ?: return@forEach
+
+            var link = iframe.attr("data-src")
+            if (!link.startsWith("http")) {
+                link = "https:$link"
+            }
+
+            when {
+                hosterSelection.contains("linkbox") && link.contains("linkbox.to") -> {
+                    videoList.addAll(LinkBoxExtractor(client).videosFromUrl(link, it.text()))
+                }
+                hosterSelection.contains("fembed") && link.contains("fembed.com") -> {
+                    videoList.addAll(FembedExtractor(client).videosFromUrl(link))
+                }
+                hosterSelection.contains("okru") && link.contains("ok.ru") -> {
+                    videoList.addAll(OkruExtractor(client).videosFromUrl(link))
+                }
+                hosterSelection.contains("yourupload") && link.contains("blogger.com") -> {
+                    videoList.addAll(BloggerExtractor(client).videosFromUrl(link, it.text()))
+                }
+                hosterSelection.contains("linkbox") && link.contains("yourupload.com") -> {
+                    videoList.addAll(YourUploadExtractor(client).videoFromUrl(link, headers, it.text(), "Original - "))
+                }
+                hosterSelection.contains("gdriveplayer") && link.contains("neonime.fun") -> {
+                    val headers = Headers.headersOf(
+                        "Accept",
+                        "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                        "Referer",
+                        response.request.url.toString(),
+                        "User-Agent",
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
+                    )
+                    var iframe = client.newCall(
+                        GET(link, headers = headers),
+                    ).execute().asJsoup()
+
+                    var iframeUrl = iframe.selectFirst("iframe")!!.attr("src")
+
+                    if (!iframeUrl.startsWith("http")) {
+                        iframeUrl = "https:$iframeUrl"
+                    }
+
+                    when {
+                        iframeUrl.contains("gdriveplayer.to") -> {
+                            videoList.addAll(GdrivePlayerExtractor(client).videosFromUrl(iframeUrl, it.text()))
+                        }
+                    }
+                }
+            }
+        }
+
+        return videoList.sort()
+    }
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", null)
@@ -237,6 +310,17 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // screen
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val hostSelection = MultiSelectListPreference(screen.context).apply {
+            key = "hoster_selection"
+            title = "Enable/Disable Hosts"
+            entries = arrayOf("Blogger", "Linkbox", "Fembed", "Ok.ru", "YourUpload", "GdrivePlayer")
+            entryValues = arrayOf("blogger", "linkbox", "fembed", "okru", "yourupload", "gdriveplayer")
+            setDefaultValue(setOf("blogger", "linkbox", "fembed", "okru", "yourupload", "gdriveplayer"))
+
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
@@ -252,6 +336,7 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        screen.addPreference(hostSelection)
         screen.addPreference(videoQualityPref)
     }
 }

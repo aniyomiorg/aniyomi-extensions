@@ -26,13 +26,18 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Rule34Video"
 
-    override val baseUrl = "https://rule34video.com/"
+    override val baseUrl = "https://rule34video.com"
 
     override val lang = "en"
 
     override val supportsLatest = false
 
-    override val client: OkHttpClient = network.cloudflareClient
+    private val ddgInterceptor = DdosGuardInterceptor(network.client)
+
+    override val client: OkHttpClient = network.client
+        .newBuilder()
+        .addInterceptor(ddgInterceptor)
+        .build()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -75,20 +80,28 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element) = throw Exception("not used")
 
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-
-        val videoLinks = document.select("div.video_tools div:nth-child(3) div a.tag_item")
-            .map {
-                it.attr("href") + it.text()
-                    .replace("MP4", "")
+        val headersBuilder = headers.newBuilder()
+            .apply {
+                val cookies = client.cookieJar.loadForRequest(response.request.url)
+                    .filterNot { it.name in listOf("__ddgid_", "__ddgmark_") }
+                    .map { "${it.name}=${it.value}" }
+                    .joinToString("; ")
+                val xsrfToken = cookies.split("XSRF-TOKEN=").getOrNull(1)?.substringBefore(";")?.replace("%3D", "=")
+                xsrfToken?.let { add("X-XSRF-TOKEN", it) }
+                add("Cookie", cookies)
+                add("Accept", "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5")
+                add("Referer", response.request.url.toString())
+                add("Accept-Language", "en-US,en;q=0.5")
             }
 
-        val videoList = mutableListOf<Video>()
-        for (video in videoLinks) {
-            videoList.add(Video(video.split(" ")[0], video.split(" ")[1], video.split(" ")[0]))
-        }
+        val document = response.asJsoup()
 
-        return videoList
+        return document.select("div.video_tools div:nth-child(3) div a.tag_item")
+            .map { element ->
+                val url = element.attr("href")
+                val quality = element.text().substringAfter(" ")
+                Video(url, quality, url, headers = headersBuilder.build())
+            }
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -98,47 +111,31 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "720p")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality == quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
+        val quality = preferences.getString("preferred_quality", "720p") ?: return this
+        return this.sortedWith(compareByDescending { it.quality == quality })
     }
 
     // Search
 
-    private var cat = false
-
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val sortedBy = filters.find { it is OrderFilter } as OrderFilter
-        val catBy = filters.find { it is CategoryBy } as CategoryBy
-        val newSort = when (sortedBy.toUriPart()) {
+        val orderFilter = filters.find { it is OrderFilter } as OrderFilter
+        val categoryFilter = filters.find { it is CategoryBy } as CategoryBy
+        val sortType = when (orderFilter.toUriPart()) {
             "latest-updates" -> "post_date"
-
             "most-popular" -> "video_viewed"
-
             "top-rated" -> "rating"
             else -> ""
         }
-        val tagFilter = try {
-            verifyTag = true
+
+        val tagFilter: String = if (filters.find { it is TagFilter } is TagFilter) {
             (filters.find { it is TagFilter } as TagFilter).state
-        } catch (e: Exception) {
-            verifyTag = false
+        } else {
             ""
         }
 
-        tagDocument = if (tagFilter.isNotBlank()) client.newCall(GET("$baseUrl/search_ajax.php?tag=$tagFilter", headers)).execute().asJsoup() else Document("")
+        val url = "$baseUrl/search_ajax.php?tag=${tagFilter.ifBlank { "." }}"
+        val response = client.newCall(GET(url, headers)).execute()
+        tagDocument = response.asJsoup()
 
         val tagSearch = try {
             filters.find { it is TagSearch } as TagSearch
@@ -146,22 +143,14 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             TagSearch(arrayOf()).apply { state = 0 }
         }
 
-        return when {
-            query.isNotEmpty() -> {
-                GET("$baseUrl/search/$query/?flag1=${catBy.toUriPart()}&sort_by=$newSort&from_videos=$page", headers) // with search
-            }
-            tagSearch.state != 0 -> GET("$baseUrl/search/?tag_ids=all,${tagSearch.toUriPart()}&sort_by=$newSort&from_videos=$page") // with tag search
-            sortedBy.state != 0 || catBy.state != 0 -> {
-                GET("$baseUrl/search/?flag1=${catBy.toUriPart()}&sort_by=${sortedBy.toUriPart()}&from_videos=$page", headers) // with sort and category
-            }
-            else -> {
-                GET("$baseUrl/latest-updates/$page/", headers) // without search
-            }
+        return if (query.isNotEmpty()) {
+            GET("$baseUrl/search/$query/?flag1=${categoryFilter.toUriPart()}&sort_by=$sortType&from_videos=$page&tag_ids=all%2C${tagSearch.toUriPart()}")
+        } else {
+            GET("$baseUrl/search/?flag1=${categoryFilter.toUriPart()}&sort_by=$sortType&from_videos=$page&tag_ids=all%2C${tagSearch.toUriPart()}")
         }
     }
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
-
     override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
 
     override fun searchAnimeNextPageSelector(): String = "div.item.pager.next a"
@@ -172,7 +161,8 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.author = document.select("#tab_video_info div:nth-child(3) div div:nth-child(2) a").joinToString { it.text() }
         anime.description = document.select("#tab_video_info div:nth-child(2) div em").text() +
             "\n\nViews : ${document.select("#tab_video_info div.info.row div:nth-child(2) span").text().replace((" "), ",")}\n" +
-            "Duration : ${document.select("#tab_video_info div.info.row div:nth-child(3) span").text()}\n"
+            "Duration : ${document.select("#tab_video_info div.info.row div:nth-child(3) span").text()}\n" +
+            "Quality : ${document.select("div.video_tools div:nth-child(3) div a.tag_item").joinToString { it.text().substringAfter(" ") }}\n"
         anime.genre = document.select("div.video_tools div:nth-child(4) div a").joinToString {
             if (it.text() != "+ | Suggest") it.text() else ""
         }
@@ -193,22 +183,17 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             key = "preferred_quality"
             title = "Preferred quality"
             entries = arrayOf("2160p", "1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("2160p", "1080p", "720p", "480p", "360p")
+            entryValues = entries
             setDefaultValue("1080p")
             summary = "%s"
-
             setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
+                preferences.edit().putString(key, newValue as String).commit()
             }
         }
         screen.addPreference(videoQualityPref)
     }
 
     // Filters
-    private var verifyTag = false
     private var tagDocument = Document("")
 
     private fun tagsResults(document: Document): Array<Pair<String, String>> {
@@ -218,7 +203,7 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val tagValue = it.select("input").attr("value")
                 val tagName = it.select("label").text()
                 Pair(tagName, tagValue)
-            }
+            },
         )
         return tagList.toTypedArray()
     }
@@ -227,35 +212,34 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         OrderFilter(),
         CategoryBy(),
         AnimeFilter.Separator(),
-        AnimeFilter.Header("Tags Search (Experimental)"),
-        AnimeFilter.Header("Click in \"filter\" to make te search and click in \"reset\" to see the results."),
+        AnimeFilter.Header("Entered a \"tag\", click on \"filter\" then Click \"reset\" to load tags."),
         TagFilter(),
-        if (verifyTag) TagSearch(tagsResults(tagDocument)) else AnimeFilter.Separator(),
+        TagSearch(tagsResults(tagDocument)),
     )
 
-    private class TagFilter : AnimeFilter.Text("Tag", "")
+    private class TagFilter : AnimeFilter.Text("Click \"reset\" without any text to load all A-Z tags.", "")
 
     private class TagSearch(results: Array<Pair<String, String>>) : UriPartFilter(
-        "Category Filter",
-        results
+        "Tag Filter ",
+        results,
     )
 
     private class CategoryBy : UriPartFilter(
-        "Category Filter",
+        "Category Filter ",
         arrayOf(
             Pair("All", ""),
             Pair("Futa", "15"),
             Pair("Gay", "192"),
-        )
+        ),
     )
 
     private class OrderFilter : UriPartFilter(
-        "Order",
+        "Sort By ",
         arrayOf(
             Pair("Latest", "latest-updates"),
             Pair("Most Viewed", "most-popular"),
             Pair("Top Rated", "top-rated"),
-        )
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

@@ -12,8 +12,9 @@ object FindPassword {
 
         val passValue = js.substringAfter("const $passVar=", "").substringBefore(";", "")
         if (passValue.isNotBlank()) {
-            if (passValue.startsWith("'"))
+            if (passValue.startsWith("'")) {
                 return passValue.trim('\'')
+            }
             return getPasswordFromJS(js, "(" + passValue.substringAfter("("))
         }
         val jsEnd = js.substringBefore("jwplayer(").substringBeforeLast("var")

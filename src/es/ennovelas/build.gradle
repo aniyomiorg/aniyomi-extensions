@@ -1,0 +1,20 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'EnNovelas'
+    pkgNameSuffix = 'es.ennovelas'
+    extClass = '.EnNovelas'
+    extVersionCode = 2
+    libVersion = '13'
+}
+dependencies {
+    implementation(project(':lib-okru-extractor'))
+    implementation project(path: ':lib-streamsb-extractor')
+    implementation project(path: ':lib-fembed-extractor')
+    implementation project(path: ':lib-voe-extractor')
+    implementation project(path: ':lib-streamtape-extractor')
+    implementation project(path: ':lib-dood-extractor')
+}
+
+apply from: "$rootDir/common.gradle"

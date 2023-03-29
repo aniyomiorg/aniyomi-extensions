@@ -25,7 +25,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
-    override val baseUrl: String = "https://oploverz.asia"
+    override val baseUrl: String = "https://oploverz.co.in"
     override val lang: String = "id"
     override val name: String = "Oploverz"
     override val supportsLatest: Boolean = true
@@ -93,8 +93,8 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun getAnimeFromAnimeElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("div > a").first().attr("href"))
-        anime.thumbnail_url = element.select("div > a > div.limit > img").first().attr("src")
+        anime.setUrlWithoutDomain(element.selectFirst("div > a")!!.attr("href"))
+        anime.thumbnail_url = element.selectFirst("div > a > div.limit > img")!!.attr("src")
         anime.title = element.select("div > a > div.tt > h2").text()
         return anime
     }
@@ -132,9 +132,11 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val zippy = document.select(patternZippy).mapNotNull {
             runCatching { zippyFromElement(it) }.getOrNull()
         }
-        val google = if (iframe == null) { mutableListOf() } else try {
-            googleLinkFromElement(iframe)
-        } catch (e: Exception) { mutableListOf() }
+        val google = if (iframe == null) { mutableListOf() } else {
+            try {
+                googleLinkFromElement(iframe)
+            } catch (e: Exception) { mutableListOf() }
+        }
 
         return google + zippy
     }
@@ -143,7 +145,7 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun googleLinkFromElement(iframe: Element): List<Video> {
         val iframeResponse = client.newCall(GET(iframe.attr("src"))).execute()
-        val streams = iframeResponse.body!!.string().substringAfter("\"streams\":[").substringBefore("]")
+        val streams = iframeResponse.body.string().substringAfter("\"streams\":[").substringBefore("]")
         val videoList = mutableListOf<Video>()
         streams.split("},").reversed().forEach {
             val url = unescape(it.substringAfter("{\"play_url\":\"").substringBefore("\""))
@@ -250,15 +252,24 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val delimiter = input[i]
             i++ // consume letter or backslash
             if (delimiter == '\\' && i < input.length) {
-
                 // consume first after backslash
                 val ch = input[i]
                 i++
                 if (ch == '\\' || ch == '/' || ch == '"' || ch == '\'') {
                     builder.append(ch)
-                } else if (ch == 'n') builder.append('\n') else if (ch == 'r') builder.append('\r') else if (ch == 't') builder.append(
-                    '\t'
-                ) else if (ch == 'b') builder.append('\b') else if (ch == 'f') builder.append('\u000C') else if (ch == 'u') {
+                } else if (ch == 'n') {
+                    builder.append('\n')
+                } else if (ch == 'r') {
+                    builder.append('\r')
+                } else if (ch == 't') {
+                    builder.append(
+                        '\t',
+                    )
+                } else if (ch == 'b') {
+                    builder.append('\b')
+                } else if (ch == 'f') {
+                    builder.append('\u000C')
+                } else if (ch == 'u') {
                     val hex = StringBuilder()
 
                     // expect 4 digits

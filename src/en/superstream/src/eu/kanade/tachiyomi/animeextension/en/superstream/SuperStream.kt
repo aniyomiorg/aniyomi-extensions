@@ -64,7 +64,7 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
                         url = LinkData(mov.id, mov.box_type ?: 1, 0, 1).toJson()
                         name = "Movie"
                         date_upload = getDateTime(mov.update_time)
-                    }
+                    },
                 )
             }
         }
@@ -77,7 +77,7 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
                             episode_number = ser.episode?.toFloat() ?: 0F
                             name = "Season ${ser.season} Ep ${ser.episode}: ${ser.title}"
                             date_upload = getDateTime(ser.update_time)
-                        }
+                        },
                     )
                 }
             }
@@ -126,7 +126,7 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun fetchSearchAnime(
         page: Int,
         query: String,
-        filters: AnimeFilterList
+        filters: AnimeFilterList,
     ): Observable<AnimesPage> {
         val searchResult = superStreamAPI.search(page, query)
         return Observable.just(AnimesPage(searchResult, searchResult.size == 20))
@@ -137,7 +137,7 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun searchAnimeParse(response: Response) = throw Exception("not used")
 
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        val data = superStreamAPI.load(anime.url)
+        val data = superStreamAPI.load(anime.url, true)
         val ani = SAnime.create()
         val (movie, seriesData) = data
         val (detail, _) = seriesData

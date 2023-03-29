@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.tioanimeh.extractors.YourUploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -14,6 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
@@ -53,7 +53,7 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
-        val epInfoScript = document.selectFirst("script:containsData(var episodes = )").data()
+        val epInfoScript = document.selectFirst("script:containsData(var episodes = )")!!.data()
 
         if (epInfoScript.substringAfter("episodes = [").substringBefore("];").isEmpty()) {
             return listOf<SEpisode>()
@@ -77,25 +77,26 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-        val serverList = document.selectFirst("script:containsData(var videos =)").data().substringAfter("var videos = [[").substringBefore("]];")
+        val serverList = document.selectFirst("script:containsData(var videos =)")!!.data().substringAfter("var videos = [[").substringBefore("]];")
             .replace("\"", "").split("],[")
 
-        serverList.forEach() {
+        serverList.forEach {
             val servers = it.split(",")
             val serverName = servers[0]
             val serverUrl = servers[1].replace("\\/", "/")
             when (serverName.lowercase()) {
                 "fembed" -> {
                     videoList.addAll(
-                        FembedExtractor(client).videosFromUrl(serverUrl)
+                        FembedExtractor(client).videosFromUrl(serverUrl),
                     )
                 }
                 "okru" -> {
                     OkruExtractor(client).videosFromUrl(serverUrl).map { vid -> videoList.add(vid) }
                 }
                 "yourupload" -> {
-                    val headers = headers.newBuilder().add("referer", "https://www.yourupload.com/").build()
-                    YourUploadExtractor(client).videoFromUrl(serverUrl, headers = headers).map { vid -> videoList.add(vid) }
+                    videoList.addAll(
+                        YourUploadExtractor(client).videoFromUrl(serverUrl, headers = headers),
+                    )
                 }
             }
         }
@@ -112,7 +113,7 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
     override fun List<Video>.sort(): List<Video> {
         return try {
             val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
             val userPreferredQuality = preferences.getString("preferred_quality", "Fembed:720p")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
@@ -151,7 +152,7 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.select("h1.title").text()
-        anime.description = document.select("p.sinopsis").first().ownText()
+        anime.description = document.selectFirst("p.sinopsis")!!.ownText()
         anime.genre = document.select("p.genres span.btn.btn-sm.btn-primary.rounded-pill a").joinToString { it.text() }
         anime.status = parseStatus(document.select("a.btn.btn-success.btn-block.status").text())
         return anime
@@ -175,7 +176,7 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
-        GenreFilter()
+        GenreFilter(),
     )
 
     class GenreFilter : UriPartFilter(
@@ -204,7 +205,7 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
             Pair("Virgenes(como tu)", "virgenes"),
             Pair("Yaoi", "Yaoi"),
             Pair("Yuri", "yuri"),
-        )
+        ),
     )
 
     open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -216,7 +217,7 @@ open class TioanimeH(override val name: String, override val baseUrl: String) : 
         val qualities = arrayOf(
             "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
             "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
-            "YourUpload" // video servers without resolution
+            "YourUpload", // video servers without resolution
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"

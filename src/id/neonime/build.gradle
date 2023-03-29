@@ -1,12 +1,20 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
 
 ext {
     extName = 'NeoNime'
     pkgNameSuffix = 'id.neonime'
     extClass = '.NeoNime'
-    extVersionCode = 7
+    extVersionCode = 9
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-yourupload-extractor'))
+    implementation(project(':lib-fembed-extractor'))
+    implementation(project(':lib-okru-extractor'))
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
 
 apply from: "$rootDir/common.gradle"

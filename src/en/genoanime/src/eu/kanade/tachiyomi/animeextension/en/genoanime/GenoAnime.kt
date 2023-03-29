@@ -49,7 +49,7 @@ class GenoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain("$baseUrl/${element.select("div.product__item a").attr("href").removePrefix("./")}")
-        anime.title = element.select("div.product__item__text h5 a:nth-of-type(2)").first().text()
+        anime.title = element.selectFirst("div.product__item__text h5 a:nth-of-type(2)")!!.text()
         anime.thumbnail_url = "$baseUrl/${element.select("div.product__item__pic").attr("data-setbg").removePrefix("./")}"
         return anime
     }
@@ -119,7 +119,7 @@ class GenoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val elements = document.select(videoListSelector())
         for (element in elements) {
             val url = element.attr("data-video")
-            val location = element.ownerDocument().location()
+            val location = element.ownerDocument()!!.location()
             val videoHeaders = Headers.headersOf("Referer", location)
             when {
                 url.contains("sbembed.com") || url.contains("sbembed1.com") || url.contains("sbplay.org") ||

@@ -27,8 +27,6 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
-import java.lang.NumberFormatException
-import kotlin.math.abs
 
 @ExperimentalSerializationApi
 class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -56,7 +54,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        anime.thumbnail_url = element.select("img").first().attr("src")
+        anime.thumbnail_url = element.selectFirst("img")!!.attr("src")
         anime.title = element.attr("title")
         return anime
     }
@@ -67,7 +65,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
-        val totalEpisodes = document.select(episodeListSelector()).last().attr("ep_end")
+        val totalEpisodes = document.select(episodeListSelector()).last()!!.attr("ep_end")
         val id = document.select("input#movie_id").attr("value")
         return episodesRequest(totalEpisodes, id)
     }
@@ -82,7 +80,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(baseUrl + element.attr("href").substringAfter(" "))
-        val ep = element.selectFirst("div.name").ownText().substringAfter(" ")
+        val ep = element.selectFirst("div.name")!!.ownText().substringAfter(" ")
         episode.episode_number = ep.toFloat()
         episode.name = "Episode $ep"
         return episode
@@ -108,7 +106,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         document.select("div.anime_muti_link > ul > li.streamsb > a")
             .firstOrNull()?.attr("data-video")
             ?.let { videoList.addAll(StreamSBExtractor(client).videosFromUrl(it, headers)) }
-        return videoList
+        return videoList.sort()
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -118,41 +116,21 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "1080")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                when {
-                    video.quality.contains(quality) -> {
-                        newList.add(preferred, video)
-                        preferred++
-                    }
-                    abs(qualityToInt(video.quality) - quality.toInt()) < 100 -> {
-                        newList.add(preferred, video)
-                    }
-                    else -> {
-                        newList.add(video)
-                    }
-                }
-            }
-            return newList
-        }
-        return this
-    }
+        val quality = preferences.getString("preferred_quality", "1080")!!
+        val server = preferences.getString("preferred_server", "Gogostream")!!
 
-    private fun qualityToInt(quality: String): Int {
-        return try {
-            quality.filter { it.isDigit() }.toInt()
-        } catch (e: NumberFormatException) {
-            -100
-        }
+        return this.sortedWith(
+            compareBy(
+                { it.quality.contains(quality) },
+                { it.quality.contains(server) },
+            ),
+        ).reversed()
     }
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        anime.thumbnail_url = element.select("img").first().attr("src")
+        anime.thumbnail_url = element.selectFirst("img")!!.attr("src")
         anime.title = element.attr("title")
         return anime
     }
@@ -164,10 +142,14 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
         val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
+        val recentFilter = filterList.find { it is RecentFilter } as RecentFilter
+        val seasonFilter = filterList.find { it is SeasonFilter } as SeasonFilter
 
         return when {
             query.isNotBlank() -> GET("$baseUrl/search.html?keyword=$query&page=$page", headers)
             genreFilter.state != 0 -> GET("$baseUrl/genre/${genreFilter.toUriPart()}?page=$page")
+            recentFilter.state != 0 -> GET("https://ajax.gogo-load.com/ajax/page-recent-release.html?page=$page&type=${recentFilter.toUriPart()}")
+            seasonFilter.state != 0 -> GET("$baseUrl/${seasonFilter.toUriPart()}?page=$page", headers)
             else -> GET("$baseUrl/popular.html?page=$page")
         }
     }
@@ -176,12 +158,12 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         anime.title = document.select("div.anime_info_body_bg h1").text()
         anime.genre = document.select("p.type:eq(5) a").joinToString("") { it.text() }
-        anime.description = document.select("p.type:eq(4)").first().ownText()
+        anime.description = document.selectFirst("p.type:eq(4)")!!.ownText()
         anime.status = parseStatus(document.select("p.type:eq(7) a").text())
 
         // add alternative name to anime description
         val altName = "Other name(s): "
-        document.select("p.type:eq(8)").firstOrNull()?.ownText()?.let {
+        document.selectFirst("p.type:eq(8)")?.ownText()?.let {
             if (it.isBlank().not()) {
                 anime.description = when {
                     anime.description.isNullOrBlank() -> altName + it
@@ -220,9 +202,9 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val domainPref = ListPreference(screen.context).apply {
             key = "preferred_domain"
             title = "Preferred domain (requires app restart)"
-            entries = arrayOf("gogoanime.lu", "gogoanime.gg")
-            entryValues = arrayOf("https://gogoanime.lu", "https://gogoanime.gg")
-            setDefaultValue("https://gogoanime.lu")
+            entries = arrayOf("gogoanime.tel", "gogoanime.ar")
+            entryValues = arrayOf("https://gogoanime.tel", "https://gogoanime.ar")
+            setDefaultValue("https://gogoanime.tel")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -247,14 +229,32 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val videoServerPref = ListPreference(screen.context).apply {
+            key = "preferred_server"
+            title = "Preferred server"
+            entries = arrayOf("Gogostream", "Vidstreaming", "Doodstream", "StreamSB")
+            entryValues = arrayOf("Gogostream", "Vidstreaming", "Doodstream", "StreamSB")
+            setDefaultValue("Gogostream")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
         screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
+        screen.addPreference(videoServerPref)
     }
 
     // Filters
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("Text search ignores filters"),
-        GenreFilter()
+        GenreFilter(),
+        RecentFilter(),
+        SeasonFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -262,34 +262,61 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         arrayOf(
             Pair("<select>", ""),
             Pair("Action", "action"),
+            Pair("Adult Cast", "adult-cast"),
             Pair("Adventure", "adventure"),
+            Pair("Anthropomorphic", "anthropomorphic"),
+            Pair("Avant Garde", "avant-garde"),
+            Pair("Boys Love", "shounen-ai"),
             Pair("Cars", "cars"),
+            Pair("CGDCT", "cgdct"),
+            Pair("Childcare", "childcare"),
             Pair("Comedy", "comedy"),
+            Pair("Comic", "comic"),
             Pair("Crime", "crime"),
+            Pair("Crossdressing", "crossdressing"),
+            Pair("Delinquents", "delinquents"),
             Pair("Dementia", "dementia"),
             Pair("Demons", "demons"),
+            Pair("Detective", "detective"),
             Pair("Drama", "drama"),
             Pair("Dub", "dub"),
             Pair("Ecchi", "ecchi"),
+            Pair("Erotica", "erotica"),
             Pair("Family", "family"),
             Pair("Fantasy", "fantasy"),
+            Pair("Gag Humor", "gag-humor"),
             Pair("Game", "game"),
+            Pair("Gender Bender", "gender-bender"),
+            Pair("Gore", "gore"),
+            Pair("Gourmet", "gourmet"),
             Pair("Harem", "harem"),
+            Pair("Hentai", "hentai"),
+            Pair("High Stakes Game", "high-stakes-game"),
             Pair("Historical", "historical"),
             Pair("Horror", "horror"),
+            Pair("Isekai", "isekai"),
+            Pair("Iyashikei", "iyashikei"),
             Pair("Josei", "josei"),
             Pair("Kids", "kids"),
             Pair("Magic", "magic"),
+            Pair("Magical Sex Shift", "magical-sex-shift"),
+            Pair("Mahou Shoujo", "mahou-shoujo"),
             Pair("Martial Arts", "martial-arts"),
-            Pair("Mature", "mature"),
             Pair("Mecha", "mecha"),
+            Pair("Medical", "medical"),
             Pair("Military", "military"),
             Pair("Music", "music"),
             Pair("Mystery", "mystery"),
+            Pair("Mythology", "mythology"),
+            Pair("Organized Crime", "organized-crime"),
             Pair("Parody", "parody"),
+            Pair("Performing Arts", "performing-arts"),
+            Pair("Pets", "pets"),
             Pair("Police", "police"),
             Pair("Psychological", "psychological"),
+            Pair("Reincarnation", "reincarnation"),
             Pair("Romance", "romance"),
+            Pair("Romantic Subtext", "romantic-subtext"),
             Pair("Samurai", "samurai"),
             Pair("School", "school"),
             Pair("Sci-Fi", "sci-fi"),
@@ -301,13 +328,74 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Slice of Life", "slice-of-life"),
             Pair("Space", "space"),
             Pair("Sports", "sports"),
+            Pair("Strategy Game", "strategy-game"),
             Pair("Super Power", "super-power"),
             Pair("Supernatural", "supernatural"),
+            Pair("Suspense", "suspense"),
+            Pair("Team Sports", "team-sports"),
             Pair("Thriller", "thriller"),
+            Pair("Time Travel", "time-travel"),
             Pair("Vampire", "vampire"),
+            Pair("Work Life", "work-life"),
+            Pair("Workplace", "workplace"),
             Pair("Yaoi", "yaoi"),
-            Pair("Yuri", "yuri")
-        )
+            Pair("Yuri", "yuri"),
+        ),
+    )
+
+    private class RecentFilter : UriPartFilter(
+        "Recent Episodes",
+        arrayOf(
+            Pair("<select>", ""),
+            Pair("Recent Release", "1"),
+            Pair("Recent Dub", "2"),
+            Pair("Recent Chinese", "3"),
+        ),
+    )
+
+    private class SeasonFilter : UriPartFilter(
+        "Season",
+        arrayOf(
+            Pair("<select>", ""),
+            Pair("Latest season", "new-season.html"),
+            Pair("Winter 2023", "sub-category/winter-2023-anime"),
+            Pair("Fall 2022", "sub-category/fall-2022-anime"),
+            Pair("Summer 2022", "sub-category/summer-2022-anime"),
+            Pair("Spring 2022", "sub-category/spring-2022-anime"),
+            Pair("Winter 2022", "sub-category/winter-2022-anime"),
+            Pair("Fall 2021", "sub-category/fall-2021-anime"),
+            Pair("Summer 2021", "sub-category/summer-2021-anime"),
+            Pair("Spring 2021", "sub-category/spring-2021-anime"),
+            Pair("Winter 2021", "sub-category/winter-2021-anime"),
+            Pair("Fall 2020", "sub-category/fall-2020-anime"),
+            Pair("Summer 2020", "sub-category/summer-2020-anime"),
+            Pair("Spring 2020", "sub-category/spring-2020-anime"),
+            Pair("Winter 2020", "sub-category/winter-2020-anime"),
+            Pair("Fall 2019", "sub-category/fall-2019-anime"),
+            Pair("Summer 2019", "sub-category/summer-2019-anime"),
+            Pair("Spring 2019", "sub-category/spring-2019-anime"),
+            Pair("Winter 2019", "sub-category/winter-2019-anime"),
+            Pair("Fall 2018", "sub-category/fall-2018-anime"),
+            Pair("Summer 2018", "sub-category/summer-2018-anime"),
+            Pair("Spring 2018", "sub-category/spring-2018-anime"),
+            Pair("Winter 2018", "sub-category/winter-2018-anime"),
+            Pair("Fall 2017", "sub-category/fall-2017-anime"),
+            Pair("Summer 2017", "sub-category/summer-2017-anime"),
+            Pair("Spring 2017", "sub-category/spring-2017-anime"),
+            Pair("Winter 2017", "sub-category/winter-2017-anime"),
+            Pair("Fall 2016", "sub-category/fall-2016-anime"),
+            Pair("Summer 2016", "sub-category/summer-2016-anime"),
+            Pair("Spring 2016", "sub-category/spring-2016-anime"),
+            Pair("Winter 2016", "sub-category/winter-2016-anime"),
+            Pair("Fall 2015", "sub-category/fall-2015-anime"),
+            Pair("Summer 2015", "sub-category/summer-2015-anime"),
+            Pair("Spring 2015", "sub-category/spring-2015-anime"),
+            Pair("Winter 2015", "sub-category/winter-2015-anime"),
+            Pair("Fall 2014", "sub-category/fall-2014-anime"),
+            Pair("Summer 2014", "sub-category/summer-2014-anime"),
+            Pair("Spring 2014", "sub-category/spring-2014-anime"),
+            Pair("Winter 2014", "sub-category/winter-2014-anime"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

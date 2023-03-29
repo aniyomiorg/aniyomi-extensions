@@ -45,7 +45,7 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("a").attr("href"))
         anime.title = element.select("a h2.Title").text()
-        anime.thumbnail_url = element.selectFirst("a div.Image figure.Objf img").attr("src")
+        anime.thumbnail_url = element.selectFirst("a div.Image figure.Objf img")!!.attr("src")
         anime.description = element.select("div.TPMvCn div.Description p:nth-child(1)").text().removeSurrounding("\"")
         return anime
     }
@@ -56,7 +56,7 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
             Log.i("bruh url", serverUrl)
             if (serverUrl.contains("fembed") || serverUrl.contains("vanfem")) {
                 videoList.addAll(
-                    FembedExtractor(client).videosFromUrl(serverUrl, lang)
+                    FembedExtractor(client).videosFromUrl(serverUrl, lang),
                 )
             }
             if (serverUrl.contains("doodstream")) {
@@ -85,7 +85,7 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
             val serverID = serverList.attr("data-key")
             val type = if (response.request.url.toString().contains("movies")) 1 else 2
             val url = "$baseUrl/?trembed=$serverID&trid=$movieID&trtype=$type"
-            val langTag = serverList.selectFirst("p.AAIco-language").text().substring(3).uppercase()
+            val langTag = serverList.selectFirst("p.AAIco-language")!!.text().substring(3).uppercase()
 
             val lang = if (langTag.contains("LATINO")) "[LAT]" else if (langTag.contains("CASTELLANO")) "[CAST]" else "[SUB]"
             var request = client.newCall(GET(url)).execute()
@@ -104,11 +104,11 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
                             .addHeader("Host", "sc.seriesflix.video")
                             .addHeader(
                                 "User-Agent",
-                                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
                             )
                             .addHeader(
                                 "Accept",
-                                "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+                                "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
                             )
                             .addHeader("Accept-Language", "en-US,en;q=0.5")
                             .addHeader("Content-Type", "application/x-www-form-urlencoded")
@@ -151,7 +151,7 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
-        GenreFilter()
+        GenreFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
@@ -173,8 +173,8 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
             Pair("Fantasía", "genero/fantasia"),
             Pair("Misterio", "genero/misterio"),
             Pair("Romance", "genero/romance"),
-            Pair("Terror", "genero/terror")
-        )
+            Pair("Terror", "genero/terror"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
@@ -185,7 +185,7 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
     override fun List<Video>.sort(): List<Video> {
         return try {
             val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) }
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
             val userPreferredQuality = preferences.getString("preferred_quality", "[LAT]Fembed:720p")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
@@ -208,7 +208,7 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
             "[LAT]Fembed:1080p", "[LAT]Fembed:720p", "[LAT]Fembed:480p", "[LAT]Fembed:360p", // Fembed
             "[CAST]Fembed:1080p", "[CAST]Fembed:720p", "[CAST]Fembed:480p", "[CAST]Fembed:360p", // Fembed
             "[SUB]Fembed:1080p", "[SUB]Fembed:720p", "[SUB]Fembed:480p", "[SUB]Fembed:360p", // Fembed
-            "[LAT]DoodStream", "[CAST]DoodStream", "[SUB]DoodStream", "[LAT]StreamTape", "[CAST]StreamTape", "[SUB]StreamTape" // video servers without resolution
+            "[LAT]DoodStream", "[CAST]DoodStream", "[SUB]DoodStream", "[LAT]StreamTape", "[CAST]StreamTape", "[SUB]StreamTape", // video servers without resolution
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"

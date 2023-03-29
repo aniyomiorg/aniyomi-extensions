@@ -42,7 +42,7 @@ class AniWorldInterceptor(private val client: OkHttpClient, private val preferen
             originalRequest
                 .newBuilder()
                 .addHeader("cookie", newCookieHeader)
-                .build()
+                .build(),
         )
     }
 

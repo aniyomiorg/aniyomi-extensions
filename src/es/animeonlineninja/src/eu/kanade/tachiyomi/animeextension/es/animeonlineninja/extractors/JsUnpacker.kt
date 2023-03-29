@@ -160,7 +160,7 @@ class JsUnpacker(packedJS: String?) {
                 0x65,
                 0x41,
                 0x64,
-                0x73
+                0x73,
             )
         val z =
             listOf(
@@ -182,7 +182,7 @@ class JsUnpacker(packedJS: String?) {
                 0x73,
                 0x2e,
                 0x41,
-                0x64
+                0x64,
             )
 
         fun String.load(): String? {

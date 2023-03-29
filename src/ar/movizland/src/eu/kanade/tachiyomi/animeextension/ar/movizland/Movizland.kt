@@ -73,16 +73,17 @@ class Movizland : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         fun addEpisodeNew(url: String, type: String, title: String = "") {
             val episode = SEpisode.create()
             episode.setUrlWithoutDomain(url)
-            if (type == "assembly")
+            if (type == "assembly") {
                 episode.name = title.replace("فيلم", "").trim()
-            else if (type == "movie")
+            } else if (type == "movie") {
                 episode.name = "مشاهدة"
-            else if (TitleRegex.SEASON.containsMatchIn(title))
+            } else if (TitleRegex.SEASON.containsMatchIn(title)) {
                 episode.name = TitleRegex.SEASON.find(title)!!.value.replace("مترجمة", "").replace("والاخيرة", "").trim()
-            else if (TitleRegex.EPISODE.containsMatchIn(title))
+            } else if (TitleRegex.EPISODE.containsMatchIn(title)) {
                 episode.name = TitleRegex.EPISODE.find(title)!!.value.replace("مترجمة", "").replace("والاخيرة", "").trim()
-            else
+            } else {
                 episode.name = title
+            }
 
             episodes.add(episode)
         }
@@ -146,11 +147,12 @@ class Movizland : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         addEpisodeNew(
                             episode.select("a").attr("href"),
                             "series",
-                            document.select("div.SeriesSingle h2 span a").text() + " " + episode.select("a").text()
+                            document.select("div.SeriesSingle h2 span a").text() + " " + episode.select("a").text(),
                         )
                     }
-                    if (count == 0)
+                    if (count == 0) {
                         addEpisodeNew(url, "movie")
+                    }
                 }
             }
         }
@@ -222,8 +224,10 @@ class Movizland : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         val title = titleEdit(element.select("a div.BlockImageItem div.BlockTitle").text(), true)
         anime.thumbnail_url = element.select("a div.BlockImageItem img").attr("src")
-        if (anime.thumbnail_url.isNullOrEmpty()) anime.thumbnail_url =
-            element.select("a div.BlockImageItem img").attr("data-src")
+        if (anime.thumbnail_url.isNullOrEmpty()) {
+            anime.thumbnail_url =
+                element.select("a div.BlockImageItem img").attr("data-src")
+        }
         anime.setUrlWithoutDomain(element.select("a").attr("href"))
         anime.title = title
         return anime
@@ -260,8 +264,11 @@ class Movizland : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         // div.CoverSingle div.CoverSingleContent
         anime.genre = document.select("div.SingleDetails li:contains(النوع) a,div.SingleDetails li:contains(الجودة) a").joinToString(", ") { it.text() }
-        anime.title = if (document.select("h2.postTitle").isNullOrEmpty())
-            titleEdit(document.select("div.H1Title h1").text()) else titleEdit(document.select("h2.postTitle").text())
+        anime.title = if (document.select("h2.postTitle").isNullOrEmpty()) {
+            titleEdit(document.select("div.H1Title h1").text())
+        } else {
+            titleEdit(document.select("h2.postTitle").text())
+        }
         anime.author = document.select("div.SingleDetails li:contains(دولة) a").text()
         anime.description = document.select("div.ServersEmbeds section.story").text().replace(document.select("meta[property=og:title]").attr("content"), "").replace(":", "").trim()
         anime.status = SAnime.COMPLETED
@@ -307,7 +314,7 @@ class Movizland : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         CatUnit("مسلسلات نتفلكس", "series/netflix-series"),
         CatUnit("مسلسلات انمى", "series/anime-series"),
         CatUnit("مسلسلات تركى", "series/turkish-series"),
-        CatUnit("مسلسلات عربى", "series/arab-series")
+        CatUnit("مسلسلات عربى", "series/arab-series"),
     )
     // ============================= title edit =============================
 
@@ -321,19 +328,25 @@ class Movizland : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             } else if (TitleRegex.SERIES_EPISODES.containsMatchIn(title)) {
                 val newTitle = TitleRegex.SERIES_EPISODES.find(title)
                 newTitle!!.groupValues[1].trim() + if (details) " (${newTitle.groupValues[2].trim()}ح)" else ""
-            } else title
+            } else {
+                title
+            }
         } else if (title.contains("فيلم")) {
-            if (TitleRegex.ARABIC_MOVIE.containsMatchIn(title)) // افلام عربى
+            if (TitleRegex.ARABIC_MOVIE.containsMatchIn(title)) {
+                // افلام عربى
                 TitleRegex.ARABIC_MOVIE.find(title)!!.groupValues[1].trim() + if (details) " ($movie)" else ""
-            else if (TitleRegex.MOVIES.containsMatchIn(title))
+            } else if (TitleRegex.MOVIES.containsMatchIn(title)) {
                 TitleRegex.MOVIES.find(title)!!.groupValues[1].trim() + if (details) " (${TitleRegex.MOVIES.find(title)!!.groupValues[2].trim()})($movie)" else ""
-            else title
-        } else if (title.contains("انمي"))
+            } else {
+                title
+            }
+        } else if (title.contains("انمي")) {
             Regex(if (title.contains("الموسم"))"انمي(.*)الموسم" else "انمي(.*)الحلقة").find(title)!!.groupValues[1] + if (details) " (انمى)" else ""
-        else if (title.contains("برنامج"))
+        } else if (title.contains("برنامج")) {
             Regex(if (title.contains("الموسم"))"برنامج(.*)الموسم" else "برنامج(.*)حلقة").find(title)!!.groupValues[1].removeSurrounding(" ال") + if (details) " (برنامج)" else ""
-        else
+        } else {
             title
+        }
         return finalTitle.trim()
     }
 

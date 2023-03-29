@@ -67,7 +67,7 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // episodes
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        return super.episodeListParse(response).reversed()
+        return super.episodeListParse(response)
     }
 
     override fun episodeListSelector() = "div.series div.items article"
@@ -96,7 +96,7 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .add("action", "get_player_contents")
             .add(
                 "a",
-                (document.select("#post_report  input:nth-child(5)").attr("value")).toString()
+                (document.select("#post_report  input:nth-child(5)").attr("value")).toString(),
             )
             .build()
 
@@ -104,7 +104,7 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val newHeaders = Headers.headersOf("referer", "$baseUrl/")
 
         val listOfVideos = client.newCall(
-            POST("$baseUrl/wp-admin/admin-ajax.php", newHeaders, body)
+            POST("$baseUrl/wp-admin/admin-ajax.php", newHeaders, body),
         )
             .execute().asJsoup()
             .body().select("iframe")
@@ -198,7 +198,7 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = document.select("div.sheader div.poster img").first().attr("data-src")
+        anime.thumbnail_url = document.selectFirst("div.sheader div.poster img")!!.attr("data-src")
         anime.title = document.select("#info1 div:nth-child(2) span").text()
         anime.genre = document.select("div.sheader  div.data  div.sgeneros a")
             .joinToString(", ") { it.text() }
@@ -235,7 +235,6 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // Settings
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred Mirror"

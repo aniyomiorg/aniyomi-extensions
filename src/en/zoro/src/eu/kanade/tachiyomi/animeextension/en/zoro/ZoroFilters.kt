@@ -7,10 +7,10 @@ object ZoroFilters {
 
     open class QueryPartFilter(
         displayName: String,
-        val vals: Array<Pair<String, String>>
+        val vals: Array<Pair<String, String>>,
     ) : AnimeFilter.Select<String>(
         displayName,
-        vals.map { it.first }.toTypedArray()
+        vals.map { it.first }.toTypedArray(),
     ) {
         fun toQueryPart() = vals[state].second
     }
@@ -34,13 +34,15 @@ object ZoroFilters {
 
     class StartYearFilter : QueryPartFilter("Start year", ZoroFiltersData.years)
     class StartMonthFilter : QueryPartFilter("Start month", ZoroFiltersData.months)
+    class StartDayFilter : QueryPartFilter("Start day", ZoroFiltersData.days)
 
     class EndYearFilter : QueryPartFilter("End year", ZoroFiltersData.years)
     class EndMonthFilter : QueryPartFilter("End month", ZoroFiltersData.months)
+    class EndDayFilter : QueryPartFilter("End day", ZoroFiltersData.days)
 
     class GenresFilter : CheckBoxFilterList(
         "Genres",
-        ZoroFiltersData.genres.map { CheckBoxVal(it.first, false) }
+        ZoroFiltersData.genres.map { CheckBoxVal(it.first, false) },
     )
 
     val filterList = AnimeFilterList(
@@ -55,11 +57,13 @@ object ZoroFilters {
 
         StartYearFilter(),
         StartMonthFilter(),
+        StartDayFilter(),
         EndYearFilter(),
         EndMonthFilter(),
+        EndDayFilter(),
         AnimeFilter.Separator(),
 
-        GenresFilter()
+        GenresFilter(),
     )
 
     data class FilterSearchParams(
@@ -72,12 +76,16 @@ object ZoroFilters {
         val sort: String = "",
         val start_year: String = "",
         val start_month: String = "",
+        val start_day: String = "",
         val end_year: String = "",
         val end_month: String = "",
-        val genres: String = ""
+        val end_day: String = "",
+        val genres: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
+        if (filters.isEmpty()) return FilterSearchParams()
+
         val genres: String = filters.filterIsInstance<GenresFilter>()
             .first()
             .state.mapNotNull { format ->
@@ -97,10 +105,12 @@ object ZoroFilters {
 
             filters.asQueryPart<StartYearFilter>(),
             filters.asQueryPart<StartMonthFilter>(),
+            filters.asQueryPart<StartDayFilter>(),
             filters.asQueryPart<EndYearFilter>(),
             filters.asQueryPart<EndMonthFilter>(),
+            filters.asQueryPart<EndDayFilter>(),
 
-            genres
+            genres,
         )
     }
 
@@ -115,14 +125,14 @@ object ZoroFilters {
             Pair("OVA", "3"),
             Pair("ONA", "4"),
             Pair("Special", "5"),
-            Pair("Music", "6")
+            Pair("Music", "6"),
         )
 
         val status = arrayOf(
             all,
             Pair("Finished Airing", "1"),
             Pair("Currently Airing", "2"),
-            Pair("Not yet aired", "3")
+            Pair("Not yet aired", "3"),
         )
 
         val rated = arrayOf(
@@ -132,7 +142,7 @@ object ZoroFilters {
             Pair("PG-13", "3"),
             Pair("R", "4"),
             Pair("R+", "5"),
-            Pair("Rx", "6")
+            Pair("Rx", "6"),
         )
 
         val scores = arrayOf(
@@ -146,7 +156,7 @@ object ZoroFilters {
             Pair("(7) Good", "7"),
             Pair("(8) Very Good", "8"),
             Pair("(9) Great", "9"),
-            Pair("(10) Masterpiece", "10")
+            Pair("(10) Masterpiece", "10"),
         )
 
         val seasons = arrayOf(
@@ -154,14 +164,14 @@ object ZoroFilters {
             Pair("Spring", "1"),
             Pair("Summer", "2"),
             Pair("Fall", "3"),
-            Pair("Winter", "4")
+            Pair("Winter", "4"),
         )
 
         val languages = arrayOf(
             all,
             Pair("SUB", "1"),
             Pair("DUB", "2"),
-            Pair("SUB & DUB", "3")
+            Pair("SUB & DUB", "3"),
         )
 
         val sorts = arrayOf(
@@ -171,14 +181,18 @@ object ZoroFilters {
             Pair("Score", "score"),
             Pair("Name A-Z", "name_az"),
             Pair("Released Date", "released_date"),
-            Pair("Most Watched", "most_watched")
+            Pair("Most Watched", "most_watched"),
         )
 
-        val years = arrayOf(all) + (1917..2022).map {
+        val years = arrayOf(all) + (1917..2023).map {
+            Pair(it.toString(), it.toString())
+        }.reversed().toTypedArray()
+
+        val months = arrayOf(all) + (1..12).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 
-        val months = arrayOf(all) + (1..12).map {
+        val days = arrayOf(all) + (1..31).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 
@@ -225,7 +239,7 @@ object ZoroFilters {
             Pair("Thriller", "41"),
             Pair("Vampire", "32"),
             Pair("Yaoi", "33"),
-            Pair("Yuri", "34")
+            Pair("Yuri", "34"),
         )
     }
 }

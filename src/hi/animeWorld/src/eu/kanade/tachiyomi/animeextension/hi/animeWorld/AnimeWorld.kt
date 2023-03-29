@@ -46,7 +46,7 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        var url = element.select("img").first().attr("src")
+        var url = element.selectFirst("img")!!.attr("src")
         if (!url.contains("https")) {
             url = "https:$url"
         }
@@ -95,8 +95,8 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             POST(
                 postUrl,
                 headers,
-                body
-            )
+                body,
+            ),
         ).execute().asJsoup()
         val episodesElements = epListResponse.select("li")
         episodesElements.map {
@@ -114,7 +114,7 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(baseUrl + element.attr("href"))
-        val epName = element.selectFirst("div.name").ownText()
+        val epName = element.selectFirst("div.name")!!.ownText()
         val ep = epName.substringAfter("Episode ")
         val epNo = try {
             ep.substringBefore(" ").toFloat()
@@ -139,7 +139,7 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val options = playerElement.select("div#$tabId li a")
             options.map {
                 val optionId = it.attr("href")
-                val videos = videosFromElement(playerElement.select("div$optionId").first(), language)
+                val videos = videosFromElement(playerElement.select("div$optionId").first()!!, language)
                 videoList.addAll(videos)
             }
         }
@@ -190,7 +190,7 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        var url = element.select("img").first().attr("src")
+        var url = element.selectFirst("img")!!.attr("src")
         if (!url.contains("https")) {
             url = "https:$url"
         }

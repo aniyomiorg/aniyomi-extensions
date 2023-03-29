@@ -8,21 +8,21 @@ data class LinkData(
     val id: Int,
     val type: Int,
     val season: Int?,
-    val episode: Int?
+    val episode: Int?,
 )
 
 @Serializable
 data class LinkDataProp(
     val code: Int? = null,
     val msg: String? = null,
-    val data: ParsedLinkData? = null
+    val data: ParsedLinkData? = null,
 )
 
 @Serializable
 data class ParsedLinkData(
     val seconds: Int? = null,
     val quality: ArrayList<String> = arrayListOf(),
-    val list: ArrayList<LinkList> = arrayListOf()
+    val list: ArrayList<LinkList> = arrayListOf(),
 )
 
 @Serializable
@@ -48,18 +48,18 @@ data class LinkList(
     val fps: Int? = null,
     val bitstream: String? = null,
     val width: Int? = null,
-    val height: Int? = null
+    val height: Int? = null,
 )
 
 @Serializable
 data class LoadData(
     val id: Int,
-    val type: Int?
+    val type: Int?,
 )
 
 @Serializable
 data class DataJSON(
-    val data: ArrayList<ListJSON> = arrayListOf()
+    val data: ArrayList<ListJSON> = arrayListOf(),
 )
 
 @Serializable
@@ -84,7 +84,7 @@ data class PostJSON(
 
 @Serializable
 data class MainData(
-    val data: ArrayList<Data> = arrayListOf()
+    val data: ArrayList<Data> = arrayListOf(),
 )
 
 @Serializable
@@ -104,7 +104,7 @@ data class Data(
 
 @Serializable
 data class MovieDataProp(
-    val data: MovieData? = MovieData()
+    val data: MovieData? = MovieData(),
 )
 
 @Serializable
@@ -131,20 +131,20 @@ data class MovieData(
     val trailer_url: String? = null,
     val imdb_link: String? = null,
     val box_type: Int? = null,
-    val recommend: List<Data> = listOf() // series does not have any recommendations :pensive:
+    val recommend: List<Data> = listOf(), // series does not have any recommendations :pensive:
 )
 
 @Serializable
 data class SeriesDataProp(
     val code: Int? = null,
     val msg: String? = null,
-    val data: SeriesData? = SeriesData()
+    val data: SeriesData? = SeriesData(),
 )
 
 @Serializable
 data class SeriesLanguage(
     val title: String? = null,
-    val lang: String? = null
+    val lang: String? = null,
 )
 
 @Serializable
@@ -170,7 +170,7 @@ data class SeriesData(
     val collect: Int? = null,
     val view: Int? = null,
     val download: Int? = null,
-    val update_time: String? = null,
+    val update_time: JsonElement? = null,
     val released: String? = null,
     val released_timestamp: Int? = null,
     val episode_released: String? = null,
@@ -206,14 +206,14 @@ data class SeriesData(
     val box_type: Int? = null,
     val year_year: String? = null,
     val season_episode: String? = null,
-    val recommend: List<Data> = listOf()
+    val recommend: List<Data> = listOf(),
 )
 
 @Serializable
 data class SeriesSeasonProp(
     val code: Int? = null,
     val msg: String? = null,
-    val data: ArrayList<SeriesEpisode>? = arrayListOf()
+    val data: ArrayList<SeriesEpisode>? = arrayListOf(),
 )
 
 @Serializable
@@ -250,13 +250,13 @@ data class SeriesEpisode(
     val display: Int? = null,
     val sync: Int? = null,
     val tomato_meter: Int? = null,
-    val imdb_link: String? = null
+    val imdb_link: String? = null,
 )
 
 @Serializable
 data class SubtitleList(
     val language: String? = null,
-    val subtitles: ArrayList<Subtitles> = arrayListOf()
+    val subtitles: ArrayList<Subtitles> = arrayListOf(),
 )
 
 @Serializable
@@ -272,18 +272,18 @@ data class Subtitles(
     val admin_order: Int? = null,
     val myselect: Int? = null,
     val add_time: Long? = null,
-    val count: Int? = null
+    val count: Int? = null,
 )
 
 @Serializable
 data class PrivateSubtitleData(
     val select: ArrayList<String> = arrayListOf(),
-    val list: ArrayList<SubtitleList> = arrayListOf()
+    val list: ArrayList<SubtitleList> = arrayListOf(),
 )
 
 @Serializable
 data class SubtitleDataProp(
     val code: Int? = null,
     val msg: String? = null,
-    val data: PrivateSubtitleData? = PrivateSubtitleData()
+    val data: PrivateSubtitleData? = PrivateSubtitleData(),
 )

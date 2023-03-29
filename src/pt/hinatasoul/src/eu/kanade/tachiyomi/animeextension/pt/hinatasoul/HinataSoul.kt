@@ -82,7 +82,7 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         name = title
         episode_number = runCatching { title.substringAfterLast(" ").toFloat() }
             .getOrNull() ?: 0F
-        date_upload = element.selectFirst("div.lancaster_episodio_info_data")
+        date_upload = element.selectFirst("div.lancaster_episodio_info_data")!!
             .text()
             .toDate()
     }
@@ -102,8 +102,8 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href"))
-        thumbnail_url = element.selectFirst("img").attr("src")
-        title = element.selectFirst("div.ultimosAnimesHomeItemInfosNome").text()
+        thumbnail_url = element.selectFirst("img")!!.attr("src")
+        title = element.selectFirst("div.ultimosAnimesHomeItemInfosNome")!!.text()
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage {
@@ -145,8 +145,8 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         val doc = getRealDoc(document)
-        val infos = doc.selectFirst("div.aniInfosSingle")
-        val img = infos.selectFirst("img")
+        val infos = doc.selectFirst("div.aniInfosSingle")!!
+        val img = infos.selectFirst("img")!!
         anime.thumbnail_url = img.attr("src")
         anime.title = img.attr("alt")
         anime.genre = infos.select("div.aniInfosSingleGeneros > span")
@@ -154,9 +154,9 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         anime.author = infos.getInfo("AUTOR")
         anime.artist = infos.getInfo("ESTÚDIO")
-        anime.status = parseStatus(infos.selectFirst("div.anime_status"))
+        anime.status = parseStatus(infos.selectFirst("div.anime_status")!!)
 
-        var desc = infos.selectFirst("div.aniInfosSingleSinopse > p").text() + "\n"
+        var desc = infos.selectFirst("div.aniInfosSingleSinopse > p")!!.text() + "\n"
         infos.getInfo("Título")?.let { desc += "\nTítulos Alternativos: $it" }
         infos.selectFirst("div.aniInfosSingleNumsItem:contains(Ano)")?.let {
             desc += "\nAno: ${it.ownText()}"
@@ -173,7 +173,7 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         "div.tituloContainer:contains(lançamento) + div.epiContainer a"
     override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href"))
-        val img = element.selectFirst("img")
+        val img = element.selectFirst("img")!!
         thumbnail_url = img.attr("src")
         title = img.attr("alt")
     }
@@ -211,15 +211,16 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun hasNextPage(doc: Document): Boolean {
         val currentUrl = doc.location()
-        val nextUrl = doc.selectFirst("a:contains(»)").attr("href")
-        return !nextUrl.endsWith("1") && currentUrl != nextUrl
+        val nextUrl = doc.selectFirst("a:contains(»)")!!.attr("href")
+        val endings = listOf("/1", "page=1")
+        return !endings.any { nextUrl.endsWith(it) } && currentUrl != nextUrl
     }
 
     private val animeMenuSelector = "div.controlesBoxItem > a > i.iconLista"
     private fun getRealDoc(document: Document): Document {
         val menu = document.selectFirst(animeMenuSelector)
         if (menu != null) {
-            val originalUrl = menu.parent().attr("href")
+            val originalUrl = menu.parent()!!.attr("href")
             val req = client.newCall(GET(originalUrl, headers)).execute()
             return req.asJsoup()
         } else {
@@ -231,7 +232,7 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val div = this.selectFirst("div.aniInfosSingleInfoItem:contains($key)")
         if (div == null) return div
         val span = div.selectFirst("span")
-        return span.text()
+        return span?.text()
     }
 
     private fun String.toDate(): Long {

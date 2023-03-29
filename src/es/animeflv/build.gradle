@@ -5,11 +5,12 @@ ext {
     extName = 'AnimeFLV'
     pkgNameSuffix = 'es.animeflv'
     extClass = '.AnimeFlv'
-    extVersionCode = 31
+    extVersionCode = 41
     libVersion = '13'
 }
 
 dependencies {
+    implementation(project(':lib-yourupload-extractor'))
     implementation(project(':lib-fembed-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-okru-extractor'))

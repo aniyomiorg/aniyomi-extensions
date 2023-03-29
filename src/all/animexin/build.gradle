@@ -1,0 +1,18 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'AnimeXin'
+    pkgNameSuffix = 'all.animexin'
+    extClass = '.AnimeXin'
+    extVersionCode = 2
+    libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-okru-extractor'))
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
+}
+
+apply from: "$rootDir/common.gradle"

@@ -75,7 +75,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(document.location())
         episode.episode_number = 1F
-        episode.name = document.selectFirst("div.name.col-xs-12 span h1").text()
+        episode.name = document.selectFirst("div.name.col-xs-12 span h1")!!.text()
         return listOf(episode)
     }
 
@@ -103,18 +103,22 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val iframe = document.selectFirst("iframe").attr("src")
+        val iframe = document.selectFirst("iframe")!!.attr("src")
         val referer = response.request.url.encodedPath
         val newHeaders = Headers.headersOf("referer", baseUrl + referer)
         val iframeResponse = client.newCall(GET(iframe, newHeaders))
             .execute().asJsoup()
-        return iframeResponse.select(videoListSelector()).map { videoFromElement(it) }
+        return iframeResponse.select(videoListSelector()).map { videoFromElement(it, iframe) }
     }
 
     override fun videoListSelector() = "source"
 
-    override fun videoFromElement(element: Element): Video {
-        return Video(element.attr("src").replace("watch", "download"), element.attr("res") + "p", element.attr("src").replace("watch", "download"))
+    override fun videoFromElement(element: Element) = throw Exception("Not used")
+
+    private fun videoFromElement(element: Element, referrer: String): Video {
+        val videoUrl = element.attr("src")
+        val headers = Headers.headersOf("Referer", referrer)
+        return Video(videoUrl, element.attr("res") + "p", videoUrl, headers = headers)
     }
 
     override fun List<Video>.sort(): List<Video> {
@@ -142,7 +146,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        anime.thumbnail_url = baseUrl + element.select("img").first().attr("data-original")
+        anime.thumbnail_url = baseUrl + element.selectFirst("img")!!.attr("data-original")
         anime.title = element.select("img").attr("alt").replace(" poster", "")
         return anime
     }
@@ -164,6 +168,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             return GET(genreUrl.toString(), headers)
                         }
                     }
+                    else -> {}
                 }
             }
             throw Exception("اختر فلتر")
@@ -220,7 +225,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Type(" قائمة الأفلام ", "movie-list"),
         Type(" قائمة الأوفا ", "ova-list"),
         Type(" قائمة الأونا ", "ona-list"),
-        Type(" قائمة الحلقات خاصة ", "special-list")
+        Type(" قائمة الحلقات خاصة ", "special-list"),
     )
 
     // preferred quality settings

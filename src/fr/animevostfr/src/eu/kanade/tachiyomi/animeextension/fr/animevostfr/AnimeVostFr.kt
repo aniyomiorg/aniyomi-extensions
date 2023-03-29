@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.fr.animevostfr.extractors.CdopeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -48,7 +49,9 @@ class AnimeVostFr : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) {
             return GET("$baseUrl/?s=$query")
-        } else filters
+        } else {
+            filters
+        }
         val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
         val typeFilter = filterList.find { it is TypeFilter } as TypeFilter
         val yearFilter = filterList.find { it is YearFilter } as YearFilter
@@ -111,8 +114,8 @@ class AnimeVostFr : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title = document.select("h1[itemprop=name]").text()
             status = parseStatus(
                 document.select(
-                    "div.mvici-right > p:contains(Statut) > a:last-child"
-                ).text()
+                    "div.mvici-right > p:contains(Statut) > a:last-child",
+                ).text(),
             )
             genre = document.select("div.mvici-left > p:contains(Genres)")
                 .text().substringAfter("Genres: ")
@@ -132,9 +135,9 @@ class AnimeVostFr : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return if (type == "MOVIE") {
             return listOf(
                 SEpisode.create().apply {
-                    url = response.request.url.toString() + "?server=download"
+                    url = response.request.url.toString()
                     name = "Movie"
-                }
+                },
             )
         } else {
             document.select(episodeListSelector()).map { episodeFromElement(it) }.reversed()
@@ -148,42 +151,83 @@ class AnimeVostFr : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .substringAfterLast("-episode-")
             .substringBefore("-")
         return SEpisode.create().apply {
-            setUrlWithoutDomain(element.attr("href") + "?server=download")
+            setUrlWithoutDomain(element.attr("href"))
             name = "Épisode $number"
             episode_number = number.toFloat()
         }
     }
 
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
-        val response = client.newCall(GET(episode.url)).execute()
+        val videoList = mutableListOf<Video>()
+
+        val url = if (episode.url.startsWith("https:")) {
+            episode.url
+        } else {
+            baseUrl + episode.url
+        }
+
+        val response = client.newCall(GET(url)).execute()
         val parsedResponse = response.asJsoup()
-        if (parsedResponse.select("title").text().contains("Warning"))
+        if (parsedResponse.select("title").text().contains("Warning")) {
             throw Exception(parsedResponse.select("body").text())
+        }
         val epId = parsedResponse.select("link[rel=shortlink]").attr("href")
             .substringAfter("?p=")
+
+        parsedResponse.select("div.list-server > select > option").forEach { server ->
+            videoList.addAll(
+                extractVideos(
+                    server.attr("value"),
+                    server.text(),
+                    epId,
+                ),
+            )
+        }
+
+        return Observable.just(videoList)
+    }
+
+    private fun extractVideos(serverValue: String, serverName: String, epId: String): List<Video> {
         Log.i("bruh", "ID: $epId \nLink: $")
         val xhr = Headers.headersOf("x-requested-with", "XMLHttpRequest")
-        val epLink = client.newCall(GET("$baseUrl/ajax-get-link-stream/?server=download&filmId=$epId", xhr))
-            .execute().body!!.string()
-        val playlistInterceptor = CloudFlareInterceptor()
-        val cfClient = client.newBuilder().addInterceptor(playlistInterceptor).build()
-        val headers = Headers.headersOf(
-            "referer", "$baseUrl/",
-            "user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"
-        )
-        val playlistResponse = cfClient.newCall(GET(epLink, headers)).execute().body!!.string()
-        val headersVideo = Headers.headersOf(
-            "referer", epLink,
-            "user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"
-        )
+        val epLink = client.newCall(GET("$baseUrl/ajax-get-link-stream/?server=$serverValue&filmId=$epId", xhr))
+            .execute().body.string()
+
         val playlist = mutableListOf<Video>()
-        playlistResponse.substringAfter("#EXT-X-STREAM-INF:")
-            .split("#EXT-X-STREAM-INF:").map {
-                val quality = it.substringAfter("RESOLUTION=").split(",")[0].split("\n")[0].substringAfter("x") + "p"
-                val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                playlist.add(Video(videoUrl, quality, videoUrl, headers = headersVideo))
+        when {
+            epLink.contains("comedyshow.to") -> {
+                val playlistInterceptor = CloudFlareInterceptor()
+                val cfClient = client.newBuilder().addInterceptor(playlistInterceptor).build()
+                val headers = Headers.headersOf(
+                    "referer",
+                    "$baseUrl/",
+                    "user-agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
+                )
+                val playlistResponse = cfClient.newCall(GET(epLink, headers)).execute().body.string()
+                val headersVideo = Headers.headersOf(
+                    "referer",
+                    epLink,
+                    "user-agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
+                )
+
+                playlistResponse.substringAfter("#EXT-X-STREAM-INF:")
+                    .split("#EXT-X-STREAM-INF:").map {
+                        val quality = it.substringAfter("RESOLUTION=").split(",")[0].split("\n")[0].substringAfter("x") + "p ($serverName)"
+                        val videoUrl = it.substringAfter("\n").substringBefore("\n")
+                        playlist.add(Video(videoUrl, quality, videoUrl, headers = headersVideo))
+                    }
             }
-        return Observable.just(playlist.sort())
+            epLink.contains("cdopetimes.xyz") -> {
+                val extractor = CdopeExtractor(client)
+                playlist.addAll(
+                    extractor.videosFromUrl(epLink),
+                )
+            }
+        }
+
+        return playlist.sort()
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -213,7 +257,7 @@ class AnimeVostFr : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.select("div.slide-middle h1").text()
-        anime.description = document.select("div.slide-desc").first().ownText()
+        anime.description = document.selectFirst("div.slide-desc")!!.ownText()
         anime.genre = document.select("div.image-bg-content div.slide-block div.slide-middle ul.slide-top li.right a").joinToString { it.text() }
         return anime
     }
@@ -223,7 +267,7 @@ class AnimeVostFr : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         GenreFilter(),
         YearFilter(),
         StatusFilter(),
-        LangFilter()
+        LangFilter(),
     )
 
     private class TypeFilter : UriPartFilter(
@@ -233,8 +277,8 @@ class AnimeVostFr : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Anime", "anime"),
             Pair("Cartoon", "cartoon"),
             Pair("MOVIE", "movie"),
-            Pair("SERIES", "series")
-        )
+            Pair("SERIES", "series"),
+        ),
     )
 
     private class GenreFilter : UriPartFilterReverse(
@@ -292,8 +336,8 @@ class AnimeVostFr : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("vampire", "Vampire"),
             Pair("cars", "Voitures"),
             Pair("war", "War"),
-            Pair("western", "Western")
-        )
+            Pair("western", "Western"),
+        ),
     )
 
     private class YearFilter : UriPartFilterYears(
@@ -304,7 +348,7 @@ class AnimeVostFr : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             } else {
                 (2022 - (it - 1)).toString()
             }
-        }
+        },
     )
 
     private class StatusFilter : UriPartFilter(
@@ -312,8 +356,8 @@ class AnimeVostFr : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         arrayOf(
             Pair("-----", ""),
             Pair("Fin", "completed"),
-            Pair("En cours", "ongoing")
-        )
+            Pair("En cours", "ongoing"),
+        ),
     )
 
     private class LangFilter : UriPartFilter(
@@ -322,8 +366,8 @@ class AnimeVostFr : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("-----", ""),
             Pair("VO", "vo"),
             Pair("Animé Vostfr", "vostfr"),
-            Pair("Animé VF", "vf")
-        )
+            Pair("Animé VF", "vf"),
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

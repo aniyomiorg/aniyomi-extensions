@@ -17,7 +17,7 @@ class Mp4uploadExtractor {
                     "referer" to url,
                     "method_free" to "+",
                     "method_premiun" to "",
-                )
+                ),
             ).method(Connection.Method.POST).ignoreContentType(true)
                 .ignoreHttpErrors(true).execute().url().toString()
             Video(videoUrl, "Mp4Upload", videoUrl, headers)

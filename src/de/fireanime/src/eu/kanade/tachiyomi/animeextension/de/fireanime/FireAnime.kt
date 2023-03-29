@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.animeextension.de.fireanime.dto.EpisodeListingWrapper
 import eu.kanade.tachiyomi.animeextension.de.fireanime.dto.EpisodeSourcesDto
 import eu.kanade.tachiyomi.animeextension.de.fireanime.dto.HosterSourceDto
 import eu.kanade.tachiyomi.animeextension.de.fireanime.dto.VideoLinkDto
-import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.de.fireanime.extractors.FireCdnExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -23,6 +22,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
@@ -65,7 +65,7 @@ class FireAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         "$baseUrl/api/public/airing",
         body = FormBody.Builder()
             .add("langs[0]", "de-DE")
-            .build()
+            .build(),
     )
 
     override fun popularAnimeParse(response: Response): AnimesPage = parseAnimeListJson(response, true)
@@ -77,7 +77,7 @@ class FireAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             .add("langs[0]", "de-DE")
             .add("limit", "30")
             .add("offset", (page - 1).toString())
-            .build()
+            .build(),
     )
 
     override fun latestUpdatesParse(response: Response): AnimesPage = parseAnimeListJson(response)
@@ -87,14 +87,14 @@ class FireAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         "$baseUrl/api/public/search",
         body = FormBody.Builder()
             .add("q", query)
-            .build()
+            .build(),
     )
 
     override fun searchAnimeParse(response: Response): AnimesPage = parseAnimeListJson(response, true)
 
     // ===== ANIME LIST PARSING =====
     private fun parseAnimeListJson(response: Response, singlePage: Boolean = false): AnimesPage {
-        val animes = json.decodeFromString(ListSerializer(AnimeBaseDto.serializer()), response.body!!.string())
+        val animes = json.decodeFromString(ListSerializer(AnimeBaseDto.serializer()), response.body.string())
             .distinctBy { it.url }
         return AnimesPage(animes.map { createAnime(it) }, animes.count() > 0 && !singlePage)
     }
@@ -104,7 +104,7 @@ class FireAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         "$baseUrl/api/public/anime",
         body = FormBody.Builder()
             .add("url", anime.url)
-            .build()
+            .build(),
     )
 
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
@@ -118,7 +118,7 @@ class FireAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun animeDetailsParse(response: Response): SAnime = throw UnsupportedOperationException("Not used")
 
     private fun animeDetailsParse(response: Response, baseAnime: SAnime): SAnime {
-        val anime = json.decodeFromString(AnimeDetailsWrapperDto.serializer(), response.body!!.string()).response
+        val anime = json.decodeFromString(AnimeDetailsWrapperDto.serializer(), response.body.string()).response
         return createAnime(baseAnime, anime)
     }
 
@@ -144,7 +144,7 @@ class FireAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         "$baseUrl/api/public/episodes",
         body = FormBody.Builder()
             .add("url", anime.url)
-            .build()
+            .build(),
     )
 
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
@@ -162,7 +162,7 @@ class FireAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> = throw UnsupportedOperationException("Not used")
 
     private fun episodeListParse(response: Response, animeUrl: String): List<SEpisode> {
-        val episodes = json.decodeFromString(EpisodeListingWrapperDto.serializer(), response.body!!.string()).response
+        val episodes = json.decodeFromString(EpisodeListingWrapperDto.serializer(), response.body.string()).response
         return episodes.mapIndexed { i, ep ->
             SEpisode.create().apply {
                 episode_number = ep.episode.toFloat()
@@ -178,11 +178,11 @@ class FireAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         body = FormBody.Builder()
             .add("url", episode.url.trim())
             .add("ep", "%.0f".format(episode.episode_number))
-            .build()
+            .build(),
     )
 
     override fun videoListParse(response: Response): List<Video> {
-        val episode = json.decodeFromString(EpisodeSourcesDto.serializer(), response.body!!.string().substringAfter("\"ep\":").substringBefore(",\"next\""))
+        val episode = json.decodeFromString(EpisodeSourcesDto.serializer(), response.body.string().substringAfter("\"ep\":").substringBefore(",\"next\""))
 
         val videos = mutableListOf<Video>()
         videos.addAll(getVideos(episode.cdns, "$baseUrl/api/public/cdn"))
@@ -197,9 +197,9 @@ class FireAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 apiUrl,
                 body = FormBody.Builder()
                     .add("id", source.id.toString())
-                    .build()
+                    .build(),
             )
-            val link = json.decodeFromString(VideoLinkDto.serializer(), client.newCall(linkRequest).execute().body!!.string()).url
+            val link = json.decodeFromString(VideoLinkDto.serializer(), client.newCall(linkRequest).execute().body.string()).url
 
             val sourceName = if (source is CdnSourceDto) FAConstants.NAME_FIRECDN else (source as HosterSourceDto).hoster
             val lang = if (source.isSub == 1) FAConstants.LANG_SUB else FAConstants.LANG_DUB
@@ -238,20 +238,26 @@ class FireAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                     otherList.add(video)
                 }
             }
-        } else otherList += this
+        } else {
+            otherList += this
+        }
         val newList = mutableListOf<Video>()
         var preferred = 0
         for (video in hosterList) {
             if (video.quality.contains(subPreference)) {
                 newList.add(preferred, video)
                 preferred++
-            } else newList.add(video)
+            } else {
+                newList.add(video)
+            }
         }
         for (video in otherList) {
             if (video.quality.contains(subPreference)) {
                 newList.add(preferred, video)
                 preferred++
-            } else newList.add(video)
+            } else {
+                newList.add(video)
+            }
         }
 
         return newList

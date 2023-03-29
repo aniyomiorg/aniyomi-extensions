@@ -1,0 +1,21 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'AllAnime'
+    pkgNameSuffix = 'en.allanime'
+    extClass = '.AllAnime'
+    extVersionCode = 15
+    libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-streamsb-extractor'))
+    implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib-okru-extractor'))
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
+}
+
+
+apply from: "$rootDir/common.gradle"

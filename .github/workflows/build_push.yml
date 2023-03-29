@@ -7,6 +7,10 @@ on:
     paths-ignore:
       - '**.md'
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
 env:
   CI_CHUNK_SIZE: 65
 
@@ -16,16 +20,10 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       individualMatrix: ${{ steps.generate-matrices.outputs.individualMatrix }}
-      #multisrcMatrix: ${{ steps.generate-matrices.outputs.multisrcMatrix }}
+      multisrcMatrix: ${{ steps.generate-matrices.outputs.multisrcMatrix }}
     env:
       CI_MODULE_GEN: true
     steps:
-      - name: Cancel previous runs
-        uses: styfle/cancel-workflow-action@0.9.1
-        with:
-          access_token: ${{ github.token }}
-          all_but_latest: true
-
       - name: Clone repo
         uses: actions/checkout@v3
         with:
@@ -33,7 +31,7 @@ jobs:
 
       - name: Find lib changes
         id: modified-libs
-        uses: tj-actions/changed-files@v32
+        uses: tj-actions/changed-files@v35
         with:
           files: lib/**
           files_ignore: lib/**.md
@@ -53,18 +51,18 @@ jobs:
           java-version: 11
           distribution: adopt
 
-#      - name: Generate multisrc sources
-#        uses: gradle/gradle-command-action@v2
-#        with:
-#          arguments: :multisrc:generateExtensions
+      - name: Generate multisrc sources
+        uses: gradle/gradle-command-action@v2
+        with:
+          arguments: :multisrc:generateExtensions
 
       - name: Get number of modules
         run: |
           set -x
-          ./gradlew -q projects | grep '.*extensions\:individual\:.*\:.*' > projects.txt
+          ./gradlew -q projects | grep '.*extensions\:\(individual\|multisrc\)\:.*\:.*' > projects.txt
 
           echo "NUM_INDIVIDUAL_MODULES=$(cat projects.txt | grep '.*\:individual\:.*' | wc -l)" >> $GITHUB_ENV
-          #echo "NUM_MULTISRC_MODULES=$(cat projects.txt | grep '.*\:multisrc\:.*' | wc -l)" >> $GITHUB_ENV
+          echo "NUM_MULTISRC_MODULES=$(cat projects.txt | grep '.*\:multisrc\:.*' | wc -l)" >> $GITHUB_ENV
 
       - id: generate-matrices
         name: Create output matrices
@@ -72,68 +70,68 @@ jobs:
         with:
           script: |
             const numIndividualModules = process.env.NUM_INDIVIDUAL_MODULES;
-            //const numMultisrcModules = process.env.NUM_MULTISRC_MODULES;
+            const numMultisrcModules = process.env.NUM_MULTISRC_MODULES;
             const chunkSize = process.env.CI_CHUNK_SIZE;
 
             const numIndividualChunks = Math.ceil(numIndividualModules / chunkSize);
-            //const numMultisrcChunks = Math.ceil(numMultisrcModules / chunkSize);
+            const numMultisrcChunks = Math.ceil(numMultisrcModules / chunkSize);
 
             console.log(`Individual modules: ${numIndividualModules} (${numIndividualChunks} chunks of ${chunkSize})`);
-            //console.log(`Multi-source modules: ${numMultisrcModules} (${numMultisrcChunks} chunks of ${chunkSize})`);
+            console.log(`Multi-source modules: ${numMultisrcModules} (${numMultisrcChunks} chunks of ${chunkSize})`);
 
             core.setOutput('individualMatrix', { 'chunk': [...Array(numIndividualChunks).keys()] });
-            //core.setOutput('multisrcMatrix', { 'chunk': [...Array(numMultisrcChunks).keys()] });
+            core.setOutput('multisrcMatrix', { 'chunk': [...Array(numMultisrcChunks).keys()] });
 
-  #build_multisrc:
-  #  name: Build multisrc modules
-  #  needs: prepare
-  #  runs-on: ubuntu-latest
-  #  strategy:
-  #    matrix: ${{ fromJSON(needs.prepare.outputs.multisrcMatrix) }}
-  #  steps:
-  #    - name: Checkout master branch
-  #      uses: actions/checkout@v3
-  #      with:
-  #        ref: master
+  build_multisrc:
+    name: Build multisrc modules
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJSON(needs.prepare.outputs.multisrcMatrix) }}
+    steps:
+      - name: Checkout master branch
+        uses: actions/checkout@v3
+        with:
+          ref: master
 
-  #    - name: Set up JDK
-  #      uses: actions/setup-java@v3
-  #      with:
-  #        java-version: 11
-  #        distribution: adopt
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: 11
+          distribution: adopt
 
-  #    - name: Prepare signing key
-  #      run: |
-  #        echo ${{ secrets.SIGNING_KEY }} | base64 -d > signingkey.jks
+      - name: Prepare signing key
+        run: |
+          echo ${{ secrets.SIGNING_KEY }} | base64 -d > signingkey.jks
 
-  #    - name: Generate sources from the multi-source library
-  #      uses: gradle/gradle-command-action@v2
-  #      env:
-  #        CI_MODULE_GEN: "true"
-  #      with:
-  #        arguments: :multisrc:generateExtensions
+      - name: Generate sources from the multi-source library
+        uses: gradle/gradle-command-action@v2
+        env:
+          CI_MODULE_GEN: "true"
+        with:
+          arguments: :multisrc:generateExtensions
 
-  #    - name: Build extensions (chunk ${{ matrix.chunk }})
-  #      uses: gradle/gradle-command-action@v2
-  #      env:
-  #        CI_MULTISRC: "true"
-  #        CI_CHUNK_NUM: ${{ matrix.chunk }}
-  #        ALIAS: ${{ secrets.ALIAS }}
-  #        KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
-  #        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-  #      with:
-  #        arguments: assembleRelease
+      - name: Build extensions (chunk ${{ matrix.chunk }})
+        uses: gradle/gradle-command-action@v2
+        env:
+          CI_MULTISRC: "true"
+          CI_CHUNK_NUM: ${{ matrix.chunk }}
+          ALIAS: ${{ secrets.ALIAS }}
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        with:
+          arguments: assembleRelease
 
-  #    - name: Upload APKs (chunk ${{ matrix.chunk }})
-  #      uses: actions/upload-artifact@v2
-  #      if: "github.repository == 'jmir1/aniyomi-extensions'"
-  #      with:
-  #        name: "multisrc-apks-${{ matrix.chunk }}"
-  #        path: "**/*.apk"
-  #        retention-days: 1
+      - name: Upload APKs (chunk ${{ matrix.chunk }})
+        uses: actions/upload-artifact@v3
+        if: "github.repository == 'jmir1/aniyomi-extensions'"
+        with:
+          name: "multisrc-apks-${{ matrix.chunk }}"
+          path: "**/*.apk"
+          retention-days: 1
 
-  #    - name: Clean up CI files
-  #      run: rm signingkey.jks
+      - name: Clean up CI files
+        run: rm signingkey.jks
 
   build_individual:
     name: Build individual modules
@@ -169,7 +167,7 @@ jobs:
           arguments: assembleRelease
 
       - name: Upload APKs (chunk ${{ matrix.chunk }})
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: "github.repository == 'jmir1/aniyomi-extensions'"
         with:
           name: "individual-apks-${{ matrix.chunk }}"
@@ -183,11 +181,12 @@ jobs:
     name: Publish repo
     needs:
       - build_individual
+      - build_multisrc
     if: "github.repository == 'jmir1/aniyomi-extensions'"
     runs-on: ubuntu-latest
     steps:
       - name: Download APK artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           path: ~/apk-artifacts
 

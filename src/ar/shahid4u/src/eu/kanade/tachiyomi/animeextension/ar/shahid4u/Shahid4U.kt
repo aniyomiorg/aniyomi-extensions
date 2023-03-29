@@ -33,7 +33,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "شاهد فور يو"
 
-    override val baseUrl = "https://shahed4u.team"
+    override val baseUrl = "https://shahed4u.agency"
 
     override val lang = "ar"
 
@@ -60,26 +60,30 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun titleEdit(title: String, details: Boolean = false): String {
-        return if (Regex("فيلم (.*?) مترجم").containsMatchIn(title))
+        return if (Regex("فيلم (.*?) مترجم").containsMatchIn(title)) {
             Regex("فيلم (.*?) مترجم").find(title)!!.groupValues[1] + " (فيلم)" // افلام اجنبيه مترجمه
-        else if (Regex("فيلم (.*?) مدبلج").containsMatchIn(title))
+        } else if (Regex("فيلم (.*?) مدبلج").containsMatchIn(title)) {
             Regex("فيلم (.*?) مدبلج").find(title)!!.groupValues[1] + " (مدبلج)(فيلم)" // افلام اجنبيه مدبلجه
-        else if (Regex("فيلم ([^a-zA-Z]+) ([0-9]+)").containsMatchIn(title)) // افلام عربى
+        } else if (Regex("فيلم ([^a-zA-Z]+) ([0-9]+)").containsMatchIn(title)) {
+            // افلام عربى
             Regex("فيلم ([^a-zA-Z]+) ([0-9]+)").find(title)!!.groupValues[1] + " (فيلم)"
-        else if (title.contains("مسلسل")) {
+        } else if (title.contains("مسلسل")) {
             if (title.contains("الموسم") and details) {
                 val newTitle = Regex("مسلسل (.*?) الموسم (.*?) الحلقة ([0-9]+)").find(title)
                 return "${newTitle!!.groupValues[1]} (م.${newTitle.groupValues[2]})(${newTitle.groupValues[3]}ح)"
             } else if (title.contains("الحلقة") and details) {
                 val newTitle = Regex("مسلسل (.*?) الحلقة ([0-9]+)").find(title)
                 return "${newTitle!!.groupValues[1]} (${newTitle.groupValues[2]}ح)"
-            } else Regex(if (title.contains("الموسم")) "مسلسل (.*?) الموسم" else "مسلسل (.*?) الحلقة").find(title)!!.groupValues[1] + " (مسلسل)"
-        } else if (title.contains("انمي"))
+            } else {
+                Regex(if (title.contains("الموسم")) "مسلسل (.*?) الموسم" else "مسلسل (.*?) الحلقة").find(title)!!.groupValues[1] + " (مسلسل)"
+            }
+        } else if (title.contains("انمي")) {
             return Regex(if (title.contains("الموسم"))"انمي (.*?) الموسم" else "انمي (.*?) الحلقة").find(title)!!.groupValues[1] + " (انمى)"
-        else if (title.contains("برنامج"))
+        } else if (title.contains("برنامج")) {
             Regex(if (title.contains("الموسم"))"برنامج (.*?) الموسم" else "برنامج (.*?) الحلقة").find(title)!!.groupValues[1] + " (برنامج)"
-        else
+        } else {
             title
+        }
     }
 
     override fun popularAnimeNextPageSelector(): String = "div.paginate ul.page-numbers li.active + li a"
@@ -93,12 +97,13 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         fun addEpisodeNew(url: String, type: String, title: String = "") {
             val episode = SEpisode.create()
             episode.setUrlWithoutDomain(url)
-            if (type == "assembly")
+            if (type == "assembly") {
                 episode.name = title.replace("فيلم", "").trim()
-            else if (type == "movie")
+            } else if (type == "movie") {
                 episode.name = "مشاهدة"
-            else
+            } else {
                 episode.name = title
+            }
 
             episodes.add(episode)
         }
@@ -110,7 +115,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     addEpisodeNew(
                         movie.select("a.fullClick").attr("href") + "watch/",
                         "assembly",
-                        movie.select("h3").text()
+                        movie.select("h3").text(),
                     )
                 }
                 return
@@ -129,7 +134,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             addEpisodeNew(
                                 episode.attr("href"),
                                 "series",
-                                seasonNum + " " + episode.text()
+                                seasonNum + " " + episode.text(),
                             )
                         }
                     } else {
@@ -142,7 +147,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             addEpisodeNew(
                                 episode.attr("href"),
                                 "series",
-                                seasonNum + " " + episode.text()
+                                seasonNum + " " + episode.text(),
                             )
                         }
                     }
@@ -165,18 +170,22 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val servers = document.select(videoListSelector())
         fun getUrl(v_id: String, i: String): String {
             val refererHeaders = Headers.headersOf(
-                "referer", response.request.url.toString(),
-                "x-requested-with", "XMLHttpRequest",
-                "Content-Type", "application/x-www-form-urlencoded; charset=UTF-8",
-                "user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36 Edg/105.0.1343.42"
+                "referer",
+                response.request.url.toString(),
+                "x-requested-with",
+                "XMLHttpRequest",
+                "Content-Type",
+                "application/x-www-form-urlencoded; charset=UTF-8",
+                "user-agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36 Edg/105.0.1343.42",
             )
             val requestBody = FormBody.Builder().add("id", v_id).add("i", i).build()
             val iframe = client.newCall(
                 POST(
                     "$baseUrl/wp-content/themes/Shahid4u-WP_HOME/Ajaxat/Single/Server.php",
                     refererHeaders,
-                    requestBody
-                )
+                    requestBody,
+                ),
             ).execute().asJsoup()
             return iframe.select("iframe").attr("src")
         }
@@ -207,7 +216,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
         return try {
-            val scriptSelect = document.select("script:containsData(eval)").first().data()
+            val scriptSelect = document.selectFirst("script:containsData(eval)")!!.data()
             val serverPrefix =
                 scriptSelect.substringAfter("|net|cdn|amzn|").substringBefore("|rewind|icon|")
             val sourceServer = "https://$serverPrefix.e-amzn-cdn.net"
@@ -255,10 +264,11 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         var link = element.select("a.fullClick").attr("href")
         anime.title = titleEdit(element.select("h3").text(), details = true).trim()
-        if (link.contains("assemblies"))
+        if (link.contains("assemblies")) {
             anime.thumbnail_url = element.select("a.image img").attr("data-src")
-        else
+        } else {
             anime.thumbnail_url = element.select("a.image img.imgInit").attr("data-image")
+        }
         if (!link.contains("assemblies")) link += "watch/"
         anime.setUrlWithoutDomain(link)
         return anime
@@ -300,7 +310,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.author = document.select("div.SingleDetails li:contains(دولة) a").text()
         anime.description = document.select("div.ServersEmbeds section.story").text().replace(document.select("meta[property=og:title]").attr("content"), "").replace(":", "").trim()
         anime.status = SAnime.COMPLETED
-        if (anime.title.contains("سلسلة")) anime.thumbnail_url = document.select("img.imgInit").first().attr("data-image")
+        if (anime.title.contains("سلسلة")) anime.thumbnail_url = document.selectFirst("img.imgInit")!!.attr("data-image")
         return anime
     }
 
@@ -344,7 +354,7 @@ class Shahid4U : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         CatUnit("مسلسلات انمى", "category/مسلسلات-انمي-4/"),
         CatUnit("مسلسلات تركى", "category/مسلسلات-تركي-3/"),
         CatUnit("مسلسلات اسيوى", "category/مسلسلات-اسيوي/"),
-        CatUnit("مسلسلات هندى", "category/مسلسلات-هندية/")
+        CatUnit("مسلسلات هندى", "category/مسلسلات-هندية/"),
     )
 
     // preferred quality settings

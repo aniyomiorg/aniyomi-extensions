@@ -4,16 +4,18 @@ apply plugin: 'kotlin-android'
 ext {
     extName = 'Pelisplushd'
     pkgNameSuffix = 'es.pelisplushd'
-    extClass = '.Pelisplushd'
-    extVersionCode = 21
+    extClass = '.PelisplushdFactory'
+    extVersionCode = 32
     libVersion = '13'
 }
 
 dependencies {
+    implementation(project(':lib-yourupload-extractor'))
     implementation(project(':lib-fembed-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib-voe-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

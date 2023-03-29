@@ -6,6 +6,8 @@ import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.de.filmpalast.extractors.EvoloadExtractor
+import eu.kanade.tachiyomi.animeextension.de.filmpalast.extractors.FilemoonExtractor
+import eu.kanade.tachiyomi.animeextension.de.filmpalast.extractors.UpstreamExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -64,7 +66,7 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
         val episode = SEpisode.create()
-        episode.name = document.select("h2.bgDark").text()
+        episode.name = "Film"
         episode.episode_number = 1F
         episode.setUrlWithoutDomain(document.select("link[rel=canonical]").attr("href"))
         episodeList.add(episode)
@@ -83,7 +85,7 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
         val elements = document.select("ul.currentStreamLinks > li > a")
-        val hosterSelection = preferences.getStringSet("hoster_selection", setOf("voe", "stape", "evo"))
+        val hosterSelection = preferences.getStringSet("hoster_selection", setOf("voe", "stape", "evo", "up", "moon"))
         for (element in elements) {
             val url = element.attr("abs:href")
             when {
@@ -92,6 +94,12 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val video = VoeExtractor(client).videoFromUrl(url, quality)
                     if (video != null) {
                         videoList.add(video)
+                    }
+                }
+                url.contains("https://upstream.to") && hosterSelection?.contains("up") == true -> {
+                    val videos = UpstreamExtractor(client).videoFromUrl(url)
+                    if (videos != null) {
+                        videoList.addAll(videos)
                     }
                 }
             }
@@ -103,11 +111,12 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     try {
                         with(
                             client.newCall(GET(url, headers = Headers.headersOf("Referer", baseUrl, "Cookie", "Fuck Streamtape because they add concatenation to fuck up scrapers")))
-                                .execute().asJsoup()
+                                .execute().asJsoup(),
                         ) {
                             linkRegex.find(this.select("script:containsData(document.getElementById('robotlink'))").toString())?.let {
                                 val quality = "Streamtape"
-                                val videoUrl = "https://streamtape.com/get_video?${it.groupValues[1]}&stream=1".replace("""" + '""", "")
+                                val id = it.groupValues[1].replace("%27+%20(%27xcdb", "")
+                                val videoUrl = "https://streamtape.com/get_video?$id&stream=1".replace("""" + '""", "")
                                 videoList.add(Video(videoUrl, quality, videoUrl))
                             }
                         }
@@ -124,6 +133,12 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     } else {
                         EvoloadExtractor(client).videoFromUrl(url, quality)
                         videoList.addAll(EvoloadExtractor(client).videoFromUrl(url, quality))
+                    }
+                }
+                url.contains("filemoon.sx") && hosterSelection?.contains("moon") == true -> {
+                    val videos = FilemoonExtractor(client).videoFromUrl(url)
+                    if (videos != null) {
+                        videoList.addAll(videos)
                     }
                 }
             }
@@ -147,20 +162,26 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     otherList.add(video)
                 }
             }
-        } else otherList += this
+        } else {
+            otherList += this
+        }
         val newList = mutableListOf<Video>()
         var preferred = 0
         for (video in hosterList) {
             if (hoster?.let { video.quality.contains(it) } == true) {
                 newList.add(preferred, video)
                 preferred++
-            } else newList.add(video)
+            } else {
+                newList.add(video)
+            }
         }
         for (video in otherList) {
             if (hoster?.let { video.quality.contains(it) } == true) {
                 newList.add(preferred, video)
                 preferred++
-            } else newList.add(video)
+            } else {
+                newList.add(video)
+            }
         }
         return newList
     }
@@ -207,13 +228,20 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Latest
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector(): String = "a.pageing:contains(vorwärts)"
 
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
+    override fun latestUpdatesFromElement(element: Element): SAnime {
+        val anime = SAnime.create()
+        anime.setUrlWithoutDomain(element.attr("href"))
+        val file = element.select("img").attr("src")
+        anime.thumbnail_url = "$baseUrl$file"
+        anime.title = element.attr("title")
+        return anime
+    }
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/page/$page")
 
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesSelector(): String = "article.liste > a"
 
     // Preferences
 
@@ -221,8 +249,8 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val hosterPref = ListPreference(screen.context).apply {
             key = "preferred_hoster"
             title = "Standard-Hoster"
-            entries = arrayOf("Voe", "Streamtape", "Evoload")
-            entryValues = arrayOf("https://voe.sx", "https://streamtape.com", "https://evoload.io")
+            entries = arrayOf("Voe", "Streamtape", "Evoload", "Upstream", "Filemoon")
+            entryValues = arrayOf("https://voe.sx", "https://streamtape.com", "https://evoload.io", "https://upstream.to", "https://filemoon.sx")
             setDefaultValue("https://voe.sx")
             summary = "%s"
 
@@ -236,9 +264,9 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val subSelection = MultiSelectListPreference(screen.context).apply {
             key = "hoster_selection"
             title = "Hoster auswählen"
-            entries = arrayOf("Voe", "Streamtape", "Evoload")
-            entryValues = arrayOf("voe", "stape", "evo")
-            setDefaultValue(setOf("voe", "stape", "evo"))
+            entries = arrayOf("Voe", "Streamtape", "Evoload", "Upstream", "Filemoon")
+            entryValues = arrayOf("voe", "stape", "evo", "up", "moon")
+            setDefaultValue(setOf("voe", "stape", "evo", "up", "moon"))
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
