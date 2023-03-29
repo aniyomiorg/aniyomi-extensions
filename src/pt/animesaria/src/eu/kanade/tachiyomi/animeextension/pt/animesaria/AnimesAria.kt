@@ -51,7 +51,33 @@ class AnimesAria : ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
-        TODO("Not yet implemented")
+        return SAnime.create().apply {
+            val row = document.selectFirst("div.anime_background_w div.row")!!
+            title = row.selectFirst("h1 > span")!!.text()
+            status = row.selectFirst("div.clear span.btn")?.text().toStatus()
+            thumbnail_url = document.selectFirst("link[as=image]")!!.attr("href")
+            genre = row.select("div.clear a.btn").eachText().joinToString()
+
+            description = buildString {
+                document.selectFirst("li.active > small")!!
+                    .ownText()
+                    .substringAfter(": ")
+                    .let(::append)
+
+                append("\n\n")
+
+                row.selectFirst("h1 > small")?.text()?.let {
+                    append("Títulos Alternativos: $it\n")
+                }
+
+                // Additional info
+                row.select("div.pull-right > a").forEach {
+                    val title = it.selectFirst("small")!!.text()
+                    val value = it.selectFirst("span")!!.text()
+                    append("$title: $value\n")
+                }
+            }
+        }
     }
 
     // ============================ Video Links =============================
@@ -118,6 +144,13 @@ class AnimesAria : ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/novos/episodios?page=$page")
 
     override fun latestUpdatesSelector() = "div.item > div.pos-rlt"
+
+    // ============================= Utilities ==============================
+    private fun String?.toStatus() = when (this) {
+        "Finalizado" -> SAnime.COMPLETED
+        "Lançamento" -> SAnime.ONGOING
+        else -> SAnime.UNKNOWN
+    }
 
     companion object {
         const val PREFIX_SEARCH = "id:"
