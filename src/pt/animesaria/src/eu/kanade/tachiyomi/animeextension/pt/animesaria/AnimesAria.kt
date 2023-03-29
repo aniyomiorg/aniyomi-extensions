@@ -27,20 +27,18 @@ class AnimesAria : ParsedAnimeHttpSource() {
 
     // ============================== Popular ===============================
     override fun popularAnimeFromElement(element: Element): SAnime {
-        TODO("Not yet implemented")
+        return SAnime.create().apply {
+            setUrlWithoutDomain(element.attr("href"))
+            title = element.attr("title")
+            thumbnail_url = element.selectFirst("img")!!.attr("src")
+        }
     }
 
-    override fun popularAnimeNextPageSelector(): String? {
-        TODO("Not yet implemented")
-    }
+    override fun popularAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
-    override fun popularAnimeRequest(page: Int): Request {
-        TODO("Not yet implemented")
-    }
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/novos/animes?page=$page")
 
-    override fun popularAnimeSelector(): String {
-        TODO("Not yet implemented")
-    }
+    override fun popularAnimeSelector() = "div.item > a"
 
     // ============================== Episodes ==============================
     override fun episodeFromElement(element: Element): SEpisode {
