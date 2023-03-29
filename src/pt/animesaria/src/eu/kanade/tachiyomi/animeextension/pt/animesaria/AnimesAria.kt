@@ -11,6 +11,7 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -128,8 +129,22 @@ class AnimesAria : ParsedAnimeHttpSource() {
 
     override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
+    override fun getFilterList(): AnimeFilterList = AnimesAriaFilters.filterList
+
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        return GET("$baseUrl/anime/buscar?q=$query&page=$page")
+        val params = AnimesAriaFilters.getSearchParameters(filters)
+        val url = "$baseUrl/anime/buscar".toHttpUrl().newBuilder()
+            .addQueryParameter("q", query)
+            .addQueryParameter("page", page.toString())
+            .addQueryParameter("tipo", params.type)
+            .addQueryParameter("genero", params.genre)
+            .addQueryParameter("status", params.status)
+            .addQueryParameter("letra", params.letter)
+            .addQueryParameter("audio", params.audio)
+            .addQueryParameter("ano", params.year)
+            .addQueryParameter("temporada", params.season)
+            .build()
+        return GET(url.toString())
     }
 
     override fun searchAnimeSelector() = popularAnimeSelector()
