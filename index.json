@@ -2791,6 +2791,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Animes Aria",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesaria",
+    "apk": "aniyomi-pt.animesaria-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Animes Aria",
+        "lang": "pt-BR",
+        "id": "8951719129981752769",
+        "baseUrl": "https://animesaria.com",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Animes House",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animeshouse",
     "apk": "aniyomi-pt.animeshouse-v13.5.apk",
