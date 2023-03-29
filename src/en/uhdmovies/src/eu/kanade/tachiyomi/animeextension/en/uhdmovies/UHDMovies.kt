@@ -18,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -39,7 +40,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "UHD Movies"
 
-    override val baseUrl = "https://uhdmovies.world"
+    override val baseUrl by lazy { preferences.getString("pref_domain", "https://uhdmovies.vip")!! }
 
     override val lang = "en"
 
@@ -53,9 +54,31 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    private var currentBaseUrl: String
+
+    init {
+        runBlocking {
+            withContext(Dispatchers.Default) {
+                currentBaseUrl = client.newBuilder()
+                    .followRedirects(false)
+                    .build()
+                    .newCall(GET("$baseUrl/")).execute().let { resp ->
+                        when (resp.code) {
+                            301 -> {
+                                (resp.headers["location"]?.substringBeforeLast("/") ?: baseUrl).also {
+                                    preferences.edit().putString("pref_domain", it).apply()
+                                }
+                            }
+                            else -> baseUrl
+                        }
+                    }
+            }
+        }
+    }
+
     // ============================== Popular ===============================
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/page/$page/")
+    override fun popularAnimeRequest(page: Int): Request = GET("$currentBaseUrl/page/$page/")
 
     override fun popularAnimeSelector(): String = "div#content  div.gridlove-posts > div.layout-masonry"
 
@@ -85,7 +108,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val cleanQuery = query.replace(" ", "+").lowercase()
-        return GET("$baseUrl/page/$page/?s=$cleanQuery")
+        return GET("$currentBaseUrl/page/$page/?s=$cleanQuery")
     }
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
@@ -107,8 +130,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Episodes ==============================
 
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
-        val response = client.newCall(GET(baseUrl + anime.url)).execute()
-        val resp = response.asJsoup()
+        val resp = client.newCall(GET(currentBaseUrl + anime.url)).execute().asJsoup()
         val episodeList = mutableListOf<SEpisode>()
         val episodeElements = resp.select("p:has(a[href*=?id])[style*=center],p:has(a[href*=?id]):has(span.maxbutton-1-center)")
         val qualityRegex = "\\d{3,4}p".toRegex(RegexOption.IGNORE_CASE)
