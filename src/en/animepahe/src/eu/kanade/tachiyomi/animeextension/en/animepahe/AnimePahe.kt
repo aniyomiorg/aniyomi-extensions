@@ -54,21 +54,21 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     override val client: OkHttpClient = network.cloudflareClient
 
     // =========================== Anime Details ============================
+    /**
+     * This override is necessary because AnimePahe does not provide permanent
+     * URLs to its animes, so we need to fetch the anime session every time.
+     *
+     * @see episodeListRequest
+     */
     override fun animeDetailsRequest(anime: SAnime): Request {
-        return if (anime.getSession().isBlank()) {
-            val animeId = anime.getId()
-            val session = fetchSession(anime.title, animeId)
-            return GET("$baseUrl/anime/$session?anime_id=$animeId")
-        } else {
-            super.animeDetailsRequest(anime)
-        }
+        val animeId = anime.getId()
+        val session = fetchSession(anime.title, animeId)
+        return GET("$baseUrl/anime/$session?anime_id=$animeId")
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
         val document = response.use { it.asJsoup() }
         return SAnime.create().apply {
-            val animeUrl = response.request.url.toString()
-            setUrlWithoutDomain(animeUrl)
             title = document.selectFirst("div.title-wrapper > h1 > span")!!.text()
             author = document.selectFirst("div.col-sm-4.anime-info p:contains(Studio:)")
                 ?.text()
@@ -94,8 +94,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
                 title = anime.title
                 thumbnail_url = anime.snapshot
                 val animeId = anime.id
-                val session = anime.animeSession
-                setUrlWithoutDomain("/anime/$session?anime_id=$animeId")
+                setUrlWithoutDomain("/anime/?anime_id=$animeId")
                 artist = anime.fansub
             }
         }
@@ -113,8 +112,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
                 title = anime.title
                 thumbnail_url = anime.poster
                 val animeId = anime.id
-                val session = anime.session
-                setUrlWithoutDomain("/anime/$session?anime_id=$animeId")
+                setUrlWithoutDomain("/anime/?anime_id=$animeId")
             }
         }
         return AnimesPage(animeList, false)
@@ -128,10 +126,14 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun popularAnimeRequest(page: Int): Request = TODO()
 
     // ============================== Episodes ==============================
+    /**
+     * This override is necessary because AnimePahe does not provide permanent
+     * URLs to its animes, so we need to fetch the anime session every time.
+     *
+     * @see animeDetailsRequest
+     */
     override fun episodeListRequest(anime: SAnime): Request {
-        val session = anime.getSession().ifEmpty {
-            fetchSession(anime.title, anime.getId())
-        }
+        val session = fetchSession(anime.title, anime.getId())
         return GET("$baseUrl/api?m=release&id=$session&sort=episode_desc&page=1")
     }
 
@@ -298,7 +300,6 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
-    private fun SAnime.getSession() = url.substringBefore("?anime_id=").substringAfterLast("/")
     private fun SAnime.getId() = url.substringAfterLast("?anime_id=").substringBefore("\"")
 
     private fun String.toDate(): Long {
