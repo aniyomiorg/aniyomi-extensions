@@ -54,6 +54,12 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     override val client: OkHttpClient = network.cloudflareClient
 
     // =========================== Anime Details ============================
+    /**
+     * This override is necessary because AnimePahe does not provide permanent
+     * URLs to its animes, so we need to fetch the anime session every time.
+     *
+     * @see episodeListRequest
+     */
     override fun animeDetailsRequest(anime: SAnime): Request {
         val animeId = anime.getId()
         val session = fetchSession(anime.title, animeId)
@@ -120,6 +126,12 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun popularAnimeRequest(page: Int): Request = TODO()
 
     // ============================== Episodes ==============================
+    /**
+     * This override is necessary because AnimePahe does not provide permanent
+     * URLs to its animes, so we need to fetch the anime session every time.
+     *
+     * @see animeDetailsRequest
+     */
     override fun episodeListRequest(anime: SAnime): Request {
         val session = fetchSession(anime.title, anime.getId())
         return GET("$baseUrl/api?m=release&id=$session&sort=episode_desc&page=1")
