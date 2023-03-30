@@ -18,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -27,6 +28,7 @@ import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
@@ -39,7 +41,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "UHD Movies"
 
-    override val baseUrl = "https://uhdmovies.world"
+    override val baseUrl by lazy { preferences.getString("pref_domain", "https://uhdmovies.vip")!! }
 
     override val lang = "en"
 
@@ -53,9 +55,31 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    private var currentBaseUrl: String
+
+    init {
+        runBlocking {
+            withContext(Dispatchers.Default) {
+                currentBaseUrl = client.newBuilder()
+                    .followRedirects(false)
+                    .build()
+                    .newCall(GET("$baseUrl/")).execute().let { resp ->
+                        when (resp.code) {
+                            301 -> {
+                                (resp.headers["location"]?.substringBeforeLast("/") ?: baseUrl).also {
+                                    preferences.edit().putString("pref_domain", it).apply()
+                                }
+                            }
+                            else -> baseUrl
+                        }
+                    }
+            }
+        }
+    }
+
     // ============================== Popular ===============================
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/page/$page/")
+    override fun popularAnimeRequest(page: Int): Request = GET("$currentBaseUrl/page/$page/")
 
     override fun popularAnimeSelector(): String = "div#content  div.gridlove-posts > div.layout-masonry"
 
@@ -85,7 +109,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val cleanQuery = query.replace(" ", "+").lowercase()
-        return GET("$baseUrl/page/$page/?s=$cleanQuery")
+        return GET("$currentBaseUrl/page/$page/?s=$cleanQuery")
     }
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
@@ -98,19 +122,20 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         return SAnime.create().apply {
-            title = document.selectFirst("h2")!!.text()
+            initialized = true
+            title = document.selectFirst(".entry-title")!!.text()
                 .replace("Download", "", true).trim()
             status = SAnime.COMPLETED
+            description = document.selectFirst("pre:contains(plot)")?.text()
         }
     }
 
     // ============================== Episodes ==============================
 
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
-        val response = client.newCall(GET(baseUrl + anime.url)).execute()
-        val resp = response.asJsoup()
+        val resp = client.newCall(GET(currentBaseUrl + anime.url)).execute().asJsoup()
         val episodeList = mutableListOf<SEpisode>()
-        val episodeElements = resp.select("p:has(a[href*=?id])[style*=center],p:has(a[href*=?id]):has(span.maxbutton-1-center)")
+        val episodeElements = resp.select("p:has(a[href*=?id]):has(a[class*=maxbutton])[style*=center],p:has(a[href*=?id]):has(span.maxbutton-1-center)")
         val qualityRegex = "\\d{3,4}p".toRegex(RegexOption.IGNORE_CASE)
         val firstText = episodeElements.first()!!.text()
         if (firstText.contains("Episode", true) ||
@@ -182,14 +207,16 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     qualityMatchOwn?.value ?: "HD"
                 }
 
-                val collectionName = row.previousElementSiblings().prev("h1,h2,h3,pre").first()!!.text()
-                    .replace("Download", "", true).trim().let {
-                        if (it.contains("Collection", true)) {
-                            row.previousElementSibling()!!.ownText()
-                        } else {
-                            it
+                val collectionName = row.previousElementSiblings().let { prevElem ->
+                    (prevElem.prev("h1,h2,h3,pre:not(:contains(plot))").first()?.text() ?: "Movie - $quality")
+                        .replace("Download", "", true).trim().let {
+                            if (it.contains("Collection", true)) {
+                                row.previousElementSibling()!!.ownText()
+                            } else {
+                                it
+                            }
                         }
-                    }
+                }
 
                 row.select("a").map { linkElement ->
                     Triple(linkElement.attr("href"), quality, collectionName)
@@ -258,25 +285,30 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun extractVideo(epUrl: EpUrl): Pair<List<Video>, String> {
         val postLink = epUrl.url.substringBefore("?id=").substringAfter("/?")
-        val formData = FormBody.Builder().add("_wp_http", epUrl.url.substringAfter("?id=")).build()
-        val response = client.newCall(POST(postLink, body = formData)).execute().asJsoup()
-        val link = response.selectFirst("form#landing")!!.attr("action")
-        val wpHttp = response.selectFirst("input[name=_wp_http2]")!!.attr("value")
-        val token = response.selectFirst("input[name=token]")!!.attr("value")
-        val blogFormData = FormBody.Builder()
-            .add("_wp_http2", wpHttp)
-            .add("token", token)
-            .build()
-        val blogResponse = client.newCall(POST(link, body = blogFormData)).execute().body.string()
-        val skToken = blogResponse.substringAfter("?go=").substringBefore("\"")
-        val tokenUrl = "$postLink?go=$skToken"
-        val cookieHeader = Headers.headersOf("Cookie", "$skToken=$wpHttp")
-        val tokenResponse = client.newBuilder().followRedirects(false).build()
-            .newCall(GET(tokenUrl, cookieHeader)).execute().asJsoup()
+        val formData = FormBody.Builder().add("_wp_http_c", epUrl.url.substringAfter("?id=")).build()
+        val response = client.newCall(POST(postLink, body = formData)).execute().body.string()
+        val (longC, catC, _) = getCookiesDetail(response)
+        val cookieHeader = Headers.headersOf("Cookie", "$longC; $catC")
+        val parsedSoup = Jsoup.parse(response)
+        val link = parsedSoup.selectFirst("center > a")!!.attr("href")
+
+        val response2 = client.newCall(GET(link, cookieHeader)).execute().body.string()
+        val (longC2, _, postC) = getCookiesDetail(response2)
+        val cookieHeader2 = Headers.headersOf("Cookie", "$catC; $longC2; $postC")
+        val parsedSoup2 = Jsoup.parse(response2)
+        val link2 = parsedSoup2.selectFirst("center > a")!!.attr("href")
+
+        val tokenResp = client.newCall(GET(link2, cookieHeader2)).execute().body.string()
+        val goToken = tokenResp.substringAfter("?go=").substringBefore("\"")
+        val tokenUrl = "$postLink?go=$goToken"
+        val newLongC = "$goToken=" + longC2.substringAfter("=")
+        val tokenCookie = Headers.headersOf("Cookie", "$catC; rdst_post=; $newLongC")
+
+        val noRedirectClient = client.newBuilder().followRedirects(false).build()
+        val tokenResponse = noRedirectClient.newCall(GET(tokenUrl, tokenCookie)).execute().asJsoup()
         val redirectUrl = tokenResponse.select("meta[http-equiv=refresh]").attr("content")
             .substringAfter("url=").substringBefore("\"")
-        val mediaResponse = client.newBuilder().followRedirects(false).build()
-            .newCall(GET(redirectUrl)).execute()
+        val mediaResponse = noRedirectClient.newCall(GET(redirectUrl)).execute()
         val path = mediaResponse.body.string().substringAfter("replace(\"").substringBefore("\"")
         if (path == "/404") return Pair(emptyList(), "")
         val mediaUrl = "https://" + mediaResponse.request.url.host + path
@@ -288,6 +320,30 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             )
         }
         return Pair(videoList, mediaUrl)
+    }
+
+    private fun getCookiesDetail(page: String): Triple<String, String, String> {
+        val cat = "rdst_cat"
+        val post = "rdst_post"
+        val longC = page.substringAfter(".setTime")
+            .substringAfter("document.cookie = \"")
+            .substringBefore("\"")
+            .substringBefore(";")
+        val catC = if (page.contains("$cat=")) {
+            page.substringAfterLast("$cat=")
+                .substringBefore(";").let {
+                    "$cat=$it"
+                }
+        } else { "" }
+
+        val postC = if (page.contains("$post=")) {
+            page.substringAfterLast("$post=")
+                .substringBefore(";").let {
+                    "$post=$it"
+                }
+        } else { "" }
+
+        return Triple(longC, catC, postC)
     }
 
     private val sizeRegex = "\\[((?:.(?!\\[))+)] *\$".toRegex(RegexOption.IGNORE_CASE)
