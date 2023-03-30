@@ -88,6 +88,10 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
             throw Exception("Enter drive path(s) in extension settings.")
         }
 
+        if (baseUrl.toHttpUrl().host == "drive.google.com") {
+            throw Exception("This extension is only for Google Drive Index sites, not drive.google.com folders.")
+        }
+
         if (page == 1) pageToken = ""
         val popHeaders = headers.newBuilder()
             .add("Accept", "*/*")
@@ -145,6 +149,10 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
         val serverFilter = filterList.find { it is ServerFilter } as ServerFilter
         val serverUrl = serverFilter.toUriPart()
+
+        if (serverUrl.toHttpUrl().host == "drive.google.com") {
+            throw Exception("This extension is only for Google Drive Index sites, not drive.google.com folders.")
+        }
 
         if (page == 1) pageToken = ""
         val searchHeaders = headers.newBuilder()
