@@ -375,10 +375,10 @@
   {
     "name": "Aniyomi: فاصل اعلاني",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.faselhd",
-    "apk": "aniyomi-ar.faselhd-v13.11.apk",
+    "apk": "aniyomi-ar.faselhd-v13.12.apk",
     "lang": "ar",
-    "code": 11,
-    "version": "13.11",
+    "code": 12,
+    "version": "13.12",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -387,7 +387,7 @@
         "name": "فاصل اعلاني",
         "lang": "ar",
         "id": "1378291029586884571",
-        "baseUrl": "https://www.faselhd.club",
+        "baseUrl": "https://www.faselhd.ac",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -438,10 +438,10 @@
   {
     "name": "Aniyomi: MY CIMA",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.mycima",
-    "apk": "aniyomi-ar.mycima-v13.18.apk",
+    "apk": "aniyomi-ar.mycima-v13.19.apk",
     "lang": "ar",
-    "code": 18,
-    "version": "13.18",
+    "code": 19,
+    "version": "13.19",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -450,7 +450,7 @@
         "name": "MY Cima",
         "lang": "ar",
         "id": "6019880483003007296",
-        "baseUrl": "https://weciima.autos",
+        "baseUrl": "https://wecima.co",
         "versionId": 1,
         "hasCloudflare": 1
       }
