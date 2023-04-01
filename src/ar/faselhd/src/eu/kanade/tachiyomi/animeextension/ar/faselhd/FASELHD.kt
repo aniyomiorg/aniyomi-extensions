@@ -28,7 +28,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "فاصل اعلاني"
 
-    override val baseUrl = "https://www.faselhd.club"
+    override val baseUrl = "https://www.faselhd.ac"
 
     override val lang = "ar"
 
@@ -87,7 +87,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         client.newCall(
                             GET(
                                 "$baseUrl/?p=" + it.select("div.seasonDiv")
-                                    .attr("data-href"),
+                                    .attr("onclick").substringAfterLast("=").substringBeforeLast("'"),
                                 headers,
                             ),
                         ).execute().asJsoup(),
