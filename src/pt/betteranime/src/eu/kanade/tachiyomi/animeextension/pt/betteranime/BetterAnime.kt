@@ -87,9 +87,7 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val episodeName = element.text()
             setUrlWithoutDomain(element.attr("href"))
             name = episodeName
-            episode_number = runCatching {
-                episodeName.substringAfterLast(" ").toFloat()
-            }.getOrDefault(0F)
+            episode_number = episodeName.substringAfterLast(" ").toFloatOrNull() ?: 0F
         }
     }
 
@@ -294,7 +292,7 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             ?.trim()
     }
 
-    private inline fun String.toPayloadData(name: String): PayloadData? {
+    private fun String.toPayloadData(name: String): PayloadData? {
         return when {
             isNotBlank() -> PayloadData(name = name, value = listOf(this))
             else -> null

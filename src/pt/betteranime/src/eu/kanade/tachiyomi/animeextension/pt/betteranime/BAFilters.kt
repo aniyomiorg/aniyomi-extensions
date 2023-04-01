@@ -52,7 +52,7 @@ object BAFilters {
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
         if (filters.isEmpty()) return FilterSearchParams()
 
-        val genres = listOf("") + filters.getFirst<GenresFilter>().state
+        val genres = listOf(" ") + filters.getFirst<GenresFilter>().state
             .mapNotNull { genre ->
                 if (genre.state) {
                     BAFiltersData.genres.find { it.first == genre.name }!!.second
