@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.pt.vizer.VizerFilters.FilterSearchParams
 import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.EpisodeListDto
 import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.PlayersDto
 import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.SearchItemDto
@@ -26,7 +27,7 @@ import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -61,20 +62,13 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================== Popular ===============================
 
     override fun popularAnimeRequest(page: Int): Request {
-        val initialUrl = "$API_URL/ajaxPagination.php?categoryFilterOrderBy=vzViews&page=${page - 1}&categoryFilterOrderWay=desc&categoryFilterYearMin=1950&categoryFilterYearMax=2022"
-        val pageType = preferences.getString(PREF_POPULAR_PAGE_KEY, "movie")!!
-        val finalUrl = if ("movie" in pageType) {
-            initialUrl + "&saga=0&categoriesListMovies=all"
-        } else {
-            (initialUrl + "&categoriesListSeries=all").let {
-                if ("anime" in pageType) {
-                    it + "&anime=1"
-                } else {
-                    it + "&anime=0"
-                }
-            }
-        }
-        return GET(finalUrl)
+        val pageType = preferences.getString(PREF_POPULAR_PAGE_KEY, PREF_POPULAR_PAGE_DEFAULT)!!
+        val params = FilterSearchParams(
+            orderBy = "vzViews",
+            orderWay = "desc",
+            type = pageType,
+        )
+        return searchAnimeRequest(page, "", params)
     }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
@@ -164,8 +158,8 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
             .execute()
             .parseAs<PlayersDto>()
         val langPrefix = if (videoObj.lang == "1") "LEG" else "DUB"
-        val videoList = players.iterator().mapNotNull loop@{ (name, status) ->
-            if (status == "0") return@loop null
+        val videoList = players.iterator().mapNotNull { (name, status) ->
+            if (status == "0") return@mapNotNull null
             val url = getPlayerUrl(videoObj.id, name)
             when (name) {
                 "mixdrop" ->
@@ -200,12 +194,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
                     searchAnimeByPathParse(response, path)
                 }
         } else {
-            val params = VizerFilters.getSearchParameters(filters)
-            client.newCall(searchAnimeRequest(page - 1, query, params))
-                .asObservableSuccess()
-                .map { response ->
-                    searchAnimeParse(response)
-                }
+            super.fetchSearchAnime(page, query, filters)
         }
     }
 
@@ -215,26 +204,33 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
         return AnimesPage(listOf(details), false)
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val params = VizerFilters.getSearchParameters(filters)
+        return searchAnimeRequest(page, query, params)
+    }
 
-    private fun searchAnimeRequest(page: Int, query: String, filters: VizerFilters.FilterSearchParams): Request {
-        val urlBuilder = "$API_URL/ajaxPagination.php".toHttpUrlOrNull()!!.newBuilder()
-            .addQueryParameter("page", page.toString())
-            .addQueryParameter("search", query)
-            .addQueryParameter("saga", "0")
-            .addQueryParameter("categoryFilterYearMin", filters.minYear)
-            .addQueryParameter("categoryFilterYearMax", filters.maxYear)
-            .addQueryParameter("categoryFilterOrderBy", filters.orderBy)
-            .addQueryParameter("categoryFilterOrderWay", filters.orderWay)
+    private fun searchAnimeRequest(page: Int, query: String, params: FilterSearchParams): Request {
+        val urlBuilder = "$API_URL/ajaxPagination.php".toHttpUrl().newBuilder()
+            .addQueryParameter("page", "${page - 1}")
+            .addQueryParameter("categoryFilterYearMin", params.minYear)
+            .addQueryParameter("categoryFilterYearMax", params.maxYear)
+            .addQueryParameter("categoryFilterOrderBy", params.orderBy)
+            .addQueryParameter("categoryFilterOrderWay", params.orderWay)
+            .apply {
+                if (query.isNotBlank()) addQueryParameter("search", query)
 
-        if (filters.type == "Movies") {
-            urlBuilder.addQueryParameter("categoriesListMovies", filters.genre)
-        } else {
-            urlBuilder.addQueryParameter("categoriesListSeries", filters.genre)
-        }
-        if (filters.type == "anime") {
-            urlBuilder.addQueryParameter("anime", "1")
-        }
+                when (params.type) {
+                    "Movies" -> {
+                        addQueryParameter("saga", "0")
+                        addQueryParameter("categoriesListMovies", params.genre)
+                    }
+                    else -> {
+                        addQueryParameter("categoriesListSeries", params.genre)
+                        val isAnime = params.type == "anime"
+                        addQueryParameter("anime", if (isAnime) "1" else "0")
+                    }
+                }
+            }
         return GET(urlBuilder.build().toString(), headers)
     }
 
@@ -271,7 +267,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
             title = PREF_POPULAR_PAGE_TITLE
             entries = PREF_POPULAR_PAGE_ENTRIES
             entryValues = PREF_POPULAR_PAGE_VALUES
-            setDefaultValue("anime")
+            setDefaultValue(PREF_POPULAR_PAGE_DEFAULT)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -286,7 +282,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
             title = PREF_PLAYER_TITLE
             entries = PREF_PLAYER_ARRAY
             entryValues = PREF_PLAYER_ARRAY
-            setDefaultValue("MixDrop")
+            setDefaultValue(PREF_PLAYER_DEFAULT)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -301,7 +297,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
             title = PREF_LANGUAGE_TITLE
             entries = PREF_LANGUAGE_ENTRIES
             entryValues = PREF_LANGUAGE_VALUES
-            setDefaultValue("LEG")
+            setDefaultValue(PREF_LANGUAGE_DEFAULT)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -326,30 +322,19 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun apiRequest(body: String): Request {
         val reqBody = body.toRequestBody("application/x-www-form-urlencoded".toMediaType())
-        val newHeaders = headersBuilder().add("x-requested-with", "XMLHttpRequest")
-            .build()
+        val newHeaders = headersBuilder().add("x-requested-with", "XMLHttpRequest").build()
         return POST("$API_URL/publicFunctions.php", newHeaders, body = reqBody)
     }
 
-    private fun List<Video>.sortIfContains(item: String): List<Video> {
-        val newList = mutableListOf<Video>()
-        var preferred = 0
-        for (video in this) {
-            if (item in video.quality) {
-                newList.add(preferred, video)
-                preferred++
-            } else {
-                newList.add(video)
-            }
-        }
-        return newList
-    }
-
     override fun List<Video>.sort(): List<Video> {
-        val player = preferences.getString(PREF_PLAYER_KEY, "MixDrop")!!
-        val language = preferences.getString(PREF_LANGUAGE_KEY, "LEG")!!
-        val newList = this.sortIfContains(language).sortIfContains(player)
-        return newList
+        val player = preferences.getString(PREF_PLAYER_KEY, PREF_PLAYER_DEFAULT)!!
+        val language = preferences.getString(PREF_LANGUAGE_KEY, PREF_LANGUAGE_DEFAULT)!!
+        return sortedWith(
+            compareBy(
+                { it.quality.contains(player) },
+                { it.quality.contains(language) },
+            ),
+        ).reversed()
     }
 
     private inline fun <reified T> Response.parseAs(): T {
@@ -359,6 +344,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
 
     companion object {
         private const val PREF_POPULAR_PAGE_KEY = "pref_popular_page"
+        private const val PREF_POPULAR_PAGE_DEFAULT = "movie"
         private const val PREF_POPULAR_PAGE_TITLE = "Página de Populares"
         private val PREF_POPULAR_PAGE_ENTRIES = arrayOf(
             "Animes",
@@ -372,6 +358,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
         )
 
         private const val PREF_PLAYER_KEY = "pref_player"
+        private const val PREF_PLAYER_DEFAULT = "MixDrop"
         private const val PREF_PLAYER_TITLE = "Player/Server favorito"
         private val PREF_PLAYER_ARRAY = arrayOf(
             "MixDrop",
@@ -380,6 +367,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
         )
 
         private const val PREF_LANGUAGE_KEY = "pref_language"
+        private const val PREF_LANGUAGE_DEFAULT = "LEG"
         private const val PREF_LANGUAGE_TITLE = "Língua/tipo preferido"
         private val PREF_LANGUAGE_ENTRIES = arrayOf("Legendado", "Dublado")
         private val PREF_LANGUAGE_VALUES = arrayOf("LEG", "DUB")
