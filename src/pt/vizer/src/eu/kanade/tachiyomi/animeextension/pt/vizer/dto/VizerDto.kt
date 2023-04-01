@@ -37,7 +37,6 @@ data class EpisodeListDto(
 @Serializable
 data class EpisodeItemDto(
     val id: String,
-    val img: String,
     val name: String,
     val released: Boolean,
     val title: String,
