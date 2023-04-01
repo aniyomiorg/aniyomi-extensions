@@ -2961,10 +2961,10 @@
   {
     "name": "Aniyomi: Better Anime",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.betteranime",
-    "apk": "aniyomi-pt.betteranime-v13.6.apk",
+    "apk": "aniyomi-pt.betteranime-v13.7.apk",
     "lang": "pt-BR",
-    "code": 6,
-    "version": "13.6",
+    "code": 7,
+    "version": "13.7",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
