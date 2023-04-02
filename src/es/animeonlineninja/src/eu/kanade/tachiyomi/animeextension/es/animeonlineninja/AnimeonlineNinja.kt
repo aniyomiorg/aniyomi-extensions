@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.es.animeonlineninja
 
 import android.app.Application
 import android.content.SharedPreferences
+import androidx.preference.CheckBoxPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.JsUnpacker
@@ -39,11 +40,15 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
-        .newBuilder().addInterceptor(VrfInterceptor()).build()
-
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    override val client: OkHttpClient = if (preferences.getBoolean("vrf_intercept", false)) {
+        network.cloudflareClient
+            .newBuilder().addInterceptor(VrfInterceptor()).build()
+    } else {
+        network.cloudflareClient
     }
 
     override fun popularAnimeSelector(): String = "div.content.right div.items article"
@@ -149,45 +154,47 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun serverslangParse(serverUrl: String, lang: String): List<Video> {
         val videos = mutableListOf<Video>()
         val langSelect = preferences.getString("preferred_lang", "SUB").toString()
-        when {
-            serverUrl.contains("fembed") && lang.contains(langSelect) -> {
-                val video = FembedExtractor(client).videosFromUrl(serverUrl, lang)
-                videos.addAll(video)
-            }
-            serverUrl.contains("streamtape") && lang.contains(langSelect) -> {
-                StreamTapeExtractor(client).videoFromUrl(serverUrl, "$lang StreamTape")?.let { it1 -> videos.add(it1) }
-            }
-            serverUrl.contains("dood") && lang.contains(langSelect) -> {
-                DoodExtractor(client).videoFromUrl(serverUrl, "$lang DoodStream", false)?.let { it1 -> videos.add(it1) }
-            }
-            serverUrl.contains("sb") && lang.contains(langSelect) -> {
-                try {
-                    val video = StreamSBExtractor(client).videosFromUrl(serverUrl, headers, lang)
+        try {
+            when {
+                serverUrl.contains("fembed") && lang.contains(langSelect) -> {
+                    val video = FembedExtractor(client).videosFromUrl(serverUrl, lang)
                     videos.addAll(video)
-                } catch (_: Exception) { }
-            }
-            serverUrl.contains("mixdrop") && lang.contains(langSelect) -> {
-                try {
-                    val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(eval)")!!.data()
-                    if (jsE.contains("MDCore")) {
-                        val url = "http:" + JsUnpacker(jsE).unpack().toString().substringAfter("MDCore.wurl=\"").substringBefore("\"")
-                        if (!url.contains("\$(document).ready(function(){});")) {
-                            videos.add(Video(url, "$lang MixDrop", url))
+                }
+                serverUrl.contains("streamtape") && lang.contains(langSelect) -> {
+                    StreamTapeExtractor(client).videoFromUrl(serverUrl, "$lang StreamTape")?.let { it1 -> videos.add(it1) }
+                }
+                serverUrl.contains("dood") && lang.contains(langSelect) -> {
+                    DoodExtractor(client).videoFromUrl(serverUrl, "$lang DoodStream", false)?.let { it1 -> videos.add(it1) }
+                }
+                serverUrl.contains("sb") && lang.contains(langSelect) -> {
+                    try {
+                        val video = StreamSBExtractor(client).videosFromUrl(serverUrl, headers, lang)
+                        videos.addAll(video)
+                    } catch (_: Exception) { }
+                }
+                serverUrl.contains("mixdrop") && lang.contains(langSelect) -> {
+                    try {
+                        val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(eval)")!!.data()
+                        if (jsE.contains("MDCore")) {
+                            val url = "http:" + JsUnpacker(jsE).unpack().toString().substringAfter("MDCore.wurl=\"").substringBefore("\"")
+                            if (!url.contains("\$(document).ready(function(){});")) {
+                                videos.add(Video(url, "$lang MixDrop", url))
+                            }
                         }
-                    }
-                } catch (_: Exception) { }
+                    } catch (_: Exception) { }
+                }
+                serverUrl.contains("wolfstream") && lang.contains(langSelect) -> {
+                    val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(sources)")!!.data()
+                    val url = jsE.substringAfter("{file:\"").substringBefore("\"")
+                    videos.add(Video(url, "$lang WolfStream", url))
+                }
+                serverUrl.contains("uqload") && lang.contains(langSelect) -> {
+                    val headers = headers.newBuilder().add("referer", "https://uqload.com/").build()
+                    val video = UploadExtractor(client).videoFromUrl(serverUrl, headers, lang)
+                    if (video != null) videos.add(video)
+                }
             }
-            serverUrl.contains("wolfstream") && lang.contains(langSelect) -> {
-                val jsE = client.newCall(GET(serverUrl)).execute().asJsoup().selectFirst("script:containsData(sources)")!!.data()
-                val url = jsE.substringAfter("{file:\"").substringBefore("\"")
-                videos.add(Video(url, "$lang WolfStream", url))
-            }
-            serverUrl.contains("uqload") && lang.contains(langSelect) -> {
-                val headers = headers.newBuilder().add("referer", "https://uqload.com/").build()
-                val video = UploadExtractor(client).videoFromUrl(serverUrl, headers, lang)
-                if (video != null) videos.add(video)
-            }
-        }
+        } catch (_: Exception) { }
 
         return videos
     }
@@ -327,6 +334,7 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         anime.description = document.select("div.wp-content p").joinToString { it.text() }
         anime.author = document.select("div.sheader div.data div.extra span a").text()
+        anime.thumbnail_url = document.select("div.poster img").attr("data-src")
         return anime
     }
 
@@ -370,7 +378,15 @@ class AnimeonlineNinja : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
+        val vrfIterceptPref = CheckBoxPreference(screen.context).apply {
+            key = "vrf_intercept"
+            title = "Intercept VRF links (Requiere Reiniciar)"
+            summary = "Intercept VRF links and open them in the browser"
+            setDefaultValue(false)
+        }
+
         screen.addPreference(videoQualityPref)
+        screen.addPreference(vrfIterceptPref)
         screen.addPreference(langPref)
     }
 
