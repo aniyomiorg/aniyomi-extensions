@@ -13,6 +13,9 @@ class VrfInterceptor : Interceptor {
         val request = chain.request()
         val response = chain.proceed(request)
         val respBody = response.body.string()
+        if (response.headers["Content-Type"]?.contains("image") == true) {
+            return chain.proceed(request)
+        }
         val body = if (respBody.contains("One moment, please")) {
             val parsed = Jsoup.parse(respBody)
             val js = parsed.selectFirst("script:containsData(west=)")!!.data()
