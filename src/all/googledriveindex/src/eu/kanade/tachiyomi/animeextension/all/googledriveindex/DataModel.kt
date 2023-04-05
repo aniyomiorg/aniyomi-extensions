@@ -36,3 +36,13 @@ data class IdUrl(
     val referer: String,
     val type: String,
 )
+
+@Serializable
+data class Details(
+    val title: String? = null,
+    val author: String? = null,
+    val artist: String? = null,
+    val description: String? = null,
+    val genre: List<String>? = null,
+    val status: String? = null,
+)

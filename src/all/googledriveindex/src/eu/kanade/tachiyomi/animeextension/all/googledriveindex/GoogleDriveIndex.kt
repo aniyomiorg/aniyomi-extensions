@@ -214,6 +214,78 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
     // =========================== Anime Details ============================
 
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
+        val parsed = json.decodeFromString<LinkData>(anime.url)
+        val newParsed = if (parsed.type != "search") {
+            parsed
+        } else {
+            val idParsed = json.decodeFromString<IdUrl>(parsed.url)
+            val id2pathHeaders = headers.newBuilder()
+                .add("Accept", "*/*")
+                .add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+                .add("Host", idParsed.url.toHttpUrl().host)
+                .add("Origin", "https://${idParsed.url.toHttpUrl().host}")
+                .add("Referer", URLEncoder.encode(idParsed.referer, "UTF-8"))
+                .add("X-Requested-With", "XMLHttpRequest")
+                .build()
+
+            val postBody = "id=${idParsed.id}".toRequestBody("application/x-www-form-urlencoded".toMediaType())
+            val slug = client.newCall(
+                POST(idParsed.url + "id2path", body = postBody, headers = id2pathHeaders),
+            ).execute().body.string()
+
+            LinkData(
+                idParsed.type,
+                idParsed.url + slug,
+                parsed.info,
+            )
+        }
+
+        if (newParsed.type == "single") {
+            return Observable.just(anime)
+        }
+
+        var newToken: String? = ""
+        var newPageIndex = 0
+        while (newToken != null) {
+            val popHeaders = headers.newBuilder()
+                .add("Accept", "*/*")
+                .add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+                .add("Host", newParsed.url.toHttpUrl().host)
+                .add("Origin", "https://${newParsed.url.toHttpUrl().host}")
+                .add("Referer", URLEncoder.encode(newParsed.url, "UTF-8"))
+                .add("X-Requested-With", "XMLHttpRequest")
+                .build()
+
+            val popBody = "password=&page_token=$newToken&page_index=$newPageIndex".toRequestBody("application/x-www-form-urlencoded".toMediaType())
+
+            val parsedBody = client.newCall(
+                POST(newParsed.url, body = popBody, headers = popHeaders),
+            ).execute().body.string().decrypt()
+            val parsed = json.decodeFromString<ResponseData>(parsedBody)
+
+            parsed.data.files.forEach { item ->
+                if (item.mimeType.startsWith("image/") && item.name.startsWith("cover", true)) {
+                    anime.thumbnail_url = joinUrl(newParsed.url, item.name)
+                }
+
+                if (item.name.equals("details.json", true)) {
+                    val details = client.newCall(
+                        GET(joinUrl(newParsed.url, item.name)),
+                    ).execute().body.string()
+                    val detailsParsed = json.decodeFromString<Details>(details)
+                    detailsParsed.title?.let { anime.title = it }
+                    detailsParsed.author?.let { anime.author = it }
+                    detailsParsed.artist?.let { anime.artist = it }
+                    detailsParsed.description?.let { anime.description = it }
+                    detailsParsed.genre?.let { anime.genre = it.joinToString(", ") }
+                    detailsParsed.status?.let { anime.status = it.toIntOrNull() ?: SAnime.UNKNOWN }
+                }
+            }
+
+            newToken = parsed.nextPageToken
+            newPageIndex += 1
+        }
+
         return Observable.just(anime)
     }
 
@@ -437,6 +509,7 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
             if (item.mimeType.endsWith("folder")) {
                 val anime = SAnime.create()
                 anime.title = item.name.trimInfo()
+                anime.thumbnail_url = ""
 
                 if (isSearch) {
                     anime.setUrlWithoutDomain(
@@ -466,6 +539,7 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
             ) {
                 val anime = SAnime.create()
                 anime.title = item.name.trimInfo()
+                anime.thumbnail_url = ""
 
                 if (isSearch) {
                     anime.setUrlWithoutDomain(
