@@ -431,15 +431,28 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
         ).execute().asJsoup()
 
         val script = doc.selectFirst("script:containsData(videodomain)")?.data()
+            ?: doc.selectFirst("script:containsData(downloaddomain)")?.data()
             ?: return Observable.just(listOf(Video(url, "Video", url)))
-        val domainUrl = script.substringAfter("\"videodomain\":\"").substringBefore("\"")
+
+        val domainUrl = if (script.contains("videodomain", true)) {
+            script
+                .substringAfter("\"videodomain\":\"")
+                .substringBefore("\"")
+        } else {
+            script
+                .substringAfter("\"downloaddomain\":\"")
+                .substringBefore("\"")
+        }
+
         val videoUrl = if (domainUrl.isBlank()) {
             url
         } else {
             domainUrl + url.toHttpUrl().encodedPath
         }
 
-        return Observable.just(listOf(Video(videoUrl, "Video", videoUrl)))
+        return Observable.just(
+            listOf(Video(videoUrl, "Video", videoUrl)),
+        )
     }
 
     // ============================= Utilities ==============================
