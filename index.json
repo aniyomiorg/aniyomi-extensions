@@ -1213,6 +1213,27 @@
     ]
   },
   {
+    "name": "Aniyomi: edytjedhgmdhm",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.edytjedhgmdhm",
+    "apk": "aniyomi-en.edytjedhgmdhm-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "edytjedhgmdhm",
+        "lang": "en",
+        "id": "5011565488977897786",
+        "baseUrl": "https://edytjedhgmdhm.abfhaqrhbnf.workers.dev",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: GenoAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.genoanime",
     "apk": "aniyomi-en.genoanime-v13.27.apk",
