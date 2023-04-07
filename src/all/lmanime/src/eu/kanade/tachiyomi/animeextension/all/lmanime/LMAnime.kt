@@ -216,6 +216,7 @@ class LMAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesSelector() = "div.listupd.normal article a.tip"
 
     // ============================== Settings ==============================
+    @Suppress("UNCHECKED_CAST")
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
