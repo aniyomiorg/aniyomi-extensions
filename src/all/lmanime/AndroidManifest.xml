@@ -16,7 +16,7 @@
 
                 <data
                     android:host="lmanime.com"
-                    android:pathPattern="/anime/..*"
+                    android:pathPattern="/..*/"
                     android:scheme="https" />
             </intent-filter>
         </activity>

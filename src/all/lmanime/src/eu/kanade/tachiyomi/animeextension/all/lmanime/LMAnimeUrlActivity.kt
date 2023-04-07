@@ -8,7 +8,7 @@ import android.util.Log
 import kotlin.system.exitProcess
 
 /**
- * Springboard that accepts https://lmanime.com/anime/<item> intents
+ * Springboard that accepts https://lmanime.com/<item> intents
  * and redirects them to the main Aniyomi process.
  */
 class LMAnimeUrlActivity : Activity() {
@@ -18,12 +18,8 @@ class LMAnimeUrlActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val pathSegments = intent?.data?.pathSegments
-        if (pathSegments != null && pathSegments.size > 1) {
-            // https://<host>/<segment 0>/<segment 1>...
-            // ex: pattern "/anime/..*" -> pathSegments[1]
-            // ex: pattern "/anime/info/..*" -> pathSegments[2]
-            // etc..
-            val item = pathSegments[1]
+        if (pathSegments != null && pathSegments.size > 0) {
+            val item = pathSegments[0]
             val mainIntent = Intent().apply {
                 action = "eu.kanade.tachiyomi.ANIMESEARCH"
                 putExtra("query", "${LMAnime.PREFIX_SEARCH}$item")

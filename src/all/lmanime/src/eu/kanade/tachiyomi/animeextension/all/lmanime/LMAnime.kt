@@ -125,19 +125,16 @@ class LMAnime : ParsedAnimeHttpSource() {
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val id = query.removePrefix(PREFIX_SEARCH)
-            client.newCall(GET("$baseUrl/anime/$id"))
+            client.newCall(GET("$baseUrl/$id"))
                 .asObservableSuccess()
-                .map { response ->
-                    searchAnimeByIdParse(response, id)
-                }
+                .map(::searchAnimeByIdParse)
         } else {
             super.fetchSearchAnime(page, query, filters)
         }
     }
 
-    private fun searchAnimeByIdParse(response: Response, id: String): AnimesPage {
+    private fun searchAnimeByIdParse(response: Response): AnimesPage {
         val details = animeDetailsParse(response.asJsoup())
-        details.url = "/anime/$id"
         return AnimesPage(listOf(details), false)
     }
 
