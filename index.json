@@ -126,6 +126,27 @@
     ]
   },
   {
+    "name": "Aniyomi: LMAnime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.all.lmanime",
+    "apk": "aniyomi-all.lmanime-v13.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "LMAnime",
+        "lang": "all",
+        "id": "7296222662412524790",
+        "baseUrl": "https://lmanime.com",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: NetFilm",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.netfilm",
     "apk": "aniyomi-all.netfilm-v13.2.apk",
