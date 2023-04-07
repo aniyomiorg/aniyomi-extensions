@@ -105,21 +105,22 @@ class LMAnime : ParsedAnimeHttpSource() {
     }
 
     // =============================== Search ===============================
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        TODO("Not yet implemented")
-    }
+    override fun searchAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
 
-    override fun searchAnimeNextPageSelector(): String? {
-        TODO("Not yet implemented")
-    }
+    override fun searchAnimeNextPageSelector() = "div.pagination a.next"
+
+    override fun getFilterList() = LMAnimeFilters.filterList
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        TODO("Not yet implemented")
+        return if (query.isNotBlank()) {
+            GET("$baseUrl/page/$page/?s=$query")
+        } else {
+            val genre = LMAnimeFilters.getGenre(filters)
+            GET("$baseUrl/genres/$genre/page/$page")
+        }
     }
 
-    override fun searchAnimeSelector(): String {
-        TODO("Not yet implemented")
-    }
+    override fun searchAnimeSelector() = "div.listupd article a.tip"
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
@@ -144,9 +145,8 @@ class LMAnime : ParsedAnimeHttpSource() {
     override fun latestUpdatesFromElement(element: Element): SAnime {
         return SAnime.create().apply {
             setUrlWithoutDomain(element.attr("href"))
-            val img = element.selectFirst("img")!!
-            thumbnail_url = img.attr("src")
-            title = img.attr("alt")
+            title = element.selectFirst("div.tt")!!.ownText()
+            thumbnail_url = element.selectFirst("img")!!.attr("src")
         }
     }
 
