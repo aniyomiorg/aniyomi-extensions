@@ -14,6 +14,8 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class LMAnime : ParsedAnimeHttpSource() {
 
@@ -42,13 +44,26 @@ class LMAnime : ParsedAnimeHttpSource() {
     override fun popularAnimeSelector() = "div.serieslist.wpop-alltime li"
 
     // ============================== Episodes ==============================
-    override fun episodeFromElement(element: Element): SEpisode {
-        TODO("Not yet implemented")
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val doc = getRealDoc(response.asJsoup())
+        return doc.select(episodeListSelector()).map(::episodeFromElement)
     }
 
-    override fun episodeListSelector(): String {
-        TODO("Not yet implemented")
+    override fun episodeFromElement(element: Element): SEpisode {
+        return SEpisode.create().apply {
+            setUrlWithoutDomain(element.attr("href"))
+            element.selectFirst("div.epl-title")!!.text().let {
+                name = it
+                episode_number = it.substringBefore(" (")
+                    .substringAfterLast(" ")
+                    .toFloatOrNull() ?: 0F
+            }
+
+            date_upload = element.selectFirst("div.epl-date")?.text().toDate()
+        }
     }
+
+    override fun episodeListSelector() = "div.eplister > ul > li > a"
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
@@ -165,7 +180,17 @@ class LMAnime : ParsedAnimeHttpSource() {
             }
     }
 
+    private fun String?.toDate(): Long {
+        return this?.let {
+            runCatching {
+                DATE_FORMATTER.parse(this)?.time
+            }.getOrNull()
+        } ?: 0L
+    }
+
     companion object {
+        private val DATE_FORMATTER by lazy { SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH) }
+
         const val PREFIX_SEARCH = "id:"
     }
 }
