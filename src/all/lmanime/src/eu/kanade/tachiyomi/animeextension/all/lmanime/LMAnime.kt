@@ -23,7 +23,7 @@ class LMAnime : ParsedAnimeHttpSource() {
 
     override val lang = "all"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     // ============================== Popular ===============================
     override fun popularAnimeFromElement(element: Element): SAnime {
@@ -107,20 +107,19 @@ class LMAnime : ParsedAnimeHttpSource() {
 
     // =============================== Latest ===============================
     override fun latestUpdatesFromElement(element: Element): SAnime {
-        TODO("Not yet implemented")
+        return SAnime.create().apply {
+            setUrlWithoutDomain(element.attr("href"))
+            val img = element.selectFirst("img")!!
+            thumbnail_url = img.attr("src")
+            title = img.attr("alt")
+        }
     }
 
-    override fun latestUpdatesNextPageSelector(): String? {
-        TODO("Not yet implemented")
-    }
+    override fun latestUpdatesNextPageSelector() = "div.hpage a:contains(Next)"
 
-    override fun latestUpdatesRequest(page: Int): Request {
-        TODO("Not yet implemented")
-    }
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/page/$page")
 
-    override fun latestUpdatesSelector(): String {
-        TODO("Not yet implemented")
-    }
+    override fun latestUpdatesSelector() = "div.listupd.normal article a.tip"
 
     companion object {
         const val PREFIX_SEARCH = "id:"
