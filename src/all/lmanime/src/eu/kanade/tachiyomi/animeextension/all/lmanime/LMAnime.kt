@@ -1,7 +1,13 @@
 package eu.kanade.tachiyomi.animeextension.all.lmanime
 
+import android.app.Application
+import android.content.SharedPreferences
 import android.util.Base64
+import androidx.preference.ListPreference
+import androidx.preference.MultiSelectListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.all.lmanime.extractors.DailymotionExtractor
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -18,10 +24,12 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class LMAnime : ParsedAnimeHttpSource() {
+class LMAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "LMAnime"
 
@@ -30,6 +38,10 @@ class LMAnime : ParsedAnimeHttpSource() {
     override val lang = "all"
 
     override val supportsLatest = true
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     // ============================== Popular ===============================
     override fun popularAnimeFromElement(element: Element): SAnime {
@@ -100,11 +112,16 @@ class LMAnime : ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val items = response.asJsoup().select(videoListSelector())
-        return items.flatMap {
-            val language = it.text().substringBefore(" ")
-            val url = getHosterUrl(it.attr("value"))
-            getVideoList(url, language)
-        }
+        val allowed = preferences.getStringSet(PREF_ALLOWED_LANGS_KEY, PREF_ALLOWED_LANGS_DEFAULT)!!
+        return items
+            .filter { element ->
+                val text = element.text()
+                allowed.any { it in text }
+            }.flatMap {
+                val language = it.text().substringBefore(" ")
+                val url = getHosterUrl(it.attr("value"))
+                getVideoList(url, language)
+            }
     }
 
     private fun getHosterUrl(encodedStr: String): String {
@@ -194,6 +211,55 @@ class LMAnime : ParsedAnimeHttpSource() {
 
     override fun latestUpdatesSelector() = "div.listupd.normal article a.tip"
 
+    // ============================== Settings ==============================
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val videoQualityPref = ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
+        val langPref = ListPreference(screen.context).apply {
+            key = PREF_LANG_KEY
+            title = PREF_LANG_TITLE
+            entries = PREF_LANG_ENTRIES
+            entryValues = PREF_LANG_ENTRIES
+            setDefaultValue(PREF_LANG_DEFAULT)
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
+        val allowedPref = MultiSelectListPreference(screen.context).apply {
+            key = PREF_ALLOWED_LANGS_KEY
+            title = PREF_ALLOWED_LANGS_TITLE
+            entries = PREF_ALLOWED_LANGS_ENTRIES
+            entryValues = PREF_ALLOWED_LANGS_ENTRIES
+            setDefaultValue(PREF_ALLOWED_LANGS_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }
+
+        screen.addPreference(videoQualityPref)
+        screen.addPreference(langPref)
+        screen.addPreference(allowedPref)
+    }
+
     // ============================= Utilities ==============================
     private fun getRealDoc(document: Document): Document {
         return document.selectFirst("div.naveps a:contains(All episodes)")?.let { link ->
@@ -226,9 +292,43 @@ class LMAnime : ParsedAnimeHttpSource() {
         } ?: 0L
     }
 
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val lang = preferences.getString(PREF_LANG_KEY, PREF_LANG_DEFAULT)!!
+        return sortedWith(
+            compareBy(
+                { it.quality.contains(quality) },
+                { it.quality.contains(lang) },
+            ),
+        ).reversed()
+    }
+
     companion object {
         private val DATE_FORMATTER by lazy { SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH) }
 
         const val PREFIX_SEARCH = "id:"
+
+        private const val PREF_QUALITY_KEY = "pref_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "720p"
+        private val PREF_QUALITY_ENTRIES = arrayOf("144p", "288p", "480p", "720p", "1080p")
+
+        private const val PREF_LANG_KEY = "pref_language"
+        private const val PREF_LANG_TITLE = "Preferred language"
+        private const val PREF_LANG_DEFAULT = "English"
+        private val PREF_LANG_ENTRIES = arrayOf(
+            "English",
+            "Español",
+            "Indonesian",
+            "Portugués",
+            "Türkçe",
+            "العَرَبِيَّة",
+            "ไทย",
+        )
+
+        private const val PREF_ALLOWED_LANGS_KEY = "pref_allowed_languages"
+        private const val PREF_ALLOWED_LANGS_TITLE = "Allowed languages to fetch videos"
+        private val PREF_ALLOWED_LANGS_ENTRIES = PREF_LANG_ENTRIES
+        private val PREF_ALLOWED_LANGS_DEFAULT = PREF_ALLOWED_LANGS_ENTRIES.toSet()
     }
 }
