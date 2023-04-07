@@ -1,11 +1,15 @@
 package eu.kanade.tachiyomi.animeextension.all.lmanime
 
+import android.util.Base64
+import eu.kanade.tachiyomi.animeextension.all.lmanime.extractors.DailymotionExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
@@ -92,11 +96,48 @@ class LMAnime : ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
-    override fun videoFromElement(element: Element): Video {
-        TODO("Not yet implemented")
+    override fun videoListSelector() = "select.mirror > option[data-index]"
+
+    override fun videoListParse(response: Response): List<Video> {
+        val items = response.asJsoup().select(videoListSelector())
+        return items.flatMap {
+            val language = it.text().substringBefore(" ")
+            val url = getHosterUrl(it.attr("value"))
+            getVideoList(url, language)
+        }
     }
 
-    override fun videoListSelector(): String {
+    private fun getHosterUrl(encodedStr: String): String {
+        return Base64.decode(encodedStr, Base64.DEFAULT)
+            .let(::String) // bytearray -> string
+            .substringAfter("iframe")
+            .substringAfter("src=\"")
+            .substringBefore('"')
+            .let {
+                // sometimes the url doesnt specify its protocol
+                if (it.startsWith("http")) {
+                    it
+                } else {
+                    "https:$it"
+                }
+            }
+    }
+
+    private fun getVideoList(url: String, language: String): List<Video> {
+        return runCatching {
+            when {
+                "ok.ru" in url ->
+                    OkruExtractor(client).videosFromUrl(url, "$language -")
+                "fembed" in url ->
+                    FembedExtractor(client).videosFromUrl(url, "$language -")
+                "dailymotion.com" in url ->
+                    DailymotionExtractor(client).videosFromUrl(url, "Dailymotion ($language)")
+                else -> null
+            }
+        }.getOrNull() ?: emptyList()
+    }
+
+    override fun videoFromElement(element: Element): Video {
         TODO("Not yet implemented")
     }
 
