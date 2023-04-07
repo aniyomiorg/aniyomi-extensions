@@ -52,7 +52,28 @@ class LMAnime : ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
-        TODO("Not yet implemented")
+        val doc = getRealDoc(document)
+        return SAnime.create().apply {
+            setUrlWithoutDomain(doc.location())
+            title = doc.selectFirst("h1.entry-title")!!.text()
+            thumbnail_url = doc.selectFirst("div.thumb > img")!!.attr("src")
+
+            val infos = doc.selectFirst("div.info-content")!!
+            genre = infos.select("div.genxed > a").eachText().joinToString()
+            status = parseStatus(infos.getInfo("Status"))
+            artist = infos.getInfo("Studio")
+            author = infos.getInfo("Fansub")
+
+            description = buildString {
+                doc.selectFirst("div.entry-content")?.text()?.let {
+                    append("$it\n\n")
+                }
+
+                infos.select("div.spe > span").eachText().forEach {
+                    append("$it\n")
+                }
+            }
+        }
     }
 
     // ============================ Video Links =============================
@@ -119,6 +140,30 @@ class LMAnime : ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/page/$page")
 
     override fun latestUpdatesSelector() = "div.listupd.normal article a.tip"
+
+    // ============================= Utilities ==============================
+    private fun getRealDoc(document: Document): Document {
+        return document.selectFirst("div.naveps a:contains(All episodes)")?.let { link ->
+            client.newCall(GET(link.attr("href")))
+                .execute()
+                .asJsoup()
+        } ?: document
+    }
+
+    private fun parseStatus(statusString: String?): Int {
+        return when (statusString?.trim()) {
+            "Completed" -> SAnime.COMPLETED
+            "Ongoing" -> SAnime.ONGOING
+            else -> SAnime.UNKNOWN
+        }
+    }
+
+    private fun Element.getInfo(text: String): String? {
+        return selectFirst("span:contains($text)")
+            ?.run {
+                selectFirst("a")?.text() ?: ownText()
+            }
+    }
 
     companion object {
         const val PREFIX_SEARCH = "id:"
