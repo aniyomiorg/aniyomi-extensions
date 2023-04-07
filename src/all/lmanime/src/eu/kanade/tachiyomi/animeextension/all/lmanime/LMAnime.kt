@@ -19,6 +19,10 @@ import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -117,11 +121,11 @@ class LMAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .filter { element ->
                 val text = element.text()
                 allowed.any { it in text }
-            }.flatMap {
+            }.parallelMap {
                 val language = it.text().substringBefore(" ")
                 val url = getHosterUrl(it.attr("value"))
                 getVideoList(url, language)
-            }
+            }.flatten()
     }
 
     private fun getHosterUrl(encodedStr: String): String {
@@ -302,6 +306,11 @@ class LMAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             ),
         ).reversed()
     }
+
+    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 
     companion object {
         private val DATE_FORMATTER by lazy { SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH) }
