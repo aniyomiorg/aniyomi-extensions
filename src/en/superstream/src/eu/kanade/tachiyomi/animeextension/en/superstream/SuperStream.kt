@@ -146,20 +146,22 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
             ani.genre = movie.cats!!.split(",").let { genArray ->
                 genArray.joinToString { genList -> genList.replaceFirstChar { gen -> gen.uppercase() } }
             }
-            ani.description = movie.description
             ani.status = SAnime.COMPLETED
-            ani.author = movie.writer!!.substringBefore("\n").split(",").distinct().joinToString { it }
-            ani.artist = movie.director!!.substringBefore("\n").split(",").distinct().joinToString { it }
+            ani.author = movie.writer?.substringBefore(",")
+            ani.artist = movie.director?.substringBefore(",")
 
-            val releasedDate = "Released: "
-            movie.released?.let { date ->
-                if (date.isEmpty().not()) {
-                    ani.description = when {
-                        ani.description.isNullOrBlank() -> releasedDate + movie.released
-                        else -> ani.description + "\n\n$releasedDate" + movie.released
-                    }
-                }
-            }
+            ani.description = (if (movie.description.isNullOrBlank()) "" else movie.description + "\n\n") +
+                (if (movie.released.isNullOrBlank().not()) "Released: " + movie.released else "") +
+                (
+                    "\n\nWriters: " + (
+                        movie.writer?.substringBefore("\n")
+                            ?.split(",")?.distinct()?.joinToString { it } ?: ""
+                        ) +
+                        "\n\nDirectors: " + (
+                        movie.director?.substringBefore("\n")
+                            ?.split(",")?.distinct()?.joinToString { it } ?: ""
+                        )
+                    )
         } else {
             detail?.let {
                 ani.title = it.title ?: "Series"
@@ -167,19 +169,22 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
                     genArray.joinToString { genList -> genList.replaceFirstChar { gen -> gen.uppercase() } }
                 }
                 ani.description = it.description
-                ani.status = SAnime.UNKNOWN
-                ani.author = it.writer!!.substringBefore("\n").split(",").distinct().joinToString()
-                ani.artist = it.director!!.substringBefore("\n").split(",").distinct().joinToString()
+                ani.status = SAnime.COMPLETED
+                ani.author = it.writer?.substringBefore("\n")?.substringBefore(",")
+                ani.artist = it.director?.substringBefore("\n")?.substringBefore(",")
 
-                val releasedDate = "Released: "
-                it.released?.let { date ->
-                    if (date.isEmpty().not()) {
-                        ani.description = when {
-                            ani.description.isNullOrBlank() -> releasedDate + it.released
-                            else -> ani.description + "\n\n$releasedDate" + it.released
-                        }
-                    }
-                }
+                ani.description = (if (it.description.isNullOrBlank()) "" else it.description + "\n\n") +
+                    (if (it.released.isNullOrBlank().not()) "Released: " + it.released else "") +
+                    (
+                        "\n\nWriters: " + (
+                            it.writer?.substringBefore("\n")
+                                ?.split(",")?.distinct()?.joinToString { wrt -> wrt } ?: ""
+                            ) +
+                            "\n\nDirectors: " + (
+                            it.director?.substringBefore("\n")
+                                ?.split(",")?.distinct()?.joinToString { dir -> dir } ?: ""
+                            )
+                        )
             }
         }
         return Observable.just(ani)
