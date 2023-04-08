@@ -8,7 +8,6 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.anime4up.extractors.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.animeextension.ar.anime4up.extractors.MoshahdaExtractor
 import eu.kanade.tachiyomi.animeextension.ar.anime4up.extractors.SharedExtractor
-import eu.kanade.tachiyomi.animeextension.ar.anime4up.extractors.VidBomExtractor
 import eu.kanade.tachiyomi.animeextension.ar.anime4up.extractors.VidYardExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -17,6 +16,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -38,7 +38,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Anime4Up"
 
-    override val baseUrl = "https://wc.anime4up.vip"
+    override val baseUrl = "https://w1.anime4up.tv"
 
     override val lang = "ar"
 
@@ -52,7 +52,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun headersBuilder(): Headers.Builder {
         return super.headersBuilder()
-            .add("Referer", "https://wc.anime4up.vip/") // https://s12.gemzawy.com https://moshahda.net
+            .add("Referer", "https://w1.anime4up.tv/") // https://s12.gemzawy.com https://moshahda.net
     }
 
     // Popular
@@ -154,6 +154,13 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val videos = MoshahdaExtractor(client).videosFromUrl(embedUrl, headers)
                     videoList.addAll(videos)
                 }
+                embedUrl.contains("dood")
+                -> {
+                    val video = DoodExtractor(client).videoFromUrl(embedUrl, qualityy)
+                    if (video != null) {
+                        videoList.add(video)
+                    }
+                }
                 embedUrl.contains("drive.google")
                 -> {
                     val embedUrlG = "https://gdriveplayer.to/embed2.php?link=" + embedUrl
@@ -218,16 +225,6 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     if (video != null) {
                         videoList.add(video)
                     }
-                }
-                embedUrl.contains("vidbom") ||
-                    embedUrl.contains("vidbem") || embedUrl.contains("vidbm") || embedUrl.contains("vedpom") ||
-                    embedUrl.contains("vedbom") || embedUrl.contains("vedbam") || embedUrl.contains("vadbom") ||
-                    embedUrl.contains("vidbam") || embedUrl.contains("vadbam") || embedUrl.contains("myviid") ||
-                    embedUrl.contains("myvid") || embedUrl.contains("vidshare") || embedUrl.contains("vedsharr") ||
-                    embedUrl.contains("vedshar") || embedUrl.contains("vedshare") || embedUrl.contains("vadshar") || embedUrl.contains("vidshar")
-                -> {
-                    val videos = VidBomExtractor(client).videosFromUrl(embedUrl)
-                    videoList.addAll(videos)
                 }
             }
         }
@@ -340,8 +337,8 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
+            entries = arrayOf("1080p", "720p", "480p", "360p", "DOODStream")
+            entryValues = arrayOf("1080", "720", "480", "360", "dood")
             setDefaultValue("1080")
             summary = "%s"
 
