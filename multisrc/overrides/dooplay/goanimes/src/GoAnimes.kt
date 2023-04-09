@@ -6,4 +6,8 @@ class GoAnimes : DooPlay(
     "pt-BR",
     "GoAnimes",
     "https://goanimes.net",
-)
+) {
+
+    // =============================== Latest ===============================
+    override val latestUpdatesPath = "lancamentos"
+}
