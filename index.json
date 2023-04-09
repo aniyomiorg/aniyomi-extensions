@@ -228,10 +228,10 @@
   {
     "name": "Aniyomi: Anime4up",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.anime4up",
-    "apk": "aniyomi-ar.anime4up-v13.41.apk",
+    "apk": "aniyomi-ar.anime4up-v13.42.apk",
     "lang": "ar",
-    "code": 41,
-    "version": "13.41",
+    "code": 42,
+    "version": "13.42",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -240,7 +240,7 @@
         "name": "Anime4Up",
         "lang": "ar",
         "id": "528782559387795213",
-        "baseUrl": "https://wc.anime4up.vip",
+        "baseUrl": "https://w1.anime4up.tv",
         "versionId": 1,
         "hasCloudflare": 1
       }
