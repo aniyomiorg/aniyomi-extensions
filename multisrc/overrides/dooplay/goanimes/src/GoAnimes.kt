@@ -7,6 +7,8 @@ class GoAnimes : DooPlay(
     "GoAnimes",
     "https://goanimes.net",
 ) {
+    // ============================== Popular ===============================
+    override fun popularAnimeSelector() = "div#featured-titles article.item.tvshows > div.poster"
 
     // =============================== Latest ===============================
     override val latestUpdatesPath = "lancamentos"
