@@ -3064,6 +3064,27 @@
     ]
   },
   {
+    "name": "Aniyomi: GoAnimes",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.goanimes",
+    "apk": "aniyomi-pt.goanimes-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "GoAnimes",
+        "lang": "pt-BR",
+        "id": "6911038002626470519",
+        "baseUrl": "https://goanimes.net",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Hinata Soul",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.hinatasoul",
     "apk": "aniyomi-pt.hinatasoul-v13.3.apk",
