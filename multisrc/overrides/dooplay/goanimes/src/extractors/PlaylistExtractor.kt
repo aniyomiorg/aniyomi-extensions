@@ -9,6 +9,9 @@ object PlaylistExtractor {
         return sources.split("file:\"").drop(1).mapNotNull { source ->
             val url = source.substringBefore("\"").ifEmpty { return@mapNotNull null }
             val label = source.substringAfter("label:\"").substringBefore("\"")
+                .replace("FHD", "1080p")
+                .replace("HD", "720p")
+                .replace("SD", "480p")
             Video(url, "Playlist - $label", url)
         }
     }
