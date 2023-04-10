@@ -465,6 +465,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                 { it.quality.contains("Aud: ${dubLocale.getLocale()}") },
                 { it.quality.contains("HardSub") == shouldContainHard },
                 { it.quality.contains(subLocale) },
+                { it.quality.contains("en-US") },
             ),
         ).reversed()
     }
