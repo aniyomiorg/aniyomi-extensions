@@ -38,7 +38,7 @@ class Multimovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Multimovies"
 
-    override val baseUrl = "https://multimovies.fun"
+    override val baseUrl = "https://multimovies.tech"
 
     override val lang = "en"
 
