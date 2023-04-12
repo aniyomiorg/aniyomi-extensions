@@ -6,7 +6,7 @@ ext {
     pkgNameSuffix = 'id.oploverz'
     extClass = '.Oploverz'
     extVersionCode = 14
-    libVersion = '14'
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"
