@@ -26,7 +26,7 @@ class RedirectInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
 
-        val newRequest = resolveWithWebView(originalRequest) ?: throw Exception("Bitte Captcha in WebView lösen")
+        val newRequest = resolveWithWebView(originalRequest) ?: throw Exception("Versuche es später nochmal")
 
         return chain.proceed(newRequest)
     }
@@ -40,9 +40,12 @@ class RedirectInterceptor : Interceptor {
         var webView: WebView? = null
 
         val origRequestUrl = request.url.toString()
+
         val headers = request.headers.toMultimap().mapValues { it.value.getOrNull(0) ?: "" }.toMutableMap()
 
         var newRequest: Request? = null
+
+        var test = true
 
         handler.post {
             val webview = WebView(context)
@@ -53,9 +56,7 @@ class RedirectInterceptor : Interceptor {
                 databaseEnabled = true
                 useWideViewPort = false
                 loadWithOverviewMode = false
-                userAgentString = // request.header("User-Agent")
-                    // ?: "\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36 Edg/88.0.705.63\""
-                    "Mozilla/5.0 (Linux; Android 12; Pixel 5 Build/SP2A.220405.004; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/100.0.4896.127 Safari/537.36"
+                userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:106.0) Gecko/20100101 Firefox/106.0"
             }
 
             webview.webViewClient = object : WebViewClient() {
@@ -63,17 +64,26 @@ class RedirectInterceptor : Interceptor {
                     view: WebView,
                     request: WebResourceRequest,
                 ): WebResourceResponse? {
-                    if (request.url.toString().contains("token") || request.url.toString().contains("https://dood.") ||
-                        request.url.toString().contains("https://streamtape") || request.url.toString().contains("https://voe")
-                    ) {
+                    if (request.url.toString().contains("payload")) {
                         newRequest = GET(request.url.toString(), request.requestHeaders.toHeaders())
                         latch.countDown()
+                    } else if (request.url.toString().contains("https://s.to/redirect/") && request.url.toString().contains("token")) {
+                        newRequest = GET(request.url.toString(), request.requestHeaders.toHeaders())
+                        latch.countDown()
+                    } else {
+                        test = false
                     }
+                    if (test == false) {
+                        newRequest = GET(origRequestUrl, headers.toHeaders())
+                        latch.countDown()
+                    }
+
                     return super.shouldInterceptRequest(view, request)
                 }
             }
             webView?.loadUrl(origRequestUrl, headers)
         }
+
         // Wait a reasonable amount of time to retrieve the solution. The minimum should be
         // around 4 seconds but it can take more due to slow networks or server issues.
         latch.await(12, TimeUnit.SECONDS)
