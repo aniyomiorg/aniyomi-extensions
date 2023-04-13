@@ -227,31 +227,45 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         val hosterSelection = preferences.getStringSet(SConstants.HOSTER_SELECTION, null)
         val redirectInterceptor = client.newBuilder().addInterceptor(RedirectInterceptor()).build()
+        val jsInterceptor = client.newBuilder().addInterceptor(JsInterceptor()).build()
         redirectlink.forEach {
             val langkey = it.attr("data-lang-key")
             val language = getlanguage(langkey)
             val redirectgs = baseUrl + it.selectFirst("a.watchEpisode")!!.attr("href")
-            val redirects = redirectInterceptor.newCall(GET(redirectgs)).execute().request.url.toString()
+            val hoster = it.select("a h4").text()
             if (hosterSelection != null) {
                 when {
-                    redirects.contains("https://voe.sx") || redirects.contains("https://launchreliantcleaverriver") ||
-                        redirects.contains("https://fraudclatterflyingcar") && hosterSelection.contains(SConstants.NAME_VOE) -> {
+                    hoster.contains("VOE") && hosterSelection.contains(SConstants.NAME_VOE) -> {
                         val quality = "Voe $language"
-                        val video = VoeExtractor(client).videoFromUrl(redirects, quality)
+                        var url = redirectInterceptor.newCall(GET(redirectgs)).execute().request.url.toString()
+                        if (url.contains("payload") || url.contains(redirectgs)) {
+                            url = recapbypass(jsInterceptor, redirectgs)
+                        }
+                        val video = VoeExtractor(client).videoFromUrl(url, quality)
                         if (video != null) {
                             videoList.add(video)
                         }
                     }
-                    redirects.contains("https://dood") && hosterSelection.contains(SConstants.NAME_DOOD) -> {
+
+                    hoster.contains("Doodstream") && hosterSelection.contains(SConstants.NAME_DOOD) -> {
                         val quality = "Doodstream $language"
-                        val video = DoodExtractor(client).videoFromUrl(redirects, quality)
+                        var url = redirectInterceptor.newCall(GET(redirectgs)).execute().request.url.toString()
+                        if (url.contains("payload") || url.contains(redirectgs)) {
+                            url = recapbypass(jsInterceptor, redirectgs)
+                        }
+                        val video = DoodExtractor(client).videoFromUrl(url, quality)
                         if (video != null) {
                             videoList.add(video)
                         }
                     }
-                    redirects.contains("https://streamtape") && hosterSelection.contains(SConstants.NAME_STAPE) -> {
+
+                    hoster.contains("Streamtape") && hosterSelection.contains(SConstants.NAME_STAPE) -> {
                         val quality = "Streamtape $language"
-                        val video = StreamTapeExtractor(client).videoFromUrl(redirects, quality)
+                        var url = redirectInterceptor.newCall(GET(redirectgs)).execute().request.url.toString()
+                        if (url.contains("payload") || url.contains(redirectgs)) {
+                            url = recapbypass(jsInterceptor, redirectgs)
+                        }
+                        val video = StreamTapeExtractor(client).videoFromUrl(url, quality)
                         if (video != null) {
                             videoList.add(video)
                         }
@@ -260,6 +274,12 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         return videoList
+    }
+
+    private fun recapbypass(jsInterceptor: OkHttpClient, redirectgs: String): String {
+        val token = jsInterceptor.newCall(GET(redirectgs)).execute().request.header("url").toString()
+        val url = client.newCall(GET("$redirectgs?token=$token&original=")).execute().request.url.toString()
+        return url
     }
 
     private fun getlanguage(langkey: String): String? {
@@ -392,7 +412,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     Toast.makeText(context, "Starte Aniyomi neu, um die Einstellungen zu übernehmen.", Toast.LENGTH_LONG).show()
                     res
                 } catch (e: Exception) {
-                    Log.e("Anicloud", "Fehler beim festlegen der Einstellung.", e)
+                    Log.e("SerienStream", "Fehler beim festlegen der Einstellung.", e)
                     false
                 }
             }
