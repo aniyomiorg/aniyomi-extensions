@@ -25,7 +25,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
-    override val baseUrl: String = "https://oploverz.co.in"
+    override val baseUrl: String = "https://oploverz.top"
     override val lang: String = "id"
     override val name: String = "Oploverz"
     override val supportsLatest: Boolean = true
