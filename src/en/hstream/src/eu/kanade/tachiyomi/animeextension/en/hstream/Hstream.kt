@@ -48,16 +48,16 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Popular Anime
 
-    override fun popularAnimeSelector(): String = "article.bs"
+    override fun popularAnimeSelector(): String = "div.soralist  div  ul  li a.series"
 
     override fun popularAnimeRequest(page: Int): Request =
-        GET("$baseUrl/hentai/search?page=$page")
+        GET("$baseUrl/hentai/list?")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(baseUrl + element.select("a").attr("href"))
-        anime.title = element.select("h2").text()
-        anime.thumbnail_url = baseUrl + element.select("img").attr("src")
+        anime.setUrlWithoutDomain(baseUrl + element.select("a.series").attr("href"))
+        anime.title = element.select("a.series").text()
+        anime.thumbnail_url = baseUrl + "/images" + element.select("a.series").attr("href") + "/cover.webp"
         return anime
     }
 
@@ -95,11 +95,18 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoUrls = mutableListOf<String>()
         val subtitleUrls = mutableListOf<Track>()
 
+        val languageMap = mapOf(
+            "eng" to "English",
+        )
+
         for (url in urls) {
             if (url.endsWith(".webm") || url.endsWith(".mp4")) {
                 videoUrls.add(url)
             } else if (url.endsWith(".ass")) {
-                subtitleUrls.add(Track(url, "English"))
+                try {
+                    val subName = url.split("/").last().split(".").first().toString()
+                    subtitleUrls.add(Track(url, languageMap[subName].toString()))
+                } catch (e: Error) {}
             }
         }
 
@@ -121,14 +128,18 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         for (video in videoUrls) {
             val resolution = video.split('.')
-            videoList.add(Video(video, resolution.get(resolution.size - 2), video, headers = newHeaders, subtitleTracks = sub))
+            try {
+                videoList.add(Video(video, resolution.get(resolution.size - 2), video, headers = newHeaders, subtitleTracks = sub))
+            } catch (e: Error) {
+                videoList.add(Video(video, resolution.get(resolution.size - 2), video, headers = newHeaders))
+            }
         }
 
         return videoList
     }
 
     private fun subLangOrder(tracks: List<Track>): List<Track> {
-        val language = preferences.getString("English", null)
+        val language = preferences.getString(PREF_SUB_KEY, null)
         if (language != null) {
             val newList = mutableListOf<Track>()
             var preferred = 0
@@ -176,9 +187,9 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         if (filterSearch) {
             // filter search
-            anime.setUrlWithoutDomain(baseUrl + element.select("a").attr("href"))
-            anime.title = element.select("h2").text()
-            anime.thumbnail_url = baseUrl + element.select("img").attr("src")
+            anime.setUrlWithoutDomain(baseUrl + element.select("a.series").attr("href"))
+            anime.title = element.select("a.series").text()
+            anime.thumbnail_url = baseUrl + "/images" + element.select("a.series").attr("href") + "/cover.webp"
             return anime
         } else {
             // normal search
@@ -191,16 +202,22 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeNextPageSelector(): String = "ul.pagination li a[rel=next]"
 
-    override fun searchAnimeSelector(): String = "article.bs"
+    override fun searchAnimeSelector(): String {
+        return if (filterSearch) {
+            "div.soralist div ul li a.series"
+        } else {
+            "article.bs"
+        }
+    }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val parameters = getSearchParameters(filters)
         return if (query.isNotEmpty()) {
             filterSearch = false
-            GET("$baseUrl/search?s=${query.replace(("[\\W]").toRegex(), " ")}") // regular search
+            GET("$baseUrl/search?s=${query.replace(("[\\.]").toRegex(), "")}") // regular search
         } else {
             filterSearch = true
-            GET("$baseUrl/hentai/search?$parameters&page=$page") // filter search //work
+            GET("$baseUrl/hentai/list?$parameters") // filter search //work
         }
     }
 
@@ -229,15 +246,15 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Latest
 
-    override fun latestUpdatesSelector(): String = "article.bs"
+    override fun latestUpdatesSelector(): String = "div.soralist  div  ul  li a.series"
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/hentai/search?order=latest&page=$page")
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/hentai/list?order=latest")
 
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(baseUrl + element.select("a").attr("href"))
-        anime.title = element.select("h2").text()
-        anime.thumbnail_url = baseUrl + element.select("img").attr("src")
+        anime.setUrlWithoutDomain(baseUrl + element.select("a.series").attr("href"))
+        anime.title = element.select("a.series").text()
+        anime.thumbnail_url = baseUrl + "/images" + element.select("a.series").attr("href") + "/cover.webp"
         return anime
     }
 
@@ -263,8 +280,13 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
 
         val subLangPref = ListPreference(screen.context).apply {
+            key = PREF_SUB_KEY
+            title = PREF_SUB_TITLE
+            entries = PREF_SUB_ENTRIES
+            entryValues = PREF_SUB_ENTRIES
             setDefaultValue("English")
             summary = "%s"
+
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
                 val index = findIndexOfValue(selected)
@@ -273,6 +295,7 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         screen.addPreference(videoQualityPref)
+        screen.addPreference(subLangPref)
     }
 
     // Filters
@@ -436,5 +459,11 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred video quality"
         private val PREF_QUALITY_ENTRIES = arrayOf("720p", "1080p", "2160p")
+
+        private const val PREF_SUB_KEY = "preferred_subLang"
+        private const val PREF_SUB_TITLE = "Preferred sub language"
+        private val PREF_SUB_ENTRIES = arrayOf(
+            "English",
+        )
     }
 }

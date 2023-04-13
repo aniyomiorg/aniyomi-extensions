@@ -65,13 +65,16 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         .add("Accept-Language", ACCEPT_LANGUAGE)
 
     // ============================== Popular ===============================
-    // The site doesn't have a popular anime tab, so we use the latest anime page instead.
-    override fun fetchPopularAnime(page: Int) = super.fetchLatestUpdates(page)
+    // The site doesn't have a true popular anime tab,
+    // so we use the latest added anime page instead.
+    override fun popularAnimeSelector() = latestUpdatesSelector()
 
-    override fun popularAnimeSelector() = throw Exception("not used")
-    override fun popularAnimeFromElement(element: Element) = throw Exception("not used")
-    override fun popularAnimeRequest(page: Int) = throw Exception("not used")
-    override fun popularAnimeNextPageSelector() = null
+    override fun popularAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
+
+    override fun popularAnimeRequest(page: Int): Request =
+        GET("$baseUrl/ultimosAdicionados?page=$page")
+
+    override fun popularAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
     // ============================== Episodes ==============================
     override fun episodeListSelector(): String = "ul#episodesList > li.list-group-item-action > a"
@@ -84,9 +87,7 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val episodeName = element.text()
             setUrlWithoutDomain(element.attr("href"))
             name = episodeName
-            episode_number = runCatching {
-                episodeName.substringAfterLast(" ").toFloat()
-            }.getOrDefault(0F)
+            episode_number = episodeName.substringAfterLast(" ").toFloatOrNull() ?: 0F
         }
     }
 
@@ -291,7 +292,7 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             ?.trim()
     }
 
-    private inline fun String.toPayloadData(name: String): PayloadData? {
+    private fun String.toPayloadData(name: String): PayloadData? {
         return when {
             isNotBlank() -> PayloadData(name = name, value = listOf(this))
             else -> null

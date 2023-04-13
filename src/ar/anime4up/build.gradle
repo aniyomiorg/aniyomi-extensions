@@ -5,13 +5,14 @@ ext {
     extName = 'Anime4up'
     pkgNameSuffix = 'ar.anime4up'
     extClass = '.Anime4Up'
-    extVersionCode = 40
+    extVersionCode = 42
     libVersion = '13'
 }
 
 dependencies {
     implementation(project(':lib-fembed-extractor'))
     implementation(project(':lib-streamsb-extractor'))
+    implementation(project(':lib-dood-extractor'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
 

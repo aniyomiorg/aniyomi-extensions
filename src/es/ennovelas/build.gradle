@@ -5,7 +5,7 @@ ext {
     extName = 'EnNovelas'
     pkgNameSuffix = 'es.ennovelas'
     extClass = '.EnNovelas'
-    extVersionCode = 2
+    extVersionCode = 3
     libVersion = '13'
 }
 dependencies {

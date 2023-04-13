@@ -17,10 +17,13 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import okhttp3.Credentials
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -31,6 +34,7 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.net.URLEncoder
 
 class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
 
@@ -52,7 +56,30 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+        .addInterceptor { chain ->
+            var request = chain.request()
+
+            if (request.url.username.isNotBlank() && request.url.password.isNotBlank()) {
+
+                val credential = Credentials.basic(request.url.username, request.url.password)
+                request = request.newBuilder()
+                    .header("Authorization", credential)
+                    .build()
+
+                val newUrl = request.url.newBuilder()
+                    .username("")
+                    .password("")
+                    .build()
+
+                request = request.newBuilder()
+                    .url(newUrl)
+                    .build()
+            }
+
+            chain.proceed(request)
+        }
+        .build()
 
     // ============================== Popular ===============================
 
@@ -61,13 +88,17 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
             throw Exception("Enter drive path(s) in extension settings.")
         }
 
+        if (baseUrl.toHttpUrl().host == "drive.google.com") {
+            throw Exception("This extension is only for Google Drive Index sites, not drive.google.com folders.")
+        }
+
         if (page == 1) pageToken = ""
         val popHeaders = headers.newBuilder()
             .add("Accept", "*/*")
             .add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
             .add("Host", baseUrl.toHttpUrl().host)
             .add("Origin", "https://${baseUrl.toHttpUrl().host}")
-            .add("Referer", baseUrl)
+            .add("Referer", URLEncoder.encode(baseUrl, "UTF-8"))
             .add("X-Requested-With", "XMLHttpRequest")
             .build()
 
@@ -88,6 +119,28 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // =============================== Search ===============================
 
+    override fun searchAnimeParse(response: Response): AnimesPage = throw Exception("Not used")
+
+    override fun fetchSearchAnime(
+        page: Int,
+        query: String,
+        filters: AnimeFilterList,
+    ): Observable<AnimesPage> {
+        val req = searchAnimeRequest(page, query, filters)
+        return Observable.defer {
+            try {
+                client.newCall(req).asObservableSuccess()
+            } catch (e: NoClassDefFoundError) {
+                // RxJava doesn't handle Errors, which tends to happen during global searches
+                // if an old extension using non-existent classes is still around
+                throw RuntimeException(e)
+            }
+        }
+            .map { response ->
+                searchAnimeParse(response, req.url.toString())
+            }
+    }
+
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         if (baseUrl.isEmpty()) {
             throw Exception("Enter drive path(s) in extension settings.")
@@ -96,6 +149,10 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
         val serverFilter = filterList.find { it is ServerFilter } as ServerFilter
         val serverUrl = serverFilter.toUriPart()
+
+        if (serverUrl.toHttpUrl().host == "drive.google.com") {
+            throw Exception("This extension is only for Google Drive Index sites, not drive.google.com folders.")
+        }
 
         if (page == 1) pageToken = ""
         val searchHeaders = headers.newBuilder()
@@ -110,11 +167,12 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
             POST(
                 serverUrl,
                 body = popBody,
-                headers = searchHeaders.add("Referer", serverUrl).build(),
+                headers = searchHeaders.add("Referer", URLEncoder.encode(serverUrl, "UTF-8")).build(),
             )
         } else {
             val cleanQuery = query.replace(" ", "+")
-            val searchUrl = "https://${serverUrl.toHttpUrl().host}/${serverUrl.toHttpUrl().pathSegments[0]}search"
+
+            val searchUrl = "https://${serverUrl.toHttpUrl().hostAndCred()}/${serverUrl.toHttpUrl().pathSegments[0]}search"
 
             val popBody = "q=$cleanQuery&page_token=$pageToken&page_index=${page - 1}".toRequestBody("application/x-www-form-urlencoded".toMediaType())
 
@@ -126,8 +184,8 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        return parsePage(response, response.request.url.toString())
+    private fun searchAnimeParse(response: Response, url: String): AnimesPage {
+        return parsePage(response, url)
     }
 
     // ============================== FILTERS ===============================
@@ -156,6 +214,78 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
     // =========================== Anime Details ============================
 
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
+        val parsed = json.decodeFromString<LinkData>(anime.url)
+        val newParsed = if (parsed.type != "search") {
+            parsed
+        } else {
+            val idParsed = json.decodeFromString<IdUrl>(parsed.url)
+            val id2pathHeaders = headers.newBuilder()
+                .add("Accept", "*/*")
+                .add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+                .add("Host", idParsed.url.toHttpUrl().host)
+                .add("Origin", "https://${idParsed.url.toHttpUrl().host}")
+                .add("Referer", URLEncoder.encode(idParsed.referer, "UTF-8"))
+                .add("X-Requested-With", "XMLHttpRequest")
+                .build()
+
+            val postBody = "id=${idParsed.id}".toRequestBody("application/x-www-form-urlencoded".toMediaType())
+            val slug = client.newCall(
+                POST(idParsed.url + "id2path", body = postBody, headers = id2pathHeaders),
+            ).execute().body.string()
+
+            LinkData(
+                idParsed.type,
+                idParsed.url + slug,
+                parsed.info,
+            )
+        }
+
+        if (newParsed.type == "single") {
+            return Observable.just(anime)
+        }
+
+        var newToken: String? = ""
+        var newPageIndex = 0
+        while (newToken != null) {
+            val popHeaders = headers.newBuilder()
+                .add("Accept", "*/*")
+                .add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+                .add("Host", newParsed.url.toHttpUrl().host)
+                .add("Origin", "https://${newParsed.url.toHttpUrl().host}")
+                .add("Referer", URLEncoder.encode(newParsed.url, "UTF-8"))
+                .add("X-Requested-With", "XMLHttpRequest")
+                .build()
+
+            val popBody = "password=&page_token=$newToken&page_index=$newPageIndex".toRequestBody("application/x-www-form-urlencoded".toMediaType())
+
+            val parsedBody = client.newCall(
+                POST(newParsed.url, body = popBody, headers = popHeaders),
+            ).execute().body.string().decrypt()
+            val parsed = json.decodeFromString<ResponseData>(parsedBody)
+
+            parsed.data.files.forEach { item ->
+                if (item.mimeType.startsWith("image/") && item.name.startsWith("cover", true)) {
+                    anime.thumbnail_url = joinUrl(newParsed.url, item.name)
+                }
+
+                if (item.name.equals("details.json", true)) {
+                    val details = client.newCall(
+                        GET(joinUrl(newParsed.url, item.name)),
+                    ).execute().body.string()
+                    val detailsParsed = json.decodeFromString<Details>(details)
+                    detailsParsed.title?.let { anime.title = it }
+                    detailsParsed.author?.let { anime.author = it }
+                    detailsParsed.artist?.let { anime.artist = it }
+                    detailsParsed.description?.let { anime.description = it }
+                    detailsParsed.genre?.let { anime.genre = it.joinToString(", ") }
+                    detailsParsed.status?.let { anime.status = it.toIntOrNull() ?: SAnime.UNKNOWN }
+                }
+            }
+
+            newToken = parsed.nextPageToken
+            newPageIndex += 1
+        }
+
         return Observable.just(anime)
     }
 
@@ -177,7 +307,7 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
                 .add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
                 .add("Host", idParsed.url.toHttpUrl().host)
                 .add("Origin", "https://${idParsed.url.toHttpUrl().host}")
-                .add("Referer", idParsed.referer)
+                .add("Referer", URLEncoder.encode(idParsed.referer, "UTF-8"))
                 .add("X-Requested-With", "XMLHttpRequest")
                 .build()
 
@@ -219,7 +349,7 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
                         .add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
                         .add("Host", url.toHttpUrl().host)
                         .add("Origin", "https://${url.toHttpUrl().host}")
-                        .add("Referer", url)
+                        .add("Referer", URLEncoder.encode(url, "UTF-8"))
                         .add("X-Requested-With", "XMLHttpRequest")
                         .build()
 
@@ -259,11 +389,6 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
                             } else {
                                 ""
                             }
-                            val seasonText = if (season.isBlank()) {
-                                ""
-                            } else {
-                                "[${season.trimInfo()}] "
-                            }
 
                             // Get other info
                             val extraInfo = if (paths.size > basePathCounter) {
@@ -273,7 +398,7 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
                             }
                             val size = item.size?.toLongOrNull()?.let { formatFileSize(it) }
 
-                            episode.name = "$seasonText${item.name.trimInfo()}${if (size == null) "" else " - $size"}"
+                            episode.name = "${item.name.trimInfo()}${if (size == null) "" else " - $size"}"
                             episode.url = epUrl
                             episode.scanlator = seasonInfo + extraInfo
                             episode.episode_number = counter.toFloat()
@@ -306,18 +431,39 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
         ).execute().asJsoup()
 
         val script = doc.selectFirst("script:containsData(videodomain)")?.data()
+            ?: doc.selectFirst("script:containsData(downloaddomain)")?.data()
             ?: return Observable.just(listOf(Video(url, "Video", url)))
-        val domainUrl = script.substringAfter("\"videodomain\":\"").substringBefore("\"")
+
+        val domainUrl = if (script.contains("videodomain", true)) {
+            script
+                .substringAfter("\"videodomain\":\"")
+                .substringBefore("\"")
+        } else {
+            script
+                .substringAfter("\"downloaddomain\":\"")
+                .substringBefore("\"")
+        }
+
         val videoUrl = if (domainUrl.isBlank()) {
             url
         } else {
             domainUrl + url.toHttpUrl().encodedPath
         }
 
-        return Observable.just(listOf(Video(videoUrl, "Video", videoUrl)))
+        return Observable.just(
+            listOf(Video(videoUrl, "Video", videoUrl)),
+        )
     }
 
     // ============================= Utilities ==============================
+
+    private fun HttpUrl.hostAndCred(): String {
+        return if (this.password.isNotBlank() && this.username.isNotBlank()) {
+            "${this.username}:${this.password}@${this.host}"
+        } else {
+            this.host
+        }
+    }
 
     private fun joinUrl(path1: String, path2: String): String {
         return path1.removeSuffix("/") + "/" + path2.removePrefix("/")
@@ -376,6 +522,7 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
             if (item.mimeType.endsWith("folder")) {
                 val anime = SAnime.create()
                 anime.title = item.name.trimInfo()
+                anime.thumbnail_url = ""
 
                 if (isSearch) {
                     anime.setUrlWithoutDomain(
@@ -405,6 +552,7 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
             ) {
                 val anime = SAnime.create()
                 anime.title = item.name.trimInfo()
+                anime.thumbnail_url = ""
 
                 if (isSearch) {
                     anime.setUrlWithoutDomain(
@@ -446,7 +594,9 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
             """.trimMargin()
             this.setDefaultValue("")
             dialogTitle = "Path list"
-            dialogMessage = "Separate paths with a comma"
+            dialogMessage = """Separate paths with a comma. For password protected sites,
+                |format as: "https://username:password@example.worker.dev/0:/"
+            """.trimMargin()
 
             setOnPreferenceChangeListener { _, newValue ->
                 try {

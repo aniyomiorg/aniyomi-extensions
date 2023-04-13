@@ -6,7 +6,7 @@ ext {
     extName = 'UHD Movies'
     pkgNameSuffix = 'en.uhdmovies'
     extClass = '.UHDMovies'
-    extVersionCode = 10
+    extVersionCode = 13
     libVersion = '13'
 }
 

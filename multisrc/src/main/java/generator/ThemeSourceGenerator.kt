@@ -166,6 +166,7 @@ interface ThemeSourceGenerator {
 
         private fun copyThemeClasses(userDir: String, themePkg: String, projectRootPath: String) {
             val themeSrcPath = "$userDir/multisrc/src/main/java/${themeSuffix(themePkg, "/")}"
+                .replace("/", File.separator)
 
             val themeDestPath = "$projectRootPath/src/${themeSuffix(themePkg, "/")}"
             File(themeDestPath).mkdirs()

@@ -6,7 +6,7 @@ ext {
     extName = 'Multimovies'
     pkgNameSuffix = 'en.multimovies'
     extClass = '.Multimovies'
-    extVersionCode = 3
+    extVersionCode = 5
     libVersion = '13'
 }
 
