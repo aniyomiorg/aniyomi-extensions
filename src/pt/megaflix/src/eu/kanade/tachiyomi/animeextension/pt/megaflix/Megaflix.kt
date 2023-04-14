@@ -53,11 +53,31 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Episodes ==============================
     override fun episodeFromElement(element: Element): SEpisode {
-        TODO("Not yet implemented")
+        return SEpisode.create().apply {
+            name = element.selectFirst("h2.entry-title")!!.text()
+            setUrlWithoutDomain(element.selectFirst("a.lnk-blk")!!.attr("href"))
+            episode_number = element.selectFirst("span.num-epi")
+                ?.text()
+                ?.substringAfter("x")
+                ?.toFloatOrNull()
+                ?: 0F
+        }
     }
 
-    override fun episodeListSelector(): String {
-        TODO("Not yet implemented")
+    override fun episodeListSelector() = "li > article.episodes"
+
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val items = response.asJsoup().select(episodeListSelector())
+        return when {
+            items.isEmpty() -> listOf(
+                SEpisode.create().apply {
+                    name = "Filme"
+                    setUrlWithoutDomain(response.request.url.toString())
+                    episode_number = 1F
+                },
+            )
+            else -> items.map(::episodeFromElement)
+        }
     }
 
     // =========================== Anime Details ============================
