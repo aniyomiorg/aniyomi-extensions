@@ -62,7 +62,13 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
-        TODO("Not yet implemented")
+        return SAnime.create().apply {
+            val infos = document.selectFirst("div.bd > article.post.single")!!
+            title = infos.selectFirst("h1.entry-title")!!.text()
+            thumbnail_url = "https:" + infos.selectFirst("img")!!.attr("src")
+            genre = infos.select("span.genres > a").eachText().joinToString()
+            description = infos.selectFirst("div.description")?.text()
+        }
     }
 
     // ============================ Video Links =============================
