@@ -109,8 +109,15 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
+    override fun getFilterList() = MegaflixFilters.filterList
+
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        return GET("$baseUrl/page/$page/?s=$query")
+        return if (query.isNotBlank()) {
+            GET("$baseUrl/page/$page/?s=$query")
+        } else {
+            val genre = MegaflixFilters.getGenre(filters)
+            GET("$baseUrl/categoria/$genre/page/$page")
+        }
     }
 
     override fun searchAnimeSelector() = latestUpdatesSelector()
