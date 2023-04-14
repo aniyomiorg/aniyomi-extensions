@@ -8,7 +8,7 @@ import android.util.Log
 import kotlin.system.exitProcess
 
 /**
- * Springboard that accepts https://megaflix.co/anime/<item> intents
+ * Springboard that accepts https://megaflix.co/<type>/<item> intents
  * and redirects them to the main Aniyomi process.
  */
 class MegaflixUrlActivity : Activity() {
@@ -19,14 +19,10 @@ class MegaflixUrlActivity : Activity() {
         super.onCreate(savedInstanceState)
         val pathSegments = intent?.data?.pathSegments
         if (pathSegments != null && pathSegments.size > 1) {
-            // https://<host>/<segment 0>/<segment 1>...
-            // ex: pattern "/anime/..*" -> pathSegments[1]
-            // ex: pattern "/anime/info/..*" -> pathSegments[2]
-            // etc..
-            val item = pathSegments[1]
+            val path = "${pathSegments[0]}/${pathSegments[1]}"
             val mainIntent = Intent().apply {
                 action = "eu.kanade.tachiyomi.ANIMESEARCH"
-                putExtra("query", "${Megaflix.PREFIX_SEARCH}$item")
+                putExtra("query", "${Megaflix.PREFIX_SEARCH}$path")
                 putExtra("filter", packageName)
             }
 

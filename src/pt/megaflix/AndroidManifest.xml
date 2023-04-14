@@ -16,7 +16,7 @@
 
                 <data
                     android:host="megaflix.co"
-                    android:pathPattern="/anime/..*"
+                    android:pathPattern="/..*/..*/"
                     android:scheme="https" />
             </intent-filter>
         </activity>

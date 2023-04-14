@@ -117,20 +117,18 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
-            val id = query.removePrefix(PREFIX_SEARCH)
-            client.newCall(GET("$baseUrl/anime/$id"))
+            val path = query.removePrefix(PREFIX_SEARCH)
+            client.newCall(GET("$baseUrl/$path"))
                 .asObservableSuccess()
-                .map { response ->
-                    searchAnimeByIdParse(response, id)
-                }
+                .map(::searchAnimeByPathParse)
         } else {
             super.fetchSearchAnime(page, query, filters)
         }
     }
 
-    private fun searchAnimeByIdParse(response: Response, id: String): AnimesPage {
+    private fun searchAnimeByPathParse(response: Response): AnimesPage {
         val details = animeDetailsParse(response.asJsoup())
-        details.url = "/anime/$id"
+        details.setUrlWithoutDomain(response.request.url.toString())
         return AnimesPage(listOf(details), false)
     }
 
@@ -167,7 +165,7 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     companion object {
-        const val PREFIX_SEARCH = "id:"
+        const val PREFIX_SEARCH = "path:"
 
         private const val PREF_LATEST_PAGE_KEY = "pref_latest_page"
         private const val PREF_LATEST_PAGE_DEFAULT = "series"
