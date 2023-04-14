@@ -1,5 +1,10 @@
 package eu.kanade.tachiyomi.animeextension.pt.megaflix
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -14,8 +19,10 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
-class Megaflix : ParsedAnimeHttpSource() {
+class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Megaflix"
 
@@ -23,7 +30,11 @@ class Megaflix : ParsedAnimeHttpSource() {
 
     override val lang = "pt-BR"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     // ============================== Popular ===============================
     override fun popularAnimeFromElement(element: Element): SAnime {
@@ -104,23 +115,50 @@ class Megaflix : ParsedAnimeHttpSource() {
     }
 
     // =============================== Latest ===============================
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        TODO("Not yet implemented")
-    }
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun latestUpdatesNextPageSelector(): String? {
-        TODO("Not yet implemented")
-    }
+    override fun latestUpdatesNextPageSelector() = "div.nav-links > a:containsOwn(PRÓXIMO)"
 
     override fun latestUpdatesRequest(page: Int): Request {
-        TODO("Not yet implemented")
+        val pageType = preferences.getString(PREF_LATEST_PAGE_KEY, PREF_LATEST_PAGE_DEFAULT)!!
+        return GET("$baseUrl/$pageType/page/$page")
     }
 
-    override fun latestUpdatesSelector(): String {
-        TODO("Not yet implemented")
+    override fun latestUpdatesSelector() = "li > article"
+
+    // ============================== Settings ==============================
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val latestPage = ListPreference(screen.context).apply {
+            key = PREF_LATEST_PAGE_KEY
+            title = PREF_LATEST_PAGE_TITLE
+            entries = PREF_LATEST_PAGE_ENTRIES
+            entryValues = PREF_LATEST_PAGE_VALUES
+            setDefaultValue(PREF_LATEST_PAGE_DEFAULT)
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(latestPage)
     }
 
     companion object {
         const val PREFIX_SEARCH = "id:"
+
+        private const val PREF_LATEST_PAGE_KEY = "pref_latest_page"
+        private const val PREF_LATEST_PAGE_DEFAULT = "series"
+        private const val PREF_LATEST_PAGE_TITLE = "Página de últimos adicionados"
+        private val PREF_LATEST_PAGE_ENTRIES = arrayOf(
+            "Filmes",
+            "Séries",
+        )
+        private val PREF_LATEST_PAGE_VALUES = arrayOf(
+            "filmes",
+            "series",
+        )
     }
 }
