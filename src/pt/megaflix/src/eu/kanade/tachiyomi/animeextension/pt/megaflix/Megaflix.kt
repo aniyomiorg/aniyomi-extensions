@@ -79,21 +79,15 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // =============================== Search ===============================
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        TODO("Not yet implemented")
-    }
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun searchAnimeNextPageSelector(): String? {
-        TODO("Not yet implemented")
-    }
+    override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        TODO("Not yet implemented")
+        return GET("$baseUrl/page/$page/?s=$query")
     }
 
-    override fun searchAnimeSelector(): String {
-        TODO("Not yet implemented")
-    }
+    override fun searchAnimeSelector() = latestUpdatesSelector()
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
