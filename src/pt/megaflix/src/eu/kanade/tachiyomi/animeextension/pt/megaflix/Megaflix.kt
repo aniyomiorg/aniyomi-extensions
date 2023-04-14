@@ -27,20 +27,18 @@ class Megaflix : ParsedAnimeHttpSource() {
 
     // ============================== Popular ===============================
     override fun popularAnimeFromElement(element: Element): SAnime {
-        TODO("Not yet implemented")
+        return SAnime.create().apply {
+            title = element.selectFirst("h2.entry-title")!!.text()
+            setUrlWithoutDomain(element.selectFirst("a.lnk-blk")!!.attr("href"))
+            thumbnail_url = "https:" + element.selectFirst("img")!!.attr("src")
+        }
     }
 
-    override fun popularAnimeNextPageSelector(): String? {
-        TODO("Not yet implemented")
-    }
+    override fun popularAnimeNextPageSelector() = null
 
-    override fun popularAnimeRequest(page: Int): Request {
-        TODO("Not yet implemented")
-    }
+    override fun popularAnimeRequest(page: Int) = GET(baseUrl)
 
-    override fun popularAnimeSelector(): String {
-        TODO("Not yet implemented")
-    }
+    override fun popularAnimeSelector() = "section#widget_list_movies_series-5 li > article"
 
     // ============================== Episodes ==============================
     override fun episodeFromElement(element: Element): SEpisode {
