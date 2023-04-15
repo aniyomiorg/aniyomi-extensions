@@ -126,14 +126,7 @@ class Pelisplusto(override val name: String, override val baseUrl: String) : Pel
             }
             if (link.contains("watchsb")) {
                 try {
-                    val newHeaders = headers.newBuilder()
-                        .set("referer", link)
-                        .set("watchsb", "sbstream")
-                        .set("authority", link.substringBefore("/e/").substringAfter("https://"))
-                        .build()
-                    StreamSBExtractor(client).videosFromDecryptedUrl(fixUrl(link), headers = newHeaders).map { video ->
-                        videoList.add(video)
-                    }
+                    StreamSBExtractor(client).videosFromUrl(link, headers).map { video -> videoList.add(video) }
                 } catch (_: Exception) {}
             }
         }
