@@ -195,7 +195,37 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Settings ==============================
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val latestPage = ListPreference(screen.context).apply {
+        val preferredQuality = ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_VALUES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
+        val preferredLanguage = ListPreference(screen.context).apply {
+            key = PREF_LANGUAGE_KEY
+            title = PREF_LANGUAGE_TITLE
+            entries = PREF_LANGUAGE_VALUES
+            entryValues = PREF_LANGUAGE_VALUES
+            setDefaultValue(PREF_LANGUAGE_DEFAULT)
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
+        val preferredLatestPage = ListPreference(screen.context).apply {
             key = PREF_LATEST_PAGE_KEY
             title = PREF_LATEST_PAGE_TITLE
             entries = PREF_LATEST_PAGE_ENTRIES
@@ -209,7 +239,10 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
-        screen.addPreference(latestPage)
+
+        screen.addPreference(preferredQuality)
+        screen.addPreference(preferredLanguage)
+        screen.addPreference(preferredLatestPage)
     }
 
     // ============================= Utilities ==============================
@@ -218,8 +251,29 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
 
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val lang = preferences.getString(PREF_LANGUAGE_KEY, PREF_LANGUAGE_DEFAULT)!!
+        return sortedWith(
+            compareBy(
+                { it.quality.contains(quality) },
+                { it.quality.contains(lang) },
+            ),
+        ).reversed()
+    }
+
     companion object {
         const val PREFIX_SEARCH = "path:"
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Qualidade preferida"
+        private const val PREF_QUALITY_DEFAULT = "720p"
+        private val PREF_QUALITY_VALUES = arrayOf("360p", "480p", "720p", "1080p")
+
+        private const val PREF_LANGUAGE_KEY = "pref_language"
+        private const val PREF_LANGUAGE_DEFAULT = "Legendado"
+        private const val PREF_LANGUAGE_TITLE = "Língua/tipo preferido"
+        private val PREF_LANGUAGE_VALUES = arrayOf("Legendado", "Dublado")
 
         private const val PREF_LATEST_PAGE_KEY = "pref_latest_page"
         private const val PREF_LATEST_PAGE_DEFAULT = "series"
