@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.pt.megaflix.extractors.MegaflixExtractor
 import eu.kanade.tachiyomi.animeextension.pt.megaflix.extractors.MixDropExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -128,6 +129,8 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 StreamTapeExtractor(client).videoFromUrl(url, "StreamTape - $language")?.let(::listOf)
             "watchsb.com" in url ->
                 StreamSBExtractor(client).videosFromUrl(url, headers, suffix = language)
+            "mflix.vip" in url ->
+                MegaflixExtractor(client).videosFromUrl(url, language)
             else -> null
         }
     }

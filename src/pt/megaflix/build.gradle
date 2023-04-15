@@ -14,7 +14,7 @@ dependencies {
     implementation(project(":lib-fembed-extractor"))
     implementation(project(":lib-streamsb-extractor"))
     implementation(project(":lib-streamtape-extractor"))
-    // for mixdrop
+    // for mixdrop and megaflix
     implementation("dev.datlag.jsunpacker:jsunpacker:1.0.1")
 }
 
