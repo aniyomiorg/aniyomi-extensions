@@ -1,0 +1,22 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
+
+ext {
+    extName = 'Megaflix'
+    pkgNameSuffix = 'pt.megaflix'
+    extClass = '.Megaflix'
+    extVersionCode = 1
+    containsNsfw = true
+}
+
+dependencies {
+    implementation(project(":lib-fembed-extractor"))
+    implementation(project(":lib-streamsb-extractor"))
+    implementation(project(":lib-streamtape-extractor"))
+    // for mixdrop and megaflix
+    implementation("dev.datlag.jsunpacker:jsunpacker:1.0.1")
+}
+
+apply from: "$rootDir/common.gradle"
