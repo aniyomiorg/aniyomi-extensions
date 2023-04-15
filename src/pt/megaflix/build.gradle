@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-
 }
 
 ext {
@@ -9,6 +8,14 @@ ext {
     pkgNameSuffix = 'pt.megaflix'
     extClass = '.Megaflix'
     extVersionCode = 1
+}
+
+dependencies {
+    implementation(project(":lib-fembed-extractor"))
+    implementation(project(":lib-streamsb-extractor"))
+    implementation(project(":lib-streamtape-extractor"))
+    // for mixdrop
+    implementation("dev.datlag.jsunpacker:jsunpacker:1.0.1")
 }
 
 apply from: "$rootDir/common.gradle"

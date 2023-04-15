@@ -2,8 +2,10 @@ package eu.kanade.tachiyomi.animeextension.pt.megaflix
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.pt.megaflix.extractors.MixDropExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -11,9 +13,16 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
+import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -92,11 +101,40 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
-    override fun videoFromElement(element: Element): Video {
-        TODO("Not yet implemented")
+    override fun videoListParse(response: Response): List<Video> {
+        val items = response.asJsoup().select(videoListSelector())
+        return items
+            .parallelMap { element ->
+                val language = element.text().substringAfter("-")
+                val id = element.attr("href")
+                val url = element.parents().get(5)
+                    ?.selectFirst("div$id a")
+                    ?.attr("href")
+                    ?.substringAfter("token=")
+                    ?.let { Base64.decode(it, Base64.DEFAULT).let(::String) }
+                    ?: return@parallelMap null
+
+                runCatching { getVideoList(url, language) }.getOrNull()
+            }.filterNotNull().flatten()
     }
 
-    override fun videoListSelector(): String {
+    private fun getVideoList(url: String, language: String): List<Video>? {
+        return when {
+            "mixdrop.co" in url ->
+                MixDropExtractor(client).videoFromUrl(url, language)?.let(::listOf)
+            "fembed.com" in url ->
+                FembedExtractor(client).videosFromUrl(url, language)
+            "streamtape.com" in url ->
+                StreamTapeExtractor(client).videoFromUrl(url, "StreamTape - $language")?.let(::listOf)
+            "watchsb.com" in url ->
+                StreamSBExtractor(client).videosFromUrl(url, headers, suffix = language)
+            else -> null
+        }
+    }
+
+    override fun videoListSelector() = "aside.video-options li a"
+
+    override fun videoFromElement(element: Element): Video {
         TODO("Not yet implemented")
     }
 
@@ -170,6 +208,12 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         screen.addPreference(latestPage)
     }
+
+    // ============================= Utilities ==============================
+    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 
     companion object {
         const val PREFIX_SEARCH = "path:"
