@@ -1992,10 +1992,10 @@
   {
     "name": "Aniyomi: Cuevana",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.cuevana",
-    "apk": "aniyomi-es.cuevana-v13.12.apk",
+    "apk": "aniyomi-es.cuevana-v13.13.apk",
     "lang": "es",
-    "code": 12,
-    "version": "13.12",
+    "code": 13,
+    "version": "13.13",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2055,10 +2055,10 @@
   {
     "name": "Aniyomi: EnNovelas",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.ennovelas",
-    "apk": "aniyomi-es.ennovelas-v13.3.apk",
+    "apk": "aniyomi-es.ennovelas-v13.4.apk",
     "lang": "es",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2067,7 +2067,7 @@
         "name": "EnNovelas",
         "lang": "es",
         "id": "6683521813386506618",
-        "baseUrl": "https://w.ennovelas.net",
+        "baseUrl": "https://www.zonevipz.com/",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -2315,10 +2315,10 @@
   {
     "name": "Aniyomi: Pelisplushd",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.pelisplushd",
-    "apk": "aniyomi-es.pelisplushd-v13.33.apk",
+    "apk": "aniyomi-es.pelisplushd-v13.34.apk",
     "lang": "es",
-    "code": 33,
-    "version": "13.33",
+    "code": 34,
+    "version": "13.34",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3123,6 +3123,27 @@
         "baseUrl": "https://www.hinatasoul.com",
         "versionId": 1,
         "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: Megaflix",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.megaflix",
+    "apk": "aniyomi-pt.megaflix-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Megaflix",
+        "lang": "pt-BR",
+        "id": "1129545692275462313",
+        "baseUrl": "https://megaflix.co",
+        "versionId": 1,
+        "hasCloudflare": 0
       }
     ]
   },
