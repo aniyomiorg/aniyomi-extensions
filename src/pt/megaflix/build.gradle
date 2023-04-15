@@ -7,7 +7,7 @@ ext {
     extName = 'Megaflix'
     pkgNameSuffix = 'pt.megaflix'
     extClass = '.Megaflix'
-    extVersionCode = 1
+    extVersionCode = 2
     containsNsfw = true
 }
 
