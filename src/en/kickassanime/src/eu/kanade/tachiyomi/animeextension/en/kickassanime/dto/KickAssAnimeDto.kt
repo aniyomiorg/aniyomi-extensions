@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.en.kickassanime.dto
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 
 @Serializable
 data class PopularResponseDto(
@@ -40,3 +41,16 @@ data class AnimeInfoDto(
     val title_en: String = "",
     val year: Int,
 )
+
+@Serializable
+data class EpisodeResponseDto(
+    val pages: List<JsonObject>, // We dont care about its contents, only the size
+    val result: List<EpisodeDto> = emptyList(),
+) {
+    @Serializable
+    data class EpisodeDto(
+        val slug: String,
+        val title: String,
+        val episode_string: String,
+    )
+}

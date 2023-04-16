@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.en.kickassanime
 
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.AnimeInfoDto
+import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.EpisodeResponseDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.PopularItemDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.PopularResponseDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.RecentsResponseDto
@@ -57,6 +58,36 @@ class KickAssAnime : AnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
+    private fun episodeListRequest(anime: SAnime, page: Int) =
+        GET("$API_URL/${anime.url}/episodes?page=$page&lang=ja-JP")
+
+    private fun getEpisodeResponse(anime: SAnime, page: Int): EpisodeResponseDto {
+        return client.newCall(episodeListRequest(anime, page))
+            .execute()
+            .parseAs<EpisodeResponseDto>()
+    }
+
+    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+        val first = getEpisodeResponse(anime, 1)
+        val items = buildList {
+            addAll(first.result)
+
+            first.pages.drop(1).forEachIndexed { index, _ ->
+                addAll(getEpisodeResponse(anime, index + 2).result)
+            }
+        }
+
+        val episodes = items.map {
+            SEpisode.create().apply {
+                name = it.title
+                url = "${anime.url}/ep-${it.episode_string}-${it.slug}"
+                episode_number = it.episode_string.toFloatOrNull() ?: 0F
+            }
+        }
+
+        return Observable.just(episodes.reversed())
+    }
+
     override fun episodeListParse(response: Response): List<SEpisode> {
         TODO("Not yet implemented")
     }
