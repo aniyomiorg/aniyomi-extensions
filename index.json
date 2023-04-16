@@ -23,17 +23,17 @@
   {
     "name": "Aniyomi: AnimeXin",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.animexin",
-    "apk": "aniyomi-all.animexin-v13.2.apk",
+    "apk": "aniyomi-all.animexin-v13.3.apk",
     "lang": "all",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
     "sources": [
       {
         "name": "AnimeXin",
-        "lang": "en",
+        "lang": "all",
         "id": "4620219025406449669",
         "baseUrl": "https://animexin.vip",
         "versionId": 1,
@@ -65,10 +65,10 @@
   {
     "name": "Aniyomi: GoogleDriveIndex",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.googledriveindex",
-    "apk": "aniyomi-all.googledriveindex-v13.4.apk",
+    "apk": "aniyomi-all.googledriveindex-v13.5.apk",
     "lang": "all",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1522,6 +1522,27 @@
         "lang": "en",
         "id": "2268620798063111053",
         "baseUrl": "https://multimovies.tech",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: Myanime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.myanime",
+    "apk": "aniyomi-en.myanime-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Myanime",
+        "lang": "en",
+        "id": "4364465995809265087",
+        "baseUrl": "https://myanime.live",
         "versionId": 1,
         "hasCloudflare": 1
       }
