@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.kickassanime.dto
 
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -12,7 +13,8 @@ data class PopularResponseDto(
 @Serializable
 data class PopularItemDto(
     val title: String,
-    val title_en: String,
+    @EncodeDefault
+    val title_en: String = "",
     val slug: String,
     val poster: PosterDto,
 ) {
@@ -21,3 +23,9 @@ data class PopularItemDto(
 
     val thumbnailPath by lazy { "image/poster/${poster.slug}.webp" }
 }
+
+@Serializable
+data class RecentsResponseDto(
+    val hadNext: Boolean,
+    val result: List<PopularItemDto>,
+)

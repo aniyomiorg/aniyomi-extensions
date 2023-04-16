@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.en.kickassanime
 
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.PopularItemDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.PopularResponseDto
+import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.RecentsResponseDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -22,16 +23,18 @@ class KickAssAnime : AnimeHttpSource() {
 
     override val baseUrl = "https://kaas.am"
 
+    private val API_URL = "$baseUrl/api/show"
+
     override val lang = "en"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     private val json = Json {
         ignoreUnknownKeys = true
     }
 
     // ============================== Popular ===============================
-    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/api/show/popular?page=$page")
+    override fun popularAnimeRequest(page: Int) = GET("$API_URL/popular?page=$page")
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val data = response.parseAs<PopularResponseDto>()
@@ -96,12 +99,12 @@ class KickAssAnime : AnimeHttpSource() {
 
     // =============================== Latest ===============================
     override fun latestUpdatesParse(response: Response): AnimesPage {
-        TODO("Not yet implemented")
+        val data = response.parseAs<RecentsResponseDto>()
+        val animes = data.result.map(::popularAnimeFromObject)
+        return AnimesPage(animes, data.hadNext)
     }
 
-    override fun latestUpdatesRequest(page: Int): Request {
-        TODO("Not yet implemented")
-    }
+    override fun latestUpdatesRequest(page: Int) = GET("$API_URL/recent?type=all&page=$page")
 
     // ============================= Utilities ==============================
     private inline fun <reified T> Response.parseAs(): T {
