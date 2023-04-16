@@ -11,10 +11,13 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import rx.Observable
 
@@ -88,11 +91,15 @@ class KickAssAnime : AnimeHttpSource() {
 
     // =============================== Search ===============================
     override fun searchAnimeParse(response: Response): AnimesPage {
-        TODO("Not yet implemented")
+        val data = response.parseAs<List<PopularItemDto>>()
+        val animes = data.map(::popularAnimeFromObject)
+        return AnimesPage(animes, false)
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        TODO("Not yet implemented")
+        val data = """{"query":"$query"}"""
+        val reqBody = data.toRequestBody("application/json".toMediaType())
+        return POST("$baseUrl/api/search", headers, reqBody)
     }
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
