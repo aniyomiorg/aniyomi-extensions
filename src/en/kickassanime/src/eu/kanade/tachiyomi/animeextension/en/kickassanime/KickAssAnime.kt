@@ -1,10 +1,15 @@
 package eu.kanade.tachiyomi.animeextension.en.kickassanime
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.AnimeInfoDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.EpisodeResponseDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.PopularItemDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.PopularResponseDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.RecentsResponseDto
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -21,8 +26,10 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
-class KickAssAnime : AnimeHttpSource() {
+class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "KickAssAnime"
 
@@ -33,6 +40,10 @@ class KickAssAnime : AnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -51,7 +62,11 @@ class KickAssAnime : AnimeHttpSource() {
 
     private fun popularAnimeFromObject(anime: PopularItemDto): SAnime {
         return SAnime.create().apply {
-            title = anime.title
+            val useEnglish = preferences.getBoolean(PREF_USE_ENGLISH_KEY, PREF_USE_ENGLISH_DEFAULT)
+            title = when {
+                anime.title_en.isNotBlank() && useEnglish -> anime.title_en
+                else -> anime.title
+            }
             setUrlWithoutDomain("/${anime.slug}")
             thumbnail_url = "$baseUrl/${anime.poster.url}"
         }
@@ -107,7 +122,11 @@ class KickAssAnime : AnimeHttpSource() {
     override fun animeDetailsParse(response: Response): SAnime {
         val anime = response.parseAs<AnimeInfoDto>()
         return SAnime.create().apply {
-            title = anime.title
+            val useEnglish = preferences.getBoolean(PREF_USE_ENGLISH_KEY, PREF_USE_ENGLISH_DEFAULT)
+            title = when {
+                anime.title_en.isNotBlank() && useEnglish -> anime.title_en
+                else -> anime.title
+            }
             setUrlWithoutDomain("/${anime.slug}")
             thumbnail_url = "$baseUrl/${anime.poster.url}"
             genre = anime.genres.joinToString()
@@ -159,6 +178,22 @@ class KickAssAnime : AnimeHttpSource() {
 
     override fun latestUpdatesRequest(page: Int) = GET("$API_URL/recent?type=all&page=$page")
 
+    // ============================== Settings ==============================
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val titlePref = SwitchPreferenceCompat(screen.context).apply {
+            key = PREF_USE_ENGLISH_KEY
+            title = PREF_USE_ENGLISH_TITLE
+            summary = PREF_USE_ENGLISH_SUMMARY
+            setDefaultValue(PREF_USE_ENGLISH_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val new = newValue as Boolean
+                preferences.edit().putBoolean(key, new).commit()
+            }
+        }
+        screen.addPreference(titlePref)
+    }
+
     // ============================= Utilities ==============================
     private inline fun <reified T> Response.parseAs(): T {
         return body.string().let(json::decodeFromString)
@@ -172,5 +207,10 @@ class KickAssAnime : AnimeHttpSource() {
 
     companion object {
         const val PREFIX_SEARCH = "slug:"
+
+        private const val PREF_USE_ENGLISH_KEY = "pref_use_english"
+        private const val PREF_USE_ENGLISH_TITLE = "Use English titles"
+        private const val PREF_USE_ENGLISH_SUMMARY = "Show Titles in English instead of Romanji when possible."
+        private const val PREF_USE_ENGLISH_DEFAULT = false
     }
 }
