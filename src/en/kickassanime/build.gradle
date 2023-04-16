@@ -1,18 +1,14 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
+}
 
 ext {
     extName = 'KickAssAnime'
     pkgNameSuffix = 'en.kickassanime'
     extClass = '.KickAssAnime'
     extVersionCode = 21
-    libVersion = '13'
-}
-
-dependencies {
-    implementation(project(':lib-streamsb-extractor'))
-    implementation(project(':lib-dood-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"
