@@ -46,7 +46,9 @@ class AnimeXin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val baseUrl by lazy { preferences.getString("preferred_domain", "https://animexin.vip")!! }
 
-    override val lang = "en"
+    override val lang = "all"
+
+    override val id = 4620219025406449669
 
     override val supportsLatest = true
 
