@@ -434,6 +434,10 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
             ?: doc.selectFirst("script:containsData(downloaddomain)")?.data()
             ?: return Observable.just(listOf(Video(url, "Video", url)))
 
+        if (script.contains("\"second_domain_for_dl\":false")) {
+            return Observable.just(listOf(Video(url, "Video", url)))
+        }
+
         val domainUrl = if (script.contains("videodomain", true)) {
             script
                 .substringAfter("\"videodomain\":\"")
