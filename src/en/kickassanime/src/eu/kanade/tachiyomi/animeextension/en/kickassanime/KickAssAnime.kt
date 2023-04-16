@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.kickassanime
 
+import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.AnimeInfoDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.PopularItemDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.PopularResponseDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.RecentsResponseDto
@@ -48,7 +49,7 @@ class KickAssAnime : AnimeHttpSource() {
         return SAnime.create().apply {
             title = anime.title
             setUrlWithoutDomain("/${anime.slug}")
-            thumbnail_url = "$baseUrl/${anime.thumbnailPath}"
+            thumbnail_url = "$baseUrl/${anime.poster.url}"
         }
     }
 
@@ -67,8 +68,22 @@ class KickAssAnime : AnimeHttpSource() {
     }
 
     // =========================== Anime Details ============================
+    override fun animeDetailsRequest(anime: SAnime) = GET("$API_URL/${anime.url}")
+
     override fun animeDetailsParse(response: Response): SAnime {
-        TODO("Not yet implemented")
+        val anime = response.parseAs<AnimeInfoDto>()
+        return SAnime.create().apply {
+            title = anime.title
+            setUrlWithoutDomain("/${anime.slug}")
+            thumbnail_url = "$baseUrl/${anime.poster.url}"
+            genre = anime.genres.joinToString()
+            status = anime.status.parseStatus()
+            description = buildString {
+                append(anime.synopsis + "\n\n")
+                append("Season: ${anime.season.capitalize()}\n")
+                append("Year: ${anime.year}")
+            }
+        }
     }
 
     // =============================== Search ===============================
@@ -109,6 +124,12 @@ class KickAssAnime : AnimeHttpSource() {
     // ============================= Utilities ==============================
     private inline fun <reified T> Response.parseAs(): T {
         return body.string().let(json::decodeFromString)
+    }
+
+    private fun String.parseStatus() = when (this) {
+        "finished_airing" -> SAnime.COMPLETED
+        "currently_airing" -> SAnime.ONGOING
+        else -> SAnime.UNKNOWN
     }
 
     companion object {
