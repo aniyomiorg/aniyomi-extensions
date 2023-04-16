@@ -62,31 +62,45 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeSelector() = "section#widget_list_movies_series-5 li > article"
 
     // ============================== Episodes ==============================
-    override fun episodeFromElement(element: Element): SEpisode {
-        return SEpisode.create().apply {
-            name = element.selectFirst("h2.entry-title")!!.text()
-            setUrlWithoutDomain(element.selectFirst("a.lnk-blk")!!.attr("href"))
-            episode_number = element.selectFirst("span.num-epi")
-                ?.text()
-                ?.substringAfter("x")
-                ?.toFloatOrNull()
-                ?: 0F
-        }
-    }
-
     override fun episodeListSelector() = "li > article.episodes"
+    private fun seasonListSelector() = "section.episodes div.choose-season > a"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val items = response.asJsoup().select(episodeListSelector())
+        val seasons = response.asJsoup().select(seasonListSelector())
         return when {
-            items.isEmpty() -> listOf(
+            seasons.isEmpty() -> listOf(
                 SEpisode.create().apply {
                     name = "Filme"
                     setUrlWithoutDomain(response.request.url.toString())
                     episode_number = 1F
                 },
             )
-            else -> items.map(::episodeFromElement)
+            else -> seasons.parallelMap(::episodesFromSeason).flatten().reversed()
+        }
+    }
+
+    private fun episodesFromSeason(seasonElement: Element): List<SEpisode> {
+        return seasonElement.attr("href").let { url ->
+            client.newCall(GET(url)).execute()
+                .asJsoup()
+                .select(episodeListSelector())
+                .map(::episodeFromElement)
+        }
+    }
+
+    override fun episodeFromElement(element: Element): SEpisode {
+        return SEpisode.create().apply {
+            name = element.selectFirst("h2.entry-title")!!.text()
+            setUrlWithoutDomain(element.selectFirst("a.lnk-blk")!!.attr("href"))
+            episode_number = element.selectFirst("span.num-epi")
+                ?.text()
+                ?.split("x")
+                ?.let {
+                    val season = it.first().toFloatOrNull() ?: 0F
+                    val episode = it.last().toFloatOrNull() ?: 0F
+                    (season * 100F) + episode
+                }
+                ?: 0F
         }
     }
 
