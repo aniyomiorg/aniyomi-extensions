@@ -1,5 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.en.kickassanime
 
+import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.PopularItemDto
+import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.PopularResponseDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -8,6 +10,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Request
 import okhttp3.Response
@@ -28,12 +31,22 @@ class KickAssAnime : AnimeHttpSource() {
     }
 
     // ============================== Popular ===============================
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/api/show/popular?page=$page")
+
     override fun popularAnimeParse(response: Response): AnimesPage {
-        TODO("Not yet implemented")
+        val data = response.parseAs<PopularResponseDto>()
+        val animes = data.result.map(::popularAnimeFromObject)
+        val page = response.request.url.queryParameter("page")?.toIntOrNull() ?: 0
+        val hasNext = data.page_count > page
+        return AnimesPage(animes, hasNext)
     }
 
-    override fun popularAnimeRequest(page: Int): Request {
-        TODO("Not yet implemented")
+    private fun popularAnimeFromObject(anime: PopularItemDto): SAnime {
+        return SAnime.create().apply {
+            title = anime.title
+            setUrlWithoutDomain("/${anime.slug}")
+            thumbnail_url = "$baseUrl/${anime.thumbnailPath}"
+        }
     }
 
     // ============================== Episodes ==============================
@@ -88,6 +101,11 @@ class KickAssAnime : AnimeHttpSource() {
 
     override fun latestUpdatesRequest(page: Int): Request {
         TODO("Not yet implemented")
+    }
+
+    // ============================= Utilities ==============================
+    private inline fun <reified T> Response.parseAs(): T {
+        return body.string().let(json::decodeFromString)
     }
 
     companion object {
