@@ -54,3 +54,6 @@ data class EpisodeResponseDto(
         val episode_string: String,
     )
 }
+
+@Serializable
+data class VideosDto(val servers: List<String>)

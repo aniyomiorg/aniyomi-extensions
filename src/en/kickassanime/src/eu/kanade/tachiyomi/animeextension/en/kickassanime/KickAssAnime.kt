@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.EpisodeResponseDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.PopularItemDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.PopularResponseDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.RecentsResponseDto
+import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.VideosDto
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -109,11 +110,15 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListRequest(episode: SEpisode): Request {
-        TODO("Not yet implemented")
+        val url = API_URL + episode.url.replace("/ep-", "/episode/ep-")
+        return GET(url)
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        TODO("Not yet implemented")
+        val videos = response.parseAs<VideosDto>()
+        // Just to see the responses at mitmproxy
+        videos.servers.forEach { client.newCall(GET(it)).execute() }
+        return emptyList<Video>()
     }
 
     // =========================== Anime Details ============================
