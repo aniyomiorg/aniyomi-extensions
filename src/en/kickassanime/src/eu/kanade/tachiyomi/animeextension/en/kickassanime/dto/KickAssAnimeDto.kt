@@ -62,6 +62,10 @@ data class ServersDto(val servers: List<String>)
 data class VideoDto(
     val hls: String = "",
     val dash: String = "",
+    val subtitles: List<SubtitlesDto> = emptyList(),
 ) {
     val playlistUrl by lazy { if (hls.isBlank()) "https:$dash" else hls }
+
+    @Serializable
+    data class SubtitlesDto(val name: String, val language: String, val src: String)
 }

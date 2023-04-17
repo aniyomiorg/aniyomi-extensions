@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.en.kickassanime.extractors
 
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.VideoDto
+import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES
 import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES.decodeHex
@@ -10,6 +11,13 @@ import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 
 class KickAssAnimeExtractor(private val client: OkHttpClient, private val json: Json) {
+    private val isStable by lazy {
+        runCatching {
+            Track("", "")
+            false
+        }.getOrDefault(true)
+    }
+
     fun videosFromUrl(url: String): List<Video> {
         val idQuery = url.substringAfterLast("?")
         val baseUrl = url.substringBeforeLast("/") // baseUrl + endpoint/player
@@ -36,6 +44,25 @@ class KickAssAnimeExtractor(private val client: OkHttpClient, private val json: 
             return emptyList()
         }
 
+        val subtitles = if (isStable || videoObject.subtitles.isEmpty()) {
+            emptyList()
+        } else {
+            videoObject.subtitles.map {
+                val subUrl: String = it.src.let { src ->
+                    if (src.startsWith("/")) {
+                        baseUrl.substringBeforeLast("/") + "/$src"
+                    } else {
+                        src
+                    }
+                }
+
+                val language = "${it.name} (${it.language})"
+
+                println("subUrl -> $subUrl")
+                Track(subUrl, language)
+            }
+        }
+
         val masterPlaylist = client.newCall(GET(videoObject.playlistUrl)).execute()
             .body.string()
 
@@ -43,12 +70,12 @@ class KickAssAnimeExtractor(private val client: OkHttpClient, private val json: 
 
         return when {
             videoObject.hls.isBlank() ->
-                extractVideosFromDash(masterPlaylist, prefix)
-            else -> extractVideosFromHLS(masterPlaylist, prefix)
+                extractVideosFromDash(masterPlaylist, prefix, subtitles)
+            else -> extractVideosFromHLS(masterPlaylist, prefix, subtitles)
         }
     }
 
-    private fun extractVideosFromHLS(playlist: String, prefix: String): List<Video> {
+    private fun extractVideosFromHLS(playlist: String, prefix: String, subs: List<Track>): List<Video> {
         val separator = "#EXT-X-STREAM-INF"
         return playlist.substringAfter(separator).split(separator).map {
             val resolution = it.substringAfter("RESOLUTION=")
@@ -57,16 +84,25 @@ class KickAssAnimeExtractor(private val client: OkHttpClient, private val json: 
                 .substringBefore(",") + "p"
 
             val videoUrl = it.substringAfter("\n").substringBefore("\n")
-            Video(videoUrl, "$prefix - $resolution", videoUrl)
+
+            if (isStable) {
+                Video(videoUrl, "$prefix - $resolution", videoUrl)
+            } else {
+                Video(videoUrl, "$prefix - $resolution", videoUrl, subtitleTracks = subs)
+            }
         }
     }
 
-    private fun extractVideosFromDash(playlist: String, prefix: String): List<Video> {
+    private fun extractVideosFromDash(playlist: String, prefix: String, subs: List<Track>): List<Video> {
         return playlist.split("<Representation").drop(1).dropLast(1).map {
             val resolution = it.substringAfter("height=\"").substringBefore('"') + "p"
             val url = it.substringAfter("<BaseURL>").substringBefore("</Base")
                 .replace("&amp;", "&")
-            Video(url, "$prefix - $resolution", url)
+            if (isStable) {
+                Video(url, "$prefix - $resolution", url)
+            } else {
+                Video(url, "$prefix - $resolution", url, subtitleTracks = subs)
+            }
         }
     }
 }
