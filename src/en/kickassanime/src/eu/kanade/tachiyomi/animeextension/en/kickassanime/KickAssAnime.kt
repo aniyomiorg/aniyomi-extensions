@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.en.kickassanime
 
 import android.app.Application
 import android.content.SharedPreferences
+import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.AnimeInfoDto
@@ -196,6 +197,23 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 preferences.edit().putBoolean(key, new).commit()
             }
         }
+
+        val videoQualityPref = ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_VALUES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
+        screen.addPreference(videoQualityPref)
         screen.addPreference(titlePref)
     }
 
@@ -210,6 +228,13 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         else -> SAnime.UNKNOWN
     }
 
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
+    }
+
     companion object {
         const val PREFIX_SEARCH = "slug:"
 
@@ -217,5 +242,10 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_USE_ENGLISH_TITLE = "Use English titles"
         private const val PREF_USE_ENGLISH_SUMMARY = "Show Titles in English instead of Romanji when possible."
         private const val PREF_USE_ENGLISH_DEFAULT = false
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "720p"
+        private val PREF_QUALITY_VALUES = arrayOf("240p", "360p", "480p", "720p", "1080p")
     }
 }
