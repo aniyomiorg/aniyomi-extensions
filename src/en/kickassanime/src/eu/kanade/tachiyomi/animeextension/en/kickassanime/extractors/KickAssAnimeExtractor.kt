@@ -39,19 +39,34 @@ class KickAssAnimeExtractor(private val client: OkHttpClient, private val json: 
         val masterPlaylist = client.newCall(GET(videoObject.playlistUrl)).execute()
             .body.string()
 
+        val prefix = if ("pink" in url) "PinkBird" else "SapphireDuck"
+
+        return when {
+            videoObject.hls.isBlank() ->
+                extractVideosFromDash(masterPlaylist, prefix)
+            else -> extractVideosFromHLS(masterPlaylist, prefix)
+        }
+    }
+
+    private fun extractVideosFromHLS(playlist: String, prefix: String): List<Video> {
         val separator = "#EXT-X-STREAM-INF"
-        return masterPlaylist.substringAfter(separator).split(separator).map {
+        return playlist.substringAfter(separator).split(separator).map {
             val resolution = it.substringAfter("RESOLUTION=")
                 .substringBefore("\n")
                 .substringAfter("x")
                 .substringBefore(",") + "p"
 
-            val quality = when {
-                "pink" in url -> "PinkBird $resolution"
-                else -> "SapphireDuck $resolution"
-            }
             val videoUrl = it.substringAfter("\n").substringBefore("\n")
-            Video(videoUrl, quality, videoUrl)
+            Video(videoUrl, "$prefix - $resolution", videoUrl)
+        }
+    }
+
+    private fun extractVideosFromDash(playlist: String, prefix: String): List<Video> {
+        return playlist.split("<Representation").drop(1).dropLast(1).map {
+            val resolution = it.substringAfter("height=\"").substringBefore('"') + "p"
+            val url = it.substringAfter("<BaseURL>").substringBefore("</Base")
+                .replace("&amp;", "&")
+            Video(url, "$prefix - $resolution", url)
         }
     }
 }

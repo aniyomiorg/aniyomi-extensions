@@ -59,4 +59,9 @@ data class EpisodeResponseDto(
 data class ServersDto(val servers: List<String>)
 
 @Serializable
-data class VideoDto(@SerialName("hls") val playlistUrl: String)
+data class VideoDto(
+    val hls: String = "",
+    val dash: String = "",
+) {
+    val playlistUrl by lazy { if (hls.isBlank()) "https:$dash" else hls }
+}
