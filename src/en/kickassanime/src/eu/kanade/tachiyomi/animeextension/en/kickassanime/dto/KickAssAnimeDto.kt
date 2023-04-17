@@ -56,4 +56,7 @@ data class EpisodeResponseDto(
 }
 
 @Serializable
-data class VideosDto(val servers: List<String>)
+data class ServersDto(val servers: List<String>)
+
+@Serializable
+data class VideoDto(@SerialName("hls") val playlistUrl: String)

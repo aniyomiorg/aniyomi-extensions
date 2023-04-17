@@ -11,4 +11,8 @@ ext {
     extVersionCode = 21
 }
 
+dependencies {
+    implementation(project(":lib-cryptoaes"))
+}
+
 apply from: "$rootDir/common.gradle"

@@ -9,7 +9,8 @@ import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.EpisodeResponseDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.PopularItemDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.PopularResponseDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.RecentsResponseDto
-import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.VideosDto
+import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.ServersDto
+import eu.kanade.tachiyomi.animeextension.en.kickassanime.extractors.KickAssAnimeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -115,10 +116,10 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val videos = response.parseAs<VideosDto>()
+        val videos = response.parseAs<ServersDto>()
         // Just to see the responses at mitmproxy
-        videos.servers.forEach { client.newCall(GET(it)).execute() }
-        return emptyList<Video>()
+        val extractor = KickAssAnimeExtractor(client, json)
+        return videos.servers.flatMap(extractor::videosFromUrl)
     }
 
     // =========================== Anime Details ============================
