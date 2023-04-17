@@ -124,6 +124,10 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // =========================== Anime Details ============================
+    // Uncomment when extensions-lib v14 gets released
+    // tested with extensions-lib:9d3dcb0
+    // override fun getAnimeUrl(anime: SAnime) = "$baseUrl${anime.url}"
+
     override fun animeDetailsRequest(anime: SAnime) = GET("$API_URL/${anime.url}")
 
     override fun animeDetailsParse(response: Response): SAnime {
