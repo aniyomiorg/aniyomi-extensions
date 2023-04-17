@@ -16,7 +16,7 @@
 
                 <data
                     android:host="kaas.am"
-                    android:pathPattern="/..*/"
+                    android:pathPattern="/..*"
                     android:scheme="https" />
             </intent-filter>
         </activity>

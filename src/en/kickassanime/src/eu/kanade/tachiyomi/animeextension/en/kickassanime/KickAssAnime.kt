@@ -161,7 +161,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val slug = query.removePrefix(PREFIX_SEARCH)
-            client.newCall(GET("$baseUrl/$slug"))
+            client.newCall(GET("$baseUrl/api/show/$slug"))
                 .asObservableSuccess()
                 .map(::searchAnimeBySlugParse)
         } else {
@@ -171,7 +171,6 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun searchAnimeBySlugParse(response: Response): AnimesPage {
         val details = animeDetailsParse(response)
-        details.setUrlWithoutDomain(response.request.url.toString())
         return AnimesPage(listOf(details), false)
     }
 
