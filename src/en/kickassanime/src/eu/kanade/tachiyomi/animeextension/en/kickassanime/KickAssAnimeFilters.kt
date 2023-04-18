@@ -54,8 +54,6 @@ object KickAssAnimeFilters {
     }
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
-        // {"genres":["Ecchi","Idols (Male)"],"year":1975,"status":"airing","type":"movie"}
-
         val genre = filters.filterIsInstance<GenreFilter>()
             .first()
             .state.mapNotNull { format ->
