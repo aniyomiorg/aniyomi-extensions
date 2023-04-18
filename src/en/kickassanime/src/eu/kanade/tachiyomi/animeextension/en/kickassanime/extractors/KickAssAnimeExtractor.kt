@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.kickassanime.extractors
 
+import android.annotation.SuppressLint
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.VideoDto
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
@@ -9,15 +10,11 @@ import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
+import org.jsoup.Jsoup
+import java.text.CharacterIterator
+import java.text.StringCharacterIterator
 
 class KickAssAnimeExtractor(private val client: OkHttpClient, private val json: Json) {
-    private val isStable by lazy {
-        runCatching {
-            Track("", "")
-            false
-        }.getOrDefault(true)
-    }
-
     fun videosFromUrl(url: String): List<Video> {
         val idQuery = url.substringAfterLast("?")
         val baseUrl = url.substringBeforeLast("/") // baseUrl + endpoint/player
@@ -44,23 +41,19 @@ class KickAssAnimeExtractor(private val client: OkHttpClient, private val json: 
             return emptyList()
         }
 
-        val subtitles = if (isStable || videoObject.subtitles.isEmpty()) {
-            emptyList()
-        } else {
-            videoObject.subtitles.map {
-                val subUrl: String = it.src.let { src ->
-                    if (src.startsWith("/")) {
-                        baseUrl.substringBeforeLast("/") + "/$src"
-                    } else {
-                        src
-                    }
+        val subtitles = videoObject.subtitles.map {
+            val subUrl: String = it.src.let { src ->
+                if (src.startsWith("/")) {
+                    baseUrl.substringBeforeLast("/") + "/$src"
+                } else {
+                    src
                 }
-
-                val language = "${it.name} (${it.language})"
-
-                println("subUrl -> $subUrl")
-                Track(subUrl, language)
             }
+
+            val language = "${it.name} (${it.language})"
+
+            println("subUrl -> $subUrl")
+            Track(subUrl, language)
         }
 
         val masterPlaylist = client.newCall(GET(videoObject.playlistUrl)).execute()
@@ -85,24 +78,40 @@ class KickAssAnimeExtractor(private val client: OkHttpClient, private val json: 
 
             val videoUrl = it.substringAfter("\n").substringBefore("\n")
 
-            if (isStable) {
-                Video(videoUrl, "$prefix - $resolution", videoUrl)
-            } else {
-                Video(videoUrl, "$prefix - $resolution", videoUrl, subtitleTracks = subs)
-            }
+            Video(videoUrl, "$prefix - $resolution", videoUrl, subtitleTracks = subs)
         }
     }
 
     private fun extractVideosFromDash(playlist: String, prefix: String, subs: List<Track>): List<Video> {
-        return playlist.split("<Representation").drop(1).dropLast(1).map {
-            val resolution = it.substringAfter("height=\"").substringBefore('"') + "p"
-            val url = it.substringAfter("<BaseURL>").substringBefore("</Base")
-                .replace("&amp;", "&")
-            if (isStable) {
-                Video(url, "$prefix - $resolution", url)
-            } else {
-                Video(url, "$prefix - $resolution", url, subtitleTracks = subs)
-            }
+        // Parsing dash with Jsoup :YEP:
+        val document = Jsoup.parse(playlist)
+        val audioList = document.select("Representation[mimetype~=audio]").map { audioSrc ->
+            Track(audioSrc.text(), formatBits(audioSrc.attr("bandwidth").toLongOrNull() ?: 0L) ?: "audio")
         }
+        return document.select("Representation[mimetype~=video]").map { videoSrc ->
+            Video(
+                videoSrc.text(),
+                "$prefix - ${videoSrc.attr("height")}p - ${formatBits(videoSrc.attr("bandwidth").toLongOrNull() ?: 0L)}",
+                videoSrc.text(),
+                audioTracks = audioList,
+                subtitleTracks = subs,
+            )
+        }
+    }
+
+    // ============================= Utilities ==============================
+
+    @SuppressLint("DefaultLocale")
+    fun formatBits(bits: Long): String? {
+        var bits = bits
+        if (-1000 < bits && bits < 1000) {
+            return "${bits}b"
+        }
+        val ci: CharacterIterator = StringCharacterIterator("kMGTPE")
+        while (bits <= -999950 || bits >= 999950) {
+            bits /= 1000
+            ci.next()
+        }
+        return java.lang.String.format("%.2f%cbs", bits / 1000.0, ci.current())
     }
 }
