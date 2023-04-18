@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.en.myanime.extractors.DailymotionExtractor
+import eu.kanade.tachiyomi.animeextension.en.myanime.extractors.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.animeextension.en.myanime.extractors.YouTubeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -201,6 +202,11 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             episode.episode_number = 0F
             episode.setUrlWithoutDomain(response.request.url.encodedPath)
             episodeList.add(episode)
+        } else if (document.selectFirst("span > a[href*=/tag/]") != null) {
+            val url = document.selectFirst("span > a[href*=/tag/]")!!.attr("href")
+            episodeList.addAll(
+                episodeListParse(client.newCall(GET(url)).execute()),
+            )
         }
 
         return episodeList
@@ -231,6 +237,9 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         }
                         url.contains("youtube.com") -> {
                             YouTubeExtractor(client).videosFromUrl(url, "YouTube - ")
+                        }
+                        url.contains("gdriveplayer") -> {
+                            GdrivePlayerExtractor(client).videosFromUrl(url, name = "Gdriveplayer")
                         }
                         else -> null
                     }
