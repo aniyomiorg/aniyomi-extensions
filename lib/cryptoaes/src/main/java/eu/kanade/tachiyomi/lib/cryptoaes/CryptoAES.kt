@@ -26,6 +26,7 @@ object CryptoAES {
     private const val KEY_SIZE = 256
     private const val IV_SIZE = 128
     private const val HASH_CIPHER = "AES/CBC/PKCS7PADDING"
+    private const val HASH_CIPHER_FALLBACK = "AES/CBC/PKCS5PADDING"
     private const val AES = "AES"
     private const val KDF_DIGEST = "MD5"
 
@@ -44,9 +45,11 @@ object CryptoAES {
             val cipherTextBytes = Arrays.copyOfRange(ctBytes, 16, ctBytes.size)
             val md5: MessageDigest = MessageDigest.getInstance("MD5")
             val keyAndIV = generateKeyAndIV(32, 16, 1, saltBytes, password.toByteArray(Charsets.UTF_8), md5)
-            return decryptAES(cipherTextBytes,
+            return decryptAES(
+                cipherTextBytes,
                 keyAndIV?.get(0) ?: ByteArray(32),
-                keyAndIV?.get(1) ?: ByteArray(16))
+                keyAndIV?.get(1) ?: ByteArray(16),
+            )
         } catch (e: Exception) {
             return ""
         }
@@ -77,7 +80,9 @@ object CryptoAES {
      */
     private fun decryptAES(cipherTextBytes: ByteArray, keyBytes: ByteArray, ivBytes: ByteArray): String {
         return try {
-            val cipher = Cipher.getInstance(HASH_CIPHER)
+            val cipher = try {
+                Cipher.getInstance(HASH_CIPHER)
+            } catch (e: Throwable) { Cipher.getInstance(HASH_CIPHER_FALLBACK) }
             val keyS = SecretKeySpec(keyBytes, AES)
             cipher.init(Cipher.DECRYPT_MODE, keyS, IvParameterSpec(ivBytes))
             cipher.doFinal(cipherTextBytes).toString(Charsets.UTF_8)
@@ -112,7 +117,6 @@ object CryptoAES {
 
             // Repeat process until sufficient data has been generated
             while (generatedLength < keyLength + ivLength) {
-
                 // Digest data (last digest if available, password data, salt if available)
                 if (generatedLength > 0) md.update(generatedData, generatedLength - digestLength, digestLength)
                 md.update(password)
