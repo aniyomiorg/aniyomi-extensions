@@ -120,7 +120,7 @@ object CryptoAES {
                 // Digest data (last digest if available, password data, salt if available)
                 if (generatedLength > 0) md.update(generatedData, generatedLength - digestLength, digestLength)
                 md.update(password)
-                if (salt != null) md.update(salt, 0, 8)
+                md.update(salt, 0, 8)
                 md.digest(generatedData, generatedLength, digestLength)
 
                 // additional rounds
