@@ -21,9 +21,11 @@ data class VideoLink(
         val link: String,
         val hls: Boolean? = null,
         val mp4: Boolean? = null,
+        val dash: Boolean? = null,
         val crIframe: Boolean? = null,
         val resolutionStr: String,
         val subtitles: List<Subtitles>? = null,
+        val rawUrls: RawUrl? = null,
         val portData: Stream? = null,
     ) {
         @Serializable
@@ -45,6 +47,19 @@ data class VideoLink(
                 val hardsub_lang: String,
             )
         }
+
+        @Serializable
+        data class RawUrl(
+            val vids: List<DashStreamObject>? = null,
+            val audios: List<DashStreamObject>? = null,
+        ) {
+            @Serializable
+            data class DashStreamObject(
+                val bandwidth: Long,
+                val height: Int,
+                val url: String,
+            )
+        }
     }
 }
 
@@ -52,7 +67,7 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
 
     private val json: Json by injectLazy()
 
-    private fun bytesIntoHumanReadable(bytes: Long): String? {
+    private fun bytesIntoHumanReadable(bytes: Long): String {
         val kilobyte: Long = 1000
         val megabyte = kilobyte * 1000
         val gigabyte = megabyte * 1000
@@ -233,6 +248,20 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
                                 }
                         }
                     }
+                }
+            } else if (link.dash == true) {
+                val audioList = link.rawUrls?.audios?.map {
+                    Track(it.url, bytesIntoHumanReadable(it.bandwidth))
+                }
+                val videos = link.rawUrls?.vids?.map {
+                    if (audioList == null) {
+                        Video(it.url, "$name - ${it.height} ${bytesIntoHumanReadable(it.bandwidth)}", it.url, subtitleTracks = subtitles)
+                    } else {
+                        Video(it.url, "$name - ${it.height} ${bytesIntoHumanReadable(it.bandwidth)}", it.url, audioTracks = audioList, subtitleTracks = subtitles)
+                    }
+                }
+                if (videos != null) {
+                    videoList.addAll(videos)
                 }
             } else {}
         }

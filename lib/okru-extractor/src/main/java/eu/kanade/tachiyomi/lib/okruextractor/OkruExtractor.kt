@@ -9,6 +9,8 @@ class OkruExtractor(private val client: OkHttpClient) {
 
     private fun fixQuality(quality: String): String {
         val qualities = listOf(
+            Pair("ultra", "2160p"),
+            Pair("quad", "1440p"),
             Pair("full", "1080p"),
             Pair("hd", "720p"),
             Pair("sd", "480p"),
