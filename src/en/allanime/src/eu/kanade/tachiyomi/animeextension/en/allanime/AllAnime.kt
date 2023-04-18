@@ -599,8 +599,8 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p", "240p", "80p")
-            entryValues = arrayOf("1080", "720", "480", "360", "240", "80")
+            entries = arrayOf("1080p", "720p", "480p", "360p", "240p", "80p", "1440p (okru only)", "2160p (okru only)")
+            entryValues = arrayOf("1080", "720", "480", "360", "240", "80", "1440", "2160")
             setDefaultValue("1080")
             summary = "%s"
 
