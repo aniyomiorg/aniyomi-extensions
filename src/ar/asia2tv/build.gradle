@@ -5,7 +5,7 @@ ext {
     extName = 'asia2tv'
     pkgNameSuffix = 'ar.asia2tv'
     extClass = '.Asia2TV'
-    extVersionCode = 9
+    extVersionCode = 10
     libVersion = '13'
 }
 

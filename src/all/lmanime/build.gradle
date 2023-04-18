@@ -8,7 +8,7 @@ ext {
     extName = 'LMAnime'
     pkgNameSuffix = 'all.lmanime'
     extClass = '.LMAnime'
-    extVersionCode = 1
+    extVersionCode = 2
 }
 
 dependencies {

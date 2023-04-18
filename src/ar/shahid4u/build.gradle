@@ -5,7 +5,7 @@ ext {
     extName = 'شاهد فور يو'
     pkgNameSuffix = 'ar.shahid4u'
     extClass = '.Shahid4U'
-    extVersionCode = 8
+    extVersionCode = 9
     libVersion = '13'
 }
 
