@@ -26,7 +26,7 @@ class StreamlareExtractor(private val client: OkHttpClient) {
 
             val separator = "#EXT-X-STREAM-INF"
             masterPlaylist.substringAfter(separator).split(separator).map {
-                val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
+                val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore("\n").substringBefore(",") + "p"
                 var videoUrl = it.substringAfter("\n").substringBefore("\n")
                 if (!videoUrl.startsWith("http")) videoUrl = "${masterPlaylistUrl.substringBefore("master.m3u8")}$videoUrl"
                 videoList.add(Video(videoUrl, "$quality (Streamlare)", videoUrl))

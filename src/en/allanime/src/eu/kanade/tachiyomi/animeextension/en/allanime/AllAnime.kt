@@ -363,6 +363,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 video.sourceUrl.startsWith("/apivtwo/") && (
                     (hosterSelection.contains("default") && video.sourceName.lowercase().contains("default")) ||
                         (hosterSelection.contains("ac") && video.sourceName.lowercase().contains("ac")) ||
+                        (hosterSelection.contains("ak") && video.sourceName.lowercase().contains("ak")) ||
                         (hosterSelection.contains("luf-mp4") && video.sourceName.lowercase().contains("luf-mp4")) ||
                         (hosterSelection.contains("si-hls") && video.sourceName.lowercase().contains("si-hls")) ||
                         (hosterSelection.contains("s-mp4") && video.sourceName.lowercase().contains("s-mp4")) ||
@@ -370,7 +371,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                         (hosterSelection.contains("uv-mp4") && video.sourceName.lowercase().contains("uv-mp4")) ||
                         (hosterSelection.contains("pn-hls") && video.sourceName.lowercase().contains("pn-hls"))
                     ) -> {
-                    serverList.add(Server(video.sourceUrl, "internal", video.priority))
+                    serverList.add(Server(video.sourceUrl, "internal ${video.sourceName}", video.priority))
                 }
                 altHosterSelection.contains("player") && video.type == "player" -> {
                     serverList.add(Server(video.sourceUrl, "player", video.priority))
@@ -402,8 +403,9 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         videoList.addAll(
             serverList.parallelMap { server ->
                 runCatching {
-                    when (server.sourceName) {
-                        "internal" -> {
+                    val sName = server.sourceName
+                    when {
+                        sName.startsWith("internal ") -> {
                             val extractor = AllAnimeExtractor(client)
                             val videos = runCatching {
                                 extractor.videoFromUrl(server.sourceUrl, server.sourceName)
@@ -412,7 +414,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                                 Pair(it, server.priority)
                             }
                         }
-                        "player" -> {
+                        sName == "player" -> {
                             listOf(
                                 Pair(
                                     Video(
@@ -424,7 +426,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                                 ),
                             )
                         }
-                        "streamsb" -> {
+                        sName == "streamsb" -> {
                             val extractor = StreamSBExtractor(client)
                             val videos = runCatching {
                                 extractor.videosFromUrl(server.sourceUrl, headers)
@@ -433,7 +435,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                                 Pair(it, server.priority)
                             }
                         }
-                        "gogo" -> {
+                        sName == "gogo" -> {
                             val extractor = VidstreamingExtractor(client, json)
                             val videos = runCatching {
                                 extractor.videosFromUrl(server.sourceUrl.replace(Regex("^//"), "https://"))
@@ -442,7 +444,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                                 Pair(it, server.priority)
                             }
                         }
-                        "dood" -> {
+                        sName == "dood" -> {
                             val extractor = DoodExtractor(client)
                             val videos = runCatching {
                                 extractor.videosFromUrl(server.sourceUrl)
@@ -451,7 +453,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                                 Pair(it, server.priority)
                             }
                         }
-                        "okru" -> {
+                        sName == "okru" -> {
                             val extractor = OkruExtractor(client)
                             val videos = runCatching {
                                 extractor.videosFromUrl(server.sourceUrl)
@@ -460,7 +462,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                                 Pair(it, server.priority)
                             }
                         }
-                        "mp4upload" -> {
+                        sName == "mp4upload" -> {
                             val headers = headers.newBuilder().set("referer", "https://mp4upload.com/").build()
                             val videos = runCatching {
                                 Mp4uploadExtractor(client).getVideoFromUrl(server.sourceUrl, headers)
@@ -469,7 +471,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                                 Pair(it, server.priority)
                             }
                         }
-                        "streamlare" -> {
+                        sName == "streamlare" -> {
                             val extractor = StreamlareExtractor(client)
                             val videos = runCatching {
                                 extractor.videosFromUrl(server.sourceUrl)
@@ -573,9 +575,9 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         val hostSelection = MultiSelectListPreference(screen.context).apply {
             key = "hoster_selection"
             title = "Enable/Disable Hosts"
-            entries = arrayOf("Default", "Ac", "Luf-mp4", "Si-Hls", "S-mp4", "Ac-Hls", "Uv-mp4", "Pn-Hls")
-            entryValues = arrayOf("default", "ac", "luf-mp4", "si-hls", "s-mp4", "ac-hls", "uv-mp4", "pn-hls")
-            setDefaultValue(setOf("default", "ac", "luf-mp4", "si-hls", "s-mp4", "ac-hls"))
+            entries = arrayOf("Default", "Ac", "Ak", "Luf-mp4", "Si-Hls", "S-mp4", "Ac-Hls", "Uv-mp4", "Pn-Hls")
+            entryValues = arrayOf("default", "ac", "ak", "luf-mp4", "si-hls", "s-mp4", "ac-hls", "uv-mp4", "pn-hls")
+            setDefaultValue(setOf("default", "ac", "ak", "luf-mp4", "si-hls", "s-mp4", "ac-hls"))
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
