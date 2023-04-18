@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.en.kickassanime
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
@@ -10,6 +11,7 @@ import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.EpisodeResponseDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.PopularItemDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.PopularResponseDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.RecentsResponseDto
+import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.SearchResponseDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.ServersDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.extractors.KickAssAnimeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -31,6 +33,7 @@ import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.lang.Exception
 
 class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
@@ -97,7 +100,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
         val episodes = items.map {
             SEpisode.create().apply {
-                name = it.title
+                name = "Ep. ${it.episode_string} - ${it.title}"
                 url = "${anime.url}/ep-${it.episode_string}-${it.slug}"
                 episode_number = it.episode_string.toFloatOrNull() ?: 0F
             }
@@ -151,16 +154,24 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // =============================== Search ===============================
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        val data = response.parseAs<List<PopularItemDto>>()
-        val animes = data.map(::popularAnimeFromObject)
-        return AnimesPage(animes, false)
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
+    override fun searchAnimeParse(response: Response) = throw Exception("Not used")
+
+    private fun searchAnimeParse(response: Response, page: Int): AnimesPage {
+        val data = response.parseAs<SearchResponseDto>()
+        val animes = data.result.map(::popularAnimeFromObject)
+        return AnimesPage(animes, page < data.maxPage)
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val data = """{"query":"$query"}"""
+    private fun searchAnimeRequest(page: Int, query: String, filters: KickAssAnimeFilters.FilterSearchParams): Request {
+        if (query.isBlank()) throw Exception("Enter query to search")
+        val data = if (filters.filters == "{}") {
+            """{"page":$page,"query":"$query"}"""
+        } else {
+            """{"page":$page,"query":"$query","filters":"${Base64.encodeToString(filters.filters.encodeToByteArray(), Base64.NO_WRAP)}"}"""
+        }
         val reqBody = data.toRequestBody("application/json".toMediaType())
-        return POST("$baseUrl/api/search", headers, reqBody)
+        return POST("$baseUrl/api/fsearch", headers, reqBody)
     }
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
@@ -170,7 +181,12 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 .asObservableSuccess()
                 .map(::searchAnimeBySlugParse)
         } else {
-            super.fetchSearchAnime(page, query, filters)
+            val params = KickAssAnimeFilters.getSearchParameters(filters)
+            return client.newCall(searchAnimeRequest(page, query, params))
+                .asObservableSuccess()
+                .map { response ->
+                    searchAnimeParse(response, page)
+                }
         }
     }
 
@@ -178,6 +194,9 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         val details = animeDetailsParse(response)
         return AnimesPage(listOf(details), false)
     }
+
+    // ============================== Filters ===============================
+    override fun getFilterList(): AnimeFilterList = KickAssAnimeFilters.filterList
 
     // =============================== Latest ===============================
     override fun latestUpdatesParse(response: Response): AnimesPage {

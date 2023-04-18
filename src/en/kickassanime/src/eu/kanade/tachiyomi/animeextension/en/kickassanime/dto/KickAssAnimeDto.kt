@@ -19,6 +19,12 @@ data class PopularItemDto(
 )
 
 @Serializable
+data class SearchResponseDto(
+    val result: List<PopularItemDto>,
+    val maxPage: Int,
+)
+
+@Serializable
 data class PosterDto(@SerialName("hq") val slug: String) {
     val url by lazy { "image/poster/$slug.webp" }
 }
