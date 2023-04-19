@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.animeextension.en.kayoanime
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animeextension.en.kayoanime.extractors.GoogleDriveExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -341,7 +342,8 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val data = script.data().substringAfter("['_DRIVE_ivd'] = '").substringBeforeLast("';")
             val decoded = Regex("\\\\x([0-9a-fA-F]{2})").replace(data) { matchResult ->
                 Integer.parseInt(matchResult.groupValues[1], 16).toChar().toString()
-            }
+            }.replace("\\\\\"", "\\\"") // Dirty fix, happens when item names includes `"`
+
             val folderArr = json.decodeFromString<List<JsonElement>>(decoded)
 
             folderArr.first().jsonArray.forEachIndexed { index, item ->
@@ -351,10 +353,15 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val type = item.jsonArray.getOrNull(3)?.jsonPrimitive?.content ?: "Unknown type"
                 if (type.startsWith("video")) {
                     val episode = SEpisode.create()
-                    episode.scanlator = "$size • /$path"
+                    episode.scanlator = if (preferences.getBoolean("scanlator_order", false)) {
+                        "/$path • $size"
+                    } else {
+                        "$size • /$path"
+                    }
                     episode.name = name.removePrefix("[Kayoanime] ")
                     episode.url = "https://drive.google.com/uc?id=$id"
                     episode.episode_number = index.toFloat()
+                    episode.date_upload = -1L
                     episodeList.add(episode)
                 }
                 if (type.endsWith(".folder")) {
@@ -367,13 +374,21 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
-        document.select("div.toggle-content > a[href*=drive.google.com]").distinctBy {
-            it.text() // remove dupes
-        }.forEach {
-            traverseFolder(it.attr("href").substringBeforeLast("?usp=share_link"), it.text())
+        document.select("div.toggle:has(> div.toggle-content > a[href*=drive.google.com])").distinctBy { t ->
+            getVideoPathsFromElement(t)
+        }.forEach { season ->
+            season.select("a[href*=drive.google.com]").distinctBy { it.text() }.forEach {
+                val url = it.selectFirst("a[href*=drive.google.com]")!!.attr("href").substringBeforeLast("?usp=share_link")
+                traverseFolder(url, getVideoPathsFromElement(season) + " " + it.text())
+            }
         }
 
         return episodeList.reversed()
+    }
+
+    private fun getVideoPathsFromElement(element: Element): String {
+        return element.selectFirst("h3")!!.text()
+            .substringBefore("480p").substringBefore("720p").substringBefore("1080p")
     }
 
     override fun episodeListSelector(): String = throw Exception("Not used")
@@ -442,5 +457,16 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
 
-    override fun setupPreferenceScreen(screen: PreferenceScreen) {}
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val scanlatorOrder = SwitchPreferenceCompat(screen.context).apply {
+            key = "scanlator_order"
+            title = "Switch order of file path and size"
+            setDefaultValue(false)
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putBoolean(key, newValue as Boolean).commit()
+            }
+        }
+
+        screen.addPreference(scanlatorOrder)
+    }
 }
