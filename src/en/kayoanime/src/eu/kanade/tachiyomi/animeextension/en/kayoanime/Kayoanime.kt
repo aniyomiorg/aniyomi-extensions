@@ -2,11 +2,13 @@ package eu.kanade.tachiyomi.animeextension.en.kayoanime
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
@@ -24,6 +26,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -50,10 +53,9 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "en"
 
-    // Used for loading animes
+    // Used for loading anime
     private var query = ""
-    private var max = 0
-    private var page = 0
+    private var max = ""
     private var latest_post = ""
     private var layout = ""
     private var settings = ""
@@ -78,11 +80,66 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Popular ===============================
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/ongoing-anime/")
+    override fun popularAnimeRequest(page: Int): Request {
+        return if (page == 1) {
+            query = ""
+            max = ""
+            latest_post = ""
+            layout = ""
+            settings = ""
+            GET("$baseUrl/ongoing-anime/")
+        } else {
+            val formBody = FormBody.Builder()
+                .add("action", "tie_archives_load_more")
+                .add("query", query)
+                .add("max", max.toString())
+                .add("page", page.toString())
+                .add("latest_post", latest_post)
+                .add("layout", layout)
+                .add("settings", settings)
+                .build()
+            val formHeaders = headers.newBuilder()
+                .add("Accept", "*/*")
+                .add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+                .add("Host", "kayoanime.com")
+                .add("Origin", "https://kayoanime.com")
+                .add("Referer", "https://kayoanime.com/ongoing-anime/")
+                .add("X-Requested-With", "XMLHttpRequest")
+                .build()
+            POST("$baseUrl/wp-admin/admin-ajax.php", body = formBody, headers = formHeaders)
+        }
+    }
+
+    override fun popularAnimeParse(response: Response): AnimesPage {
+        return if (response.request.url.toString().endsWith("admin-ajax.php")) {
+            val body = response.body.string()
+            Log.i("HELLOWORLD", body)
+            AnimesPage(emptyList(), false)
+        } else {
+            val document = response.asJsoup()
+            val container = document.selectFirst("ul#posts-container")!!
+            val pagesNav = document.selectFirst("div.pages-nav > a")!!
+            layout = container.attr("data-layout")
+            query = pagesNav.attr("data-query")
+            max = pagesNav.attr("data-max")
+            latest_post = pagesNav.attr("data-latest")
+            settings = container.attr("data-settings")
+
+            val animes = document.select(popularAnimeSelector()).map { element ->
+                popularAnimeFromElement(element)
+            }
+
+            val hasNextPage = popularAnimeNextPageSelector()?.let { selector ->
+                document.select(selector).first()
+            } != null
+
+            AnimesPage(animes, hasNextPage)
+        }
+    }
 
     override fun popularAnimeSelector(): String = "ul#posts-container > li.post-item"
 
-    override fun popularAnimeNextPageSelector(): String? = null
+    override fun popularAnimeNextPageSelector(): String = "div.pages-nav > a[data-text=load more]"
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         return SAnime.create().apply {
