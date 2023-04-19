@@ -1423,6 +1423,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Kayoanime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.kayoanime",
+    "apk": "aniyomi-en.kayoanime-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Kayoanime (Experimental)",
+        "lang": "en",
+        "id": "203922289858257167",
+        "baseUrl": "https://kayoanime.com",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: KickAssAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.kickassanime",
     "apk": "aniyomi-en.kickassanime-v13.24.apk",
