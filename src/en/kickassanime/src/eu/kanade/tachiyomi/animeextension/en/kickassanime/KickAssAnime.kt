@@ -8,6 +8,7 @@ import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.AnimeInfoDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.EpisodeResponseDto
+import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.LanguagesDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.PopularItemDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.PopularResponseDto
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.RecentsResponseDto
@@ -79,22 +80,28 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    private fun episodeListRequest(anime: SAnime, page: Int) =
-        GET("$API_URL/${anime.url}/episodes?page=$page&lang=ja-JP")
+    private fun episodeListRequest(anime: SAnime, page: Int, lang: String) =
+        GET("$API_URL${anime.url}/episodes?page=$page&lang=$lang")
 
-    private fun getEpisodeResponse(anime: SAnime, page: Int): EpisodeResponseDto {
-        return client.newCall(episodeListRequest(anime, page))
+    private fun getEpisodeResponse(anime: SAnime, page: Int, lang: String): EpisodeResponseDto {
+        return client.newCall(episodeListRequest(anime, page, lang))
             .execute()
             .parseAs<EpisodeResponseDto>()
     }
 
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
-        val first = getEpisodeResponse(anime, 1)
+        val languages = client.newCall(
+            GET("$API_URL${anime.url}/language"),
+        ).execute().parseAs<LanguagesDto>()
+        val prefLang = preferences.getString(PREF_AUDIO_LANG_KEY, PREF_AUDIO_LANG_DEFAULT)!!
+        val lang = languages.result.firstOrNull { it == prefLang } ?: PREF_AUDIO_LANG_DEFAULT
+
+        val first = getEpisodeResponse(anime, 1, lang)
         val items = buildList {
             addAll(first.result)
 
             first.pages.drop(1).forEachIndexed { index, _ ->
-                addAll(getEpisodeResponse(anime, index + 2).result)
+                addAll(getEpisodeResponse(anime, index + 2, lang).result)
             }
         }
 
@@ -103,6 +110,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 name = "Ep. ${it.episode_string} - ${it.title}"
                 url = "${anime.url}/ep-${it.episode_string}-${it.slug}"
                 episode_number = it.episode_string.toFloatOrNull() ?: 0F
+                scanlator = lang.getLocale()
             }
         }
 
@@ -131,9 +139,12 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     // tested with extensions-lib:9d3dcb0
     // override fun getAnimeUrl(anime: SAnime) = "$baseUrl${anime.url}"
 
-    override fun animeDetailsRequest(anime: SAnime) = GET("$API_URL/${anime.url}")
+    override fun animeDetailsRequest(anime: SAnime) = GET("$API_URL${anime.url}")
 
     override fun animeDetailsParse(response: Response): SAnime {
+        val languages = client.newCall(
+            GET("${response.request.url}/language"),
+        ).execute().parseAs<LanguagesDto>()
         val anime = response.parseAs<AnimeInfoDto>()
         return SAnime.create().apply {
             val useEnglish = preferences.getBoolean(PREF_USE_ENGLISH_KEY, PREF_USE_ENGLISH_DEFAULT)
@@ -147,6 +158,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             status = anime.status.parseStatus()
             description = buildString {
                 append(anime.synopsis + "\n\n")
+                append("Available Dub Languages: ${languages.result.joinToString(", ") { t -> t.getLocale() }}\n")
                 append("Season: ${anime.season.capitalize()}\n")
                 append("Year: ${anime.year}")
             }
@@ -158,12 +170,20 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun searchAnimeParse(response: Response) = throw Exception("Not used")
 
     private fun searchAnimeParse(response: Response, page: Int): AnimesPage {
-        val data = response.parseAs<SearchResponseDto>()
-        val animes = data.result.map(::popularAnimeFromObject)
-        return AnimesPage(animes, page < data.maxPage)
+        val path = response.request.url.encodedPath
+        return if (path.endsWith("api/fsearch") || path.endsWith("/anime")) {
+            val data = response.parseAs<SearchResponseDto>()
+            val animes = data.result.map(::popularAnimeFromObject)
+            AnimesPage(animes, page < data.maxPage)
+        } else if (path.endsWith("/recent")) {
+            latestUpdatesParse(response)
+        } else {
+            popularAnimeParse(response)
+        }
     }
 
     private fun searchAnimeRequest(page: Int, query: String, filters: KickAssAnimeFilters.FilterSearchParams): Request {
+        if (filters.subPage.isNotBlank()) return GET("$baseUrl/api/${filters.subPage}?page=$page")
         if (query.isBlank()) throw Exception("Enter query to search")
         val data = if (filters.filters == "{}") {
             """{"page":$page,"query":"$query"}"""
@@ -221,6 +241,21 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
+        val audioLangPref = ListPreference(screen.context).apply {
+            key = PREF_AUDIO_LANG_KEY
+            title = PREF_AUDIO_LANG_TITLE
+            entries = locale.map { it.second }.toTypedArray()
+            entryValues = locale.map { it.first }.toTypedArray()
+            setDefaultValue(PREF_AUDIO_LANG_DEFAULT)
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
@@ -235,14 +270,34 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val serverPref = ListPreference(screen.context).apply {
+            key = PREF_SERVER_KEY
+            title = PREF_SERVER_TITLE
+            entries = PREF_SERVER_VALUES
+            entryValues = PREF_SERVER_VALUES
+            setDefaultValue(PREF_SERVER_DEFAULT)
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
 
         screen.addPreference(videoQualityPref)
+        screen.addPreference(audioLangPref)
         screen.addPreference(titlePref)
+        screen.addPreference(serverPref)
     }
 
     // ============================= Utilities ==============================
     private inline fun <reified T> Response.parseAs(): T {
         return body.string().let(json::decodeFromString)
+    }
+
+    private fun String.getLocale(): String {
+        return locale.firstOrNull { it.first == this }?.second ?: ""
     }
 
     private fun String.parseStatus() = when (this) {
@@ -253,8 +308,12 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
         return sortedWith(
-            compareBy { it.quality.contains(quality) },
+            compareBy(
+                { it.quality.contains(quality) },
+                { it.quality.contains(server, true) },
+            ),
         ).reversed()
     }
 
@@ -270,5 +329,21 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_QUALITY_TITLE = "Preferred quality"
         private const val PREF_QUALITY_DEFAULT = "720p"
         private val PREF_QUALITY_VALUES = arrayOf("240p", "360p", "480p", "720p", "1080p")
+
+        private const val PREF_AUDIO_LANG_KEY = "preferred_audio_lang"
+        private const val PREF_AUDIO_LANG_TITLE = "Preferred audio language"
+        private const val PREF_AUDIO_LANG_DEFAULT = "ja-JP"
+
+        // Add new locales to the bottom so it doesn't mess with pref indexes
+        private val locale = arrayOf(
+            Pair("en-US", "English"),
+            Pair("es-ES", "Spanish (España)"),
+            Pair("ja-JP", "Japanese"),
+        )
+
+        private const val PREF_SERVER_KEY = "preferred_server"
+        private const val PREF_SERVER_TITLE = "Preferred server"
+        private const val PREF_SERVER_DEFAULT = "SapphireDuck"
+        private val PREF_SERVER_VALUES = arrayOf("SapphireDuck", "PinkBird")
     }
 }

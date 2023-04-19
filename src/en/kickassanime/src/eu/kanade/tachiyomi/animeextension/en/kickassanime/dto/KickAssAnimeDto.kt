@@ -75,3 +75,8 @@ data class VideoDto(
     @Serializable
     data class SubtitlesDto(val name: String, val language: String, val src: String)
 }
+
+@Serializable
+data class LanguagesDto(
+    val result: List<String>,
+)

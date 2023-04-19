@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.kickassanime
 
+import eu.kanade.tachiyomi.animeextension.en.kickassanime.KickAssAnimeFilters.asQueryPart
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 
@@ -31,16 +32,21 @@ object KickAssAnimeFilters {
     class YearFilter : QueryPartFilter("Year", KickAssAnimeFiltersData.year)
     class StatusFilter : QueryPartFilter("Status", KickAssAnimeFiltersData.status)
     class TypeFilter : QueryPartFilter("Type", KickAssAnimeFiltersData.type)
+    class SubPageFilter : QueryPartFilter("Sub-page", KickAssAnimeFiltersData.subpage)
 
     val filterList = AnimeFilterList(
         GenreFilter(),
         YearFilter(),
         StatusFilter(),
         TypeFilter(),
+        AnimeFilter.Separator(),
+        AnimeFilter.Header("NOTE: Overrides & ignores search and other filters"),
+        SubPageFilter(),
     )
 
     data class FilterSearchParams(
         val filters: String = "",
+        val subPage: String = "",
     )
 
     private fun getJsonList(listString: String, name: String): String {
@@ -66,7 +72,7 @@ object KickAssAnimeFilters {
         val status = filters.asQueryPart<StatusFilter>()
         val type = filters.asQueryPart<TypeFilter>()
 
-        val filters = "{${
+        val filtersQuery = "{${
         listOf(
             getJsonList(genre, "genres"),
             getJsonItem(year, "year"),
@@ -74,7 +80,10 @@ object KickAssAnimeFilters {
             getJsonItem(type, "type"),
         ).filter { it.isNotEmpty() }.joinToString(",")
         }}"
-        return FilterSearchParams(filters)
+        return FilterSearchParams(
+            filtersQuery,
+            filters.asQueryPart<SubPageFilter>(),
+        )
     }
 
     private object KickAssAnimeFiltersData {
@@ -278,6 +287,14 @@ object KickAssAnimeFilters {
             Pair("MOVIE", "\"movie\""),
             Pair("UNKNOWN", "\"unknown\""),
             Pair("MUSIC", "\"music\""),
+        )
+
+        val subpage = arrayOf(
+            Pair("<Select>", ""),
+            Pair("Trending", "show/trending"),
+            Pair("Anime", "anime"),
+            Pair("Recently Added", "show/recent"),
+            Pair("Popular Shows", "show/popular"),
         )
     }
 }
