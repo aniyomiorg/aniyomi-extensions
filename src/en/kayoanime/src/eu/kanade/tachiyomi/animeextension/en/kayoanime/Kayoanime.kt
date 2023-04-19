@@ -2,11 +2,10 @@ package eu.kanade.tachiyomi.animeextension.en.kayoanime
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
-import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import androidx.preference.SwitchPreferenceCompat
+import eu.kanade.tachiyomi.animeextension.en.kayoanime.extractors.GoogleDriveExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -21,19 +20,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
-import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
@@ -47,18 +45,19 @@ import java.util.Locale
 
 class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "Kayoanime"
+    override val name = "Kayoanime (Experimental)"
 
     override val baseUrl = "https://kayoanime.com"
 
     override val lang = "en"
 
     // Used for loading anime
-    private var query = ""
+    private var infoQuery = ""
     private var max = ""
     private var latest_post = ""
     private var layout = ""
     private var settings = ""
+    private var currentReferer = ""
 
     override val supportsLatest = true
 
@@ -82,17 +81,18 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeRequest(page: Int): Request {
         return if (page == 1) {
-            query = ""
+            infoQuery = ""
             max = ""
             latest_post = ""
             layout = ""
             settings = ""
+            currentReferer = "https://kayoanime.com/ongoing-anime/"
             GET("$baseUrl/ongoing-anime/")
         } else {
             val formBody = FormBody.Builder()
                 .add("action", "tie_archives_load_more")
-                .add("query", query)
-                .add("max", max.toString())
+                .add("query", infoQuery)
+                .add("max", max)
                 .add("page", page.toString())
                 .add("latest_post", latest_post)
                 .add("layout", layout)
@@ -103,7 +103,7 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
                 .add("Host", "kayoanime.com")
                 .add("Origin", "https://kayoanime.com")
-                .add("Referer", "https://kayoanime.com/ongoing-anime/")
+                .add("Referer", currentReferer)
                 .add("X-Requested-With", "XMLHttpRequest")
                 .build()
             POST("$baseUrl/wp-admin/admin-ajax.php", body = formBody, headers = formHeaders)
@@ -113,17 +113,17 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeParse(response: Response): AnimesPage {
         return if (response.request.url.toString().endsWith("admin-ajax.php")) {
             val body = response.body.string()
-            Log.i("HELLOWORLD", body)
-            AnimesPage(emptyList(), false)
+            val rawParsed = json.decodeFromString<String>(body)
+            val parsed = json.decodeFromString<PostResponse>(rawParsed)
+            val soup = Jsoup.parse(parsed.code)
+
+            val animes = soup.select("li.post-item").map { element ->
+                popularAnimeFromElement(element)
+            }
+
+            AnimesPage(animes, !parsed.hide_next)
         } else {
             val document = response.asJsoup()
-            val container = document.selectFirst("ul#posts-container")!!
-            val pagesNav = document.selectFirst("div.pages-nav > a")!!
-            layout = container.attr("data-layout")
-            query = pagesNav.attr("data-query")
-            max = pagesNav.attr("data-max")
-            latest_post = pagesNav.attr("data-latest")
-            settings = container.attr("data-settings")
 
             val animes = document.select(popularAnimeSelector()).map { element ->
                 popularAnimeFromElement(element)
@@ -132,6 +132,15 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val hasNextPage = popularAnimeNextPageSelector()?.let { selector ->
                 document.select(selector).first()
             } != null
+            if (hasNextPage) {
+                val container = document.selectFirst("ul#posts-container")!!
+                val pagesNav = document.selectFirst("div.pages-nav > a")!!
+                layout = container.attr("data-layout")
+                infoQuery = pagesNav.attr("data-query")
+                max = pagesNav.attr("data-max")
+                latest_post = pagesNav.attr("data-latest")
+                settings = container.attr("data-settings")
+            }
 
             AnimesPage(animes, hasNextPage)
         }
@@ -145,7 +154,7 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return SAnime.create().apply {
             setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").toHttpUrl().encodedPath)
             thumbnail_url = element.selectFirst("img[src]")?.attr("src") ?: ""
-            title = element.selectFirst("p.post-excerpt")!!.text().substringBefore(" Episode")
+            title = element.selectFirst("h2.post-title")!!.text().substringBefore(" Episode")
         }
     }
 
@@ -153,63 +162,158 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesRequest(page: Int): Request = GET(baseUrl)
 
-    override fun latestUpdatesSelector(): String = "div#latest-tab-pane > div.row > div.col-md-6"
+    override fun latestUpdatesSelector(): String = "ul.tabs:has(a:contains(Recent)) + div.tab-content li.widget-single-post-item"
 
-    override fun latestUpdatesNextPageSelector(): String? = popularAnimeNextPageSelector()
+    override fun latestUpdatesNextPageSelector(): String? = null
 
     override fun latestUpdatesFromElement(element: Element): SAnime {
-        val thumbnailUrl = element.selectFirst("img")!!.attr("data-src")
-
         return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a.animeparent")!!.attr("href"))
-            thumbnail_url = if (thumbnailUrl.contains(baseUrl.toHttpUrl().host)) {
-                thumbnailUrl
-            } else {
-                baseUrl + thumbnailUrl
-            }
-            title = element.selectFirst("span.animename")!!.text()
+            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").toHttpUrl().encodedPath)
+            thumbnail_url = element.selectFirst("img[src]")?.attr("src") ?: ""
+            title = element.selectFirst("a.post-title")!!.text().substringBefore(" Episode")
         }
     }
 
     // =============================== Search ===============================
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val cleanQuery = query.replace(" ", "+")
-        return GET("$baseUrl?s=$cleanQuery")
+        return if (page == 1) {
+            infoQuery = ""
+            max = ""
+            latest_post = ""
+            layout = ""
+            settings = ""
+
+            val filterList = if (filters.isEmpty()) getFilterList() else filters
+            val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
+            val subPageFilter = filterList.find { it is SubPageFilter } as SubPageFilter
+
+            return when {
+                query.isNotBlank() -> {
+                    val cleanQuery = query.replace(" ", "+")
+                    currentReferer = "$baseUrl?s=$cleanQuery"
+                    GET("$baseUrl?s=$cleanQuery")
+                }
+                genreFilter.state != 0 -> {
+                    val url = "$baseUrl${genreFilter.toUriPart()}"
+                    currentReferer = url
+                    GET(url)
+                }
+                subPageFilter.state != 0 -> {
+                    val url = "$baseUrl${subPageFilter.toUriPart()}"
+                    currentReferer = url
+                    GET(url)
+                }
+                else -> popularAnimeRequest(page)
+            }
+        } else {
+            val formBody = FormBody.Builder()
+                .add("action", "tie_archives_load_more")
+                .add("query", infoQuery)
+                .add("max", max)
+                .add("page", page.toString())
+                .add("latest_post", latest_post)
+                .add("layout", layout)
+                .add("settings", settings)
+                .build()
+            val formHeaders = headers.newBuilder()
+                .add("Accept", "*/*")
+                .add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+                .add("Host", "kayoanime.com")
+                .add("Origin", "https://kayoanime.com")
+                .add("Referer", currentReferer)
+                .add("X-Requested-With", "XMLHttpRequest")
+                .build()
+            POST("$baseUrl/wp-admin/admin-ajax.php", body = formBody, headers = formHeaders)
+        }
     }
+
+    override fun searchAnimeParse(response: Response): AnimesPage = popularAnimeParse(response)
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
 
-    override fun searchAnimeNextPageSelector(): String? = popularAnimeNextPageSelector()
+    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
     override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
+
+    // ============================== Filters ===============================
+
+    override fun getFilterList(): AnimeFilterList = AnimeFilterList(
+        AnimeFilter.Header("Text search ignores filters"),
+        SubPageFilter(),
+        GenreFilter(),
+    )
+
+    private class SubPageFilter : UriPartFilter(
+        "Sub-page",
+        arrayOf(
+            Pair("<select>", ""),
+            Pair("Anime Series", "/anime-series/"),
+            Pair("Anime Movie", "/anime-movie/"),
+        ),
+    )
+
+    private class GenreFilter : UriPartFilter(
+        "Genres",
+        arrayOf(
+            Pair("<select>", ""),
+            Pair("Adventure", "/adventure/"),
+            Pair("Comedy", "/comedy/"),
+            Pair("Demons", "/demons/"),
+            Pair("Drama", "/drama/"),
+            Pair("Fantasy", "/fantasy/"),
+            Pair("Mecha", "/mecha/"),
+            Pair("Military", "/military/"),
+            Pair("Romance", "/romance/"),
+            Pair("School", "/school/"),
+            Pair("Sci-Fi", "/sci-fi/"),
+            Pair("Shounen", "/shounen/"),
+            Pair("Slice of Life", "/slice-of-life/"),
+            Pair("Sports", "/sports/"),
+            Pair("Super Power", "/super-power/"),
+            Pair("Supernatural", "/supernatural/"),
+        ),
+    )
+
+    private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
+        AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
+        fun toUriPart() = vals[state].second
+    }
 
     // =========================== Anime Details ============================
 
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        return Observable.just(anime)
+        return client.newCall(animeDetailsRequest(anime))
+            .asObservableSuccess()
+            .map { response ->
+                animeDetailsParse(response, anime).apply { initialized = true }
+            }
     }
 
     override fun animeDetailsParse(document: Document): SAnime = throw Exception("Not used")
 
-//    override fun animeDetailsParse(document: Document): SAnime {
-//        val thumbnailUrl = document.selectFirst("div.card-body img")!!.attr("data-src")
-//        val moreInfo = document.select("div.card-body table > tbody > tr").joinToString("\n") { it.text() }
-//
-//        return SAnime.create().apply {
-//            title = document.selectFirst("div.card-body h2")!!.text()
-//            thumbnail_url = if (thumbnailUrl.contains(baseUrl.toHttpUrl().host)) {
-//                thumbnailUrl
-//            } else {
-//                baseUrl + thumbnailUrl
-//            }
-//            status = document.selectFirst("div.card-body table > tbody > tr:has(>td:contains(Status)) td:not(:contains(Status))")?.let {
-//                parseStatus(it.text())
-//            } ?: SAnime.UNKNOWN
-//            description = (document.selectFirst("div.card-body div:has(>b:contains(Description))")?.ownText() ?: "") + "\n\n$moreInfo"
-//            genre = document.select("div.card-body table > tbody > tr:has(>td:contains(Genres)) td > a").joinToString(", ") { it.text() }
-//        }
-//    }
+    private fun animeDetailsParse(response: Response, anime: SAnime): SAnime {
+        val document = response.asJsoup()
+        val moreInfo = document.select("div.toggle-content > ul > li").joinToString("\n") { it.text() }
+        val realDesc = document.selectFirst("div.entry-content:has(div.toggle + div.clearfix + div.toggle:has(h3:contains(Information)))")?.let {
+            it.selectFirst("div.toggle > div.toggle-content")!!.text() + "\n\n"
+        } ?: ""
+
+        return SAnime.create().apply {
+            title = anime.title
+            thumbnail_url = anime.thumbnail_url
+            status = document.selectFirst("div.toggle-content > ul > li:contains(Status)")?.let {
+                parseStatus(it.text())
+            } ?: SAnime.UNKNOWN
+            description = realDesc + "\n\n$moreInfo"
+            genre = document.selectFirst("div.toggle-content > ul > li:contains(Genres)")?.let {
+                it.text().substringAfter("Genres: ")
+            }
+            author = document.selectFirst("div.toggle-content > ul > li:contains(Studios)")?.let {
+                it.text().substringAfter("Studios: ")
+            }
+        }
+    }
 
     // ============================== Episodes ==============================
 
@@ -229,7 +333,9 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 GET(url, headers = headers.build()),
             ).execute().asJsoup()
 
-            if (driveDocument.selectFirst("script:containsData(requestAccess)") != null) throw Exception("Please log in through webview on google drive")
+            if (driveDocument.selectFirst("script:containsData(requestAccess)") != null) {
+                throw Exception("Please log in through webview on google drive & join group")
+            }
 
             val script = driveDocument.selectFirst("script:containsData(_DRIVE_ivd)") ?: return
             val data = script.data().substringAfter("['_DRIVE_ivd'] = '").substringBeforeLast("';")
@@ -245,7 +351,7 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val type = item.jsonArray.getOrNull(3)?.jsonPrimitive?.content ?: "Unknown type"
                 if (type.startsWith("video")) {
                     val episode = SEpisode.create()
-                    episode.scanlator = "/$path • $size"
+                    episode.scanlator = "$size • /$path"
                     episode.name = name.removePrefix("[Kayoanime] ")
                     episode.url = "https://drive.google.com/uc?id=$id"
                     episode.episode_number = index.toFloat()
@@ -270,103 +376,15 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episodeList.reversed()
     }
 
-    override fun episodeListSelector(): String = "div#episodes-tab-pane > div.row > div > div.card"
+    override fun episodeListSelector(): String = throw Exception("Not used")
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        val episodeName = element.selectFirst("span.animename")!!.text()
-        val episodeTitle = element.selectFirst("div.animetitle")?.text() ?: ""
-
-        return SEpisode.create().apply {
-            name = "$episodeName $episodeTitle"
-            episode_number = if (episodeName.contains("Episode ", true)) {
-                episodeName.substringAfter("Episode ").substringBefore(" ").toFloatOrNull() ?: 0F
-            } else { 0F }
-            date_upload = element.selectFirst("span.date")?.let { parseDate(it.text()) } ?: 0L
-            setUrlWithoutDomain(element.selectFirst("a[href]")!!.attr("href"))
-        }
-    }
+    override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not used")
 
     // ============================ Video Links =============================
 
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
-        return OkHttpClient().newCall(videoListRequest(episode))
-            .asObservableSuccess()
-            .map { response ->
-                videoListParse(response).sort()
-            }
-    }
-
-    override fun videoListRequest(episode: SEpisode): Request {
-        val videoHeaders = Headers.Builder()
-            .add("Accept", "*/*")
-            .add("Accept-Language", "en-US,en;q=0.5")
-            .add("Connection", "keep-alive")
-            .add("Cookie", getCookie(episode.url))
-            .add("Host", "drive.google.com")
-            .add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6)")
-            .build()
-
-        return GET(episode.url, headers = videoHeaders)
-    }
-
-    override fun videoListParse(response: Response): List<Video> {
-        val noRedirectClient = OkHttpClient().newBuilder().followRedirects(false).build()
-        val document = response.asJsoup()
-
-        val url = document.selectFirst("form#download-form")?.attr("action") ?: return emptyList()
-        val redirectHeaders = headers.newBuilder()
-            .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
-            .add("Connection", "keep-alive")
-            .add("Content-Length", "0")
-            .add("Content-Type", "application/x-www-form-urlencoded")
-            .add("Cookie", getCookie(url))
-            .add("Host", "drive.google.com")
-            .add("Origin", "https://drive.google.com")
-            .add("Referer", url.substringBeforeLast("&at="))
-            .build()
-
-        val response = noRedirectClient.newCall(
-            POST(url, headers = redirectHeaders, body = "".toRequestBody("application/x-www-form-urlencoded".toMediaType())),
-        ).execute()
-        val redirected = response.headers["location"] ?: return listOf(Video(url, "Video", url))
-
-        val redirectedHeaders = headers.newBuilder()
-            .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
-            .add("Connection", "keep-alive")
-            .add("Host", redirected.toHttpUrl().host)
-            .add("Referer", "https://drive.google.com/")
-            .build()
-
-        val redirectedResponseHeaders = noRedirectClient.newCall(
-            GET(redirected, headers = redirectedHeaders),
-        ).execute().headers
-        val authCookie = redirectedResponseHeaders.first {
-            it.first == "set-cookie" && it.second.startsWith("AUTH_6")
-        }.second.substringBefore(";")
-        val newRedirected = redirectedResponseHeaders["location"] ?: return listOf(Video(redirected, "Video", redirected))
-
-        val googleDriveRedirectHeaders = headers.newBuilder()
-            .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
-            .add("Connection", "keep-alive")
-            .add("Cookie", getCookie(newRedirected))
-            .add("Host", "drive.google.com")
-            .add("Referer", "https://drive.google.com/")
-            .build()
-        val googleDriveRedirectUrl = noRedirectClient.newCall(
-            GET(newRedirected, headers = googleDriveRedirectHeaders),
-        ).execute().headers["location"]!!
-
-        val videoHeaders = headers.newBuilder()
-            .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
-            .add("Connection", "keep-alive")
-            .add("Cookie", authCookie)
-            .add("Host", googleDriveRedirectUrl.toHttpUrl().host)
-            .add("Referer", "https://drive.google.com/")
-            .build()
-
-        return listOf(
-            Video(googleDriveRedirectUrl, "Video", googleDriveRedirectUrl, headers = videoHeaders),
-        )
+        val videoList = GoogleDriveExtractor(client, headers).videosFromUrl(episode.url)
+        return Observable.just(videoList)
     }
 
     override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
@@ -377,27 +395,11 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================= Utilities ==============================
 
-    override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "1080")!!
-        val server = preferences.getString("preferred_server", "vstream")!!
-
-        return this.sortedWith(
-            compareBy(
-                { it.quality.contains(quality) },
-                { it.quality.contains(server) },
-            ),
-        ).reversed()
-    }
-
-    data class Server(
-        val url: String,
-        val name: String,
+    @Serializable
+    data class PostResponse(
+        val hide_next: Boolean,
+        val code: String,
     )
-
-    private fun parseDate(dateStr: String): Long {
-        return runCatching { DateFormatter.parse(dateStr)?.time }
-            .getOrNull() ?: 0L
-    }
 
     private fun formatBytes(bytes: Long?): String? {
         if (bytes == null) return null
@@ -428,8 +430,8 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun parseStatus(statusString: String): Int {
         return when (statusString) {
-            "Ongoing" -> SAnime.ONGOING
-            "Completed" -> SAnime.COMPLETED
+            "Status: Currently Airing" -> SAnime.ONGOING
+            "Status: Finished Airing" -> SAnime.COMPLETED
             else -> SAnime.UNKNOWN
         }
     }
@@ -440,69 +442,5 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
 
-    override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val domainPref = ListPreference(screen.context).apply {
-            key = "preferred_domain"
-            title = "Preferred domain (requires app restart)"
-            entries = arrayOf("animedao.to")
-            entryValues = arrayOf("https://animedao.to")
-            setDefaultValue("https://animedao.to")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
-            setDefaultValue("1080")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-        val videoServerPref = ListPreference(screen.context).apply {
-            key = "preferred_server"
-            title = "Preferred server"
-            entries = arrayOf("Vidstreaming", "Vidstreaming2", "Vidstreaming3", "Mixdrop", "Fembed", "StreamSB", "Streamtape", "Vidstreaming4", "Doodstream")
-            entryValues = arrayOf("vstream", "src2", "src", "mixdrop", "vcdn", "streamsb", "streamtape", "vplayer", "doodstream")
-            setDefaultValue("vstream")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-        val episodeSortPref = SwitchPreferenceCompat(screen.context).apply {
-            key = "preferred_episode_sorting"
-            title = "Attempt episode sorting"
-            summary = """AnimeDao displays the episodes in either ascending or descending order,
-                | enable to attempt order or disable to set same as website.
-            """.trimMargin()
-            setDefaultValue(true)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val new = newValue as Boolean
-                preferences.edit().putBoolean(key, new).commit()
-            }
-        }
-
-        screen.addPreference(domainPref)
-        screen.addPreference(videoQualityPref)
-        screen.addPreference(videoServerPref)
-        screen.addPreference(episodeSortPref)
-    }
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {}
 }
