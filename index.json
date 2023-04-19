@@ -1425,10 +1425,10 @@
   {
     "name": "Aniyomi: KickAssAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.kickassanime",
-    "apk": "aniyomi-en.kickassanime-v13.23.apk",
+    "apk": "aniyomi-en.kickassanime-v13.24.apk",
     "lang": "en",
-    "code": 23,
-    "version": "13.23",
+    "code": 24,
+    "version": "13.24",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
