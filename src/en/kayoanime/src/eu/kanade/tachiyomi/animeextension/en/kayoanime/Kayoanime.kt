@@ -2,13 +2,11 @@ package eu.kanade.tachiyomi.animeextension.en.kayoanime
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
-import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
@@ -52,11 +50,19 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "en"
 
-    private var authCookie = ""
+    // Used for loading animes
+    private var query = ""
+    private var max = 0
+    private var page = 0
+    private var latest_post = ""
+    private var layout = ""
+    private var settings = ""
 
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
+
+    private val MAX_RECURSION_DEPTH = 2
 
     private val json: Json by injectLazy()
 
@@ -110,54 +116,14 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =============================== Search ===============================
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
-
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        val document = response.asJsoup()
-
-        val animes = if (response.request.url.encodedPath.startsWith("/animelist/")) {
-            document.select(searchAnimeSelectorFilter()).map { element ->
-                searchAnimeFromElement(element)
-            }
-        } else {
-            document.select(searchAnimeSelector()).map { element ->
-                searchAnimeFromElement(element)
-            }
-        }
-
-        val hasNextPage = searchAnimeNextPageSelector()?.let { selector ->
-            document.select(selector).first()
-        } != null
-
-        return AnimesPage(animes, hasNextPage)
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val cleanQuery = query.replace(" ", "+")
+        return GET("$baseUrl?s=$cleanQuery")
     }
-
-//    private fun searchAnimeRequest(page: Int, query: String, filters: AnimeDaoFilters.FilterSearchParams): Request {
-//        return if (query.isNotBlank()) {
-//            val cleanQuery = query.replace(" ", "+")
-//            GET("$baseUrl/search/?search=$cleanQuery", headers = headers)
-//        } else {
-//            var url = "$baseUrl/animelist/".toHttpUrlOrNull()!!.newBuilder()
-//                .addQueryParameter("status[]=", filters.status)
-//                .addQueryParameter("order[]=", filters.order)
-//                .build().toString()
-//
-//            if (filters.genre.isNotBlank()) url += "&${filters.genre}"
-//            if (filters.rating.isNotBlank()) url += "&${filters.rating}"
-//            if (filters.letter.isNotBlank()) url += "&${filters.letter}"
-//            if (filters.year.isNotBlank()) url += "&${filters.year}"
-//            if (filters.score.isNotBlank()) url += "&${filters.score}"
-//            url += "&page=$page"
-//
-//            GET(url, headers = headers)
-//        }
-//    }
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
 
-    private fun searchAnimeSelectorFilter(): String = "div.container div.col-12 > div.row > div.col-md-6"
-
-    override fun searchAnimeNextPageSelector(): String = "ul.pagination > li.page-item:has(i.fa-arrow-right):not(.disabled)"
+    override fun searchAnimeNextPageSelector(): String? = popularAnimeNextPageSelector()
 
     override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
 
@@ -194,18 +160,21 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
 
-        document.select("div.toggle-content > a[href*=drive.google.com]").forEach {
-            val url = it.attr("href").substringBeforeLast("?usp=share_link")
-            Log.i("SOMEURL", url)
+        fun traverseFolder(url: String, path: String, recursionDepth: Int = 0) {
+            if (recursionDepth == MAX_RECURSION_DEPTH) return
             val headers = headers.newBuilder()
                 .add("Accept", "*/*")
                 .add("Connection", "keep-alive")
+                .add("Cookie", getCookie("https://drive.google.com"))
                 .add("Host", "drive.google.com")
+
             val driveDocument = client.newCall(
                 GET(url, headers = headers.build()),
             ).execute().asJsoup()
 
-            val script = driveDocument.selectFirst("script:containsData(_DRIVE_ivd)") ?: return@forEach
+            if (driveDocument.selectFirst("script:containsData(requestAccess)") != null) throw Exception("Please log in through webview on google drive")
+
+            val script = driveDocument.selectFirst("script:containsData(_DRIVE_ivd)") ?: return
             val data = script.data().substringAfter("['_DRIVE_ivd'] = '").substringBeforeLast("';")
             val decoded = Regex("\\\\x([0-9a-fA-F]{2})").replace(data) { matchResult ->
                 Integer.parseInt(matchResult.groupValues[1], 16).toChar().toString()
@@ -216,14 +185,29 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val size = item.jsonArray.getOrNull(13)?.let { t -> formatBytes(t.toString().toLongOrNull()) }
                 val name = item.jsonArray.getOrNull(2)?.jsonPrimitive?.content ?: "Name unavailable"
                 val id = item.jsonArray.getOrNull(0)?.jsonPrimitive?.content ?: ""
-
-                val episode = SEpisode.create()
-                episode.scanlator = size
-                episode.name = name
-                episode.url = "https://drive.google.com/uc?id=$id"
-                episode.episode_number = index.toFloat()
-                episodeList.add(episode)
+                val type = item.jsonArray.getOrNull(3)?.jsonPrimitive?.content ?: "Unknown type"
+                if (type.startsWith("video")) {
+                    val episode = SEpisode.create()
+                    episode.scanlator = "/$path • $size"
+                    episode.name = name.removePrefix("[Kayoanime] ")
+                    episode.url = "https://drive.google.com/uc?id=$id"
+                    episode.episode_number = index.toFloat()
+                    episodeList.add(episode)
+                }
+                if (type.endsWith(".folder")) {
+                    traverseFolder(
+                        "https://drive.google.com/drive/folders/$id",
+                        "$path/$name",
+                        recursionDepth + 1,
+                    )
+                }
             }
+        }
+
+        document.select("div.toggle-content > a[href*=drive.google.com]").distinctBy {
+            it.text() // remove dupes
+        }.forEach {
+            traverseFolder(it.attr("href").substringBeforeLast("?usp=share_link"), it.text())
         }
 
         return episodeList.reversed()
@@ -256,114 +240,76 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun videoListRequest(episode: SEpisode): Request {
-        val cookieList = client.cookieJar.loadForRequest(episode.url.toHttpUrl())
-        if (cookieList.isNotEmpty()) {
-            authCookie = cookieList.joinToString("; ") { "${it.name}=${it.value}" }
-        }
-
         val videoHeaders = Headers.Builder()
             .add("Accept", "*/*")
             .add("Accept-Language", "en-US,en;q=0.5")
             .add("Connection", "keep-alive")
-            .add("Cookie", authCookie)
+            .add("Cookie", getCookie(episode.url))
             .add("Host", "drive.google.com")
             .add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6)")
             .build()
-        Log.i("AUTHCOOKIEURL", episode.url)
-        Log.i("AUTHCOOKIE", authCookie)
 
         return GET(episode.url, headers = videoHeaders)
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        val videoList = mutableListOf<Video>()
         val noRedirectClient = OkHttpClient().newBuilder().followRedirects(false).build()
-        val url = document.selectFirst("form#download-form")?.attr("action") ?: return emptyList()
+        val document = response.asJsoup()
 
-        val redirectHeaders = Headers.Builder()
+        val url = document.selectFirst("form#download-form")?.attr("action") ?: return emptyList()
+        val redirectHeaders = headers.newBuilder()
             .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
             .add("Connection", "keep-alive")
             .add("Content-Length", "0")
             .add("Content-Type", "application/x-www-form-urlencoded")
-            .add("Cookie", authCookie)
+            .add("Cookie", getCookie(url))
             .add("Host", "drive.google.com")
             .add("Origin", "https://drive.google.com")
             .add("Referer", url.substringBeforeLast("&at="))
-            .add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6)")
             .build()
 
-        Log.i("SOMETHINGURL", url)
-
-        var response = noRedirectClient.newCall(
+        val response = noRedirectClient.newCall(
             POST(url, headers = redirectHeaders, body = "".toRequestBody("application/x-www-form-urlencoded".toMediaType())),
         ).execute()
-//        if (response.code == 200) {
-//            val dlUrl = response.asJsoup().selectFirst("form#download-form")?.attr("action") ?: return emptyList()
-//            response = noRedirectClient.newCall(
-//                GET(dlUrl.substringBefore("&at"), headers = redirectHeaders),
-//            ).execute()
-//        }
-//        Log.i("SOMETHING", response.toString())
-//        Log.i("SOMETHING2", response.asJsoup().toString())
-//        Log.i("SOMETHINGCOOL", response.headers.joinToString("\n") { "${it.first} - ${it.second}" })
+        val redirected = response.headers["location"] ?: return listOf(Video(url, "Video", url))
 
-        var redirected: String? = response.headers["location"] ?: return emptyList()
-        var videoHeaders = Headers.Builder()
+        val redirectedHeaders = headers.newBuilder()
             .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
             .add("Connection", "keep-alive")
-            .add("Host", redirected!!.toHttpUrl().host)
+            .add("Host", redirected.toHttpUrl().host)
             .add("Referer", "https://drive.google.com/")
-            .add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6)")
             .build()
 
-        videoList.add(
-            Video(redirected, "Video", redirected, headers = videoHeaders),
+        val redirectedResponseHeaders = noRedirectClient.newCall(
+            GET(redirected, headers = redirectedHeaders),
+        ).execute().headers
+        val authCookie = redirectedResponseHeaders.first {
+            it.first == "set-cookie" && it.second.startsWith("AUTH_6")
+        }.second.substringBefore(";")
+        val newRedirected = redirectedResponseHeaders["location"] ?: return listOf(Video(redirected, "Video", redirected))
+
+        val googleDriveRedirectHeaders = headers.newBuilder()
+            .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+            .add("Connection", "keep-alive")
+            .add("Cookie", getCookie(newRedirected))
+            .add("Host", "drive.google.com")
+            .add("Referer", "https://drive.google.com/")
+            .build()
+        val googleDriveRedirectUrl = noRedirectClient.newCall(
+            GET(newRedirected, headers = googleDriveRedirectHeaders),
+        ).execute().headers["location"]!!
+
+        val videoHeaders = headers.newBuilder()
+            .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+            .add("Connection", "keep-alive")
+            .add("Cookie", authCookie)
+            .add("Host", googleDriveRedirectUrl.toHttpUrl().host)
+            .add("Referer", "https://drive.google.com/")
+            .build()
+
+        return listOf(
+            Video(googleDriveRedirectUrl, "Video", googleDriveRedirectUrl, headers = videoHeaders),
         )
-
-//        while (true) {
-//            if (newUrl.toHttpUrl().host.endsWith("googleusercontent.com")) {
-//                // Set usercontent cookie for use later
-//                response.headers.forEach {
-//                    if (it.first == "set-cookie" && it.second.startsWith("AUTH_")) {
-//                        usercontentCookie = it.second.substringBefore(";")
-//                    }
-//                }
-//                videoHeaders = Headers.Builder()
-//                    .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
-//                    .add("Connection", "keep-alive")
-//                    .add("Host", redirected!!.toHttpUrl().host)
-//                    .add("Referer", "https://drive.google.com/")
-//                    .add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6)")
-//                    .build()
-//                response = noRedirectClient.newCall(
-//                    GET(redirected, headers = videoHeaders),
-//                ).execute()
-//                newUrl = redirected
-//                redirected = response.headers["location"]
-//            } else if (newUrl.toHttpUrl().host == "drive.google.com") {
-//                videoHeaders = Headers.Builder()
-//                    .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
-//                    .add("Connection", "keep-alive")
-//                    .add("Cookie", authCookie)
-//                    .add("Host", "drive.google.com")
-//                    .add("Referer", "https://drive.google.com/")
-//                    .add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6)")
-//                    .build()
-//                response = noRedirectClient.newCall(
-//                    GET(redirected!!, headers = videoHeaders),
-//                ).execute()
-//                newUrl = redirected
-//                redirected = response.headers["location"]
-//            }
-//
-//            if (usercontentCookie.isNotBlank() && newUrl.contains("googleusercontent")) break
-//
-//            Log.i("NEWURL1", newUrl)
-//            Log.i("NEWURL2", redirected.toString())
-//        }
-
-        return videoList
     }
 
     override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
@@ -412,6 +358,15 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         value *= java.lang.Long.signum(bytes).toLong()
         return java.lang.String.format("%.1f %cB", value / 1024.0, ci.current())
+    }
+
+    private fun getCookie(url: String): String {
+        val cookieList = client.cookieJar.loadForRequest(url.toHttpUrl())
+        return if (cookieList.isNotEmpty()) {
+            cookieList.joinToString("; ") { "${it.name}=${it.value}" }
+        } else {
+            ""
+        }
     }
 
     private fun parseStatus(statusString: String): Int {
