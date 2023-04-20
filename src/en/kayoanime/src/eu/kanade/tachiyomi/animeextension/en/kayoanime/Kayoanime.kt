@@ -17,10 +17,6 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -130,7 +126,7 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 popularAnimeFromElement(element)
             }
 
-            val hasNextPage = popularAnimeNextPageSelector()?.let { selector ->
+            val hasNextPage = popularAnimeNextPageSelector().let { selector ->
                 document.select(selector).first()
             } != null
             if (hasNextPage) {
@@ -354,9 +350,9 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 if (type.startsWith("video")) {
                     val episode = SEpisode.create()
                     episode.scanlator = if (preferences.getBoolean("scanlator_order", false)) {
-                        "/$path • $size"
+                        "/${path.trim()} • $size"
                     } else {
-                        "$size • /$path"
+                        "$size • /${path.trim()}"
                     }
                     episode.name = name.removePrefix("[Kayoanime] ")
                     episode.url = "https://drive.google.com/uc?id=$id"
@@ -383,12 +379,34 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
+        val noRedirectClient = client.newBuilder().followRedirects(false).build()
+        val indexExtractor = DriveIndexExtractor(client, headers)
+        document.select("div.toggle:has(> div.toggle-content > a[href*=tinyurl.com])").forEach { season ->
+            season.select("a[href*=tinyurl.com]").forEach {
+                val url = it.selectFirst("a[href*=tinyurl.com]")!!.attr("href")
+                val redirected = noRedirectClient.newCall(GET(url)).execute()
+                redirected.headers["location"]?.let { location ->
+                    if (location.toHttpUrl().host.contains("workers.dev")) {
+                        episodeList.addAll(
+                            indexExtractor.getEpisodesFromIndex(
+                                location,
+                                getVideoPathsFromElement(season) + " " + it.text(),
+                                preferences.getBoolean("scanlator_order", false),
+                            ),
+                        )
+                        // getVideoPathsFromElement(season) + " " + it.text()
+                    }
+                }
+            }
+        }
+
         return episodeList.reversed()
     }
 
     private fun getVideoPathsFromElement(element: Element): String {
         return element.selectFirst("h3")!!.text()
             .substringBefore("480p").substringBefore("720p").substringBefore("1080p")
+            .replace("Download The Anime From Drive", "", true)
     }
 
     override fun episodeListSelector(): String = throw Exception("Not used")
@@ -398,7 +416,15 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
 
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
-        val videoList = GoogleDriveExtractor(client, headers).videosFromUrl(episode.url)
+        val host = episode.url.toHttpUrl().host
+        val videoList = if (host == "drive.google.com") {
+            GoogleDriveExtractor(client, headers).videosFromUrl(episode.url)
+        } else if (host.contains("workers.dev")) {
+            getIndexVideoUrl(episode.url)
+        } else {
+            emptyList()
+        }
+
         return Observable.just(videoList)
     }
 
@@ -409,6 +435,38 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
 
     // ============================= Utilities ==============================
+
+    private fun getIndexVideoUrl(url: String): List<Video> {
+        val doc = client.newCall(
+            GET("$url?a=view"),
+        ).execute().asJsoup()
+
+        val script = doc.selectFirst("script:containsData(videodomain)")?.data()
+            ?: doc.selectFirst("script:containsData(downloaddomain)")?.data()
+            ?: return listOf(Video(url, "Video", url))
+
+        if (script.contains("\"second_domain_for_dl\":false")) {
+            return listOf(Video(url, "Video", url))
+        }
+
+        val domainUrl = if (script.contains("videodomain", true)) {
+            script
+                .substringAfter("\"videodomain\":\"")
+                .substringBefore("\"")
+        } else {
+            script
+                .substringAfter("\"downloaddomain\":\"")
+                .substringBefore("\"")
+        }
+
+        val videoUrl = if (domainUrl.isBlank()) {
+            url
+        } else {
+            domainUrl + url.toHttpUrl().encodedPath
+        }
+
+        return listOf(Video(videoUrl, "Video", videoUrl))
+    }
 
     @Serializable
     data class PostResponse(
@@ -450,12 +508,6 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> SAnime.UNKNOWN
         }
     }
-
-    // From Dopebox
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
-        runBlocking {
-            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
-        }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val scanlatorOrder = SwitchPreferenceCompat(screen.context).apply {
