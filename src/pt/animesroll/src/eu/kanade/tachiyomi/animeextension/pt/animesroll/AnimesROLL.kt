@@ -1,10 +1,10 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesroll
 
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.AnimeDataDto
-import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.MovieInfoDto
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.EpisodeDto
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.EpisodeListDto
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.LatestAnimeDto
+import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.MovieInfoDto
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.PagePropDto
 import eu.kanade.tachiyomi.animeextension.pt.animesroll.dto.SearchResultsDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -18,7 +18,6 @@ import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -156,7 +155,7 @@ class AnimesROLL : AnimeHttpSource() {
     // =============================== Latest ===============================
     override fun latestUpdatesParse(response: Response): AnimesPage {
         val parsed = response.asJsoup().parseAs<LatestAnimeDto>()
-        val animes = parsed.animes.map { it.toSAnime() }
+        val animes = parsed.episodes.map { it.episode.anime!!.toSAnime() }
         return AnimesPage(animes, false)
     }
 
