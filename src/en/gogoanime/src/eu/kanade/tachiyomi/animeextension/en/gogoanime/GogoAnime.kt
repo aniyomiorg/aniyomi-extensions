@@ -204,7 +204,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title = "Preferred domain (requires app restart)"
             entries = arrayOf("gogoanime.cl", "gogoanime.llc")
             entryValues = arrayOf("https://gogoanime.cl", "https://gogoanime.llc")
-            setDefaultValue("https://gogoanime.tel")
+            setDefaultValue("https://gogoanime.cl")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
