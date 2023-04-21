@@ -211,16 +211,6 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Episodes ==============================
 
-    fun generateSapisidhashHeader(SAPISID: String, origin: String = "https://drive.google.com"): String {
-        val timeNow = System.currentTimeMillis() / 1000
-        // SAPISIDHASH algorithm from https://stackoverflow.com/a/32065323
-        val sapisidhash = MessageDigest
-            .getInstance("SHA-1")
-            .digest("$timeNow $SAPISID $origin".toByteArray())
-            .joinToString("") { "%02x".format(it) }
-        return "SAPISIDHASH ${timeNow}_$sapisidhash"
-    }
-
     // Lots of code borrowed from https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/extractor/googledrive.py under the `GoogleDriveFolderIE` class
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
@@ -245,6 +235,7 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val driveDocument = client.newCall(
                 GET(url, headers = driveHeaders),
             ).execute().asJsoup()
+            if (driveDocument.selectFirst("title:contains(Error 404 \\(Not found\\))") != null) return
 
             val keyScript = driveDocument.select("script").first { script ->
                 keyRegex.find(script.data()) != null
@@ -340,13 +331,13 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val noRedirectClient = client.newBuilder().followRedirects(false).build()
 
             if (url.host.contains("drive.google.com")) {
-                traverseFolder(url.toString().substringBeforeLast("?usp=share_link"), it.text())
+                traverseFolder(url.toString().substringBeforeLast("?usp=shar"), it.text())
             }
             if (url.host.contains("tinyurl")) {
                 val redirected = noRedirectClient.newCall(GET(url.toString())).execute()
                 redirected.headers["location"]?.let { location ->
                     if (location.toHttpUrl().host.contains("drive.google.com")) {
-                        traverseFolder(location.substringBeforeLast("?usp=share_link"), it.text())
+                        traverseFolder(location.substringBeforeLast("?usp=shar"), it.text())
                     }
                 }
             }
@@ -373,6 +364,17 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
 
     // ============================= Utilities ==============================
+
+    // https://github.com/yt-dlp/yt-dlp/blob/8f0be90ecb3b8d862397177bb226f17b245ef933/yt_dlp/extractor/youtube.py#L573
+    private fun generateSapisidhashHeader(SAPISID: String, origin: String = "https://drive.google.com"): String {
+        val timeNow = System.currentTimeMillis() / 1000
+        // SAPISIDHASH algorithm from https://stackoverflow.com/a/32065323
+        val sapisidhash = MessageDigest
+            .getInstance("SHA-1")
+            .digest("$timeNow $SAPISID $origin".toByteArray())
+            .joinToString("") { "%02x".format(it) }
+        return "SAPISIDHASH ${timeNow}_$sapisidhash"
+    }
 
     @Serializable
     data class PostResponse(
