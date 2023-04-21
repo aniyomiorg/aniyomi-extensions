@@ -293,6 +293,7 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val parsed = json.decodeFromString<PostResponse>(
                     jsonRegex.find(response.body.string())!!.groupValues[1],
                 )
+                if (parsed.items == null) throw Exception("Failed to load items, please log in through webview")
                 parsed.items.forEachIndexed { index, it ->
                     if (it.mimeType.startsWith("video")) {
                         val episode = SEpisode.create()
@@ -376,7 +377,7 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     @Serializable
     data class PostResponse(
         val nextPageToken: String? = null,
-        val items: List<ResponseItem>,
+        val items: List<ResponseItem>? = null,
     ) {
         @Serializable
         data class ResponseItem(
