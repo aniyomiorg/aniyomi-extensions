@@ -202,8 +202,8 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val domainPref = ListPreference(screen.context).apply {
             key = "preferred_domain"
             title = "Preferred domain (requires app restart)"
-            entries = arrayOf("gogoanime.tel", "gogoanime.ar")
-            entryValues = arrayOf("https://gogoanime.tel", "https://gogoanime.ar")
+            entries = arrayOf("gogoanime.tel", "gogoanime.ar", "gogoanime.cl", "gogoanime.llc")
+            entryValues = arrayOf("https://gogoanime.tel", "https://gogoanime.ar", "https://gogoanime.cl", "https://gogoanime.llc")
             setDefaultValue("https://gogoanime.tel")
             summary = "%s"
 
