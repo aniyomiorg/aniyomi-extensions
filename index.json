@@ -1425,10 +1425,10 @@
   {
     "name": "Aniyomi: Kayoanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.kayoanime",
-    "apk": "aniyomi-en.kayoanime-v13.2.apk",
+    "apk": "aniyomi-en.kayoanime-v13.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1669,6 +1669,27 @@
         "lang": "en",
         "id": "2129864039842084686",
         "baseUrl": "https://putlocker.vip",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: Ripcrabbyanime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.ripcrabbyanime",
+    "apk": "aniyomi-en.ripcrabbyanime-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Ripcrabbyanime (Experimental)",
+        "lang": "en",
+        "id": "623659475482363776",
+        "baseUrl": "https://ripcrabbyanime.in",
         "versionId": 1,
         "hasCloudflare": 1
       }
