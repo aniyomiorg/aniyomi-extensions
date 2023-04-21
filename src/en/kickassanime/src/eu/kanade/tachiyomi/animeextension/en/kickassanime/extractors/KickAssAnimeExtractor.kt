@@ -11,6 +11,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Element
 import java.text.CharacterIterator
 import java.text.StringCharacterIterator
 
@@ -18,23 +19,28 @@ class KickAssAnimeExtractor(private val client: OkHttpClient, private val json: 
     fun videosFromUrl(url: String): List<Video> {
         val idQuery = url.substringAfterLast("?")
         val baseUrl = url.substringBeforeLast("/") // baseUrl + endpoint/player
+
         val response = client.newCall(GET("$baseUrl/source.php?$idQuery")).execute()
             .body.string()
+            // Temporary, just to prevent catastrophic failure at Sapphire links
+            .ifEmpty { return emptyList() }
 
         val (encryptedData, ivhex) = response.substringAfter(":\"")
             .substringBefore('"')
             .replace("\\", "")
             .split(":")
 
-        // TODO: Create something to get the key dynamically.
-        // Maybe we can do something like what is being used at Dopebox, Sflix and Zoro:
-        // Leave the hard work to github actions and make the extension just fetch the key
-        // from the repository.
-        val key = "7191d608bd4deb4dc36f656c4bbca1b7".toByteArray()
+        val prefix = if ("pink" in url) "PinkBird" else "SapphireDuck"
+        val key = AESKeyExtractor.keyMap.get(prefix) ?: AESKeyExtractor(client).getKey(url, prefix)
         val iv = ivhex.decodeHex()
 
         val videoObject = try {
             val decrypted = CryptoAES.decrypt(encryptedData, key, iv)
+                .ifEmpty { // Maybe the key did change
+                    val newkey = AESKeyExtractor(client).getKey(url, prefix)
+                    CryptoAES.decrypt(encryptedData, newkey, iv)
+                }
+            android.util.Log.d("KAASExtractor", "Decrypted -> $decrypted")
             json.decodeFromString<VideoDto>(decrypted)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -52,14 +58,11 @@ class KickAssAnimeExtractor(private val client: OkHttpClient, private val json: 
 
             val language = "${it.name} (${it.language})"
 
-            println("subUrl -> $subUrl")
             Track(subUrl, language)
         }
 
         val masterPlaylist = client.newCall(GET(videoObject.playlistUrl)).execute()
             .body.string()
-
-        val prefix = if ("pink" in url) "PinkBird" else "SapphireDuck"
 
         return when {
             videoObject.hls.isBlank() ->
@@ -86,12 +89,12 @@ class KickAssAnimeExtractor(private val client: OkHttpClient, private val json: 
         // Parsing dash with Jsoup :YEP:
         val document = Jsoup.parse(playlist)
         val audioList = document.select("Representation[mimetype~=audio]").map { audioSrc ->
-            Track(audioSrc.text(), formatBits(audioSrc.attr("bandwidth").toLongOrNull() ?: 0L) ?: "audio")
+            Track(audioSrc.text(), audioSrc.formatBits() ?: "audio")
         }
         return document.select("Representation[mimetype~=video]").map { videoSrc ->
             Video(
                 videoSrc.text(),
-                "$prefix - ${videoSrc.attr("height")}p - ${formatBits(videoSrc.attr("bandwidth").toLongOrNull() ?: 0L)}",
+                "$prefix - ${videoSrc.attr("height")}p - ${videoSrc.formatBits()}",
                 videoSrc.text(),
                 audioTracks = audioList,
                 subtitleTracks = subs,
@@ -102,8 +105,8 @@ class KickAssAnimeExtractor(private val client: OkHttpClient, private val json: 
     // ============================= Utilities ==============================
 
     @SuppressLint("DefaultLocale")
-    fun formatBits(bits: Long): String? {
-        var bits = bits
+    private fun Element.formatBits(attribute: String = "bandwidth"): String? {
+        var bits = attr(attribute).toLongOrNull() ?: 0L
         if (-1000 < bits && bits < 1000) {
             return "${bits}b"
         }
