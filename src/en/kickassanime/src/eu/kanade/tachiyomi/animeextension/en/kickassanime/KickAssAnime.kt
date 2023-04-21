@@ -129,8 +129,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val videos = response.parseAs<ServersDto>()
-        // Just to see the responses at mitmproxy
-        val extractor = KickAssAnimeExtractor(client, json)
+        val extractor = KickAssAnimeExtractor(client, json, headers)
         return videos.servers.flatMap(extractor::videosFromUrl)
     }
 

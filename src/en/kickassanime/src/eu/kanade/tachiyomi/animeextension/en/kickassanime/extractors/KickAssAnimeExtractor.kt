@@ -9,38 +9,55 @@ import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES.decodeHex
 import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import okhttp3.Headers
 import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
+import java.security.MessageDigest
 import java.text.CharacterIterator
 import java.text.StringCharacterIterator
 
-class KickAssAnimeExtractor(private val client: OkHttpClient, private val json: Json) {
+class KickAssAnimeExtractor(
+    private val client: OkHttpClient,
+    private val json: Json,
+    private val headers: Headers,
+) {
+
     fun videosFromUrl(url: String): List<Video> {
-        val idQuery = url.substringAfterLast("?")
+        val query = url.substringAfterLast("?")
         val baseUrl = url.substringBeforeLast("/") // baseUrl + endpoint/player
 
-        val response = client.newCall(GET("$baseUrl/source.php?$idQuery")).execute()
+        val html = client.newCall(GET(url, headers)).execute().body.string()
+
+        val prefix = if ("pink" in url) "PinkBird" else "SapphireDuck"
+        val key = AESKeyExtractor.keyMap.get(prefix)
+            ?: AESKeyExtractor(client).getKeyFromHtml(baseUrl, html, prefix)
+
+        val request = sourcesRequest(baseUrl, url, html, query, key)
+
+        val response = client.newCall(request).execute()
             .body.string()
-            // Temporary, just to prevent catastrophic failure at Sapphire links
-            .ifEmpty { return emptyList() }
+            .ifEmpty { // Http 403 moment
+                val newkey = AESKeyExtractor(client).getKeyFromUrl(url, prefix)
+                sourcesRequest(baseUrl, url, html, query, newkey)
+                    .let(client::newCall).execute()
+                    .body.string()
+            }
 
         val (encryptedData, ivhex) = response.substringAfter(":\"")
             .substringBefore('"')
             .replace("\\", "")
             .split(":")
 
-        val prefix = if ("pink" in url) "PinkBird" else "SapphireDuck"
-        val key = AESKeyExtractor.keyMap.get(prefix) ?: AESKeyExtractor(client).getKey(url, prefix)
         val iv = ivhex.decodeHex()
 
         val videoObject = try {
             val decrypted = CryptoAES.decrypt(encryptedData, key, iv)
-                .ifEmpty { // Maybe the key did change
-                    val newkey = AESKeyExtractor(client).getKey(url, prefix)
+                .ifEmpty { // Maybe the key did change.. AGAIN.
+                    val newkey = AESKeyExtractor(client).getKeyFromUrl(url, prefix)
                     CryptoAES.decrypt(encryptedData, newkey, iv)
                 }
-            android.util.Log.d("KAASExtractor", "Decrypted -> $decrypted")
             json.decodeFromString<VideoDto>(decrypted)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -68,6 +85,30 @@ class KickAssAnimeExtractor(private val client: OkHttpClient, private val json: 
             videoObject.hls.isBlank() ->
                 extractVideosFromDash(masterPlaylist, prefix, subtitles)
             else -> extractVideosFromHLS(masterPlaylist, prefix, subtitles)
+        }
+    }
+
+    private fun sourcesRequest(baseUrl: String, url: String, html: String, query: String, key: ByteArray): Request {
+        val timestamp = ((System.currentTimeMillis() / 1000) + 60).toString()
+        val cid = html.substringAfter("cid: '").substringBefore("'").decodeHex()
+        val ip = String(cid).substringBefore("|")
+        val path = "/" + baseUrl.substringAfterLast("/") + "/source.php"
+        val userAgent = headers.get("User-Agent") ?: ""
+        val localHeaders = Headers.headersOf("User-Agent", userAgent, "referer", url)
+        val idQuery = query.substringAfter("=")
+        val items = listOf(timestamp, ip, userAgent, path.replace("player", "source"), idQuery, String(key))
+        val signature = sha1sum(items.joinToString(""))
+
+        return GET("$baseUrl/source.php?$query&e=$timestamp&s=$signature", localHeaders)
+    }
+
+    private fun sha1sum(value: String): String {
+        return try {
+            val md = MessageDigest.getInstance("SHA-1")
+            val bytes = md.digest(value.toByteArray())
+            bytes.joinToString("") { "%02x".format(it) }
+        } catch (e: Exception) {
+            throw Exception("Attempt to create the signature failed miserably.")
         }
     }
 

@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.animeextension.en.kickassanime.extractors
 import android.app.Application
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -19,7 +18,7 @@ class AESKeyExtractor(private val client: OkHttpClient) {
         val keyMap = mutableMapOf(
             // Default key. if it changes, the extractor will update it.
             "PinkBird" to "7191d608bd4deb4dc36f656c4bbca1b7".toByteArray(),
-            "SapphireDuck" to null, // i hate sapphire
+            "SapphireDuck" to "f04274d54a9e01ed4a728c5c1889886e".toByteArray(), // i hate sapphire
         )
 
         private const val ERROR_MSG_GENERIC = "the AES key was not found."
@@ -34,14 +33,22 @@ class AESKeyExtractor(private val client: OkHttpClient) {
     class ExtractorJSI(private val latch: CountDownLatch, private val prefix: String) {
         @JavascriptInterface
         fun setKey(key: String) {
-            Log.i(TAG, "($prefix) Key -> $key")
             AESKeyExtractor.keyMap.set(prefix, key.toByteArray())
             latch.countDown()
         }
     }
 
-    fun getKey(url: String, prefix: String): ByteArray {
+    fun getKeyFromHtml(url: String, html: String, prefix: String): ByteArray {
+        val patchedScript = patchScriptFromHtml(url, html)
+        return getKey(patchedScript, prefix)
+    }
+
+    fun getKeyFromUrl(url: String, prefix: String): ByteArray {
         val patchedScript = patchScriptFromUrl(url)
+        return getKey(patchedScript, prefix)
+    }
+
+    private fun getKey(patchedScript: String, prefix: String): ByteArray {
         val latch = CountDownLatch(1)
         var webView: WebView? = null
         val jsi = ExtractorJSI(latch, prefix)
@@ -62,7 +69,6 @@ class AESKeyExtractor(private val client: OkHttpClient) {
 
             webView?.loadData("<html><body></body></html>", "text/html", "UTF-8")
             webView?.evaluateJavascript(patchedScript) {}
-            Log.i(TAG, "POST_JS_EVAL")
         }
 
         latch.await(30, TimeUnit.SECONDS)
@@ -77,10 +83,16 @@ class AESKeyExtractor(private val client: OkHttpClient) {
     }
 
     private fun patchScriptFromUrl(url: String): String {
-        val body = client.newCall(GET(url)).execute().body.string()
+        return client.newCall(GET(url)).execute()
+            .body.string()
+            .let {
+                patchScriptFromHtml(url.substringBeforeLast("/"), it)
+            }
+    }
 
+    private fun patchScriptFromHtml(baseUrl: String, body: String): String {
         val scriptPath = body.substringAfter("script src=\"").substringBefore('"')
-        val scriptUrl = url.substringBefore("player.php") + scriptPath
+        val scriptUrl = "$baseUrl/$scriptPath"
         val scriptBody = client.newCall(GET(scriptUrl)).execute().body.string()
 
         val varWithKeyName = keyVarRegex.find(scriptBody)
