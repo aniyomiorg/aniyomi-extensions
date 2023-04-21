@@ -63,6 +63,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Google Drive",
+    "pkg": "eu.kanade.tachiyomi.animeextension.all.googledrive",
+    "apk": "aniyomi-all.googledrive-v13.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Google Drive (Experimental)",
+        "lang": "all",
+        "id": "4222017068256633289",
+        "baseUrl": "",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: GoogleDriveIndex",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.googledriveindex",
     "apk": "aniyomi-all.googledriveindex-v13.5.apk",
