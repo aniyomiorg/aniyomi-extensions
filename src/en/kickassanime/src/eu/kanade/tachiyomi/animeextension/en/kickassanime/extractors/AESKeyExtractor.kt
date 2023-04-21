@@ -23,7 +23,6 @@ class AESKeyExtractor(private val client: OkHttpClient) {
 
         private const val ERROR_MSG_GENERIC = "the AES key was not found."
         private const val ERROR_MSG_VAR = "the AES key variable was not found"
-        private const val TAG = "AESKeyExtractor" // TODO: Remove all logging
         private val keyVarRegex by lazy { Regex("\\.AES\\[.*?\\]\\((\\w+)\\),") }
     }
 
