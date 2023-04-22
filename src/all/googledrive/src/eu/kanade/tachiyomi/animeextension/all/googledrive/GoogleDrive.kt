@@ -24,6 +24,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.ProtocolException
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
@@ -43,7 +44,7 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // Hack to manipulate what gets opened in webview
     private val baseUrlInternal by lazy {
-        preferences.getString("domain_list", "")!!.split(";").first()
+        preferences.getString("domain_list", "")!!.split(";").firstOrNull()
     }
 
     override val lang = "all"
@@ -52,7 +53,7 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val supportsLatest = false
 
-    private val driveFolderRegex = Regex("""(?<name>\[[^\[\];]+\])?https?:\/\/(?:docs|drive)\.google\.com\/drive(?:\/u\/\d+)?\/folders\/(?<id>[\w-]{28,})(?<depth>#[^;]+)?""")
+    private val driveFolderRegex = Regex("""(?<name>\[[^\[\];]+\])?https?:\/\/(?:docs|drive)\.google\.com\/drive(?:\/[^\/]+)*?\/folders\/(?<id>[\w-]{28,})(?:\?[^;#]+)?(?<depth>#[^;]+)?""")
     private val keyRegex = """"(\w{39})"""".toRegex()
     private val versionRegex = """"([^"]+web-frontend[^"]+)"""".toRegex()
     private val jsonRegex = """(?:)\s*(\{(.+)\})\s*(?:)""".toRegex(RegexOption.DOT_MATCHES_ALL)
@@ -73,7 +74,11 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun popularAnimeRequest(page: Int): Request {
-        val match = driveFolderRegex.matchEntire(baseUrlInternal)!!
+        if (baseUrlInternal.isNullOrEmpty()) {
+            throw Exception("Enter drive path(s) in extension settings.")
+        }
+
+        val match = driveFolderRegex.matchEntire(baseUrlInternal!!)!!
         val folderId = match.groups["id"]!!.value
         val recurDepth = match.groups["depth"]?.value ?: ""
         baseUrl = "https://drive.google.com/drive/folders/$folderId"
@@ -109,7 +114,7 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        if (baseUrlInternal.isEmpty()) {
+        if (baseUrlInternal.isNullOrEmpty()) {
             throw Exception("Enter drive path(s) in extension settings.")
         }
 
@@ -144,6 +149,7 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
     )
 
     private fun getDomains(): Array<Pair<String, String>> {
+        if (preferences.getString("domain_list", "")!!.isBlank()) return emptyArray()
         return preferences.getString("domain_list", "")!!.split(";").map {
             val name = driveFolderRegex.matchEntire(it)!!.groups["name"]?.let {
                 it.value.substringAfter("[").substringBeforeLast("]")
@@ -159,6 +165,11 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // =========================== Anime Details ============================
 
+    override fun animeDetailsRequest(anime: SAnime): Request {
+        val parsed = json.decodeFromString<LinkData>(anime.url)
+        return GET(parsed.url)
+    }
+
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
         val parsed = json.decodeFromString<LinkData>(anime.url)
         val anime = anime
@@ -173,14 +184,17 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
             .add("Host", "drive.google.com")
             .build()
 
-        val driveDocument = client.newCall(
-            GET(parsed.url, headers = driveHeaders),
-        ).execute().asJsoup()
+        val driveDocument = try {
+            client.newCall(GET(parsed.url, headers = driveHeaders)).execute().asJsoup()
+        } catch (a: ProtocolException) {
+            null
+        } ?: return Observable.just(anime)
+
         if (driveDocument.selectFirst("title:contains(Error 404 \\(Not found\\))") != null) return Observable.just(anime)
 
-        val keyScript = driveDocument.select("script").first { script ->
+        val keyScript = driveDocument.select("script").firstOrNull { script ->
             keyRegex.find(script.data()) != null
-        }.data()
+        }?.data() ?: return Observable.just(anime)
         val key = keyRegex.find(keyScript)?.groupValues?.get(1) ?: ""
 
         val versionScript = driveDocument.select("script").first { script ->
@@ -259,14 +273,17 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
                 .add("Host", "drive.google.com")
                 .build()
 
-            val driveDocument = client.newCall(
-                GET(url, headers = driveHeaders),
-            ).execute().asJsoup()
+            val driveDocument = try {
+                client.newCall(GET(url, headers = driveHeaders)).execute().asJsoup()
+            } catch (a: ProtocolException) {
+                throw Exception("Unable to get items, check webview")
+            }
+
             if (driveDocument.selectFirst("title:contains(Error 404 \\(Not found\\))") != null) return
 
-            val keyScript = driveDocument.select("script").first { script ->
+            val keyScript = driveDocument.select("script").firstOrNull { script ->
                 keyRegex.find(script.data()) != null
-            }.data()
+            }?.data() ?: throw Exception("Unknown error occured, check webview")
             val key = keyRegex.find(keyScript)?.groupValues?.get(1) ?: ""
 
             val versionScript = driveDocument.select("script").first { script ->
@@ -382,7 +399,13 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
         val recurDepth = request.url.encodedFragment?.let { "#$it" } ?: ""
 
         val folderId = driveFolderRegex.matchEntire(request.url.toString())!!.groups["id"]!!.value
-        val driveDocument = client.newCall(request).execute().asJsoup()
+
+        val driveDocument = try {
+            client.newCall(request).execute().asJsoup()
+        } catch (a: ProtocolException) {
+            throw Exception("Unable to get items, check webview")
+        }
+
         if (driveDocument.selectFirst("title:contains(Error 404 \\(Not found\\))") != null) {
             return AnimesPage(emptyList(), false)
         }
@@ -534,15 +557,11 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
         return json.encodeToString(this)
     }
 
-    private fun LinkDataInfo.toJsonString(): String {
-        return json.encodeToString(this)
-    }
-
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val domainListPref = EditTextPreference(screen.context).apply {
             key = "domain_list"
             title = "Enter drive paths to be shown in extension"
-            summary = """Enter drive paths to be shown in extension
+            summary = """Enter links of drive folders to be shown in extension
                 |Enter as a semicolon `;` separated list
             """.trimMargin()
             this.setDefaultValue("")
@@ -577,7 +596,7 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
                     }
 
                     if (isValid) {
-                        val res = preferences.edit().putString("domain_list", newValue as String).commit()
+                        val res = preferences.edit().putString("domain_list", newValue).commit()
                         Toast.makeText(screen.context, "Restart Aniyomi to apply changes", Toast.LENGTH_LONG).show()
                         res
                     } else {
