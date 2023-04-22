@@ -18,6 +18,9 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
@@ -62,7 +65,14 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
      */
     override fun animeDetailsRequest(anime: SAnime): Request {
         val animeId = anime.getId()
-        val session = fetchSession(anime.title, animeId)
+        // We're using coroutines here to run it inside another thread and
+        // prevent android.os.NetworkOnMainThreadException when trying to open
+        // webview or share it.
+        val session = runBlocking {
+            withContext(Dispatchers.IO) {
+                fetchSession(anime.title, animeId)
+            }
+        }
         return GET("$baseUrl/anime/$session?anime_id=$animeId")
     }
 
