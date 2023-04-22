@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.en.bestdubbedanime.extractors.DailyMotionExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -16,6 +15,11 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -32,6 +36,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 
 class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -45,6 +50,8 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
+
+    private val json: Json by injectLazy()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -81,7 +88,6 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector(): String = throw Exception("Not used")
 
     // Episodes
-
     override fun episodeListSelector() = throw Exception("Not used")
 
     override fun episodeListParse(response: Response): List<SEpisode> {
@@ -161,64 +167,55 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return String(Base64.decode(inputStr.replace("\\x", "").decodeHex(), Base64.DEFAULT))
     }
 
+    @Serializable
+    data class ServerResponse(
+        val result: ResultObject,
+    ) {
+        @Serializable
+        data class ResultObject(
+            val anime: List<AnimeObject>,
+        ) {
+            @Serializable
+            data class AnimeObject(
+                val serversHTML: String,
+            )
+        }
+    }
+
     override fun videoListParse(response: Response): List<Video> {
         val videoList = mutableListOf<Video>()
 
-        var slug = response.request.url.toString().split(".com/")[1]
-        if (slug.startsWith("movies/")) {
-            slug = slug.split("movies/")[1]
-        }
+        val slug = response.request.url.encodedPath.substringAfter("/")
+        val serverHeaders = headers.newBuilder()
+            .add("Accept", "application/json, text/javascript, */*; q=0.01")
+            .add("Host", baseUrl.toHttpUrl().host)
+            .add("Referer", response.request.url.toString())
+            .add("X-Requested-With", "XMLHttpRequest")
+            .build()
 
-        val jsString = client.newCall(
-            GET("$baseUrl/xz/v3/js/index_beta.js?999995b"),
+        val serversResponse = client.newCall(
+            GET("$baseUrl/xz/v3/jsonEpi.php?slug=$slug&_=${System.currentTimeMillis() / 1000}", headers = serverHeaders),
         ).execute().body.string()
-
-        val apiPath = if (response.request.url.encodedPath.startsWith("/movies/")) {
-            "/movies/jsonMovie.php?slug="
-        } else {
-            decodeAtob(jsString.substringAfter("var Epinfri = window.atob('").substringBefore("');"))
-        }
-        val playerUrl = decodeAtob(jsString.substringAfter("var gkrrxx = '").substringBefore("';"))
-
-        val apiResp = client.newCall(
-            GET(baseUrl + apiPath + slug + "&_=${System.currentTimeMillis() / 1000}"),
-        ).execute()
-
-        val apiJson = apiResp.body.let { Json.decodeFromString<JsonObject>(it.string()) }
-
-        val serversHtml = apiJson!!["result"]!!
-            .jsonObject["anime"]!!
-            .jsonArray[0]
-            .jsonObject["serversHTML"]!!
-            .jsonPrimitive.content
-        val serversSoup = Jsoup.parse(serversHtml)
-
-        for (server in serversSoup.select("body > div")) {
-            if (server.attr("isembedurl") == "true") {
-                val iframeUrl = String(Base64.decode(server.attr("hl"), Base64.DEFAULT))
-                when {
-                    iframeUrl.contains("dailymotion.com") -> {
-                        val extractor = DailyMotionExtractor(client)
-
-                        for (video in extractor.videoFromUrl(iframeUrl)) {
-                            videoList.add(video)
-                        }
+        val parsed = json.decodeFromString<ServerResponse>(serversResponse)
+        Jsoup.parse(parsed.result.anime.first().serversHTML).select("div.serversks").parallelMap { player ->
+            val playerHeaders = headers.newBuilder()
+                .add("Accept", "*/*")
+                .add("Host", baseUrl.toHttpUrl().host)
+                .add("Referer", response.request.url.toString())
+                .add("X-Requested-With", "XMLHttpRequest")
+                .build()
+            runCatching {
+                val playerResponse = client.newCall(
+                    GET("$baseUrl/xz/api/playeri.php?url=${player.attr("hl")}&_=${System.currentTimeMillis() / 1000}", headers = playerHeaders),
+                ).execute().asJsoup()
+                playerResponse.select("source").forEach { source ->
+                    val url = source.attr("src")
+                    if (url.isNotBlank()) {
+                        videoList.add(
+                            Video(url, "${source.attr("label")}p ${player.text()}", url),
+                        )
                     }
                 }
-            } else {
-                val sourceElement = client.newCall(
-                    GET("https:" + playerUrl + server.attr("hl") + "&_=${System.currentTimeMillis() / 1000}"),
-                ).execute().asJsoup().selectFirst("source")!!
-
-                val videoUrl = sourceElement.attr("src").replace("^//".toRegex(), "https://")
-
-                videoList.add(
-                    Video(
-                        videoUrl,
-                        "1080p (${server.select("small").text()})",
-                        videoUrl,
-                    ),
-                )
             }
         }
 
@@ -226,6 +223,12 @@ class BestDubbedAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun videoListSelector() = throw Exception("Not used")
+
+    // From Dopebox
+    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", null)
