@@ -63,19 +63,6 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     override val client: OkHttpClient = OkHttpClient().newBuilder()
         .addInterceptor(tokenInterceptor).build()
 
-    companion object {
-        private val DateFormatter by lazy {
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ENGLISH)
-        }
-
-        private const val PREF_QLT = "preferred_quality"
-        private const val PREF_AUD = "preferred_audio"
-        private const val PREF_SUB = "preferred_sub"
-        private const val PREF_SUB_TYPE = "preferred_sub_type"
-
-        private const val PREF_USE_LOCAL_Token = "preferred_local_Token"
-    }
-
     // ============================== Popular ===============================
 
     override fun popularAnimeRequest(page: Int): Request {
@@ -191,9 +178,10 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> {
         val seasons = json.decodeFromString<SeasonResult>(response.body.string())
         val series = response.request.url.encodedPath.contains("series/")
+        val chunkSize = if (preferences.getBoolean(PREF_DISABLE_SEASON_PARALLEL_MAP, false)) 1 else 6
 
         return if (series) {
-            seasons.data.sortedBy { it.season_number }.chunked(6).map { chunk ->
+            seasons.data.sortedBy { it.season_number }.chunked(chunkSize).map { chunk ->
                 chunk.parallelMap { seasonData ->
                     runCatching {
                         val episodeResp =
@@ -407,7 +395,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                     }
                     ) +
                 (
-                    if (this@toSAnime.series_metadata?.audio_locales?.any() == true ||
+                    if ((this@toSAnime.series_metadata?.audio_locales?.size ?: 0) > 1 ||
                         this@toSAnime.movie_metadata?.is_dubbed == true
                     ) {
                         " Dub"
@@ -517,10 +505,20 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
+        val disableParallelEpMap = SwitchPreferenceCompat(screen.context).apply {
+            key = PREF_DISABLE_SEASON_PARALLEL_MAP
+            title = "Disable Parallel Requests for Seasons"
+            setDefaultValue(false)
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putBoolean(key, newValue as Boolean).commit()
+            }
+        }
+
         screen.addPreference(videoQualityPref)
         screen.addPreference(audLocalePref)
         screen.addPreference(subLocalePref)
         screen.addPreference(subTypePref)
+        screen.addPreference(disableParallelEpMap)
         screen.addPreference(localSubsPreference(screen))
     }
 
@@ -536,18 +534,16 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                     this.apply {
                         key = PREF_USE_LOCAL_Token
                         title = "Use Local Token (Don't Spam this please!)"
-                        runBlocking {
-                            withContext(Dispatchers.IO) { summary = getTokenDetail() }
+                        summary = runBlocking {
+                            withContext(Dispatchers.IO) { getTokenDetail() }
                         }
                         setDefaultValue(false)
                         setOnPreferenceChangeListener { _, newValue ->
                             val new = newValue as Boolean
                             preferences.edit().putBoolean(key, new).commit().also {
                                 Thread {
-                                    runBlocking {
-                                        withContext(Dispatchers.IO) {
-                                            summary = getTokenDetail(true)
-                                        }
+                                    summary = runBlocking {
+                                        withContext(Dispatchers.IO) { getTokenDetail(true) }
                                     }
                                 }.start()
                             }
@@ -574,5 +570,18 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
             tokenInterceptor.removeToken()
             "Error: ${e.localizedMessage ?: "Something Went Wrong"}"
         }
+    }
+
+    companion object {
+        private val DateFormatter by lazy {
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ENGLISH)
+        }
+
+        private const val PREF_QLT = "preferred_quality"
+        private const val PREF_AUD = "preferred_audio"
+        private const val PREF_SUB = "preferred_sub"
+        private const val PREF_SUB_TYPE = "preferred_sub_type"
+        private const val PREF_DISABLE_SEASON_PARALLEL_MAP = "preferred_disable_parallelMap"
+        private const val PREF_USE_LOCAL_Token = "preferred_local_Token"
     }
 }
