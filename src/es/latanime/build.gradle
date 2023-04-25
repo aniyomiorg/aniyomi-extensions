@@ -5,7 +5,7 @@ ext {
     extName = 'Latanime'
     pkgNameSuffix = 'es.latanime'
     extClass = '.Latanime'
-    extVersionCode = 8
+    extVersionCode = 9
     libVersion = '13'
 }
 
