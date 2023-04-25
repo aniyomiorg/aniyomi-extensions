@@ -19,5 +19,6 @@ dependencies {
     compileOnly(libs.kotlin.json)
     compileOnly(libs.okhttp)
     compileOnly(libs.aniyomi.lib)
+    compileOnly(libs.injekt.core)
 }
 // BUMPS: 0
