@@ -39,7 +39,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AnimeFlix"
 
-    override val baseUrl = "https://animeflix.org.in"
+    override val baseUrl = "https://animeflix.net.in"
 
     override val lang = "en"
 
