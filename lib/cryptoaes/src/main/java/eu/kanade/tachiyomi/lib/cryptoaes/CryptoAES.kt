@@ -20,7 +20,7 @@ import javax.crypto.spec.SecretKeySpec
 /**
  * Conforming with CryptoJS AES method
  */
-@Suppress("unused", "FunctionName")
+@Suppress("unused")
 object CryptoAES {
 
     private const val KEY_SIZE = 256
@@ -39,19 +39,41 @@ object CryptoAES {
      * @param password passphrase
      */
     fun decrypt(cipherText: String, password: String): String {
-        try {
+        return try {
             val ctBytes = Base64.decode(cipherText, Base64.DEFAULT)
             val saltBytes = Arrays.copyOfRange(ctBytes, 8, 16)
             val cipherTextBytes = Arrays.copyOfRange(ctBytes, 16, ctBytes.size)
             val md5: MessageDigest = MessageDigest.getInstance("MD5")
             val keyAndIV = generateKeyAndIV(32, 16, 1, saltBytes, password.toByteArray(Charsets.UTF_8), md5)
-            return decryptAES(
+            decryptAES(
                 cipherTextBytes,
                 keyAndIV?.get(0) ?: ByteArray(32),
                 keyAndIV?.get(1) ?: ByteArray(16),
             )
         } catch (e: Exception) {
-            return ""
+            ""
+        }
+    }
+
+    fun decryptWithSalt(cipherText: String, salt: String, password: String): String {
+        return try {
+            val ctBytes = Base64.decode(cipherText, Base64.DEFAULT)
+            val md5: MessageDigest = MessageDigest.getInstance("MD5")
+            val keyAndIV = generateKeyAndIV(
+                32,
+                16,
+                1,
+                salt.decodeHex(),
+                password.toByteArray(Charsets.UTF_8),
+                md5
+            )
+            decryptAES(
+                ctBytes,
+                keyAndIV?.get(0) ?: ByteArray(32),
+                keyAndIV?.get(1) ?: ByteArray(16),
+            )
+        } catch (e: Exception) {
+            ""
         }
     }
 
