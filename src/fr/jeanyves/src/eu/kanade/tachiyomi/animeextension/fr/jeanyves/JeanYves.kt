@@ -23,7 +23,6 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.net.URLDecoder
 
 class JeanYves : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -163,6 +162,8 @@ class JeanYves : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         fun traverseDirectory(url: String) {
             val doc = client.newCall(GET(url)).execute().asJsoup()
 
+            if (doc.selectFirst("div#page-content:contains(File path does not exist)") != null) return
+
             doc.select(episodeListSelector()).forEach { link ->
                 val href = link.selectFirst("a[href]")!!.attr("href")
 
@@ -189,12 +190,9 @@ class JeanYves : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         val size = link.selectFirst("span.file-size")?.let { it.text().trim() }
                         val episodeNumRegex = Regex(""" - \d+x(\d+) - """)
 
-                        episode.name = URLDecoder.decode(
-                            videoFormats.fold(paths.last()) { acc, suffix -> acc.removeSuffix(suffix).trimInfo() },
-                            "UTF-8",
-                        )
+                        episode.name = videoFormats.fold(paths.last()) { acc, suffix -> acc.removeSuffix(suffix).trimInfo() }
                         episode.url = fullUrl
-                        episode.scanlator = URLDecoder.decode("${extraInfo.ifBlank { "/" }}${if (size == null) "" else " • $size"}", "UTF-8")
+                        episode.scanlator = "${extraInfo.ifBlank { "/" }}${if (size == null) "" else " • $size"}"
                         episode.episode_number = episodeNumRegex.find(paths.last())?.let {
                             it.groupValues[1].toFloatOrNull()
                         } ?: counter.toFloat()
