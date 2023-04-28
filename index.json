@@ -2518,12 +2518,33 @@
     ]
   },
   {
-    "name": "Aniyomi: JeanYves",
-    "pkg": "eu.kanade.tachiyomi.animeextension.fr.jeanyves",
-    "apk": "aniyomi-fr.jeanyves-v13.1.apk",
+    "name": "Aniyomi: French Anime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.fr.frenchanime",
+    "apk": "aniyomi-fr.frenchanime-v13.1.apk",
     "lang": "fr",
     "code": 1,
     "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "French Anime",
+        "lang": "fr",
+        "id": "8142032927870763721",
+        "baseUrl": "https://french-anime.com",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: JeanYves",
+    "pkg": "eu.kanade.tachiyomi.animeextension.fr.jeanyves",
+    "apk": "aniyomi-fr.jeanyves-v13.2.apk",
+    "lang": "fr",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
