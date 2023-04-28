@@ -1,0 +1,19 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'French Anime'
+    pkgNameSuffix = 'fr.frenchanime'
+    extClass = '.FrenchAnime'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+dependencies {
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
+    implementation(project(':lib-okru-extractor'))
+    implementation(project(':lib-streamsb-extractor'))
+    implementation(project(':lib-dood-extractor'))
+}
+
+apply from: "$rootDir/common.gradle"
