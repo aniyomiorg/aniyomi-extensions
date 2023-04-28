@@ -11,8 +11,6 @@ ext {
 
 dependencies {
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
-    implementation(project(':lib-fembed-extractor'))
-    implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-okru-extractor'))
     implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))

@@ -289,7 +289,7 @@ class FrenchAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                     source.contains("ok.ru") -> {
                         videoList.addAll(
-                            OkruExtractor(client).videosFromUrl(source)
+                            OkruExtractor(client).videosFromUrl(source),
                         )
                     }
                     else -> {}
