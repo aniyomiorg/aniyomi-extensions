@@ -9,7 +9,7 @@ ext {
     pkgNameSuffix = 'en.kickassanime'
     extClass = '.KickAssAnime'
     libVersion = '13'
-    extVersionCode = 25
+    extVersionCode = 26
 }
 
 dependencies {
