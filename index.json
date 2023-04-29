@@ -1467,10 +1467,10 @@
   {
     "name": "Aniyomi: KickAssAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.kickassanime",
-    "apk": "aniyomi-en.kickassanime-v13.25.apk",
+    "apk": "aniyomi-en.kickassanime-v13.26.apk",
     "lang": "en",
-    "code": 25,
-    "version": "13.25",
+    "code": 26,
+    "version": "13.26",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3381,6 +3381,27 @@
         "lang": "sr",
         "id": "789279548118486310",
         "baseUrl": "https://www.animesrbija.com",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: Türk Anime TV",
+    "pkg": "eu.kanade.tachiyomi.animeextension.tr.turkanime",
+    "apk": "aniyomi-tr.turkanime-v13.2.apk",
+    "lang": "tr",
+    "code": 2,
+    "version": "13.2",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Türk Anime TV",
+        "lang": "tr",
+        "id": "1539162878022626585",
+        "baseUrl": "https://www.turkanime.co",
         "versionId": 1,
         "hasCloudflare": 1
       }
