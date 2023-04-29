@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.pt.flixei
 
 import eu.kanade.tachiyomi.animeextension.pt.flixei.dto.AnimeDto
 import eu.kanade.tachiyomi.animeextension.pt.flixei.dto.ApiResultsDto
+import eu.kanade.tachiyomi.animeextension.pt.flixei.dto.EpisodeDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -37,7 +38,7 @@ class Flixei : ParsedAnimeHttpSource() {
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int): Request {
-        val body = "slider=3".toRequestBody("application/x-www-form-urlencoded".toMediaType())
+        val body = "slider=3".toFormBody()
         return POST("$baseUrl/includes/ajax/home.php", body = body)
     }
 
@@ -68,6 +69,42 @@ class Flixei : ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
+    private fun getSeasonEps(seasonElement: Element): List<SEpisode> {
+        val id = seasonElement.attr("data-load-episodes")
+        val sname = seasonElement.text()
+        val body = "getEpisodes=$id".toFormBody()
+        val response = client.newCall(POST("$WAREZ_URL/serieAjax.php", body = body)).execute()
+        val episodes = response.parseAs<ApiResultsDto<EpisodeDto>>().items.values.map {
+            SEpisode.create().apply {
+                name = "Temp $sname: Ep ${it.name}"
+                episode_number = it.name.toFloatOrNull() ?: 0F
+                url = it.id
+            }
+        }
+        return episodes
+    }
+
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val docUrl = response.asJsoup().selectFirst("div#playButton")!!
+            .attr("onclick")
+            .substringAfter("'")
+            .substringBefore("'")
+        return if (response.request.url.toString().contains("/serie/")) {
+            client.newCall(GET(docUrl)).execute()
+                .asJsoup()
+                .select("div#seasons div.item[data-load-episodes]")
+                .flatMap(::getSeasonEps)
+                .reversed()
+        } else {
+            listOf(
+                SEpisode.create().apply {
+                    name = "Filme"
+                    episode_number = 1F
+                    url = "$WAREZ_URL/filme/" + docUrl.substringAfter("=")
+                },
+            )
+        }
+    }
     override fun episodeFromElement(element: Element): SEpisode {
         throw UnsupportedOperationException("Not used.")
     }
@@ -160,7 +197,11 @@ class Flixei : ParsedAnimeHttpSource() {
 
     private fun Element.getInfo(item: String) = selectFirst("*:containsOwn($item) b")?.text()
 
+    private fun String.toFormBody() = toRequestBody("application/x-www-form-urlencoded".toMediaType())
+
     companion object {
         const val PREFIX_SEARCH = "path:"
+
+        private const val WAREZ_URL = "https://embed.warezcdn.net"
     }
 }
