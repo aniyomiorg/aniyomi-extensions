@@ -23,7 +23,7 @@ class Flixei : ParsedAnimeHttpSource() {
 
     override val lang = "pt-BR"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     // ============================== Popular ===============================
     override fun popularAnimeFromElement(element: Element): SAnime {
@@ -104,20 +104,18 @@ class Flixei : ParsedAnimeHttpSource() {
 
     // =============================== Latest ===============================
     override fun latestUpdatesFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
+        return SAnime.create().apply {
+            title = element.selectFirst("div.i span")!!.text()
+            thumbnail_url = element.selectFirst("img")!!.attr("src")
+            setUrlWithoutDomain("/" + element.attr("href"))
+        }
     }
 
-    override fun latestUpdatesNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesNextPageSelector() = "div.paginationSystem a.next"
 
-    override fun latestUpdatesRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/filmes/estreia/$page")
 
-    override fun latestUpdatesSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesSelector() = "div#listingPage a.gPoster"
 
     companion object {
         const val PREFIX_SEARCH = "path:"
