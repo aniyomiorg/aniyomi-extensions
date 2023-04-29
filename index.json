@@ -2539,27 +2539,6 @@
     ]
   },
   {
-    "name": "Aniyomi: JeanYves",
-    "pkg": "eu.kanade.tachiyomi.animeextension.fr.jeanyves",
-    "apk": "aniyomi-fr.jeanyves-v13.2.apk",
-    "lang": "fr",
-    "code": 2,
-    "version": "13.2",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "Jean-Yves",
-        "lang": "fr",
-        "id": "6895733156938951875",
-        "baseUrl": "https://jeanyves.pro/data/",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: NekoSama",
     "pkg": "eu.kanade.tachiyomi.animeextension.fr.nekosama",
     "apk": "aniyomi-fr.nekosama-v13.4.apk",
