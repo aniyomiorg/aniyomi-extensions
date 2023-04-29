@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.tr.turkanime
+package eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors
 
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET

@@ -4,7 +4,24 @@ import android.app.Application
 import android.content.SharedPreferences
 import android.util.Base64
 import androidx.preference.ListPreference
+import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.AlucardExtractor
+import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.EmbedgramExtractor
+import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.FilemoonExtractor
+import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.GoogleDriveExtractor
+import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MVidooExtractor
+import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MailRuExtractor
+import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.Mp4uploadExtractor
+import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MytvExtractor
+import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.SendvidExtractor
+import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.SibnetExtractor
+import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.StreamVidExtractor
+import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.UqloadExtractor
+import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.VTubeExtractor
+import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.VkExtractor
+import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.VudeoExtractor
+import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.WolfstreamExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -12,6 +29,8 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.synchrony.Deobfuscator
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
@@ -153,18 +172,24 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val selectedHoster = document.select("div#videodetay div.btn-group:not(.pull-right) > button.btn-danger")
         val hosters = document.select("div#videodetay div.btn-group:not(.pull-right) > button.btn-default[onclick*=videosec]")
 
+        val hosterSelection = preferences.getStringSet(
+            "hoster_selection",
+            setOf("GDRIVE", "STREAMSB", "VOE"),
+        )!!
+
         val videoList = mutableListOf<Video>()
         val selectedHosterName = selectedHoster.text().trim()
-        if (selectedHosterName in SUPPORTED_HOSTERS) {
+        if (selectedHosterName in SUPPORTED_HOSTERS && selectedHosterName in hosterSelection) {
             val src = document.select("iframe").attr("src")
             videoList.addAll(getVideosFromSource(src, selectedHosterName, subber))
         }
         hosters.parallelMap {
             val hosterName = it.text().trim()
             if (hosterName !in SUPPORTED_HOSTERS) return@parallelMap
+            if (hosterName !in hosterSelection) return@parallelMap
             val url = it.attr("onclick").trimOnClick()
             val videoDoc = client.newCall(GET(url, xmlHeader)).execute().asJsoup()
-            val src = videoDoc.select("iframe").attr("src")
+            val src = videoDoc.select("iframe").attr("src").replace("^//".toRegex(), "https://")
             videoList.addAll(getVideosFromSource(src, hosterName, subber))
         }
         return videoList
@@ -191,14 +216,68 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ).content
 
         when (hosterName) {
+            "ALUCARD(BETA)" -> {
+                videoList.addAll(AlucardExtractor(client, json, baseUrl).extractVideos(hosterLink, subber))
+            }
+            "DOODSTREAM" -> {
+                videoList.addAll(DoodExtractor(client).videosFromUrl(hosterLink, "$subber: DOODSTREAM", redirect = false))
+            }
+            "EMBEDGRAM" -> {
+                videoList.addAll(EmbedgramExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: "))
+            }
+            "FILEMOON" -> {
+                videoList.addAll(FilemoonExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: "))
+            }
+            "GDRIVE" -> {
+                Regex("""[\w-]{28,}""").find(hosterLink)?.groupValues?.get(0)?.let {
+                    videoList.addAll(GoogleDriveExtractor(client, headers).videosFromUrl("https://drive.google.com/uc?id=$it", "$subber: Gdrive"))
+                }
+            }
+            "MAIL" -> {
+                videoList.addAll(MailRuExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: "))
+            }
+            "MP4UPLOAD" -> {
+                videoList.addAll(Mp4uploadExtractor(client).getVideoFromUrl(hosterLink, headers, prefix = "$subber: "))
+            }
+            "MYVI" -> {
+                videoList.addAll(MytvExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
+            }
+            "MVIDOO" -> {
+                videoList.addAll(MVidooExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
+            }
+            "ODNOKLASSNIKI" -> {
+                videoList.addAll(OkruExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
+            }
+            "SENDVID" -> {
+                videoList.addAll(SendvidExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: "))
+            }
+            "SIBNET" -> {
+                videoList.addAll(SibnetExtractor(client).getVideosFromUrl(hosterLink, prefix = "$subber: "))
+            }
             "STREAMSB" -> {
-                videoList.addAll(StreamSBExtractor(client).videosFromUrl(hosterLink, refererHeader, "$subber:"))
+                videoList.addAll(StreamSBExtractor(client).videosFromUrl(hosterLink, refererHeader, prefix = "$subber: "))
+            }
+            "STREAMVID" -> {
+                videoList.addAll(StreamVidExtractor(client).videosFromUrl(hosterLink, headers, prefix = "$subber: "))
+            }
+            "UQLOAD" -> {
+                videoList.addAll(UqloadExtractor(client).videosFromUrl(hosterLink, headers, "$subber: Uqload"))
+            }
+            "VK" -> {
+                val vkUrl = "https://vk.com" + hosterLink.substringAfter("vk.com")
+                videoList.addAll(VkExtractor(client).getVideosFromUrl(vkUrl, prefix = "$subber: "))
             }
             "VOE" -> {
                 VoeExtractor(client).videoFromUrl(hosterLink, "$subber: VOE")?.let { video -> videoList.add(video) }
             }
-            "ALUCARD(BETA)" -> {
-                videoList.addAll(AlucardExtractor(client, json, baseUrl).extractVideos(hosterLink, subber))
+            "VTUBE" -> {
+                videoList.addAll(VTubeExtractor(client, headers).videosFromUrl(hosterLink, baseUrl, prefix = "$subber: "))
+            }
+            "VUDEA" -> {
+                videoList.addAll(VudeoExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
+            }
+            "WOLFSTREAM" -> {
+                videoList.addAll(WolfstreamExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
             }
         }
         return videoList
@@ -259,7 +338,19 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val hostSelection = MultiSelectListPreference(screen.context).apply {
+            key = "hoster_selection"
+            title = "Enable/Disable Hosts"
+            entries = SUPPORTED_HOSTERS.toTypedArray()
+            entryValues = SUPPORTED_HOSTERS.toTypedArray()
+            setDefaultValue(setOf("GDRIVE", "STREAMSB", "VOE"))
+
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }
         screen.addPreference(videoQualityPref)
+        screen.addPreference(hostSelection)
     }
 
     override fun List<Video>.sort(): List<Video> {
@@ -314,8 +405,26 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 private val SUPPORTED_HOSTERS = listOf(
     // TODO: Fix Alucard
     // "ALUCARD(BETA)",
+    "DOODSTREAM",
+    "EMBEDGRAM",
+    "FILEMOON",
+    "GDRIVE",
+    "MAIL",
+    "MP4UPLOAD",
+    "MYVI",
+    "MVIDOO",
+    "ODNOKLASSNIKI",
+    "SENDVID",
+    "SIBNET",
     "STREAMSB",
-    "VOE")
+    "STREAMVID",
+    "UQLOAD",
+    "VK",
+    "VOE",
+    "VTUBE",
+    "VUDEA",
+    "WOLFSTREAM",
+)
 
 private const val PREF_KEY_KEY = "key"
 private const val DEFAULT_KEY = "710^8A@3@>T2}#zN5xK?kR7KNKb@-A!LzYL5~M1qU0UfdWsZoBm4UUat%}ueUv6E--*hDPPbH7K2bp9^3o41hw,khL:}Kx8080@M"
