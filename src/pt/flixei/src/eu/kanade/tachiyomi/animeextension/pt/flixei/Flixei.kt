@@ -95,20 +95,14 @@ class Flixei : ParsedAnimeHttpSource() {
     }
 
     // =============================== Search ===============================
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
 
-    override fun searchAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeSelector() = latestUpdatesSelector()
+
+    override fun searchAnimeNextPageSelector() = null
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun searchAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
+        return GET("$baseUrl/pesquisar/$query")
     }
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
@@ -140,7 +134,7 @@ class Flixei : ParsedAnimeHttpSource() {
 
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/filmes/estreia/$page")
 
-    override fun latestUpdatesSelector() = "div#listingPage a.gPoster"
+    override fun latestUpdatesSelector() = "div.generalMoviesList > a.gPoster"
 
     // ============================= Utilities ==============================
     private inline fun <reified T> Response.parseAs(): T {
