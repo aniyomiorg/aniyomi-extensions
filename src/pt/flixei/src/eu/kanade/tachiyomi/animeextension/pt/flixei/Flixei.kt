@@ -78,7 +78,24 @@ class Flixei : ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
-        throw UnsupportedOperationException("Not used.")
+        return SAnime.create().apply {
+            setUrlWithoutDomain(document.location())
+            thumbnail_url = document.selectFirst("meta[property=og:image]")!!.attr("content")
+            val container = document.selectFirst("div.moviePresent")!!
+            with(container) {
+                title = selectFirst("h2.tit")!!.text()
+                genre = select("div.genres > span").eachText().joinToString()
+                author = getInfo("Diretor")
+                artist = getInfo("Produtoras")
+                description = buildString {
+                    selectFirst("p")?.text()?.let { append(it + "\n\n") }
+                    getInfo("Título")?.let { append("Título original: $it\n") }
+                    getInfo("Serie de")?.let { append("ano: $it\n") }
+                    getInfo("Elenco")?.let { append("Elenco: $it\n") }
+                    getInfo("Qualidade")?.let { append("Qualidade: $it\n") }
+                }
+            }
+        }
     }
 
     // ============================ Video Links =============================
@@ -140,6 +157,8 @@ class Flixei : ParsedAnimeHttpSource() {
     private inline fun <reified T> Response.parseAs(): T {
         return body.string().let(json::decodeFromString)
     }
+
+    private fun Element.getInfo(item: String) = selectFirst("*:containsOwn($item) b")?.text()
 
     companion object {
         const val PREFIX_SEARCH = "path:"
