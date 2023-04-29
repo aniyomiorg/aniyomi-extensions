@@ -103,29 +103,38 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         // Call POST
         val newHeaders = Headers.headersOf("referer", "$baseUrl/")
 
-        val listOfVideos = client.newCall(
+        val listOfiFrame = client.newCall(
             POST("$baseUrl/wp-admin/admin-ajax.php", newHeaders, body),
         )
             .execute().asJsoup()
-            .body().select("iframe")
+            .body().select("iframe").toString()
 
-        val embedUrl = listOfVideos.toString()
-            .substringAfter("src=\"\\&quot;https:\\/\\/hentaimama.io\\/")
-            .substringBefore("\\&")
-            .split("p=")[1]
+        val regex = Regex("https?[\\S][^\"]+")
+        val allLinks = regex.findAll(listOfiFrame)
+        val urls = allLinks.map { it.value }.toList()
 
-        // Video from Element
-        val source1 = client.newCall(GET("$baseUrl/new2.php?p=$embedUrl")).execute().asJsoup()
-            .body().toString()
-            .substringAfterLast("file: \"").substringBeforeLast("}],")
-            .replace("\"", "").replace("\n", "")
-
-        val source2 = client.newCall(GET("$baseUrl/new3.php?p=$embedUrl")).execute().asJsoup()
-            .body().select("video source").attr("src")
+        val videoRegex = Regex("(https:[^\"]+\\.mp4*)")
 
         val videoList = mutableListOf<Video>()
-        videoList.add(Video(source1, "Mirror 1", source1))
-        videoList.add(Video(source2, "Mirror 2", source2))
+
+        for (url in urls) {
+            val req = client.newCall(GET(url)).execute().asJsoup()
+                .body().toString()
+
+            val videoLink = videoRegex.find(req)
+            val videoRes = when {
+                url.contains("newr2") -> "Beta"
+                url.contains("new1") -> "Mirror 1"
+                url.contains("new2") -> "Mirror 2"
+                url.contains("new3") -> "Mirror 3"
+                else -> ""
+            }
+
+            if (videoLink != null) {
+                videoList.add(Video(videoLink.value, videoRes, videoLink.value))
+            }
+        }
+
         return videoList
     }
 
@@ -236,11 +245,11 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred Mirror"
-            entries = arrayOf("Mirror 1", "Mirror 2")
-            entryValues = arrayOf("source1", "source2")
-            setDefaultValue("source1")
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES
+            setDefaultValue("Mirror 2")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -595,4 +604,10 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         YearList(getYears()),
         ProducerList(getProducer()),
     )
+
+    companion object {
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred video quality"
+        private val PREF_QUALITY_ENTRIES = arrayOf("Mirror 1", "Mirror 2", "Mirror 3", "Beta")
+    }
 }
