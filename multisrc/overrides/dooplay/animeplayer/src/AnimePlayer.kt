@@ -12,4 +12,9 @@ class AnimePlayer : DooPlay(
     override fun popularAnimeSelector() = "div#featured-titles article div.poster"
 
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/animes/")
+
+    // =============================== Latest ===============================
+    override val latestUpdatesPath = "episodios"
+
+    override fun latestUpdatesNextPageSelector() = "a > i#nextpagination"
 }
