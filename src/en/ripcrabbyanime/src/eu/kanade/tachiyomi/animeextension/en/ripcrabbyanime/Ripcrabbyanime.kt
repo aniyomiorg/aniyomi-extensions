@@ -38,7 +38,7 @@ import java.text.StringCharacterIterator
 
 class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "Ripcrabbyanime (Experimental)"
+    override val name = "Ripcrabbyanime"
 
     override val baseUrl = "https://ripcrabbyanime.in"
 

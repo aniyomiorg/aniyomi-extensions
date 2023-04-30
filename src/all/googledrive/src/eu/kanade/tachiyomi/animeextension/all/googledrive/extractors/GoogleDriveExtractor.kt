@@ -28,6 +28,9 @@ class GoogleDriveExtractor(private val client: OkHttpClient, private val headers
         val noRedirectClient = OkHttpClient().newBuilder().followRedirects(false).build()
         val document = itemResponse.asJsoup()
 
+        val itemSize = document.selectFirst("span.uc-name-size")?.let {
+            " ${it.ownText().trim()} "
+        } ?: ""
         val url = document.selectFirst("form#download-form")?.attr("action") ?: return emptyList()
         val redirectHeaders = headers.newBuilder()
             .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
@@ -43,7 +46,7 @@ class GoogleDriveExtractor(private val client: OkHttpClient, private val headers
         val response = noRedirectClient.newCall(
             POST(url, headers = redirectHeaders, body = "".toRequestBody("application/x-www-form-urlencoded".toMediaType())),
         ).execute()
-        val redirected = response.headers["location"] ?: return listOf(Video(url, videoName, url))
+        val redirected = response.headers["location"] ?: return listOf(Video(url, videoName + itemSize, url))
 
         val redirectedHeaders = headers.newBuilder()
             .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
@@ -55,10 +58,10 @@ class GoogleDriveExtractor(private val client: OkHttpClient, private val headers
         val redirectedResponseHeaders = noRedirectClient.newCall(
             GET(redirected, headers = redirectedHeaders),
         ).execute().headers
-        val authCookie = redirectedResponseHeaders.first {
+        val authCookie = redirectedResponseHeaders.firstOrNull {
             it.first == "set-cookie" && it.second.startsWith("AUTH_")
-        }.second.substringBefore(";")
-        val newRedirected = redirectedResponseHeaders["location"] ?: return listOf(Video(redirected, videoName, redirected))
+        }?.second?.substringBefore(";") ?: return listOf(Video(url, videoName + itemSize, url))
+        val newRedirected = redirectedResponseHeaders["location"] ?: return listOf(Video(redirected, videoName + itemSize, redirected))
 
         val googleDriveRedirectHeaders = headers.newBuilder()
             .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
@@ -80,7 +83,7 @@ class GoogleDriveExtractor(private val client: OkHttpClient, private val headers
             .build()
 
         return listOf(
-            Video(googleDriveRedirectUrl, videoName, googleDriveRedirectUrl, headers = videoHeaders),
+            Video(googleDriveRedirectUrl, videoName + itemSize, googleDriveRedirectUrl, headers = videoHeaders),
         )
     }
 
