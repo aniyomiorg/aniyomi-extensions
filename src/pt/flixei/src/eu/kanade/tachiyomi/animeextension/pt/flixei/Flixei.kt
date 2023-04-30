@@ -1,9 +1,14 @@
 package eu.kanade.tachiyomi.animeextension.pt.flixei
 
+import android.app.Application
+import android.content.SharedPreferences
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.flixei.dto.AnimeDto
 import eu.kanade.tachiyomi.animeextension.pt.flixei.dto.ApiResultsDto
 import eu.kanade.tachiyomi.animeextension.pt.flixei.dto.EpisodeDto
 import eu.kanade.tachiyomi.animeextension.pt.flixei.dto.PlayersDto
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -30,9 +35,11 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 
-class Flixei : ParsedAnimeHttpSource() {
+class Flixei : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Flixei"
 
@@ -43,6 +50,10 @@ class Flixei : ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     private val json: Json by injectLazy()
+
+    private val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int): Request {
@@ -268,6 +279,41 @@ class Flixei : ParsedAnimeHttpSource() {
 
     override fun latestUpdatesSelector() = "div.generalMoviesList > a.gPoster"
 
+    // ============================== Settings ==============================
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val preferredPlayer = ListPreference(screen.context).apply {
+            key = PREF_PLAYER_KEY
+            title = PREF_PLAYER_TITLE
+            entries = PREF_PLAYER_ARRAY
+            entryValues = PREF_PLAYER_ARRAY
+            setDefaultValue(PREF_PLAYER_DEFAULT)
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
+        val preferredLanguage = ListPreference(screen.context).apply {
+            key = PREF_LANGUAGE_KEY
+            title = PREF_LANGUAGE_TITLE
+            entries = PREF_LANGUAGE_ENTRIES
+            entryValues = PREF_LANGUAGE_VALUES
+            setDefaultValue(PREF_LANGUAGE_DEFAULT)
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(preferredPlayer)
+        screen.addPreference(preferredLanguage)
+    }
+
     // ============================= Utilities ==============================
     private inline fun <reified T> Response.parseAs(): T {
         return body.string().let(json::decodeFromString)
@@ -282,11 +328,36 @@ class Flixei : ParsedAnimeHttpSource() {
 
     private fun String.toFormBody() = toRequestBody("application/x-www-form-urlencoded".toMediaType())
 
+    override fun List<Video>.sort(): List<Video> {
+        val player = preferences.getString(PREF_PLAYER_KEY, PREF_PLAYER_DEFAULT)!!
+        val language = preferences.getString(PREF_LANGUAGE_KEY, PREF_LANGUAGE_DEFAULT)!!
+        return sortedWith(
+            compareBy(
+                { it.quality.contains(player) },
+                { it.quality.contains(language) },
+            ),
+        ).reversed()
+    }
+
     companion object {
 
         const val PREFIX_SEARCH = "path:"
 
         private const val EMBED_WAREZ_URL = "https://embed.warezcdn.net"
         private const val WAREZ_URL = "https://warezcdn.com"
+
+        private const val PREF_PLAYER_KEY = "pref_player"
+        private const val PREF_PLAYER_DEFAULT = "MixDrop"
+        private const val PREF_PLAYER_TITLE = "Player/Server favorito"
+        private val PREF_PLAYER_ARRAY = arrayOf(
+            "MixDrop",
+            "Streamtape",
+        )
+
+        private const val PREF_LANGUAGE_KEY = "pref_language"
+        private const val PREF_LANGUAGE_DEFAULT = "LEG"
+        private const val PREF_LANGUAGE_TITLE = "Língua/tipo preferido"
+        private val PREF_LANGUAGE_ENTRIES = arrayOf("Legendado", "Dublado")
+        private val PREF_LANGUAGE_VALUES = arrayOf("LEG", "DUB")
     }
 }
