@@ -17,4 +17,7 @@ class AnimePlayer : DooPlay(
     override val latestUpdatesPath = "episodios"
 
     override fun latestUpdatesNextPageSelector() = "a > i#nextpagination"
+
+    // ============================== Filters ===============================
+    override fun genresListSelector() = "ul.genres a"
 }
