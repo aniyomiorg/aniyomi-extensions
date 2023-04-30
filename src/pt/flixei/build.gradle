@@ -11,4 +11,9 @@ ext {
     extVersionCode = 1
 }
 
+dependencies {
+    implementation(project(":lib-streamtape-extractor"))
+    implementation(project(":lib-mixdrop-extractor"))
+}
+
 apply from: "$rootDir/common.gradle"

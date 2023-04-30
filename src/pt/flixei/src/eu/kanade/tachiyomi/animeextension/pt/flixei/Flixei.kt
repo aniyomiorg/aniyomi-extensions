@@ -3,18 +3,26 @@ package eu.kanade.tachiyomi.animeextension.pt.flixei
 import eu.kanade.tachiyomi.animeextension.pt.flixei.dto.AnimeDto
 import eu.kanade.tachiyomi.animeextension.pt.flixei.dto.ApiResultsDto
 import eu.kanade.tachiyomi.animeextension.pt.flixei.dto.EpisodeDto
+import eu.kanade.tachiyomi.animeextension.pt.flixei.dto.PlayersDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -73,7 +81,7 @@ class Flixei : ParsedAnimeHttpSource() {
         val id = seasonElement.attr("data-load-episodes")
         val sname = seasonElement.text()
         val body = "getEpisodes=$id".toFormBody()
-        val response = client.newCall(POST("$WAREZ_URL/serieAjax.php", body = body)).execute()
+        val response = client.newCall(POST("$EMBED_WAREZ_URL/serieAjax.php", body = body)).execute()
         val episodes = response.parseAs<ApiResultsDto<EpisodeDto>>().items.values.map {
             SEpisode.create().apply {
                 name = "Temp $sname: Ep ${it.name}"
@@ -100,7 +108,7 @@ class Flixei : ParsedAnimeHttpSource() {
                 SEpisode.create().apply {
                     name = "Filme"
                     episode_number = 1F
-                    url = "$WAREZ_URL/filme/" + docUrl.substringAfter("=")
+                    url = "$EMBED_WAREZ_URL/filme/" + docUrl.substringAfter("=")
                 },
             )
         }
@@ -136,6 +144,76 @@ class Flixei : ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
+    override fun videoListRequest(episode: SEpisode): Request {
+        val url = episode.url
+        return if (url.startsWith("https")) {
+            // Its an real url, maybe from a movie
+            GET(url, headers)
+        } else {
+            POST("$EMBED_WAREZ_URL/serieAjax.php", body = "getAudios=$url".toFormBody())
+        }
+    }
+
+    override fun videoListParse(response: Response): List<Video> {
+        val body = response.body.string()
+        // Pair<Language, Query>
+        val items = if (body.startsWith("{")) {
+            val data = json.decodeFromString<ApiResultsDto<PlayersDto>>(body)
+            data.items.values.flatMap {
+                val lang = if (it.audio == "1") "LEGENDADO" else "DUBLADO"
+                it.iterator().mapNotNull { (server, status) ->
+                    if (status == "3") {
+                        Pair(lang, "?id=${it.id}&sv=$server")
+                    } else {
+                        null
+                    }
+                }
+            }
+        } else {
+            val doc = response.asJsoup(body)
+            doc.select("div.selectAudioButton").flatMap {
+                val lang = it.text()
+                val id = it.attr("data-load-hosts")
+                doc.select("div[data-load-embed=$id]").map { element ->
+                    lang to "?id=$id&sv=${element.attr("data-load-embed-host")}"
+                }
+            }.ifEmpty {
+                val lang = doc.selectFirst("div.selectAudio > b")!!.text()
+                    .substringBefore("/")
+                    .uppercase()
+                val id = doc.selectFirst("*[data-load-embed]")!!.attr("data-load-embed")
+                doc.select("div.buttonLoadHost").map {
+                    lang to "?id=$id&sv=${it.attr("data-load-embed-host")}"
+                }
+            }
+        }
+
+        return items.parallelMap(::getVideosFromItem).flatten()
+    }
+
+    private fun getVideosFromItem(item: Pair<String, String>): List<Video> {
+        val (lang, query) = item
+        val headers = Headers.headersOf("referer", WAREZ_URL)
+        val hostUrl = if ("warezcdn" in query) {
+            "$WAREZ_URL/player/player.php$query"
+        } else {
+            client.newCall(GET("$WAREZ_URL/embed/getPlay.php$query", headers))
+                .execute()
+                .body.string()
+                .substringAfter("location.href=\"")
+                .substringBefore("\";")
+        }
+
+        return when (query.substringAfter("sv=")) {
+            "streamtape" ->
+                StreamTapeExtractor(client).videoFromUrl(hostUrl, "Streamtape($lang)")
+                    ?.let(::listOf)
+            "mixdrop" ->
+                MixDropExtractor(client).videoFromUrl(hostUrl, lang)
+            else -> null // TODO: Add warezcdn extractor
+        } ?: emptyList()
+    }
+
     override fun videoFromElement(element: Element): Video {
         throw UnsupportedOperationException("Not used.")
     }
@@ -195,13 +273,20 @@ class Flixei : ParsedAnimeHttpSource() {
         return body.string().let(json::decodeFromString)
     }
 
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
+
     private fun Element.getInfo(item: String) = selectFirst("*:containsOwn($item) b")?.text()
 
     private fun String.toFormBody() = toRequestBody("application/x-www-form-urlencoded".toMediaType())
 
     companion object {
+
         const val PREFIX_SEARCH = "path:"
 
-        private const val WAREZ_URL = "https://embed.warezcdn.net"
+        private const val EMBED_WAREZ_URL = "https://embed.warezcdn.net"
+        private const val WAREZ_URL = "https://warezcdn.com"
     }
 }
