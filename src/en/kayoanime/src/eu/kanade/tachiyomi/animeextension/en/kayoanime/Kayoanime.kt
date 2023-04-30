@@ -44,6 +44,8 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Kayoanime"
 
+    override val id = 203922289858257167
+
     override val baseUrl = "https://kayoanime.com"
 
     override val lang = "en"

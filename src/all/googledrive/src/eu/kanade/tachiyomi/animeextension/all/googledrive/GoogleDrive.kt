@@ -40,6 +40,8 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "Google Drive"
 
+    override val id = 4222017068256633289
+
     override var baseUrl = ""
 
     // Hack to manipulate what gets opened in webview
