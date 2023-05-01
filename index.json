@@ -128,10 +128,10 @@
   {
     "name": "Aniyomi: Yomiroll",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.kamyroll",
-    "apk": "aniyomi-all.kamyroll-v13.22.apk",
+    "apk": "aniyomi-all.kamyroll-v13.23.apk",
     "lang": "all",
-    "code": 22,
-    "version": "13.22",
+    "code": 23,
+    "version": "13.23",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1698,10 +1698,10 @@
   {
     "name": "Aniyomi: Ripcrabbyanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.ripcrabbyanime",
-    "apk": "aniyomi-en.ripcrabbyanime-v13.2.apk",
+    "apk": "aniyomi-en.ripcrabbyanime-v13.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1710,7 +1710,7 @@
         "name": "Ripcrabbyanime",
         "lang": "en",
         "id": "623659475482363776",
-        "baseUrl": "https://ripcrabbyanime.in",
+        "baseUrl": "https://ripcrabbyanimes.com",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -3102,6 +3102,27 @@
         "baseUrl": "https://api2.animestc.com",
         "versionId": 1,
         "hasCloudflare": 0
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: AnimesZone",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animeszone",
+    "apk": "aniyomi-pt.animeszone-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimesZone",
+        "lang": "pt-BR",
+        "id": "7465937896816422886",
+        "baseUrl": "https://animeszone.net",
+        "versionId": 1,
+        "hasCloudflare": 1
       }
     ]
   },
