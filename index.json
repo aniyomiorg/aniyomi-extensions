@@ -65,16 +65,16 @@
   {
     "name": "Aniyomi: Google Drive",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.googledrive",
-    "apk": "aniyomi-all.googledrive-v13.2.apk",
+    "apk": "aniyomi-all.googledrive-v13.3.apk",
     "lang": "all",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
     "sources": [
       {
-        "name": "Google Drive (Experimental)",
+        "name": "Google Drive",
         "lang": "all",
         "id": "4222017068256633289",
         "baseUrl": "",
@@ -1446,16 +1446,16 @@
   {
     "name": "Aniyomi: Kayoanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.kayoanime",
-    "apk": "aniyomi-en.kayoanime-v13.3.apk",
+    "apk": "aniyomi-en.kayoanime-v13.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
     "sources": [
       {
-        "name": "Kayoanime (Experimental)",
+        "name": "Kayoanime",
         "lang": "en",
         "id": "203922289858257167",
         "baseUrl": "https://kayoanime.com",
@@ -1698,16 +1698,16 @@
   {
     "name": "Aniyomi: Ripcrabbyanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.ripcrabbyanime",
-    "apk": "aniyomi-en.ripcrabbyanime-v13.1.apk",
+    "apk": "aniyomi-en.ripcrabbyanime-v13.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "13.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
     "sources": [
       {
-        "name": "Ripcrabbyanime (Experimental)",
+        "name": "Ripcrabbyanime",
         "lang": "en",
         "id": "623659475482363776",
         "baseUrl": "https://ripcrabbyanime.in",
@@ -3001,6 +3001,27 @@
     ]
   },
   {
+    "name": "Aniyomi: AnimePlayer",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animeplayer",
+    "apk": "aniyomi-pt.animeplayer-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimePlayer",
+        "lang": "pt-BR",
+        "id": "6456382572881676651",
+        "baseUrl": "https://animeplayer.com.br",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Animes Aria",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesaria",
     "apk": "aniyomi-pt.animesaria-v13.1.apk",
@@ -3184,6 +3205,27 @@
         "lang": "pt-BR",
         "id": "4986568999330167770",
         "baseUrl": "https://cinevision.vc",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: Flixei",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.flixei",
+    "apk": "aniyomi-pt.flixei-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Flixei",
+        "lang": "pt-BR",
+        "id": "1017446964244457164",
+        "baseUrl": "https://flixei.com",
         "versionId": 1,
         "hasCloudflare": 0
       }
