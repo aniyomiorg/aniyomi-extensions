@@ -25,7 +25,6 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
@@ -58,10 +57,13 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val tokenInterceptor = AccessTokenInterceptor(crUrl, json, preferences, PREF_USE_LOCAL_Token)
+    private val tokenInterceptor by lazy {
+        AccessTokenInterceptor(crUrl, json, preferences, PREF_USE_LOCAL_Token)
+    }
 
-    override val client: OkHttpClient = OkHttpClient().newBuilder()
-        .addInterceptor(tokenInterceptor).build()
+    override val client by lazy {
+        super.client.newBuilder().addInterceptor(tokenInterceptor).build()
+    }
 
     // ============================== Popular ===============================
 
@@ -72,17 +74,8 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val parsed = json.decodeFromString<AnimeResult>(response.body.string())
-        val animeList = parsed.data.parallelMap { ani ->
-            runCatching {
-                ani.toSAnime()
-            }.getOrNull()
-        }.filterNotNull()
-        val queries = response.request.url.encodedQuery ?: "0"
-        val position = if (queries.contains("start=")) {
-            queries.substringAfter("start=").substringBefore("&").toInt()
-        } else {
-            0
-        }
+        val animeList = parsed.data.mapNotNull { it.toSAnimeOrNull() }
+        val position = response.request.url.queryParameter("start")?.toIntOrNull() ?: 0
         return AnimesPage(animeList, position + 36 < parsed.total)
     }
 
@@ -112,7 +105,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun searchAnimeParse(response: Response): AnimesPage {
         val bod = response.body.string()
         val total: Int
-        val animeList = (
+        val items =
             if (response.request.url.encodedPath.contains("search")) {
                 val parsed = json.decodeFromString<SearchAnimeResult>(bod).data.first()
                 total = parsed.count
@@ -122,17 +115,9 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                 total = parsed.total
                 parsed.data
             }
-            ).parallelMap { ani ->
-            runCatching {
-                ani.toSAnime()
-            }.getOrNull()
-        }.filterNotNull()
-        val queries = response.request.url.encodedQuery ?: "0"
-        val position = if (queries.contains("start=")) {
-            queries.substringAfter("start=").substringBefore("&").toInt()
-        } else {
-            0
-        }
+
+        val animeList = items.mapNotNull { it.toSAnimeOrNull() }
+        val position = response.request.url.queryParameter("start")?.toIntOrNull() ?: 0
         return AnimesPage(animeList, position + 36 < total)
     }
 
@@ -181,51 +166,55 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         val chunkSize = if (preferences.getBoolean(PREF_DISABLE_SEASON_PARALLEL_MAP, false)) 1 else 6
 
         return if (series) {
-            seasons.data.sortedBy { it.season_number }.chunked(chunkSize).map { chunk ->
+            seasons.data.sortedBy { it.season_number }.chunked(chunkSize).flatMap { chunk ->
                 chunk.parallelMap { seasonData ->
                     runCatching {
-                        val episodeResp =
-                            client.newCall(GET("$crUrl/content/v2/cms/seasons/${seasonData.id}/episodes"))
-                                .execute()
-                        val body = episodeResp.body.string()
-                        val episodes =
-                            json.decodeFromString<EpisodeResult>(body)
-                        episodes.data.sortedBy { it.episode_number }.parallelMap EpisodeMap@{ ep ->
-                            SEpisode.create().apply {
-                                url = EpisodeData(
-                                    ep.versions?.map { Pair(it.mediaId, it.audio_locale) }
-                                        ?: listOf(
-                                            Pair(
-                                                ep.streams_link?.substringAfter("videos/")
-                                                    ?.substringBefore("/streams")
-                                                    ?: return@EpisodeMap null,
-                                                ep.audio_locale,
-                                            ),
-                                        ),
-                                ).toJsonString()
-                                name = if (ep.episode_number > 0 && ep.episode.isNumeric()) {
-                                    "Season ${seasonData.season_number} Ep ${df.format(ep.episode_number)}: " + ep.title
-                                } else {
-                                    ep.title
-                                }
-                                episode_number = ep.episode_number
-                                date_upload = ep.airDate?.let { parseDate(it) } ?: 0L
-                                scanlator = ep.versions?.sortedBy { it.audio_locale }
-                                    ?.joinToString { it.audio_locale.substringBefore("-") }
-                                    ?: ep.audio_locale.substringBefore("-")
-                            }
-                        }.filterNotNull()
+                        getEpisodes(seasonData)
                     }.getOrNull()
                 }.filterNotNull().flatten()
-            }.flatten().reversed()
+            }.reversed()
         } else {
             seasons.data.mapIndexed { index, movie ->
                 SEpisode.create().apply {
-                    this.url = EpisodeData(listOf(Pair(movie.id, ""))).toJsonString()
-                    this.name = "Movie"
-                    this.episode_number = (index + 1).toFloat()
-                    this.date_upload = movie.date?.let { parseDate(it) } ?: 0L
+                    url = EpisodeData(listOf(Pair(movie.id, ""))).toJsonString()
+                    name = "Movie"
+                    episode_number = (index + 1).toFloat()
+                    date_upload = movie.date?.let(::parseDate) ?: 0L
                 }
+            }
+        }
+    }
+
+    private fun getEpisodes(seasonData: SeasonResult.Season): List<SEpisode> {
+        val episodeResp =
+            client.newCall(GET("$crUrl/content/v2/cms/seasons/${seasonData.id}/episodes"))
+                .execute()
+        val body = episodeResp.body.string()
+        val episodes = json.decodeFromString<EpisodeResult>(body)
+
+        return episodes.data.sortedBy { it.episode_number }.mapNotNull EpisodeMap@{ ep ->
+            SEpisode.create().apply {
+                url = EpisodeData(
+                    ep.versions?.map { Pair(it.mediaId, it.audio_locale) }
+                        ?: listOf(
+                            Pair(
+                                ep.streams_link?.substringAfter("videos/")
+                                    ?.substringBefore("/streams")
+                                    ?: return@EpisodeMap null,
+                                ep.audio_locale,
+                            ),
+                        ),
+                ).toJsonString()
+                name = if (ep.episode_number > 0 && ep.episode.isNumeric()) {
+                    "Season ${seasonData.season_number} Ep ${df.format(ep.episode_number)}: " + ep.title
+                } else {
+                    ep.title
+                }
+                episode_number = ep.episode_number
+                date_upload = ep.airDate?.let(::parseDate) ?: 0L
+                scanlator = ep.versions?.sortedBy { it.audio_locale }
+                    ?.joinToString { it.audio_locale.substringBefore("-") }
+                    ?: ep.audio_locale.substringBefore("-")
             }
         }
     }
@@ -322,15 +311,13 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         return GET("$crUrl/cms/v2{0}/videos/$mediaId/streams?Policy={1}&Signature={2}&Key-Pair-Id={3}")
     }
 
-    private val df = DecimalFormat("0.#")
+    private val df by lazy { DecimalFormat("0.#") }
 
     private fun String.getLocale(): String {
         return locale.firstOrNull { it.first == this }?.second ?: ""
     }
 
-    private fun String?.isNumeric(): Boolean {
-        return this@isNumeric?.toDoubleOrNull() != null
-    }
+    private fun String?.isNumeric() = this?.toDoubleOrNull() != null
 
     // Add new locales to the bottom so it doesn't mess with pref indexes
     private val locale = arrayOf(
@@ -373,21 +360,23 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
             .getOrNull() ?: 0L
     }
 
+    private fun Anime.toSAnimeOrNull() = runCatching { toSAnime() }.getOrNull()
+
     private fun Anime.toSAnime(): SAnime =
         SAnime.create().apply {
             title = this@toSAnime.title
-            thumbnail_url = this@toSAnime.images.poster_tall?.getOrNull(0)?.thirdLast()?.source
-                ?: this@toSAnime.images.poster_tall?.getOrNull(0)?.last()?.source
-            url = LinkData(this@toSAnime.id, this@toSAnime.type!!).toJsonString()
-            genre = this@toSAnime.series_metadata?.genres?.joinToString()
-                ?: this@toSAnime.movie_metadata?.genres?.joinToString() ?: ""
+            thumbnail_url = images.poster_tall?.getOrNull(0)?.thirdLast()?.source
+                ?: images.poster_tall?.getOrNull(0)?.last()?.source
+            url = LinkData(id, type!!).toJsonString()
+            genre = series_metadata?.genres?.joinToString()
+                ?: movie_metadata?.genres?.joinToString() ?: ""
             status = SAnime.COMPLETED
             var desc = this@toSAnime.description + "\n"
             desc += "\nLanguage:" +
                 (
-                    if (this@toSAnime.series_metadata?.subtitle_locales?.any() == true ||
-                        this@toSAnime.movie_metadata?.subtitle_locales?.any() == true ||
-                        this@toSAnime.series_metadata?.is_subbed == true
+                    if (series_metadata?.subtitle_locales?.any() == true ||
+                        movie_metadata?.subtitle_locales?.any() == true ||
+                        series_metadata?.is_subbed == true
                     ) {
                         " Sub"
                     } else {
@@ -395,8 +384,8 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                     }
                     ) +
                 (
-                    if ((this@toSAnime.series_metadata?.audio_locales?.size ?: 0) > 1 ||
-                        this@toSAnime.movie_metadata?.is_dubbed == true
+                    if ((series_metadata?.audio_locales?.size ?: 0) > 1 ||
+                        movie_metadata?.is_dubbed == true
                     ) {
                         " Dub"
                     } else {
@@ -405,18 +394,18 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                     )
             desc += "\nMaturity Ratings: " +
                 (
-                    this@toSAnime.series_metadata?.maturity_ratings?.joinToString()
-                        ?: this@toSAnime.movie_metadata?.maturity_ratings?.joinToString() ?: ""
+                    series_metadata?.maturity_ratings?.joinToString()
+                        ?: movie_metadata?.maturity_ratings?.joinToString() ?: ""
                     )
-            desc += if (this@toSAnime.series_metadata?.is_simulcast == true) "\nSimulcast" else ""
+            desc += if (series_metadata?.is_simulcast == true) "\nSimulcast" else ""
             desc += "\n\nAudio: " + (
-                this@toSAnime.series_metadata?.audio_locales?.sortedBy { it.getLocale() }
+                series_metadata?.audio_locales?.sortedBy { it.getLocale() }
                     ?.joinToString { it.getLocale() } ?: ""
                 )
             desc += "\n\nSubs: " + (
-                this@toSAnime.series_metadata?.subtitle_locales?.sortedBy { it.getLocale() }
+                series_metadata?.subtitle_locales?.sortedBy { it.getLocale() }
                     ?.joinToString { it.getLocale() }
-                    ?: this@toSAnime.movie_metadata?.subtitle_locales?.sortedBy { it.getLocale() }
+                    ?: movie_metadata?.subtitle_locales?.sortedBy { it.getLocale() }
                         ?.joinToString { it.getLocale() } ?: ""
                 )
             description = desc
