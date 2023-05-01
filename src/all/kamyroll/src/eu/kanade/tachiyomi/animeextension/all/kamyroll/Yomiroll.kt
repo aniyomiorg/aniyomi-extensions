@@ -163,8 +163,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> {
         val seasons = json.decodeFromString<SeasonResult>(response.body.string())
         val series = response.request.url.encodedPath.contains("series/")
-        val chunkSize = if (preferences.getBoolean(PREF_DISABLE_SEASON_PARALLEL_MAP, false)) 1 else 6
-
+        val chunkSize = Runtime.getRuntime().availableProcessors()
         return if (series) {
             seasons.data.sortedBy { it.season_number }.chunked(chunkSize).flatMap { chunk ->
                 chunk.parallelMap { seasonData ->
@@ -494,20 +493,10 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
-        val disableParallelEpMap = SwitchPreferenceCompat(screen.context).apply {
-            key = PREF_DISABLE_SEASON_PARALLEL_MAP
-            title = "Disable Parallel Requests for Seasons"
-            setDefaultValue(false)
-            setOnPreferenceChangeListener { _, newValue ->
-                preferences.edit().putBoolean(key, newValue as Boolean).commit()
-            }
-        }
-
         screen.addPreference(videoQualityPref)
         screen.addPreference(audLocalePref)
         screen.addPreference(subLocalePref)
         screen.addPreference(subTypePref)
-        screen.addPreference(disableParallelEpMap)
         screen.addPreference(localSubsPreference(screen))
     }
 
@@ -570,7 +559,6 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_AUD = "preferred_audio"
         private const val PREF_SUB = "preferred_sub"
         private const val PREF_SUB_TYPE = "preferred_sub_type"
-        private const val PREF_DISABLE_SEASON_PARALLEL_MAP = "preferred_disable_parallelMap"
         private const val PREF_USE_LOCAL_Token = "preferred_local_Token"
     }
 }
