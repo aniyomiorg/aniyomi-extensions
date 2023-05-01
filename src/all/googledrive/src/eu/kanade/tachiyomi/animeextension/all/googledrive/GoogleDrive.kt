@@ -38,7 +38,9 @@ import java.text.StringCharacterIterator
 
 class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
 
-    override val name = "Google Drive (Experimental)"
+    override val name = "Google Drive"
+
+    override val id = 4222017068256633289
 
     override var baseUrl = ""
 
