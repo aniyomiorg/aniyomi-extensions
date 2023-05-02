@@ -66,31 +66,23 @@ class AnimeLek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListSelector() = "div.ep-card-anime-title-detail h3 a"
 
     override fun episodeFromElement(element: Element): SEpisode {
-        val episode = SEpisode.create()
-        episode.setUrlWithoutDomain(element.attr("href"))
-        episode.name = element.text()
-        val epNum = getNumberFromEpsString(element.text())
-        episode.episode_number = when {
-            (epNum.isNotEmpty()) -> epNum.toFloat()
-            else -> 1F
+        return SEpisode.create().apply {
+            setUrlWithoutDomain(element.attr("href"))
+            val text = element.text()
+            name = text
+            val epNum = text.filter { it.isDigit() }
+            episode_number = when {
+                (epNum.isNotEmpty()) -> epNum.toFloatOrNull() ?: 1F
+                else -> 1F
+            }
         }
-        return episode
     }
 
-    private fun getNumberFromEpsString(epsStr: String): String {
-        return epsStr.filter { it.isDigit() }
-    }
+    override fun episodeListParse(response: Response) = super.episodeListParse(response).reversed()
 
     // Video urls
-
-    override fun videoListRequest(episode: SEpisode): Request {
-        val iframe = baseUrl + episode.url
-        return GET(iframe)
-    }
-
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        return videosFromElement(document)
+        return response.use { videosFromElement(it.asJsoup()) }
     }
 
     override fun videoListSelector() = "ul#episode-servers li.watch a"
