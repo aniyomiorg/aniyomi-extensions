@@ -178,17 +178,10 @@ class AnimeLek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // search
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("h3 a").attr("href"))
-        // anime.thumbnail_url = element.select("div.img div.picture img").attr("src")
-        anime.title = element.attr("title")
-        return anime
-    }
-
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
     override fun searchAnimeNextPageSelector(): String = "li.page-item a[rel=next]"
 
-    override fun searchAnimeSelector(): String = "div.anime-card-details div.anime-card-title"
+    override fun searchAnimeSelector(): String = "div.anime-list-content div.anime-card-container"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/search/?s=$query&page=$page")
 
