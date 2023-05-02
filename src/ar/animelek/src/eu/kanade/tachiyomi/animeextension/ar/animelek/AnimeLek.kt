@@ -36,7 +36,7 @@ class AnimeLek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "ar"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -173,7 +173,7 @@ class AnimeLek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
     override fun searchAnimeNextPageSelector(): String = "li.page-item a[rel=next]"
 
-    override fun searchAnimeSelector(): String = "div.anime-list-content div.anime-card-container"
+    override fun searchAnimeSelector() = "div.anime-list-content div.anime-card-container"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/search/?s=$query&page=$page")
 
@@ -199,13 +199,13 @@ class AnimeLek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Latest
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector() = searchAnimeNextPageSelector()
 
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/episode/?page=$page")
 
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesSelector() = "div.episodes-list-content div.episodes-card-container"
 
     // Preferences
 
