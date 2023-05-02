@@ -112,7 +112,17 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
         filters: AnimeFilterList,
     ): Observable<AnimesPage> {
         val req = searchAnimeRequest(page, query, filters)
-        return Observable.just(parsePage(req, page, query))
+
+        val filterList = if (filters.isEmpty()) getFilterList() else filters
+        val urlFilter = filterList.find { it is URLFilter } as URLFilter
+
+        if (query.isNotEmpty()) throw Exception("Search is disabled. Use search in webview and add it as a single folder in filters.")
+
+        return if (urlFilter.state.isEmpty()) {
+            Observable.just(parsePage(req, page))
+        } else {
+            Observable.just(addSinglePage(urlFilter.state))
+        }
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -141,8 +151,10 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================== FILTERS ===============================
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
-        AnimeFilter.Header("Text search will only search inside selected server"),
         ServerFilter(getDomains()),
+        AnimeFilter.Separator(),
+        AnimeFilter.Header("Add single folder"),
+        URLFilter(),
     )
 
     private class ServerFilter(domains: Array<Pair<String, String>>) : UriPartFilter(
@@ -164,6 +176,8 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
         AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
     }
+
+    private class URLFilter : AnimeFilter.Text("Url")
 
     // =========================== Anime Details ============================
 
@@ -395,7 +409,23 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================= Utilities ==============================
 
-    private fun parsePage(request: Request, page: Int, matches: String? = null): AnimesPage {
+    private fun addSinglePage(folderUrl: String): AnimesPage {
+        val match = driveFolderRegex.matchEntire(folderUrl) ?: throw Exception("Invalid drive url")
+        val recurDepth = match.groups["depth"]?.value ?: ""
+
+        val anime = SAnime.create()
+        anime.title = match.groups["name"]?.value?.substringAfter("[")?.substringBeforeLast("]") ?: "Folder"
+        anime.setUrlWithoutDomain(
+            LinkData(
+                "https://drive.google.com/drive/folders/${match.groups["id"]!!.value}$recurDepth",
+                "multi",
+            ).toJsonString(),
+        )
+        anime.thumbnail_url = ""
+        return AnimesPage(listOf(anime), false)
+    }
+
+    private fun parsePage(request: Request, page: Int): AnimesPage {
         val animeList = mutableListOf<SAnime>()
 
         val recurDepth = request.url.encodedFragment?.let { "#$it" } ?: ""
@@ -428,17 +458,17 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
         if (page == 1) nextPageToken = ""
         val requestUrl = "/drive/v2beta/files?openDrive=true&reason=102&syncType=0&errorRecovery=false&q=trashed%20%3D%20false%20and%20'$folderId'%20in%20parents&fields=kind%2CnextPageToken%2Citems(kind%2CmodifiedDate%2CmodifiedByMeDate%2ClastViewedByMeDate%2CfileSize%2Cowners(kind%2CpermissionId%2Cid)%2ClastModifyingUser(kind%2CpermissionId%2Cid)%2ChasThumbnail%2CthumbnailVersion%2Ctitle%2Cid%2CresourceKey%2Cshared%2CsharedWithMeDate%2CuserPermission(role)%2CexplicitlyTrashed%2CmimeType%2CquotaBytesUsed%2Ccopyable%2CfileExtension%2CsharingUser(kind%2CpermissionId%2Cid)%2Cspaces%2Cversion%2CteamDriveId%2ChasAugmentedPermissions%2CcreatedDate%2CtrashingUser(kind%2CpermissionId%2Cid)%2CtrashedDate%2Cparents(id)%2CshortcutDetails(targetId%2CtargetMimeType%2CtargetLookupStatus)%2Ccapabilities(canCopy%2CcanDownload%2CcanEdit%2CcanAddChildren%2CcanDelete%2CcanRemoveChildren%2CcanShare%2CcanTrash%2CcanRename%2CcanReadTeamDrive%2CcanMoveTeamDriveItem)%2Clabels(starred%2Ctrashed%2Crestricted%2Cviewed))%2CincompleteSearch&appDataFilter=NO_APP_DATA&spaces=drive&pageToken=$nextPageToken&maxResults=50&supportsTeamDrives=true&includeItemsFromAllDrives=true&corpora=default&orderBy=folder%2Ctitle_natural%20asc&retryCount=0&key=$key HTTP/1.1"
         val body = """--$boundary
-                |content-type: application/http
-                |content-transfer-encoding: binary
-                |
-                |GET $requestUrl
-                |X-Goog-Drive-Client-Version: $driveVersion
-                |authorization: ${generateSapisidhashHeader(sapisid)}
-                |x-goog-authuser: 0
-                |
-                |--$boundary
-                |
-                """.trimMargin("|").toRequestBody("multipart/mixed; boundary=\"$boundary\"".toMediaType())
+            |content-type: application/http
+            |content-transfer-encoding: binary
+            |
+            |GET $requestUrl
+            |X-Goog-Drive-Client-Version: $driveVersion
+            |authorization: ${generateSapisidhashHeader(sapisid)}
+            |x-goog-authuser: 0
+            |
+            |--$boundary
+            |
+            """.trimMargin("|").toRequestBody("multipart/mixed; boundary=\"$boundary\"".toMediaType())
 
         val postUrl = "https://clients6.google.com/batch/drive/v2beta".toHttpUrl().newBuilder()
             .addQueryParameter("${'$'}ct", "multipart/mixed;boundary=\"$boundary\"")
@@ -460,10 +490,6 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
         )
         if (parsed.items == null) throw Exception("Failed to load items, please log in through webview")
         parsed.items.forEachIndexed { index, it ->
-            if (matches != null) {
-                if (!it.title.contains(matches, true)) return@forEachIndexed
-            }
-
             if (it.mimeType.startsWith("video")) {
                 val anime = SAnime.create()
                 anime.title = if (preferences.getBoolean("trim_anime_info", false)) {
