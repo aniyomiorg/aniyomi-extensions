@@ -1,22 +1,19 @@
 plugins {
     id("com.android.library")
-    id("kotlinx-serialization") // for the DTO
+    id("kotlinx-serialization")
     kotlin("android")
 }
 
 android {
     compileSdk = AndroidConfig.compileSdk
+    namespace = "eu.kanade.tachiyomi.lib.fembedextractor"
 
     defaultConfig {
         minSdk = AndroidConfig.minSdk
-        targetSdk = AndroidConfig.targetSdk
     }
 }
 
 dependencies {
-    compileOnly(libs.kotlin.stdlib)
-    compileOnly(libs.kotlin.json)
-    compileOnly(libs.okhttp)
-    compileOnly(libs.aniyomi.lib)
+    compileOnly(libs.bundles.common)
 }
-// BUMPS: 0
+

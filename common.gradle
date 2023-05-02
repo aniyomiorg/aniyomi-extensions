@@ -2,6 +2,7 @@ apply plugin: 'org.jmailen.kotlinter'
 
 android {
     compileSdkVersion AndroidConfig.compileSdk
+    namespace AndroidConfig.namespace
 
     sourceSets {
         main {
