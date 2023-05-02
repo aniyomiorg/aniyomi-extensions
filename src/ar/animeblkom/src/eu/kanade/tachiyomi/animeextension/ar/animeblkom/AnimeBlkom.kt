@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.ar.animeblkom.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -11,9 +12,9 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -96,22 +97,26 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // Video links
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val iframe = document.selectFirst("iframe")!!.attr("src")
-        val referer = response.request.url.encodedPath
-        val newHeaders = Headers.headersOf("referer", baseUrl + referer)
-        val iframeResponse = client.newCall(GET(iframe, newHeaders))
-            .execute().asJsoup()
-        return iframeResponse.select(videoListSelector()).map { videoFromElement(it, iframe) }
+        return document.select("span.server a").mapNotNull {
+            val url = it.attr("data-src").replace("http://", "https://")
+            when {
+                "new.vid4up" in url -> {
+                    val urlResponse = client.newCall(GET(url, headers))
+                        .execute().asJsoup()
+                    urlResponse.select(videoListSelector()).map(::videoFromElement)
+                }
+                "ok.ru" in url -> OkruExtractor(client).videosFromUrl(url)
+                "mp4upload" in url -> Mp4uploadExtractor(client).videosFromUrl(url, headers)
+                else -> null
+            }
+        }.flatten()
     }
 
     override fun videoListSelector() = "source"
 
-    override fun videoFromElement(element: Element) = throw Exception("Not used")
-
-    private fun videoFromElement(element: Element, referrer: String): Video {
+    override fun videoFromElement(element: Element): Video {
         val videoUrl = element.attr("src")
-        val headers = Headers.headersOf("Referer", referrer)
-        return Video(videoUrl, element.attr("res") + "p", videoUrl, headers = headers)
+        return Video(videoUrl, "Blkbom - " + element.attr("label"), videoUrl, headers = headers)
     }
 
     override fun List<Video>.sort(): List<Video> {
