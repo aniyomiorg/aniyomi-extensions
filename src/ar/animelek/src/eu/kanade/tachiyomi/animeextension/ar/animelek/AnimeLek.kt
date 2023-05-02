@@ -46,19 +46,20 @@ class AnimeLek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Popular Anime
 
-    override fun popularAnimeSelector(): String = "div.anime-card-details div.anime-card-title"
+    override fun popularAnimeSelector() = "div.slider-episode-container div.episodes-card-container"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/قائمة-الأنمي/?page=$page") // page/$page
+    override fun popularAnimeRequest(page: Int): Request = GET(baseUrl)
 
     override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("h3 a").attr("href"))
-        // anime.thumbnail_url = element.select("div.img div.picture img").attr("src")
-        anime.title = element.attr("title")
-        return anime
+        return SAnime.create().apply {
+            val ahref = element.selectFirst("h3 a")!!
+            setUrlWithoutDomain(ahref.attr("href"))
+            title = ahref.text()
+            thumbnail_url = element.selectFirst("img")?.attr("src")
+        }
     }
 
-    override fun popularAnimeNextPageSelector(): String = "li.page-item a[rel=next]"
+    override fun popularAnimeNextPageSelector() = null
 
     // Episodes
 
