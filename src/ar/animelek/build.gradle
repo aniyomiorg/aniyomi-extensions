@@ -1,5 +1,7 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
 
 ext {
     extName = 'AnimeLek'
@@ -14,6 +16,7 @@ dependencies {
     implementation(project(':lib-okru-extractor'))
     implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib-vidbom-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"
