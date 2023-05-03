@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.pt.animesfoxbr
 
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
+import org.jsoup.nodes.Document
 
 class AnimesFoxBR : DooPlay(
     "pt-BR",
@@ -19,6 +20,16 @@ class AnimesFoxBR : DooPlay(
 
     // =============================== Search ===============================
     override fun searchAnimeNextPageSelector() = "div.pagination > *:last-child:not(.current)"
+
+    // ============================== Filters ===============================
+    override fun genresListRequest() = GET("$baseUrl/categorias")
+
+    override fun genresListSelector() = "div.box_category > a"
+
+    override fun genresListParse(document: Document) =
+        super.genresListParse(document).map {
+            Pair(it.first.substringAfter(" "), it.second)
+        }.toTypedArray()
 
     // =============================== Latest ===============================
     override val latestUpdatesPath = "episodios"
