@@ -16,4 +16,11 @@ class AnimesFoxBR : DooPlay(
     override fun popularAnimeSelector() = "div.clw div.b_flex > div > a"
 
     override fun popularAnimeNextPageSelector() = "div.pagination i#nextpagination"
+
+    // =============================== Latest ===============================
+    override val latestUpdatesPath = "episodios"
+
+    override fun latestUpdatesSelector() = popularAnimeSelector()
+
+    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
 }
