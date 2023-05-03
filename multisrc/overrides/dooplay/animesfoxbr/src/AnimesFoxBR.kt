@@ -1,6 +1,8 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesfoxbr
 
 import android.util.Base64
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
@@ -36,19 +38,16 @@ class AnimesFoxBR : DooPlay(
 
     // ============================ Video Links =============================
     override val PREF_QUALITY_VALUES = arrayOf("360p ~ SD", "720p ~ HD")
-    protected open val PREF_QUALITY_ENTRIES = arrayOf("360p", "720p")
+    override val PREF_QUALITY_ENTRIES = PREF_QUALITY_VALUES
 
     override fun videoListParse(response: Response): List<Video> {
         val doc = response.asJsoup()
-        val languages = doc.select("ul#playeroptionsul span.title")
-        val players = doc.select("ul#playeroptionsul li").map(::getPlayerUrl)
-
-        return players.mapIndexedNotNull { index, url ->
-            languages.getOrNull(index)?.text()?.let { language ->
-                when {
-                    baseUrl in url -> extractVideos(url, language)
-                    else -> null
-                }
+        return doc.select("ul#playeroptionsul li").mapNotNull {
+            val url = getPlayerUrl(it)
+            val language = it.selectFirst("span.title")?.text() ?: "Linguagem desconhecida"
+            when {
+                baseUrl in url -> extractVideos(url, language)
+                else -> null
             }
         }.flatten()
     }
@@ -148,6 +147,27 @@ class AnimesFoxBR : DooPlay(
 
     override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
 
+    // ============================== Settings ==============================
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val videoLanguagePref = ListPreference(screen.context).apply {
+            key = PREF_LANGUAGE_KEY
+            title = PREF_LANGUAGE_TITLE
+            entries = PREF_LANGUAGE_ENTRIES
+            entryValues = PREF_LANGUAGE_VALUES
+            setDefaultValue(PREF_LANGUAGE_DEFAULT)
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
+        screen.addPreference(videoLanguagePref)
+        super.setupPreferenceScreen(screen)
+    }
+
     // ============================= Utilities ==============================
     override val animeMenuSelector = "div.epsL i.material-icons:contains(library)"
 
@@ -156,5 +176,24 @@ class AnimesFoxBR : DooPlay(
         return hex.drop(1).joinToString("") {
             Char(it xor hex.first()).toString()
         }
+    }
+
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(VIDEO_SORT_PREF_KEY, VIDEO_SORT_PREF_DEFAULT)!!
+        val language = preferences.getString(PREF_LANGUAGE_KEY, PREF_LANGUAGE_DEFAULT)!!
+        return sortedWith(
+            compareBy(
+                { it.quality.lowercase().contains(quality.lowercase()) },
+                { it.quality.lowercase().contains(language.lowercase()) },
+            ),
+        ).reversed()
+    }
+
+    companion object {
+        private const val PREF_LANGUAGE_KEY = "preferred_language"
+        private const val PREF_LANGUAGE_DEFAULT = "Legendado"
+        private const val PREF_LANGUAGE_TITLE = "Língua preferida"
+        private val PREF_LANGUAGE_VALUES = arrayOf("Legendado", "Dublado")
+        private val PREF_LANGUAGE_ENTRIES = PREF_LANGUAGE_VALUES
     }
 }
