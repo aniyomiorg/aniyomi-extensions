@@ -17,6 +17,9 @@ class AnimesFoxBR : DooPlay(
 
     override fun popularAnimeNextPageSelector() = "div.pagination i#nextpagination"
 
+    // =============================== Search ===============================
+    override fun searchAnimeNextPageSelector() = "div.pagination > *:last-child:not(.current)"
+
     // =============================== Latest ===============================
     override val latestUpdatesPath = "episodios"
 
