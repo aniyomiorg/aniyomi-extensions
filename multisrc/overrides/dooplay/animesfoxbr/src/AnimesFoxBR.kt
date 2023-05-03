@@ -4,6 +4,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
 import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 
 class AnimesFoxBR : DooPlay(
     "pt-BR",
@@ -18,6 +19,14 @@ class AnimesFoxBR : DooPlay(
     override fun popularAnimeSelector() = "div.clw div.b_flex > div > a"
 
     override fun popularAnimeNextPageSelector() = "div.pagination i#nextpagination"
+
+    // ============================== Episodes ==============================
+    override fun episodeListSelector() = "div.se-a > div.anime_item > a"
+
+    override fun episodeFromElement(element: Element, seasonName: String) =
+        super.episodeFromElement(element, seasonName).apply {
+            name = name.substringBefore("- ")
+        }
 
     // =============================== Search ===============================
     override fun searchAnimeNextPageSelector() = "div.pagination > *:last-child:not(.current)"
