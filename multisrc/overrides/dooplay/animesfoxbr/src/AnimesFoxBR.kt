@@ -1,8 +1,14 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesfoxbr
 
+import android.util.Base64
 import eu.kanade.tachiyomi.animesource.model.SAnime
+import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
+import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.FormBody
+import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
@@ -27,6 +33,63 @@ class AnimesFoxBR : DooPlay(
         super.episodeFromElement(element, seasonName).apply {
             name = name.substringBefore("- ")
         }
+
+    // ============================ Video Links =============================
+    override val PREF_QUALITY_VALUES = arrayOf("360p ~ SD", "720p ~ HD")
+    protected open val PREF_QUALITY_ENTRIES = arrayOf("360p", "720p")
+
+    override fun videoListParse(response: Response): List<Video> {
+        val doc = response.asJsoup()
+        val languages = doc.select("ul#playeroptionsul span.title")
+        val players = doc.select("ul#playeroptionsul li").map(::getPlayerUrl)
+
+        return players.mapIndexedNotNull { index, url ->
+            languages.getOrNull(index)?.text()?.let { language ->
+                when {
+                    baseUrl in url -> extractVideos(url, language)
+                    else -> null
+                }
+            }
+        }.flatten()
+    }
+
+    private fun extractVideos(url: String, language: String): List<Video> {
+        return client.newCall(GET(url, headers)).execute()
+            .use { response ->
+                response.body.string()
+                    .substringAfter("sources:[")
+                    .substringBefore("]")
+                    .split("},")
+                    .mapNotNull {
+                        val videoUrl = it.substringAfter("file: \"")
+                            .substringBefore('"')
+                            .ifBlank { return@mapNotNull null }
+                        val quality = it.substringAfter("label:\"").substringBefore('"')
+                        Video(videoUrl, "$language($quality)", videoUrl, headers = headers)
+                    }
+            }
+    }
+
+    private fun getPlayerUrl(player: Element): String {
+        val body = FormBody.Builder()
+            .add("action", "doo_player_ajax")
+            .add("post", player.attr("data-post"))
+            .add("nume", player.attr("data-nume"))
+            .add("type", player.attr("data-type"))
+            .build()
+
+        return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", headers, body))
+            .execute()
+            .use { response ->
+                response.body.string()
+                    .substringAfter("\"embed_url\":\"")
+                    .substringBefore("\",")
+                    .replace("\\", "")
+                    .substringAfter("token=")
+                    .substringBefore("' ")
+                    .let { Base64.decode(it, Base64.DEFAULT).let(::String) }
+            }
+    }
 
     // =============================== Search ===============================
     override fun searchAnimeNextPageSelector() = "div.pagination > *:last-child:not(.current)"
