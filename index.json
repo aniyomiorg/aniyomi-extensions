@@ -3043,6 +3043,27 @@
     ]
   },
   {
+    "name": "Aniyomi: AnimesFox BR",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesfoxbr",
+    "apk": "aniyomi-pt.animesfoxbr-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimesFox BR",
+        "lang": "pt-BR",
+        "id": "6518280198965195589",
+        "baseUrl": "https://animesfoxbr.com",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Animes House",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animeshouse",
     "apk": "aniyomi-pt.animeshouse-v13.5.apk",
