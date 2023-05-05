@@ -23,7 +23,7 @@ class OpenAnimes : ParsedAnimeHttpSource() {
 
     override val lang = "pt-BR"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     // ============================== Popular ===============================
     override fun popularAnimeFromElement(element: Element): SAnime {
@@ -104,20 +104,20 @@ class OpenAnimes : ParsedAnimeHttpSource() {
 
     // =============================== Latest ===============================
     override fun latestUpdatesFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
+        return SAnime.create().apply {
+            element.selectFirst("a.thumb")!!.let {
+                setUrlWithoutDomain(it.attr("href"))
+                thumbnail_url = it.selectFirst("img")!!.attr("data-lazy-src")
+            }
+            title = element.selectFirst("h3 > a")!!.text()
+        }
     }
 
-    override fun latestUpdatesNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesNextPageSelector() = "div.pagination a.pagination__arrow--right"
 
-    override fun latestUpdatesRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/lancamentos/page/$page")
 
-    override fun latestUpdatesSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesSelector() = "div.contents div.itens > div"
 
     companion object {
         const val PREFIX_SEARCH = "id:"
