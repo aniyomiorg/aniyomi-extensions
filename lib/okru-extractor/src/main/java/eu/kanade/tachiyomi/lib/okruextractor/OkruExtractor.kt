@@ -16,7 +16,7 @@ class OkruExtractor(private val client: OkHttpClient) {
             Pair("sd", "480p"),
             Pair("low", "360p"),
             Pair("lowest", "240p"),
-            Pair("mobile", "144p")
+            Pair("mobile", "144p"),
         )
         return qualities.find { it.first == quality }?.second ?: quality
     }
@@ -33,16 +33,24 @@ class OkruExtractor(private val client: OkHttpClient) {
                 .substringBefore("\\\"")
                 .replace("\\\\u0026", "&")
             val quality = it.substringBefore("\\\"").let {
-                if (fixQualities) fixQuality(it)
-                else it
+                if (fixQualities) {
+                    fixQuality(it)
+                } else {
+                    it
+                }
             }
             val videoQuality = ("Okru:" + quality).let {
-                if (prefix.isNotBlank()) "$prefix $it"
-                else it
+                if (prefix.isNotBlank()) {
+                    "$prefix $it"
+                } else {
+                    it
+                }
             }
-            if (videoUrl.startsWith("https://"))
+            if (videoUrl.startsWith("https://")) {
                 Video(videoUrl, videoQuality, videoUrl)
-            else null
+            } else {
+                null
+            }
         }
     }
 }

@@ -12,7 +12,6 @@ android {
     }
 }
 
-
 dependencies {
     compileOnly(libs.bundles.common)
     implementation(project(":lib-unpacker"))

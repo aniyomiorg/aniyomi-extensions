@@ -16,4 +16,3 @@ android {
 dependencies {
     compileOnly(libs.bundles.common)
 }
-

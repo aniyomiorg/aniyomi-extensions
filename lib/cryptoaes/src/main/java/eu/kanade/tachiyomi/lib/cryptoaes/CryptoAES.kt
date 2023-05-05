@@ -23,8 +23,9 @@ import javax.crypto.spec.SecretKeySpec
 @Suppress("unused")
 object CryptoAES {
 
-    private const val KEY_SIZE = 256
-    private const val IV_SIZE = 128
+    private const val KEY_SIZE = 32 // 256 bits
+    private const val IV_SIZE = 16 // 128 bits
+    private const val SALT_SIZE = 8 // 64 bits
     private const val HASH_CIPHER = "AES/CBC/PKCS7PADDING"
     private const val HASH_CIPHER_FALLBACK = "AES/CBC/PKCS5PADDING"
     private const val AES = "AES"
@@ -41,14 +42,14 @@ object CryptoAES {
     fun decrypt(cipherText: String, password: String): String {
         return try {
             val ctBytes = Base64.decode(cipherText, Base64.DEFAULT)
-            val saltBytes = Arrays.copyOfRange(ctBytes, 8, 16)
-            val cipherTextBytes = Arrays.copyOfRange(ctBytes, 16, ctBytes.size)
-            val md5: MessageDigest = MessageDigest.getInstance("MD5")
-            val keyAndIV = generateKeyAndIV(32, 16, 1, saltBytes, password.toByteArray(Charsets.UTF_8), md5)
+            val saltBytes = Arrays.copyOfRange(ctBytes, SALT_SIZE, IV_SIZE)
+            val cipherTextBytes = Arrays.copyOfRange(ctBytes, IV_SIZE, ctBytes.size)
+            val md5 = MessageDigest.getInstance("MD5")
+            val keyAndIV = generateKeyAndIV(KEY_SIZE, IV_SIZE, 1, saltBytes, password.toByteArray(Charsets.UTF_8), md5)
             decryptAES(
                 cipherTextBytes,
-                keyAndIV?.get(0) ?: ByteArray(32),
-                keyAndIV?.get(1) ?: ByteArray(16),
+                keyAndIV?.get(0) ?: ByteArray(KEY_SIZE),
+                keyAndIV?.get(1) ?: ByteArray(IV_SIZE),
             )
         } catch (e: Exception) {
             ""
@@ -60,17 +61,17 @@ object CryptoAES {
             val ctBytes = Base64.decode(cipherText, Base64.DEFAULT)
             val md5: MessageDigest = MessageDigest.getInstance("MD5")
             val keyAndIV = generateKeyAndIV(
-                32,
-                16,
+                KEY_SIZE,
+                IV_SIZE,
                 1,
                 salt.decodeHex(),
                 password.toByteArray(Charsets.UTF_8),
-                md5
+                md5,
             )
             decryptAES(
                 ctBytes,
-                keyAndIV?.get(0) ?: ByteArray(32),
-                keyAndIV?.get(1) ?: ByteArray(16),
+                keyAndIV?.get(0) ?: ByteArray(KEY_SIZE),
+                keyAndIV?.get(1) ?: ByteArray(IV_SIZE),
             )
         } catch (e: Exception) {
             ""
@@ -129,7 +130,14 @@ object CryptoAES {
      * @param md the message digest algorithm to use
      * @return an two-element array with the generated key and IV
      */
-    private fun generateKeyAndIV(keyLength: Int, ivLength: Int, iterations: Int, salt: ByteArray, password: ByteArray, md: MessageDigest): Array<ByteArray?>? {
+    private fun generateKeyAndIV(
+        keyLength: Int,
+        ivLength: Int,
+        iterations: Int,
+        salt: ByteArray,
+        password: ByteArray,
+        md: MessageDigest,
+    ): Array<ByteArray?>? {
         val digestLength = md.digestLength
         val requiredLength = (keyLength + ivLength + digestLength - 1) / digestLength * digestLength
         val generatedData = ByteArray(requiredLength)
@@ -142,7 +150,7 @@ object CryptoAES {
                 // Digest data (last digest if available, password data, salt if available)
                 if (generatedLength > 0) md.update(generatedData, generatedLength - digestLength, digestLength)
                 md.update(password)
-                md.update(salt, 0, 8)
+                md.update(salt, 0, SALT_SIZE)
                 md.digest(generatedData, generatedLength, digestLength)
 
                 // additional rounds

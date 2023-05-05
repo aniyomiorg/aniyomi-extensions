@@ -132,12 +132,12 @@ abstract class DooPlay(
         return SEpisode.create().apply {
             val epNum = element.selectFirst("div.numerando")!!.text()
                 .trim()
-                .let {
-                    episodeNumberRegex.find(it)?.groupValues?.last() ?: "0"
-                }
+                .let(episodeNumberRegex::find)
+                ?.groupValues
+                ?.last() ?: "0"
             val href = element.selectFirst("a[href]")!!
             val episodeName = href.ownText()
-            episode_number = runCatching { epNum.toFloat() }.getOrDefault(0F)
+            episode_number = epNum.toFloatOrNull() ?: 0F
             date_upload = element.selectFirst(episodeDateSelector)
                 ?.text()
                 ?.toDate() ?: 0L
@@ -250,7 +250,7 @@ abstract class DooPlay(
     override fun animeDetailsParse(document: Document): SAnime {
         val doc = getRealAnimeDoc(document)
         val sheader = doc.selectFirst("div.sheader")!!
-        val anime = SAnime.create().apply {
+        return SAnime.create().apply {
             setUrlWithoutDomain(doc.location())
             sheader.selectFirst("div.poster > img")!!.let {
                 thumbnail_url = it.getImageUrl()
@@ -261,7 +261,7 @@ abstract class DooPlay(
 
             genre = sheader.select("div.data > div.sgeneros > a")
                 .eachText()
-                .joinToString(", ")
+                .joinToString()
 
             doc.selectFirst(additionalInfoSelector)?.let { info ->
                 description = buildString {
@@ -272,7 +272,6 @@ abstract class DooPlay(
                 }
             }
         }
-        return anime
     }
 
     // =============================== Latest ===============================

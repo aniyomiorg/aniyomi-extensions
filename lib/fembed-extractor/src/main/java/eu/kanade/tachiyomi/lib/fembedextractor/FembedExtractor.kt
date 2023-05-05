@@ -6,29 +6,35 @@ import eu.kanade.tachiyomi.network.POST
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
+import uy.kohesive.injekt.injectLazy
 
 class FembedExtractor(private val client: OkHttpClient) {
+    private val json: Json by injectLazy()
     fun videosFromUrl(url: String, prefix: String = "", redirect: Boolean = false): List<Video> {
-        val videoApi = if (redirect) {
-            (runCatching { client.newCall(GET(url)).execute().request.url.toString()
-                .replace("/v/", "/api/source/") }.getOrNull() ?: return emptyList<Video>())
-        } else {
-            url.replace("/v/", "/api/source/")
-        }
-        val body = runCatching {
-            client.newCall(POST(videoApi)).execute().body.string()
+        val videoApi = when {
+            redirect -> runCatching {
+                client.newCall(GET(url)).execute().request.url.toString()
+            }.getOrNull() ?: return emptyList<Video>()
+            else -> url
+        }.replace("/v/", "/api/source/")
+
+        val jsonResponse = runCatching {
+            client.newCall(POST(videoApi)).execute().use {
+                json.decodeFromString<FembedResponse>(it.body.string())
+            }
         }.getOrNull() ?: return emptyList<Video>()
 
-        val jsonResponse = try{ Json { ignoreUnknownKeys = true }.decodeFromString<FembedResponse>(body) } catch (e: Exception) { FembedResponse(false, emptyList()) }
+        if (!jsonResponse.success) return emptyList<Video>()
 
-        return if (jsonResponse.success) {
-            jsonResponse.data.map {
-                val quality = ("Fembed:${it.label}").let {
-                    if (prefix.isNotBlank()) "$prefix $it"
-                    else it
+        return jsonResponse.data.map {
+            val quality = ("Fembed:${it.label}").let {
+                if (prefix.isNotBlank()) {
+                    "$prefix $it"
+                } else {
+                    it
                 }
-                Video(it.file, quality, it.file)
             }
-        } else { emptyList<Video>() }
+            Video(it.file, quality, it.file)
+        }
     }
 }
