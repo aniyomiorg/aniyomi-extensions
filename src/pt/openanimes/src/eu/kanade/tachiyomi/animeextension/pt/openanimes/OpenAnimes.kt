@@ -53,7 +53,24 @@ class OpenAnimes : ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
-        throw UnsupportedOperationException("Not used.")
+        val doc = getRealDoc(document)
+        return SAnime.create().apply {
+            setUrlWithoutDomain(doc.location())
+            artist = doc.getInfo("Estúdio")
+            author = doc.getInfo("Autor") ?: doc.getInfo("Diretor")
+            genre = doc.select("div.info span.cat > a").eachText().joinToString()
+            title = doc.selectFirst("div.tituloPrincipal > h1")!!.text()
+                .removePrefix("Assistir ")
+                .removeSuffix(" Temporada Online")
+            thumbnail_url = doc.selectFirst("div.thumb > img")!!.attr("data-lazy-src")
+
+            val statusStr = doc.selectFirst("li:contains(Status) > span[data]")?.text()
+            status = when (statusStr) {
+                "Completo" -> SAnime.COMPLETED
+                "Lançamento" -> SAnime.ONGOING
+                else -> SAnime.UNKNOWN
+            }
+        }
     }
 
     // ============================ Video Links =============================
@@ -118,6 +135,21 @@ class OpenAnimes : ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/lancamentos/page/$page")
 
     override fun latestUpdatesSelector() = "div.contents div.itens > div"
+
+    // ============================= Utilities ==============================
+    private fun getRealDoc(document: Document): Document {
+        return document.selectFirst("a:has(i.fa-grid)")?.let { link ->
+            client.newCall(GET(link.attr("href")))
+                .execute()
+                .asJsoup()
+        } ?: document
+    }
+
+    private fun Element.getInfo(key: String): String? {
+        return selectFirst("div.info li:has(span:containsOwn($key))")
+            ?.ownText()
+            ?.trim()
+    }
 
     companion object {
         const val PREFIX_SEARCH = "id:"
