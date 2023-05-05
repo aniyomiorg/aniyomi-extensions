@@ -14,6 +14,8 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class OpenAnimes : ParsedAnimeHttpSource() {
 
@@ -43,13 +45,20 @@ class OpenAnimes : ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
+    override fun episodeListParse(response: Response) =
+        super.episodeListParse(response).reversed()
+
     override fun episodeFromElement(element: Element): SEpisode {
-        throw UnsupportedOperationException("Not used.")
+        return SEpisode.create().apply {
+            setUrlWithoutDomain(element.attr("href"))
+            val title = element.selectFirst("div.tituloEP > h3")!!.text().trim()
+            name = title
+            date_upload = element.selectFirst("span.data")?.text().toDate()
+            episode_number = title.substringAfterLast(" ").toFloatOrNull() ?: 0F
+        }
     }
 
-    override fun episodeListSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun episodeListSelector() = "div.listaEp div.episodioItem > a"
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
@@ -151,7 +160,19 @@ class OpenAnimes : ParsedAnimeHttpSource() {
             ?.trim()
     }
 
+    private fun String?.toDate(): Long {
+        return this?.let {
+            runCatching {
+                DATE_FORMATTER.parse(this)?.time
+            }.getOrNull()
+        } ?: 0L
+    }
+
     companion object {
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("d 'de' MMMM 'de' yyyy", Locale("pt", "BR"))
+        }
+
         const val PREFIX_SEARCH = "id:"
     }
 }
