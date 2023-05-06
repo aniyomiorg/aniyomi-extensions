@@ -13,26 +13,22 @@ import org.jsoup.nodes.Element
  */
 
 /**
- * Use if the attribute tag could have a data:image string or URL
- * Transforms data:image in to a fake URL that OkHttp won't die on
+ * Use if the attribute tag has a data:image string but real URLs are on a different attribute
  */
-fun Element.dataImageAsUrl(attr: String): String {
-    return if (this.attr(attr).startsWith("data")) {
-        "https://127.0.0.1/?" + this.attr(attr).substringAfter(":")
+fun Element.dataImageAsUrlOrNull(attr: String): String? {
+    return if (attr(attr).startsWith("data")) {
+        "https://127.0.0.1/?" + attr(attr).substringAfter(":")
     } else {
-        this.attr("abs:$attr")
+        null
     }
 }
 
 /**
- * Use if the attribute tag has a data:image string but real URLs are on a different attribute
+ * Use if the attribute tag could have a data:image string or URL
+ * Transforms data:image in to a fake URL that OkHttp won't die on
  */
-fun Element.dataImageAsUrlOrNull(attr: String): String? {
-    return if (this.attr(attr).startsWith("data")) {
-        "https://127.0.0.1/?" + this.attr(attr).substringAfter(":")
-    } else {
-        null
-    }
+fun Element.dataImageAsUrl(attr: String): String {
+    return dataImageAsUrlOrNull(attr) ?: attr("abs:$attr")
 }
 
 /**
@@ -51,7 +47,7 @@ class DataImageInterceptor : Interceptor {
             } else {
                 dataString.substringAfter(",").toByteArray()
             }
-            val mediaType = mediaTypePattern.find(dataString)!!.value.toMediaTypeOrNull()
+            val mediaType = mediaTypePattern.find(dataString)?.value?.toMediaTypeOrNull()
             Response.Builder().body(byteArray.toResponseBody(mediaType))
                 .request(chain.request())
                 .protocol(Protocol.HTTP_1_0)

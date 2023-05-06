@@ -8,7 +8,6 @@ import android.webkit.CookieManager
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import eu.kanade.tachiyomi.network.NetworkHelper
 import okhttp3.Cookie
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
@@ -22,7 +21,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 class CloudflareInterceptor(private val client: OkHttpClient) : Interceptor {
-    private val network: NetworkHelper by injectLazy()
     private val context: Application by injectLazy()
     private val handler by lazy { Handler(Looper.getMainLooper()) }
 
@@ -141,7 +139,6 @@ class CloudflareInterceptor(private val client: OkHttpClient) : Interceptor {
     companion object {
         private val ERROR_CODES = listOf(403, 503)
         private val SERVER_CHECK = arrayOf("cloudflare-nginx", "cloudflare")
-        private val COOKIE_NAMES = listOf("cf_clearance")
 
         // ref: https://github.com/vvanglro/cf-clearance/blob/0d3455b5b4f299b131f357dd6e0a27316cf26f9a/cf_clearance/retry.py#L15
         private val CHECK_SCRIPT by lazy {

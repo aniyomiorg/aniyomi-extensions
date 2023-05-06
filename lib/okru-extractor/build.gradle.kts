@@ -5,7 +5,7 @@ plugins {
 
 android {
     compileSdk = AndroidConfig.compileSdk
-    namespace = "eu.kanade.tachiyomi.lib.okruextractor" 
+    namespace = "eu.kanade.tachiyomi.lib.okruextractor"
 
     defaultConfig {
         minSdk = AndroidConfig.minSdk

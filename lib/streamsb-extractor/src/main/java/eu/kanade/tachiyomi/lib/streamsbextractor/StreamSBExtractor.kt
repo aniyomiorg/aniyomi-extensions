@@ -67,7 +67,14 @@ class StreamSBExtractor(private val client: OkHttpClient) {
         }
     }
 
-    fun videosFromUrl(url: String, headers: Headers, prefix: String = "", suffix: String = "", common: Boolean = true, manualData: Boolean = false): List<Video> {
+    fun videosFromUrl(
+        url: String,
+        headers: Headers,
+        prefix: String = "",
+        suffix: String = "",
+        common: Boolean = true,
+        manualData: Boolean = false,
+    ): List<Video> {
         val trimmedUrl = url.trim() // Prevents some crashes
         val newHeaders = if (manualData) {
             headers
@@ -78,7 +85,7 @@ class StreamSBExtractor(private val client: OkHttpClient) {
                 .set("authority", "embedsb.com")
                 .build()
         }
-        return try {
+        return runCatching {
             val master = if (manualData) trimmedUrl else fixUrl(trimmedUrl, common)
             val request = client.newCall(GET(master, newHeaders)).execute()
 
@@ -86,6 +93,7 @@ class StreamSBExtractor(private val client: OkHttpClient) {
                 if (request.code == 200) {
                     request.use { it.body.string() }
                 } else {
+                    request.close()
                     updateEndpoint()
                     client.newCall(GET(fixUrl(trimmedUrl, common), newHeaders))
                         .execute()
@@ -94,9 +102,9 @@ class StreamSBExtractor(private val client: OkHttpClient) {
             )
 
             val masterUrl = json.stream_data.file.trim('"')
-            val subtitleList = json.stream_data.subs?.let {
-                it.map { s -> Track(s.file, s.label) }
-            } ?: emptyList()
+            val subtitleList = json.stream_data.subs
+                ?.map { Track(it.file, it.label) }
+                ?: emptyList()
 
             val masterPlaylist = client.newCall(GET(masterUrl, newHeaders))
                 .execute()
@@ -118,28 +126,16 @@ class StreamSBExtractor(private val client: OkHttpClient) {
                     .substringAfter("x")
                     .substringBefore(",") + "p"
                 val quality = ("StreamSB:" + resolution).let {
-                    if (prefix.isNotBlank()) {
-                        "$prefix $it"
-                    } else {
-                        it
-                    }
-                }.let {
-                    if (suffix.isNotBlank()) {
-                        "$it $suffix"
-                    } else {
-                        it
+                    buildString {
+                        if (prefix.isNotBlank()) append("$prefix ")
+                        append(it)
+                        if (prefix.isNotBlank()) append(" $suffix")
                     }
                 }
                 val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                if (audioList.isEmpty()) {
-                    Video(videoUrl, quality, videoUrl, headers = newHeaders, subtitleTracks = subtitleList)
-                } else {
-                    Video(videoUrl, quality, videoUrl, headers = newHeaders, subtitleTracks = subtitleList, audioTracks = audioList)
-                }
+                Video(videoUrl, quality, videoUrl, headers = newHeaders, subtitleTracks = subtitleList, audioTracks = audioList)
             }
-        } catch (e: Exception) {
-            emptyList<Video>()
-        }
+        }.getOrNull() ?: emptyList<Video>()
     }
 
     fun videosFromDecryptedUrl(realUrl: String, headers: Headers, prefix: String = "", suffix: String = ""): List<Video> {
