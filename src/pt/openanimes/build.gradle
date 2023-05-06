@@ -1,0 +1,14 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
+}
+
+ext {
+    extName = 'Open Animes'
+    pkgNameSuffix = 'pt.openanimes'
+    extClass = '.OpenAnimes'
+    extVersionCode = 1
+}
+
+apply from: "$rootDir/common.gradle"
