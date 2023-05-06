@@ -6,6 +6,7 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.JkanimeExtractor
 import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.Mp4uploadExtractor
+import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.UqloadExtractor
 import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.ZippyExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -15,7 +16,10 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
+import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
@@ -65,8 +69,23 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = jsonResponse["anime"]!!.jsonObject
         val studioId = anime["studios"]!!.jsonPrimitive.content.split(",")
         val studio = try { studioId.map { id -> studiosMap.filter { it.value == id.toInt() }.keys.first() } } catch (e: Exception) { emptyList() }
+        val malid = anime["mal_id"]!!.jsonPrimitive.content
+        var thumb: String? = null
+
+        try {
+            val jikanResponse = client.newCall(GET("https://api.jikan.moe/v4/anime/$malid")).execute().asJsoup().body().text()
+            val jikanJson = json.decodeFromString<JsonObject>(jikanResponse)
+            val pictures = jikanJson["data"]!!.jsonObject["images"]!!.jsonObject["jpg"]!!.jsonObject
+            thumb = pictures["large_image_url"]!!.jsonPrimitive.content
+        } catch (_: Exception) {
+            // ignore
+        }
+
         return SAnime.create().apply {
             title = anime["name"]!!.jsonPrimitive.content
+            if (thumb != null) {
+                thumbnail_url = thumb
+            }
             description = anime["synopsis"]!!.jsonPrimitive.content
             genre = anime["genres"]!!.jsonPrimitive.content
             author = studio.joinToString { it.toString() }
@@ -252,12 +271,54 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         val videoHeaders = headersBuilder().add("Referer", "https://mp4upload.com/").build()
                         videoList.add(Mp4uploadExtractor().getVideoFromUrl(url, videoHeaders))
                     }
+                    url.contains("dood") -> {
+                        try {
+                            val video = DoodExtractor(client).videoFromUrl(url)
+                            if (video != null) {
+                                videoList.add(video)
+                            }
+                        } catch (_: Exception) {
+                            // ignore
+                        }
+                    }
+                    url.contains("ok.ru") -> {
+                        val video = OkruExtractor(client).videosFromUrl(url)
+                        if (video.isNotEmpty()) {
+                            videoList.addAll(video)
+                        }
+                    }
+                    url.contains("drive.google") -> {
+                        try {
+                            val newUrl = "http://gdriveplayer.to/embed2.php?link=" + url.replace("preview", "view").replace("u/2/", "")
+                            val video = GdrivePlayerExtractor(client).videosFromUrl(newUrl, "Gdrive", headers)
+                            videoList.addAll(video)
+                        } catch (_: Exception) {
+                            // ignore
+                        }
+                    }
+                    url.contains("flvvideo") && (url.endsWith(".m3u8") || url.endsWith(".mp4")) -> {
+                        if (url.contains("http")) {
+                            videoList.add(Video(url, "VideoFLV", url))
+                        }
+                    }
+                    url.contains("cdnlat4animecen") && (url.endsWith(".class") || url.endsWith(".m3u8") || url.endsWith(".mp4")) -> {
+                        if (url.contains("http")) {
+                            videoList.add(Video(url, "AnimeCen", url))
+                        }
+                    }
+                    url.contains("uqload") -> {
+                        val video = UqloadExtractor(client).videoFromUrl(url, headers)
+                        if (video != null) {
+                            videoList.add(video)
+                        }
+                    }
                 }
             } catch (_: Exception) {
                 // ignore
             }
         }
-        return videoList
+
+        return videoList.filter { it.url.contains("http") }
     }
 
     private fun amazonExtractor(url: String): String {

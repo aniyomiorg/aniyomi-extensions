@@ -5,7 +5,7 @@ ext {
     extName = 'LegionAnime'
     pkgNameSuffix = 'es.legionanime'
     extClass = '.LegionAnime'
-    extVersionCode = 17
+    extVersionCode = 18
     libVersion = '13'
 }
 
@@ -16,6 +16,7 @@ dependencies {
     implementation(project(':lib-okru-extractor'))
     implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib-gdriveplayer-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"
