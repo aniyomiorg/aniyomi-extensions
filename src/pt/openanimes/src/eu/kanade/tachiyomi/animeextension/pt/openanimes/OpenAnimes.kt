@@ -115,11 +115,21 @@ class OpenAnimes : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return client.newCall(GET(playerUrl, headers)).execute()
             .use {
-                val iframeUrl = it.asJsoup().selectFirst("iframe")?.attr("src")
-                    ?: return emptyList()
-                BloggerExtractor(client).videosFromUrl(iframeUrl, headers)
+                val doc = it.asJsoup()
+                doc.selectFirst("iframe")?.attr("src")?.let { iframeUrl ->
+                    BloggerExtractor(client).videosFromUrl(iframeUrl, headers)
+                } ?: run {
+                    val videoUrl = doc.selectFirst("script:containsData(var jw =)")
+                        ?.data()
+                        ?.substringAfter("file\":\"")
+                        ?.substringBefore('"')
+                        ?.replace("\\", "")
+                        ?: return emptyList()
+                    listOf(Video(videoUrl, "Default", videoUrl, headers))
+                }
             }
     }
+
     override fun videoFromElement(element: Element): Video {
         throw UnsupportedOperationException("Not used.")
     }
