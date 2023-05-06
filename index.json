@@ -1698,10 +1698,10 @@
   {
     "name": "Aniyomi: Ripcrabbyanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.ripcrabbyanime",
-    "apk": "aniyomi-en.ripcrabbyanime-v13.3.apk",
+    "apk": "aniyomi-en.ripcrabbyanime-v13.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1710,7 +1710,7 @@
         "name": "Ripcrabbyanime",
         "lang": "en",
         "id": "623659475482363776",
-        "baseUrl": "https://ripcrabbyanimes.com",
+        "baseUrl": "https://ripcrabbyanime.in",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -2307,10 +2307,10 @@
   {
     "name": "Aniyomi: LegionAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.legionanime",
-    "apk": "aniyomi-es.legionanime-v13.17.apk",
+    "apk": "aniyomi-es.legionanime-v13.18.apk",
     "lang": "es",
-    "code": 17,
-    "version": "13.17",
+    "code": 18,
+    "version": "13.18",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3352,6 +3352,27 @@
         "lang": "pt-BR",
         "id": "8394381853778573358",
         "baseUrl": "https://meusanimes.org",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: Open Animes",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.openanimes",
+    "apk": "aniyomi-pt.openanimes-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Open Animes",
+        "lang": "pt-BR",
+        "id": "5304601048761984017",
+        "baseUrl": "https://openanimes.com",
         "versionId": 1,
         "hasCloudflare": 0
       }
