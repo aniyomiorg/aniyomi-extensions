@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.openanimes
 
+import eu.kanade.tachiyomi.animeextension.pt.openanimes.extractors.BloggerExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -26,6 +27,8 @@ class OpenAnimes : ParsedAnimeHttpSource() {
     override val lang = "pt-BR"
 
     override val supportsLatest = true
+
+    override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
 
     // ============================== Popular ===============================
     override fun popularAnimeFromElement(element: Element): SAnime {
@@ -83,6 +86,18 @@ class OpenAnimes : ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
+    override fun videoListParse(response: Response): List<Video> {
+        val playerUrl = response.use { it.asJsoup() }
+            .selectFirst("div.Link > a")
+            ?.attr("href") ?: return emptyList()
+
+        return client.newCall(GET(playerUrl, headers)).execute()
+            .use {
+                val iframeUrl = it.asJsoup().selectFirst("iframe")?.attr("src")
+                    ?: return emptyList()
+                BloggerExtractor(client).videosFromUrl(iframeUrl, headers)
+            }
+    }
     override fun videoFromElement(element: Element): Video {
         throw UnsupportedOperationException("Not used.")
     }
