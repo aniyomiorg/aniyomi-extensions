@@ -1,5 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.pt.openanimes
 
+import eu.kanade.tachiyomi.animeextension.pt.openanimes.OpenAnimesFilters.FilterSearchParams
+import eu.kanade.tachiyomi.animeextension.pt.openanimes.dto.SearchResultDto
 import eu.kanade.tachiyomi.animeextension.pt.openanimes.extractors.BloggerExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -8,13 +10,19 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import okhttp3.FormBody
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -29,6 +37,8 @@ class OpenAnimes : ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
+
+    private val json: Json by injectLazy()
 
     // ============================== Popular ===============================
     override fun popularAnimeFromElement(element: Element): SAnime {
@@ -119,8 +129,55 @@ class OpenAnimes : ParsedAnimeHttpSource() {
         throw UnsupportedOperationException("Not used.")
     }
 
+    private val searchToken by lazy {
+        client.newCall(GET("$baseUrl/lista-de-animes")).execute()
+            .use {
+                it.asJsoup().selectFirst("input#token")!!.attr("value")
+            }
+    }
+
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        throw UnsupportedOperationException("Not used.")
+        return searchAnimeRequest(page, query, OpenAnimesFilters.getSearchParameters(filters))
+    }
+
+    override fun getFilterList(): AnimeFilterList = OpenAnimesFilters.filterList
+
+    private fun searchAnimeRequest(page: Int, query: String, params: FilterSearchParams): Request {
+        val body = FormBody.Builder().apply {
+            add("action", "getListFilter")
+            add("token", searchToken)
+            add("filter_pagina", "$page")
+            val filters = baseUrl.toHttpUrl().newBuilder().apply {
+                addQueryParameter("filter_type", "animes")
+                addQueryParameter("filter_audio", params.audio)
+                addQueryParameter("filter_letter", params.initialLetter)
+                addQueryParameter("filter_ordem", params.sortBy)
+                addQueryParameter("filter_search", query.ifEmpty { "0" })
+            }.build().encodedQuery
+
+            val genres = params.genres.joinToString { "\"$it\"" }
+
+            add("filters", """{"filter_data": "$filters", "filter_genre": [$genres]}""")
+        }.build()
+
+        return POST("$baseUrl/wp-admin/admin-ajax.php", body = body, headers = headers)
+    }
+
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        val data = response.use {
+            json.decodeFromString<SearchResultDto>(it.body.string())
+        }
+
+        val animes = data.results.map {
+            SAnime.create().apply {
+                title = it.title
+                thumbnail_url = it.thumbnail
+                setUrlWithoutDomain(it.permalink)
+            }
+        }
+
+        val hasNext = data.page.toIntOrNull()?.let { it < data.totalPage } ?: false
+        return AnimesPage(animes, hasNext)
     }
 
     override fun searchAnimeSelector(): String {
