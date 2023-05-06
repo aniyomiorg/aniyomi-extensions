@@ -80,6 +80,7 @@ class OpenAnimes : ParsedAnimeHttpSource() {
             setUrlWithoutDomain(doc.location())
             artist = doc.getInfo("Estúdio")
             author = doc.getInfo("Autor") ?: doc.getInfo("Diretor")
+            description = doc.selectFirst("div.sinopseEP > p")?.text()
             genre = doc.select("div.info span.cat > a").eachText().joinToString()
             title = doc.selectFirst("div.tituloPrincipal > h1")!!.text()
                 .removePrefix("Assistir ")
