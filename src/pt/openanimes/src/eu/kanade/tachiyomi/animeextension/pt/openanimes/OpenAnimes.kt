@@ -49,9 +49,9 @@ class OpenAnimes : ParsedAnimeHttpSource() {
         throw UnsupportedOperationException("Not used.")
     }
 
-    override fun popularAnimeRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun popularAnimeRequest(page: Int) = searchAnimeRequest(page, "", FilterSearchParams())
+
+    override fun popularAnimeParse(response: Response) = searchAnimeParse(response)
 
     override fun popularAnimeSelector(): String {
         throw UnsupportedOperationException("Not used.")
