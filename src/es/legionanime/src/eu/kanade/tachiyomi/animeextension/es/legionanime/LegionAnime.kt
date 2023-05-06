@@ -297,10 +297,14 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         }
                     }
                     url.contains("flvvideo") && (url.endsWith(".m3u8") || url.endsWith(".mp4")) -> {
-                        videoList.add(Video(url, "VideoFLV", url))
+                        if (url.contains("http")) {
+                            videoList.add(Video(url, "VideoFLV", url))
+                        }
                     }
                     url.contains("cdnlat4animecen") && (url.endsWith(".class") || url.endsWith(".m3u8") || url.endsWith(".mp4")) -> {
-                        videoList.add(Video(url, "AnimeCen", url))
+                        if (url.contains("http")) {
+                            videoList.add(Video(url, "AnimeCen", url))
+                        }
                     }
                     url.contains("uqload") -> {
                         val video = UqloadExtractor(client).videoFromUrl(url, headers)
@@ -313,7 +317,8 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 // ignore
             }
         }
-        return videoList
+
+        return videoList.filter { it.url.contains("http") }
     }
 
     private fun amazonExtractor(url: String): String {
