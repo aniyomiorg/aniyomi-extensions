@@ -19,7 +19,6 @@ import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -264,7 +263,7 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val url = if (preUrl.startsWith("F-")) {
                 preUrl.substringAfter("-")
             } else {
-                preUrl.reversed()
+                preUrl.substringAfter("-").reversed()
             }
             videoList.addAll(parseExtractors(url, server))
         }
@@ -290,9 +289,11 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     emptyList()
                 }
             }
+            /*
             url.contains("sb") -> {
                 StreamSBExtractor(client).videosFromUrl(url, headers)
             }
+             */
             url.contains("jkanime") -> {
                 listOf(JkanimeExtractor(client).getDesuFromUrl(url))
             }
