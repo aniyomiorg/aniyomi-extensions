@@ -440,17 +440,18 @@ val genres = mapOf(
     "Yaoi" to 30,
     "Yuri" to 40,
 )
-val orderby = mapOf(
-    "Fecha (Menor a Mayor)" to 0,
-    "Recientemente vistos por otros" to 1,
-    "Fecha (Mayor a Menor)" to 2,
-    "A-Z" to 3,
-    "Más Visitado" to 4,
-    "Z-A" to 5,
-    "Mejor Calificación" to 6,
-    "Peor Calificación" to 7,
-    "Últimos Agregados en app" to 8,
-    "Primeros Agregados en app" to 9,
+
+val orderby = arrayOf(
+    Pair("Fecha (Menor a Mayor)", "0"),
+    Pair("Recientemente vistos por otros", "1"),
+    Pair("Fecha (Mayor a Menor)", "2"),
+    Pair("A-Z", "3"),
+    Pair("Más Visitado", "4"),
+    Pair("Z-A", "5"),
+    Pair("Mejor Calificación", "6"),
+    Pair("Peor Calificación", "7"),
+    Pair("Últimos Agregados en app", "8"),
+    Pair("Primeros Agregados en app", "9"),
 )
 
 // this is supposed to be information about the device, it is needed to make any api calls, this could probably be randomized

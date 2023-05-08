@@ -38,4 +38,16 @@ class JkanimeExtractor(
         val streamUrl = script.substringAfter("url: '").substringBefore("'")
         return Video(streamUrl, "Desu", streamUrl)
     }
+
+    fun amazonExtractor(url: String): String {
+        val document = client.newCall(GET(url.replace(".com", ".tv"))).execute().asJsoup()
+        val videoURl = document.selectFirst("script:containsData(sources: [)")!!.data()
+            .substringAfter("[{\"file\":\"")
+            .substringBefore("\",").replace("\\", "")
+        return try {
+            if (client.newCall(GET(videoURl)).execute().code == 200) videoURl else ""
+        } catch (_: Exception) {
+            ""
+        }
+    }
 }
