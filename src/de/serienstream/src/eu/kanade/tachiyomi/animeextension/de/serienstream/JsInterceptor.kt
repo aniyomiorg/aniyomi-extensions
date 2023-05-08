@@ -238,51 +238,62 @@ class JsInterceptor : Interceptor {
                 return result.text;
             }
 
-            (async function() {
-                let intervalIdA = setInterval(() => {
-                    let iframewindow = document.querySelector('iframe[title="reCAPTCHA-Aufgabe läuft in zwei Minuten ab"]').contentWindow;
-                    if (iframewindow) {
-                        clearInterval(intervalIdA);
-                        let audiobutton = iframewindow.document.querySelector('#recaptcha-audio-button');
-                        let event = iframewindow.document.createEvent('HTMLEvents');
-                        event.initEvent('click', false, false);
-                        audiobutton.dispatchEvent(event);
-                        let intervalIdB = setInterval(async () => {
-                            let source = iframewindow.document.querySelector('#audio-source').getAttribute('src');
-                            if (source) {
-                                clearInterval(intervalIdB);
-                                let audioresponse = iframewindow.document.querySelector('#audio-response');
-                                let verifybutton = iframewindow.document.querySelector('#recaptcha-verify-button');
-                                var tries = 0;
-                                let intervalIdC = setInterval(async () => {
-                                    var solved = null
-                                    solved = await getWitSpeechApiResult(source);
-                                    tries++;
-                                    if (solved != null) {
-                                        clearInterval(intervalIdC);
-                                        audioresponse.value = solved;
-                                        verifybutton.dispatchEvent(event);
-                                        const originalOpen = iframewindow.XMLHttpRequest.prototype.open;
-                                        iframewindow.XMLHttpRequest.prototype.open = function (method, url, async) {
-                                            if (url.includes('userverify')) {
-                                                originalOpen.apply(this, arguments); // call the original open method
-                                                this.onreadystatechange = function () {
-                                                    if (this.readyState === 4 && this.status === 200) {
-                                                        const responseBody = this.responseText;
-                                                        window.android.passPayload(responseBody);
-                                                    }
-                                                };
-                                            }
-                                        };
-                                    } else if(tries >= 2) {
-                                        window.android.passPayload("");
-                                    }
-                                }, 2000);
-                            }
+            async function main() {
+              let intervalIdA = setInterval(() => {
+                let iframewindow = document.querySelector("iframe[src*='recaptcha/api2']:not([src*=anchor])").contentWindow;
+                if (iframewindow) {
+                  clearInterval(intervalIdA);
+                  let audiobutton = iframewindow.document.querySelector('#recaptcha-audio-button');
+                  let event = iframewindow.document.createEvent('HTMLEvents');
+                  event.initEvent('click', false, false);
+                  audiobutton.dispatchEvent(event);
+                  let intervalIdB = setInterval(async () => {
+                    let audio = iframewindow.document.querySelector('#audio-source');
+                    let source = audio.getAttribute('src');
+                    if (source) {
+                      clearInterval(intervalIdB);
+                      // Prevent 404 status loop
+                      const response = await fetch(source);
+                      if (response.ok) {
+                        let audioresponse = iframewindow.document.querySelector('#audio-response');
+                        let verifybutton = iframewindow.document.querySelector('#recaptcha-verify-button');
+                        var tries = 0;
+                        let intervalIdC = setInterval(async () => {
+                          var solved = null
+                          solved = await getWitSpeechApiResult(source);
+                          tries++;
+                          if (solved != null) {
+                            clearInterval(intervalIdC);
+                            audioresponse.value = solved;
+                            verifybutton.dispatchEvent(event);
+                            const originalOpen = iframewindow.XMLHttpRequest.prototype.open;
+                            iframewindow.XMLHttpRequest.prototype.open = function (method, url, async) {
+                              if (url.includes('userverify')) {
+                                originalOpen.apply(this, arguments); // call the original open method
+                                this.onreadystatechange = function () {
+                                  if (this.readyState === 4 && this.status === 200) {
+                                    const responseBody = this.responseText;
+                                    window.android.passPayload(responseBody);
+                                  }
+                                };
+                              }
+                            };
+                          } else if (tries >= 2) {
+                            clearInterval(intervalIdC);
+                            window.android.passPayload("");
+                          }
                         }, 2000);
+                      } else {
+                        window.android.passPayload("Audio file not found");
+                      }
                     }
-                }, 2000);
-            })()
+                  }, 2000);
+                }
+              }, 2000);
+            };
+
+            // Prevent async-related problems with stupid webviews
+            setTimeout(async () => await main(), 0);
         """
 
         val headers = request.headers.toMultimap().mapValues { it.value.getOrNull(0) ?: "" }.toMutableMap()
