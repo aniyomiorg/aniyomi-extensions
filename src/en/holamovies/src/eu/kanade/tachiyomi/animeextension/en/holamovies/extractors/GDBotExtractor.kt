@@ -3,6 +3,10 @@ package eu.kanade.tachiyomi.animeextension.en.holamovies.extractors
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -24,18 +28,29 @@ class GDBotExtractor(private val client: OkHttpClient, private val headers: Head
             GET("$botUrl/file/$fileId", headers = docHeaders),
         ).execute().asJsoup()
 
-        document.select("li.py-6 > a[href]").forEach {
-            val url = it.attr("href")
-            when {
-                url.toHttpUrl().host.contains("gdflix") -> {
-                    videoList.addAll(GDFlixExtractor(client, headers).videosFromUrl(url))
-                }
-//                url.toHttpUrl().host.contains("gdtot") -> {
-//                    videoList.addAll(GDTotExtractor(client, headers).videosFromUrl(url))
-//                }
-            }
-        }
+        videoList.addAll(
+            document.select("li.py-6 > a[href]").parallelMap { server ->
+                runCatching {
+                    val url = server.attr("href")
+                    when {
+                        url.toHttpUrl().host.contains("gdflix") -> {
+                            GDFlixExtractor(client, headers).videosFromUrl(url)
+                        }
+                        url.toHttpUrl().host.contains("gdtot") -> {
+                            GDTotExtractor(client, headers).videosFromUrl(url)
+                        }
+                        else -> null
+                    }
+                }.getOrNull()
+            }.filterNotNull().flatten(),
+        )
 
         return videoList
     }
+
+    // From Dopebox
+    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 }
