@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.es.animelatinohd.extractors.FilemoonExtractor
 import eu.kanade.tachiyomi.animeextension.es.animelatinohd.extractors.SolidFilesExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -14,7 +15,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
@@ -167,7 +167,11 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         val request = client.newCall(
                             GET(
                                 url = "https://api.animelatinohd.com/stream/${item["id"]!!.jsonPrimitive.content}",
-                                headers = headers.newBuilder().add("Referer", "https://www.animelatinohd.com/").build(),
+                                headers = headers.newBuilder()
+                                    .add("Referer", "https://www.animelatinohd.com/")
+                                    .add("authority", "api.animelatinohd.com")
+                                    .add("upgrade-insecure-requests", "1")
+                                    .build(),
                             ),
                         ).execute()
                         val locationsDdh = request!!.networkResponse.toString()
@@ -182,41 +186,23 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                 embedUrl.contains("sbfast") || embedUrl.contains("sbfull.com") || embedUrl.contains("javplaya.com") ||
                                 embedUrl.contains("ssbstream.net") || embedUrl.contains("p1ayerjavseen.com") || embedUrl.contains("sbthe.com") ||
                                 embedUrl.contains("vidmovie.xyz") || embedUrl.contains("sbspeed.com") || embedUrl.contains("streamsss.net") ||
-                                embedUrl.contains("sblanh.com")
+                                embedUrl.contains("sblanh.com") || embedUrl.contains("lvturbo.com")
                             ) {
                                 val videos = StreamSBExtractor(client).videosFromUrl(url, headers, language)
                                 videoList.addAll(videos)
                             }
-                            if (embedUrl.contains("fembed") || embedUrl.contains("anime789.com") || embedUrl.contains("24hd.club") ||
-                                embedUrl.contains("fembad.org") || embedUrl.contains("vcdn.io") || embedUrl.contains("sharinglink.club") ||
-                                embedUrl.contains("moviemaniac.org") || embedUrl.contains("votrefiles.club") || embedUrl.contains("femoload.xyz") ||
-                                embedUrl.contains("albavido.xyz") || embedUrl.contains("feurl.com") || embedUrl.contains("dailyplanet.pw") ||
-                                embedUrl.contains("ncdnstm.com") || embedUrl.contains("jplayer.net") || embedUrl.contains("xstreamcdn.com") ||
-                                embedUrl.contains("fembed-hd.com") || embedUrl.contains("gcloud.live") || embedUrl.contains("vcdnplay.com") ||
-                                embedUrl.contains("superplayxyz.club") || embedUrl.contains("vidohd.com") || embedUrl.contains("vidsource.me") ||
-                                embedUrl.contains("cinegrabber.com") || embedUrl.contains("votrefile.xyz") || embedUrl.contains("zidiplay.com") ||
-                                embedUrl.contains("ndrama.xyz") || embedUrl.contains("fcdn.stream") || embedUrl.contains("mediashore.org") ||
-                                embedUrl.contains("suzihaza.com") || embedUrl.contains("there.to") || embedUrl.contains("femax20.com") ||
-                                embedUrl.contains("javstream.top") || embedUrl.contains("viplayer.cc") || embedUrl.contains("sexhd.co") ||
-                                embedUrl.contains("fembed.net") || embedUrl.contains("mrdhan.com") || embedUrl.contains("votrefilms.xyz") ||
-                                embedUrl.contains("embedsito.com") || embedUrl.contains("dutrag.com") || embedUrl.contains("youvideos.ru") ||
-                                embedUrl.contains("streamm4u.club") || embedUrl.contains("moviepl.xyz") || embedUrl.contains("asianclub.tv") ||
-                                embedUrl.contains("vidcloud.fun") || embedUrl.contains("fplayer.info") || embedUrl.contains("diasfem.com") ||
-                                embedUrl.contains("javpoll.com") || embedUrl.contains("reeoov.tube") || embedUrl.contains("suzihaza.com") ||
-                                embedUrl.contains("ezsubz.com") || embedUrl.contains("vidsrc.xyz") || embedUrl.contains("diampokusy.com") ||
-                                embedUrl.contains("diampokusy.com") || embedUrl.contains("i18n.pw") || embedUrl.contains("vanfem.com") ||
-                                embedUrl.contains("fembed9hd.com") || embedUrl.contains("votrefilms.xyz") || embedUrl.contains("watchjavnow.xyz")
-                            ) {
-                                val videos = FembedExtractor(client).videosFromUrl(url, language)
-                                videoList.addAll(videos)
+                            if (embedUrl.contains("filemoon")) {
+                                FilemoonExtractor(client).videoFromUrl(url, language)?.let {
+                                    videoList.addAll(it)
+                                }
                             }
-                            if (url.lowercase().contains("streamtape")) {
+                            if (embedUrl.contains("streamtape")) {
                                 val video = StreamTapeExtractor(client).videoFromUrl(url, language + "Streamtape")
                                 if (video != null) {
                                     videoList.add(video)
                                 }
                             }
-                            if (url.lowercase().contains("dood")) {
+                            if (embedUrl.contains("dood")) {
                                 val video = try {
                                     DoodExtractor(client).videoFromUrl(url, language + "DoodStream")
                                 } catch (e: Exception) {
@@ -226,18 +212,18 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                     videoList.add(video)
                                 }
                             }
-                            if (url.lowercase().contains("okru")) {
+                            if (embedUrl.contains("okru") || embedUrl.contains("ok.ru")) {
                                 val videos = OkruExtractor(client).videosFromUrl(url, language)
                                 videoList.addAll(videos)
                             }
-                            if (url.lowercase().contains("www.solidfiles.com")) {
+                            if (embedUrl.contains("solidfiles")) {
                                 val videos = SolidFilesExtractor(client).videosFromUrl(url, language)
                                 videoList.addAll(videos)
                             }
-                            if (url.lowercase().contains("od.lk")) {
+                            if (embedUrl.contains("od.lk")) {
                                 videoList.add(Video(url, language + "Od.lk", url))
                             }
-                            if (url.lowercase().contains("cldup.com")) {
+                            if (embedUrl.contains("cldup.com")) {
                                 videoList.add(Video(url, language + "CldUp", url))
                             }
                         }
@@ -278,16 +264,23 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
         val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
-        return when {
-            query.isNotBlank() -> GET("$baseUrl/animes?page=$page&search=$query")
-            genreFilter.state != 0 -> GET("$baseUrl/animes?page=$page&genre=${genreFilter.toUriPart()}")
-            else -> GET("$baseUrl/animes?page=$page")
+        val stateFilter = filterList.find { it is StateFilter } as StateFilter
+        val typeFilter = filterList.find { it is TypeFilter } as TypeFilter
+
+        val filterUrl = if (query.isBlank()) {
+            "$baseUrl/animes?page=$page&genre=${genreFilter.toUriPart()}&status=${stateFilter.toUriPart()}&type=${typeFilter.toUriPart()}"
+        } else {
+            "$baseUrl/animes?page=$page&search=$query"
         }
+
+        return GET(filterUrl)
     }
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
-        AnimeFilter.Header("La busqueda por texto ignora el filtro"),
+        AnimeFilter.Header("La busqueda por texto ignora los filtros"),
         GenreFilter(),
+        StateFilter(),
+        TypeFilter(),
     )
 
     override fun searchAnimeFromElement(element: Element): SAnime {
@@ -373,6 +366,27 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Vampiros", "vampiros"),
             Pair("Yaoi", "yaoi"),
             Pair("Yuri", "yuri"),
+        ),
+    )
+
+    private class StateFilter : UriPartFilter(
+        "Estado",
+        arrayOf(
+            Pair("Todos", ""),
+            Pair("Finalizado", "0"),
+            Pair("En emisión", "1"),
+        ),
+    )
+
+    private class TypeFilter : UriPartFilter(
+        "Tipo",
+        arrayOf(
+            Pair("Todos", ""),
+            Pair("Animes", "tv"),
+            Pair("Películas", "movie"),
+            Pair("Especiales", "special"),
+            Pair("OVAS", "ova"),
+            Pair("ONAS", "ona"),
         ),
     )
 
