@@ -9,8 +9,6 @@ import okhttp3.OkHttpClient
 
 class GDTotExtractor(private val client: OkHttpClient, private val headers: Headers) {
     fun videosFromUrl(serverUrl: String): List<Video> {
-        val videoList = mutableListOf<Video>()
-
         val docHeaders = headers.newBuilder()
             .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
             .add("Host", serverUrl.toHttpUrl().host)
@@ -34,8 +32,8 @@ class GDTotExtractor(private val client: OkHttpClient, private val headers: Head
             GET(ddlUrl, headers = ddlHeaders),
         ).execute().asJsoup()
 
-        // TODO - Finish it
+        val btn = document.selectFirst("button[onclick~=drive.google.com]")?.attr("onclick") ?: return emptyList()
 
-        return videoList
+        return GoogleDriveExtractor(client, headers).videosFromUrl(btn.substringAfter("myDl('").substringBefore("'"), "GDToT")
     }
 }

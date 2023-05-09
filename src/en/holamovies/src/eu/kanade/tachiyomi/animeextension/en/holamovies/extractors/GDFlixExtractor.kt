@@ -1,10 +1,13 @@
 package eu.kanade.tachiyomi.animeextension.en.holamovies.extractors
 
-import android.util.Base64
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -20,78 +23,37 @@ class GDFlixExtractor(private val client: OkHttpClient, private val headers: Hea
 
     fun videosFromUrl(serverUrl: String): List<Video> {
         val videoList = mutableListOf<Video>()
-        val failedMediaUrl = mutableListOf<Pair<String, String>>()
-
-        if (serverUrl.toHttpUrl().encodedPath != "/404") {
-            val (videos, mediaUrl) = extractVideo(EpUrl("Video", serverUrl, "Video"))
-            if (videos.isEmpty()) failedMediaUrl.add(Pair(mediaUrl, "Video"))
-            videoList.addAll(videos)
-        }
 
         videoList.addAll(
-            failedMediaUrl.mapNotNull { (url, quality) ->
+            listOf("direct", "drivebot").parallelMap { type ->
                 runCatching {
-                    extractGDriveLink(url, quality)
+                    when (type) {
+                        "direct" -> {
+                            extractGDriveLink(serverUrl)
+                        }
+                        "drivebot" -> {
+                            extractDriveBotLink(serverUrl)
+                        }
+                        else -> null
+                    }
                 }.getOrNull()
-            }.flatten(),
-        )
-
-        videoList.addAll(
-            failedMediaUrl.mapNotNull { (url, quality) ->
-                runCatching {
-                    extractDriveBotLink(url)
-                }.getOrNull()
-            }.flatten(),
+            }.filterNotNull().flatten(),
         )
 
         return videoList
     }
 
-    private fun extractVideo(epUrl: EpUrl): Pair<List<Video>, String> {
-        val videoList = mutableListOf<Video>()
-
-        val qualityRegex = """(\d+)p""".toRegex()
-        val matchResult = qualityRegex.find(epUrl.name)
-        val quality = if (matchResult == null) {
-            epUrl.quality
-        } else {
-            matchResult.groupValues[1]
+    // From Dopebox
+    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
 
-        for (type in 1..3) {
-            videoList.addAll(
-                extractWorkerLinks(epUrl.url, quality, type),
-            )
-        }
-        return Pair(videoList, epUrl.url)
-    }
-
-    private val sizeRegex = "\\[((?:.(?!\\[))+)][ ]*\$".toRegex(RegexOption.IGNORE_CASE)
-
-    private fun extractWorkerLinks(mediaUrl: String, quality: String, type: Int): List<Video> {
-        val reqLink = mediaUrl.replace("/file/", "/wfile/") + "?type=$type"
-        val resp = client.newCall(GET(reqLink)).execute().asJsoup()
-        val sizeMatch = sizeRegex.find(resp.select("div.card-header").text().trim())
-        val size = sizeMatch?.groups?.get(1)?.value?.let { " - $it" } ?: ""
-        return resp.select("div.card-body div.mb-4 > a").mapIndexed { index, linkElement ->
-            val link = linkElement.attr("href")
-            val decodedLink = if (link.contains("workers.dev")) {
-                link
-            } else {
-                String(Base64.decode(link.substringAfter("download?url="), Base64.DEFAULT))
-            }
-
-            Video(
-                url = decodedLink,
-                quality = "$quality - CF $type Worker ${index + 1}$size",
-                videoUrl = decodedLink,
-            )
-        }
-    }
-
-    private fun extractGDriveLink(mediaUrl: String, quality: String): List<Video> {
+    private fun extractGDriveLink(mediaUrl: String): List<Video> {
         val tokenClient = client.newBuilder().addInterceptor(TokenInterceptor()).build()
+
         val response = tokenClient.newCall(GET(mediaUrl)).execute().asJsoup()
+
         val gdBtn = response.selectFirst("div.card-body a.btn")!!
         val gdLink = gdBtn.attr("href")
 
@@ -159,13 +121,6 @@ class GDFlixExtractor(private val client: OkHttpClient, private val headers: Hea
             Video(url, "DriveBot", url, headers = videoHeaders),
         )
     }
-
-    @Serializable
-    data class EpUrl(
-        val quality: String,
-        val url: String,
-        val name: String,
-    )
 
     @Serializable
     data class DriveBotResp(
