@@ -226,7 +226,7 @@ open class Pelisplushd(override val name: String, override val baseUrl: String) 
         }
     }
 
-    private fun getNumberFromString(epsStr: String): String {
+    fun getNumberFromString(epsStr: String): String {
         return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
     }
 
