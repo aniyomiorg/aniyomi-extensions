@@ -286,7 +286,7 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val parsed = json.decodeFromString<PostResponse>(
                     jsonRegex.find(response.body.string())!!.groupValues[1],
                 )
-                if (parsed.items == null) throw Exception("Failed to load items, please log in through webview")
+                if (parsed.items == null) throw Exception("Failed to load items, please log in to google drive through webview")
                 parsed.items.forEachIndexed { index, it ->
                     if (it.mimeType.startsWith("video")) {
                         val episode = SEpisode.create()
