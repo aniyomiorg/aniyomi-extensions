@@ -18,6 +18,7 @@ class DooPlayGenerator : ThemeSourceGenerator {
         SingleLang("CineVision", "https://cinevision.vc", "pt-BR", isNsfw = true, overrideVersionCode = 4),
         SingleLang("GoAnimes", "https://goanimes.net", "pt-BR", isNsfw = true),
         SingleLang("pactedanime", "https://pactedanime.com", "en", isNsfw = false, overrideVersionCode = 4),
+        SingleLang("AnimeOnline360", "https://animeonline360.me", "en", isNsfw = false),
         SingleLang("Pi Fansubs", "https://pifansubs.org", "pt-BR", isNsfw = true, overrideVersionCode = 14),
     )
 
