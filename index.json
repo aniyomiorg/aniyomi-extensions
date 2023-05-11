@@ -1467,10 +1467,10 @@
   {
     "name": "Aniyomi: Kayoanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.kayoanime",
-    "apk": "aniyomi-en.kayoanime-v13.4.apk",
+    "apk": "aniyomi-en.kayoanime-v13.5.apk",
     "lang": "en",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1719,10 +1719,10 @@
   {
     "name": "Aniyomi: Ripcrabbyanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.ripcrabbyanime",
-    "apk": "aniyomi-en.ripcrabbyanime-v13.4.apk",
+    "apk": "aniyomi-en.ripcrabbyanime-v13.5.apk",
     "lang": "en",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2441,10 +2441,10 @@
   {
     "name": "Aniyomi: Pelisplushd",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.pelisplushd",
-    "apk": "aniyomi-es.pelisplushd-v13.35.apk",
+    "apk": "aniyomi-es.pelisplushd-v13.36.apk",
     "lang": "es",
-    "code": 35,
-    "version": "13.35",
+    "code": 36,
+    "version": "13.36",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2462,6 +2462,14 @@
         "lang": "es",
         "id": "1705636111422561130",
         "baseUrl": "https://ww3.pelisplus.to",
+        "versionId": 1,
+        "hasCloudflare": 1
+      },
+      {
+        "name": "PelisPlusPh",
+        "lang": "es",
+        "id": "4917265654298497443",
+        "baseUrl": "https://www.pelisplushd.ph",
         "versionId": 1,
         "hasCloudflare": 1
       }
