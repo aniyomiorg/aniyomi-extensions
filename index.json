@@ -1087,6 +1087,27 @@
     ]
   },
   {
+    "name": "Aniyomi: AnimeOnline360",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.animeonline360",
+    "apk": "aniyomi-en.animeonline360-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimeOnline360",
+        "lang": "en",
+        "id": "503935250348346192",
+        "baseUrl": "https://animeonline360.me",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: AnimeOwl",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.animeowl",
     "apk": "aniyomi-en.animeowl-v13.11.apk",
