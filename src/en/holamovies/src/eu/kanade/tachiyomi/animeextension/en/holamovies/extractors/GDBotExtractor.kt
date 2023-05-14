@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.holamovies.extractors
 
+import android.content.SharedPreferences
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -11,12 +12,17 @@ import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 
-class GDBotExtractor(private val client: OkHttpClient, private val headers: Headers) {
+class GDBotExtractor(private val client: OkHttpClient, private val headers: Headers, private val preferences: SharedPreferences) {
 
-    private val botUrl = "https://gdbot.xyz"
+    private val PREF_BOT_URL_KEY = "bot_url"
 
-    fun videosFromUrl(serverUrl: String): List<Video> {
+    private val defaultUrl = "https://gdtot.pro"
+
+    fun videosFromUrl(serverUrl: String, maxTries: Int = 1): List<Video> {
+        val botUrl = preferences.getString(PREF_BOT_URL_KEY, defaultUrl)!!
         val videoList = mutableListOf<Video>()
+
+        if (maxTries == 3) throw Exception("Video extraction catastrophically failed")
 
         val docHeaders = headers.newBuilder()
             .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
@@ -24,9 +30,23 @@ class GDBotExtractor(private val client: OkHttpClient, private val headers: Head
             .build()
 
         val fileId = serverUrl.substringAfter("/file/")
-        val document = client.newCall(
-            GET("$botUrl/file/$fileId", headers = docHeaders),
-        ).execute().asJsoup()
+        val resp = try {
+            client.newCall(
+                GET("$botUrl/file/$fileId", headers = docHeaders),
+            ).execute()
+        } catch (a: Exception) {
+            val newHost = OkHttpClient().newCall(GET(botUrl)).execute().request.url.host
+            preferences.edit().putString(PREF_BOT_URL_KEY, "https://$newHost").apply()
+            return videosFromUrl(serverUrl, maxTries + 1)
+        }
+
+        if (resp.code == 421) {
+            val newHost = OkHttpClient().newCall(GET(botUrl)).execute().request.url.host
+            preferences.edit().putString(PREF_BOT_URL_KEY, "https://$newHost").apply()
+            return videosFromUrl(serverUrl, maxTries + 1)
+        }
+
+        val document = resp.asJsoup()
 
         videoList.addAll(
             document.select("li.py-6 > a[href]").parallelMap { server ->
