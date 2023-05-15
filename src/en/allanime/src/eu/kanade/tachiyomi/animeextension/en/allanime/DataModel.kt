@@ -25,6 +25,7 @@ data class PopularResult(
                     val thumbnail: String,
                     val englishName: String? = null,
                     val nativeName: String? = null,
+                    val slugTime: String? = null,
                 )
             }
         }
@@ -50,6 +51,7 @@ data class SearchResult(
                 val thumbnail: String,
                 val englishName: String? = null,
                 val nativeName: String? = null,
+                val slugTime: String? = null,
             )
         }
     }

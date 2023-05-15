@@ -72,6 +72,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                         thumbnail
                         englishName
                         nativeName
+                        slugTime
                     }
                 }
             }
@@ -102,6 +103,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                     thumbnail
                     englishName
                     nativeName
+                    slugTime
                 }
             }
         }
@@ -181,7 +183,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                             else -> it.anyCard.nativeName ?: it.anyCard.name
                         }
                         thumbnail_url = it.anyCard.thumbnail
-                        url = it.anyCard._id
+                        url = "${it.anyCard._id}<&sep>${it.anyCard.slugTime ?: ""}<&sep>${it.anyCard.name.slugify()}"
                     },
                 )
             }
@@ -252,19 +254,30 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun animeDetailsParse(response: Response): SAnime = throw Exception("Not used")
 
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        return client.newCall(animeDetailsRequest(anime))
+        return client.newCall(animeDetailsRequestInternal(anime))
             .asObservableSuccess()
             .map { response ->
                 animeDetailsParse(response, anime).apply { initialized = true }
             }
     }
 
-    override fun animeDetailsRequest(anime: SAnime): Request {
-        val variables = """{"_id":"${anime.url}"}"""
+    private fun animeDetailsRequestInternal(anime: SAnime): Request {
+        val variables = """{"_id":"${anime.url.split("<&sep>").first()}"}"""
         val headers = headers.newBuilder()
             .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
             .build()
         return GET("$baseUrl/allanimeapi?variables=$variables&query=$detailsQuery", headers = headers)
+    }
+
+    override fun animeDetailsRequest(anime: SAnime): Request {
+        val (id, time, slug) = anime.url.split("<&sep>")
+        val slugTime = if (time.isNotEmpty()) {
+            "-st-$time"
+        } else {
+            time
+        }
+        val siteUrl = preferences.getString("preferred_site_domain", "https://allanime.to")!!
+        return GET("$siteUrl/anime/$id/$slug$slugTime")
     }
 
     private fun animeDetailsParse(response: Response, animeOld: SAnime): SAnime {
@@ -292,7 +305,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================== Episodes ==============================
 
     override fun episodeListRequest(anime: SAnime): Request {
-        val variables = """{"_id":"${anime.url}"}"""
+        val variables = """{"_id":"${anime.url.split("<&sep>").first()}"}"""
         val headers = headers.newBuilder()
             .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
             .build()
@@ -364,6 +377,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                     (hosterSelection.contains("default") && video.sourceName.lowercase().contains("default")) ||
                         (hosterSelection.contains("ac") && video.sourceName.lowercase().contains("ac")) ||
                         (hosterSelection.contains("ak") && video.sourceName.lowercase().contains("ak")) ||
+                        (hosterSelection.contains("kir") && video.sourceName.lowercase().contains("kir")) ||
                         (hosterSelection.contains("luf-mp4") && video.sourceName.lowercase().contains("luf-mp4")) ||
                         (hosterSelection.contains("si-hls") && video.sourceName.lowercase().contains("si-hls")) ||
                         (hosterSelection.contains("s-mp4") && video.sourceName.lowercase().contains("s-mp4")) ||
@@ -520,6 +534,12 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
+    private fun String.slugify(): String {
+        return this.replace("""[^a-zA-Z0-9]""".toRegex(), "-")
+            .replace("""-{2,}""".toRegex(), "-")
+            .lowercase()
+    }
+
     private fun ParseAnime(response: Response): AnimesPage {
         val parsed = json.decodeFromString<SearchResult>(response.body.string())
         val titleStyle = preferences.getString("preferred_title_style", "romaji")!!
@@ -532,7 +552,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                     else -> ani.nativeName ?: ani.name
                 }
                 thumbnail_url = ani.thumbnail
-                url = ani._id
+                url = "${ani._id}<&sep>${ani.slugTime ?: ""}<&sep>${ani.name.slugify()}"
             }
         }
 
@@ -540,6 +560,21 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val domainSitePref = ListPreference(screen.context).apply {
+            key = "preferred_site_domain"
+            title = "Preferred domain for site (requires app restart)"
+            entries = arrayOf("allanime.to", "allanime.co")
+            entryValues = arrayOf("https://allanime.to", "https://allanime.co")
+            setDefaultValue("https://allanime.to")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
         val domainPref = ListPreference(screen.context).apply {
             key = "preferred_domain"
             title = "Preferred domain (requires app restart)"
@@ -575,9 +610,9 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         val hostSelection = MultiSelectListPreference(screen.context).apply {
             key = "hoster_selection"
             title = "Enable/Disable Hosts"
-            entries = arrayOf("Default", "Ac", "Ak", "Luf-mp4", "Si-Hls", "S-mp4", "Ac-Hls", "Uv-mp4", "Pn-Hls")
-            entryValues = arrayOf("default", "ac", "ak", "luf-mp4", "si-hls", "s-mp4", "ac-hls", "uv-mp4", "pn-hls")
-            setDefaultValue(setOf("default", "ac", "ak", "luf-mp4", "si-hls", "s-mp4", "ac-hls"))
+            entries = arrayOf("Default", "Ac", "Ak", "Kir", "Luf-mp4", "Si-Hls", "S-mp4", "Ac-Hls", "Uv-mp4", "Pn-Hls")
+            entryValues = arrayOf("default", "ac", "ak", "kir", "luf-mp4", "si-hls", "s-mp4", "ac-hls", "uv-mp4", "pn-hls")
+            setDefaultValue(setOf("default", "ac", "ak", "kir", "luf-mp4", "si-hls", "s-mp4", "ac-hls"))
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
@@ -644,6 +679,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
+        screen.addPreference(domainSitePref)
         screen.addPreference(domainPref)
         screen.addPreference(serverPref)
         screen.addPreference(hostSelection)
