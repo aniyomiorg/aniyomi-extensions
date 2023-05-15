@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -24,9 +23,6 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import uy.kohesive.injekt.injectLazy
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class HolaMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -40,16 +36,8 @@ class HolaMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val json: Json by injectLazy()
-
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
-
-    companion object {
-        private val DateFormatter by lazy {
-            SimpleDateFormat("d MMMM yyyy", Locale.ENGLISH)
-        }
     }
 
     // ============================== Popular ===============================
@@ -74,7 +62,7 @@ class HolaMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesSelector(): String = "div#latest-tab-pane > div.row > div.col-md-6"
 
-    override fun latestUpdatesNextPageSelector(): String? = popularAnimeNextPageSelector()
+    override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
 
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val thumbnailUrl = element.selectFirst("img")!!.attr("data-src")
@@ -331,7 +319,7 @@ class HolaMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             episode.url.toHttpUrl().host.contains("gdtot") ||
                 episode.url.toHttpUrl().host.contains("gdbot") -> {
-                GDBotExtractor(client, headers).videosFromUrl(episode.url)
+                GDBotExtractor(client, headers, preferences).videosFromUrl(episode.url)
             }
             else -> { throw Exception("Unsupported url: ${episode.url}") }
         }
