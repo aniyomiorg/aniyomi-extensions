@@ -6,13 +6,22 @@ object BloggerJWPlayerExtractor {
     fun videosFromScript(script: String): List<Video> {
         val sources = script.substringAfter("sources: [").substringBefore("],")
 
-        return sources.split("{").drop(1).map {
-            val label = it.substringAfter("label").substringAfter(":\"").substringBefore('"')
+        return sources.split("{").drop(1).mapNotNull {
+            val label = it.substringAfter("label")
+                .substringAfter(":")
+                .substringAfter("\"")
+                .substringBefore('"')
+
             val videoUrl = it.substringAfter("file")
-                .substringAfter(":\"")
+                .substringAfter(":")
+                .substringAfter("\"")
                 .substringBefore('"')
                 .replace("\\", "")
-            Video(videoUrl, "BloggerJWPlayer - $label", videoUrl)
+            if (videoUrl.isEmpty()) {
+                null
+            } else {
+                Video(videoUrl, "BloggerJWPlayer - $label", videoUrl)
+            }
         }
     }
 }

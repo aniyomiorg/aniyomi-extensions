@@ -59,10 +59,6 @@ class AnimesZone : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     companion object {
         private val episodeRegex = Regex("""Episódio ?\d+\.?\d* ?""")
-
-        private val DateFormatter by lazy {
-            SimpleDateFormat("d MMMM yyyy", Locale.ENGLISH)
-        }
     }
 
     // ============================== Popular ===============================
@@ -360,6 +356,8 @@ class AnimesZone : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                     when {
                         "/bloggerjwplayer" in url ->
+                            videoList.addAll(BloggerJWPlayerExtractor.videosFromScript(decrypted))
+                        "jwplayer-2" in url ->
                             videoList.addAll(BloggerJWPlayerExtractor.videosFromScript(decrypted))
                         "/m3u8" in url ->
                             videoList.addAll(PlaylistExtractor.videosFromScript(decrypted))
