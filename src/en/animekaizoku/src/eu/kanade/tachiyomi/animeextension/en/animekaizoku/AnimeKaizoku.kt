@@ -700,6 +700,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -707,14 +708,13 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -723,6 +723,14 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val baseUrl = "https://animekaizoku.com"
 
     override val lang = "en"
+
+    // Used for loading anime
+    private var infoQuery = ""
+    private var max = ""
+    private var latest_post = ""
+    private var layout = ""
+    private var settings = ""
+    private var currentReferer = ""
 
     override val supportsLatest = false
 
@@ -736,10 +744,6 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     companion object {
         private val ddlRegex = Regex("""DDL\((.*?), ?(.*?), ?(.*?), ?(.*?)\)""")
-
-        private val DateFormatter by lazy {
-            SimpleDateFormat("d MMMM yyyy", Locale.ENGLISH)
-        }
     }
 
     // ============================== Popular ===============================
@@ -795,20 +799,88 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
         val subPageFilter = filterList.find { it is SubPageFilter } as SubPageFilter
-        return GET(baseUrl + subPageFilter.toUriPart())
+
+        return when {
+            subPageFilter.state != 0 -> GET(baseUrl + subPageFilter.toUriPart())
+            query.isNotBlank() -> {
+                val cleanQuery = query.replace(" ", "+")
+                if (page == 1) {
+                    infoQuery = ""
+                    max = ""
+                    latest_post = ""
+                    layout = ""
+                    settings = ""
+                    currentReferer = "$baseUrl/?s=$cleanQuery"
+                    GET("$baseUrl/?s=$cleanQuery")
+                } else {
+                    val formBody = FormBody.Builder()
+                        .add("action", "tie_archives_load_more")
+                        .add("query", infoQuery)
+                        .add("max", max)
+                        .add("page", page.toString())
+                        .add("latest_post", latest_post)
+                        .add("layout", layout)
+                        .add("settings", settings)
+                        .build()
+                    val formHeaders = headers.newBuilder()
+                        .add("Accept", "*/*")
+                        .add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+                        .add("Host", "animekaizoku.com")
+                        .add("Origin", "https://animekaizoku.com")
+                        .add("Referer", currentReferer)
+                        .add("X-Requested-With", "XMLHttpRequest")
+                        .build()
+                    POST("$baseUrl/wp-admin/admin-ajax.php", body = formBody, headers = formHeaders)
+                }
+            }
+            else -> popularAnimeRequest(page)
+        }
     }
 
     private fun searchAnimeParse(response: Response, query: String): AnimesPage {
-        val document = response.asJsoup()
+        return if (response.request.url.toString().endsWith("admin-ajax.php")) {
+            val body = response.body.string()
+            val rawParsed = json.decodeFromString<String>(body)
+            val parsed = json.decodeFromString<PostResponse>(rawParsed)
+            val soup = Jsoup.parse(parsed.code)
 
-        val animes = document.select(searchAnimeSelector()).filter {
-                t ->
-            t.selectFirst("a:not([title])")!!.text().contains(query, true)
-        }.map { element ->
-            searchAnimeFromElement(element)
+            val animes = soup.select("li.post-item").map { element ->
+                searchAnimeFromElementPaginated(element)
+            }
+
+            AnimesPage(animes, !parsed.hide_next)
+        } else if (response.request.url.queryParameterNames == setOf("s")) {
+            val document = response.asJsoup()
+
+            val animes = document.select("ul#posts-container > li.post-item").map { element ->
+                searchAnimeFromElementPaginated(element)
+            }
+
+            val hasNextPage = document.selectFirst("div.pages-nav > a[data-text=load more]") != null
+
+            if (hasNextPage) {
+                val container = document.selectFirst("ul#posts-container")!!
+                val pagesNav = document.selectFirst("div.pages-nav > a")!!
+                layout = container.attr("data-layout")
+                infoQuery = pagesNav.attr("data-query")
+                max = pagesNav.attr("data-max")
+                latest_post = pagesNav.attr("data-latest")
+                settings = container.attr("data-settings")
+            }
+
+            AnimesPage(animes, hasNextPage)
+        } else {
+            val document = response.asJsoup()
+
+            val animes = document.select(searchAnimeSelector()).filter {
+                    t ->
+                t.selectFirst("a:not([title])")!!.text().contains(query, true)
+            }.map { element ->
+                searchAnimeFromElement(element)
+            }
+
+            AnimesPage(animes, false)
         }
-
-        return AnimesPage(animes, false)
     }
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
@@ -816,6 +888,14 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeNextPageSelector(): String? = popularAnimeNextPageSelector()
 
     override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
+
+    private fun searchAnimeFromElementPaginated(element: Element): SAnime {
+        return SAnime.create().apply {
+            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").toHttpUrl().encodedPath)
+            thumbnail_url = element.selectFirst("img[src]")?.attr("src") ?: ""
+            title = element.selectFirst("h2.post-title")!!.text().substringBefore(" Episode")
+        }
+    }
 
     // ============================== Filters ===============================
 
@@ -827,6 +907,7 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private class SubPageFilter : UriPartFilter(
         "Select sub-page",
         arrayOf(
+            Pair("<select>", ""),
             Pair("Airing", "/airing/"),
             Pair("Completed", "/finished-airing/"),
             Pair("Movies", "/anime-movies/"),
@@ -1096,6 +1177,12 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val postId: String,
         val ref: String,
         val info: String,
+    )
+
+    @Serializable
+    data class PostResponse(
+        val hide_next: Boolean,
+        val code: String,
     )
 
     private fun List<EpUrl>.toJsonString(): String {
