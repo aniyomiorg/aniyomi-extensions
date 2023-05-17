@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.lib.voeextractor
+package eu.kanade.tachiyomi.lib.chillxextractor
 
 import android.util.Base64
 import android.util.Log
@@ -12,8 +12,6 @@ import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import org.json.JSONObject
-import java.security.DigestException
-import java.security.MessageDigest
 import javax.crypto.Cipher
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.IvParameterSpec
