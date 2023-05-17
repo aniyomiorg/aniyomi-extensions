@@ -229,7 +229,6 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                         val linkpart = it.substringAfter("\"link\":\"").substringBefore("\"}]")
                                                         val leaveurl = client.newCall(GET("$baseUrl/leave/$linkpart")).execute().request.url.toString()
                                                         if (leaveurl.contains(baseUrl)) {
-                                                            Log.i("leaveurl", leaveurl)
                                                             val neexurl = client.newCall(GET(leaveurl)).execute().request.url.toString()
                                                             val neexdoc = client.newCall(GET(leaveurl)).execute().asJsoup()
                                                             val nextlink = neexdoc.select("div#continue a").attr("href")
@@ -366,7 +365,6 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                         val linkpart = it.substringAfter("\"link\":\"").substringBefore("\"}]")
                                                         val leaveurl = client.newCall(GET("$baseUrl/leave/$linkpart")).execute().request.url.toString()
                                                         if (leaveurl.contains(baseUrl)) {
-                                                            Log.i("leaveurl", leaveurl)
                                                             val neexurl = client.newCall(GET(leaveurl)).execute().request.url.toString()
                                                             val neexdoc = client.newCall(GET(leaveurl)).execute().asJsoup()
                                                             val nextlink = neexdoc.select("div#continue a").attr("href")
@@ -565,7 +563,6 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                         val linkpart = it.substringAfter("\"link\":\"").substringBefore("\"}]")
                                                         val leaveurl = client.newCall(GET("$baseUrl/leave/$linkpart")).execute().request.url.toString()
                                                         if (leaveurl.contains(baseUrl)) {
-                                                            Log.i("leaveurl", leaveurl)
                                                             val neexurl = client.newCall(GET(leaveurl)).execute().request.url.toString()
                                                             val neexdoc = client.newCall(GET(leaveurl)).execute().asJsoup()
                                                             val nextlink = neexdoc.select("div#continue a").attr("href")
@@ -702,7 +699,6 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                         val linkpart = it.substringAfter("\"link\":\"").substringBefore("\"}]")
                                                         val leaveurl = client.newCall(GET("$baseUrl/leave/$linkpart")).execute().request.url.toString()
                                                         if (leaveurl.contains(baseUrl)) {
-                                                            Log.i("leaveurl", leaveurl)
                                                             val neexurl = client.newCall(GET(leaveurl)).execute().request.url.toString()
                                                             val neexdoc = client.newCall(GET(leaveurl)).execute().asJsoup()
                                                             val nextlink = neexdoc.select("div#continue a").attr("href")
