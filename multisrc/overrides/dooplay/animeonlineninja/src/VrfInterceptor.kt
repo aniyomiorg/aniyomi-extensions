@@ -32,10 +32,9 @@ class VrfInterceptor : Interceptor {
     }
 
     private fun evalJs(west: String, east: String): String {
-        val quickjs = QuickJs.create()
-        val jscript = """$west + $east;"""
-        val result = quickjs.evaluate(jscript).toString()
-        quickjs.close()
-        return result
+        return QuickJs.create().use { qjs ->
+            val jscript = """$west + $east;"""
+            qjs.evaluate(jscript).toString()
+        }
     }
 }
