@@ -480,7 +480,7 @@ abstract class DooPlay(
         SimpleDateFormat("MMMM. dd, yyyy", Locale.ENGLISH)
     }
 
-    private fun String.toDate(): Long {
+    protected open fun String.toDate(): Long {
         return runCatching { DATE_FORMATTER.parse(trim())?.time }
             .getOrNull() ?: 0L
     }

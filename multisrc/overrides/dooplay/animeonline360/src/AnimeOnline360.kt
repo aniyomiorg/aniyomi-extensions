@@ -124,12 +124,6 @@ class AnimeOnline360 : DooPlay(
     }
 
     // ============================= Utilities ==============================
-
-    private fun String.toDate(): Long {
-        return runCatching { DATE_FORMATTER.parse(trim())?.time }
-            .getOrNull() ?: 0L
-    }
-
     private fun String.addSubPrefix(): String {
         return if (this.contains(" dubbed", true)) {
             "[DUB] ${this.substringBefore(" Dubbed")}"
