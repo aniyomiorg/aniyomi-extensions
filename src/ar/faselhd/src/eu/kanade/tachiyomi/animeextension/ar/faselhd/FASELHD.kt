@@ -28,7 +28,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "فاصل اعلاني"
 
-    override val baseUrl = "https://www.faselhd.ac"
+    override val baseUrl = "https://www.faselhd.club"
 
     override val lang = "ar"
 
@@ -67,38 +67,36 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun seasonsNextPageSelector(seasonNumber: Int) = "div#seasonList div.col-xl-2:nth-child($seasonNumber)" // "div.List--Seasons--Episodes > a:nth-child($seasonNumber)"
 
-    private fun episodeExtract(element: Element): SEpisode {
-        val episode = SEpisode.create()
-        episode.setUrlWithoutDomain(element.select("span#liskSh").text())
-        episode.name = "مشاهدة"
-        return episode
-    }
-
     override fun episodeListParse(response: Response): List<SEpisode> {
         val episodes = mutableListOf<SEpisode>()
         var seasonNumber = 1
-        var seasonNumberCheck = 1
-        var document = response.asJsoup()
-        while (!document.select(episodeListSelector()).isNullOrEmpty() || document.select(seasonsNextPageSelector(seasonNumber)).isNullOrEmpty()) {
-
-            document.select(episodeListSelector()).map {
-                episodes.add(episodeFromElement(it))
-            }
-
-            document.select(seasonsNextPageSelector(seasonNumber)).firstOrNull()?.let {
-                seasonNumber++
-                document = client.newCall(
-                    GET(
-                        baseUrl + it.select("div.seasonDiv")
-                            .attr("onclick").split("'")[1],
-                        headers
-                    )
-                ).execute().asJsoup()
-            }
-            if (seasonNumber == seasonNumberCheck) break
-            else seasonNumberCheck++
+        fun episodeExtract(element: Element): SEpisode {
+            val episode = SEpisode.create()
+            episode.setUrlWithoutDomain(element.select("span#liskSh").text())
+            episode.name = "مشاهدة"
+            return episode
         }
-        if (episodes.isEmpty()) document.select("div.shortLink").map { episodes.add(episodeExtract(it)) }
+        fun addEpisodes(document: Document) {
+            if (document.select(episodeListSelector()).isNullOrEmpty())
+                document.select("div.shortLink").map { episodes.add(episodeExtract(it)) }
+            else {
+                document.select(episodeListSelector()).map { episodes.add(episodeFromElement(it)) }
+                document.select(seasonsNextPageSelector(seasonNumber)).firstOrNull()?.let {
+                    seasonNumber++
+                    addEpisodes(
+                        client.newCall(
+                            GET(
+                                "$baseUrl/?p=" + it.select("div.seasonDiv")
+                                    .attr("data-href"),
+                                headers
+                            )
+                        ).execute().asJsoup()
+                    )
+                }
+            }
+        }
+
+        addEpisodes(response.asJsoup())
         return episodes.reversed()
     }
 
@@ -106,9 +104,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episode = SEpisode.create()
         episode.setUrlWithoutDomain(element.attr("abs:href"))
         episode.name = element.ownerDocument().select("div.seasonDiv.active > div.title").text() + " : " + element.text()
-        episode.episode_number = element.ownerDocument().select("div.seasonDiv.active > div.title").text()
-            .replace("موسم ", "").toFloat() +
-            (element.text().replace("الحلقة ", "").toFloat() * 0.01F)
+        episode.episode_number = element.text().replace("الحلقة ", "").toFloat()
         return episode
     }
 
