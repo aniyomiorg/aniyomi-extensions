@@ -2,7 +2,7 @@ package eu.kanade.tachiyomi.animeextension.en.tokuzilla
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
+import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -46,9 +46,9 @@ class Tokuzilla : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.selectFirst("a").attr("href").replace("https://tokuzilla.net", ""))
-        anime.thumbnail_url = element.selectFirst("img").attr("src")
-        anime.title = element.selectFirst("a").attr("title")
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").replace("https://tokuzilla.net", ""))
+        anime.thumbnail_url = element.selectFirst("img")!!.attr("src")
+        anime.title = element.selectFirst("a")!!.attr("title")
         return anime
     }
 
@@ -62,7 +62,6 @@ class Tokuzilla : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
         val infoElement = document.selectFirst("ul.pagination.post-tape")
-        Log.i("HAELPU", infoElement.html())
         if (infoElement != null) {
             infoElement.html().split("<a href=\"").drop(1).forEach {
                 val link = it.substringBefore("\"")
@@ -74,6 +73,12 @@ class Tokuzilla : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 episodeList.add(episode)
             }
         } else {
+            val link = document.selectFirst("meta[property=og:url]").attr("content")
+            val episode = SEpisode.create()
+            episode.setUrlWithoutDomain(link)
+            episode.episode_number = 1F
+            episode.name = "Movie"
+            episodeList.add(episode)
         }
         return episodeList.reversed()
     }
@@ -85,46 +90,89 @@ class Tokuzilla : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-        val frameLink = document.selectFirst("iframe[id=frame]").attr("src")
-        Log.i("SDFSDF", frameLink.substringBefore("/v/"))
-        val videos = ChillxExtractor(client, frameLink.substringBefore("/v/")).videoFromUrl(frameLink)
+        val frameLink = document.selectFirst("iframe[id=frame]")!!.attr("src")
+        val videos = ChillxExtractor(client, headers).videoFromUrl(frameLink, baseUrl)
         if (videos != null) {
             videoList.addAll(videos)
         }
-        return videoList
+        return videoList.reversed()
     }
 
     override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString("preferred_quality", null)
+        if (quality != null) {
+            val newList = mutableListOf<Video>()
+            var preferred = 0
+            for (video in this) {
+                if (video.quality.contains(quality)) {
+                    newList.add(preferred, video)
+                    preferred++
+                } else {
+                    newList.add(video)
+                }
+            }
+            return newList
+        }
         return this
     }
 
-    override fun videoListSelector() = throw Exception("c")
-
+    override fun videoListSelector() = throw Exception("not used")
     override fun videoFromElement(element: Element) = throw Exception("not used")
-
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     // =============================== Search ===============================
 
     override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun searchAnimeNextPageSelector(): String = "link[rel=next]"
+    override fun searchAnimeNextPageSelector(): String = "a.next.page-numbers"
 
     override fun searchAnimeSelector(): String = "div.col-sm-4.col-xs-12.item"
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/?s=$query")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        var url = baseUrl
+        filters.forEach { filter ->
+            when (filter) {
+                is GenreFilter -> url += filter.toUriPart()
+                else -> {}
+            }
+        }
+        return GET("$url/page/$page?s=$query")
+    }
 
     override fun getFilterList() = AnimeFilterList(
-        AnimeFilter.Header("HAHAHAHA"),
+        GenreFilter(),
     )
+
+    private class GenreFilter : UriPartFilter(
+        "Genres",
+        arrayOf(
+            Pair("Any", ""),
+            Pair("Series", "/series"),
+            Pair("Movie", "/movie"),
+            Pair("Kamen Rider", "/kamen-rider"),
+            Pair("Super Sentai", "/super-sentai"),
+            Pair("Armor Hero", "/armor-hero"),
+            Pair("Garo", "/garo"),
+            Pair("Godzilla", "/godzilla"),
+            Pair("Metal Heroes", "/metal-heroes"),
+            Pair("Power Rangers", "/power-ranger"),
+            Pair("Ultraman", "/ultraman"),
+            Pair("Other", "/other"),
+        )
+    )
+
+    private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
+        AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
+        fun toUriPart() = vals[state].second
+    }
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create().apply {
-            genre = parseGenres(document.selectFirst("table").html())
-            description = document.selectFirst("p").text()
-            author = parseYear(document.selectFirst("table").html())
-            status = parseStatus(document.selectFirst("table").text())
+            genre = parseGenres(document.selectFirst("table")!!.html())
+            description = document.selectFirst("p")!!.text()
+            author = parseYear(document.selectFirst("table")!!.html())
+            status = parseStatus(document.selectFirst("table")!!.text())
         }
         return anime
     }
@@ -144,13 +192,16 @@ class Tokuzilla : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun parseStatus(statusString: String): Int {
-        return if (statusString.contains("Ongoing")) SAnime.ONGOING
-        else SAnime.COMPLETED
+        return if (statusString.contains("Ongoing")) {
+            SAnime.ONGOING
+        } else {
+            SAnime.COMPLETED
+        }
     }
 
     // =============================== Latest ===============================
 
-    override fun latestUpdatesNextPageSelector(): String? = throw Exception("not used")
+    override fun latestUpdatesNextPageSelector(): String = throw Exception("not used")
 
     override fun latestUpdatesFromElement(element: Element) = throw Exception("not used")
 
@@ -163,6 +214,21 @@ class Tokuzilla : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================= Preference =============================
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        TODO("Not yet implemented")
+        val videoQualityPref = ListPreference(screen.context).apply {
+            key = "preferred_quality"
+            title = "Preferred quality"
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
+            setDefaultValue("1080")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(videoQualityPref)
     }
 }
