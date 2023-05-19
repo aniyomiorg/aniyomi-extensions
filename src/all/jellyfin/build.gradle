@@ -6,7 +6,7 @@ ext {
     extName = 'Jellyfin'
     pkgNameSuffix = 'all.jellyfin'
     extClass = '.Jellyfin'
-    extVersionCode = 6
+    extVersionCode = 7
     libVersion = '13'
 }
 

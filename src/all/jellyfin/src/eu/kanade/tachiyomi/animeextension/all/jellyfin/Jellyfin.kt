@@ -351,19 +351,21 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
                         if (media.Language != null) {
                             if (media.Language == prefSub) {
                                 try {
-                                    subtitleList.add(0, Track(subUrl, media.DisplayTitle!!))
+                                    if (media.IsExternal) {
+                                        subtitleList.add(0, Track(subUrl, media.DisplayTitle!!))
+                                    }
                                 } catch (e: Error) {
                                     subIndex = media.Index
                                 }
                             } else {
-                                try {
+                                if (media.IsExternal) {
                                     subtitleList.add(Track(subUrl, media.DisplayTitle!!))
-                                } catch (_: Error) {}
+                                }
                             }
                         } else {
-                            try {
+                            if (media.IsExternal) {
                                 subtitleList.add(Track(subUrl, media.DisplayTitle!!))
-                            } catch (_: Error) {}
+                            }
                         }
                     } else {
                         if (media.Language != null && media.Language == prefSub) {
@@ -387,7 +389,7 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
         JFConstants.QUALITIES_LIST.forEach { quality ->
             if (width < quality.width && height < quality.height) {
                 val url = "$baseUrl/Videos/$id/stream?static=True&api_key=$apiKey"
-                videoList.add(Video(url, "Best", url))
+                videoList.add(Video(url, "Best", url, subtitleTracks = subtitleList))
 
                 return videoList.reversed()
             } else {
@@ -419,11 +421,7 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
                 url.addQueryParameter("h264-deinterlace", "true")
                 url.addQueryParameter("TranscodeReasons", "VideoCodecNotSupported,AudioCodecNotSupported,ContainerBitrateExceedsLimit")
 
-                try {
-                    videoList.add(Video(url.toString(), quality.description, url.toString(), subtitleTracks = subtitleList))
-                } catch (_: Error) {
-                    videoList.add(Video(url.toString(), quality.description, url.toString()))
-                }
+                videoList.add(Video(url.toString(), quality.description, url.toString(), subtitleTracks = subtitleList))
             }
         }
 

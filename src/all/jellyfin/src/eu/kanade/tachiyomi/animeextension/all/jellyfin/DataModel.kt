@@ -44,6 +44,7 @@ data class SessionResponse(
             val Index: Int,
             val Type: String,
             val SupportsExternalStream: Boolean,
+            val IsExternal: Boolean,
             val Language: String? = null,
             val DisplayTitle: String? = null,
             val Height: Int? = null,
