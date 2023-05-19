@@ -1696,6 +1696,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Oppai Stream",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.oppaistream",
+    "apk": "aniyomi-en.oppaistream-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Oppai Stream",
+        "lang": "en",
+        "id": "1938195875614354298",
+        "baseUrl": "https://oppai.stream",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: pactedanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.pactedanime",
     "apk": "aniyomi-en.pactedanime-v13.5.apk",
@@ -3297,6 +3318,27 @@
         "lang": "pt-BR",
         "id": "4986568999330167770",
         "baseUrl": "https://cinevision.vc",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: DonghuaX",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.donghuax",
+    "apk": "aniyomi-pt.donghuax-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "DonghuaX",
+        "lang": "pt-BR",
+        "id": "4766292642740176896",
+        "baseUrl": "https://donghuax.com",
         "versionId": 1,
         "hasCloudflare": 0
       }
