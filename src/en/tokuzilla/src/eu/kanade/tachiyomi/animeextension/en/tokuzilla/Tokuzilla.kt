@@ -73,7 +73,7 @@ class Tokuzilla : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 episodeList.add(episode)
             }
         } else {
-            val link = document.selectFirst("meta[property=og:url]").attr("content")
+            val link = document.selectFirst("meta[property=og:url]")!!.attr("content")
             val episode = SEpisode.create()
             episode.setUrlWithoutDomain(link)
             episode.episode_number = 1F
