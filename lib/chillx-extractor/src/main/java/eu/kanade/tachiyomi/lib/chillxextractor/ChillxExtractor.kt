@@ -750,7 +750,7 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
         )
 
         val response = client.newCall(GET(playlistUrl, headers = masterHeaders)).execute()
-        val masterPlaylist = response.body?.string()
+        val masterPlaylist = response.body.string()
 
         masterPlaylist?.substringAfter("#EXT-X-STREAM-INF:")
             ?.split("#EXT-X-STREAM-INF:")?.map {
