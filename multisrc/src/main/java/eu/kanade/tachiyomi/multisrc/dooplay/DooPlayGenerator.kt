@@ -21,6 +21,7 @@ class DooPlayGenerator : ThemeSourceGenerator {
         SingleLang("pactedanime", "https://pactedanime.com", "en", isNsfw = false, overrideVersionCode = 4),
         SingleLang("AnimeOnline360", "https://animeonline360.me", "en", isNsfw = false),
         SingleLang("Pi Fansubs", "https://pifansubs.org", "pt-BR", isNsfw = true, overrideVersionCode = 14),
+        SingleLang("DonghuaX", "https://donghuax.com", "pt-BR", isNsfw = false),
     )
 
     companion object {
