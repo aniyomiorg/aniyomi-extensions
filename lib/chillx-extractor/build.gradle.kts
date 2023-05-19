@@ -12,15 +12,7 @@ android {
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
-    compileOnly(libs.kotlin.stdlib)
-    compileOnly(libs.kotlin.json)
-    compileOnly(libs.okhttp)
-    compileOnly(libs.aniyomi.lib)
-    compileOnly(libs.jsoup)
+    compileOnly(libs.bundles.common)
 }
 // BUMPS: 0
