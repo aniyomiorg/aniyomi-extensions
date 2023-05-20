@@ -3326,10 +3326,10 @@
   {
     "name": "Aniyomi: CineVision",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.cinevision",
-    "apk": "aniyomi-pt.cinevision-v13.5.apk",
+    "apk": "aniyomi-pt.cinevision-v13.6.apk",
     "lang": "pt-BR",
-    "code": 5,
-    "version": "13.5",
+    "code": 6,
+    "version": "13.6",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3338,7 +3338,7 @@
         "name": "CineVision",
         "lang": "pt-BR",
         "id": "4986568999330167770",
-        "baseUrl": "https://cinevision.vc",
+        "baseUrl": "https://cinevisionv3.online",
         "versionId": 1,
         "hasCloudflare": 0
       }
