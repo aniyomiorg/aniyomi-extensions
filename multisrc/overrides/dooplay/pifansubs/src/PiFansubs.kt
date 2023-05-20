@@ -16,7 +16,7 @@ import org.jsoup.nodes.Element
 class PiFansubs : DooPlay(
     "pt-BR",
     "Pi Fansubs",
-    "https://pifansubs.org",
+    "https://pifansubs.club",
 ) {
 
     override fun headersBuilder() = super.headersBuilder()
