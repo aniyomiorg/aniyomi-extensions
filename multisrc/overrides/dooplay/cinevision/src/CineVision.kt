@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.cinevision
 
+import eu.kanade.tachiyomi.animeextension.pt.cinevision.extractors.EmbedflixExtractor
 import eu.kanade.tachiyomi.animeextension.pt.cinevision.extractors.StreamlareExtractor
 import eu.kanade.tachiyomi.animeextension.pt.cinevision.extractors.VidmolyExtractor
 import eu.kanade.tachiyomi.animesource.model.Video
@@ -39,6 +40,8 @@ class CineVision : DooPlay(
                 VidmolyExtractor(client).getVideoList(url, name)
             "streamlare.com" in url ->
                 StreamlareExtractor(client).videosFromUrl(url, name)
+            "embedflix.in" in url ->
+                EmbedflixExtractor(client).videosFromUrl(url)
             else -> emptyList<Video>()
         }
     }
