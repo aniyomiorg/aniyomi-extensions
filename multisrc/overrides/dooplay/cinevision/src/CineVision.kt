@@ -4,8 +4,9 @@ import eu.kanade.tachiyomi.animeextension.pt.cinevision.extractors.StreamlareExt
 import eu.kanade.tachiyomi.animeextension.pt.cinevision.extractors.VidmolyExtractor
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
-import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.FormBody
 import okhttp3.Response
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.api.get
@@ -43,17 +44,31 @@ class CineVision : DooPlay(
     }
 
     private fun getPlayerUrl(player: Element): String {
-        val type = player.attr("data-type")
-        val id = player.attr("data-post")
-        val num = player.attr("data-nume")
-        return client.newCall(GET("$baseUrl/wp-json/dooplayer/v2/$id/$type/$num"))
+        val body = FormBody.Builder()
+            .add("action", "doo_player_ajax")
+            .add("post", player.attr("data-post"))
+            .add("nume", player.attr("data-nume"))
+            .add("type", player.attr("data-type"))
+            .build()
+
+        return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", headers, body))
             .execute()
             .use { response ->
                 response.body.string()
                     .substringAfter("\"embed_url\":\"")
                     .substringBefore("\",")
                     .replace("\\", "")
-                    .let { "https:$it" }
+                    .let { url ->
+                        when {
+                            url.contains("iframe") -> {
+                                url.substringAfter(" src=\"")
+                                    .substringBefore("\" ")
+                                    .let { "https:$it" }
+                            }
+
+                            else -> url
+                        }
+                    }
             }
     }
 
