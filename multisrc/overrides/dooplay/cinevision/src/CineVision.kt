@@ -19,6 +19,8 @@ class CineVision : DooPlay(
     override fun popularAnimeSelector(): String = "article.w_item_b > a"
 
     // =============================== Latest ===============================
+    override val latestUpdatesPath = "episodios"
+
     override fun latestUpdatesNextPageSelector(): String = "div.resppages > a > span.fa-chevron-right"
 
     // ============================ Video Links =============================
