@@ -1,5 +1,6 @@
 dependencies {
     implementation(project(':lib-streamsb-extractor'))
+    implementation(project(':lib-gdriveplayer-extractor'))
     implementation("dev.datlag.jsunpacker:jsunpacker:1.0.1")
 }
 

@@ -2,9 +2,9 @@ package eu.kanade.tachiyomi.animeextension.pt.pifansubs
 
 import android.net.Uri
 import eu.kanade.tachiyomi.animeextension.pt.pifansubs.extractors.AdoroDoramasExtractor
-import eu.kanade.tachiyomi.animeextension.pt.pifansubs.extractors.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.animeextension.pt.pifansubs.extractors.JMVStreamExtractor
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
@@ -45,12 +45,12 @@ class PiFansubs : DooPlay(
     }
 
     private fun getPlayerVideos(url: String): List<Video> {
-        val streamsbDomains = listOf("sbspeed", "sbanh", "streamsb", "sbfull", "sbbrisk")
+        val streamsbDomains = listOf("sbspeed", "sbanh", "streamsb", "sbfull", "sbbrisk", "lvturbo")
         return when {
             "player.jmvstream" in url ->
                 JMVStreamExtractor(client).videosFromUrl(url)
             "gdriveplayer." in url ->
-                GdrivePlayerExtractor(client).videosFromUrl(url)
+                GdrivePlayerExtractor(client).videosFromUrl(url, "GdrivePlayer", headers)
             streamsbDomains.any { it in url } ->
                 StreamSBExtractor(client).videosFromUrl(url, headers)
             "adorodoramas.com" in url ->
