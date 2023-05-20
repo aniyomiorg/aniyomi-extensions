@@ -84,9 +84,20 @@ class AnimesFoxBR : DooPlay(
                     .substringAfter("\"embed_url\":\"")
                     .substringBefore("\",")
                     .replace("\\", "")
-                    .substringAfter("token=")
-                    .substringBefore("' ")
-                    .let { Base64.decode(it, Base64.DEFAULT).let(::String) }
+                    .let { url ->
+                        when {
+                            url.contains("token=") -> {
+                                url.substringAfter("token=")
+                                    .substringBefore("' ")
+                                    .let { Base64.decode(it, Base64.DEFAULT) }
+                                    .let(::String)
+                            }
+                            url.contains("iframe") -> {
+                                url.substringAfter("?link=").substringBefore("'")
+                            }
+                            else -> ""
+                        }
+                    }
             }
     }
 
