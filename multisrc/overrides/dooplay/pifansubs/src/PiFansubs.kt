@@ -53,7 +53,7 @@ class PiFansubs : DooPlay(
                 GdrivePlayerExtractor(client).videosFromUrl(url, "GdrivePlayer", headers)
             streamsbDomains.any { it in url } ->
                 StreamSBExtractor(client).videosFromUrl(url, headers)
-            "adorodoramas.com" in url ->
+            "https://adorodoramas.com" in url ->
                 AdoroDoramasExtractor(client).videosFromUrl(url)
             "/jwplayer/?source" in url -> {
                 val videoUrl = Uri.parse(url).getQueryParameter("source")!!
