@@ -92,7 +92,7 @@ dependencies {
 configurations.all {
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         if (details.requested.group == 'org.jetbrains.kotlin' && details.requested.name == 'kotlin-stdlib-jdk8' && details.requested.version == '1.7.0') {
-            details.useVersion '1.7.21'
+            details.useVersion '1.8.21'
             details.because 'Fix problems with dev.datlag JsUnpacker'
         }
     }

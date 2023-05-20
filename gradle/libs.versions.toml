@@ -1,8 +1,8 @@
 [versions]
-agp_version = "7.4.1"
-coroutines_version = "1.6.4"
-kotlin_version = "1.7.21"
-serialization_version = "1.4.0"
+agp_version = "8.0.1"
+coroutines_version = "1.7.1"
+kotlin_version = "1.8.21"
+serialization_version = "1.5.1"
 
 [libraries]
 aniyomi-lib = { module = "com.github.jmir1:extensions-lib", version = "a2f1874" }
