@@ -5,7 +5,6 @@ import dev.datlag.jsunpacker.JsUnpacker
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -146,7 +145,7 @@ class GdrivePlayerExtractor(private val client: OkHttpClient) {
     }
 
     companion object {
-        private const val playerName = "GDRIVE"
+        private const val PLAYER_NAME = "GDRIVE"
 
         private val REGEX_DATAJSON = Regex("data='(\\S+?)'")
         private val REGEX_PASSWORD = Regex("var pass = \"(\\S+?)\"")

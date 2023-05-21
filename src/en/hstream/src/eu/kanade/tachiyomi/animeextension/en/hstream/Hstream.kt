@@ -266,8 +266,8 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
-            entries = prefQualityEntries
-            entryValues = prefQualityEntries
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES
             setDefaultValue("720p")
             summary = "%s"
 
@@ -458,7 +458,7 @@ class Hstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     companion object {
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred video quality"
-        private val prefQualityEntries = arrayOf("720p", "1080p", "2160p")
+        private val PREF_QUALITY_ENTRIES = arrayOf("720p", "1080p", "2160p")
 
         private const val PREF_SUB_KEY = "preferred_subLang"
         private const val PREF_SUB_TITLE = "Preferred sub language"

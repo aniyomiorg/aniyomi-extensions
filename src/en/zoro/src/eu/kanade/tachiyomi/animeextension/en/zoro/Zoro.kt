@@ -22,7 +22,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
@@ -343,8 +342,8 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
-            entries = prefQualityEntries
-            entryValues = prefQualityEntries
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES
             setDefaultValue("720p")
             summary = "%s"
 
@@ -434,7 +433,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         const val PREFIX_SEARCH = "slug:"
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred video quality"
-        private val prefQualityEntries = arrayOf("360p", "720p", "1080p")
+        private val PREF_QUALITY_ENTRIES = arrayOf("360p", "720p", "1080p")
 
         private const val PREF_TYPE_KEY = "preferred_type"
         private const val PREF_TYPE_TITLE = "Preferred episode type/mode"

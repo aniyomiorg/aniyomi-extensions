@@ -257,8 +257,8 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
-            entries = prefQualityValues
-            entryValues = prefQualityValues
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
@@ -326,7 +326,7 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"
         private const val PREF_QUALITY_DEFAULT = "720p"
-        private val prefQualityValues = arrayOf("240p", "360p", "480p", "720p", "1080p")
+        private val PREF_QUALITY_ENTRIES = arrayOf("240p", "360p", "480p", "720p", "1080p")
 
         private const val PREF_AUDIO_LANG_KEY = "preferred_audio_lang"
         private const val PREF_AUDIO_LANG_TITLE = "Preferred audio language"

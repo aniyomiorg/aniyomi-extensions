@@ -212,8 +212,8 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val preferredQuality = ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
-            entries = prefQualityValues
-            entryValues = prefQualityValues
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
@@ -282,7 +282,7 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Qualidade preferida"
         private const val PREF_QUALITY_DEFAULT = "720p"
-        private val prefQualityValues = arrayOf("360p", "480p", "720p", "1080p")
+        private val PREF_QUALITY_ENTRIES = arrayOf("360p", "480p", "720p", "1080p")
 
         private const val PREF_LANGUAGE_KEY = "pref_language"
         private const val PREF_LANGUAGE_DEFAULT = "Legendado"
