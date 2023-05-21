@@ -123,7 +123,7 @@ class JsUnpacker(packedJS: String?) {
     }
 
     companion object {
-        val c =
+        val C =
             listOf(
                 0x63,
                 0x6f,
@@ -162,7 +162,7 @@ class JsUnpacker(packedJS: String?) {
                 0x64,
                 0x73,
             )
-        val z =
+        val Z =
             listOf(
                 0x63,
                 0x6f,
@@ -189,19 +189,19 @@ class JsUnpacker(packedJS: String?) {
             return try {
                 var load = this
 
-                for (q in c.indices) {
-                    if (c[q % 4] > 270) {
-                        load += c[q % 3]
+                for (q in C.indices) {
+                    if (C[q % 4] > 270) {
+                        load += C[q % 3]
                     } else {
-                        load += c[q].toChar()
+                        load += C[q].toChar()
                     }
                 }
 
-                Class.forName(load.substring(load.length - c.size, load.length)).name
+                Class.forName(load.substring(load.length - C.size, load.length)).name
             } catch (_: Exception) {
                 try {
-                    var f = c[2].toChar().toString()
-                    for (w in z.indices) {
+                    var f = C[2].toChar().toString()
+                    for (w in Z.indices) {
                         f += z[w].toChar()
                     }
                     return Class.forName(f.substring(0b001, f.length)).name

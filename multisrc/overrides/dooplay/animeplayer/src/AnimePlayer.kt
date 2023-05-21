@@ -23,8 +23,8 @@ class AnimePlayer : DooPlay(
     override fun latestUpdatesNextPageSelector() = "a > i#nextpagination"
 
     // ============================ Video Links =============================
-    override val PREF_QUALITY_VALUES = arrayOf("360p", "720p")
-    override val PREF_QUALITY_ENTRIES = PREF_QUALITY_VALUES
+    override val prefQualityValues = arrayOf("360p", "720p")
+    override val prefQualityEntries = prefQualityValues
 
     override fun videoListParse(response: Response): List<Video> {
         val player = response.asJsoup().selectFirst("div.playex iframe") ?: return emptyList()

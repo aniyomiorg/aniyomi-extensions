@@ -28,12 +28,12 @@ object AnimeOnlineNinjaFilters {
 
     class InvertedResultsFilter : AnimeFilter.CheckBox("Invertir resultados", false)
     class TypeFilter : UriPartFilter("Tipo", AnimesOnlineNinjaData.TYPES)
-    class LetterFilter : UriPartFilter("Filtrar por letra", AnimesOnlineNinjaData.letters)
+    class LetterFilter : UriPartFilter("Filtrar por letra", AnimesOnlineNinjaData.LETTERS)
 
-    class GenreFilter : UriPartFilter("Generos", AnimesOnlineNinjaData.genres)
-    class LanguageFilter : UriPartFilter("Idiomas", AnimesOnlineNinjaData.languages)
+    class GenreFilter : UriPartFilter("Generos", AnimesOnlineNinjaData.GENRES)
+    class LanguageFilter : UriPartFilter("Idiomas", AnimesOnlineNinjaData.LANGUAGES)
     class YearFilter : UriPartFilter("Año", AnimesOnlineNinjaData.YEARS)
-    class MovieFilter : UriPartFilter("Peliculas", AnimesOnlineNinjaData.movies)
+    class MovieFilter : UriPartFilter("Peliculas", AnimesOnlineNinjaData.MOVIES)
 
     class OtherOptionsGroup : AnimeFilter.Group<UriPartFilter>(
         "Otros filtros",
@@ -85,7 +85,7 @@ object AnimeOnlineNinjaFilters {
     }
 
     private object AnimesOnlineNinjaData {
-        val every = Pair("Seleccionar", "")
+        val EVERY = Pair("Seleccionar", "")
 
         val TYPES = arrayOf(
             Pair("Todos", "todos"),
@@ -93,12 +93,12 @@ object AnimeOnlineNinjaFilters {
             Pair("Peliculas", "pelicula"),
         )
 
-        val letters = arrayOf(every) + ('a'..'z').map {
+        val LETTERS = arrayOf(EVERY) + ('a'..'z').map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 
-        val genres = arrayOf(
-            every,
+        val GENRES = arrayOf(
+            EVERY,
             Pair("Sin Censura \uD83D\uDD1E", "sin-censura"),
             Pair("En emisión ⏩", "en-emision"),
             Pair("Blu-Ray / DVD \uD83D\uDCC0", "blu-ray-dvd"),
@@ -108,18 +108,18 @@ object AnimeOnlineNinjaFilters {
             Pair("Mejores valorados ⭐", "ratings"),
         )
 
-        val languages = arrayOf(
-            every,
+        val LANGUAGES = arrayOf(
+            EVERY,
             Pair("Audio Latino \uD83C\uDDF2\uD83C\uDDFD", "audio-latino"),
             Pair("Audio Castellano \uD83C\uDDEA\uD83C\uDDF8", "anime-castellano"),
         )
 
-        val YEARS = arrayOf(every) + (2023 downTo 1979).map {
+        val YEARS = arrayOf(EVERY) + (2023 downTo 1979).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 
-        val movies = arrayOf(
-            every,
+        val MOVIES = arrayOf(
+            EVERY,
             Pair("Anime ㊗️", "pelicula"),
             Pair("Live Action \uD83C\uDDEF\uD83C\uDDF5", "live-action"),
         )

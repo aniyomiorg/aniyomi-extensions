@@ -200,8 +200,8 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
-            entries = PREF_QUALITY_VALUES
-            entryValues = PREF_QUALITY_VALUES
+            entries = prefQualityValues
+            entryValues = prefQualityValues
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
@@ -288,6 +288,6 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Qualidade preferida"
         private const val PREF_QUALITY_DEFAULT = "HD"
-        private val PREF_QUALITY_VALUES = arrayOf("SD", "HD", "FULLHD")
+        private val prefQualityValues = arrayOf("SD", "HD", "FULLHD")
     }
 }

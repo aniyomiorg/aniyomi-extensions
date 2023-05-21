@@ -78,7 +78,7 @@ interface ThemeSourceGenerator {
                 |    pkgNameSuffix = '${pkgNameSuffix(source, ".")}'
                 |    extClass = '.${source.className}'
                 |    extFactory = '$themePkg'
-                |    extVersionCode = ${baseVersionCode + source.overrideVersionCode + multisrcLibraryVersion}
+                |    extVersionCode = ${baseVersionCode + source.overrideVersionCode + MULTISRC_LIBRARY_VERSION}
                 |    ${if (source.isNsfw) "containsNsfw = true\n" else ""}
                 |}
                 |$defaultAdditionalGradleText
@@ -302,4 +302,4 @@ sealed class ThemeSourceData {
 /**
  * This variable should be increased when the multisrc library changes in a way that prompts global extension upgrade
  */
-const val multisrcLibraryVersion = 0
+const val MULTISRC_LIBRARY_VERSION = 0

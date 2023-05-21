@@ -47,16 +47,16 @@ object DopeFlixFilters {
     }
 
     class TypeFilter : QueryPartFilter("Type", DopeFlixFiltersData.TYPES)
-    class QualityFilter : QueryPartFilter("Quality", DopeFlixFiltersData.qualities)
+    class QualityFilter : QueryPartFilter("Quality", DopeFlixFiltersData.QUALITIES)
     class ReleaseYearFilter : QueryPartFilter("Released at", DopeFlixFiltersData.YEARS)
 
     class GenresFilter : CheckBoxFilterList(
         "Genres",
-        DopeFlixFiltersData.genres.map { CheckBoxVal(it.first, false) },
+        DopeFlixFiltersData.GENRES.map { CheckBoxVal(it.first, false) },
     )
     class CountriesFilter : CheckBoxFilterList(
         "Countries",
-        DopeFlixFiltersData.countries.map { CheckBoxVal(it.first, false) },
+        DopeFlixFiltersData.COUNTRIES.map { CheckBoxVal(it.first, false) },
     )
 
     val FILTER_LIST = AnimeFilterList(
@@ -83,8 +83,8 @@ object DopeFlixFilters {
             filters.asQueryPart<TypeFilter>(),
             filters.asQueryPart<QualityFilter>(),
             filters.asQueryPart<ReleaseYearFilter>(),
-            filters.parseCheckbox<GenresFilter>(DopeFlixFiltersData.genres),
-            filters.parseCheckbox<CountriesFilter>(DopeFlixFiltersData.countries),
+            filters.parseCheckbox<GenresFilter>(DopeFlixFiltersData.GENRES),
+            filters.parseCheckbox<CountriesFilter>(DopeFlixFiltersData.COUNTRIES),
         )
     }
 
@@ -97,7 +97,7 @@ object DopeFlixFilters {
             Pair("TV Shows", "tv"),
         )
 
-        val qualities = arrayOf(
+        val QUALITIES = arrayOf(
             ALL,
             Pair("HD", "HD"),
             Pair("SD", "SD"),
@@ -114,7 +114,7 @@ object DopeFlixFilters {
             Pair("Older", "older-2018"),
         )
 
-        val genres = arrayOf(
+        val GENRES = arrayOf(
             Pair("Action", "10"),
             Pair("Action & Adventure", "24"),
             Pair("Adventure", "18"),
@@ -145,7 +145,7 @@ object DopeFlixFilters {
             Pair("Western", "6"),
         )
 
-        val countries = arrayOf(
+        val COUNTRIES = arrayOf(
             Pair("Argentina", "11"),
             Pair("Australia", "151"),
             Pair("Austria", "4"),

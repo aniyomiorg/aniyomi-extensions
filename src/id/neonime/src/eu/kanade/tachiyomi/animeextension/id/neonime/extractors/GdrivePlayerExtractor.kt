@@ -129,7 +129,7 @@ class GdrivePlayerExtractor(private val client: OkHttpClient) {
     }
 
     companion object {
-        private const val PLAYER_NAME = "GDRIVE"
+        private const val playerName = "GDRIVE"
 
         private val REGEX_DATAJSON = Regex("data='(\\S+?)'")
         private val REGEX_PASSWORD = Regex("var pass = \"(\\S+?)\"")

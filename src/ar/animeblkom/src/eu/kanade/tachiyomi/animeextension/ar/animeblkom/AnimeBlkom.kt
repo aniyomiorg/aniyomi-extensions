@@ -200,8 +200,8 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
-            entries = PREF_QUALITY_ENTRIES
-            entryValues = PREF_QUALITY_ENTRIES
+            entries = prefQualityEntries
+            entryValues = prefQualityEntries
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
@@ -227,6 +227,6 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"
         private const val PREF_QUALITY_DEFAULT = "720p"
-        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p", "240p")
+        private val prefQualityEntries = arrayOf("1080p", "720p", "480p", "360p", "240p")
     }
 }

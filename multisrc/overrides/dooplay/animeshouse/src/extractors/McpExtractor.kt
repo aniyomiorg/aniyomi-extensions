@@ -10,17 +10,17 @@ class McpExtractor(
     private val headers: Headers,
 ) {
 
-    private val REGEX_EP_ID = Regex("ss,\"(\\d+)\"")
-    private val REGEX_VIDEO_URL = Regex("h\":\"(\\S+?)\"")
-    private val API_URL = "https://clp-new.animeshouse.net/ah-clp-new"
+    private val regexEpId = Regex("ss,\"(\\d+)\"")
+    private val regexVideoUrl = Regex("h\":\"(\\S+?)\"")
+    private val apiUrl = "https://clp-new.animeshouse.net/ah-clp-new"
 
     fun getVideoList(js: String): List<Video> {
-        val epId = REGEX_EP_ID.find(js)!!.groupValues[1]
-        val videoUrl = client.newCall(GET("$API_URL/s_control.php?mid=$epId", headers))
+        val epId = regexEpId.find(js)!!.groupValues[1]
+        val videoUrl = client.newCall(GET("$apiUrl/s_control.php?mid=$epId", headers))
             .execute()
             .use { req ->
                 val reqBody = req.body.string()
-                REGEX_VIDEO_URL.find(reqBody)!!.groupValues
+                regexVideoUrl.find(reqBody)!!.groupValues
                     .get(1)
                     .replace("\\", "")
             }

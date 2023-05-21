@@ -37,8 +37,8 @@ class AnimesFoxBR : DooPlay(
         }
 
     // ============================ Video Links =============================
-    override val PREF_QUALITY_VALUES = arrayOf("360p ~ SD", "720p ~ HD")
-    override val PREF_QUALITY_ENTRIES = PREF_QUALITY_VALUES
+    override val prefQualityValues = arrayOf("360p ~ SD", "720p ~ HD")
+    override val prefQualityEntries = prefQualityValues
 
     override fun videoListParse(response: Response): List<Video> {
         val doc = response.asJsoup()

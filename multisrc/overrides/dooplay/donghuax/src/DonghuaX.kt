@@ -335,8 +335,8 @@ class DonghuaX : DooPlay(
 
     // ============================= Utilities ==============================
 
-    override val PREF_QUALITY_VALUES = arrayOf("288p", "360p", "480p", "720p", "1080p")
-    override val PREF_QUALITY_ENTRIES = PREF_QUALITY_VALUES
+    override val prefQualityValues = arrayOf("288p", "360p", "480p", "720p", "1080p")
+    override val prefQualityEntries = prefQualityValues
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(VIDEO_SORT_PREF_KEY, VIDEO_SORT_PREF_DEFAULT)!!

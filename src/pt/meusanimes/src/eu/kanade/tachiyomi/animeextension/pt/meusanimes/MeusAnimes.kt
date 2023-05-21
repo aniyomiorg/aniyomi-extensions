@@ -156,9 +156,9 @@ class MeusAnimes : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
-            entries = PREF_QUALITY_VALUES
-            entryValues = PREF_QUALITY_VALUES
-            setDefaultValue(PREF_QUALITY_VALUES.last())
+            entries = prefQualityValues
+            entryValues = prefQualityValues
+            setDefaultValue(prefQualityValues.last())
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -183,6 +183,6 @@ class MeusAnimes : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         private const val PREF_QUALITY_KEY = "pref_quality"
         private const val PREF_QUALITY_TITLE = "Qualidade preferida"
-        private val PREF_QUALITY_VALUES = arrayOf("SD", "HD")
+        private val prefQualityValues = arrayOf("SD", "HD")
     }
 }

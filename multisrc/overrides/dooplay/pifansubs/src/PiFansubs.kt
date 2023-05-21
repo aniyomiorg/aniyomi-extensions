@@ -22,8 +22,8 @@ class PiFansubs : DooPlay(
     override fun headersBuilder() = super.headersBuilder()
         .add("Accept-Language", "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7")
 
-    override val PREF_QUALITY_VALUES = arrayOf("360p", "480p", "720p", "1080p")
-    override val PREF_QUALITY_ENTRIES = PREF_QUALITY_VALUES
+    val prefQualityValues = arrayOf("360p", "480p", "720p", "1080p")
+    override val prefQualityEntries = prefQualityValues
 
     // ============================== Popular ===============================
     override fun popularAnimeSelector(): String = "div#featured-titles div.poster"

@@ -233,8 +233,8 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
-            entries = PREF_QUALITY_VALUES
-            entryValues = PREF_QUALITY_VALUES
+            entries = prefQualityValues
+            entryValues = prefQualityValues
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
@@ -331,7 +331,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_QUALITY_KEY = "preffered_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"
         private const val PREF_QUALITY_DEFAULT = "1080p"
-        private val PREF_QUALITY_VALUES = arrayOf("1080p", "720p", "360p")
+        private val prefQualityValues = arrayOf("1080p", "720p", "360p")
 
         private const val PREF_DOMAIN_KEY = "preffered_domain"
         private const val PREF_DOMAIN_TITLE = "Preferred domain (requires app restart)"

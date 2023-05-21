@@ -8,7 +8,7 @@ import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Response
 import org.jsoup.nodes.Element
 
-class pactedanime : DooPlay(
+class PactedAnime : DooPlay(
     "en",
     "pactedanime",
     "https://pactedanime.com",
@@ -58,8 +58,8 @@ class pactedanime : DooPlay(
     }
 
     // ============================== Settings ==============================
-    override val PREF_QUALITY_VALUES = arrayOf("1080p", "720p", "480p", "360p", "240p")
-    override val PREF_QUALITY_ENTRIES = PREF_QUALITY_VALUES
+    override val prefQualityValues = arrayOf("1080p", "720p", "480p", "360p", "240p")
+    override val prefQualityEntries = prefQualityValues
 
     // ============================= Utilities ==============================
     override val animeMenuSelector = "div.pag_episodes div.item a[href] i.fa-bars"

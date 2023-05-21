@@ -143,9 +143,9 @@ class AnimeOnlineNinja : DooPlay(
 
     private fun extractFromMulti(url: String): List<Video> {
         val document = client.newCall(GET(url)).execute().asJsoup()
-        val pref_lang = preferences.getString(PREF_LANG_KEY, PREF_LANG_DEFAULT)!!
+        val prefLang = preferences.getString(PREF_LANG_KEY, PREF_LANG_DEFAULT)!!
         val langSelector = when {
-            pref_lang.isBlank() -> "div"
+            prefLang.isBlank() -> "div"
             else -> "div.OD_$pref_lang"
         }
         return document.select("div.ODDIV $langSelector > li").flatMap {
@@ -158,7 +158,7 @@ class AnimeOnlineNinja : DooPlay(
                         .substringAfter("OD_", "")
                         .substringBefore(" ")
                 }
-                else -> pref_lang
+                else -> prefLang
             }
             extractVideos(hosterUrl, lang)
         }
@@ -242,8 +242,8 @@ class AnimeOnlineNinja : DooPlay(
         ).reversed()
     }
 
-    override val PREF_QUALITY_VALUES = arrayOf("480p", "720p", "1080p")
-    override val PREF_QUALITY_ENTRIES = PREF_QUALITY_VALUES
+    override val prefQualityValues = arrayOf("480p", "720p", "1080p")
+    override val prefQualityEntries = prefQualityValues
 
     companion object {
         private const val PREF_LANG_KEY = "preferred_lang"

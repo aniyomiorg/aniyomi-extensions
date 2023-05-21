@@ -247,8 +247,8 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
-            entries = PREF_QUALITY_ENTRIES
-            entryValues = PREF_QUALITY_ENTRIES
+            entries = prefQualityEntries
+            entryValues = prefQualityEntries
             setDefaultValue("Mirror 2")
             summary = "%s"
 
@@ -608,6 +608,6 @@ class HentaiMama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     companion object {
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred video quality"
-        private val PREF_QUALITY_ENTRIES = arrayOf("Mirror 1", "Mirror 2", "Mirror 3", "Beta")
+        private val prefQualityEntries = arrayOf("Mirror 1", "Mirror 2", "Mirror 3", "Beta")
     }
 }
