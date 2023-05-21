@@ -202,7 +202,7 @@ class JsUnpacker(packedJS: String?) {
                 try {
                     var f = C[2].toChar().toString()
                     for (w in Z.indices) {
-                        f += z[w].toChar()
+                        f += Z[w].toChar()
                     }
                     return Class.forName(f.substring(0b001, f.length)).name
                 } catch (_: Exception) {

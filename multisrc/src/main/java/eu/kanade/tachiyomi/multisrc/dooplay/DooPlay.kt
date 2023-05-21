@@ -32,7 +32,7 @@ import java.util.Locale
  * This class takes some inspiration from Tachiyomi's Madara multisrc class.
  */
 abstract class DooPlay(
-    final override val lang: String,
+    override val lang: String,
     override val name: String,
     override val baseUrl: String,
 ) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -54,13 +54,13 @@ abstract class DooPlay(
         const val PREFIX_SEARCH = "path:"
     }
 
-    private val prefQualityDefault = "720p"
-    private val prefQualityKey = "preferred_quality"
+    protected open val prefQualityDefault = "720p"
+    protected open val prefQualityKey = "preferred_quality"
     protected open val prefQualityTitle = when (lang) {
         "pt-BR" -> "Qualidade preferida"
         else -> "Preferred quality"
     }
-    private val prefQualityValues = arrayOf("480p", "720p")
+    protected open val prefQualityValues = arrayOf("480p", "720p")
     protected open val prefQualityEntries = prefQualityValues
 
     protected open val videoSortPrefKey = prefQualityKey
