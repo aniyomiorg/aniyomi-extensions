@@ -18,7 +18,6 @@ import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -50,7 +49,7 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val MAX_RECURSION_DEPTH = 2
+    private val maxRecursionDepth = 2
 
     private val json: Json by injectLazy()
 
@@ -224,7 +223,7 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val boundary = "=====vc17a3rwnndj====="
 
         fun traverseFolder(url: String, path: String, recursionDepth: Int = 0) {
-            if (recursionDepth == MAX_RECURSION_DEPTH) return
+            if (recursionDepth == maxRecursionDepth) return
 
             val folderId = url.substringAfter("/folders/")
             val driveHeaders = headers.newBuilder()

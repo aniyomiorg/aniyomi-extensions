@@ -54,23 +54,23 @@ object AnimesZoneFilters {
 
     class GenreFilter : CheckBoxFilterList(
         "Selecionar Gêneros",
-        AnimesZoneFiltersData.genre.map { CheckBoxVal(it.first, false) },
+        AnimesZoneFiltersData.GENRE.map { CheckBoxVal(it.first, false) },
     )
 
-    class YearFilter : QueryPartFilter("Ano", AnimesZoneFiltersData.year)
+    class YearFilter : QueryPartFilter("Ano", AnimesZoneFiltersData.YEAR)
 
-    class VersionFilter : QueryPartFilter("Versão", AnimesZoneFiltersData.version)
+    class VersionFilter : QueryPartFilter("Versão", AnimesZoneFiltersData.VERSION)
 
     class StudioFilter : CheckBoxFilterList(
         "Estudio",
-        AnimesZoneFiltersData.studio.map { CheckBoxVal(it.first, false) },
+        AnimesZoneFiltersData.STUDIO.map { CheckBoxVal(it.first, false) },
     )
 
-    class TypeFilter : QueryPartFilter("Tipo", AnimesZoneFiltersData.type)
+    class TypeFilter : QueryPartFilter("Tipo", AnimesZoneFiltersData.TYPE)
 
-    class AdultFilter : QueryPartFilter("Adulto", AnimesZoneFiltersData.adult)
+    class AdultFilter : QueryPartFilter("Adulto", AnimesZoneFiltersData.ADULT)
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         GenreFilter(),
         StudioFilter(),
         YearFilter(),
@@ -92,19 +92,19 @@ object AnimesZoneFilters {
         if (filters.isEmpty()) return FilterSearchParams()
 
         return FilterSearchParams(
-            filters.parseCheckbox<GenreFilter>(AnimesZoneFiltersData.genre, "_generos"),
+            filters.parseCheckbox<GenreFilter>(AnimesZoneFiltersData.GENRE, "_generos"),
             filters.asQueryPart<YearFilter>("_versao"),
             filters.asQueryPart<VersionFilter>("_tipo"),
-            filters.parseCheckbox<StudioFilter>(AnimesZoneFiltersData.studio, "_estudio"),
+            filters.parseCheckbox<StudioFilter>(AnimesZoneFiltersData.STUDIO, "_estudio"),
             filters.asQueryPart<TypeFilter>("_tipototal"),
             filters.asQueryPart<AdultFilter>("_adulto"),
         )
     }
 
     private object AnimesZoneFiltersData {
-        val any = Pair("Selecione", "")
+        val ANY = Pair("Selecione", "")
 
-        val genre = arrayOf(
+        val GENRE = arrayOf(
             Pair("Comédia", "comedia"),
             Pair("Ação", "acao"),
             Pair("Fantasia", "fantasia"),
@@ -167,18 +167,18 @@ object AnimesZoneFilters {
             Pair("Vida Escolar", "vida-escolar"),
         )
 
-        val year = arrayOf(any) + (1986..2023).map {
+        val YEAR = arrayOf(ANY) + (1986..2023).map {
             Pair(it.toString(), it.toString())
         }.reversed().toTypedArray()
 
-        val version = arrayOf(
-            any,
+        val VERSION = arrayOf(
+            ANY,
             Pair("Legendados", "legendada"),
             Pair("Dublado", "series02"),
             Pair("Seção de Hentais", "series03"),
         )
 
-        val studio = arrayOf(
+        val STUDIO = arrayOf(
             Pair("J.C.Staff", "j-c-staff"),
             Pair("Shueisha", "shueisha"),
             Pair("Aniplex", "aniplex"),
@@ -280,14 +280,14 @@ object AnimesZoneFilters {
             Pair("Ashi Productions", "ashi-productions"),
         )
 
-        val type = arrayOf(
-            any,
+        val TYPE = arrayOf(
+            ANY,
             Pair("TV Shows", "tvshows"),
             Pair("Filmes", "movies"),
         )
 
-        val adult = arrayOf(
-            any,
+        val ADULT = arrayOf(
+            ANY,
             Pair("Hentais", "dublada"),
             Pair("Seção de Hentais", "series03"),
         )

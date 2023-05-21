@@ -47,49 +47,49 @@ object NineAnimeFilters {
             }
     }
 
-    class SortFilter : QueryPartFilter("Sort order", NineAnimeFiltersData.sort)
+    class SortFilter : QueryPartFilter("Sort order", NineAnimeFiltersData.SORT)
 
     class GenreFilter : CheckBoxFilterList(
         "Genre",
-        NineAnimeFiltersData.genre.map { CheckBoxVal(it.first, false) },
+        NineAnimeFiltersData.GENRE.map { CheckBoxVal(it.first, false) },
     )
 
     class CountryFilter : CheckBoxFilterList(
         "Country",
-        NineAnimeFiltersData.country.map { CheckBoxVal(it.first, false) },
+        NineAnimeFiltersData.COUNTRY.map { CheckBoxVal(it.first, false) },
     )
 
     class SeasonFilter : CheckBoxFilterList(
         "Season",
-        NineAnimeFiltersData.season.map { CheckBoxVal(it.first, false) },
+        NineAnimeFiltersData.SEASON.map { CheckBoxVal(it.first, false) },
     )
 
     class YearFilter : CheckBoxFilterList(
         "Year",
-        NineAnimeFiltersData.year.map { CheckBoxVal(it.first, false) },
+        NineAnimeFiltersData.YEAR.map { CheckBoxVal(it.first, false) },
     )
 
     class TypeFilter : CheckBoxFilterList(
         "Type",
-        NineAnimeFiltersData.type.map { CheckBoxVal(it.first, false) },
+        NineAnimeFiltersData.TYPE.map { CheckBoxVal(it.first, false) },
     )
 
     class StatusFilter : CheckBoxFilterList(
         "Status",
-        NineAnimeFiltersData.status.map { CheckBoxVal(it.first, false) },
+        NineAnimeFiltersData.STATUS.map { CheckBoxVal(it.first, false) },
     )
 
     class LanguageFilter : CheckBoxFilterList(
         "Language",
-        NineAnimeFiltersData.language.map { CheckBoxVal(it.first, false) },
+        NineAnimeFiltersData.LANGUAGE.map { CheckBoxVal(it.first, false) },
     )
 
     class RatingFilter : CheckBoxFilterList(
         "Rating",
-        NineAnimeFiltersData.rating.map { CheckBoxVal(it.first, false) },
+        NineAnimeFiltersData.RATING.map { CheckBoxVal(it.first, false) },
     )
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         SortFilter(),
         AnimeFilter.Separator(),
         GenreFilter(),
@@ -119,19 +119,19 @@ object NineAnimeFilters {
 
         return FilterSearchParams(
             filters.asQueryPart<SortFilter>(),
-            filters.parseCheckbox<GenreFilter>(NineAnimeFiltersData.genre, "genre"),
-            filters.parseCheckbox<CountryFilter>(NineAnimeFiltersData.country, "country"),
-            filters.parseCheckbox<SeasonFilter>(NineAnimeFiltersData.season, "season"),
-            filters.parseCheckbox<YearFilter>(NineAnimeFiltersData.year, "year"),
-            filters.parseCheckbox<TypeFilter>(NineAnimeFiltersData.type, "type"),
-            filters.parseCheckbox<StatusFilter>(NineAnimeFiltersData.status, "status"),
-            filters.parseCheckbox<LanguageFilter>(NineAnimeFiltersData.language, "language"),
-            filters.parseCheckbox<RatingFilter>(NineAnimeFiltersData.rating, "rating"),
+            filters.parseCheckbox<GenreFilter>(NineAnimeFiltersData.GENRE, "genre"),
+            filters.parseCheckbox<CountryFilter>(NineAnimeFiltersData.COUNTRY, "country"),
+            filters.parseCheckbox<SeasonFilter>(NineAnimeFiltersData.SEASON, "season"),
+            filters.parseCheckbox<YearFilter>(NineAnimeFiltersData.YEAR, "year"),
+            filters.parseCheckbox<TypeFilter>(NineAnimeFiltersData.TYPE, "type"),
+            filters.parseCheckbox<StatusFilter>(NineAnimeFiltersData.STATUS, "status"),
+            filters.parseCheckbox<LanguageFilter>(NineAnimeFiltersData.LANGUAGE, "language"),
+            filters.parseCheckbox<RatingFilter>(NineAnimeFiltersData.RATING, "rating"),
         )
     }
 
     private object NineAnimeFiltersData {
-        val sort = arrayOf(
+        val SORT = arrayOf(
             Pair("Most relevance", "most_relevance"),
             Pair("Recently updated", "recently_updated"),
             Pair("Recently added", "recently_added"),
@@ -145,7 +145,7 @@ object NineAnimeFilters {
             Pair("Number of episodes", "number_of_episodes"),
         )
 
-        val genre = arrayOf(
+        val GENRE = arrayOf(
             Pair("Action", "1"),
             Pair("Adventure", "2"),
             Pair("Avant Garde", "2262888"),
@@ -189,12 +189,12 @@ object NineAnimeFilters {
             Pair("Vampire", "41"),
         )
 
-        val country = arrayOf(
+        val COUNTRY = arrayOf(
             Pair("China", "120823"),
             Pair("Japan", "120822"),
         )
 
-        val season = arrayOf(
+        val SEASON = arrayOf(
             Pair("Fall", "fall"),
             Pair("Summer", "summer"),
             Pair("Spring", "spring"),
@@ -202,7 +202,7 @@ object NineAnimeFilters {
             Pair("Unknown", "unknown"),
         )
 
-        val year = arrayOf(
+        val YEAR = arrayOf(
             Pair("2023", "2023"),
             Pair("2022", "2022"),
             Pair("2021", "2021"),
@@ -236,7 +236,7 @@ object NineAnimeFilters {
             Pair("1910s", "1910s"),
         )
 
-        val type = arrayOf(
+        val TYPE = arrayOf(
             Pair("Movie", "movie"),
             Pair("TV", "tv"),
             Pair("OVA", "ova"),
@@ -245,19 +245,19 @@ object NineAnimeFilters {
             Pair("Music", "music"),
         )
 
-        val status = arrayOf(
+        val STATUS = arrayOf(
             Pair("Not Yet Aired", "info"),
             Pair("Releasing", "releasing"),
             Pair("Completed", "completed"),
         )
 
-        val language = arrayOf(
+        val LANGUAGE = arrayOf(
             Pair("Sub and Dub", "subdub"),
             Pair("Sub", "sub"),
             Pair("Dub", "dub"),
         )
 
-        val rating = arrayOf(
+        val RATING = arrayOf(
             Pair("G - All Ages", "g"),
             Pair("PG - Children", "pg"),
             Pair("PG 13 - Teens 13 and Older", "pg_13"),

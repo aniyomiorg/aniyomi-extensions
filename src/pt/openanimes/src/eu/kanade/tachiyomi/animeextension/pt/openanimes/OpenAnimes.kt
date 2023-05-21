@@ -162,7 +162,7 @@ class OpenAnimes : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return searchAnimeRequest(page, query, OpenAnimesFilters.getSearchParameters(filters))
     }
 
-    override fun getFilterList(): AnimeFilterList = OpenAnimesFilters.filterList
+    override fun getFilterList(): AnimeFilterList = OpenAnimesFilters.FILTER_LIST
 
     private fun searchAnimeRequest(page: Int, query: String, params: FilterSearchParams): Request {
         val body = FormBody.Builder().apply {

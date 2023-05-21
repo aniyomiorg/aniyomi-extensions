@@ -169,8 +169,8 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 when (filter) {
                     is TypeList -> {
                         if (filter.state > 0) {
-                            val TypeN = getTypeList()[filter.state].query
-                            val typeUrl = "$baseUrl/category/$TypeN".toHttpUrlOrNull()!!.newBuilder()
+                            val typeN = getTypeList()[filter.state].query
+                            val typeUrl = "$baseUrl/category/$typeN".toHttpUrlOrNull()!!.newBuilder()
                             return GET(typeUrl.toString(), headers)
                         }
                     }

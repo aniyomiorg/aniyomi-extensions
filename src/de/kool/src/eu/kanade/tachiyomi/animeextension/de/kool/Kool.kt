@@ -152,13 +152,17 @@ class Kool : ConfigurableAnimeSource, AnimeHttpSource() {
                   "filter": {},
                   "cursor":
                   ${
-            if (tpage == 0) {
-                "null"
-            } else if (tpage == 1){
-                8
-            } else {
-                tpage * 8 - (tpage - 1)
-            }
+                when (tpage) {
+                    0 -> {
+                        "null"
+                    }
+                    1 -> {
+                        8
+                    }
+                    else -> {
+                        tpage * 8 - (tpage - 1)
+                    }
+                }
             },
                   "clientVersion": "1.1.3"
              }
@@ -484,13 +488,13 @@ class Kool : ConfigurableAnimeSource, AnimeHttpSource() {
                   "sort": "",
                   "filter": {},
                   "cursor": ${
-                    if (tpage == 0) {
-                        "null"
-                    } else if (tpage == 1) {
-                        8
-                    } else {
-                        tpage * 8 - (tpage - 1)
-                    }
+                        if (tpage == 0) {
+                            "null"
+                        } else if (tpage == 1) {
+                            8
+                        } else {
+                            tpage * 8 - (tpage - 1)
+                        }
                     },
                   "clientVersion": "1.1.3"
             }
@@ -513,13 +517,13 @@ class Kool : ConfigurableAnimeSource, AnimeHttpSource() {
                   "sort": "",
                   "filter": {},
                   "cursor": ${
-                    if (tpage == 0) {
-                        "null"
-                    } else if (tpage == 1){
-                        8
-                    } else {
-                        tpage * 8 - (tpage - 1)
-                    }
+                        if (tpage == 0) {
+                            "null"
+                        } else if (tpage == 1){
+                            8
+                        } else {
+                            tpage * 8 - (tpage - 1)
+                        }
                     },
                   "clientVersion": "1.1.3"
             }
@@ -542,13 +546,13 @@ class Kool : ConfigurableAnimeSource, AnimeHttpSource() {
                   "sort": "",
                   "filter": {},
                   "cursor": ${
-                    if (tpage == 0) {
-                        "null"
-                    } else if (tpage == 1){
-                        8
-                    } else {
-                        tpage * 8 - (tpage - 1)
-                    }
+                        if (tpage == 0) {
+                            "null"
+                        } else if (tpage == 1){
+                            8
+                        } else {
+                            tpage * 8 - (tpage - 1)
+                        }
                     },
                   "clientVersion": "1.1.3"
             }
@@ -571,13 +575,13 @@ class Kool : ConfigurableAnimeSource, AnimeHttpSource() {
                               "sort": "",
                               "filter": {},
                               "cursor": ${
-                    if (tpage == 0) {
-                        "null"
-                    } else if (tpage == 1) {
-                        8
-                    } else {
-                        tpage * 8 - (tpage - 1)
-                    }
+                        if (tpage == 0) {
+                            "null"
+                        } else if (tpage == 1) {
+                            8
+                        } else {
+                            tpage * 8 - (tpage - 1)
+                        }
                     },
                               "clientVersion": "1.1.3"
                             }

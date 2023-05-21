@@ -96,7 +96,7 @@ class MeusAnimes : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
     override fun searchAnimeSelector() = popularAnimeSelector()
     override fun searchAnimeNextPageSelector() = "div.paginacao > a.next"
-    override fun getFilterList(): AnimeFilterList = MAFilters.filterList
+    override fun getFilterList(): AnimeFilterList = MAFilters.FILTER_LIST
 
     private fun searchAnimeRequest(page: Int, query: String, filters: MAFilters.FilterSearchParams): Request {
         val defaultUrl = "$baseUrl/lista-de-animes/$page"

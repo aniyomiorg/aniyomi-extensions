@@ -21,7 +21,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -122,7 +121,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         return AnimesPage(animeList, position + 36 < total)
     }
 
-    override fun getFilterList(): AnimeFilterList = YomirollFilters.filterList
+    override fun getFilterList(): AnimeFilterList = YomirollFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
 
@@ -352,7 +351,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun parseDate(dateStr: String): Long {
-        return runCatching { DateFormatter.parse(dateStr)?.time }
+        return runCatching { DATE_FORMATTER.parse(dateStr)?.time }
             .getOrNull() ?: 0L
     }
 
@@ -536,10 +535,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun getTokenDetail(force: Boolean = false): String {
         return try {
             val storedToken = tokenInterceptor.getAccessToken(force)
-            """Token location: ${
-            storedToken.bucket?.substringAfter("/")?.substringBefore("/") ?: ""
-            }
-            """.trimMargin()
+            "Token location: " + storedToken.bucket?.substringAfter("/")?.substringBefore("/")
         } catch (e: Exception) {
             tokenInterceptor.removeToken()
             "Error: ${e.localizedMessage ?: "Something Went Wrong"}"
@@ -547,7 +543,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     companion object {
-        private val DateFormatter by lazy {
+        private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ENGLISH)
         }
 

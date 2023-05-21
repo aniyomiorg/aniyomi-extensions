@@ -125,7 +125,7 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
         return AnimesPage(animeList, animeList.size == 36)
     }
 
-    override fun getFilterList(): AnimeFilterList = AniPlayFilters.filterList
+    override fun getFilterList(): AnimeFilterList = AniPlayFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
 

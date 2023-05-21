@@ -21,15 +21,15 @@ object AnimesAriaFilters {
         }
     }
 
-    class TypeFilter : QueryPartFilter("Tipo", AnimesAriaFiltersData.types)
-    class GenreFilter : QueryPartFilter("Gênero", AnimesAriaFiltersData.genres)
-    class StatusFilter : QueryPartFilter("Status", AnimesAriaFiltersData.status)
-    class LetterFilter : QueryPartFilter("Letra inicial", AnimesAriaFiltersData.letters)
-    class AudioFilter : QueryPartFilter("Áudio", AnimesAriaFiltersData.audio)
-    class YearFilter : QueryPartFilter("Ano", AnimesAriaFiltersData.years)
-    class SeasonFilter : QueryPartFilter("Temporada", AnimesAriaFiltersData.seasons)
+    class TypeFilter : QueryPartFilter("Tipo", AnimesAriaFiltersData.TYPES)
+    class GenreFilter : QueryPartFilter("Gênero", AnimesAriaFiltersData.GENRES)
+    class StatusFilter : QueryPartFilter("Status", AnimesAriaFiltersData.STATUS)
+    class LetterFilter : QueryPartFilter("Letra inicial", AnimesAriaFiltersData.LETTERS)
+    class AudioFilter : QueryPartFilter("Áudio", AnimesAriaFiltersData.AUDIO)
+    class YearFilter : QueryPartFilter("Ano", AnimesAriaFiltersData.YEARS)
+    class SeasonFilter : QueryPartFilter("Temporada", AnimesAriaFiltersData.SEASONS)
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         TypeFilter(),
         GenreFilter(),
         StatusFilter(),
@@ -62,11 +62,11 @@ object AnimesAriaFilters {
     }
 
     private object AnimesAriaFiltersData {
-        val every = Pair("Todos", "todos")
-        val every_f = Pair("Todas", "todas")
+        val EVERY = Pair("Todos", "todos")
+        val EVERY_F = Pair("Todas", "todas")
 
-        val types = arrayOf(
-            every,
+        val TYPES = arrayOf(
+            EVERY,
             Pair("Série de TV", "serie"),
             Pair("OVA", "ova"),
             Pair("Filme", "filme"),
@@ -74,8 +74,8 @@ object AnimesAriaFilters {
             Pair("ONA", "ona"),
         )
 
-        val genres = arrayOf(
-            every,
+        val GENRES = arrayOf(
+            EVERY,
             Pair("Ação", "acao"),
             Pair("Artes Maciais", "artes_maciais"),
             Pair("Aventura", "aventura"),
@@ -123,28 +123,28 @@ object AnimesAriaFilters {
             Pair("Yuri", "yuri"),
         )
 
-        val status = arrayOf(
-            every,
+        val STATUS = arrayOf(
+            EVERY,
             Pair("Em lançamento", "lancamento"),
             Pair("Finalizado", "finalizado"),
         )
 
-        val letters = arrayOf(every_f) + ('A'..'Z').map {
+        val LETTERS = arrayOf(EVERY_F) + ('A'..'Z').map {
             Pair(it.toString(), it.toString().lowercase())
         }.toTypedArray()
 
-        val audio = arrayOf(
-            every,
+        val AUDIO = arrayOf(
+            EVERY,
             Pair("Dublado", "dublado"),
             Pair("Legendado", "legendado"),
         )
 
-        val years = arrayOf(every) + (2023 downTo 1962).map {
+        val YEARS = arrayOf(EVERY) + (2023 downTo 1962).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 
-        val seasons = arrayOf(
-            every_f,
+        val SEASONS = arrayOf(
+            EVERY_F,
             Pair("Primavera", "primavera"),
             Pair("Verão", "verao"),
             Pair("Outono", "outono"),

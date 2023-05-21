@@ -21,9 +21,9 @@ object LMAnimeFilters {
         }
     }
 
-    class GenreFilter : QueryPartFilter("Genre", LMAnimeFiltersData.genres)
+    class GenreFilter : QueryPartFilter("Genre", LMAnimeFiltersData.GENRES)
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         AnimeFilter.Header(LMAnimeFiltersData.IGNORE_SEARCH_MSG),
         GenreFilter(),
     )
@@ -33,7 +33,7 @@ object LMAnimeFilters {
     private object LMAnimeFiltersData {
         const val IGNORE_SEARCH_MSG = "NOTE: Ignored if using text search."
 
-        val genres = arrayOf(
+        val GENRES = arrayOf(
             Pair("Action", "action"),
             Pair("Adventure", "adventure"),
             Pair("Angel", "angel"),

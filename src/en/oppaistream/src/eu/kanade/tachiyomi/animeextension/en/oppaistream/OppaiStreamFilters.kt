@@ -201,7 +201,7 @@ private fun getStudioList(): List<CheckFilter> = listOf(
 
 class StudioListFilter(studios: List<CheckFilter>) : AnimeFilter.Group<CheckFilter>("Studio", studios)
 
-val filters = AnimeFilterList(
+val FILTERS = AnimeFilterList(
     OrderByFilter(),
     GenreListFilter(getGenreList()),
     StudioListFilter(getStudioList()),

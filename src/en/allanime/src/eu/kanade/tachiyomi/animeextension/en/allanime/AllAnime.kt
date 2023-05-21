@@ -203,7 +203,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
-        return ParseAnime(response)
+        return parseAnime(response)
     }
 
     // =============================== Search ===============================
@@ -244,10 +244,10 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        return ParseAnime(response)
+        return parseAnime(response)
     }
 
-    override fun getFilterList(): AnimeFilterList = AllAnimeFilters.filterList
+    override fun getFilterList(): AnimeFilterList = AllAnimeFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
 
@@ -540,7 +540,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             .lowercase()
     }
 
-    private fun ParseAnime(response: Response): AnimesPage {
+    private fun parseAnime(response: Response): AnimesPage {
         val parsed = json.decodeFromString<SearchResult>(response.body.string())
         val titleStyle = preferences.getString("preferred_title_style", "romaji")!!
 

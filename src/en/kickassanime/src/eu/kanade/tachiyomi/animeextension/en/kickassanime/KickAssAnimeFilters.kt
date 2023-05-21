@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.en.kickassanime
 
-import eu.kanade.tachiyomi.animeextension.en.kickassanime.KickAssAnimeFilters.asQueryPart
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 
@@ -26,15 +25,15 @@ object KickAssAnimeFilters {
 
     class GenreFilter : CheckBoxFilterList(
         "Genre",
-        KickAssAnimeFiltersData.genre.map { CheckBoxVal(it.first, false) },
+        KickAssAnimeFiltersData.GENRE.map { CheckBoxVal(it.first, false) },
     )
 
-    class YearFilter : QueryPartFilter("Year", KickAssAnimeFiltersData.year)
-    class StatusFilter : QueryPartFilter("Status", KickAssAnimeFiltersData.status)
-    class TypeFilter : QueryPartFilter("Type", KickAssAnimeFiltersData.type)
-    class SubPageFilter : QueryPartFilter("Sub-page", KickAssAnimeFiltersData.subpage)
+    class YearFilter : QueryPartFilter("Year", KickAssAnimeFiltersData.YEAR)
+    class StatusFilter : QueryPartFilter("Status", KickAssAnimeFiltersData.STATUS)
+    class TypeFilter : QueryPartFilter("Type", KickAssAnimeFiltersData.TYPE)
+    class SubPageFilter : QueryPartFilter("Sub-page", KickAssAnimeFiltersData.SUBPAGE)
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         GenreFilter(),
         YearFilter(),
         StatusFilter(),
@@ -64,7 +63,7 @@ object KickAssAnimeFilters {
             .first()
             .state.mapNotNull { format ->
                 if (format.state) {
-                    KickAssAnimeFiltersData.genre.find { it.first == format.name }!!.second
+                    KickAssAnimeFiltersData.GENRE.find { it.first == format.name }!!.second
                 } else { null }
             }.joinToString(",") { "\"$it\"" }
 
@@ -73,12 +72,12 @@ object KickAssAnimeFilters {
         val type = filters.asQueryPart<TypeFilter>()
 
         val filtersQuery = "{${
-        listOf(
-            getJsonList(genre, "genres"),
-            getJsonItem(year, "year"),
-            getJsonItem(status, "status"),
-            getJsonItem(type, "type"),
-        ).filter { it.isNotEmpty() }.joinToString(",")
+            listOf(
+                getJsonList(genre, "genres"),
+                getJsonItem(year, "year"),
+                getJsonItem(status, "status"),
+                getJsonItem(type, "type"),
+            ).filter { it.isNotEmpty() }.joinToString(",")
         }}"
         return FilterSearchParams(
             filtersQuery,
@@ -87,7 +86,7 @@ object KickAssAnimeFilters {
     }
 
     private object KickAssAnimeFiltersData {
-        val genre = arrayOf(
+        val GENRE = arrayOf(
             Pair("Action", "Action"),
             Pair("Adult Cast", "Adult Cast"),
             Pair("Adventure", "Adventure"),
@@ -166,7 +165,7 @@ object KickAssAnimeFilters {
             Pair("Workplace", "Workplace"),
         )
 
-        val year = arrayOf(
+        val YEAR = arrayOf(
             Pair("All", ""),
             Pair("1917", "1917"),
             Pair("1918", "1918"),
@@ -272,13 +271,13 @@ object KickAssAnimeFilters {
             Pair("2023", "2023"),
         )
 
-        val status = arrayOf(
+        val STATUS = arrayOf(
             Pair("All", ""),
             Pair("Finished Airing", "\"finished\""),
             Pair("Currently Airing", "\"airing\""),
         )
 
-        val type = arrayOf(
+        val TYPE = arrayOf(
             Pair("All", ""),
             Pair("TV", "\"tv\""),
             Pair("OVA", "\"ova\""),
@@ -289,7 +288,7 @@ object KickAssAnimeFilters {
             Pair("MUSIC", "\"music\""),
         )
 
-        val subpage = arrayOf(
+        val SUBPAGE = arrayOf(
             Pair("<Select>", ""),
             Pair("Trending", "show/trending"),
             Pair("Anime", "anime"),

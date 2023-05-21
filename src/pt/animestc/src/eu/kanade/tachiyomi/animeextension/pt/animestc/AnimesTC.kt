@@ -169,7 +169,7 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         }.flatten()
     }
 
-    override fun getFilterList(): AnimeFilterList = ATCFilters.filterList
+    override fun getFilterList(): AnimeFilterList = ATCFilters.FILTER_LIST
 
     private fun searchAnime(page: Int, query: String, filterParams: ATCFilters.FilterSearchParams): AnimesPage {
         filterParams.animeName = query

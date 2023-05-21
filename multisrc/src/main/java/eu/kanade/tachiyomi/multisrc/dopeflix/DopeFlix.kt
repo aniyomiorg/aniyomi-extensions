@@ -273,7 +273,7 @@ abstract class DopeFlix(
         return GET(url, headers)
     }
 
-    override fun getFilterList(): AnimeFilterList = DopeFlixFilters.filterList
+    override fun getFilterList(): AnimeFilterList = DopeFlixFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {

@@ -28,22 +28,22 @@ object OpenAnimesFilters {
         }
     }
 
-    class InitialLetterFilter : QueryPartFilter("Primeira letra", OpenAnimesFiltersData.initialLetter)
+    class InitialLetterFilter : QueryPartFilter("Primeira letra", OpenAnimesFiltersData.INITIAL_LETTER)
 
     class SortFilter : AnimeFilter.Sort(
         "Ordenar",
-        OpenAnimesFiltersData.orders.map { it.first }.toTypedArray(),
+        OpenAnimesFiltersData.ORDERS.map { it.first }.toTypedArray(),
         Selection(0, false),
     )
 
-    class AudioFilter : QueryPartFilter("Língua/Áudio", OpenAnimesFiltersData.audios)
+    class AudioFilter : QueryPartFilter("Língua/Áudio", OpenAnimesFiltersData.AUDIOS)
 
     class GenresFilter : CheckBoxFilterList(
         "Gêneros",
-        OpenAnimesFiltersData.genres.map { CheckBoxVal(it.first, false) },
+        OpenAnimesFiltersData.GENRES.map { CheckBoxVal(it.first, false) },
     )
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         InitialLetterFilter(),
         SortFilter(),
         AudioFilter(),
@@ -62,7 +62,7 @@ object OpenAnimesFilters {
         if (filters.isEmpty()) return FilterSearchParams()
 
         val order = filters.getFirst<SortFilter>().state?.let {
-            val order = OpenAnimesFiltersData.orders[it.index].second
+            val order = OpenAnimesFiltersData.ORDERS[it.index].second
             when {
                 it.ascending -> "$order-asc"
                 else -> "$order-des"
@@ -72,7 +72,7 @@ object OpenAnimesFilters {
         val genres = filters.getFirst<GenresFilter>().state
             .mapNotNull { genre ->
                 if (genre.state) {
-                    OpenAnimesFiltersData.genres.find { it.first == genre.name }!!.second
+                    OpenAnimesFiltersData.GENRES.find { it.first == genre.name }!!.second
                 } else { null }
             }.toList()
 
@@ -85,23 +85,23 @@ object OpenAnimesFilters {
     }
 
     private object OpenAnimesFiltersData {
-        val orders = arrayOf(
+        val ORDERS = arrayOf(
             Pair("Populares", "popu"),
             Pair("Alfabética", "alfa"),
             Pair("Lançamento", "lancamento"),
         )
 
-        val initialLetter = arrayOf(Pair("Selecione", "0")) + ('A'..'Z').map {
+        val INITIAL_LETTER = arrayOf(Pair("Selecione", "0")) + ('A'..'Z').map {
             Pair(it.toString(), it.toString().lowercase())
         }.toTypedArray()
 
-        val audios = arrayOf(
+        val AUDIOS = arrayOf(
             Pair("Todos", "0"),
             Pair("Legendado", "legendado"),
             Pair("Dublado", "dublado"),
         )
 
-        val genres = arrayOf(
+        val GENRES = arrayOf(
             Pair("Ação", "7"),
             Pair("Adaptação de Manga", "49"),
             Pair("Animação", "11"),

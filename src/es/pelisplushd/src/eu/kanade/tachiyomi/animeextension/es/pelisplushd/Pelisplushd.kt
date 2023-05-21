@@ -171,7 +171,7 @@ open class Pelisplushd(override val name: String, override val baseUrl: String) 
                 if (!url.contains("disable")) {
                     val body = client.newCall(GET(url)).execute().asJsoup()
                     if (body.select("script:containsData(var shareId)").toString()
-                        .isNotBlank()
+                            .isNotBlank()
                     ) {
                         val shareId =
                             body.selectFirst("script:containsData(var shareId)")!!.data()

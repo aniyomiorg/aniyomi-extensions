@@ -26,18 +26,18 @@ object VizerFilters {
         }
     }
 
-    class TypeFilter : QueryPartFilter("Tipo", VizerFiltersData.types)
-    class MinYearFilter : QueryPartFilter("Ano (min)", VizerFiltersData.minYears)
-    class MaxYearFilter : QueryPartFilter("Ano (max)", VizerFiltersData.maxYears)
-    class GenreFilter : QueryPartFilter("Categoria", VizerFiltersData.genres)
+    class TypeFilter : QueryPartFilter("Tipo", VizerFiltersData.TYPES)
+    class MinYearFilter : QueryPartFilter("Ano (min)", VizerFiltersData.MIN_YEARS)
+    class MaxYearFilter : QueryPartFilter("Ano (max)", VizerFiltersData.MAX_YEARS)
+    class GenreFilter : QueryPartFilter("Categoria", VizerFiltersData.GENRES)
 
     class SortFilter : AnimeFilter.Sort(
         "Ordernar por",
-        VizerFiltersData.orders.map { it.first }.toTypedArray(),
+        VizerFiltersData.ORDERS.map { it.first }.toTypedArray(),
         Selection(0, false),
     )
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         TypeFilter(),
         MinYearFilter(),
         MaxYearFilter(),
@@ -62,7 +62,7 @@ object VizerFilters {
             filters.asQueryPart<GenreFilter>(),
         )
         filters.getFirst<SortFilter>().state?.let {
-            val order = VizerFiltersData.orders[it.index].second
+            val order = VizerFiltersData.ORDERS[it.index].second
             searchParams.orderBy = order
             searchParams.orderWay = if (it.ascending) "asc" else "desc"
         }
@@ -71,25 +71,25 @@ object VizerFilters {
 
     private object VizerFiltersData {
 
-        val types = arrayOf(
+        val TYPES = arrayOf(
             Pair("Animes", "anime"),
             Pair("Filmes", "Movies"),
             Pair("Series", "Series"),
         )
-        val maxYears = (2022 downTo 1890).map {
+        val MAX_YEARS = (2022 downTo 1890).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 
-        val minYears = maxYears.reversed().toTypedArray()
+        val MIN_YEARS = MAX_YEARS.reversed().toTypedArray()
 
-        val orders = arrayOf(
+        val ORDERS = arrayOf(
             Pair("Popularidade", "vzViews"),
             Pair("Ano", "year"),
             Pair("Título", "title"),
             Pair("Rating", "rating"),
         )
 
-        val genres = arrayOf(
+        val GENRES = arrayOf(
             Pair("Todas", "all"),
             Pair("Animação", "animacao"),
             Pair("Aventura", "aventura"),

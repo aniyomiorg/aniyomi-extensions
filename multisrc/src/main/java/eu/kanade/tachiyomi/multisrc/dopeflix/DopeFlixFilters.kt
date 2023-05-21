@@ -46,9 +46,9 @@ object DopeFlixFilters {
             }
     }
 
-    class TypeFilter : QueryPartFilter("Type", DopeFlixFiltersData.types)
+    class TypeFilter : QueryPartFilter("Type", DopeFlixFiltersData.TYPES)
     class QualityFilter : QueryPartFilter("Quality", DopeFlixFiltersData.qualities)
-    class ReleaseYearFilter : QueryPartFilter("Released at", DopeFlixFiltersData.years)
+    class ReleaseYearFilter : QueryPartFilter("Released at", DopeFlixFiltersData.YEARS)
 
     class GenresFilter : CheckBoxFilterList(
         "Genres",
@@ -59,7 +59,7 @@ object DopeFlixFilters {
         DopeFlixFiltersData.countries.map { CheckBoxVal(it.first, false) },
     )
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         TypeFilter(),
         QualityFilter(),
         ReleaseYearFilter(),
@@ -89,23 +89,23 @@ object DopeFlixFilters {
     }
 
     private object DopeFlixFiltersData {
-        val all = Pair("All", "all")
+        val ALL = Pair("All", "all")
 
-        val types = arrayOf(
-            all,
+        val TYPES = arrayOf(
+            ALL,
             Pair("Movies", "movies"),
             Pair("TV Shows", "tv"),
         )
 
         val qualities = arrayOf(
-            all,
+            ALL,
             Pair("HD", "HD"),
             Pair("SD", "SD"),
             Pair("CAM", "CAM"),
         )
 
-        val years = arrayOf(
-            all,
+        val YEARS = arrayOf(
+            ALL,
             Pair("2022", "2022"),
             Pair("2021", "2021"),
             Pair("2020", "2020"),

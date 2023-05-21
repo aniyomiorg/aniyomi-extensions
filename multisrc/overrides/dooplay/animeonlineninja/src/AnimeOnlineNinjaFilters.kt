@@ -27,12 +27,12 @@ object AnimeOnlineNinjaFilters {
     }
 
     class InvertedResultsFilter : AnimeFilter.CheckBox("Invertir resultados", false)
-    class TypeFilter : UriPartFilter("Tipo", AnimesOnlineNinjaData.types)
+    class TypeFilter : UriPartFilter("Tipo", AnimesOnlineNinjaData.TYPES)
     class LetterFilter : UriPartFilter("Filtrar por letra", AnimesOnlineNinjaData.letters)
 
     class GenreFilter : UriPartFilter("Generos", AnimesOnlineNinjaData.genres)
     class LanguageFilter : UriPartFilter("Idiomas", AnimesOnlineNinjaData.languages)
-    class YearFilter : UriPartFilter("Año", AnimesOnlineNinjaData.years)
+    class YearFilter : UriPartFilter("Año", AnimesOnlineNinjaData.YEARS)
     class MovieFilter : UriPartFilter("Peliculas", AnimesOnlineNinjaData.movies)
 
     class OtherOptionsGroup : AnimeFilter.Group<UriPartFilter>(
@@ -49,7 +49,7 @@ object AnimeOnlineNinjaFilters {
         return state.first { it is R }.toUriPart()
     }
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         InvertedResultsFilter(),
         TypeFilter(),
         LetterFilter(),
@@ -87,7 +87,7 @@ object AnimeOnlineNinjaFilters {
     private object AnimesOnlineNinjaData {
         val every = Pair("Seleccionar", "")
 
-        val types = arrayOf(
+        val TYPES = arrayOf(
             Pair("Todos", "todos"),
             Pair("Series", "serie"),
             Pair("Peliculas", "pelicula"),
@@ -114,7 +114,7 @@ object AnimeOnlineNinjaFilters {
             Pair("Audio Castellano \uD83C\uDDEA\uD83C\uDDF8", "anime-castellano"),
         )
 
-        val years = arrayOf(every) + (2023 downTo 1979).map {
+        val YEARS = arrayOf(every) + (2023 downTo 1979).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 

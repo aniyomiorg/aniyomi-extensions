@@ -246,7 +246,7 @@ class NollyVerse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 animes = document.select(movieGenreSelector()).map { element ->
                     movieGenreFromElement(element)
                 }
-                hasNextPage = NextPageSelector()?.let { selector ->
+                hasNextPage = nextPageSelector()?.let { selector ->
                     if (document.select(selector).text() != ">") {
                         return AnimesPage(animes, false)
                     }
@@ -260,7 +260,7 @@ class NollyVerse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 animes = document.select(seriesGenreSelector()).map { element ->
                     seriesGenreFromElement(element)
                 }
-                hasNextPage = NextPageSelector()?.let { selector ->
+                hasNextPage = nextPageSelector()?.let { selector ->
                     if (document.select(selector).text() != ">") {
                         return AnimesPage(animes, false)
                     }
@@ -272,7 +272,7 @@ class NollyVerse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 animes = document.select(koreanSelector()).map { element ->
                     koreanFromElement(element)
                 }
-                hasNextPage = NextPageSelector()?.let { selector ->
+                hasNextPage = nextPageSelector()?.let { selector ->
                     if (document.select(selector).text() != ">") {
                         return AnimesPage(animes, false)
                     }
@@ -286,7 +286,7 @@ class NollyVerse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 animes = document.select(latestSelector()).map { element ->
                     latestFromElement(element)
                 }
-                hasNextPage = NextPageSelector()?.let { selector ->
+                hasNextPage = nextPageSelector()?.let { selector ->
                     if (document.select(selector).text() != ">") {
                         return AnimesPage(animes, false)
                     }
@@ -305,7 +305,7 @@ class NollyVerse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 animes = document.select(movieSelector()).map { element ->
                     movieFromElement(element)
                 }
-                hasNextPage = NextPageSelector()?.let { selector ->
+                hasNextPage = nextPageSelector()?.let { selector ->
                     if (document.select(selector).text() != ">") {
                         return AnimesPage(animes, false)
                     }
@@ -317,7 +317,7 @@ class NollyVerse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return AnimesPage(animes, hasNextPage)
     }
 
-    private fun NextPageSelector(): String = "ul.pagination.pagination-md li:nth-last-child(2)"
+    private fun nextPageSelector(): String = "ul.pagination.pagination-md li:nth-last-child(2)"
 
     private fun movieGenreSelector(): String = "div.container > div.row > div.col-md-4"
 

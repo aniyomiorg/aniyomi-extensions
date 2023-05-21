@@ -60,7 +60,7 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     companion object {
-        private val DateFormatter by lazy {
+        private val DATE_FORMATTER by lazy {
             SimpleDateFormat("d MMMM yyyy", Locale.ENGLISH)
         }
     }
@@ -173,7 +173,7 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== FILTERS ===============================
 
-    override fun getFilterList(): AnimeFilterList = AnimeDaoFilters.filterList
+    override fun getFilterList(): AnimeFilterList = AnimeDaoFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
 
@@ -326,7 +326,7 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     )
 
     private fun parseDate(dateStr: String): Long {
-        return runCatching { DateFormatter.parse(dateStr)?.time }
+        return runCatching { DATE_FORMATTER.parse(dateStr)?.time }
             .getOrNull() ?: 0L
     }
 

@@ -8,12 +8,12 @@ import okhttp3.Request
 
 class TioanimeHFactory : AnimeSourceFactory {
     override fun createSources(): List<AnimeSource> = listOf(
-        tioanime(),
-        tiohentai(),
+        TioAnime(),
+        TioHentai(),
     )
 }
 
-class tioanime : TioanimeH("TioAnime", "https://tioanime.com") {
+class TioAnime : TioanimeH("TioAnime", "https://tioanime.com") {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
         val genreFilter = if (filterList.isNotEmpty())filterList.find { it is GenreFilter } as GenreFilter else { GenreFilter().apply { state = 0 } }
@@ -76,4 +76,4 @@ class tioanime : TioanimeH("TioAnime", "https://tioanime.com") {
     )
 }
 
-class tiohentai : TioanimeH("TioHentai", "https://tiohentai.com")
+class TioHentai : TioanimeH("TioHentai", "https://tiohentai.com")

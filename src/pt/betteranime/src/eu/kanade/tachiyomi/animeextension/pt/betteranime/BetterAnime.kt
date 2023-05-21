@@ -19,7 +19,6 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
@@ -228,7 +227,7 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         screen.addPreference(videoQualityPref)
     }
 
-    override fun getFilterList(): AnimeFilterList = BAFilters.filterList
+    override fun getFilterList(): AnimeFilterList = BAFilters.FILTER_LIST
 
     // ============================= Utilities ==============================
     private fun loginInterceptor(chain: Interceptor.Chain): Response {
@@ -256,32 +255,32 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    private var INITIAL_DATA: String = ""
-    private var WIRE_TOKEN: String = ""
+    private var initialData: String = ""
+    private var wireToken: String = ""
 
     private fun updateInitialData(request: Request) {
         val document = client.newCall(request).execute().asJsoup()
         val wireElement = document.selectFirst("[wire:id]")
-        WIRE_TOKEN = document.html()
+        wireToken = document.html()
             .substringAfter("livewire_token")
             .substringAfter("'")
             .substringBefore("'")
-        INITIAL_DATA = wireElement!!.attr("wire:initial-data").dropLast(1)
+        initialData = wireElement!!.attr("wire:initial-data").dropLast(1)
     }
 
     private fun wireRequest(path: String, updates: List<PayloadItem>): Request {
-        if (WIRE_TOKEN.isBlank()) {
+        if (wireToken.isBlank()) {
             updateInitialData(GET("$baseUrl/pesquisa"))
         }
 
         val url = "$baseUrl/livewire/message/$path"
         val items = updates.joinToString(",") { json.encodeToString(it) }
-        val data = "$INITIAL_DATA, \"updates\": [$items]}"
+        val data = "$initialData, \"updates\": [$items]}"
         val reqBody = data.toRequestBody("application/json".toMediaType())
 
         val headers = headersBuilder()
             .add("x-livewire", "true")
-            .add("x-csrf-token", WIRE_TOKEN)
+            .add("x-csrf-token", wireToken)
             .build()
         return POST(url, headers, reqBody)
     }

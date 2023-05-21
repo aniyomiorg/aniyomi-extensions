@@ -13,7 +13,7 @@ import kotlin.system.exitProcess
  */
 class BAUrlActivity : Activity() {
 
-    private val TAG = "BAUrlActivity"
+    private val tag = "BAUrlActivity"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,10 +32,10 @@ class BAUrlActivity : Activity() {
             try {
                 startActivity(mainIntent)
             } catch (e: ActivityNotFoundException) {
-                Log.e(TAG, e.toString())
+                Log.e(tag, e.toString())
             }
         } else {
-            Log.e(TAG, "could not parse uri from intent $intent")
+            Log.e(tag, "could not parse uri from intent $intent")
         }
 
         finish()

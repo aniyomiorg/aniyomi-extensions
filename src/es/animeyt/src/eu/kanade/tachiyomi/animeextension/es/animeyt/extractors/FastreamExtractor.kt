@@ -24,10 +24,10 @@ class FastreamExtractor(private val client: OkHttpClient) {
         try {
             val document = client.newCall(GET(url)).execute()
             if (document.isSuccessful) {
-                val content = document!!.asJsoup()
-                content!!.select("script").forEach {
-                    if (it!!.data()!!.contains("jwplayer(jwplayer(\"vplayer\").setup({")) {
-                        val basicUrl = it!!.data().substringAfter("file: '").substringBefore("',")
+                val content = document.asJsoup()
+                content.select("script").forEach {
+                    if (it!!.data().contains("jwplayer(jwplayer(\"vplayer\").setup({")) {
+                        val basicUrl = it.data().substringAfter("file: '").substringBefore("',")
                         videoList.add(Video(basicUrl, server, basicUrl, headers = null))
                     } else {
                         val packedRegex = Regex("eval\\(function\\(p,a,c,k,e,.*\\)\\)")
@@ -37,10 +37,10 @@ class FastreamExtractor(private val client: OkHttpClient) {
                             Pair("HD", "720p"),
                             Pair("Full", "1080p"),
                         )
-                        packedRegex.findAll(it!!.data()).map { packed -> packed.value }.toList().map { eval ->
+                        packedRegex.findAll(it.data()).map { packed -> packed.value }.toList().map { eval ->
                             val fastreamRegex = "fastream.*?\\.m3u8([^&\">]?)".toRegex()
                             val unpack = JsUnpacker.unpack(eval)
-                            fetchUrls(unpack!!.first()).map { url ->
+                            fetchUrls(unpack.first()).map { url ->
                                 if (fastreamRegex.containsMatchIn(url)) {
                                     val urlQualities = url.split(",").filter { p -> !p.contains("m3u8") }
                                     val baseUrl = urlQualities.first()
@@ -69,7 +69,7 @@ class FastreamExtractor(private val client: OkHttpClient) {
                     }
                 }
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
         }
         return videoList
     }

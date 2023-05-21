@@ -21,7 +21,6 @@ import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -36,8 +35,6 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class AnimesZone : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -58,7 +55,7 @@ class AnimesZone : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     companion object {
-        private val episodeRegex = Regex("""Episódio ?\d+\.?\d* ?""")
+        private val EPISODE_REGEX = Regex("""Episódio ?\d+\.?\d* ?""")
     }
 
     // ============================== Popular ===============================
@@ -223,7 +220,7 @@ class AnimesZone : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== FILTERS ===============================
 
-    override fun getFilterList(): AnimeFilterList = AnimesZoneFilters.filterList
+    override fun getFilterList(): AnimeFilterList = AnimesZoneFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
 
@@ -297,7 +294,7 @@ class AnimesZone : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val epNumber = element.selectFirst("span.epiTipo")
 
         return SEpisode.create().apply {
-            name = "Ep. ${epNumber?.text()?.trim() ?: counter} - ${epTitle.replace(episodeRegex, "")}"
+            name = "Ep. ${epNumber?.text()?.trim() ?: counter} - ${epTitle.replace(EPISODE_REGEX, "")}"
                 .replace(" - - ", " - ")
             episode_number = epNumber?.let {
                 it.text().trim().toFloatOrNull()

@@ -156,15 +156,15 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 when (filter) {
                     is TypeList -> {
                         if (filter.state > 0) {
-                            val GenreN = getTypeList()[filter.state].query
-                            val genreUrl = "$baseUrl/category/asian-drama/$GenreN/page/$page/".toHttpUrlOrNull()!!.newBuilder()
+                            val genreN = getTypeList()[filter.state].query
+                            val genreUrl = "$baseUrl/category/asian-drama/$genreN/page/$page/".toHttpUrlOrNull()!!.newBuilder()
                             return GET(genreUrl.toString(), headers)
                         }
                     }
                     is StatusList -> {
                         if (filter.state > 0) {
-                            val StatusN = getStatusList()[filter.state].query
-                            val statusUrl = "$baseUrl/$StatusN/page/$page/".toHttpUrlOrNull()!!.newBuilder()
+                            val statusN = getStatusList()[filter.state].query
+                            val statusUrl = "$baseUrl/$statusN/page/$page/".toHttpUrlOrNull()!!.newBuilder()
                             return GET(statusUrl.toString(), headers)
                         }
                     }

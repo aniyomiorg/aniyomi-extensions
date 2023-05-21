@@ -81,10 +81,10 @@ class HolaMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =============================== Search ===============================
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-//        val filterList = if (filters.isEmpty()) getFilterList() else filters
-//        val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
-//        val recentFilter = filterList.find { it is RecentFilter } as RecentFilter
-//        val seasonFilter = filterList.find { it is SeasonFilter } as SeasonFilter
+//        val FILTER_LIST = if (filters.isEmpty()) getFilterList() else filters
+//        val genreFilter = FILTER_LIST.find { it is GenreFilter } as GenreFilter
+//        val recentFilter = FILTER_LIST.find { it is RecentFilter } as RecentFilter
+//        val seasonFilter = FILTER_LIST.find { it is SeasonFilter } as SeasonFilter
 
         val cleanQuery = query.replace(" ", "+")
 

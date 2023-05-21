@@ -195,7 +195,7 @@ class AnimeOnlineNinja : DooPlay(
     // ============================== Filters ===============================
     override val fetchGenres = false
 
-    override fun getFilterList() = AnimeOnlineNinjaFilters.filterList
+    override fun getFilterList() = AnimeOnlineNinjaFilters.FILTER_LIST
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {

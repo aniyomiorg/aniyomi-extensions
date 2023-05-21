@@ -7,18 +7,18 @@ object JsUnpacker {
     /**
      * Regex to detect packed functions.
      */
-    private val packedRegex = Regex("eval[(]function[(]p,a,c,k,e,[r|d]?", setOf(RegexOption.IGNORE_CASE, RegexOption.MULTILINE))
+    private val PACKED_REGEX = Regex("eval[(]function[(]p,a,c,k,e,[r|d]?", setOf(RegexOption.IGNORE_CASE, RegexOption.MULTILINE))
 
     /**
      * Regex to get and group the packed javascript.
      * Needed to get information and unpack the code.
      */
-    private val packedExtractRegex = Regex("[}][(]'(.*)', *(\\d+), *(\\d+), *'(.*?)'[.]split[(]'[|]'[)]", setOf(RegexOption.IGNORE_CASE, RegexOption.MULTILINE))
+    private val PACKED_EXTRACT_REGEX = Regex("[}][(]'(.*)', *(\\d+), *(\\d+), *'(.*?)'[.]split[(]'[|]'[)]", setOf(RegexOption.IGNORE_CASE, RegexOption.MULTILINE))
 
     /**
      * Matches function names and variables to de-obfuscate the code.
      */
-    private val unpackReplaceRegex = Regex("\\b\\w+\\b", setOf(RegexOption.IGNORE_CASE, RegexOption.MULTILINE))
+    private val UNPACK_REPLACE_REGEX = Regex("\\b\\w+\\b", setOf(RegexOption.IGNORE_CASE, RegexOption.MULTILINE))
 
     /**
      * Check if script is packed.
@@ -28,7 +28,7 @@ object JsUnpacker {
      * @return whether the [scriptBlock] contains packed code or not.
      */
     fun detect(scriptBlock: String): Boolean {
-        return scriptBlock.contains(packedRegex)
+        return scriptBlock.contains(PACKED_REGEX)
     }
 
     /**
@@ -40,7 +40,7 @@ object JsUnpacker {
      */
     fun detect(vararg scriptBlock: String): List<String> {
         return scriptBlock.mapNotNull {
-            if (it.contains(packedRegex)) {
+            if (it.contains(PACKED_REGEX)) {
                 it
             } else {
                 null
@@ -130,7 +130,7 @@ object JsUnpacker {
      * @return a list of all unpacked code from all found packed and unpackable occurrences found.
      */
     private fun unpacking(scriptBlock: String): Sequence<String> {
-        val unpacked = packedExtractRegex.findAll(scriptBlock).mapNotNull { result ->
+        val unpacked = PACKED_EXTRACT_REGEX.findAll(scriptBlock).mapNotNull { result ->
 
             val payload = result.groups[1]?.value
             val symtab = result.groups[4]?.value?.split('|')
@@ -141,7 +141,7 @@ object JsUnpacker {
             if (symtab == null || count == null || symtab.size != count) {
                 null
             } else {
-                payload?.replace(unpackReplaceRegex) { match ->
+                payload?.replace(UNPACK_REPLACE_REGEX) { match ->
                     val word = match.value
                     val unbased = symtab[unbaser.unbase(word)]
                     unbased.ifEmpty {

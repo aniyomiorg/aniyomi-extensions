@@ -14,12 +14,12 @@ import okhttp3.OkHttpClient
 
 class GDBotExtractor(private val client: OkHttpClient, private val headers: Headers, private val preferences: SharedPreferences) {
 
-    private val PREF_BOT_URL_KEY = "bot_url"
+    private val prefBotUrlKey = "bot_url"
 
     private val defaultUrl = "https://gdtot.pro"
 
     fun videosFromUrl(serverUrl: String, maxTries: Int = 1): List<Video> {
-        val botUrl = preferences.getString(PREF_BOT_URL_KEY, defaultUrl)!!
+        val botUrl = preferences.getString(prefBotUrlKey, defaultUrl)!!
         val videoList = mutableListOf<Video>()
 
         if (maxTries == 3) throw Exception("Video extraction catastrophically failed")
@@ -36,13 +36,13 @@ class GDBotExtractor(private val client: OkHttpClient, private val headers: Head
             ).execute()
         } catch (a: Exception) {
             val newHost = OkHttpClient().newCall(GET(botUrl)).execute().request.url.host
-            preferences.edit().putString(PREF_BOT_URL_KEY, "https://$newHost").apply()
+            preferences.edit().putString(prefBotUrlKey, "https://$newHost").apply()
             return videosFromUrl(serverUrl, maxTries + 1)
         }
 
         if (resp.code == 421) {
             val newHost = OkHttpClient().newCall(GET(botUrl)).execute().request.url.host
-            preferences.edit().putString(PREF_BOT_URL_KEY, "https://$newHost").apply()
+            preferences.edit().putString(prefBotUrlKey, "https://$newHost").apply()
             return videosFromUrl(serverUrl, maxTries + 1)
         }
 

@@ -26,37 +26,37 @@ object AniPlayFilters {
 
     class GenereFilter : CheckBoxFilterList(
         "Genere",
-        AniPlayFiltersData.genere.map { CheckBoxVal(it.first, false) },
+        AniPlayFiltersData.GENERE.map { CheckBoxVal(it.first, false) },
     )
 
     class TipologiaFilter : CheckBoxFilterList(
         "Tipologia anime",
-        AniPlayFiltersData.tipologia.map { CheckBoxVal(it.first, false) },
+        AniPlayFiltersData.TIPOLOGIA.map { CheckBoxVal(it.first, false) },
     )
 
     class StatoFilter : CheckBoxFilterList(
         "Stato",
-        AniPlayFiltersData.stato.map { CheckBoxVal(it.first, false) },
+        AniPlayFiltersData.STATO.map { CheckBoxVal(it.first, false) },
     )
 
     class OrigineFilter : CheckBoxFilterList(
         "Origine",
-        AniPlayFiltersData.origine.map { CheckBoxVal(it.first, false) },
+        AniPlayFiltersData.ORIGINE.map { CheckBoxVal(it.first, false) },
     )
 
     class StudioFilter : CheckBoxFilterList(
         "Studio",
-        AniPlayFiltersData.studio.map { CheckBoxVal(it.first, false) },
+        AniPlayFiltersData.STUDIO.map { CheckBoxVal(it.first, false) },
     )
 
-    class InizioFilter : QueryPartFilter("Inizio", AniPlayFiltersData.anni)
-    class FineFilter : QueryPartFilter("Fine", AniPlayFiltersData.anni)
-    class OrdinaFilter : QueryPartFilter("Ordina per", AniPlayFiltersData.ordina)
+    class InizioFilter : QueryPartFilter("Inizio", AniPlayFiltersData.ANNI)
+    class FineFilter : QueryPartFilter("Fine", AniPlayFiltersData.ANNI)
+    class OrdinaFilter : QueryPartFilter("Ordina per", AniPlayFiltersData.ORDINA)
 
-    class AnniFilter : QueryPartFilter("Anni", AniPlayFiltersData.anni)
-    class StagioneFilter : QueryPartFilter("Stagione", AniPlayFiltersData.stagione)
+    class AnniFilter : QueryPartFilter("Anni", AniPlayFiltersData.ANNI)
+    class StagioneFilter : QueryPartFilter("Stagione", AniPlayFiltersData.STAGIONE)
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         OrdinaFilter(),
         AnimeFilter.Separator(),
 
@@ -99,7 +99,7 @@ object AniPlayFilters {
             .first()
             .state.mapNotNull { format ->
                 if (format.state) {
-                    AniPlayFiltersData.genere.find { it.first == format.name }!!.second
+                    AniPlayFiltersData.GENERE.find { it.first == format.name }!!.second
                 } else { null }
             }.joinToString(",")
 
@@ -107,7 +107,7 @@ object AniPlayFilters {
             .first()
             .state.mapNotNull { format ->
                 if (format.state) {
-                    AniPlayFiltersData.tipologia.find { it.first == format.name }!!.second
+                    AniPlayFiltersData.TIPOLOGIA.find { it.first == format.name }!!.second
                 } else { null }
             }.joinToString(",")
 
@@ -115,7 +115,7 @@ object AniPlayFilters {
             .first()
             .state.mapNotNull { format ->
                 if (format.state) {
-                    AniPlayFiltersData.stato.find { it.first == format.name }!!.second
+                    AniPlayFiltersData.STATO.find { it.first == format.name }!!.second
                 } else { null }
             }.joinToString(",")
 
@@ -123,7 +123,7 @@ object AniPlayFilters {
             .first()
             .state.mapNotNull { format ->
                 if (format.state) {
-                    AniPlayFiltersData.origine.find { it.first == format.name }!!.second
+                    AniPlayFiltersData.ORIGINE.find { it.first == format.name }!!.second
                 } else { null }
             }.joinToString(",")
 
@@ -131,7 +131,7 @@ object AniPlayFilters {
             .first()
             .state.mapNotNull { format ->
                 if (format.state) {
-                    AniPlayFiltersData.studio.find { it.first == format.name }!!.second
+                    AniPlayFiltersData.STUDIO.find { it.first == format.name }!!.second
                 } else { null }
             }.joinToString(",")
 
@@ -150,9 +150,9 @@ object AniPlayFilters {
     }
 
     private object AniPlayFiltersData {
-        val all = Pair("All", "")
+        val ALL = Pair("All", "")
 
-        val ordina = arrayOf(
+        val ORDINA = arrayOf(
             Pair("Popolarità decrescente", "views,desc"),
             Pair("Popolarità crescente", "views,asc"),
             Pair("Titolo decrescente", "title,desc"),
@@ -167,7 +167,7 @@ object AniPlayFilters {
             Pair("Data di fine aggiunta", "createdDate,asc"),
         )
 
-        val genere = arrayOf(
+        val GENERE = arrayOf(
             Pair("Arti marziali", "68"),
             Pair("Automobilismo", "90"),
             Pair("Avventura", "25"),
@@ -222,7 +222,7 @@ object AniPlayFilters {
             Pair("Yuri", "50"),
         )
 
-        val tipologia = arrayOf(
+        val TIPOLOGIA = arrayOf(
             Pair("Movie", "2"),
             Pair("ONA", "4"),
             Pair("OVA", "3"),
@@ -230,7 +230,7 @@ object AniPlayFilters {
             Pair("Special", "5"),
         )
 
-        val stato = arrayOf(
+        val STATO = arrayOf(
             Pair("Annunciato", "4"),
             Pair("Completato", "1"),
             Pair("In corso", "2"),
@@ -238,7 +238,7 @@ object AniPlayFilters {
             Pair("Sospeso", "3"),
         )
 
-        val origine = arrayOf(
+        val ORIGINE = arrayOf(
             Pair("Gioco di carte", "1"),
             Pair("Light novel", "2"),
             Pair("Mange", "3"),
@@ -252,7 +252,7 @@ object AniPlayFilters {
             Pair("Web Novel", "12"),
         )
 
-        val studio = arrayOf(
+        val STUDIO = arrayOf(
             Pair("2:10 AM Animation", "435"),
             Pair("8bit", "183"),
             Pair("A-1 Picture", "167"),
@@ -568,15 +568,15 @@ object AniPlayFilters {
             Pair("Zexcs", "259"),
         )
 
-        val stagione = arrayOf(
-            all,
+        val STAGIONE = arrayOf(
+            ALL,
             Pair("Inverno", "winter"),
             Pair("Primavera", "spring"),
             Pair("Estate", "summer"),
             Pair("Autunno", "fall"),
         )
 
-        val anni = arrayOf(all) + (1984..2023).map {
+        val ANNI = arrayOf(ALL) + (1984..2023).map {
             Pair(it.toString(), it.toString())
         }.reversed().toTypedArray()
     }

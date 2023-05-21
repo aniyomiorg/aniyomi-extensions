@@ -59,7 +59,7 @@ class AnimeXin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     companion object {
-        private val DateFormatter by lazy {
+        private val DATE_FORMATTER by lazy {
             SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH)
         }
     }
@@ -109,7 +109,7 @@ class AnimeXin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } else {
             val multiChoose = mutableListOf<String>()
             if (filters.genres.isNotEmpty()) multiChoose.add(filters.genres)
-            if (filters.seasons.isNotEmpty()) multiChoose.add(filters.seasons)
+            if (filters.SEASONS.isNotEmpty()) multiChoose.add(filters.SEASONS)
             if (filters.studios.isNotEmpty()) multiChoose.add(filters.studios)
             val multiString = if (multiChoose.isEmpty()) "" else multiChoose.joinToString("&") + "&"
             GET("$baseUrl/anime/?page=$page&${multiString}status=${filters.status}&type=${filters.type}&sub=${filters.sub}&order=${filters.order}")
@@ -128,7 +128,7 @@ class AnimeXin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun getFilterList(): AnimeFilterList = AnimeXinFilters.filterList
+    override fun getFilterList(): AnimeFilterList = AnimeXinFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
 
@@ -275,7 +275,7 @@ class AnimeXin : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun parseDate(dateStr: String): Long {
-        return runCatching { DateFormatter.parse(dateStr)?.time }
+        return runCatching { DATE_FORMATTER.parse(dateStr)?.time }
             .getOrNull() ?: 0L
     }
 

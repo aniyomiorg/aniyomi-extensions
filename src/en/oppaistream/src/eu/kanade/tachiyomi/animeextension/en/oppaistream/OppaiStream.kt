@@ -98,7 +98,7 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
                     else -> {}
                 }
                 addQueryParameter("page", page.toString())
-                addQueryParameter("limit", searchLimit.toString())
+                addQueryParameter("limit", SEARCH_LIMIT.toString())
             }
         }.build().toString()
 
@@ -117,7 +117,7 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             searchAnimeFromElement(element)
         }.distinctBy { it.title }
 
-        val hasNextPage = elements.size >= searchLimit
+        val hasNextPage = elements.size >= SEARCH_LIMIT
 
         return AnimesPage(mangas, hasNextPage)
     }
@@ -126,12 +126,12 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         return SAnime.create().apply {
             thumbnail_url = element.select("img.cover-img-in").attr("abs:src")
             title = element.select(".title-ep").text()
-                .replace(titleCleanupRegex, "")
+                .replace(TITLE_CLEANUP_REGEX, "")
             setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
         }
     }
 
-    override fun getFilterList() = filters
+    override fun getFilterList() = FILTERS
 
     // details
     override fun animeDetailsParse(document: Document): SAnime {
@@ -190,7 +190,7 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
             key = PREF_QUALITY
-            title = PREF_QUALITY_title
+            title = PREF_QUALITY_TITLE
             entries = arrayOf("2160p", "1080p", "720p")
             entryValues = arrayOf("2160", "1080", "720")
             setDefaultValue("720")
@@ -201,10 +201,10 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     companion object {
-        private const val searchLimit = 36
-        private val titleCleanupRegex = Regex("""\s+\d+$""")
+        private const val SEARCH_LIMIT = 36
+        private val TITLE_CLEANUP_REGEX = Regex("""\s+\d+$""")
 
         private const val PREF_QUALITY = "preferred_quality"
-        private const val PREF_QUALITY_title = "Preferred quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
     }
 }

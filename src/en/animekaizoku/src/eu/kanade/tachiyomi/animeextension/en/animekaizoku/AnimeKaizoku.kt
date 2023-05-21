@@ -697,7 +697,6 @@ import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
@@ -727,7 +726,7 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // Used for loading anime
     private var infoQuery = ""
     private var max = ""
-    private var latest_post = ""
+    private var latestPost = ""
     private var layout = ""
     private var settings = ""
     private var currentReferer = ""
@@ -743,7 +742,7 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     companion object {
-        private val ddlRegex = Regex("""DDL\((.*?), ?(.*?), ?(.*?), ?(.*?)\)""")
+        private val DDL_REGEX = Regex("""DDL\((.*?), ?(.*?), ?(.*?), ?(.*?)\)""")
     }
 
     // ============================== Popular ===============================
@@ -807,7 +806,7 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 if (page == 1) {
                     infoQuery = ""
                     max = ""
-                    latest_post = ""
+                    latestPost = ""
                     layout = ""
                     settings = ""
                     currentReferer = "$baseUrl/?s=$cleanQuery"
@@ -818,7 +817,7 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         .add("query", infoQuery)
                         .add("max", max)
                         .add("page", page.toString())
-                        .add("latest_post", latest_post)
+                        .add("latest_post", latestPost)
                         .add("layout", layout)
                         .add("settings", settings)
                         .build()
@@ -864,7 +863,7 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 layout = container.attr("data-layout")
                 infoQuery = pagesNav.attr("data-query")
                 max = pagesNav.attr("data-max")
-                latest_post = pagesNav.attr("data-latest")
+                latestPost = pagesNav.attr("data-latest")
                 settings = container.attr("data-settings")
             }
 
@@ -956,7 +955,7 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val prefServer = preferences.getString("preferred_server", "server")!!
 
-        ddlRegex.findAll(document.data()).forEach { serverType ->
+        DDL_REGEX.findAll(document.data()).forEach { serverType ->
             val data = serverType.groupValues
             if (data[2] == "2" && prefServer == "worker") return@forEach
             if (data[2] == "4" && prefServer == "server") return@forEach
@@ -989,7 +988,7 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 if (quality != bestQuality) return@forEach
                 if (text.equals("patches", true)) return@forEach
                 val onclickText = season.attr("onclick")
-                val onclickData = ddlRegex.find(onclickText)?.groupValues ?: return@forEach
+                val onclickData = DDL_REGEX.find(onclickText)?.groupValues ?: return@forEach
 
                 val seasonNumData = onclickData[3].substringAfter("'").substringBefore("'")
 
@@ -1054,7 +1053,7 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .add("X-Requested-With", "XMLHttpRequest")
                 .build()
 
-            val ddlData = ddlRegex.find(it.url)!!.groupValues
+            val ddlData = DDL_REGEX.find(it.url)!!.groupValues
             val num = ddlData[3].substringAfter("'").substringBefore("'")
 
             val postBody = "action=DDL&post_id=${it.postId}&div_id=${ddlData[1]}&tab_id=${ddlData[2]}&num=$num&folder=${ddlData[4]}"

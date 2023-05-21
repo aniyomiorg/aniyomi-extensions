@@ -46,22 +46,22 @@ object AllAnimeFilters {
             }
     }
 
-    class OriginFilter : QueryPartFilter("Origin", AllAnimeFiltersData.origin)
-    class SeasonFilter : QueryPartFilter("Season", AllAnimeFiltersData.seasons)
-    class ReleaseYearFilter : QueryPartFilter("Released at", AllAnimeFiltersData.years)
-    class SortByFilter : QueryPartFilter("Sort By", AllAnimeFiltersData.sortBy)
+    class OriginFilter : QueryPartFilter("Origin", AllAnimeFiltersData.ORIGIN)
+    class SeasonFilter : QueryPartFilter("Season", AllAnimeFiltersData.SEASONS)
+    class ReleaseYearFilter : QueryPartFilter("Released at", AllAnimeFiltersData.YEARS)
+    class SortByFilter : QueryPartFilter("Sort By", AllAnimeFiltersData.SORT_BY)
 
     class TypesFilter : CheckBoxFilterList(
         "Types",
-        AllAnimeFiltersData.types.map { CheckBoxVal(it.first, false) },
+        AllAnimeFiltersData.TYPES.map { CheckBoxVal(it.first, false) },
     )
 
     class GenresFilter : CheckBoxFilterList(
         "Genres",
-        AllAnimeFiltersData.genres.map { CheckBoxVal(it.first, false) },
+        AllAnimeFiltersData.GENRES.map { CheckBoxVal(it.first, false) },
     )
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         OriginFilter(),
         SeasonFilter(),
         ReleaseYearFilter(),
@@ -88,31 +88,31 @@ object AllAnimeFilters {
             filters.asQueryPart<SeasonFilter>(),
             filters.asQueryPart<ReleaseYearFilter>(),
             filters.asQueryPart<SortByFilter>(),
-            filters.parseCheckbox<TypesFilter>(AllAnimeFiltersData.types),
-            filters.parseCheckbox<GenresFilter>(AllAnimeFiltersData.genres),
+            filters.parseCheckbox<TypesFilter>(AllAnimeFiltersData.TYPES),
+            filters.parseCheckbox<GenresFilter>(AllAnimeFiltersData.GENRES),
         )
     }
 
     private object AllAnimeFiltersData {
-        val all = Pair("All", "all")
+        val ALL = Pair("All", "all")
 
-        val origin = arrayOf(
+        val ORIGIN = arrayOf(
             Pair("All", "ALL"),
             Pair("Japan", "JP"),
             Pair("China", "CN"),
             Pair("Korea", "KR"),
         )
 
-        val seasons = arrayOf(
-            all,
+        val SEASONS = arrayOf(
+            ALL,
             Pair("Winter", "Winter"),
             Pair("Spring", "Spring"),
             Pair("Summer", "Summer"),
             Pair("Fall", "Fall"),
         )
 
-        val years = arrayOf(
-            all,
+        val YEARS = arrayOf(
+            ALL,
             Pair("2024", "2024"),
             Pair("2023", "2023"),
             Pair("2022", "2022"),
@@ -165,14 +165,14 @@ object AllAnimeFilters {
             Pair("1975", "1975"),
         )
 
-        val sortBy = arrayOf(
+        val SORT_BY = arrayOf(
             Pair("Update", "update"),
             Pair("Name Asc", "Name_ASC"),
             Pair("Name Desc", "Name_DESC"),
             Pair("Ratings", "Top"),
         )
 
-        val types = arrayOf(
+        val TYPES = arrayOf(
             Pair("Movie", "Movie"),
             Pair("ONA", "ONA"),
             Pair("OVA", "OVA"),
@@ -181,7 +181,7 @@ object AllAnimeFilters {
             Pair("Unknown", "Unknown"),
         )
 
-        val genres = arrayOf(
+        val GENRES = arrayOf(
             Pair("Action", "Action"),
             Pair("Adventure", "Adventure"),
             Pair("Cars", "Cars"),

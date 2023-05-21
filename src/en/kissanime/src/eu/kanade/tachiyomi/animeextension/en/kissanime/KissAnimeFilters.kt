@@ -23,18 +23,18 @@ object KissAnimeFilters {
         }
     }
 
-    class StatusFilter : QueryPartFilter("Status", KissAnimeFiltersData.status)
+    class StatusFilter : QueryPartFilter("Status", KissAnimeFiltersData.STATUS)
 
     class GenreFilter : CheckBoxFilterList(
         "Genre",
-        KissAnimeFiltersData.genre.map { CheckBoxVal(it.first, false) },
+        KissAnimeFiltersData.GENRE.map { CheckBoxVal(it.first, false) },
     )
 
-    class SubPageFilter : QueryPartFilter("Sub-page", KissAnimeFiltersData.subpage)
+    class SubPageFilter : QueryPartFilter("Sub-page", KissAnimeFiltersData.SUBPAGE)
 
-    class ScheduleFilter : QueryPartFilter("Schedule", KissAnimeFiltersData.schedule)
+    class ScheduleFilter : QueryPartFilter("Schedule", KissAnimeFiltersData.SCHEDULE)
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         StatusFilter(),
         GenreFilter(),
         AnimeFilter.Separator(),
@@ -57,7 +57,7 @@ object KissAnimeFilters {
             .first()
             .state.mapNotNull { format ->
                 if (format.state) {
-                    KissAnimeFiltersData.genre.find { it.first == format.name }!!.second
+                    KissAnimeFiltersData.GENRE.find { it.first == format.name }!!.second
                 } else { null }
             }.joinToString(separator = "")
 
@@ -70,13 +70,13 @@ object KissAnimeFilters {
     }
 
     private object KissAnimeFiltersData {
-        val status = arrayOf(
+        val STATUS = arrayOf(
             Pair("Any", ""),
             Pair("Ongoing", "upcoming"),
             Pair("Completed", "complete"),
         )
 
-        val genre = arrayOf(
+        val GENRE = arrayOf(
             Pair("Action", "Action_"),
             Pair("Adventure", "Adventure_"),
             Pair("Cars", "Cars_"),
@@ -126,7 +126,7 @@ object KissAnimeFilters {
             Pair("Yuri", "Yuri_"),
         )
 
-        val subpage = arrayOf(
+        val SUBPAGE = arrayOf(
             Pair("<select>", ""),
             Pair("List A-Z", "AnimeListOnline"),
             Pair("List Most Popular", "AnimeListOnline/MostPopular"),
@@ -135,7 +135,7 @@ object KissAnimeFilters {
             Pair("List New Anime", "AnimeListOnline/Newest"),
         )
 
-        val schedule = arrayOf(
+        val SCHEDULE = arrayOf(
             Pair("<select>", ""),
             Pair("Yesterday", "Yesterday"),
             Pair("Today", "Today"),

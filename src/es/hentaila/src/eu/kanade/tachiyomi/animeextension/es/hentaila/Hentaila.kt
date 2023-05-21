@@ -15,8 +15,6 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import okhttp3.OkHttpClient
@@ -139,7 +137,6 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
         val genreFilter = filterList.find { it is GenreFilter } as GenreFilter

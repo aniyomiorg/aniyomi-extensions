@@ -49,25 +49,25 @@ object AnimeXinFilters {
 
     class GenresFilter : CheckBoxFilterList(
         "Genres",
-        AnimeXinFiltersData.genres.map { CheckBoxVal(it.first, false) },
+        AnimeXinFiltersData.GENRES.map { CheckBoxVal(it.first, false) },
     )
 
     class SeasonsFilter : CheckBoxFilterList(
         "Seasons",
-        AnimeXinFiltersData.seasons.map { CheckBoxVal(it.first, false) },
+        AnimeXinFiltersData.SEASONS.map { CheckBoxVal(it.first, false) },
     )
 
     class StudiosFilter : CheckBoxFilterList(
         "Studios",
-        AnimeXinFiltersData.studios.map { CheckBoxVal(it.first, false) },
+        AnimeXinFiltersData.STUDIOS.map { CheckBoxVal(it.first, false) },
     )
 
-    class StatusFilter : QueryPartFilter("Status", AnimeXinFiltersData.status)
-    class TypeFilter : QueryPartFilter("Type", AnimeXinFiltersData.type)
-    class SubFilter : QueryPartFilter("Sub", AnimeXinFiltersData.sub)
-    class OrderFilter : QueryPartFilter("Order", AnimeXinFiltersData.order)
+    class StatusFilter : QueryPartFilter("Status", AnimeXinFiltersData.STATUS)
+    class TypeFilter : QueryPartFilter("Type", AnimeXinFiltersData.TYPE)
+    class SubFilter : QueryPartFilter("Sub", AnimeXinFiltersData.SUB)
+    class OrderFilter : QueryPartFilter("Order", AnimeXinFiltersData.ORDER)
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         GenresFilter(),
         SeasonsFilter(),
         StudiosFilter(),
@@ -80,7 +80,7 @@ object AnimeXinFilters {
 
     data class FilterSearchParams(
         val genres: String = "",
-        val seasons: String = "",
+        val SEASONS: String = "",
         val studios: String = "",
         val status: String = "",
         val type: String = "",
@@ -92,9 +92,9 @@ object AnimeXinFilters {
         if (filters.isEmpty()) return FilterSearchParams()
 
         return FilterSearchParams(
-            filters.parseCheckbox<GenresFilter>(AnimeXinFiltersData.genres, "genre"),
-            filters.parseCheckbox<SeasonsFilter>(AnimeXinFiltersData.seasons, "season"),
-            filters.parseCheckbox<StudiosFilter>(AnimeXinFiltersData.studios, "studio"),
+            filters.parseCheckbox<GenresFilter>(AnimeXinFiltersData.GENRES, "genre"),
+            filters.parseCheckbox<SeasonsFilter>(AnimeXinFiltersData.SEASONS, "season"),
+            filters.parseCheckbox<StudiosFilter>(AnimeXinFiltersData.STUDIOS, "studio"),
             filters.asQueryPart<StatusFilter>(),
             filters.asQueryPart<TypeFilter>(),
             filters.asQueryPart<SubFilter>(),
@@ -103,9 +103,9 @@ object AnimeXinFilters {
     }
 
     private object AnimeXinFiltersData {
-        val all = Pair("All", "")
+        val ALL = Pair("All", "")
 
-        val genres = arrayOf(
+        val GENRES = arrayOf(
             Pair("Action", "action"),
             Pair("Adventure", "adventure"),
             Pair("Comedy", "comedy"),
@@ -127,7 +127,7 @@ object AnimeXinFilters {
             Pair("War", "war"),
         )
 
-        val seasons = arrayOf(
+        val SEASONS = arrayOf(
             Pair("4", "4"),
             Pair("OVA", "ova"),
             Pair("Season 1", "season-1"),
@@ -141,7 +141,7 @@ object AnimeXinFilters {
             Pair("Winter 2023", "winter-2023"),
         )
 
-        val studios = arrayOf(
+        val STUDIOS = arrayOf(
             Pair("2:10 Animatión", "210-animation"),
             Pair("ASK Animation Studio", "ask-animation-studio"),
             Pair("Axis Studios", "axis-studios"),
@@ -186,16 +186,16 @@ object AnimeXinFilters {
             Pair("Year Young Culture", "year-young-culture"),
         )
 
-        val status = arrayOf(
-            all,
+        val STATUS = arrayOf(
+            ALL,
             Pair("Ongoing", "ongoing"),
             Pair("Completed", "completed"),
             Pair("Upcoming", "upcoming"),
             Pair("Hiatus", "hiatus"),
         )
 
-        val type = arrayOf(
-            all,
+        val TYPE = arrayOf(
+            ALL,
             Pair("TV Series", "tv"),
             Pair("OVA", "ova"),
             Pair("Movie", "movie"),
@@ -206,14 +206,14 @@ object AnimeXinFilters {
             Pair("Music", "music"),
         )
 
-        val sub = arrayOf(
-            all,
+        val SUB = arrayOf(
+            ALL,
             Pair("Sub", "sub"),
             Pair("Dub", "dub"),
             Pair("RAW", "raw"),
         )
 
-        val order = arrayOf(
+        val ORDER = arrayOf(
             Pair("Default", ""),
             Pair("A-Z", "title"),
             Pair("Z-A", "titlereverse"),

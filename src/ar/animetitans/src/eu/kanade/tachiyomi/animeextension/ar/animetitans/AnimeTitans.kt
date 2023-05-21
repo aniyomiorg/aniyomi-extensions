@@ -48,7 +48,7 @@ class AnimeTitans : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
 
-    private val AnimeUrlDirectory: String = "/anime"
+    private val animeUrlDirectory: String = "/anime"
 
     private val dateFormat: SimpleDateFormat = SimpleDateFormat("MMM d, yyy", Locale.US)
 
@@ -247,7 +247,7 @@ class AnimeTitans : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         if (query.startsWith(URL_SEARCH_PREFIX).not()) return super.fetchSearchAnime(page, query, filters)
 
-        val AnimePath = try {
+        val animePath = try {
             animePathFromUrl(query.substringAfter(URL_SEARCH_PREFIX))
                 ?: return Observable.just(AnimesPage(emptyList(), false))
         } catch (e: Exception) {
@@ -256,11 +256,11 @@ class AnimeTitans : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return fetchAnimeDetails(
             SAnime.create()
-                .apply { this.url = "$AnimeUrlDirectory/$AnimePath" },
+                .apply { this.url = "$animeUrlDirectory/$animePath" },
         )
             .map {
                 // Isn't set in returned Anime
-                it.url = "$AnimeUrlDirectory/$id"
+                it.url = "$animeUrlDirectory/$id"
                 AnimesPage(listOf(it), false)
             }
     }
@@ -271,7 +271,7 @@ class AnimeTitans : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (query.isNotEmpty()) {
             url.addPathSegments("page/$page/").addQueryParameter("s", query)
         } else {
-            url.addPathSegment(AnimeUrlDirectory.substring(1)).addPathSegments("page/$page/")
+            url.addPathSegment(animeUrlDirectory.substring(1)).addPathSegments("page/$page/")
             filters.forEach { filter ->
                 when (filter) {
                     is AuthorFilter -> {
@@ -503,7 +503,7 @@ class AnimeTitans : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
      * @returns Path of a Anime, or null if none could be found
      */
     private fun animePathFromUrl(urlString: String): String? {
-        val baseAnimeUrl = "$baseUrl$AnimeUrlDirectory".toHttpUrl()
+        val baseAnimeUrl = "$baseUrl$animeUrlDirectory".toHttpUrl()
         val url = urlString.toHttpUrlOrNull() ?: return null
 
         val isAnimeUrl = (baseAnimeUrl.host == url.host && pathLengthIs(url, 2) && url.pathSegments[0] == baseAnimeUrl.pathSegments[0])

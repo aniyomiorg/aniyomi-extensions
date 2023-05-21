@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.en.marinmoe
 
 object MarinMoeConstants {
-    val groupEntries = arrayOf(
+    val GROUP_ENTRIES = arrayOf(
         "Site Default", "-__-`", "-.-", "Abstinence", "AC_", "ADZ Subs", "Afternoon Naps Empire", "Almighty", "Alt",
         "Anime Noobs Fansubbers", "Anime-4ever", "Anime-Conan", "Anime-Destiny", "Anime-Empire", "Anime-FanRips",
         "Anime-Fury", "Anime-Jiyuu", "Anime-Supreme", "anime4life.", "AnimeBytes Remuxes", "AnimeOne", "AnimeSenshi Subs",
@@ -52,7 +52,7 @@ object MarinMoeConstants {
         "Zurako Subs",
     )
 
-    val groupEntryValues = arrayOf(
+    val GROUP_ENTRY_VALUES = arrayOf(
         "site_default", "-__-`", "-.-", "Abstinence", "AC", "ADZ", "ANE", "Almighty", "Alt", "anfs", "a4e", "AConan", "A-Destiny", "A-E",
         "A-FanRips", "A-Fury", "Ani-Jiyuu", "a-S", "anime4life.", "AB-RMX", "AonE", "Asenshi", "AnY", "None", "ARR",
         "AOmundson", "ARC", "Aria", "Arid", "None", "aro", "Asakura", "ASC", "Asteroid", "AtlasSubbed", "Ayashii", "AZFS",

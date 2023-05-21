@@ -129,7 +129,7 @@ class AnimesAria : ParsedAnimeHttpSource() {
 
     override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
-    override fun getFilterList(): AnimeFilterList = AnimesAriaFilters.filterList
+    override fun getFilterList(): AnimeFilterList = AnimesAriaFilters.FILTER_LIST
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val params = AnimesAriaFilters.getSearchParameters(filters)

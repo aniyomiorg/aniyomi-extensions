@@ -24,7 +24,6 @@ import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
@@ -60,7 +59,7 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val headers1 = headersBuilder().add("json", jsonString).add("User-Agent", "android l3gi0n4N1mE %E6%9C%AC%E7%89%A9").build()
+    private val headers1 = headersBuilder().add("json", JSON_STRING).add("User-Agent", "android l3gi0n4N1mE %E6%9C%AC%E7%89%A9").build()
 
     override fun animeDetailsRequest(anime: SAnime): Request = episodeListRequest(anime)
 
@@ -68,7 +67,7 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val jsonResponse = json.decodeFromString<JsonObject>(document.body().text())["response"]!!.jsonObject
         val anime = jsonResponse["anime"]!!.jsonObject
         val studioId = anime["studios"]!!.jsonPrimitive.content.split(",")
-        val studio = try { studioId.map { id -> studiosMap.filter { it.value == id.toInt() }.keys.first() } } catch (e: Exception) { emptyList() }
+        val studio = try { studioId.map { id -> STUDIOS_MAP.filter { it.value == id.toInt() }.keys.first() } } catch (e: Exception) { emptyList() }
         val malid = anime["mal_id"]!!.jsonPrimitive.content
         var thumb: String? = null
 
@@ -112,7 +111,7 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun latestUpdatesRequest(page: Int): Request {
-        val body = FormBody.Builder().add("apyki", apyki).build()
+        val body = FormBody.Builder().add("apyki", API_KEY).build()
         return POST(
             "$baseUrl/v2/directories?studio=0&not_genre=&year=&orderBy=2&language=&type=&duration=&search=&letter=0&limit=24&genre=&season=&page=${(page - 1) * 24}&status=",
             headers = headers1,
@@ -123,7 +122,7 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesParse(response: Response): AnimesPage = popularAnimeParse(response)
 
     override fun popularAnimeRequest(page: Int): Request {
-        val body = FormBody.Builder().add("apyki", apyki).build()
+        val body = FormBody.Builder().add("apyki", API_KEY).build()
         return POST(
             "$baseUrl/v2/directories?studio=0&not_genre=&year=&orderBy=4&language=&type=&duration=&search=&letter=0&limit=24&genre=&season=&page=${(page - 1) * 24}&status=",
             headers = headers1,
@@ -142,7 +141,7 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     SAnime.create().apply {
                         title = animeDetail["nombre"]!!.jsonPrimitive.content
                         url = "$baseUrl/v1/episodes/$animeId"
-                        thumbnail_url = aip.random() + animeDetail["img_url"]!!.jsonPrimitive.content
+                        thumbnail_url = AIP.random() + animeDetail["img_url"]!!.jsonPrimitive.content
                     }
                 },
                 true,
@@ -153,7 +152,7 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val requestBody = FormBody.Builder().add("apyki", apyki).build()
+        val requestBody = FormBody.Builder().add("apyki", API_KEY).build()
 
         val genreFilter = filters.getTagFilter()?.state ?: emptyList()
         val excludeGenreFilter = filters.getExcludeTagFilter()?.state ?: emptyList()
@@ -162,17 +161,17 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val orderByFilter = filters.getOrderByFilter() ?: OrderByFilter()
 
         val genre = genreFilter.filter { it.state }
-            .map { genres[it.name] }
+            .map { GENRES[it.name] }
             .joinToString("%2C") { it.toString() }
             .takeIf { it.isNotEmpty() } ?: ""
 
         val excludeGenre = excludeGenreFilter.filter { it.state }
-            .map { genres[it.name] }
+            .map { GENRES[it.name] }
             .joinToString("%2C") { it.toString() }
             .takeIf { it.isNotEmpty() } ?: ""
 
         val studio = studioFilter.filter { it.state }
-            .map { studiosMap[it.name] }
+            .map { STUDIOS_MAP[it.name] }
             .joinToString("%2C") { it.toString() }
             .takeIf { it.isNotEmpty() } ?: "0"
 
@@ -232,7 +231,7 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     SAnime.create().apply {
                         title = animeDetail["nombre"]!!.jsonPrimitive.content
                         url = "$baseUrl/v1/episodes/$animeId"
-                        thumbnail_url = aip.random() + animeDetail["img_url"]!!.jsonPrimitive.content
+                        thumbnail_url = AIP.random() + animeDetail["img_url"]!!.jsonPrimitive.content
                     }
                 },
                 false,
@@ -243,7 +242,7 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun videoListRequest(episode: SEpisode): Request {
-        val body = FormBody.Builder().add("apyki", apyki).build()
+        val body = FormBody.Builder().add("apyki", API_KEY).build()
         return POST(
             episode.url,
             headers1,
@@ -368,11 +367,11 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     /* --FilterStuff-- */
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
-        TagFilter("Generos", checkboxesFrom(genres)),
+        TagFilter("Generos", checkboxesFrom(GENRES)),
         OrderByFilter(),
         StateFilter(),
-        StudioFilter("Estudio", checkboxesFrom(studiosMap)),
-        ExcludeTagFilter("Excluir Genero", checkboxesFrom(genres)),
+        StudioFilter("Estudio", checkboxesFrom(STUDIOS_MAP)),
+        ExcludeTagFilter("Excluir Genero", checkboxesFrom(GENRES)),
     )
 
     private class StateFilter : UriPartFilter(

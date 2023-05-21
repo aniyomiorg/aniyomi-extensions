@@ -5,7 +5,6 @@ import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -106,7 +105,7 @@ class RabbitStreamExtractor(private val client: OkHttpClient) {
         val salt = saltedData.copyOfRange(8, 16)
         val ciphertext = saltedData.copyOfRange(16, saltedData.size)
         val password = remoteKey.toByteArray()
-        val (key, iv) = GenerateKeyAndIv(password, salt) ?: return null
+        val (key, iv) = generateKeyAndIv(password, salt) ?: return null
         val keySpec = SecretKeySpec(key, "AES")
         val ivSpec = IvParameterSpec(iv)
         val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
@@ -116,7 +115,7 @@ class RabbitStreamExtractor(private val client: OkHttpClient) {
     }
 
     // https://stackoverflow.com/a/41434590/8166854
-    private fun GenerateKeyAndIv(
+    private fun generateKeyAndIv(
         password: ByteArray,
         salt: ByteArray,
         hashAlgorithm: String = "MD5",

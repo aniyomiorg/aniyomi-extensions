@@ -24,28 +24,28 @@ object ZoroFilters {
         }
     }
 
-    class TypeFilter : QueryPartFilter("Type", ZoroFiltersData.types)
-    class StatusFilter : QueryPartFilter("Status", ZoroFiltersData.status)
-    class RatedFilter : QueryPartFilter("Rated", ZoroFiltersData.rated)
-    class ScoreFilter : QueryPartFilter("Score", ZoroFiltersData.scores)
-    class SeasonFilter : QueryPartFilter("Season", ZoroFiltersData.seasons)
-    class LanguageFilter : QueryPartFilter("Language", ZoroFiltersData.languages)
-    class SortFilter : QueryPartFilter("Sort by", ZoroFiltersData.sorts)
+    class TypeFilter : QueryPartFilter("Type", ZoroFiltersData.TYPES)
+    class StatusFilter : QueryPartFilter("Status", ZoroFiltersData.STATUS)
+    class RatedFilter : QueryPartFilter("Rated", ZoroFiltersData.RATED)
+    class ScoreFilter : QueryPartFilter("Score", ZoroFiltersData.SCORES)
+    class SeasonFilter : QueryPartFilter("Season", ZoroFiltersData.SEASONS)
+    class LanguageFilter : QueryPartFilter("Language", ZoroFiltersData.LANGUAGES)
+    class SortFilter : QueryPartFilter("Sort by", ZoroFiltersData.SORTS)
 
-    class StartYearFilter : QueryPartFilter("Start year", ZoroFiltersData.years)
-    class StartMonthFilter : QueryPartFilter("Start month", ZoroFiltersData.months)
-    class StartDayFilter : QueryPartFilter("Start day", ZoroFiltersData.days)
+    class StartYearFilter : QueryPartFilter("Start year", ZoroFiltersData.YEARS)
+    class StartMonthFilter : QueryPartFilter("Start month", ZoroFiltersData.MONTHS)
+    class StartDayFilter : QueryPartFilter("Start day", ZoroFiltersData.DAYS)
 
-    class EndYearFilter : QueryPartFilter("End year", ZoroFiltersData.years)
-    class EndMonthFilter : QueryPartFilter("End month", ZoroFiltersData.months)
-    class EndDayFilter : QueryPartFilter("End day", ZoroFiltersData.days)
+    class EndYearFilter : QueryPartFilter("End year", ZoroFiltersData.YEARS)
+    class EndMonthFilter : QueryPartFilter("End month", ZoroFiltersData.MONTHS)
+    class EndDayFilter : QueryPartFilter("End day", ZoroFiltersData.DAYS)
 
     class GenresFilter : CheckBoxFilterList(
         "Genres",
-        ZoroFiltersData.genres.map { CheckBoxVal(it.first, false) },
+        ZoroFiltersData.GENRES.map { CheckBoxVal(it.first, false) },
     )
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         TypeFilter(),
         StatusFilter(),
         RatedFilter(),
@@ -90,7 +90,7 @@ object ZoroFilters {
             .first()
             .state.mapNotNull { format ->
                 if (format.state) {
-                    ZoroFiltersData.genres.find { it.first == format.name }!!.second
+                    ZoroFiltersData.GENRES.find { it.first == format.name }!!.second
                 } else { null }
             }.joinToString(",")
 
@@ -116,10 +116,10 @@ object ZoroFilters {
 
     private object ZoroFiltersData {
 
-        val all = Pair("All", "")
+        val ALL = Pair("All", "")
 
-        val types = arrayOf(
-            all,
+        val TYPES = arrayOf(
+            ALL,
             Pair("Movie", "1"),
             Pair("TV", "2"),
             Pair("OVA", "3"),
@@ -128,15 +128,15 @@ object ZoroFilters {
             Pair("Music", "6"),
         )
 
-        val status = arrayOf(
-            all,
+        val STATUS = arrayOf(
+            ALL,
             Pair("Finished Airing", "1"),
             Pair("Currently Airing", "2"),
             Pair("Not yet aired", "3"),
         )
 
-        val rated = arrayOf(
-            all,
+        val RATED = arrayOf(
+            ALL,
             Pair("G", "1"),
             Pair("PG", "2"),
             Pair("PG-13", "3"),
@@ -145,8 +145,8 @@ object ZoroFilters {
             Pair("Rx", "6"),
         )
 
-        val scores = arrayOf(
-            all,
+        val SCORES = arrayOf(
+            ALL,
             Pair("(1) Appalling", "1"),
             Pair("(2) Horrible", "2"),
             Pair("(3) Very Bad", "3"),
@@ -159,22 +159,22 @@ object ZoroFilters {
             Pair("(10) Masterpiece", "10"),
         )
 
-        val seasons = arrayOf(
-            all,
+        val SEASONS = arrayOf(
+            ALL,
             Pair("Spring", "1"),
             Pair("Summer", "2"),
             Pair("Fall", "3"),
             Pair("Winter", "4"),
         )
 
-        val languages = arrayOf(
-            all,
+        val LANGUAGES = arrayOf(
+            ALL,
             Pair("SUB", "1"),
             Pair("DUB", "2"),
             Pair("SUB & DUB", "3"),
         )
 
-        val sorts = arrayOf(
+        val SORTS = arrayOf(
             Pair("Default", "default"),
             Pair("Recently Added", "recently_added"),
             Pair("Recently Updated", "recently_updated"),
@@ -184,19 +184,19 @@ object ZoroFilters {
             Pair("Most Watched", "most_watched"),
         )
 
-        val years = arrayOf(all) + (1917..2023).map {
+        val YEARS = arrayOf(ALL) + (1917..2023).map {
             Pair(it.toString(), it.toString())
         }.reversed().toTypedArray()
 
-        val months = arrayOf(all) + (1..12).map {
+        val MONTHS = arrayOf(ALL) + (1..12).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 
-        val days = arrayOf(all) + (1..31).map {
+        val DAYS = arrayOf(ALL) + (1..31).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 
-        val genres = arrayOf(
+        val GENRES = arrayOf(
             Pair("Action", "1"),
             Pair("Adventure", "2"),
             Pair("Cars", "3"),

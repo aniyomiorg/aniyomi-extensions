@@ -18,7 +18,6 @@ import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -53,7 +52,7 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // Used for loading anime
     private var infoQuery = ""
     private var max = ""
-    private var latest_post = ""
+    private var latestPost = ""
     private var layout = ""
     private var settings = ""
     private var currentReferer = ""
@@ -62,7 +61,7 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val MAX_RECURSION_DEPTH = 2
+    private val maxRecursionDepth = 2
 
     private val json: Json by injectLazy()
 
@@ -71,7 +70,7 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     companion object {
-        private val DateFormatter by lazy {
+        private val DATE_FORMATTER by lazy {
             SimpleDateFormat("d MMMM yyyy", Locale.ENGLISH)
         }
     }
@@ -82,7 +81,7 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return if (page == 1) {
             infoQuery = ""
             max = ""
-            latest_post = ""
+            latestPost = ""
             layout = ""
             settings = ""
             currentReferer = "https://kayoanime.com/ongoing-anime/"
@@ -93,7 +92,7 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .add("query", infoQuery)
                 .add("max", max)
                 .add("page", page.toString())
-                .add("latest_post", latest_post)
+                .add("latest_post", latestPost)
                 .add("layout", layout)
                 .add("settings", settings)
                 .build()
@@ -137,7 +136,7 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 layout = container.attr("data-layout")
                 infoQuery = pagesNav.attr("data-query")
                 max = pagesNav.attr("data-max")
-                latest_post = pagesNav.attr("data-latest")
+                latestPost = pagesNav.attr("data-latest")
                 settings = container.attr("data-settings")
             }
 
@@ -179,7 +178,7 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return if (page == 1) {
             infoQuery = ""
             max = ""
-            latest_post = ""
+            latestPost = ""
             layout = ""
             settings = ""
 
@@ -211,7 +210,7 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .add("query", infoQuery)
                 .add("max", max)
                 .add("page", page.toString())
-                .add("latest_post", latest_post)
+                .add("latest_post", latestPost)
                 .add("layout", layout)
                 .add("settings", settings)
                 .build()
@@ -327,7 +326,7 @@ class Kayoanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val boundary = "=====vc17a3rwnndj====="
 
         fun traverseFolder(url: String, path: String, recursionDepth: Int = 0) {
-            if (recursionDepth == MAX_RECURSION_DEPTH) return
+            if (recursionDepth == maxRecursionDepth) return
 
             val folderId = url.substringAfter("/folders/")
             val driveHeaders = headers.newBuilder()

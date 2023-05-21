@@ -60,7 +60,7 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     companion object {
-        private val DateFormatter by lazy {
+        private val DATE_FORMATTER by lazy {
             SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN)
         }
     }
@@ -339,7 +339,7 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun parseDate(dateStr: String): Long {
-        return runCatching { DateFormatter.parse(dateStr)?.time }
+        return runCatching { DATE_FORMATTER.parse(dateStr)?.time }
             .getOrNull() ?: 0L
     }
 

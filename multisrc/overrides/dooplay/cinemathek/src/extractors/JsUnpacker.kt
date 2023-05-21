@@ -73,8 +73,8 @@ class JsUnpacker(packedJS: String?) {
     }
 
     private inner class Unbase(private val radix: Int) {
-        private val ALPHABET_62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        private val ALPHABET_95 =
+        private val alphabet62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        private val alphabet95 =
             " !\"#$%&\\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
         private var alphabet: String? = null
         private var dictionary: HashMap<String, Int>? = null
@@ -95,16 +95,16 @@ class JsUnpacker(packedJS: String?) {
             if (radix > 36) {
                 when {
                     radix < 62 -> {
-                        alphabet = ALPHABET_62.substring(0, radix)
+                        alphabet = alphabet62.substring(0, radix)
                     }
                     radix in 63..94 -> {
-                        alphabet = ALPHABET_95.substring(0, radix)
+                        alphabet = alphabet95.substring(0, radix)
                     }
                     radix == 62 -> {
-                        alphabet = ALPHABET_62
+                        alphabet = alphabet62
                     }
                     radix == 95 -> {
-                        alphabet = ALPHABET_95
+                        alphabet = alphabet95
                     }
                 }
                 dictionary = HashMap(95)
