@@ -22,7 +22,7 @@ class PiFansubs : DooPlay(
     override fun headersBuilder() = super.headersBuilder()
         .add("Accept-Language", "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7")
 
-    val prefQualityValues = arrayOf("360p", "480p", "720p", "1080p")
+    override val prefQualityValues = arrayOf("360p", "480p", "720p", "1080p")
     override val prefQualityEntries = prefQualityValues
 
     // ============================== Popular ===============================

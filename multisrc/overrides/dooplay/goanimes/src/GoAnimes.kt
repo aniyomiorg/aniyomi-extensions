@@ -39,8 +39,8 @@ class GoAnimes : DooPlay(
     }
 
     // ============================ Video Links =============================
-    val prefQualityValues = arrayOf("240p", "360p", "480p", "720p", "1080p")
-    val prefQualityEntries = prefQualityValues
+    override val prefQualityValues = arrayOf("240p", "360p", "480p", "720p", "1080p")
+    override val prefQualityEntries = prefQualityValues
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
