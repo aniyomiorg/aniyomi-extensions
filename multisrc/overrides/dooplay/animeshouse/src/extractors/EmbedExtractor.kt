@@ -12,7 +12,7 @@ class EmbedExtractor(private val headers: Headers) {
         val hostUrl = url.substringBefore("/embed")
         return regexEmbedPlayer.findAll(iframeBody).map {
             val newUrl = "$hostUrl/${it.groupValues[1]}"
-            val quality = "$PLAYER_NAME: " + it.groupValues[2]
+            val quality = "$playerName: " + it.groupValues[2]
             Video(newUrl, quality, newUrl, headers)
         }.toList()
     }

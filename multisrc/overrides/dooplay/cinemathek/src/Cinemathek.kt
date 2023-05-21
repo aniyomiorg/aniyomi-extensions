@@ -118,11 +118,11 @@ class Cinemathek : DooPlay(
         }
 
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = PREF_QUALITY_KEY
+            key = prefQualityKey
             title = PREF_QUALITY_TITLE
             entries = PREF_QUALITY_VALUES
             entryValues = PREF_QUALITY_VALUES
-            setDefaultValue(PREF_QUALITY_DEFAULT)
+            setDefaultValue(prefQualityDefault)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -142,7 +142,7 @@ class Cinemathek : DooPlay(
 
     override fun List<Video>.sort(): List<Video> {
         val hoster = preferences.getString(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
-        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val quality = preferences.getString(prefQualityKey, prefQualityDefault)!!
         return sortedWith(
             compareBy(
                 { it.url.contains(hoster) },
@@ -164,9 +164,9 @@ class Cinemathek : DooPlay(
         private val PREF_HOSTER_SELECTION_VALUES = arrayOf("slare", "streamsb", "fmoon")
         private val PREF_HOSTER_SELECTION_DEFAULT = PREF_HOSTER_SELECTION_VALUES.toSet()
 
-        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val prefQualityKey = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"
-        private const val PREF_QUALITY_DEFAULT = "720p"
+        private const val prefQualityDefault = "720p"
         private val PREF_QUALITY_VALUES = arrayOf("1080p", "720p", "480p", "360p")
     }
 }

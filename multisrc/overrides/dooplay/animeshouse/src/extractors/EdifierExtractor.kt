@@ -19,7 +19,7 @@ class EdifierExtractor(
         val body = req.body.string()
         return regexEdifier.findAll(body).map {
             val videoUrl = it.groupValues.get(1).replace("\\", "")
-            val quality = "$PLAYER_NAME: " + it.groupValues.get(2)
+            val quality = "$playerName: " + it.groupValues.get(2)
             Video(videoUrl, quality, videoUrl, headers)
         }.toList()
     }

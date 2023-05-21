@@ -216,7 +216,7 @@ abstract class DopeFlix(
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val quality = preferences.getString(prefQualityKey, prefQualityDefault)!!
         return sortedWith(
             compareBy { it.quality.contains(quality) },
         ).reversed()
@@ -330,11 +330,11 @@ abstract class DopeFlix(
             }
         }
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = PREF_QUALITY_KEY
+            key = prefQualityKey
             title = PREF_QUALITY_TITLE
             entries = PREF_QUALITY_LIST
             entryValues = PREF_QUALITY_LIST
-            setDefaultValue(PREF_QUALITY_DEFAULT)
+            setDefaultValue(prefQualityDefault)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -407,9 +407,9 @@ abstract class DopeFlix(
         private const val PREF_DOMAIN_KEY = "preferred_domain_new"
         private const val PREF_DOMAIN_TITLE = "Preferred domain (requires app restart)"
 
-        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val prefQualityKey = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"
-        private const val PREF_QUALITY_DEFAULT = "1080p"
+        private const val prefQualityDefault = "1080p"
         private val PREF_QUALITY_LIST = arrayOf("1080p", "720p", "480p", "360p")
 
         private const val PREF_SUB_KEY = "preferred_subLang"

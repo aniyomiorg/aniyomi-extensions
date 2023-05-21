@@ -146,7 +146,7 @@ class AnimeOnlineNinja : DooPlay(
         val prefLang = preferences.getString(PREF_LANG_KEY, PREF_LANG_DEFAULT)!!
         val langSelector = when {
             prefLang.isBlank() -> "div"
-            else -> "div.OD_$pref_lang"
+            else -> "div.OD_$prefLang"
         }
         return document.select("div.ODDIV $langSelector > li").flatMap {
             val hosterUrl = it.attr("onclick").toString()
@@ -232,7 +232,7 @@ class AnimeOnlineNinja : DooPlay(
     override fun String.toDate() = 0L
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val quality = preferences.getString(prefQualityKey, prefQualityDefault)!!
         val lang = preferences.getString(PREF_LANG_KEY, PREF_LANG_DEFAULT)!!
         return sortedWith(
             compareBy(
