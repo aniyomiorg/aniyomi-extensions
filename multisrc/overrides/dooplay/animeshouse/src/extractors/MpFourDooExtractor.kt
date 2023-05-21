@@ -9,11 +9,11 @@ class MpFourDooExtractor(
     private val client: OkHttpClient,
     private val headers: Headers,
 ) {
-    private val REGEX_MPDOO = Regex("file\":\"(.*?)\"")
-    private val PLAYER_NAME = "Mp4Doo"
+    private val regexMpdoo = Regex("file\":\"(.*?)\"")
+    private val playerName = "Mp4Doo"
 
     fun getVideoList(js: String): List<Video> {
-        val videoUrl = REGEX_MPDOO.find(js)!!.groupValues
+        val videoUrl = regexMpdoo.find(js)!!.groupValues
             .get(1)
             .replace("fy..", "fy.v.")
         return if (videoUrl.endsWith("playlist.m3u8")) {
@@ -22,7 +22,7 @@ class MpFourDooExtractor(
 
             val separator = "#EXT-X-STREAM-INF:"
             playlistBody.substringAfter(separator).split(separator).map {
-                val quality = PLAYER_NAME + " - " + it.substringAfter("RESOLUTION=")
+                val quality = playerName + " - " + it.substringAfter("RESOLUTION=")
                     .substringAfter("x")
                     .substringBefore("\n")
                     .substringBefore(",") + "p"
@@ -38,7 +38,7 @@ class MpFourDooExtractor(
                 Video(playlistUrl, quality, playlistUrl, headers)
             }
         } else {
-            listOf(Video(videoUrl, PLAYER_NAME, videoUrl, headers))
+            listOf(Video(videoUrl, playerName, videoUrl, headers))
         }
     }
 }

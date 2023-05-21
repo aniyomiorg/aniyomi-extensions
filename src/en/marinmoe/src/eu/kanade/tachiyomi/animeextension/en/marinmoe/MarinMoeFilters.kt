@@ -23,38 +23,38 @@ object MarinMoeFilters {
         }
     }
 
-    class SortFilter : QueryPartFilter("Sort order", MarinMoeFiltersData.sort)
+    class SortFilter : QueryPartFilter("Sort order", MarinMoeFiltersData.SORT)
 
     class TypeFilter : CheckBoxFilterList(
         "Type",
-        MarinMoeFiltersData.types.map { CheckBoxVal(it.first, true) },
+        MarinMoeFiltersData.TYPES.map { CheckBoxVal(it.first, true) },
     )
 
     class StatusFilter : CheckBoxFilterList(
         "Status",
-        MarinMoeFiltersData.status.map { CheckBoxVal(it.first, true) },
+        MarinMoeFiltersData.STATUS.map { CheckBoxVal(it.first, true) },
     )
 
     class ContentRatingFilter : CheckBoxFilterList(
         "Content Rating",
-        MarinMoeFiltersData.contentRating.map { CheckBoxVal(it.first, true) },
+        MarinMoeFiltersData.CONTENT_RATING.map { CheckBoxVal(it.first, true) },
     )
 
     class SourceFilter : CheckBoxFilterList(
         "Source",
-        MarinMoeFiltersData.source.map { CheckBoxVal(it.first, false) },
+        MarinMoeFiltersData.SOURCE.map { CheckBoxVal(it.first, false) },
     )
 
     class GenreFilter : CheckBoxFilterList(
         "Genre",
-        MarinMoeFiltersData.genre.map { CheckBoxVal(it.first, false) },
+        MarinMoeFiltersData.GENRE.map { CheckBoxVal(it.first, false) },
     )
 
-    class GroupFilter : QueryPartFilter("Group", MarinMoeFiltersData.groups)
+    class GroupFilter : QueryPartFilter("Group", MarinMoeFiltersData.GROUPS)
 
-    class StudioFilter : QueryPartFilter("Studio", MarinMoeFiltersData.studios)
+    class StudioFilter : QueryPartFilter("Studio", MarinMoeFiltersData.STUDIOS)
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         SortFilter(),
         AnimeFilter.Separator(),
         TypeFilter(),
@@ -93,7 +93,7 @@ object MarinMoeFilters {
                 .first()
                 .state.mapNotNull { format ->
                     if (!format.state) {
-                        MarinMoeFiltersData.types.find { it.first == format.name }!!.second
+                        MarinMoeFiltersData.TYPES.find { it.first == format.name }!!.second
                     } else { null }
                 },
         )
@@ -104,7 +104,7 @@ object MarinMoeFilters {
                 .first()
                 .state.mapNotNull { format ->
                     if (!format.state) {
-                        MarinMoeFiltersData.status.find { it.first == format.name }!!.second
+                        MarinMoeFiltersData.STATUS.find { it.first == format.name }!!.second
                     } else { null }
                 },
         )
@@ -115,7 +115,7 @@ object MarinMoeFilters {
                 .first()
                 .state.mapNotNull { format ->
                     if (!format.state) {
-                        MarinMoeFiltersData.contentRating.find { it.first == format.name }!!.second
+                        MarinMoeFiltersData.CONTENT_RATING.find { it.first == format.name }!!.second
                     } else { null }
                 },
         )
@@ -124,7 +124,7 @@ object MarinMoeFilters {
             .first()
             .state.mapNotNull { format ->
                 if (format.state) {
-                    MarinMoeFiltersData.source.find { it.first == format.name }!!.second
+                    MarinMoeFiltersData.SOURCE.find { it.first == format.name }!!.second
                 } else { null }
             }.withIndex().joinToString(separator = "&") {
                 "filter[source][${it.index}][id]=${it.value}&filter[source][${it.index}][opr]=include"
@@ -134,7 +134,7 @@ object MarinMoeFilters {
             .first()
             .state.mapNotNull { format ->
                 if (format.state) {
-                    MarinMoeFiltersData.genre.find { it.first == format.name }!!.second
+                    MarinMoeFiltersData.GENRE.find { it.first == format.name }!!.second
                 } else { null }
             }.withIndex().joinToString(separator = "&") {
                 "filter[genre][${it.index}][id]=${it.value}&filter[genre][${it.index}][opr]=include"
@@ -153,7 +153,7 @@ object MarinMoeFilters {
     }
 
     private object MarinMoeFiltersData {
-        val sort = arrayOf(
+        val SORT = arrayOf(
             Pair("A to Z", "az-a"),
             Pair("Z to A", "az-d"),
             Pair("Earliest Released", "rel-a"),
@@ -172,7 +172,7 @@ object MarinMoeFilters {
             Pair("Most Popular This Year", "vyr-d"),
         )
 
-        val types = arrayOf(
+        val TYPES = arrayOf(
             Pair("Unknown", "1"),
             Pair("TV Series", "2"),
             Pair("OVA", "3"),
@@ -183,14 +183,14 @@ object MarinMoeFilters {
             Pair("Other", "8"),
         )
 
-        val status = arrayOf(
+        val STATUS = arrayOf(
             Pair("Unknown", "1"),
             Pair("Ongoing", "2"),
             Pair("Completed", "3"),
             Pair("Stalled", "4"),
         )
 
-        val contentRating = arrayOf(
+        val CONTENT_RATING = arrayOf(
             Pair("Unknown", "1"),
             Pair("PG - Children", "2"),
             Pair("PG-13 - Teens 13 or older", "3"),
@@ -200,7 +200,7 @@ object MarinMoeFilters {
             Pair("G - All Ages", "7"),
         )
 
-        val source = arrayOf(
+        val SOURCE = arrayOf(
             Pair("Blu-ray", "5"),
             Pair("DVD", "4"),
             Pair("LD", "8"),
@@ -211,7 +211,7 @@ object MarinMoeFilters {
             Pair("Web", "3"),
         )
 
-        val genre = arrayOf(
+        val GENRE = arrayOf(
             Pair("Action", "1"),
             Pair("Adult Cast", "55"),
             Pair("Adventure", "15"),
@@ -287,7 +287,7 @@ object MarinMoeFilters {
             Pair("Workplace", "42"),
         )
 
-        val groups = arrayOf(
+        val GROUPS = arrayOf(
             Pair("All", ""),
             Pair("-__-`", "279"),
             Pair("-.-", "221"),
@@ -630,7 +630,7 @@ object MarinMoeFilters {
             Pair("Zurako Subs", "283"),
         )
 
-        val studios = arrayOf(
+        val STUDIOS = arrayOf(
             Pair("All", ""),
             Pair("3xCube", "432"),
             Pair("4Kids Entertainment", "340"),

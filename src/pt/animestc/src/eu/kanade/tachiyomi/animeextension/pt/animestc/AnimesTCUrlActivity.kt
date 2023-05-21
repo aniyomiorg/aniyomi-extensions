@@ -13,7 +13,7 @@ import kotlin.system.exitProcess
  */
 class AnimesTCUrlActivity : Activity() {
 
-    private val TAG = javaClass.simpleName
+    private val tag = javaClass.simpleName
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,10 +29,10 @@ class AnimesTCUrlActivity : Activity() {
             try {
                 startActivity(mainIntent)
             } catch (e: ActivityNotFoundException) {
-                Log.e(TAG, e.toString())
+                Log.e(tag, e.toString())
             }
         } else {
-            Log.e(TAG, "could not parse uri from intent $intent")
+            Log.e(tag, "could not parse uri from intent $intent")
         }
 
         finish()

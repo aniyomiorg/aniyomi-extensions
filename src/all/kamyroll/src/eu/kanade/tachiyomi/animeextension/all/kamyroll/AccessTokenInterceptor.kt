@@ -4,7 +4,6 @@ import android.content.SharedPreferences
 import android.net.Uri
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
@@ -127,7 +126,7 @@ class AccessTokenInterceptor(
             policyJson.cms.signature,
             policyJson.cms.key_pair_id,
             policyJson.cms.bucket,
-            DateFormatter.parse(policyJson.cms.expires)?.time,
+            DATE_FORMATTER.parse(policyJson.cms.expires)?.time,
         )
 
         preferences.edit().putString(TOKEN_PREF_KEY, allTokens.toJsonString()).apply()
@@ -164,7 +163,7 @@ class AccessTokenInterceptor(
     companion object {
         private const val TOKEN_PREF_KEY = "access_token_data"
 
-        private val DateFormatter by lazy {
+        private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ENGLISH)
         }
     }

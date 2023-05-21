@@ -5,13 +5,13 @@ import eu.kanade.tachiyomi.network.GET
 import okhttp3.OkHttpClient
 
 class GoAnimesExtractor(private val client: OkHttpClient) {
-    private val REGEX_PLAYER = Regex("""player\('(\S+?)','\S+'\)""")
+    private val regexPlayer = Regex("""player\('(\S+?)','\S+'\)""")
 
     fun videosFromUrl(url: String): List<Video> {
         val playlistUrl = client.newCall(GET(url)).execute()
             .body.string()
             .let(JsUnpacker::unpack)
-            .let(REGEX_PLAYER::find)
+            .let(regexPlayer::find)
             ?.groupValues
             ?.get(1)
             ?: return emptyList<Video>()

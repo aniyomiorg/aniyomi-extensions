@@ -6,7 +6,7 @@ import okhttp3.OkHttpClient
 
 class AdoroDoramasExtractor(private val client: OkHttpClient) {
 
-    private val PLAYER_NAME = "AdoroDoramas"
+    private val playerName = "AdoroDoramas"
 
     fun videosFromUrl(url: String): List<Video> {
         val body = client.newCall(GET(url)).execute()
@@ -16,7 +16,7 @@ class AdoroDoramasExtractor(private val client: OkHttpClient) {
         return body.split("}").filter { it.isNotBlank() }.map {
             val quality = it.substringAfter("size: ").substringBefore(" ") + "p"
             val videoUrl = it.substringAfter("src: '").substringBefore("'")
-            Video(url, "$PLAYER_NAME - $quality", videoUrl)
+            Video(url, "$playerName - $quality", videoUrl)
         }
     }
 }

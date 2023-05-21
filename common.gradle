@@ -82,14 +82,6 @@ android {
         jvmTarget = JavaVersion.VERSION_1_8.toString()
         freeCompilerArgs += "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"
     }
-
-    kotlinter {
-        experimentalRules = true
-        disabledRules = [
-            "experimental:argument-list-wrapping", // Doesn't play well with Android Studio
-            "experimental:comment-wrapping",
-        ]
-    }
 }
 
 dependencies {
@@ -100,7 +92,7 @@ dependencies {
 configurations.all {
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         if (details.requested.group == 'org.jetbrains.kotlin' && details.requested.name == 'kotlin-stdlib-jdk8' && details.requested.version == '1.7.0') {
-            details.useVersion '1.7.21'
+            details.useVersion '1.8.21'
             details.because 'Fix problems with dev.datlag JsUnpacker'
         }
     }

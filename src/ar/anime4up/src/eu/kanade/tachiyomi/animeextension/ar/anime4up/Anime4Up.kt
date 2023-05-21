@@ -275,22 +275,22 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 when (filter) {
                     is GenreList -> {
                         if (filter.state > 0) {
-                            val GenreN = getGenreList()[filter.state].query
-                            val genreUrl = "$baseUrl/anime-genre/$GenreN".toHttpUrlOrNull()!!.newBuilder()
+                            val genreN = getGenreList()[filter.state].query
+                            val genreUrl = "$baseUrl/anime-genre/$genreN".toHttpUrlOrNull()!!.newBuilder()
                             return GET(genreUrl.toString(), headers)
                         }
                     }
                     is StatusList -> {
                         if (filter.state > 0) {
-                            val StatusN = getStatusList()[filter.state].query
-                            val statusUrl = "$baseUrl/anime-status/$StatusN".toHttpUrlOrNull()!!.newBuilder()
+                            val statusN = getStatusList()[filter.state].query
+                            val statusUrl = "$baseUrl/anime-status/$statusN".toHttpUrlOrNull()!!.newBuilder()
                             return GET(statusUrl.toString(), headers)
                         }
                     }
                     is TypeList -> {
                         if (filter.state > 0) {
-                            val TypeN = getTypeList()[filter.state].query
-                            val typeUrl = "$baseUrl/anime-type/$TypeN".toHttpUrlOrNull()!!.newBuilder()
+                            val typeN = getTypeList()[filter.state].query
+                            val typeUrl = "$baseUrl/anime-type/$typeN".toHttpUrlOrNull()!!.newBuilder()
                             return GET(typeUrl.toString(), headers)
                         }
                     }

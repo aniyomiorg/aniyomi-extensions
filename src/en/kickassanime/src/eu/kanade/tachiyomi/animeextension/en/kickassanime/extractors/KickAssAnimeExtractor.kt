@@ -7,7 +7,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES
 import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES.decodeHex
 import eu.kanade.tachiyomi.network.GET
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.OkHttpClient
@@ -31,7 +30,7 @@ class KickAssAnimeExtractor(
         val html = client.newCall(GET(url, headers)).execute().body.string()
 
         val prefix = if ("pink" in url) "PinkBird" else "SapphireDuck"
-        val key = AESKeyExtractor.keyMap.get(prefix)
+        val key = AESKeyExtractor.KEY_MAP.get(prefix)
             ?: AESKeyExtractor(client).getKeyFromHtml(baseUrl, html, prefix)
 
         val request = sourcesRequest(baseUrl, url, html, query, key)

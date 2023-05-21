@@ -9,7 +9,7 @@ import java.net.ProtocolException
 
 class MeusAnimesExtractor(private val client: OkHttpClient) {
 
-    fun HEAD(url: String, headers: Headers) = GET(url, headers).newBuilder().head().build()
+    fun head(url: String, headers: Headers) = GET(url, headers).newBuilder().head().build()
 
     fun videoListFromElement(element: Element): List<Video> {
         val headers = Headers.headersOf("Range", "bytes=0-1")
@@ -18,7 +18,7 @@ class MeusAnimesExtractor(private val client: OkHttpClient) {
             put("SD", sdUrl)
             val hdUrl = sdUrl.replace("/sd/", "/hd/")
             try {
-                val testIt = client.newCall(HEAD(hdUrl, headers)).execute()
+                val testIt = client.newCall(head(hdUrl, headers)).execute()
                 put("HD", hdUrl)
             } catch (e: ProtocolException) {}
         }

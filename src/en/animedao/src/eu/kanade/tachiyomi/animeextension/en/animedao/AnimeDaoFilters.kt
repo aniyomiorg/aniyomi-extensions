@@ -49,34 +49,34 @@ object AnimeDaoFilters {
 
     class GenreFilter : CheckBoxFilterList(
         "Genre",
-        AnimeDaoFiltersData.genre.map { CheckBoxVal(it.first, false) },
+        AnimeDaoFiltersData.GENRE.map { CheckBoxVal(it.first, false) },
     )
 
     class RatingFilter : CheckBoxFilterList(
         "Rating",
-        AnimeDaoFiltersData.rating.map { CheckBoxVal(it.first, false) },
+        AnimeDaoFiltersData.RATING.map { CheckBoxVal(it.first, false) },
     )
 
     class LetterFilter : CheckBoxFilterList(
         "Letter",
-        AnimeDaoFiltersData.letter.map { CheckBoxVal(it.first, false) },
+        AnimeDaoFiltersData.LETTER.map { CheckBoxVal(it.first, false) },
     )
 
     class YearFilter : CheckBoxFilterList(
         "Year",
-        AnimeDaoFiltersData.year.map { CheckBoxVal(it.first, false) },
+        AnimeDaoFiltersData.YEAR.map { CheckBoxVal(it.first, false) },
     )
 
-    class StatusFilter : QueryPartFilter("Status", AnimeDaoFiltersData.status)
+    class StatusFilter : QueryPartFilter("Status", AnimeDaoFiltersData.STATUS)
 
     class ScoreFilter : CheckBoxFilterList(
         "Score",
-        AnimeDaoFiltersData.score.map { CheckBoxVal(it.first, false) },
+        AnimeDaoFiltersData.SCORE.map { CheckBoxVal(it.first, false) },
     )
 
-    class OrderFilter : QueryPartFilter("Order", AnimeDaoFiltersData.order)
+    class OrderFilter : QueryPartFilter("Order", AnimeDaoFiltersData.ORDER)
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         GenreFilter(),
         RatingFilter(),
         LetterFilter(),
@@ -101,18 +101,18 @@ object AnimeDaoFilters {
         if (filters.isEmpty()) return FilterSearchParams()
 
         return FilterSearchParams(
-            filters.parseCheckbox<GenreFilter>(AnimeDaoFiltersData.genre, "genres"),
-            filters.parseCheckbox<RatingFilter>(AnimeDaoFiltersData.rating, "ratings"),
-            filters.parseCheckbox<LetterFilter>(AnimeDaoFiltersData.letter, "letters"),
-            filters.parseCheckbox<YearFilter>(AnimeDaoFiltersData.year, "years"),
+            filters.parseCheckbox<GenreFilter>(AnimeDaoFiltersData.GENRE, "genres"),
+            filters.parseCheckbox<RatingFilter>(AnimeDaoFiltersData.RATING, "ratings"),
+            filters.parseCheckbox<LetterFilter>(AnimeDaoFiltersData.LETTER, "letters"),
+            filters.parseCheckbox<YearFilter>(AnimeDaoFiltersData.YEAR, "years"),
             filters.asQueryPart<StatusFilter>(),
-            filters.parseCheckbox<ScoreFilter>(AnimeDaoFiltersData.score, "score"),
+            filters.parseCheckbox<ScoreFilter>(AnimeDaoFiltersData.SCORE, "score"),
             filters.asQueryPart<OrderFilter>(),
         )
     }
 
     private object AnimeDaoFiltersData {
-        val genre = arrayOf(
+        val GENRE = arrayOf(
             Pair("Action", "Action"),
             Pair("Adventure", "Adventure"),
             Pair("Chinese", "Chinese"),
@@ -163,7 +163,7 @@ object AnimeDaoFilters {
             Pair("Video Game", "Video Game"),
         )
 
-        val rating = arrayOf(
+        val RATING = arrayOf(
             Pair("G - All Ages", "all-ages"),
             Pair("PG - Children", "children"),
             Pair("PG-13 - Teens 13 or older", "pg13"),
@@ -171,7 +171,7 @@ object AnimeDaoFilters {
             Pair("R+ - Mild Nudity", "rplus"),
         )
 
-        val letter = arrayOf(
+        val LETTER = arrayOf(
             Pair("A", "A"),
             Pair("B", "B"),
             Pair("C", "C"),
@@ -200,7 +200,7 @@ object AnimeDaoFilters {
             Pair("Z", "Z"),
         )
 
-        val year = arrayOf(
+        val YEAR = arrayOf(
             Pair("2023", "2023"),
             Pair("2022", "2022"),
             Pair("2021", "2021"),
@@ -231,13 +231,13 @@ object AnimeDaoFilters {
             Pair("1960 - 1969", "1960"),
         )
 
-        val status = arrayOf(
+        val STATUS = arrayOf(
             Pair("Status", ""),
             Pair("Ongoing", "Ongoing"),
             Pair("Completed", "Completed"),
         )
 
-        val score = arrayOf(
+        val SCORE = arrayOf(
             Pair("Outstanding (9+)", "outstanding"),
             Pair("Excellent (8+)", "excellent"),
             Pair("Very Good (7+)", "verygood"),
@@ -248,7 +248,7 @@ object AnimeDaoFilters {
             Pair("Dont Watch (2+)", "dontwatch"),
         )
 
-        val order = arrayOf(
+        val ORDER = arrayOf(
             Pair("Order", ""),
             Pair("Name A -> Z", "nameaz"),
             Pair("Name Z -> A", "nameza"),

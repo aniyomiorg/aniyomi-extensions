@@ -25,7 +25,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.CacheControl
 import okhttp3.Headers
@@ -169,7 +168,7 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         }.flatten()
     }
 
-    override fun getFilterList(): AnimeFilterList = ATCFilters.filterList
+    override fun getFilterList(): AnimeFilterList = ATCFilters.FILTER_LIST
 
     private fun searchAnime(page: Int, query: String, filterParams: ATCFilters.FilterSearchParams): AnimesPage {
         filterParams.animeName = query
@@ -219,8 +218,8 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
-            entries = PREF_QUALITY_VALUES
-            entryValues = PREF_QUALITY_VALUES
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
@@ -298,7 +297,7 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_QUALITY_KEY = "pref_quality"
         private const val PREF_QUALITY_TITLE = "Qualidade preferida"
         private const val PREF_QUALITY_DEFAULT = "HD"
-        private val PREF_QUALITY_VALUES = arrayOf("SD", "HD", "FULLHD")
+        private val PREF_QUALITY_ENTRIES = arrayOf("SD", "HD", "FULLHD")
 
         private const val PREF_PLAYER_KEY = "pref_player"
         private const val PREF_PLAYER_TITLE = "Player preferido"

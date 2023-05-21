@@ -171,7 +171,7 @@ class LMAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeNextPageSelector() = "div.pagination a.next"
 
-    override fun getFilterList() = LMAnimeFilters.filterList
+    override fun getFilterList() = LMAnimeFilters.FILTER_LIST
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         return if (query.isNotBlank()) {

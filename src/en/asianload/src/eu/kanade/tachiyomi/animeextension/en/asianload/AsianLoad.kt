@@ -177,8 +177,8 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 when (filter) {
                     is TypeList -> {
                         if (filter.state > 0) {
-                            val GenreN = getTypeList()[filter.state].query
-                            val genreUrl = "$baseUrl/$GenreN?page=$page".toHttpUrlOrNull()!!.newBuilder()
+                            val genreN = getTypeList()[filter.state].query
+                            val genreUrl = "$baseUrl/$genreN?page=$page".toHttpUrlOrNull()!!.newBuilder()
                             return GET(genreUrl.toString(), headers)
                         }
                     }

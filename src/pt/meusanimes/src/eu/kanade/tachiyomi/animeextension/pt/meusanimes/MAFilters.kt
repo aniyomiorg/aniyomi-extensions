@@ -21,12 +21,12 @@ object MAFilters {
         }
     }
 
-    class LetterFilter : QueryPartFilter("Letra inicial", MAFiltersData.letters)
-    class YearFilter : QueryPartFilter("Ano", MAFiltersData.years)
-    class AudioFilter : QueryPartFilter("Áudio", MAFiltersData.audio)
-    class GenreFilter : QueryPartFilter("Gênero", MAFiltersData.genres)
+    class LetterFilter : QueryPartFilter("Letra inicial", MAFiltersData.LETTERS)
+    class YearFilter : QueryPartFilter("Ano", MAFiltersData.YEARS)
+    class AudioFilter : QueryPartFilter("Áudio", MAFiltersData.AUDIO)
+    class GenreFilter : QueryPartFilter("Gênero", MAFiltersData.GENRES)
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         AnimeFilter.Header(MAFiltersData.IGNORE_SEARCH_MSG),
         LetterFilter(),
         AnimeFilter.Header(MAFiltersData.IGNORE_LETTER_MSG),
@@ -58,24 +58,24 @@ object MAFilters {
         const val IGNORE_LETTER_MSG = "NOTA: O filtro por ano IGNORA o por letra."
         const val IGNORE_YEAR_MSG = "NOTA: O filtro de áudio IGNORA o por ano."
         const val IGNORE_AUDIO_MSG = "NOTA: O filtro de gêneros IGNORA o de áudio."
-        val every = Pair("Selecione", "")
+        val EVERY = Pair("Selecione", "")
 
-        val letters = arrayOf(every) + ('a'..'z').map {
+        val LETTERS = arrayOf(EVERY) + ('a'..'z').map {
             Pair(it.toString().uppercase(), it.toString())
         }.toTypedArray()
 
-        val years = arrayOf(every) + (2023 downTo 1985).map {
+        val YEARS = arrayOf(EVERY) + (2023 downTo 1985).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 
-        val audio = arrayOf(
-            every,
+        val AUDIO = arrayOf(
+            EVERY,
             Pair("Dublado", "Dublado"),
             Pair("Legendado", "Legendado"),
         )
 
-        val genres = arrayOf(
-            every,
+        val GENRES = arrayOf(
+            EVERY,
             Pair("Artes Marciais", "artes-marciais"),
             Pair("Aventura", "aventura"),
             Pair("Ação", "acao"),

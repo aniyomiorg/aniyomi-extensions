@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 
 class AESKeyExtractor(private val client: OkHttpClient) {
     companion object {
-        val keyMap = mutableMapOf(
+        val KEY_MAP = mutableMapOf(
             // Default key. if it changes, the extractor will update it.
             "PinkBird" to "7191d608bd4deb4dc36f656c4bbca1b7".toByteArray(),
             "SapphireDuck" to "f04274d54a9e01ed4a728c5c1889886e".toByteArray(), // i hate sapphire
@@ -23,7 +23,7 @@ class AESKeyExtractor(private val client: OkHttpClient) {
 
         private const val ERROR_MSG_GENERIC = "the AES key was not found."
         private const val ERROR_MSG_VAR = "the AES key variable was not found"
-        private val keyVarRegex by lazy { Regex("\\.AES\\[.*?\\]\\((\\w+)\\),") }
+        private val KEY_VAR_REGEX by lazy { Regex("\\.AES\\[.*?\\]\\((\\w+)\\),") }
     }
 
     private val context = Injekt.get<Application>()
@@ -32,7 +32,7 @@ class AESKeyExtractor(private val client: OkHttpClient) {
     class ExtractorJSI(private val latch: CountDownLatch, private val prefix: String) {
         @JavascriptInterface
         fun setKey(key: String) {
-            AESKeyExtractor.keyMap.set(prefix, key.toByteArray())
+            AESKeyExtractor.KEY_MAP.set(prefix, key.toByteArray())
             latch.countDown()
         }
     }
@@ -78,7 +78,7 @@ class AESKeyExtractor(private val client: OkHttpClient) {
             webView = null
         }
 
-        return AESKeyExtractor.keyMap.get(prefix) ?: throw Exception(ERROR_MSG_GENERIC)
+        return AESKeyExtractor.KEY_MAP.get(prefix) ?: throw Exception(ERROR_MSG_GENERIC)
     }
 
     private fun patchScriptFromUrl(url: String): String {
@@ -94,7 +94,7 @@ class AESKeyExtractor(private val client: OkHttpClient) {
         val scriptUrl = "$baseUrl/$scriptPath"
         val scriptBody = client.newCall(GET(scriptUrl)).execute().body.string()
 
-        val varWithKeyName = keyVarRegex.find(scriptBody)
+        val varWithKeyName = KEY_VAR_REGEX.find(scriptBody)
             ?.groupValues
             ?.last()
             ?: Exception(ERROR_MSG_VAR)

@@ -195,7 +195,7 @@ class AnimeFire : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         screen.addPreference(videoQualityPref)
     }
 
-    override fun getFilterList(): AnimeFilterList = AFFilters.filterList
+    override fun getFilterList(): AnimeFilterList = AFFilters.FILTER_LIST
 
     // ============================= Utilities ==============================
 

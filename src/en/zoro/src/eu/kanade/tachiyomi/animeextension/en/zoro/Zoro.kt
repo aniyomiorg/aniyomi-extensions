@@ -22,7 +22,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
@@ -290,7 +289,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return GET(url.build().toString())
     }
 
-    override fun getFilterList(): AnimeFilterList = ZoroFilters.filterList
+    override fun getFilterList(): AnimeFilterList = ZoroFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {

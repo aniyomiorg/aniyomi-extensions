@@ -233,7 +233,7 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Filters
 
-    override fun getFilterList(): AnimeFilterList = KawaiifuFilters.filterList
+    override fun getFilterList(): AnimeFilterList = KawaiifuFilters.FILTER_LIST
 
     // settings
 

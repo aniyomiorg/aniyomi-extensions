@@ -193,10 +193,10 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
 
         val animes = document.select("ul.switch-block a").map { element ->
-            val _document = client.newCall(GET("$baseUrl/${element.attr("href")}")).execute().asJsoup()
+            val hrefDocument = client.newCall(GET("$baseUrl/${element.attr("href")}")).execute().asJsoup()
             SAnime.create().apply {
                 title = element.select("h3").text()
-                url = _document.select("div.category a").attr("abs:href").substringAfter(baseUrl)
+                url = hrefDocument.select("div.category a").attr("abs:href").substringAfter(baseUrl)
                 thumbnail_url = element.select("img").attr("data-original").replace(" ", "%20")
             }
         }

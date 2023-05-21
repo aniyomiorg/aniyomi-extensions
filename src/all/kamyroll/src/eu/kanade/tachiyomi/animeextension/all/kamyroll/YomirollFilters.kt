@@ -40,17 +40,17 @@ object YomirollFilters {
             }.joinToString("")
     }
 
-    class TypeFilter : QueryPartFilter("Type", CrunchyFiltersData.searchType)
-    class CategoryFilter : QueryPartFilter("Category", CrunchyFiltersData.categories)
-    class SortFilter : QueryPartFilter("Sort By", CrunchyFiltersData.sortType)
-    class MediaFilter : QueryPartFilter("Media", CrunchyFiltersData.mediaType)
+    class TypeFilter : QueryPartFilter("Type", CrunchyFiltersData.SEARCH_TYPE)
+    class CategoryFilter : QueryPartFilter("Category", CrunchyFiltersData.CATEGORIES)
+    class SortFilter : QueryPartFilter("Sort By", CrunchyFiltersData.SORT_TYPE)
+    class MediaFilter : QueryPartFilter("Media", CrunchyFiltersData.MEDIA_TYPE)
 
     class LanguageFilter : CheckBoxFilterList(
         "Language",
-        CrunchyFiltersData.language.map { CheckBoxVal(it.first, false) },
+        CrunchyFiltersData.LANGUAGE.map { CheckBoxVal(it.first, false) },
     )
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         AnimeFilter.Header("Search Filter (ignored if browsing)"),
         TypeFilter(),
         AnimeFilter.Separator(),
@@ -76,19 +76,19 @@ object YomirollFilters {
             filters.asQueryPart<TypeFilter>(),
             filters.asQueryPart<CategoryFilter>(),
             filters.asQueryPart<SortFilter>(),
-            filters.parseCheckbox<LanguageFilter>(CrunchyFiltersData.language),
+            filters.parseCheckbox<LanguageFilter>(CrunchyFiltersData.LANGUAGE),
             filters.asQueryPart<MediaFilter>(),
         )
     }
 
     private object CrunchyFiltersData {
-        val searchType = arrayOf(
+        val SEARCH_TYPE = arrayOf(
             Pair("Top Results", "top_results"),
             Pair("Series", "series"),
             Pair("Movies", "movie_listing"),
         )
 
-        val categories = arrayOf(
+        val CATEGORIES = arrayOf(
             Pair("-", ""),
             Pair("Action", "&categories=action"),
             Pair("Action, Adventure", "&categories=action,adventure"),
@@ -181,18 +181,18 @@ object YomirollFilters {
             Pair("Thriller, Supernatural", "&categories=thriller,supernatural"),
         )
 
-        val sortType = arrayOf(
+        val SORT_TYPE = arrayOf(
             Pair("Popular", "popularity"),
             Pair("New", "newly_added"),
             Pair("Alphabetical", "alphabetical"),
         )
 
-        val language = arrayOf(
+        val LANGUAGE = arrayOf(
             Pair("Sub", "&is_subbed=true"),
             Pair("Dub", "&is_dubbed=true"),
         )
 
-        val mediaType = arrayOf(
+        val MEDIA_TYPE = arrayOf(
             Pair("All", ""),
             Pair("Series", "&type=series"),
             Pair("Movies", "&type=movie_listing"),

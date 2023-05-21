@@ -158,7 +158,7 @@ class Tokuzilla : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Power Rangers", "/power-ranger"),
             Pair("Ultraman", "/ultraman"),
             Pair("Other", "/other"),
-        )
+        ),
     )
 
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :

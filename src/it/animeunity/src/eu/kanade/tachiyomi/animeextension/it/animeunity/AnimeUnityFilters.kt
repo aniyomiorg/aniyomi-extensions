@@ -24,26 +24,26 @@ object AnimeUnityFilters {
         }
     }
 
-    class TopFilter : QueryPartFilter("Top Anime", AnimeUnityFiltersData.top)
+    class TopFilter : QueryPartFilter("Top Anime", AnimeUnityFiltersData.TOP)
 
     class GenreFilter : CheckBoxFilterList(
         "Genere",
-        AnimeUnityFiltersData.genere.map { CheckBoxVal(it.first, false) },
+        AnimeUnityFiltersData.GENERE.map { CheckBoxVal(it.first, false) },
     )
 
-    class YearFilter : QueryPartFilter("Anno", AnimeUnityFiltersData.year)
+    class YearFilter : QueryPartFilter("Anno", AnimeUnityFiltersData.YEAR)
 
-    class OrderFilter : QueryPartFilter("Ordina", AnimeUnityFiltersData.order)
+    class OrderFilter : QueryPartFilter("Ordina", AnimeUnityFiltersData.ORDER)
 
-    class StateFilter : QueryPartFilter("Stato", AnimeUnityFiltersData.state)
+    class StateFilter : QueryPartFilter("Stato", AnimeUnityFiltersData.STATE)
 
-    class TypeFilter : QueryPartFilter("Tipo", AnimeUnityFiltersData.type)
+    class TypeFilter : QueryPartFilter("Tipo", AnimeUnityFiltersData.TYPE)
 
-    class SeasonFilter : QueryPartFilter("Stagione", AnimeUnityFiltersData.season)
+    class SeasonFilter : QueryPartFilter("Stagione", AnimeUnityFiltersData.SEASON)
 
-    class DubFilter : QueryPartFilter("Dub ITA", AnimeUnityFiltersData.dub)
+    class DubFilter : QueryPartFilter("Dub ITA", AnimeUnityFiltersData.DUB)
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         AnimeFilter.Header("Le migliori pagine di anime"),
         AnimeFilter.Header("Nota: ignora altri filtri"),
         TopFilter(),
@@ -76,9 +76,9 @@ object AnimeUnityFilters {
             .state.mapNotNull { format ->
                 if (format.state) {
                     "{\"id\":" +
-                        AnimeUnityFiltersData.genere.find { it.first == format.name }!!.second +
+                        AnimeUnityFiltersData.GENERE.find { it.first == format.name }!!.second +
                         ",\"name\":\"" +
-                        AnimeUnityFiltersData.genere.find { it.first == format.name }!!.first +
+                        AnimeUnityFiltersData.GENERE.find { it.first == format.name }!!.first +
                         "\"}"
                 } else { null }
             }.joinToString(",")
@@ -96,9 +96,9 @@ object AnimeUnityFilters {
     }
 
     private object AnimeUnityFiltersData {
-        val any = Pair("Any", "")
+        val ANY = Pair("Any", "")
 
-        val top = arrayOf(
+        val TOP = arrayOf(
             Pair("Nessuno", ""),
             Pair("Tutto", "top-anime"),
             Pair("In corso", "top-anime?status=In Corso"),
@@ -113,7 +113,7 @@ object AnimeUnityFilters {
             Pair("Più visti", "top-anime?order=most_viewed"),
         )
 
-        val genere = arrayOf(
+        val GENERE = arrayOf(
             Pair("Action", "51"),
             Pair("Adventure", "21"),
             Pair("Cars", "29"),
@@ -160,24 +160,24 @@ object AnimeUnityFilters {
             Pair("Yuri", "36"),
         )
 
-        val order = arrayOf(
-            any,
+        val ORDER = arrayOf(
+            ANY,
             Pair("Lista A-Z", "Lista A-Z"),
             Pair("Lista Z-A", "Lista Z-A"),
             Pair("Popolarità", "Popolarità"),
             Pair("Valutazione", "Valutazione"),
         )
 
-        val state = arrayOf(
-            any,
+        val STATE = arrayOf(
+            ANY,
             Pair("In Corso", "In Corso"),
             Pair("Terminato", "Terminato"),
             Pair("In Uscita", "In Uscita"),
             Pair("Droppato", "Droppato"),
         )
 
-        val type = arrayOf(
-            any,
+        val TYPE = arrayOf(
+            ANY,
             Pair("TV", "TV"),
             Pair("OVA", "OVA"),
             Pair("ONA", "ONA"),
@@ -185,20 +185,20 @@ object AnimeUnityFilters {
             Pair("Movie", "Movie"),
         )
 
-        val season = arrayOf(
-            any,
+        val SEASON = arrayOf(
+            ANY,
             Pair("Inverno", "Inverno"),
             Pair("Primavera", "Primavera"),
             Pair("Estate", "Estate"),
             Pair("Autunno", "Autunno"),
         )
 
-        val dub = arrayOf(
+        val DUB = arrayOf(
             Pair("No", ""),
             Pair("Sì", "true"),
         )
 
-        val year = arrayOf(any) + (1969..2024).map {
+        val YEAR = arrayOf(ANY) + (1969..2024).map {
             Pair(it.toString(), it.toString())
         }.reversed().toTypedArray()
     }

@@ -5,7 +5,6 @@ import dev.datlag.jsunpacker.JsUnpacker
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -76,7 +75,7 @@ class GdrivePlayerExtractor(private val client: OkHttpClient) {
         val salt = json["s"]!!.jsonPrimitive.content
         val encodedCiphetext = json["ct"]!!.jsonPrimitive.content
         val ciphertext = Base64.decode(encodedCiphetext, Base64.DEFAULT)
-        val (key, iv) = GenerateKeyAndIv(password, salt.decodeHex())
+        val (key, iv) = generateKeyAndIv(password, salt.decodeHex())
             ?: return null
         val keySpec = SecretKeySpec(key, "AES")
         val ivSpec = IvParameterSpec(iv)
@@ -87,7 +86,7 @@ class GdrivePlayerExtractor(private val client: OkHttpClient) {
     }
 
     // https://stackoverflow.com/a/41434590/8166854
-    private fun GenerateKeyAndIv(
+    private fun generateKeyAndIv(
         password: ByteArray,
         salt: ByteArray,
         hashAlgorithm: String = "MD5",

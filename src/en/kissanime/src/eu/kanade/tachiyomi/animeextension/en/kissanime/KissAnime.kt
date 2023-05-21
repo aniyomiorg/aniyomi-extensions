@@ -62,7 +62,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     companion object {
-        private val DateFormatter by lazy {
+        private val DATE_FORMATTER by lazy {
             SimpleDateFormat("MM/dd/yyyy", Locale.ENGLISH)
         }
     }
@@ -141,7 +141,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== FILTERS ===============================
 
-    override fun getFilterList(): AnimeFilterList = KissAnimeFilters.filterList
+    override fun getFilterList(): AnimeFilterList = KissAnimeFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
 
@@ -308,7 +308,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     )
 
     private fun parseDate(dateStr: String): Long {
-        return runCatching { DateFormatter.parse(dateStr)?.time }
+        return runCatching { DATE_FORMATTER.parse(dateStr)?.time }
             .getOrNull() ?: 0L
     }
 

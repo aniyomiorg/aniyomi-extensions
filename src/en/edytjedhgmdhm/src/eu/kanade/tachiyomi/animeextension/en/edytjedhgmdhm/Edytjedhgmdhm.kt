@@ -28,7 +28,7 @@ import java.net.URLEncoder
 import java.text.CharacterIterator
 import java.text.StringCharacterIterator
 
-class edytjedhgmdhm : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+class Edytjedhgmdhm : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "edytjedhgmdhm"
 

@@ -17,7 +17,6 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
@@ -111,7 +110,7 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         return parseAnime(response)
     }
 
-    override fun getFilterList(): AnimeFilterList = MarinMoeFilters.filterList
+    override fun getFilterList(): AnimeFilterList = MarinMoeFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
 
@@ -338,8 +337,8 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         val groupPref = ListPreference(screen.context).apply {
             key = "preferred_group"
             title = "Preferred group"
-            entries = MarinMoeConstants.groupEntries
-            entryValues = MarinMoeConstants.groupEntryValues
+            entries = MarinMoeConstants.GROUP_ENTRIES
+            entryValues = MarinMoeConstants.GROUP_ENTRY_VALUES
             setDefaultValue("site_default")
             summary = "%s"
 

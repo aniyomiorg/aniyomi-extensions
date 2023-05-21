@@ -30,21 +30,21 @@ object ATCFilters {
         }
     }
 
-    class InitialLetterFilter : QueryPartFilter("Primeira letra", ATCFiltersData.initialLetter)
-    class StatusFilter : QueryPartFilter("Status", ATCFiltersData.status)
+    class InitialLetterFilter : QueryPartFilter("Primeira letra", ATCFiltersData.INITIAL_LETTER)
+    class StatusFilter : QueryPartFilter("Status", ATCFiltersData.STATUS)
 
     class SortFilter : AnimeFilter.Sort(
         "Ordenar",
-        ATCFiltersData.orders.map { it.first }.toTypedArray(),
+        ATCFiltersData.ORDERS.map { it.first }.toTypedArray(),
         Selection(0, true),
     )
 
     class GenresFilter : TriStateFilterList(
         "Gêneros",
-        ATCFiltersData.genres.map { TriStateVal(it) },
+        ATCFiltersData.GENRES.map { TriStateVal(it) },
     )
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         InitialLetterFilter(),
         StatusFilter(),
         SortFilter(),
@@ -71,7 +71,7 @@ object ATCFilters {
         )
 
         filters.getFirst<SortFilter>().state?.let {
-            val order = ATCFiltersData.orders[it.index].second
+            val order = ATCFiltersData.ORDERS[it.index].second
             searchParams.orderAscending = it.ascending
             searchParams.sortBy = order
         }
@@ -130,22 +130,22 @@ object ATCFilters {
 
     private object ATCFiltersData {
 
-        val orders = arrayOf(
+        val ORDERS = arrayOf(
             Pair("Alfabeticamente", "A-Z"),
             Pair("Por ano", "year"),
         )
 
-        val status = arrayOf(
+        val STATUS = arrayOf(
             Pair("Selecione", ""),
             Pair("Completo", SAnime.COMPLETED.toString()),
             Pair("Em Lançamento", SAnime.ONGOING.toString()),
         )
 
-        val initialLetter = arrayOf(Pair("Selecione", "")) + ('A'..'Z').map {
+        val INITIAL_LETTER = arrayOf(Pair("Selecione", "")) + ('A'..'Z').map {
             Pair(it.toString(), it.toString().lowercase())
         }.toTypedArray()
 
-        val genres = arrayOf(
+        val GENRES = arrayOf(
             "Ação",
             "Action",
             "Adventure",

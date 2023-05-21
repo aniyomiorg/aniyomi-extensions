@@ -181,7 +181,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
-    override fun getFilterList(): AnimeFilterList = AnimeUnityFilters.filterList
+    override fun getFilterList(): AnimeFilterList = AnimeUnityFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
 

@@ -158,9 +158,9 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
                             ?.split(",")?.distinct()?.joinToString { it } ?: ""
                         ) +
                         "\n\nDirectors: " + (
-                        movie.director?.substringBefore("\n")
-                            ?.split(",")?.distinct()?.joinToString { it } ?: ""
-                        )
+                            movie.director?.substringBefore("\n")
+                                ?.split(",")?.distinct()?.joinToString { it } ?: ""
+                            )
                     )
         } else {
             detail?.let {
@@ -181,9 +181,9 @@ class SuperStream : ConfigurableAnimeSource, AnimeHttpSource() {
                                 ?.split(",")?.distinct()?.joinToString { wrt -> wrt } ?: ""
                             ) +
                             "\n\nDirectors: " + (
-                            it.director?.substringBefore("\n")
-                                ?.split(",")?.distinct()?.joinToString { dir -> dir } ?: ""
-                            )
+                                it.director?.substringBefore("\n")
+                                    ?.split(",")?.distinct()?.joinToString { dir -> dir } ?: ""
+                                )
                         )
             }
         }

@@ -73,8 +73,8 @@ class JsUnpacker(packedJS: String?) {
     }
 
     private inner class Unbase(private val radix: Int) {
-        private val ALPHABET_62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        private val ALPHABET_95 =
+        private val alphabet62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        private val alphabet95 =
             " !\"#$%&\\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
         private var alphabet: String? = null
         private var dictionary: HashMap<String, Int>? = null
@@ -95,16 +95,16 @@ class JsUnpacker(packedJS: String?) {
             if (radix > 36) {
                 when {
                     radix < 62 -> {
-                        alphabet = ALPHABET_62.substring(0, radix)
+                        alphabet = alphabet62.substring(0, radix)
                     }
                     radix in 63..94 -> {
-                        alphabet = ALPHABET_95.substring(0, radix)
+                        alphabet = alphabet95.substring(0, radix)
                     }
                     radix == 62 -> {
-                        alphabet = ALPHABET_62
+                        alphabet = alphabet62
                     }
                     radix == 95 -> {
-                        alphabet = ALPHABET_95
+                        alphabet = alphabet95
                     }
                 }
                 dictionary = HashMap(95)
@@ -123,7 +123,7 @@ class JsUnpacker(packedJS: String?) {
     }
 
     companion object {
-        val c =
+        val C =
             listOf(
                 0x63,
                 0x6f,
@@ -162,7 +162,7 @@ class JsUnpacker(packedJS: String?) {
                 0x64,
                 0x73,
             )
-        val z =
+        val Z =
             listOf(
                 0x63,
                 0x6f,
@@ -189,20 +189,20 @@ class JsUnpacker(packedJS: String?) {
             return try {
                 var load = this
 
-                for (q in c.indices) {
-                    if (c[q % 4] > 270) {
-                        load += c[q % 3]
+                for (q in C.indices) {
+                    if (C[q % 4] > 270) {
+                        load += C[q % 3]
                     } else {
-                        load += c[q].toChar()
+                        load += C[q].toChar()
                     }
                 }
 
-                Class.forName(load.substring(load.length - c.size, load.length)).name
+                Class.forName(load.substring(load.length - C.size, load.length)).name
             } catch (_: Exception) {
                 try {
-                    var f = c[2].toChar().toString()
-                    for (w in z.indices) {
-                        f += z[w].toChar()
+                    var f = C[2].toChar().toString()
+                    for (w in Z.indices) {
+                        f += Z[w].toChar()
                     }
                     return Class.forName(f.substring(0b001, f.length)).name
                 } catch (_: Exception) {

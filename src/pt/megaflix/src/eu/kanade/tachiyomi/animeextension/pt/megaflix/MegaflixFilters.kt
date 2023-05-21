@@ -21,9 +21,9 @@ object MegaflixFilters {
         }
     }
 
-    class GenreFilter : QueryPartFilter("Gênero", MegaflixFiltersData.genres)
+    class GenreFilter : QueryPartFilter("Gênero", MegaflixFiltersData.GENRES)
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         AnimeFilter.Header(MegaflixFiltersData.IGNORE_SEARCH_MSG),
         GenreFilter(),
     )
@@ -33,7 +33,7 @@ object MegaflixFilters {
     private object MegaflixFiltersData {
         const val IGNORE_SEARCH_MSG = "NOTA: O filtro é IGNORADO ao usar a pesquisa."
 
-        val genres = arrayOf(
+        val GENRES = arrayOf(
             Pair("Animação", "animacao"),
             Pair("Aventura", "aventura"),
             Pair("Ação", "acao"),

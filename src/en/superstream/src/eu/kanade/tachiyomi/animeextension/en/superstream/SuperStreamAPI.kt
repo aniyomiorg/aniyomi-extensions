@@ -820,11 +820,11 @@ class SuperStreamAPI(val json: Json) {
         val appKeyHash = CipherUtils.md5(appKey)!!
         val newBody =
             """{"app_key":"$appKeyHash","verify":"${
-            CipherUtils.getVerify(
-                encryptedQuery,
-                appKey,
-                key,
-            )
+                CipherUtils.getVerify(
+                    encryptedQuery,
+                    appKey,
+                    key,
+                )
             }","encrypt_data":"$encryptedQuery"}"""
         val base64Body = String(Base64.encode(newBody.toByteArray(), Base64.NO_WRAP))
 

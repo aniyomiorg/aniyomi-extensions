@@ -82,7 +82,7 @@ class AnimesHouse : DooPlay(
     }
 
     // ============================== Settings ==============================
-    override val PREF_QUALITY_ENTRIES = arrayOf(
+    override val prefQualityEntries = arrayOf(
         "SD - 240p",
         "SD - 360p",
         "SD - 480p",
@@ -90,7 +90,7 @@ class AnimesHouse : DooPlay(
         "FULLHD - 1080p",
     )
 
-    override val PREF_QUALITY_VALUES = arrayOf("240p", "360p", "480p", "720p", "1080p")
+    override val prefQualityValues = arrayOf("240p", "360p", "480p", "720p", "1080p")
 
     // ============================= Utilities ==============================
     override val animeMenuSelector = "div.pag_episodes div.item a[href] i.icon-bars"

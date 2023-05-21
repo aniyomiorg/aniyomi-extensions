@@ -45,13 +45,13 @@ object KawaiifuFilters {
             }
     }
 
-    class CategoryFilter : QueryPartFilter("Category", KawaiifuFiltersData.categories)
+    class CategoryFilter : QueryPartFilter("Category", KawaiifuFiltersData.CATEGORIES)
     class TagsFilter : CheckBoxFilterList(
         "Tags",
-        KawaiifuFiltersData.tags.map { CheckBoxVal(it.first, false) },
+        KawaiifuFiltersData.TAGS.map { CheckBoxVal(it.first, false) },
     )
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         TagsFilter(),
         AnimeFilter.Separator(),
         CategoryFilter(),
@@ -67,12 +67,12 @@ object KawaiifuFilters {
 
         return FilterSearchParams(
             filters.asQueryPart<CategoryFilter>(),
-            filters.parseCheckbox<TagsFilter>(KawaiifuFiltersData.tags),
+            filters.parseCheckbox<TagsFilter>(KawaiifuFiltersData.TAGS),
         )
     }
 
     private object KawaiifuFiltersData {
-        val categories = arrayOf(
+        val CATEGORIES = arrayOf(
             Pair("All", ""),
             Pair("Dub", "dub"),
             Pair("Ecchi Anime", "ecchi-anime"),
@@ -193,7 +193,7 @@ object KawaiifuFilters {
             Pair("Winter 2023", "winter-2023"),
         )
 
-        val tags = arrayOf(
+        val TAGS = arrayOf(
             Pair("18 +", "18"),
             Pair("4-koma", "4-koma"),
             Pair("Action", "action"),

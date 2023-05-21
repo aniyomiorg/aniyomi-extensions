@@ -21,12 +21,12 @@ object AnitubeFilters {
         }
     }
 
-    class GenreFilter : QueryPartFilter("Gênero", AnitubeFiltersData.genres)
-    class CharacterFilter : QueryPartFilter("Inicia com", AnitubeFiltersData.initialChars)
-    class YearFilter : QueryPartFilter("Ano", AnitubeFiltersData.years)
-    class SeasonFilter : QueryPartFilter("Temporada", AnitubeFiltersData.seasons)
+    class GenreFilter : QueryPartFilter("Gênero", AnitubeFiltersData.GENRES)
+    class CharacterFilter : QueryPartFilter("Inicia com", AnitubeFiltersData.INITIAL_CHARS)
+    class YearFilter : QueryPartFilter("Ano", AnitubeFiltersData.YEARS)
+    class SeasonFilter : QueryPartFilter("Temporada", AnitubeFiltersData.SEASONS)
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         AnimeFilter.Header(AnitubeFiltersData.IGNORE_SEARCH_MSG),
         GenreFilter(),
         CharacterFilter(),
@@ -53,28 +53,28 @@ object AnitubeFilters {
 
         const val IGNORE_SEARCH_MSG = "NOTA: Os filtros abaixos são IGNORADOS durante a pesquisa."
         const val IGNORE_SEASON_MSG = "Nota: o filtro de temporada IGNORA o filtro de gênero/letra."
-        val every = Pair("Qualquer um", "")
+        val EVERY = Pair("Qualquer um", "")
 
-        val seasons = arrayOf(
-            every,
+        val SEASONS = arrayOf(
+            EVERY,
             Pair("Outono", "outono"),
             Pair("Inverno", "inverno"),
             Pair("Primavera", "primavera"),
             Pair("Verão", "verao"),
         )
 
-        val years = (2022 downTo 1979).map {
+        val YEARS = (2022 downTo 1979).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 
-        val initialChars = arrayOf(
+        val INITIAL_CHARS = arrayOf(
             Pair("Qualquer letra", "todos"),
         ) + ('A'..'Z').map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 
-        val genres = arrayOf(
-            every,
+        val GENRES = arrayOf(
+            EVERY,
             Pair("Ação", "acao"),
             Pair("Artes marciais", "artes-marciais"),
             Pair("Aventura", "aventura"),

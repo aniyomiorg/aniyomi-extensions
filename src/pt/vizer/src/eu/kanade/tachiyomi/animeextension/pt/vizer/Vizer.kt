@@ -25,7 +25,6 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -43,7 +42,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     override val name = "Vizer.tv"
 
     override val baseUrl = "https://vizer.tv"
-    private val API_URL = "$baseUrl/includes/ajax"
+    private val apiUrl = "$baseUrl/includes/ajax"
 
     override val lang = "pt-BR"
 
@@ -181,7 +180,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // =============================== Search ===============================
 
-    override fun getFilterList(): AnimeFilterList = VizerFilters.filterList
+    override fun getFilterList(): AnimeFilterList = VizerFilters.FILTER_LIST
 
     override fun searchAnimeParse(response: Response) = popularAnimeParse(response)
 
@@ -210,7 +209,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun searchAnimeRequest(page: Int, query: String, params: FilterSearchParams): Request {
-        val urlBuilder = "$API_URL/ajaxPagination.php".toHttpUrl().newBuilder()
+        val urlBuilder = "$apiUrl/ajaxPagination.php".toHttpUrl().newBuilder()
             .addQueryParameter("page", "${page - 1}")
             .addQueryParameter("categoryFilterYearMin", params.minYear)
             .addQueryParameter("categoryFilterYearMax", params.maxYear)
@@ -323,7 +322,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun apiRequest(body: String): Request {
         val reqBody = body.toRequestBody("application/x-www-form-urlencoded".toMediaType())
         val newHeaders = headersBuilder().add("x-requested-with", "XMLHttpRequest").build()
-        return POST("$API_URL/publicFunctions.php", newHeaders, body = reqBody)
+        return POST("$apiUrl/publicFunctions.php", newHeaders, body = reqBody)
     }
 
     override fun List<Video>.sort(): List<Video> {

@@ -58,7 +58,7 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     companion object {
-        private val DateFormatter by lazy {
+        private val DATE_FORMATTER by lazy {
             SimpleDateFormat("d MMMM yyyy", Locale.ENGLISH)
         }
     }

@@ -52,7 +52,7 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     companion object {
-        private val DateFormatter by lazy {
+        private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd", Locale.KOREAN)
         }
     }
@@ -353,7 +353,7 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     )
 
     private fun parseDate(dateStr: String): Long {
-        return runCatching { DateFormatter.parse(dateStr)?.time }
+        return runCatching { DATE_FORMATTER.parse(dateStr)?.time }
             .getOrNull() ?: 0L
     }
 

@@ -18,7 +18,6 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -162,7 +161,7 @@ class OpenAnimes : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return searchAnimeRequest(page, query, OpenAnimesFilters.getSearchParameters(filters))
     }
 
-    override fun getFilterList(): AnimeFilterList = OpenAnimesFilters.filterList
+    override fun getFilterList(): AnimeFilterList = OpenAnimesFilters.FILTER_LIST
 
     private fun searchAnimeRequest(page: Int, query: String, params: FilterSearchParams): Request {
         val body = FormBody.Builder().apply {
@@ -244,8 +243,8 @@ class OpenAnimes : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val preferredQuality = ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
-            entries = PREF_QUALITY_VALUES
-            entryValues = PREF_QUALITY_VALUES
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
@@ -299,6 +298,6 @@ class OpenAnimes : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Qualidade preferida"
         private const val PREF_QUALITY_DEFAULT = "720p"
-        private val PREF_QUALITY_VALUES = arrayOf("360p", "720p")
+        private val PREF_QUALITY_ENTRIES = arrayOf("360p", "720p")
     }
 }

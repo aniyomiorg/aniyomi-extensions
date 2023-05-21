@@ -46,20 +46,20 @@ object DopeFlixFilters {
             }
     }
 
-    class TypeFilter : QueryPartFilter("Type", DopeFlixFiltersData.types)
-    class QualityFilter : QueryPartFilter("Quality", DopeFlixFiltersData.qualities)
-    class ReleaseYearFilter : QueryPartFilter("Released at", DopeFlixFiltersData.years)
+    class TypeFilter : QueryPartFilter("Type", DopeFlixFiltersData.TYPES)
+    class QualityFilter : QueryPartFilter("Quality", DopeFlixFiltersData.QUALITIES)
+    class ReleaseYearFilter : QueryPartFilter("Released at", DopeFlixFiltersData.YEARS)
 
     class GenresFilter : CheckBoxFilterList(
         "Genres",
-        DopeFlixFiltersData.genres.map { CheckBoxVal(it.first, false) },
+        DopeFlixFiltersData.GENRES.map { CheckBoxVal(it.first, false) },
     )
     class CountriesFilter : CheckBoxFilterList(
         "Countries",
-        DopeFlixFiltersData.countries.map { CheckBoxVal(it.first, false) },
+        DopeFlixFiltersData.COUNTRIES.map { CheckBoxVal(it.first, false) },
     )
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST = AnimeFilterList(
         TypeFilter(),
         QualityFilter(),
         ReleaseYearFilter(),
@@ -83,29 +83,29 @@ object DopeFlixFilters {
             filters.asQueryPart<TypeFilter>(),
             filters.asQueryPart<QualityFilter>(),
             filters.asQueryPart<ReleaseYearFilter>(),
-            filters.parseCheckbox<GenresFilter>(DopeFlixFiltersData.genres),
-            filters.parseCheckbox<CountriesFilter>(DopeFlixFiltersData.countries),
+            filters.parseCheckbox<GenresFilter>(DopeFlixFiltersData.GENRES),
+            filters.parseCheckbox<CountriesFilter>(DopeFlixFiltersData.COUNTRIES),
         )
     }
 
     private object DopeFlixFiltersData {
-        val all = Pair("All", "all")
+        val ALL = Pair("All", "all")
 
-        val types = arrayOf(
-            all,
+        val TYPES = arrayOf(
+            ALL,
             Pair("Movies", "movies"),
             Pair("TV Shows", "tv"),
         )
 
-        val qualities = arrayOf(
-            all,
+        val QUALITIES = arrayOf(
+            ALL,
             Pair("HD", "HD"),
             Pair("SD", "SD"),
             Pair("CAM", "CAM"),
         )
 
-        val years = arrayOf(
-            all,
+        val YEARS = arrayOf(
+            ALL,
             Pair("2022", "2022"),
             Pair("2021", "2021"),
             Pair("2020", "2020"),
@@ -114,7 +114,7 @@ object DopeFlixFilters {
             Pair("Older", "older-2018"),
         )
 
-        val genres = arrayOf(
+        val GENRES = arrayOf(
             Pair("Action", "10"),
             Pair("Action & Adventure", "24"),
             Pair("Adventure", "18"),
@@ -145,7 +145,7 @@ object DopeFlixFilters {
             Pair("Western", "6"),
         )
 
-        val countries = arrayOf(
+        val COUNTRIES = arrayOf(
             Pair("Argentina", "11"),
             Pair("Australia", "151"),
             Pair("Austria", "4"),

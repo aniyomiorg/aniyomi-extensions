@@ -143,10 +143,10 @@ class AnimeOnlineNinja : DooPlay(
 
     private fun extractFromMulti(url: String): List<Video> {
         val document = client.newCall(GET(url)).execute().asJsoup()
-        val pref_lang = preferences.getString(PREF_LANG_KEY, PREF_LANG_DEFAULT)!!
+        val prefLang = preferences.getString(PREF_LANG_KEY, PREF_LANG_DEFAULT)!!
         val langSelector = when {
-            pref_lang.isBlank() -> "div"
-            else -> "div.OD_$pref_lang"
+            prefLang.isBlank() -> "div"
+            else -> "div.OD_$prefLang"
         }
         return document.select("div.ODDIV $langSelector > li").flatMap {
             val hosterUrl = it.attr("onclick").toString()
@@ -158,7 +158,7 @@ class AnimeOnlineNinja : DooPlay(
                         .substringAfter("OD_", "")
                         .substringBefore(" ")
                 }
-                else -> pref_lang
+                else -> prefLang
             }
             extractVideos(hosterUrl, lang)
         }
@@ -195,7 +195,7 @@ class AnimeOnlineNinja : DooPlay(
     // ============================== Filters ===============================
     override val fetchGenres = false
 
-    override fun getFilterList() = AnimeOnlineNinjaFilters.filterList
+    override fun getFilterList() = AnimeOnlineNinjaFilters.FILTER_LIST
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -232,7 +232,7 @@ class AnimeOnlineNinja : DooPlay(
     override fun String.toDate() = 0L
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val quality = preferences.getString(prefQualityKey, prefQualityDefault)!!
         val lang = preferences.getString(PREF_LANG_KEY, PREF_LANG_DEFAULT)!!
         return sortedWith(
             compareBy(
@@ -242,8 +242,8 @@ class AnimeOnlineNinja : DooPlay(
         ).reversed()
     }
 
-    override val PREF_QUALITY_VALUES = arrayOf("480p", "720p", "1080p")
-    override val PREF_QUALITY_ENTRIES = PREF_QUALITY_VALUES
+    override val prefQualityValues = arrayOf("480p", "720p", "1080p")
+    override val prefQualityEntries = prefQualityValues
 
     companion object {
         private const val PREF_LANG_KEY = "preferred_lang"

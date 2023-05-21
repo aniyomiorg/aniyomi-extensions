@@ -68,11 +68,11 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodeList = mutableListOf<SEpisode>()
         val episodeElement = document.select(
             "div.tab-content #gersub div.panel, div.tab-content #filme div.panel button[${
-            if (document.select("div.tab-content #filme div.panel button[data-dubbed=\"0\"]").isNullOrEmpty()){
-                "data-dubbed=\"1\""
-            } else {
-                "data-dubbed=\"0\""
-            }
+                if (document.select("div.tab-content #filme div.panel button[data-dubbed=\"0\"]").isNullOrEmpty()) {
+                    "data-dubbed=\"1\""
+                } else {
+                    "data-dubbed=\"0\""
+                }
             }][data-hoster=\"1\"], div.tab-content #specials div.panel button[data-dubbed=\"0\"][data-hoster=\"1\"]",
         )
         episodeElement.forEach {
