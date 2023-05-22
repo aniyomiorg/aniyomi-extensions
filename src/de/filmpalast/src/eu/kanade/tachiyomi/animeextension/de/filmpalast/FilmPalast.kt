@@ -7,6 +7,7 @@ import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.de.filmpalast.extractors.EvoloadExtractor
 import eu.kanade.tachiyomi.animeextension.de.filmpalast.extractors.FilemoonExtractor
+import eu.kanade.tachiyomi.animeextension.de.filmpalast.extractors.StreamHideVidExtractor
 import eu.kanade.tachiyomi.animeextension.de.filmpalast.extractors.UpstreamExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -83,107 +84,72 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun videosFromElement(document: Document): List<Video> {
-        val videoList = mutableListOf<Video>()
         val elements = document.select("ul.currentStreamLinks > li > a")
-        val hosterSelection = preferences.getStringSet("hoster_selection", setOf("voe", "stape", "evo", "up", "moon"))
-        for (element in elements) {
-            val url = element.attr("abs:href")
-            when {
-                url.contains("https://voe.sx") && hosterSelection?.contains("voe") == true -> {
-                    val quality = "Voe"
-                    val video = VoeExtractor(client).videoFromUrl(url, quality)
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
-                url.contains("https://upstream.to") && hosterSelection?.contains("up") == true -> {
-                    val videos = UpstreamExtractor(client).videoFromUrl(url)
-                    if (videos != null) {
-                        videoList.addAll(videos)
-                    }
-                }
+        val hosterSelection = preferences.getStringSet(PREF_SELECTION_KEY, PREF_SELECTION_DEFAULT)!!
+        return elements.mapNotNull { element ->
+            val url = element.attr("abs:href").ifEmpty {
+                element.attr("abs:data-player-url")
             }
-        }
-        for (element in elements) {
-            val url = element.attr("abs:data-player-url")
             when {
-                url.contains("https://streamtape.com") && hosterSelection?.contains("stape") == true -> {
-                    try {
-                        with(
-                            client.newCall(GET(url, headers = Headers.headersOf("Referer", baseUrl, "Cookie", "Fuck Streamtape because they add concatenation to fuck up scrapers")))
-                                .execute().asJsoup(),
-                        ) {
-                            linkRegex.find(this.select("script:containsData(document.getElementById('robotlink'))").toString())?.let {
-                                val quality = "Streamtape"
-                                val id = it.groupValues[1].replace("%27+%20(%27xcdb", "")
-                                val videoUrl = "https://streamtape.com/get_video?$id&stream=1".replace("""" + '""", "")
-                                videoList.add(Video(videoUrl, quality, videoUrl))
-                            }
-                        }
-                    } catch (e: Exception) {
-                    }
-                }
-                url.contains("https://evoload.io") && hosterSelection?.contains("evo") == true -> {
-                    val quality = "Evoload"
-                    if (document.select("#EvoVid_html5_api").attr("src").contains("EvoStreams")) {
-                        val videoUrl = document.select("#EvoVid_html5_api").attr("src")
-                        if (videoUrl.isNotEmpty()) {
-                            videoList.add(Video(videoUrl, quality, videoUrl))
-                        }
-                    } else {
-                        EvoloadExtractor(client).videoFromUrl(url, quality)
-                        videoList.addAll(EvoloadExtractor(client).videoFromUrl(url, quality))
-                    }
-                }
-                url.contains("filemoon.sx") && hosterSelection?.contains("moon") == true -> {
-                    val videos = FilemoonExtractor(client).videoFromUrl(url)
-                    if (videos != null) {
-                        videoList.addAll(videos)
-                    }
-                }
-            }
-        }
+                url.contains("https://voe.sx") && hosterSelection.contains("voe") ->
+                    VoeExtractor(client).videoFromUrl(url, "Voe")
+                        ?.let(::listOf)
 
-        return videoList
+                url.contains("https://upstream.to") && hosterSelection.contains("up") ->
+                    UpstreamExtractor(client).videoFromUrl(url)
+
+                url.contains("https://streamtape.com") && hosterSelection.contains("stape") -> {
+                    runCatching {
+                        val stapeHeaders = Headers.headersOf(
+                            "Referer",
+                            baseUrl,
+                            "Cookie",
+                            "Fuck Streamtape because they add concatenation to fuck up scrapers",
+                        )
+                        // from lib streamtape-extractor
+                        // TODO: add headers param to lib, so we can use the
+                        // lib in cases like this.
+                        val doc = client.newCall(GET(url, headers = stapeHeaders))
+                            .execute()
+                            .asJsoup()
+
+                        val targetLine = "document.getElementById('robotlink')"
+                        val script = doc.selectFirst("script:containsData($targetLine)")
+                            ?.data()
+                            ?.substringAfter("$targetLine.innerHTML = '")
+                            ?: return@runCatching null
+                        val videoUrl = "https:" + script.substringBefore("'") +
+                            script.substringAfter("+ ('xcd").substringBefore("'")
+                        listOf(Video(videoUrl, "Streamtape", videoUrl))
+                    }.getOrNull()
+                }
+
+                url.contains("https://evoload.io") && hosterSelection.contains("evo") -> {
+                    val quality = "Evoload"
+                    document.selectFirst("#EvoVid_html5_api")?.attr("src")?.let { videoUrl ->
+                        if (videoUrl.contains("EvoStreams")) {
+                            listOf(Video(videoUrl, quality, videoUrl))
+                        } else {
+                            EvoloadExtractor(client).videoFromUrl(url, quality)
+                        }
+                    }
+                }
+                url.contains("filemoon.sx") && hosterSelection.contains("moon") ->
+                    FilemoonExtractor(client).videoFromUrl(url)
+                url.contains("hide.com") && hosterSelection.contains("hide") ->
+                    StreamHideVidExtractor(client).videosFromUrl(url, "StreamHide")
+                url.contains("streamvid.net") && hosterSelection.contains("vid") ->
+                    StreamHideVidExtractor(client).videosFromUrl(url, "StreamVid")
+                else -> null
+            }
+        }.flatten()
     }
 
-    private val linkRegex =
-        Regex("""(i(|" \+ ')d(|" \+ ')=.*?&(|" \+ ')e(|" \+ ')x(|" \+ ')p(|" \+ ')i(|" \+ ')r(|" \+ ')e(|" \+ ')s(|" \+ ')=.*?&(|" \+ ')i(|" \+ ')p(|" \+ ')=.*?&(|" \+ ')t(|" \+ ')o(|" \+ ')k(|" \+ ')e(|" \+ ')n(|" \+ ')=.*)'""")
-
     override fun List<Video>.sort(): List<Video> {
-        val hoster = preferences.getString("preferred_hoster", "Voe")
-        val hosterList = mutableListOf<Video>()
-        val otherList = mutableListOf<Video>()
-        if (hoster != null) {
-            for (video in this) {
-                if (video.url.contains(hoster)) {
-                    hosterList.add(video)
-                } else {
-                    otherList.add(video)
-                }
-            }
-        } else {
-            otherList += this
-        }
-        val newList = mutableListOf<Video>()
-        var preferred = 0
-        for (video in hosterList) {
-            if (hoster?.let { video.quality.contains(it) } == true) {
-                newList.add(preferred, video)
-                preferred++
-            } else {
-                newList.add(video)
-            }
-        }
-        for (video in otherList) {
-            if (hoster?.let { video.quality.contains(it) } == true) {
-                newList.add(preferred, video)
-                preferred++
-            } else {
-                newList.add(video)
-            }
-        }
-        return newList
+        val hoster = preferences.getString(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
+        return sortedWith(
+            compareBy { it.url.contains(hoster) },
+        ).reversed()
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -247,11 +213,11 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val hosterPref = ListPreference(screen.context).apply {
-            key = "preferred_hoster"
-            title = "Standard-Hoster"
-            entries = arrayOf("Voe", "Streamtape", "Evoload", "Upstream", "Filemoon")
-            entryValues = arrayOf("https://voe.sx", "https://streamtape.com", "https://evoload.io", "https://upstream.to", "https://filemoon.sx")
-            setDefaultValue("https://voe.sx")
+            key = PREF_HOSTER_KEY
+            title = PREF_HOSTER_TITLE
+            entries = PREF_HOSTER_ENTRIES
+            entryValues = PREF_HOSTER_VALUES
+            setDefaultValue(PREF_HOSTER_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -262,11 +228,11 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         val subSelection = MultiSelectListPreference(screen.context).apply {
-            key = "hoster_selection"
-            title = "Hoster auswählen"
-            entries = arrayOf("Voe", "Streamtape", "Evoload", "Upstream", "Filemoon")
-            entryValues = arrayOf("voe", "stape", "evo", "up", "moon")
-            setDefaultValue(setOf("voe", "stape", "evo", "up", "moon"))
+            key = PREF_SELECTION_KEY
+            title = PREF_SELECTION_TITLE
+            entries = PREF_SELECTION_ENTRIES
+            entryValues = PREF_SELECTION_VALUES
+            setDefaultValue(PREF_SELECTION_DEFAULT)
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
@@ -274,5 +240,35 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         screen.addPreference(hosterPref)
         screen.addPreference(subSelection)
+    }
+
+    companion object {
+        private const val PREF_HOSTER_KEY = "preferred_hoster"
+        private const val PREF_HOSTER_TITLE = "Standard-Hoster"
+        private const val PREF_HOSTER_DEFAULT = "https://voe.sx"
+        private val PREF_HOSTER_ENTRIES = arrayOf(
+            "Voe",
+            "Streamtape",
+            "Evoload",
+            "Upstream",
+            "Filemoon",
+            "StreamHide",
+            "StreamVid",
+        )
+        private val PREF_HOSTER_VALUES = arrayOf(
+            "https://voe.sx",
+            "https://streamtape.com",
+            "https://evoload.io",
+            "https://upstream.to",
+            "https://filemoon.sx",
+            "hide.com",
+            "streamvid.net",
+        )
+
+        private const val PREF_SELECTION_KEY = "hoster_selection"
+        private const val PREF_SELECTION_TITLE = "Hoster auswählen"
+        private val PREF_SELECTION_ENTRIES = PREF_HOSTER_ENTRIES
+        private val PREF_SELECTION_VALUES = arrayOf("voe", "stape", "evo", "up", "moon", "hide", "vid")
+        private val PREF_SELECTION_DEFAULT = PREF_SELECTION_VALUES.toSet()
     }
 }
