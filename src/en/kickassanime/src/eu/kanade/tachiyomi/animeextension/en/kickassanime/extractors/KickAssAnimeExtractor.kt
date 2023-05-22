@@ -114,7 +114,7 @@ class KickAssAnimeExtractor(
 
     private fun extractVideosFromHLS(playlist: String, prefix: String, subs: List<Track>, playlistUrl: String): List<Video> {
         val separator = "#EXT-X-STREAM-INF"
-        return playlist.substringAfter(separator).split(separator).map {
+        return playlist.substringAfter(separator).split(separator).mapNotNull {
             val resolution = it.substringAfter("RESOLUTION=")
                 .substringBefore("\n")
                 .substringAfter("x")
@@ -125,7 +125,7 @@ class KickAssAnimeExtractor(
                     url.startsWith("/") -> "https://" + playlistUrl.toHttpUrl().host + url
                     else -> url
                 }
-            }
+            }.ifEmpty { return@mapNotNull null }
 
             Video(videoUrl, "$prefix - $resolution", videoUrl, subtitleTracks = subs)
         }
