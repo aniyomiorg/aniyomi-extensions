@@ -134,12 +134,24 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         }
                     }
                 }
+
                 url.contains("filemoon.sx") && hosterSelection.contains("moon") ->
                     FilemoonExtractor(client).videoFromUrl(url)
                 url.contains("hide.com") && hosterSelection.contains("hide") ->
                     StreamHideVidExtractor(client).videosFromUrl(url, "StreamHide")
                 url.contains("streamvid.net") && hosterSelection.contains("vid") ->
                     StreamHideVidExtractor(client).videosFromUrl(url, "StreamVid")
+
+                "wolfstream" in url && hosterSelection.contains("wolf") -> {
+                    client.newCall(GET(url, headers)).execute()
+                        .use { it.asJsoup() }
+                        .selectFirst("script:containsData(sources)")
+                        ?.data()
+                        ?.let { jsData ->
+                            val videoUrl = jsData.substringAfter("{file:\"").substringBefore("\"")
+                            listOf(Video(videoUrl, "WolfStream", videoUrl, headers = headers))
+                        }
+                }
                 else -> null
             }
         }.flatten()
@@ -254,6 +266,7 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "Filemoon",
             "StreamHide",
             "StreamVid",
+            "WolfStream",
         )
         private val PREF_HOSTER_VALUES = arrayOf(
             "https://voe.sx",
@@ -263,12 +276,22 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "https://filemoon.sx",
             "hide.com",
             "streamvid.net",
+            "https://wolfstream",
         )
 
         private const val PREF_SELECTION_KEY = "hoster_selection"
         private const val PREF_SELECTION_TITLE = "Hoster auswählen"
         private val PREF_SELECTION_ENTRIES = PREF_HOSTER_ENTRIES
-        private val PREF_SELECTION_VALUES = arrayOf("voe", "stape", "evo", "up", "moon", "hide", "vid")
+        private val PREF_SELECTION_VALUES = arrayOf(
+            "voe",
+            "stape",
+            "evo",
+            "up",
+            "moon",
+            "hide",
+            "vid",
+            "wolf",
+        )
         private val PREF_SELECTION_DEFAULT = PREF_SELECTION_VALUES.toSet()
     }
 }
