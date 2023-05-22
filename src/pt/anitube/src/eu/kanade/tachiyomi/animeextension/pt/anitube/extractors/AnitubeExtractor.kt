@@ -17,13 +17,13 @@ object AnitubeExtractor {
             .replace("cdn1", "cdn3")
         val type = serverUrl.split("/").get(3)
         val qualities = listOfNotNull("SD", "HD", if (hasFHD) "FULLHD" else null)
-        val paths = listOf("appsd", "apphd", "appfullhd").let {
+        val paths = listOf("appsd", "apphd").let {
             if (type.endsWith("2")) {
                 it.map { path -> path + "2" }
             } else {
                 it
             }
-        }
+        } + listOf("appfullhd")
         return qualities.mapIndexed { index, quality ->
             val path = paths[index]
             val url = serverUrl.replace(type, path)
