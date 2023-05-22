@@ -155,42 +155,40 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Episodes ==============================
 
     override fun episodeListRequest(anime: SAnime): Request {
-        val id = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup()
-            .selectFirst("div[data-id]")!!.attr("data-id")
-        val vrf = callConsumet(id, "vrf")
-        return GET(
-            "$baseUrl/ajax/episode/list/$id?$vrf",
-            headers = Headers.headersOf("url", anime.url),
-        )
-    }
+    val id = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup()
+        .selectFirst("div[data-id]")?.attr("data-id") ?: throw IllegalStateException("Failed to retrieve anime ID")
+    val vrf = callConsumet(id, "vrf")
+    return GET(
+        "$baseUrl/ajax/episode/list/$id?$vrf",
+        headers = Headers.headersOf("url", anime.url),
+    )
+}
 
-    override fun episodeListSelector() = "div.episodes ul > li > a"
+override fun episodeListSelector() = "div.episodes ul > li > a"
 
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        val animeUrl = response.request.header("url").toString()
-        val responseObject = json.decodeFromString<JsonObject>(response.body.string())
-        val document = Jsoup.parse(JSONUtil.unescape(responseObject["result"]!!.jsonPrimitive.content))
-        val episodeElements = document.select(episodeListSelector())
-        return episodeElements.parallelMap { episodeFromElements(it, animeUrl) }.reversed()
-    }
+override fun episodeListParse(response: Response): List<SEpisode> {
+    val animeUrl = response.request.header("url").toString()
+    val responseObject = json.decodeFromString<JsonObject>(response.body?.string() ?: "")
+    val document = Jsoup.parse(JSONUtil.unescape(responseObject["result"]?.jsonPrimitive?.content ?: ""))
+    val episodeElements = document.select(episodeListSelector())
+    return episodeElements.map { episodeFromElement(it, animeUrl) }.reversed()
+}
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not Used")
-
-    private fun episodeFromElements(element: Element, url: String): SEpisode {
-        val episode = SEpisode.create()
-        val epNum = element.attr("data-num")
-        val ids = element.attr("data-ids")
-        val sub = element.attr("data-sub").toInt().toBoolean()
-        val dub = element.attr("data-dub").toInt().toBoolean()
-        episode.url = "$ids&epurl=$url/ep-$epNum"
-        episode.episode_number = epNum.toFloat()
-        episode.scanlator = (if (sub) "Sub" else "") + if (dub) ", Dub" else ""
-        val name = element.parent()?.select("span.d-title")?.text().orEmpty()
-        val namePrefix = "Episode $epNum"
-        episode.name = "Episode $epNum" +
+private fun episodeFromElement(element: Element, url: String): SEpisode {
+    val episode = SEpisode.create()
+    val epNum = element.attr("data-num")
+    val ids = element.attr("data-ids")
+    val sub = element.attr("data-sub").toIntOrNull()?.toBoolean() ?: false
+    val dub = element.attr("data-dub").toIntOrNull()?.toBoolean() ?: false
+    episode.url = "$ids&epurl=$url/ep-$epNum"
+    episode.episode_number = epNum.toFloat()
+    episode.scanlator = (if (sub) "Sub" else "") + if (dub) ", Dub" else ""
+    val name = element.parent()?.select("span.d-title")?.text().orEmpty()
+    val namePrefix = "Episode $epNum"
+    episode.name = "Episode $epNum" +
             if (name.isNotEmpty() && name != namePrefix) ": $name" else ""
-        return episode
-    }
+    return episode
+}
 
     // ============================ Video Links =============================
 
