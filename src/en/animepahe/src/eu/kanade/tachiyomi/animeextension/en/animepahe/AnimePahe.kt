@@ -217,12 +217,14 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         val subPreference = preferences.getString(PREF_SUB_KEY, PREF_SUB_DEFAULT)!!
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val shouldBeAv1 = preferences.getBoolean(PREF_AV1_KEY, PREF_AV1_DEFAULT)
         val shouldEndWithEng = (subPreference == "eng")
 
         return this.sortedWith(
             compareBy(
                 { it.quality.contains(quality) },
-                { it.quality.endsWith("eng", true) == shouldEndWithEng },
+                { (Regex("""\beng\b""").find(it.quality.lowercase()) != null) == shouldEndWithEng },
+                { it.quality.lowercase().contains("av1") == shouldBeAv1 },
             ),
         ).reversed()
     }
@@ -285,10 +287,22 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
                 preferences.edit().putBoolean(key, new).commit()
             }
         }
+        val av1Pref = SwitchPreferenceCompat(screen.context).apply {
+            key = PREF_AV1_KEY
+            title = PREF_AV1_TITLE
+            summary = PREF_AV1_SUMMARY
+            setDefaultValue(PREF_AV1_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val new = newValue as Boolean
+                preferences.edit().putBoolean(key, new).commit()
+            }
+        }
         screen.addPreference(videoQualityPref)
         screen.addPreference(domainPref)
         screen.addPreference(subPref)
         screen.addPreference(linkPref)
+        screen.addPreference(av1Pref)
     }
 
     // ============================= Utilities ==============================
@@ -352,6 +366,16 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         private val PREF_LINK_TYPE_SUMMARY by lazy {
             """Enable this if you are having Cloudflare issues.
             |Note that this will break the ability to seek inside of the video unless the episode is downloaded in advance.
+            """.trimMargin()
+        }
+
+        // Big slap to whoever misspelled `preferred`
+        private const val PREF_AV1_KEY = "preffered_av1"
+        private const val PREF_AV1_TITLE = "Use AV1 codec"
+        private const val PREF_AV1_DEFAULT = false
+        private val PREF_AV1_SUMMARY by lazy {
+            """Enable to use AV1 if available
+            |Turn off to never select av1 as preferred codec
             """.trimMargin()
         }
     }
