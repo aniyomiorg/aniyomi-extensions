@@ -70,7 +70,14 @@ data class VideoDto(
     val dash: String = "",
     val subtitles: List<SubtitlesDto> = emptyList(),
 ) {
-    val playlistUrl by lazy { if (hls.isBlank()) "https:$dash" else hls }
+    val playlistUrl by lazy {
+        hls.ifEmpty { dash }.let { uri ->
+            when {
+                uri.startsWith("//") -> "https:$uri"
+                else -> uri
+            }
+        }
+    }
 
     @Serializable
     data class SubtitlesDto(val name: String, val language: String, val src: String)
