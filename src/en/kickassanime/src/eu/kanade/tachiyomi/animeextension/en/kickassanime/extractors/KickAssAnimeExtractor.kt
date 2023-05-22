@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES.decodeHex
 import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.Jsoup
@@ -83,7 +84,7 @@ class KickAssAnimeExtractor(
         return when {
             videoObject.hls.isBlank() ->
                 extractVideosFromDash(masterPlaylist, prefix, subtitles)
-            else -> extractVideosFromHLS(masterPlaylist, prefix, subtitles)
+            else -> extractVideosFromHLS(masterPlaylist, prefix, subtitles, videoObject.playlistUrl)
         }
     }
 
@@ -111,15 +112,20 @@ class KickAssAnimeExtractor(
         }
     }
 
-    private fun extractVideosFromHLS(playlist: String, prefix: String, subs: List<Track>): List<Video> {
+    private fun extractVideosFromHLS(playlist: String, prefix: String, subs: List<Track>, playlistUrl: String): List<Video> {
         val separator = "#EXT-X-STREAM-INF"
-        return playlist.substringAfter(separator).split(separator).map {
+        return playlist.substringAfter(separator).split(separator).mapNotNull {
             val resolution = it.substringAfter("RESOLUTION=")
                 .substringBefore("\n")
                 .substringAfter("x")
                 .substringBefore(",") + "p"
 
-            val videoUrl = it.substringAfter("\n").substringBefore("\n")
+            val videoUrl = it.substringAfter("\n").substringBefore("\n").let { url ->
+                when {
+                    url.startsWith("/") -> "https://" + playlistUrl.toHttpUrl().host + url
+                    else -> url
+                }
+            }.ifEmpty { return@mapNotNull null }
 
             Video(videoUrl, "$prefix - $resolution", videoUrl, subtitleTracks = subs)
         }
@@ -143,7 +149,6 @@ class KickAssAnimeExtractor(
     }
 
     // ============================= Utilities ==============================
-
     @SuppressLint("DefaultLocale")
     private fun Element.formatBits(attribute: String = "bandwidth"): String? {
         var bits = attr(attribute).toLongOrNull() ?: 0L

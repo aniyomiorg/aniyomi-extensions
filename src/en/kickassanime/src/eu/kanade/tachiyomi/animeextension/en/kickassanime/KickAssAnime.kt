@@ -129,7 +129,9 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val videos = response.parseAs<ServersDto>()
         val extractor = KickAssAnimeExtractor(client, json, headers)
-        return videos.servers.flatMap(extractor::videosFromUrl)
+        return videos.servers.mapNotNull {
+            runCatching { extractor.videosFromUrl(it) }.getOrNull()
+        }.flatten()
     }
 
     // =========================== Anime Details ============================

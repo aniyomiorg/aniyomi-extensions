@@ -6,10 +6,10 @@ import android.os.Looper
 import android.webkit.JavascriptInterface
 import android.webkit.WebSettings
 import android.webkit.WebView
+import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES.decodeHex
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.OkHttpClient
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -18,21 +18,27 @@ class AESKeyExtractor(private val client: OkHttpClient) {
         val KEY_MAP = mutableMapOf(
             // Default key. if it changes, the extractor will update it.
             "PinkBird" to "7191d608bd4deb4dc36f656c4bbca1b7".toByteArray(),
-            "SapphireDuck" to "f04274d54a9e01ed4a728c5c1889886e".toByteArray(), // i hate sapphire
+            "SapphireDuck" to "2940ba141ba490377b3f0a28ce56641a".toByteArray(), // i hate sapphire
         )
 
-        private const val ERROR_MSG_GENERIC = "the AES key was not found."
-        private const val ERROR_MSG_VAR = "the AES key variable was not found"
+        // ..... dont try reading them.
         private val KEY_VAR_REGEX by lazy { Regex("\\.AES\\[.*?\\]\\((\\w+)\\),") }
+        private val KEY_FUNC_REGEX by lazy {
+            Regex(",\\w+\\.SHA1\\)\\(\\[.*?function.*?\\(\\w+=(\\w+).*?function")
+        }
     }
 
-    private val context = Injekt.get<Application>()
+    private val context: Application by injectLazy()
     private val handler by lazy { Handler(Looper.getMainLooper()) }
 
     class ExtractorJSI(private val latch: CountDownLatch, private val prefix: String) {
         @JavascriptInterface
         fun setKey(key: String) {
-            AESKeyExtractor.KEY_MAP.set(prefix, key.toByteArray())
+            val keyBytes = when {
+                key.length == 32 -> key.toByteArray()
+                else -> key.decodeHex()
+            }
+            AESKeyExtractor.KEY_MAP.set(prefix, keyBytes)
             latch.countDown()
         }
     }
@@ -78,7 +84,7 @@ class AESKeyExtractor(private val client: OkHttpClient) {
             webView = null
         }
 
-        return AESKeyExtractor.KEY_MAP.get(prefix) ?: throw Exception(ERROR_MSG_GENERIC)
+        return AESKeyExtractor.KEY_MAP.get(prefix) ?: throw Exception()
     }
 
     private fun patchScriptFromUrl(url: String): String {
@@ -90,18 +96,37 @@ class AESKeyExtractor(private val client: OkHttpClient) {
     }
 
     private fun patchScriptFromHtml(baseUrl: String, body: String): String {
-        val scriptPath = body.substringAfter("script src=\"").substringBefore('"')
-        val scriptUrl = "$baseUrl/$scriptPath"
+        val scriptPath = body.substringAfter("src=\"assets/").substringBefore('"')
+        val scriptUrl = "$baseUrl/assets/$scriptPath"
         val scriptBody = client.newCall(GET(scriptUrl)).execute().body.string()
 
-        val varWithKeyName = KEY_VAR_REGEX.find(scriptBody)
-            ?.groupValues
-            ?.last()
-            ?: Exception(ERROR_MSG_VAR)
+        return when {
+            KEY_FUNC_REGEX.containsMatchIn(scriptBody) -> patchScriptWithFunction(scriptBody) // Sapphire
+            KEY_VAR_REGEX.containsMatchIn(scriptBody) -> patchScriptWithVar(scriptBody) // PinkBird
+            else -> throw Exception() // ????
+        }
+    }
 
-        val varWithKeyBody = scriptBody.substringAfter("var $varWithKeyName=")
+    private fun patchScriptWithVar(script: String): String {
+        val varWithKeyName = KEY_VAR_REGEX.find(script)
+            ?.groupValues
+            ?.lastOrNull()
+            ?: throw Exception()
+
+        val varWithKeyBody = script.substringAfter("var $varWithKeyName=")
             .substringBefore(";")
 
-        return scriptBody.replace(varWithKeyBody, "AESKeyExtractor.setKey($varWithKeyBody)")
+        return script.replace(varWithKeyBody, "AESKeyExtractor.setKey($varWithKeyBody)")
+    }
+
+    private fun patchScriptWithFunction(script: String): String {
+        val (match, functionName) = KEY_FUNC_REGEX.find(script)
+            ?.groupValues
+            ?: throw Exception()
+        val patchedMatch = match.replace(
+            ";function",
+            ";AESKeyExtractor.setKey($functionName().toString());function",
+        )
+        return script.replace(match, patchedMatch)
     }
 }
