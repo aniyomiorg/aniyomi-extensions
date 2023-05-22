@@ -168,64 +168,6 @@
     ]
   },
   {
-    "name": "Aniyomi: NetFilm",
-    "pkg": "eu.kanade.tachiyomi.animeextension.all.netfilm",
-    "apk": "aniyomi-all.netfilm-v13.2.apk",
-    "lang": "all",
-    "code": 2,
-    "version": "13.2",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "NetFilm",
-        "lang": "all",
-        "id": "7380900262139500622",
-        "baseUrl": "https://net-film.vercel.app/api",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: Onepace",
-    "pkg": "eu.kanade.tachiyomi.animeextension.all.onepace",
-    "apk": "aniyomi-all.onepace-v13.8.apk",
-    "lang": "all",
-    "code": 8,
-    "version": "13.8",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "OnePaceESP",
-        "lang": "es",
-        "id": "2127103978762495399",
-        "baseUrl": "https://www.zippyshare.com/rest/public/getTree?user=onepace&ident=kbvatgfc&id=%23",
-        "versionId": 1,
-        "hasCloudflare": 1
-      },
-      {
-        "name": "OnePaceFR",
-        "lang": "fr",
-        "id": "7521637788799590682",
-        "baseUrl": "https://www.zippyshare.com/rest/public/getTree?user=onepace&ident=kbvatgfc&id=%23",
-        "versionId": 1,
-        "hasCloudflare": 1
-      },
-      {
-        "name": "OnePaceEN",
-        "lang": "en",
-        "id": "4340635229919113655",
-        "baseUrl": "https://www.zippyshare.com/rest/public/getTree?user=onepace&ident=kbvatgfc&id=%23",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: أكوام",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.akwam",
     "apk": "aniyomi-ar.akwam-v13.8.apk",
@@ -774,10 +716,10 @@
   {
     "name": "Aniyomi: FilmPalast",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.filmpalast",
-    "apk": "aniyomi-de.filmpalast-v13.9.apk",
+    "apk": "aniyomi-de.filmpalast-v13.10.apk",
     "lang": "de",
-    "code": 9,
-    "version": "13.9",
+    "code": 10,
+    "version": "13.10",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1509,10 +1451,10 @@
   {
     "name": "Aniyomi: KickAssAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.kickassanime",
-    "apk": "aniyomi-en.kickassanime-v13.26.apk",
+    "apk": "aniyomi-en.kickassanime-v13.27.apk",
     "lang": "en",
-    "code": 26,
-    "version": "13.26",
+    "code": 27,
+    "version": "13.27",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3284,10 +3226,10 @@
   {
     "name": "Aniyomi: Anitube",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.anitube",
-    "apk": "aniyomi-pt.anitube-v13.9.apk",
+    "apk": "aniyomi-pt.anitube-v13.10.apk",
     "lang": "pt-BR",
-    "code": 9,
-    "version": "13.9",
+    "code": 10,
+    "version": "13.10",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
