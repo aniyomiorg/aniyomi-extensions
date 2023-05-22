@@ -21,9 +21,6 @@ class AESKeyExtractor(private val client: OkHttpClient) {
             "SapphireDuck" to "2940ba141ba490377b3f0a28ce56641a".toByteArray(), // i hate sapphire
         )
 
-        private const val ERROR_MSG_GENERIC = "the AES key was not found."
-        private const val ERROR_MSG_VAR = "the AES key variable was not found"
-
         // ..... dont try reading them.
         private val KEY_VAR_REGEX by lazy { Regex("\\.AES\\[.*?\\]\\((\\w+)\\),") }
         private val KEY_FUNC_REGEX by lazy {
@@ -87,7 +84,7 @@ class AESKeyExtractor(private val client: OkHttpClient) {
             webView = null
         }
 
-        return AESKeyExtractor.KEY_MAP.get(prefix) ?: throw Exception(ERROR_MSG_GENERIC)
+        return AESKeyExtractor.KEY_MAP.get(prefix) ?: throw Exception()
     }
 
     private fun patchScriptFromUrl(url: String): String {
@@ -106,7 +103,7 @@ class AESKeyExtractor(private val client: OkHttpClient) {
         return when {
             KEY_FUNC_REGEX.containsMatchIn(scriptBody) -> patchScriptWithFunction(scriptBody) // Sapphire
             KEY_VAR_REGEX.containsMatchIn(scriptBody) -> patchScriptWithVar(scriptBody) // PinkBird
-            else -> throw Exception(ERROR_MSG_GENERIC) // ????
+            else -> throw Exception() // ????
         }
     }
 
@@ -114,7 +111,7 @@ class AESKeyExtractor(private val client: OkHttpClient) {
         val varWithKeyName = KEY_VAR_REGEX.find(script)
             ?.groupValues
             ?.lastOrNull()
-            ?: throw Exception(ERROR_MSG_VAR)
+            ?: throw Exception()
 
         val varWithKeyBody = script.substringAfter("var $varWithKeyName=")
             .substringBefore(";")
@@ -125,7 +122,7 @@ class AESKeyExtractor(private val client: OkHttpClient) {
     private fun patchScriptWithFunction(script: String): String {
         val (match, functionName) = KEY_FUNC_REGEX.find(script)
             ?.groupValues
-            ?: throw Exception(ERROR_MSG_GENERIC)
+            ?: throw Exception()
         val patchedMatch = match.replace(
             ";function",
             ";AESKeyExtractor.setKey($functionName().toString());function",
