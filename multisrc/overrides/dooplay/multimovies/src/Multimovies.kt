@@ -5,6 +5,7 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.en.multimovies.extractors.AutoEmbedExtractor
 import eu.kanade.tachiyomi.animeextension.en.multimovies.extractors.MultimoviesCloudExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
@@ -29,6 +30,25 @@ class Multimovies : DooPlay(
     override fun popularAnimeSelector() = latestUpdatesSelector()
 
     override fun popularAnimeNextPageSelector() = latestUpdatesNextPageSelector()
+
+    // ============================== Episodes ==============================
+    override val seasonListSelector = "div#seasons > div:not(:contains(no episodes this season))"
+
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val doc = response.use { getRealAnimeDoc(it.asJsoup()) }
+        val seasonList = doc.select(seasonListSelector)
+        return if ("/movies/" in doc.location()) {
+            SEpisode.create().apply {
+                setUrlWithoutDomain(doc.location())
+                episode_number = 1F
+                name = episodeMovieText
+            }.let(::listOf)
+        } else if (seasonList.size < 1) {
+            throw Exception("The source provides ZERO episodes.")
+        } else {
+            seasonList.flatMap(::getSeasonEpisodes).reversed()
+        }
+    }
 
     // ============================ Video Links =============================
     override val prefQualityValues = arrayOf("1080p", "720p", "480p", "360p", "240p")
