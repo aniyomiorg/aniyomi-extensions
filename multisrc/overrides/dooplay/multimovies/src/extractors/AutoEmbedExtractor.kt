@@ -683,6 +683,7 @@ import android.util.Base64
 import app.cash.quickjs.QuickJs
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -698,9 +699,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.RequestBody.Companion.toRequestBody
 import uy.kohesive.injekt.injectLazy
 
 class AutoEmbedExtractor(private val client: OkHttpClient) {
@@ -708,10 +707,6 @@ class AutoEmbedExtractor(private val client: OkHttpClient) {
     private val json: Json by injectLazy()
 
     fun videosFromUrl(url: String, headers: Headers): List<Video> {
-        val videoList = mutableListOf<Video>()
-        val serverList = mutableListOf<Server>()
-        val containerList = mutableListOf<Server>()
-
         val docHeaders = headers.newBuilder()
             .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
             .add("Host", url.toHttpUrl().host)
@@ -721,7 +716,7 @@ class AutoEmbedExtractor(private val client: OkHttpClient) {
         ).execute().asJsoup()
 
         // First get all containers
-        document.select("div > a[id*=server]").forEach {
+        val containerList = document.select("div > a[id*=server]").mapNotNull {
             val slug = it.attr("href")
             val newDocument = client.newCall(
                 GET("https://${url.toHttpUrl().host}$slug", headers = headers),
@@ -731,72 +726,64 @@ class AutoEmbedExtractor(private val client: OkHttpClient) {
                 .substringAfter("replace(\"").substringBefore("\"")
 
             when {
-                container.contains("2embed.to", true) -> {
-                    containerList.add(Server(container, "2embed"))
-                }
-                container.contains("gomostream", true) -> {
-                    containerList.add(Server(container, "gomostream"))
-                }
+                container.contains("2embed.to", true) -> Server(container, "2embed")
+                container.contains("gomostream", true) -> Server(container, "gomostream")
+                else -> null
             }
         }
 
         // Get video servers from containers
-        serverList.addAll(
-            containerList.parallelMap { container ->
-                runCatching {
-                    when (container.name) {
-                        "2embed" -> {
-                            getTwoEmbedServers(container.url, container.name, headers = headers)
-                        }
-                        "gomostream" -> {
-                            getGomoStreamServers(container.url, container.name, headers = headers)
-                        }
-                        else -> null
+        val serverList = containerList.parallelMap { container ->
+            runCatching {
+                when (container.name) {
+                    "2embed" -> {
+                        getTwoEmbedServers(container.url, headers = headers)
                     }
-                }.getOrNull()
-            }.filterNotNull().flatten(),
-        )
+                    "gomostream" -> {
+                        getGomoStreamServers(container.url, headers = headers)
+                    }
+                    else -> null
+                }
+            }.getOrNull() ?: emptyList()
+        }.flatten()
 
         val videoHeaders = headers.newBuilder()
             .add("Referer", "https://www.2embed.to/")
             .build()
 
-        videoList.addAll(
-            serverList.parallelMap { server ->
-                runCatching {
-                    val prefix = server.name
-                    val url = server.url
+        return serverList.parallelMap { server ->
+            runCatching {
+                val prefix = server.name
+                val videoUrl = server.url
 
-                    when {
-                        url.contains("streamsb") -> {
-                            StreamSBExtractor(client).videosFromUrl(url, headers = headers, prefix = prefix)
-                        }
-                        url.contains("streamlare") -> {
-                            StreamlareExtractor(client).videosFromUrl(url, prefix = prefix)
-                        }
-                        url.contains("mixdrop") -> {
-                            MixDropExtractor(client).videoFromUrl(url, prefix = prefix)
-                        }
-                        url.contains("https://voe") -> {
-                            VoeExtractor(client).videoFromUrl(url, server.name)?.let { listOf(it) }
-                        }
-                        url.contains("rabbitstream") -> {
-                            RabbitStreamExtractor(client).videosFromUrl(url, headers = videoHeaders, prefix = prefix)
-                        }
-                        url.contains("mixdrop") -> {
-                            MixDropExtractor(client).videoFromUrl(url, prefix = prefix)
-                        }
-                        url.contains("https://dood") -> {
-                            val video = DoodExtractor(client).videoFromUrl(url, server.name, false)
-                            video?.let { listOf(it) }
-                        }
-                        else -> null
+                when {
+                    videoUrl.contains("streamsb") -> {
+                        StreamSBExtractor(client).videosFromUrl(videoUrl, headers = headers, prefix = prefix)
                     }
-                }.getOrNull()
-            }.filterNotNull().flatten(),
-        )
-
-        return videoList
+                    videoUrl.contains("streamlare") -> {
+                        StreamlareExtractor(client).videosFromUrl(videoUrl, prefix = prefix)
+                    }
+                    videoUrl.contains("mixdrop") -> {
+                        MixDropExtractor(client).videoFromUrl(videoUrl, prefix = prefix)
+                    }
+                    videoUrl.contains("https://voe") -> {
+                        VoeExtractor(client).videoFromUrl(videoUrl, server.name)
+                            ?.let(::listOf)
+                    }
+                    videoUrl.contains("rabbitstream") -> {
+                        RabbitStreamExtractor(client).videosFromUrl(videoUrl, headers = videoHeaders, prefix = prefix)
+                    }
+                    videoUrl.contains("mixdrop") -> {
+                        MixDropExtractor(client).videoFromUrl(videoUrl, prefix = prefix)
+                    }
+                    videoUrl.contains("https://dood") -> {
+                        DoodExtractor(client).videoFromUrl(videoUrl, server.name, false)
+                            ?.let(::listOf)
+                    }
+                    else -> null
+                }
+            }.getOrNull() ?: emptyList()
+        }.flatten()
     }
 
     data class Server(
@@ -809,15 +796,11 @@ class AutoEmbedExtractor(private val client: OkHttpClient) {
         val link: String,
     )
 
-    private fun getGomoStreamServers(url: String, name: String, headers: Headers): List<Server> {
-        val serverList = mutableListOf<Server>()
-
-        val response = client.newCall(
-            GET(url, headers = headers),
-        ).execute()
+    private fun getGomoStreamServers(url: String, headers: Headers): List<Server> {
+        val response = client.newCall(GET(url, headers = headers)).execute()
         val responseUrl = response.request.url
         val document = response.asJsoup()
-        val script = document.selectFirst("script:containsData(_token)")?.data() ?: return serverList
+        val script = document.selectFirst("script:containsData(_token)")?.data() ?: return emptyList()
         val token = script.substringAfter("\"_token\": \"").substringBefore("\"")
         val tokenCode = script.substringAfter("var tc = '").substringBefore("';")
         val postUrl = script.substringAfter("\"POST\"").substringAfter("\"").substringBefore("\"")
@@ -826,9 +809,7 @@ class AutoEmbedExtractor(private val client: OkHttpClient) {
         val functionName = script.substringAfter("'x-token': ").substringBefore("(")
         val toExecute = "function $functionName${script.substringAfter("function $functionName")};$functionName(\"$tokenCode\")"
 
-        val quickJs = QuickJs.create()
-        val xToken = quickJs.evaluate(toExecute).toString()
-        quickJs.close()
+        val xToken = QuickJs.create().use { it.evaluate(toExecute).toString() }
 
         val postHeaders = Headers.headersOf(
             "Accept", "*/*",
@@ -841,33 +822,29 @@ class AutoEmbedExtractor(private val client: OkHttpClient) {
             "x-token", xToken,
         )
 
-        val postBody = "tokenCode=$tokenCode&_token=$token".toRequestBody("application/x-www-form-urlencoded".toMediaType())
+        val postBody = FormBody.Builder()
+            .add("tokenCode", tokenCode)
+            .add("_token", token)
+            .build()
         val postResponse = client.newCall(
             POST(postUrl, headers = postHeaders, body = postBody),
         ).execute().body.string()
         val list = json.decodeFromString<List<String>>(postResponse)
 
-        serverList.addAll(
-            list.filter { x -> x != "" }.map {
-                Server(it, "[gomostream] ${it.toHttpUrl().host} -")
-            },
-        )
-
-        return serverList
+        return list.filter { x -> x != "" }.map {
+            Server(it, "[gomostream] ${it.toHttpUrl().host} -")
+        }
     }
 
-    private fun getTwoEmbedServers(url: String, name: String, headers: Headers): List<Server> {
-        val serverList = mutableListOf<Server>()
-        val document = client.newCall(
-            GET(url),
-        ).execute().asJsoup()
+    private fun getTwoEmbedServers(url: String, headers: Headers): List<Server> {
+        val document = client.newCall(GET(url)).execute().asJsoup()
 
         val captcha = document.selectFirst("script[src*=recaptcha/api.js]")!!
             .attr("src")
             .substringAfter("render=")
 
         // Get video host urls
-        document.select("div.dropdown-menu > a[data-id]").map {
+        return document.select("div.dropdown-menu > a[data-id]").map {
             val ajaxHeaders = Headers.headersOf(
                 "Accept", "*/*",
                 "Host", url.toHttpUrl().host,
@@ -881,42 +858,45 @@ class AutoEmbedExtractor(private val client: OkHttpClient) {
                 GET("https://www.2embed.to/ajax/embed/play?id=${it.attr("data-id")}&_token=$token", headers = ajaxHeaders),
             ).execute().body.string()
             val parsed = json.decodeFromString<Stream>(streamUrl)
-            serverList.add(
-                Server(parsed.link, "[2embed] ${it.text()} - "),
-            )
+            Server(parsed.link, "[2embed] ${it.text()} - ")
         }
-
-        return serverList
     }
 
     // https://github.com/recloudstream/cloudstream/blob/7b47f93190fb2b106da44150c4431178eb3995dc/app/src/main/java/com/lagradost/cloudstream3/MainAPI.kt#L123
     private fun getCaptchaToken(url: String, key: String): String? {
-        try {
-            val domain = Base64.encodeToString(
-                (url.toHttpUrl().scheme + "://" + url.toHttpUrl().host + ":443").encodeToByteArray(),
-                0,
-            ).replace("\n", "").replace("=", ".")
-            val vToken = client.newCall(
-                GET("https://www.google.com/recaptcha/api.js?render=$key"),
-            ).execute().body.string().substringAfter("releases/").substringBefore("/")
-            val recapToken = client.newCall(
+        return runCatching {
+            val httpUrl = url.toHttpUrl()
+            val pureDomain = (httpUrl.scheme + "://" + httpUrl.host + ":443")
+            val domain = Base64.encodeToString(pureDomain.encodeToByteArray(), Base64.DEFAULT)
+                .replace("\n", "")
+                .replace("=", ".")
+
+            val vToken = client.newCall(GET("https://www.google.com/recaptcha/api.js?render=$key"))
+                .execute()
+                .body.string()
+                .substringAfter("releases/")
+                .substringBefore("/")
+
+            client.newCall(
                 GET("https://www.google.com/recaptcha/api2/anchor?ar=1&hl=en&size=invisible&cb=cs3&k=$key&co=$domain&v=$vToken"),
-            ).execute().asJsoup().selectFirst("#recaptcha-token")?.attr("value")
-            if (recapToken != null) {
-                val body = FormBody.Builder()
-                    .add("v", vToken)
-                    .add("k", key)
-                    .add("c", recapToken)
-                    .add("co", domain)
-                    .add("sa", "")
-                    .add("reason", "q")
-                    .build()
-                return client.newCall(
-                    POST("https://www.google.com/recaptcha/api2/reload?k=$key", body = body),
-                ).execute().body.string().substringAfter("rresp\",\"").substringBefore("\"")
-            }
-        } catch (_: Exception) { }
-        return null
+            ).execute()
+                .asJsoup()
+                .selectFirst("#recaptcha-token")
+                ?.attr("value")
+                ?.let { recapToken ->
+                    val body = FormBody.Builder()
+                        .add("v", vToken)
+                        .add("k", key)
+                        .add("c", recapToken)
+                        .add("co", domain)
+                        .add("sa", "")
+                        .add("reason", "q")
+                        .build()
+                    return client.newCall(
+                        POST("https://www.google.com/recaptcha/api2/reload?k=$key", body = body),
+                    ).execute().body.string().substringAfter("rresp\",\"").substringBefore("\"")
+                }
+        }.getOrNull()
     }
 
     // From Dopebox
