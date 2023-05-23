@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.animeextension.en.multimovies
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.en.multimovies.extractors.AutoEmbedExtractor
+import eu.kanade.tachiyomi.animeextension.en.multimovies.extractors.MultimoviesCloudExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
@@ -59,6 +60,8 @@ class Multimovies : DooPlay(
             streamSbServers.any { it in url } ->
                 StreamSBExtractor(client).videosFromUrl(url, headers = headers, prefix = "[multimovies]")
 
+            url.contains("multimovies.cloud") ->
+                MultimoviesCloudExtractor(client).videosFromUrl(url)
             url.contains("autoembed.to") || url.contains("2embed.to") -> {
                 val newHeaders = headers.newBuilder()
                     .set("Referer", url)
