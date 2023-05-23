@@ -10,7 +10,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 class StreamlareExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String, prefix: String): List<Video> {
         val id = url.split("/").last()
-        val videoList = mutableListOf<Video>()
         val playlist = client.newCall(
             POST(
                 "https://slwatch.co/api/video/stream/get",
@@ -20,27 +19,32 @@ class StreamlareExtractor(private val client: OkHttpClient) {
         ).execute().body.string()
 
         val type = playlist.substringAfter("\"type\":\"").substringBefore("\"")
-        if (type == "hls") {
+        return if (type == "hls") {
             val masterPlaylistUrl = playlist.substringAfter("\"file\":\"").substringBefore("\"").replace("\\/", "/")
             val masterPlaylist = client.newCall(GET(masterPlaylistUrl)).execute().body.string()
 
             val separator = "#EXT-X-STREAM-INF"
             masterPlaylist.substringAfter(separator).split(separator).map {
                 val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
-                var videoUrl = it.substringAfter("\n").substringBefore("\n")
-                if (!videoUrl.startsWith("http")) videoUrl = "${masterPlaylistUrl.substringBefore("master.m3u8")}$videoUrl"
-                videoList.add(Video(videoUrl, "$prefix $quality (Streamlare)", videoUrl))
+                val videoUrl = it.substringAfter("\n").substringBefore("\n").let { urlPart ->
+                    when {
+                        !urlPart.startsWith("http") ->
+                            masterPlaylistUrl.substringBefore("master.m3u8") + urlPart
+                        else -> urlPart
+                    }
+                }
+                Video(videoUrl, "$prefix $quality (Streamlare)", videoUrl)
             }
         } else {
-            playlist.substringAfter("\"label\":\"").split("\"label\":\"").forEach {
-                val quality = it.substringAfter("\"label\":\"").substringBefore("\",") + " (Sl-mp4)"
-                val token = it.substringAfter("\"file\":\"https:\\/\\/larecontent.com\\/video?token=")
-                    .substringBefore("\",")
-                val response = client.newCall(POST("https://larecontent.com/video?token=$token")).execute()
+            val separator = "\"label\":\""
+            playlist.substringAfter(separator).split(separator).map {
+                val quality = it.substringAfter(separator).substringBefore("\",") + " (Sl-mp4)"
+                val apiUrl = it.substringAfter("\"file\":\"").substringBefore("\",")
+                    .replace("\\", "")
+                val response = client.newCall(POST(apiUrl)).execute()
                 val videoUrl = response.request.url.toString()
-                videoList.add(Video(videoUrl, "$prefix $quality (Streamlare)", videoUrl))
+                Video(videoUrl, "$prefix $quality (Streamlare)", videoUrl)
             }
         }
-        return videoList
     }
 }
