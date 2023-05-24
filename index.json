@@ -2848,10 +2848,10 @@
   {
     "name": "Aniyomi: ANIMEWORLD.tv",
     "pkg": "eu.kanade.tachiyomi.animeextension.it.animeworld",
-    "apk": "aniyomi-it.animeworld-v13.24.apk",
+    "apk": "aniyomi-it.animeworld-v13.25.apk",
     "lang": "it",
-    "code": 24,
-    "version": "13.24",
+    "code": 25,
+    "version": "13.25",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
