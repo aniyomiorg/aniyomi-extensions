@@ -195,8 +195,6 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", "1080")!!
         val server = preferences.getString("preferred_server", "Animeworld server")!!
-        // val quality = preferences.getString(VIDEO_SORT_PREF_KEY, VIDEO_SORT_PREF_DEFAULT)!!
-        // val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
 
         return sortedWith(
             compareBy(
