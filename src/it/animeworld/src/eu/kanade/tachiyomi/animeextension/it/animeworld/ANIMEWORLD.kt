@@ -193,21 +193,17 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", null)
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
+        val quality = preferences.getString("preferred_quality", "1080")!!
+        val server = preferences.getString("preferred_server", "Animeworld server")!!
+        // val quality = preferences.getString(VIDEO_SORT_PREF_KEY, VIDEO_SORT_PREF_DEFAULT)!!
+        // val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
+
+        return sortedWith(
+            compareBy(
+                { it.quality.lowercase().contains(server.lowercase()) },
+                { it.quality.lowercase().contains(quality.lowercase()) },
+            ),
+        ).reversed()
     }
 
     // search
@@ -530,8 +526,8 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p", "Doodstream", "StreamTape")
-            entryValues = arrayOf("1080", "720", "480", "360", "Doodstream", "StreamTape")
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
             setDefaultValue("1080")
             summary = "%s"
 
@@ -542,7 +538,23 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val serverPref = ListPreference(screen.context).apply {
+            key = "preferred_server"
+            title = "Preferred server"
+            entries = arrayOf("Animeworld server", "FileMoon", "StreamHide", "StreamSB", "Doodstream", "StreamTape")
+            entryValues = arrayOf("Animeworld server", "FileMoon", "StreamHide", "StreamSB", "Doodstream", "StreamTape")
+            setDefaultValue("Animeworld server")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
         screen.addPreference(videoQualityPref)
+        screen.addPreference(serverPref)
     }
 
     // Utilities
