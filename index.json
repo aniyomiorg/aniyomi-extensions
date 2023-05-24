@@ -359,10 +359,10 @@
   {
     "name": "Aniyomi: فاصل اعلاني",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.faselhd",
-    "apk": "aniyomi-ar.faselhd-v13.12.apk",
+    "apk": "aniyomi-ar.faselhd-v13.13.apk",
     "lang": "ar",
-    "code": 12,
-    "version": "13.12",
+    "code": 13,
+    "version": "13.13",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -371,7 +371,7 @@
         "name": "فاصل اعلاني",
         "lang": "ar",
         "id": "1378291029586884571",
-        "baseUrl": "https://www.faselhd.ac",
+        "baseUrl": "https://www.faselhd.vip",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -464,10 +464,10 @@
   {
     "name": "Aniyomi: توك توك سينما",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.tuktukcinema",
-    "apk": "aniyomi-ar.tuktukcinema-v13.4.apk",
+    "apk": "aniyomi-ar.tuktukcinema-v13.5.apk",
     "lang": "ar",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -476,7 +476,7 @@
         "name": "توك توك سينما",
         "lang": "ar",
         "id": "7363299109912773155",
-        "baseUrl": "https://w.tuktukcinema.net",
+        "baseUrl": "https://w.tuktukcinema.tv",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -2848,10 +2848,10 @@
   {
     "name": "Aniyomi: ANIMEWORLD.tv",
     "pkg": "eu.kanade.tachiyomi.animeextension.it.animeworld",
-    "apk": "aniyomi-it.animeworld-v13.25.apk",
+    "apk": "aniyomi-it.animeworld-v13.26.apk",
     "lang": "it",
-    "code": 25,
-    "version": "13.25",
+    "code": 26,
+    "version": "13.26",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
