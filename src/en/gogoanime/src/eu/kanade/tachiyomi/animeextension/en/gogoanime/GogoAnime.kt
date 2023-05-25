@@ -33,7 +33,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Gogoanime"
 
-    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://gogoanime.lu")!! }
+    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://gogoanime.cl")!! }
 
     override val lang = "en"
 
