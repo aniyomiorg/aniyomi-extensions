@@ -41,7 +41,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "UHD Movies"
 
-    override val baseUrl by lazy { preferences.getString("pref_domain", "https://uhdmovies.vip")!! }
+    override val baseUrl by lazy { preferences.getString("pref_domain", "https://uhdmovies.bio")!! }
 
     override val lang = "en"
 
