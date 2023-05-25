@@ -36,7 +36,7 @@ class Membed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Membed"
 
-    override val baseUrl = "https://membed.net"
+    override val baseUrl = "https://membed1.com"
 
     override val lang = "en"
 
