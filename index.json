@@ -1262,10 +1262,10 @@
   {
     "name": "Aniyomi: Gogoanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.gogoanime",
-    "apk": "aniyomi-en.gogoanime-v13.62.apk",
+    "apk": "aniyomi-en.gogoanime-v13.63.apk",
     "lang": "en",
-    "code": 62,
-    "version": "13.62",
+    "code": 63,
+    "version": "13.63",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1274,7 +1274,7 @@
         "name": "Gogoanime",
         "lang": "en",
         "id": "7055547649318749672",
-        "baseUrl": "https://gogoanime.lu",
+        "baseUrl": "https://gogoanime.cl",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -1829,10 +1829,10 @@
   {
     "name": "Aniyomi: UHD Movies",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.uhdmovies",
-    "apk": "aniyomi-en.uhdmovies-v13.13.apk",
+    "apk": "aniyomi-en.uhdmovies-v13.14.apk",
     "lang": "en",
-    "code": 13,
-    "version": "13.13",
+    "code": 14,
+    "version": "13.14",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1841,7 +1841,7 @@
         "name": "UHD Movies",
         "lang": "en",
         "id": "582068848290425167",
-        "baseUrl": "https://uhdmovies.vip",
+        "baseUrl": "https://uhdmovies.bio",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -1871,10 +1871,10 @@
   {
     "name": "Aniyomi: Membed",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.vidembed",
-    "apk": "aniyomi-en.vidembed-v13.28.apk",
+    "apk": "aniyomi-en.vidembed-v13.29.apk",
     "lang": "en",
-    "code": 28,
-    "version": "13.28",
+    "code": 29,
+    "version": "13.29",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1883,7 +1883,7 @@
         "name": "Membed",
         "lang": "en",
         "id": "8093842542096095331",
-        "baseUrl": "https://membed.net",
+        "baseUrl": "https://membed1.com",
         "versionId": 1,
         "hasCloudflare": 1
       }
