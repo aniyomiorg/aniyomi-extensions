@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.DailymotionExtractor
 import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.SharedExtractor
 import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.SoraPlayExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -94,6 +95,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
+        var dailyMotion = true
         document.select("ul#episode-servers li").forEach { it ->
             val server = it.select("a").text()
             val url = it.select("a").attr("data-ep-url")
@@ -147,6 +149,11 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 url.contains("sbanh") -> {
                     val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
                     videoList.addAll(videos)
+                }
+                url.contains("dailymotion") && dailyMotion -> {
+                    val videos = DailymotionExtractor(client).videosFromUrl(url, headers)
+                    videoList.addAll(videos)
+                    dailyMotion = false
                 }
             }
         }
@@ -239,8 +246,8 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p", "240p")
-            entryValues = arrayOf("1080", "720", "480", "360p", "240")
+            entries = arrayOf("1080p", "720p", "480p", "380p", "360p", "240p")
+            entryValues = arrayOf("1080", "720", "480", "380", "360", "240")
             setDefaultValue("1080")
             summary = "%s"
 
