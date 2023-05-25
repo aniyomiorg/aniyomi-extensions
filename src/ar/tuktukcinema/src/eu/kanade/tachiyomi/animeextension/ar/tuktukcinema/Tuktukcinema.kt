@@ -2,11 +2,11 @@ package eu.kanade.tachiyomi.animeextension.ar.tuktukcinema
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.widget.Toast
+import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.tuktukcinema.extractors.MoshahdaExtractor
-import eu.kanade.tachiyomi.animeextension.ar.tuktukcinema.extractors.UQLoadExtractor
-import eu.kanade.tachiyomi.animeextension.ar.tuktukcinema.extractors.VidBomExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
@@ -31,7 +30,9 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "توك توك سينما"
 
-    override val baseUrl = "https://w.tuktukcinema.tv"
+    override val baseUrl by lazy {
+        getPrefHostUrl(preferences)
+    }
 
     override val lang = "ar"
 
@@ -58,31 +59,22 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun titleEdit(title: String, details: Boolean = false): String {
-        return if (title.contains("فيلم")) {
-            if (Regex("فيلم (.*?) مترجم").containsMatchIn(title)) {
-                Regex("فيلم (.*?) مترجم").find(title)!!.groupValues[1] + if (details) " (فيلم)" else "" // افلام اجنبيه مترجمه
-            } else if (Regex("فيلم (.*?) مدبلج").containsMatchIn(title)) {
-                Regex("فيلم (.*?) مدبلج").find(title)!!.groupValues[1] + if (details) " (مدبلج)(فيلم)" else "" // افلام اجنبيه مدبلجه
-            } else if (Regex("فيلم ([^a-zA-Z]+) ([0-9]+)").containsMatchIn(title)) {
-                // افلام عربى
-                Regex("فيلم ([^a-zA-Z]+) ([0-9]+)").find(title)!!.groupValues[1] + if (details) " (فيلم)" else ""
+        return if (Regex("(?:فيلم|عرض)\\s(.*\\s[0-9]+)\\s(.+?)\\s").containsMatchIn(title)) {
+            val titleGroup = Regex("(?:فيلم|عرض)\\s(.*\\s[0-9]+)\\s(.+?)\\s").find(title)
+            val movieName = titleGroup!!.groupValues[1]
+            val type = titleGroup.groupValues[2]
+            movieName + if (details) " ($type)" else ""
+        } else if (Regex("(?:مسلسل|برنامج|انمي)\\s(.+)\\sالحلقة\\s(\\d+)").containsMatchIn(title)) {
+            val titleGroup = Regex("(?:مسلسل|برنامج|انمي)\\s(.+)\\sالحلقة\\s(\\d+)").find(title)
+            val seriesName = titleGroup!!.groupValues[1]
+            val epNum = titleGroup.groupValues[2]
+            if (details) {
+                "$seriesName (ep:$epNum)"
+            } else if (seriesName.contains("الموسم")) {
+                seriesName.split("الموسم")[0].trim()
             } else {
-                title
+                seriesName
             }
-        } else if (title.contains("مسلسل")) {
-            if (title.contains("الموسم")) {
-                val newTitle = Regex("مسلسل (.*?) الموسم (.*?) الحلقة ([0-9]+)").find(title)
-                newTitle!!.groupValues[1] + if (details) " (م.${newTitle.groupValues[2]})(${newTitle.groupValues[3]}ح)" else ""
-            } else if (title.contains("الحلقة")) {
-                val newTitle = Regex("مسلسل (.*?) الحلقة ([0-9]+)").find(title)
-                newTitle!!.groupValues[1] + if (details) " (${newTitle.groupValues[2]}ح)" else ""
-            } else {
-                Regex(if (title.contains("الموسم")) "مسلسل (.*?) الموسم" else "مسلسل (.*?) الحلقة").find(title)!!.groupValues[1] + if (details) " (مسلسل)" else ""
-            }
-        } else if (title.contains("انمي")) {
-            return Regex(if (title.contains("الموسم"))"انمي (.*?) الموسم" else "انمي (.*?) الحلقة").find(title)!!.groupValues[1] + if (details) " (انمى)" else ""
-        } else if (title.contains("برنامج")) {
-            Regex(if (title.contains("الموسم"))"برنامج (.*?) الموسم" else "برنامج (.*?) الحلقة").find(title)!!.groupValues[1] + if (details) " (برنامج)" else ""
         } else {
             title
         }
@@ -150,7 +142,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             } /*else if (link.contains("ok")) {
                 val videosFromURL = OkruExtractor(client).videosFromUrl(link)
                 videos.addAll(videosFromURL)
-            }*/ else if (server.text().contains("vidbom", ignoreCase = true) or server.text().contains("vidshare", ignoreCase = true)) {
+            } else if (server.text().contains("vidbom", ignoreCase = true) or server.text().contains("vidshare", ignoreCase = true)) {
                 val videosFromURL = VidBomExtractor(client).videosFromUrl(link)
                 videos.addAll(videosFromURL)
             } else if (server.text().contains("dood", ignoreCase = true)) {
@@ -159,7 +151,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             } else if (server.text().contains("uqload", ignoreCase = true)) {
                 val videosFromURL = UQLoadExtractor(client).videoFromUrl(link, "Uqload mirror")
                 if (videosFromURL != null) videos.add(videosFromURL)
-            }
+            }*/
         }
         return videos
     }
@@ -280,8 +272,32 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     )
 
     // preferred quality settings
+    private fun getPrefHostUrl(preferences: SharedPreferences): String = preferences.getString(
+        "default_domain",
+        "https://w.tuktukcinema.tv/",
+    )!!.trim()
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val defaultDomain = EditTextPreference(screen.context).apply {
+            key = "default_domain"
+            title = "Enter default domain"
+            summary = getPrefHostUrl(preferences)
+            this.setDefaultValue(getPrefHostUrl(preferences))
+            dialogTitle = "Default domain"
+            dialogMessage = "You can change the site domain from here"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                try {
+                    val res = preferences.edit().putString("default_domain", newValue as String).commit()
+                    Toast.makeText(screen.context, "Restart Aniyomi to apply changes", Toast.LENGTH_LONG).show()
+                    res
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    false
+                }
+            }
+        }
+
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
@@ -297,6 +313,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        screen.addPreference(defaultDomain)
         screen.addPreference(videoQualityPref)
     }
 }
