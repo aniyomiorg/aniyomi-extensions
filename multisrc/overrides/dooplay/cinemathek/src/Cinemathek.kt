@@ -26,12 +26,13 @@ class Cinemathek : DooPlay(
     // ============================== Popular ===============================
     override fun popularAnimeSelector(): String = "article.movies div.poster"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/movies/page/$page/")
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/filme/page/$page/")
 
     override fun popularAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
     // =============================== Latest ===============================
     override fun latestUpdatesNextPageSelector(): String = "#nextpagination"
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/episoden/page/$page")
 
     // =========================== Anime Details ============================
     override val additionalInfoItems = listOf("Original", "Start", "Staffeln", "letzte", "Episoden")
