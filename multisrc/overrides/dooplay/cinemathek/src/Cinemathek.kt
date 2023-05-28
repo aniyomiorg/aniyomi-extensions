@@ -4,14 +4,14 @@ import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.de.cinemathek.extractors.FilemoonExtractor
+import eu.kanade.tachiyomi.animeextension.de.cinemathek.extractors.StreamHideExtractor
 import eu.kanade.tachiyomi.animeextension.de.cinemathek.extractors.StreamlareExtractor
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.FormBody
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -49,27 +49,23 @@ class Cinemathek : DooPlay(
         val hosterSelection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
         return players.mapNotNull { player ->
             runCatching {
-                val url = getPlayerUrl(player)
+                val url = getPlayerUrl(player).ifEmpty { return@mapNotNull null }
                 getPlayerVideos(url, hosterSelection)
-            }.getOrDefault(emptyList<Video>())
+            }.getOrNull()
         }.flatten()
     }
 
     private fun getPlayerUrl(player: Element): String {
-        val body = FormBody.Builder()
-            .add("action", "doo_player_ajax")
-            .add("post", player.attr("data-post"))
-            .add("nume", player.attr("data-nume"))
-            .add("type", player.attr("data-type"))
-            .build()
-        return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", headers, body))
+        val type = player.attr("data-type")
+        val id = player.attr("data-post")
+        val num = player.attr("data-nume")
+        if (num == "trailer") return ""
+        return client.newCall(GET("$baseUrl/wp-json/dooplayer/v2/$id/$type/$num"))
             .execute()
-            .use { response ->
-                response.body.string()
-                    .substringAfter("\"embed_url\":\"")
-                    .substringBefore("\",")
-                    .replace("\\", "")
-            }
+            .body.string()
+            .substringAfter("\"embed_url\":\"")
+            .substringBefore("\",")
+            .replace("\\", "")
     }
 
     private fun getPlayerVideos(url: String, hosterSelection: Set<String>): List<Video>? {
@@ -78,10 +74,16 @@ class Cinemathek : DooPlay(
                 StreamlareExtractor(client).videosFromUrl(url)
             }
             url.contains("https://streamsb") && hosterSelection.contains("streamsb") -> {
-                StreamSBExtractor(client).videosFromUrl(url, headers = headers, common = false)
+                StreamSBExtractor(client).videosFromUrl(url, headers = headers)
             }
             url.contains("https://filemoon") && hosterSelection.contains("fmoon") -> {
                 FilemoonExtractor(client).videoFromUrl(url)
+            }
+            url.contains("https://dooood") && hosterSelection.contains("dood") -> {
+                DoodExtractor(client).videosFromUrl(url)
+            }
+            url.contains("https://streamhide") && hosterSelection.contains("shide") -> {
+                StreamHideExtractor(client).videosFromUrl(url)
             }
             else -> null
         }
@@ -156,13 +158,13 @@ class Cinemathek : DooPlay(
         private const val PREF_HOSTER_KEY = "preferred_hoster"
         private const val PREF_HOSTER_TITLE = "Standard-Hoster"
         private const val PREF_HOSTER_DEFAULT = "https://viewsb.com"
-        private val PREF_HOSTER_ENTRIES = arrayOf("Streamlare", "StreamSB", "Filemoon")
-        private val PREF_HOSTER_VALUES = arrayOf("https://streamlare", "https://viewsb.com", "https://filemoon")
+        private val PREF_HOSTER_ENTRIES = arrayOf("Streamlare", "StreamSB", "Filemoon", "DoodStream", "StreamHide")
+        private val PREF_HOSTER_VALUES = arrayOf("https://streamlare", "https://viewsb.com", "https://filemoon", "https://dooood", "https://streamhide")
 
         private const val PREF_HOSTER_SELECTION_KEY = "hoster_selection"
         private const val PREF_HOSTER_SELECTION_TITLE = "Hoster auswählen"
         private val PREF_HOSTER_SELECTION_ENTRIES = PREF_HOSTER_ENTRIES
-        private val PREF_HOSTER_SELECTION_VALUES = arrayOf("slare", "streamsb", "fmoon")
+        private val PREF_HOSTER_SELECTION_VALUES = arrayOf("slare", "streamsb", "fmoon", "dood", "shide")
         private val PREF_HOSTER_SELECTION_DEFAULT = PREF_HOSTER_SELECTION_VALUES.toSet()
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
