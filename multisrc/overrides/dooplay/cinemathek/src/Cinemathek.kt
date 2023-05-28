@@ -77,7 +77,7 @@ class Cinemathek : DooPlay(
                 StreamSBExtractor(client).videosFromUrl(url, headers = headers)
             }
             url.contains("https://filemoon") && hosterSelection.contains("fmoon") -> {
-                FilemoonExtractor(client).videoFromUrl(url)
+                FilemoonExtractor(client).videosFromUrl(url)
             }
             url.contains("https://dooood") && hosterSelection.contains("dood") -> {
                 DoodExtractor(client).videosFromUrl(url)
