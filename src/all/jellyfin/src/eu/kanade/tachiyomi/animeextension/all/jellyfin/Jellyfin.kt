@@ -76,7 +76,7 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
             username = JFConstants.getPrefUsername(preferences)
             password = JFConstants.getPrefPassword(preferences)
             if (username.isEmpty() || password.isEmpty()) {
-                return null
+                if (username != "demo") return null
             }
             val (newKey, newUid) = runBlocking {
                 withContext(Dispatchers.IO) {
