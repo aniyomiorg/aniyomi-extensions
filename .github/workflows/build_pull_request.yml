@@ -187,10 +187,10 @@ jobs:
             const isIndividualChanged = process.env.INDIVIDUAL_CHANGED == '1';
             const isMultisrcChanged = process.env.MULTISRC_CHANGED == '1';
             
-            const individualStatus = !isIndividualChanged ? 'success' : process.env.STATUS_INDIVIDUAL;
-            const multisrcStatus = !isMultisrcChanged ? 'success' : process.env.STATUS_MULTISRC;
+            const individualStatus = !isIndividualChanged || process.env.STATUS_INDIVIDUAL == 'success';
+            const multisrcStatus = !isMultisrcChanged || process.env.STATUS_MULTISRC == 'success';
             
-            const success = individualStatus == 'success' && multisrcStatus == 'success';
+            const success = individualStatus && multisrcStatus;
             
             if (!success) {
               core.setFailed('Build failed');
