@@ -98,6 +98,8 @@ jobs:
     needs: prepare
     if: ${{ needs.prepare.outputs.isMultisrcChanged == '1' }}
     runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.status.outputs.individualMatrix }}
     strategy:
       matrix: ${{ fromJSON(needs.prepare.outputs.multisrcMatrix) }}
     steps:
@@ -127,11 +129,18 @@ jobs:
           arguments: assembleDebug
           cache-read-only: true
 
+      - name: Set status output
+        id: status
+        run: |
+          echo "status=success" >> $GITHUB_OUTPUT
+
   build_individual:
     name: Build individual modules
     needs: prepare
     if: ${{ needs.prepare.outputs.isIndividualChanged == '1' }}
     runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.status.outputs.individualMatrix }}
     strategy:
       matrix: ${{ fromJSON(needs.prepare.outputs.individualMatrix) }}
     steps:
@@ -153,9 +162,15 @@ jobs:
           arguments: assembleDebug
           cache-read-only: true
 
+      - name: Set status output
+        id: status
+        run: |
+          echo "status=success" >> $GITHUB_OUTPUT
+
   status:
     name: Status of job
     runs-on: ubuntu-latest
+    if: ${{ always() }}
     needs: [prepare, build_individual, build_multisrc]
     steps:
       - name: Set status of PR check
