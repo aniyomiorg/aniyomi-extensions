@@ -90,22 +90,23 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val extractor = GogoCdnExtractor(network.client, json)
         val videoList = mutableListOf<Video>()
+
         // GogoCdn:
         document.select("div.anime_muti_link > ul > li.vidcdn > a")
             .firstOrNull()?.attr("data-video")
-            ?.let { videoList.addAll(extractor.videosFromUrl("https:$it")) }
+            ?.let { videoList.addAll(extractor.videosFromUrl(it.replace(Regex("^//"), "https://"))) }
         // Vidstreaming:
         document.select("div.anime_muti_link > ul > li.anime > a")
             .firstOrNull()?.attr("data-video")
-            ?.let { videoList.addAll(extractor.videosFromUrl("https:$it")) }
+            ?.let { videoList.addAll(extractor.videosFromUrl(it.replace(Regex("^//"), "https://"))) }
         // Doodstream mirror:
         document.select("div.anime_muti_link > ul > li.doodstream > a")
             .firstOrNull()?.attr("data-video")
-            ?.let { videoList.addAll(DoodExtractor(client).videosFromUrl(it)) }
+            ?.let { videoList.addAll(DoodExtractor(client).videosFromUrl(it.replace(Regex("^//"), "https://"))) }
         // StreamSB mirror:
         document.select("div.anime_muti_link > ul > li.streamsb > a")
             .firstOrNull()?.attr("data-video")
-            ?.let { videoList.addAll(StreamSBExtractor(client).videosFromUrl(it, headers)) }
+            ?.let { videoList.addAll(StreamSBExtractor(client).videosFromUrl(it.replace(Regex("^//"), "https://"), headers)) }
         return videoList.sort()
     }
 
