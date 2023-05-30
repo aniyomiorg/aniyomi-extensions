@@ -18,8 +18,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import uy.kohesive.injekt.injectLazy
-import java.text.CharacterIterator
-import java.text.StringCharacterIterator
+import kotlin.math.abs
 
 class YouTubeExtractor(private val client: OkHttpClient) {
 
@@ -167,16 +166,17 @@ class YouTubeExtractor(private val client: OkHttpClient) {
     }
 
     @SuppressLint("DefaultLocale")
-    fun formatBits(bits: Long): String? {
-        var bits = bits
-        if (-1000 < bits && bits < 1000) {
+    fun formatBits(size: Long): String {
+        var bits = abs(size)
+        if (bits < 1000) {
             return "${bits}b"
         }
-        val ci: CharacterIterator = StringCharacterIterator("kMGTPE")
-        while (bits <= -999950 || bits >= 999950) {
+        val iterator = "kMGTPE".iterator()
+        var currentChar = iterator.next()
+        while (bits >= 999950 && iterator.hasNext()) {
             bits /= 1000
-            ci.next()
+            currentChar = iterator.next()
         }
-        return java.lang.String.format("%.0f%cb", bits / 1000.0, ci.current())
+        return "%.0f%cb".format(bits / 1000.0, currentChar)
     }
 }
