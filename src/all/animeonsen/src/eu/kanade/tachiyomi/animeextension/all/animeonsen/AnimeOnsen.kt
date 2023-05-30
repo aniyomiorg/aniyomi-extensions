@@ -35,7 +35,7 @@ import kotlin.Exception
 
 class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
 
-    override val name = "AnimeOnsen"
+    override val name = "AnimeOnsenBruh"f
 
     override val baseUrl = "https://animeonsen.xyz"
 
