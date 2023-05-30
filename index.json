@@ -23,10 +23,10 @@
   {
     "name": "Aniyomi: AnimeXin",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.animexin",
-    "apk": "aniyomi-all.animexin-v13.4.apk",
+    "apk": "aniyomi-all.animexin-v13.5.apk",
     "lang": "all",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -149,10 +149,10 @@
   {
     "name": "Aniyomi: LMAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.lmanime",
-    "apk": "aniyomi-all.lmanime-v13.2.apk",
+    "apk": "aniyomi-all.lmanime-v13.3.apk",
     "lang": "all",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -163,7 +163,7 @@
         "id": "7296222662412524790",
         "baseUrl": "https://lmanime.com",
         "versionId": 1,
-        "hasCloudflare": 0
+        "hasCloudflare": 1
       }
     ]
   },
@@ -695,10 +695,10 @@
   {
     "name": "Aniyomi: Cinemathek",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.cinemathek",
-    "apk": "aniyomi-de.cinemathek-v13.12.apk",
+    "apk": "aniyomi-de.cinemathek-v13.13.apk",
     "lang": "de",
-    "code": 12,
-    "version": "13.12",
+    "code": 13,
+    "version": "13.13",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3451,6 +3451,27 @@
         "baseUrl": "https://pifansubs.club",
         "versionId": 1,
         "hasCloudflare": 0
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: RineCloud",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.rinecloud",
+    "apk": "aniyomi-pt.rinecloud-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "RineCloud",
+        "lang": "pt-BR",
+        "id": "9212086076543778498",
+        "baseUrl": "https://rine.cloud",
+        "versionId": 1,
+        "hasCloudflare": 1
       }
     ]
   },
