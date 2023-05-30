@@ -152,3 +152,22 @@ jobs:
         with:
           arguments: assembleDebug
           cache-read-only: true
+
+  status:
+    name: Status of job
+    runs-on: ubuntu-latest
+    needs: [prepare, build_individual, build_multisrc]
+    steps:
+      - name: Set status of PR check
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const isIndividualChanged = needs.prepare.outputs.isIndividualChanged == '1';
+            const isMultisrcChanged = needs.prepare.outputs.isMultisrcChanged == '1';
+            
+            const individualStatus = isIndividualChanged ? 'success' : jobs.build_individual.outputs.status;
+            const multisrcStatus = isMultisrcChanged ? 'success' : jobs.build_multisrc.outputs.status;
+            
+            const success = individualStatus == 'success' && multisrcStatus == 'success';
+            
+            core.setOutput('status', success ? 'success' : 'failure');
