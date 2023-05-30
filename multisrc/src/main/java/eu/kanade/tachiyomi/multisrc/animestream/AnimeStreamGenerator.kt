@@ -14,6 +14,7 @@ class AnimeStreamGenerator : ThemeSourceGenerator {
         SingleLang("AnimeXin", "https://animexin.vip", "all", isNsfw = false, overrideVersionCode = 4),
         SingleLang("LMAnime", "https://lmanime.com", "all", isNsfw = false, overrideVersionCode = 2),
         SingleLang("RineCloud", "https://rine.cloud", "pt-BR", isNsfw = false),
+        SingleLang("Animenosub", "https://animenosub.com", "en", isNsfw = true),
     )
 
     companion object {
