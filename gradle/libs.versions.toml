@@ -28,6 +28,6 @@ reactivex = ["rxandroid"]
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp_version" }
 android-library = { id = "com.android.library", version.ref = "agp_version" }
-kotlinter = { id = "org.jmailen.kotlinter", version = "3.14.0" }
+kotlinter = { id = "org.jmailen.kotlinter", version = "3.15.0" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin_version" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin_version" }

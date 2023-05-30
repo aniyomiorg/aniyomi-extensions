@@ -297,8 +297,8 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                 "streamtape" -> StreamTapeExtractor(client)
                     .videoFromUrl(embedLink, "StreamTape - ${server.first}")?.let {
-                    videoList.add(it)
-                }
+                        videoList.add(it)
+                    }
                 "mp4upload" -> Mp4uploadExtractor(client)
                     .videoFromUrl(embedLink, "Mp4Upload - ${server.first}").let {
                         videoList.addAll(it)

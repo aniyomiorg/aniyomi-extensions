@@ -174,9 +174,7 @@ class UAKino : ParsedAnimeHttpSource() {
                         }
                     }
                 }
-            }
-            // Search as one video
-            else {
+            } else { // Search as one video
                 val episode = SEpisode.create()
                 episode.name = animePage.select("span.solototle").text()
                 episode.url = playerUrl

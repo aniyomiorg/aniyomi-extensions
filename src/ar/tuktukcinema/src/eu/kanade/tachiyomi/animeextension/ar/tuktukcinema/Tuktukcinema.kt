@@ -139,7 +139,8 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val refererHeaders = Headers.headersOf("referer", response.request.url.toString())
                 val videosFromURL = MoshahdaExtractor(client).videosFromUrl(link, refererHeaders)
                 videos.addAll(videosFromURL)
-            } /*else if (link.contains("ok")) {
+            }
+            /* else if (link.contains("ok")) {
                 val videosFromURL = OkruExtractor(client).videosFromUrl(link)
                 videos.addAll(videosFromURL)
             } else if (server.text().contains("vidbom", ignoreCase = true) or server.text().contains("vidshare", ignoreCase = true)) {
@@ -151,7 +152,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             } else if (server.text().contains("uqload", ignoreCase = true)) {
                 val videosFromURL = UQLoadExtractor(client).videoFromUrl(link, "Uqload mirror")
                 if (videosFromURL != null) videos.add(videosFromURL)
-            }*/
+            } */
         }
         return videos
     }
