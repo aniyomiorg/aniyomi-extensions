@@ -131,6 +131,7 @@ jobs:
 
       - name: Set status output
         id: status
+        if: ${{ success() }}
         run: |
           echo "status=success" >> $GITHUB_OUTPUT
 
@@ -164,6 +165,7 @@ jobs:
 
       - name: Set status output
         id: status
+        if: ${{ success() }}
         run: |
           echo "status=success" >> $GITHUB_OUTPUT
 
@@ -174,15 +176,22 @@ jobs:
     needs: [prepare, build_individual, build_multisrc]
     steps:
       - name: Set status of PR check
+        env:
+          INDIVIDUAL_CHANGED: ${{ needs.prepare.outputs.isIndividualChanged }}
+          MULTISRC_CHANGED: ${{ needs.prepare.outputs.isMultisrcChanged }}
+          STATUS_INDIVIDUAL: ${{needs.build_individual.outputs.status}}
+          STATUS_MULTISRC: ${{needs.build_multisrc.outputs.status}}
         uses: actions/github-script@v6
         with:
           script: |
-            const isIndividualChanged = needs.prepare.outputs.isIndividualChanged == '1';
-            const isMultisrcChanged = needs.prepare.outputs.isMultisrcChanged == '1';
+            const isIndividualChanged = process.env.INDIVIDUAL_CHANGED == '1';
+            const isMultisrcChanged = process.env.MULTISRC_CHANGED == '1';
             
-            const individualStatus = isIndividualChanged ? 'success' : jobs.build_individual.outputs.status;
-            const multisrcStatus = isMultisrcChanged ? 'success' : jobs.build_multisrc.outputs.status;
+            const individualStatus = !isIndividualChanged ? 'success' : process.env.STATUS_INDIVIDUAL;
+            const multisrcStatus = !isMultisrcChanged ? 'success' : process.env.STATUS_MULTISRC;
             
             const success = individualStatus == 'success' && multisrcStatus == 'success';
             
-            core.setOutput('status', success ? 'success' : 'failure');
+            if (!success) {
+              core.setFailed('Build failed');
+            }
