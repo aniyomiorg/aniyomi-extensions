@@ -1008,6 +1008,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Animenosub",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.animenosub",
+    "apk": "aniyomi-en.animenosub-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Animenosub",
+        "lang": "en",
+        "id": "6722573244246256733",
+        "baseUrl": "https://animenosub.com",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Animension",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.animension",
     "apk": "aniyomi-en.animension-v13.16.apk",
