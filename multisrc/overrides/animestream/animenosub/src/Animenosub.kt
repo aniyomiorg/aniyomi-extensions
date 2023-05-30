@@ -15,7 +15,7 @@ import org.jsoup.nodes.Element
 
 class Animenosub : AnimeStream(
     "en",
-    "Animenosub",
+    "AnimenosubBruh",
     "https://animenosub.com",
 ) {
     // ============================== Popular ===============================
