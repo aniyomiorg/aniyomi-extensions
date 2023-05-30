@@ -10,7 +10,9 @@ class AnimeStreamGenerator : ThemeSourceGenerator {
 
     override val baseVersionCode = 1
 
-    override val sources = emptyList<SingleLang>()
+    override val sources = listOf(
+        SingleLang("RineCloud", "https://rine.cloud", "pt-BR", isNsfw = false),
+    )
 
     companion object {
         @JvmStatic
