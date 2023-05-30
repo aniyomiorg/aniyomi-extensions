@@ -170,12 +170,12 @@ jobs:
           echo "status=success" >> $GITHUB_OUTPUT
 
   status:
-    name: Status of job
+    name: Workflow status
     runs-on: ubuntu-latest
     if: ${{ always() }}
     needs: [prepare, build_individual, build_multisrc]
     steps:
-      - name: Set status of PR check
+      - name: Set the status of this workflow (used for branch protection rules)
         env:
           INDIVIDUAL_CHANGED: ${{ needs.prepare.outputs.isIndividualChanged }}
           MULTISRC_CHANGED: ${{ needs.prepare.outputs.isMultisrcChanged }}
