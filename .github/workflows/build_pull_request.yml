@@ -99,7 +99,7 @@ jobs:
     if: ${{ needs.prepare.outputs.isMultisrcChanged == '1' }}
     runs-on: ubuntu-latest
     outputs:
-      status: ${{ steps.status.outputs.individualMatrix }}
+      status: ${{ steps.status.outputs.status }}
     strategy:
       matrix: ${{ fromJSON(needs.prepare.outputs.multisrcMatrix) }}
     steps:
@@ -141,7 +141,7 @@ jobs:
     if: ${{ needs.prepare.outputs.isIndividualChanged == '1' }}
     runs-on: ubuntu-latest
     outputs:
-      status: ${{ steps.status.outputs.individualMatrix }}
+      status: ${{ steps.status.outputs.status }}
     strategy:
       matrix: ${{ fromJSON(needs.prepare.outputs.individualMatrix) }}
     steps:
