@@ -104,37 +104,27 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
         for (link in linkJson.links) {
             val subtitles = mutableListOf<Track>()
             if (!link.subtitles.isNullOrEmpty()) {
-                try {
-                    for (sub in link.subtitles) {
+                subtitles.addAll(
+                    link.subtitles.map { sub ->
                         val label = if (sub.label != null) {
                             " - ${sub.label}"
                         } else {
                             ""
                         }
-                        subtitles.add(Track(sub.src, Locale(sub.lang).displayLanguage + label))
+                        Track(sub.src, Locale(sub.lang).displayLanguage + label)
                     }
-                } catch (_: Error) {}
+                )
             }
 
             if (link.mp4 == true) {
-                try {
-                    videoList.add(
-                        Video(
-                            link.link,
-                            "Original ($name - ${link.resolutionStr})",
-                            link.link,
-                            subtitleTracks = subtitles,
-                        ),
-                    )
-                } catch (_: Error) {
-                    videoList.add(
-                        Video(
-                            link.link,
-                            "Original ($name - ${link.resolutionStr})",
-                            link.link,
-                        ),
-                    )
-                }
+                videoList.add(
+                    Video(
+                        link.link,
+                        "Original ($name - ${link.resolutionStr})",
+                        link.link,
+                        subtitleTracks = subtitles,
+                    ),
+                )
             } else if (link.hls == true) {
                 val newClient = OkHttpClient()
                 val resp = runCatching {
@@ -168,14 +158,10 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
                             "User-Agent",
                             "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
                         )
-                        return try {
-                            if (audioList.isEmpty()) {
-                                listOf(Video(link.link, "$name - ${link.resolutionStr}", link.link, subtitleTracks = subtitles, headers = headers))
-                            } else {
-                                listOf(Video(link.link, "$name - ${link.resolutionStr}", link.link, subtitleTracks = subtitles, audioTracks = audioList, headers = headers))
-                            }
-                        } catch (_: Error) {
-                            listOf(Video(link.link, "$name - ${link.resolutionStr}", link.link, headers = headers))
+                        return if (audioList.isEmpty()) {
+                            listOf(Video(link.link, "$name - ${link.resolutionStr}", link.link, subtitleTracks = subtitles, headers = headers))
+                        } else {
+                            listOf(Video(link.link, "$name - ${link.resolutionStr}", link.link, subtitleTracks = subtitles, audioTracks = audioList, headers = headers))
                         }
                     }
 
@@ -194,38 +180,24 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
                                 videoUrl = resp.request.url.toString().substringBeforeLast("/") + "/$videoUrl"
                             }
 
-                            try {
-                                if (audioList.isEmpty()) {
-                                    videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subtitles))
-                                } else {
-                                    videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subtitles, audioTracks = audioList))
-                                }
-                            } catch (_: Error) {
-                                videoList.add(Video(videoUrl, quality, videoUrl))
+                            if (audioList.isEmpty()) {
+                                videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subtitles))
+                            } else {
+                                videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subtitles, audioTracks = audioList))
                             }
                         }
                 }
             } else if (link.crIframe == true) {
                 link.portData!!.streams.forEach {
                     if (it.format == "adaptive_dash") {
-                        try {
-                            videoList.add(
-                                Video(
-                                    it.url,
-                                    "Original (AC - Dash${if (it.hardsub_lang.isEmpty()) "" else " - Hardsub: ${it.hardsub_lang}"})",
-                                    it.url,
-                                    subtitleTracks = subtitles,
-                                ),
-                            )
-                        } catch (a: Error) {
-                            videoList.add(
-                                Video(
-                                    it.url,
-                                    "Original (AC - Dash${if (it.hardsub_lang.isEmpty()) "" else " - Hardsub: ${it.hardsub_lang}"})",
-                                    it.url,
-                                ),
-                            )
-                        }
+                        videoList.add(
+                            Video(
+                                it.url,
+                                "Original (AC - Dash${if (it.hardsub_lang.isEmpty()) "" else " - Hardsub: ${it.hardsub_lang}"})",
+                                it.url,
+                                subtitleTracks = subtitles,
+                            ),
+                        )
                     } else if (it.format == "adaptive_hls") {
                         val resp = runCatching {
                             client.newCall(
@@ -240,11 +212,7 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
                                     val quality = t.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p (AC - HLS${if (it.hardsub_lang.isEmpty()) "" else " - Hardsub: ${it.hardsub_lang}"})"
                                     var videoUrl = t.substringAfter("\n").substringBefore("\n")
 
-                                    try {
-                                        videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subtitles))
-                                    } catch (_: Error) {
-                                        videoList.add(Video(videoUrl, quality, videoUrl))
-                                    }
+                                    videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subtitles))
                                 }
                         }
                     }
