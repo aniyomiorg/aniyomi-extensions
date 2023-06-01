@@ -41,30 +41,27 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
-        val zing = document.select("div.infozingle")
-        val status = parseStatus(zing.select("p:nth-child(6) > span").text().replace("Status: ", ""))
-        anime.title = zing.select("p:nth-child(1) > span").text().replace("Judul: ", "")
-        anime.genre = zing.select("p:nth-child(11) > span").text().replace("Genre: ", "")
-        anime.status = status
-        anime.artist = zing.select("p:nth-child(10) > span").text()
-        anime.author = zing.select("p:nth-child(4) > span").text()
+        return SAnime.create().apply {
+            val info = document.selectFirst("div.infozingle")!!
+            title = info.getInfo("Judul") ?: ""
+            genre = info.getInfo("Genre")
+            status = parseStatus(info.getInfo("Status"))
+            artist = info.getInfo("Studio")
+            author = info.getInfo("Produser")
 
-        // Others
-        // Jap title
-        anime.description = document.select("p:nth-child(2) > span").text()
-        // Score
-        anime.description = anime.description + "\n" + document.select("p:nth-child(3) > span").text()
-        // Total Episode
-        anime.description = anime.description + "\n" + document.select("p:nth-child(7) > span").text()
-        // Synopsis
-        anime.description = anime.description + "\n\n\nSynopsis: \n" + document.select("div.sinopc > p").joinToString("\n\n") { it.text() }
-
-        return anime
+            description = buildString {
+                info.getInfo("Japanese", false)?.let { append("$it\n") }
+                info.getInfo("Skor", false)?.let { append("$it\n") }
+                info.getInfo("Total Episode", false)?.let { append("$it\n") }
+                append("\n\nSynopsis:\n")
+                document.select("div.sinopc > p").eachText().forEach { append("$it\n\n") }
+            }
+        }
     }
 
-    private fun parseStatus(statusString: String): Int {
+    private fun parseStatus(statusString: String?): Int {
         return when (statusString) {
             "Ongoing" -> SAnime.ONGOING
             "Completed" -> SAnime.COMPLETED
@@ -72,87 +69,67 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
+    // ============================== Episodes ==============================
+    private val nameRegex by lazy { ".+?(?=Episode)|\\sSubtitle.+".toRegex() }
     override fun episodeFromElement(element: Element): SEpisode {
-        val episode = SEpisode.create()
-        val epsNum = getNumberFromEpsString(element.select("span > a").text())
-        episode.setUrlWithoutDomain(element.select("span > a").attr("href"))
-        episode.episode_number = when {
-            (epsNum.isNotEmpty()) -> epsNum.toFloat()
-            else -> 1F
+        return SEpisode.create().apply {
+            val link = element.selectFirst("span > a")!!
+            val text = link.text()
+            episode_number = text.substringAfter("Episode ")
+                .substringBefore(" ")
+                .toFloatOrNull() ?: 1F
+            setUrlWithoutDomain(link.attr("href"))
+            name = text.replace(nameRegex, "")
+            date_upload = element.selectFirst("span.zeebr")?.text().toDate()
         }
-        episode.name = element.select("span > a").text().replace(".+?(?=Episode)|\\sSubtitle.+".toRegex(), "")
-        episode.date_upload = reconstructDate(element.select("span.zeebr").text())
-
-        return episode
     }
 
-    private fun getNumberFromEpsString(epsStr: String): String {
-        return epsStr.filter { it.isDigit() }
-    }
+    override fun episodeListSelector() = "#venkonten > div.venser > div:nth-child(8) > ul > li"
 
-    private fun reconstructDate(Str: String): Long {
-        val newStr = Str.replace("Januari", "Jan").replace("Februari", "Feb").replace("Maret", "Mar").replace("April", "Apr").replace("Mei", "May").replace("Juni", "Jun").replace("Juli", "Jul").replace("Agustus", "Aug").replace("September", "Sep").replace("Oktober", "Oct").replace("November", "Nov").replace("Desember", "Dec")
-
-        val pattern = SimpleDateFormat("d MMM yyyy", Locale.US)
-        return pattern.parse(newStr.replace(",", " "))!!.time
-    }
-
-    override fun episodeListSelector(): String = "#venkonten > div.venser > div:nth-child(8) > ul > li"
-
+    // =============================== Latest ===============================
     override fun latestUpdatesFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.selectFirst("div.thumb > a")!!.attr("href"))
-        anime.thumbnail_url = element.selectFirst("div.thumb > a > div.thumbz > img")!!.attr("src")
-        anime.title = element.select("div.thumb > a > div.thumbz > h2").text()
-        return anime
+        return SAnime.create().apply {
+            setUrlWithoutDomain(element.attr("href"))
+            thumbnail_url = element.selectFirst("img")!!.attr("src")
+            title = element.selectFirst("h2")!!.text()
+        }
     }
 
-    override fun latestUpdatesNextPageSelector(): String = "a.next.page-numbers"
+    override fun latestUpdatesNextPageSelector() = "a.next.page-numbers"
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/ongoing-anime/page/$page")
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/ongoing-anime/page/$page")
 
-    override fun latestUpdatesSelector(): String = "div.detpost"
+    override fun latestUpdatesSelector() = "div.detpost div.thumb > a"
 
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.selectFirst("div.thumb > a")!!.attr("href"))
-        anime.thumbnail_url = element.selectFirst("div.thumb > a > div.thumbz > img")!!.attr("src")
-        anime.title = element.select("div.thumb > a > div.thumbz > h2").text()
-        return anime
-    }
+    // ============================== Popular ===============================
+    override fun popularAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
+    override fun popularAnimeNextPageSelector() = latestUpdatesNextPageSelector()
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/complete-anime/page/$page")
+    override fun popularAnimeSelector() = latestUpdatesSelector()
 
-    override fun popularAnimeNextPageSelector(): String = "a.next.page-numbers"
-
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/complete-anime/page/$page")
-
-    override fun popularAnimeSelector(): String = "div.detpost"
-
+    // =============================== Search ===============================
     override fun searchAnimeFromElement(element: Element): SAnime = throw Exception("not used")
 
     private fun searchAnimeFromElement(element: Element, ui: String): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(
+        return SAnime.create().apply {
             when (ui) {
-                "search" -> element.selectFirst("h2 > a")!!.attr("href")
-                "genres" -> element.select(".col-anime-title > a").attr("href")
-                else -> element.selectFirst("div.thumb > a")!!.attr("href")
-            },
-        )
-
-        anime.thumbnail_url = when (ui) {
-            "search" -> element.selectFirst("img")!!.attr("src")
-            "genres" -> element.select(".col-anime-cover > img").attr("src")
-            else -> element.selectFirst("div.thumb > a > div.thumbz > img")!!.attr("src")
+                "search" -> {
+                    val link = element.selectFirst("h2 > a")!!
+                    setUrlWithoutDomain(link.attr("href"))
+                    title = link.text().replace(" Subtitle Indonesia", "")
+                    thumbnail_url = element.selectFirst("img")!!.attr("src")
+                }
+                else -> {
+                    val link = element.selectFirst(".col-anime-title > a")!!
+                    setUrlWithoutDomain(link.attr("href"))
+                    title = link.text()
+                    thumbnail_url = element.selectFirst(".col-anime-cover > img")!!.attr("src")
+                }
+            }
         }
-        anime.title = when (ui) {
-            "search" -> element.select("h2 > a").text().replace(" Subtitle Indonesia", "")
-            "genres" -> element.select(".col-anime-title > a").text()
-            else -> element.select("div.thumb > a > div.thumbz > h2").text()
-        }
-        return anime
     }
 
-    override fun searchAnimeNextPageSelector(): String = "a.next.page-numbers"
+    override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
@@ -165,49 +142,32 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun searchAnimeSelector(): String = "#venkonten > div > div.venser > div > div > ul > li"
+    override fun searchAnimeSelector() = "#venkonten > div > div.venser > div > div > ul > li"
+    private val genreSelector = ".col-anime"
 
     override fun searchAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
 
         val ui = when {
-            document.select(".col-anime").isNullOrEmpty() -> "search"
-            document.select("#venkonten > div > div.venser > div > div > ul > li").isNullOrEmpty() -> "genres"
+            document.selectFirst(genreSelector) == null -> "search"
+            document.selectFirst(searchAnimeSelector()) == null -> "genres"
             else -> "unknown"
         }
 
         val animes = when (ui) {
-            "genres" -> document.select(".col-anime").map { element -> searchAnimeFromElement(element, ui) }
-            "search" -> document.select("#venkonten > div > div.venser > div > div > ul > li").map { element -> searchAnimeFromElement(element, ui) }
-            else -> document.select("div.detpost").map { element -> popularAnimeFromElement(element) }
+            "genres" -> document.select(genreSelector).map { searchAnimeFromElement(it, ui) }
+            "search" -> document.select(searchAnimeSelector()).map { searchAnimeFromElement(it, ui) }
+            else -> document.select(latestUpdatesSelector()).map(::latestUpdatesFromElement)
         }
 
-        val hasNextPage = searchAnimeNextPageSelector().let { selector ->
-            document.select(selector).first()
-        } != null
+        val hasNextPage = document.selectFirst(searchAnimeNextPageSelector()) != null
 
         return AnimesPage(animes, hasNextPage)
     }
 
+    // ============================ Video Links =============================
+    // TODO: Fix extractor
     override fun videoListSelector() = "div.download > ul > li > a:nth-child(2)"
-
-    override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", null)
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
-    }
 
     override fun videoFromElement(element: Element): Video {
         val res = client.newCall(GET(element.attr("href"))).execute().asJsoup()
@@ -233,26 +193,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
-    override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
-            setDefaultValue("1080")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-        screen.addPreference(videoQualityPref)
-    }
-
-    // filter
+    // ============================== Filters ===============================
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("Text search ignores filters"),
         GenreFilter(),
@@ -304,5 +245,58 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
         AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
+    }
+
+    // ============================== Settings ==============================
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val videoQualityPref = ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+        screen.addPreference(videoQualityPref)
+    }
+
+    // ============================= Utilities ==============================
+    private fun Element.getInfo(info: String, cut: Boolean = true): String? {
+        return selectFirst("p > span:has(b:contains($info))")?.text()
+            ?.let {
+                when {
+                    cut -> it.substringAfter(":")
+                    else -> it
+                }.trim()
+            }
+    }
+
+    private fun String?.toDate(): Long {
+        return runCatching { DATE_FORMATTER.parse(this?.trim() ?: "")?.time }
+            .getOrNull() ?: 0L
+    }
+
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        return sortedWith(
+            compareByDescending { it.quality.equals(quality) },
+        )
+    }
+
+    companion object {
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("d MMM,yyyy", Locale("id", "ID"))
+        }
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "1080p"
+        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p")
     }
 }
