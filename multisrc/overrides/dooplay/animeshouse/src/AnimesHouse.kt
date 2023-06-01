@@ -25,7 +25,9 @@ class AnimesHouse : DooPlay(
         .add("Accept-Language", "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7")
 
     // ============================== Popular ===============================
-    override fun popularAnimeSelector(): String = "div#featured-titles div.poster"
+    // This source does not have a "popular" animes page, so we're going to
+    // use latest updates page instead.
+    override fun fetchPopularAnime(page: Int) = fetchLatestUpdates(page)
 
     // =============================== Latest ===============================
     override fun latestUpdatesNextPageSelector(): String = "div.resppages > a > span.icon-chevron-right"
@@ -42,10 +44,10 @@ class AnimesHouse : DooPlay(
             .execute()
             .use { it.asJsoup().selectFirst("iframe")!!.attr("src") }
             .let {
-                if (it.startsWith("/redplay")) {
-                    RedplayBypasser(client, headers).fromUrl(baseUrl + it)
-                } else {
-                    it
+                when {
+                    it.startsWith("/redplay") ->
+                        RedplayBypasser(client, headers).fromUrl(baseUrl + it)
+                    else -> it
                 }
             }
     }
@@ -56,7 +58,7 @@ class AnimesHouse : DooPlay(
             runCatching {
                 val url = getPlayerUrl(player)
                 getPlayerVideos(url)
-            }.getOrDefault(emptyList<Video>())
+            }.getOrElse { emptyList<Video>() }
         }
     }
 

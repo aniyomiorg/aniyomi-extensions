@@ -15,22 +15,23 @@ class RedplayBypasser(
 ) {
 
     fun fromUrl(url: String): String {
-        val next = client.newCall(GET(url, headers)).execute()
+        val linkUrl = client.newCall(GET(url, headers)).execute()
             .use { it.asJsoup().selectFirst("a")!!.attr("href") }
-        val response = client.newCall(GET(next, headers)).execute()
-        return getIframeUrl(response, next)
+
+        val newHeaders = headers.newBuilder().set("Referer", linkUrl).build()
+
+        val response = client.newCall(GET(linkUrl, newHeaders)).execute()
+        return getIframeUrl(response, newHeaders)
     }
 
-    private fun getIframeUrl(response: Response, formUrl: String): String {
+    private fun getIframeUrl(response: Response, newHeaders: Headers): String {
         return response.use { page ->
             val document = page.asJsoup(decodeAtob(page.body.string()))
             val iframe = document.selectFirst("iframe")
             if (iframe != null) {
                 iframe.attr("src")
             } else {
-                val newHeaders = headers.newBuilder()
-                    .set("Referer", formUrl)
-                    .build()
+                val formUrl = document.selectFirst("form")!!.attr("action")
 
                 val formBody = FormBody.Builder().apply {
                     document.select("input[name]").forEach {
@@ -38,10 +39,9 @@ class RedplayBypasser(
                     }
                 }.build()
 
-                val nextForm = document.selectFirst("form")!!.attr("action")
-                val nextPage = client.newCall(POST(formUrl, newHeaders, formBody))
+                client.newCall(POST(formUrl, newHeaders, formBody))
                     .execute()
-                getIframeUrl(nextPage, nextForm)
+                    .let { getIframeUrl(it, newHeaders) }
             }
         }
     }
