@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.id.otakudesu
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -13,10 +14,17 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
+import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
@@ -166,31 +174,72 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
-    // TODO: Fix extractor
-    override fun videoListSelector() = "div.download > ul > li > a:nth-child(2)"
+    override fun videoListSelector() = "div.mirrorstream ul li > a"
 
-    override fun videoFromElement(element: Element): Video {
-        val res = client.newCall(GET(element.attr("href"))).execute().asJsoup()
-        val scr = res.select("script:containsData(dlbutton)").html()
-        var url = element.attr("href").substringBefore("/v/")
-        val numbs = scr.substringAfter("\" + (").substringBefore(") + \"")
-        val firstString = scr.substringAfter(" = \"").substringBefore("\" + (")
-        val num = numbs.substringBefore(" % ").toInt()
-        val lastString = scr.substringAfter("913) + \"").substringBefore("\";")
-        val nums = num % 51245 + num % 913
-        url += firstString + nums.toString() + lastString
-        val quality = with(lastString) {
-            when {
-                contains("1080p") -> "1080p"
-                contains("720p") -> "720p"
-                contains("480p") -> "480p"
-                contains("360p") -> "360p"
-                else -> "Default"
+    override fun videoListParse(response: Response): List<Video> {
+        val doc = response.use { it.asJsoup() }
+        val script = doc.selectFirst("script:containsData({action:)")!!
+            .data()
+
+        val nonceAction = script.substringAfter("{action:\"").substringBefore('"')
+        val action = script.substringAfter("action:\"").substringBefore('"')
+
+        val nonce = getNonce(nonceAction)
+
+        return doc.select(videoListSelector())
+            .parallelMapNotNull {
+                runCatching { getEmbedLinks(it, action, nonce) }.getOrNull()
             }
-        }
-        return Video(url, quality, url)
+            .parallelMapNotNull {
+                runCatching {
+                    getVideosFromEmbed(it.first, it.second)
+                }.getOrNull()
+            }.flatten()
     }
 
+    private fun getEmbedLinks(element: Element, action: String, nonce: String): Pair<String, String> {
+        val decodedData = element.attr("data-content").b64Decode()
+            .drop(1)
+            .dropLast(1)
+
+        val (id, mirror, quality) = decodedData.split(",").map {
+            it.substringAfter(":").replace("\"", "")
+        }
+
+        val form = FormBody.Builder().apply {
+            add("id", id)
+            add("i", mirror)
+            add("q", quality)
+            add("nonce", nonce)
+            add("action", action)
+        }.build()
+
+        val doc = client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", body = form))
+            .execute()
+            .body.string()
+            .substringAfter(":\"")
+            .substringBefore('"')
+            .b64Decode()
+            .let(Jsoup::parse)
+
+        return Pair(quality, doc.selectFirst("iframe")!!.attr("src"))
+    }
+
+    private fun getVideosFromEmbed(quality: String, link: String): List<Video> {
+        println("Quality -> $quality,  Link -> $link")
+        return emptyList()
+    }
+
+    private fun getNonce(action: String): String {
+        val form = FormBody.Builder().add("action", action).build()
+        return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", body = form))
+            .execute()
+            .use {
+                it.body.string().substringAfter(":\"").substringBefore('"')
+            }
+    }
+
+    override fun videoFromElement(element: Element) = throw Exception("not used")
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     // ============================== Filters ===============================
@@ -287,6 +336,15 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return sortedWith(
             compareByDescending { it.quality.equals(quality) },
         )
+    }
+
+    private inline fun <A, B> Iterable<A>.parallelMapNotNull(crossinline f: suspend (A) -> B?): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll().filterNotNull()
+        }
+
+    private fun String.b64Decode(): String {
+        return String(Base64.decode(this, Base64.DEFAULT))
     }
 
     companion object {
