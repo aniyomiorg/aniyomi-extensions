@@ -20,6 +20,7 @@ class DooPlayGenerator : ThemeSourceGenerator {
         SingleLang("CineVision", "https://cinevisionv3.online", "pt-BR", isNsfw = true, overrideVersionCode = 5),
         SingleLang("DonghuaX", "https://donghuax.com", "pt-BR", isNsfw = false),
         SingleLang("GoAnimes", "https://goanimes.net", "pt-BR", isNsfw = true),
+        SingleLang("Kinoking", "https://kinoking.cc", "de", isNsfw = false, overrideVersionCode = 15),
         SingleLang("Multimovies", "https://multimovies.tech", "en", isNsfw = false, overrideVersionCode = 6),
         SingleLang("pactedanime", "https://pactedanime.com", "en", isNsfw = false, className = "PactedAnime", overrideVersionCode = 4),
         SingleLang("Pi Fansubs", "https://pifansubs.org", "pt-BR", isNsfw = true, overrideVersionCode = 16),
