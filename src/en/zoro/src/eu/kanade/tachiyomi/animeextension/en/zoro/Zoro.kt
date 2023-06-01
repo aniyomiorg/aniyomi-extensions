@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animeextension.en.zoro.extractors.ZoroExtractor
 import eu.kanade.tachiyomi.animeextension.en.zoro.utils.JSONUtil
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -94,6 +95,9 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 episode_number = it.attr("data-number").toFloat()
                 name = "Episode ${it.attr("data-number")}: ${it.attr("title")}"
                 url = it.attr("href")
+                if (it.hasClass("ssl-item-filler") && preferences.getBoolean(MARK_FILLERS_KEY, MARK_FILLERS_DEFAULT)) {
+                    scanlator = "Filler Episode"
+                }
             }
         }
         return episodeList.reversed()
@@ -386,10 +390,21 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+
+        val markFillers = SwitchPreferenceCompat(screen.context).apply {
+            key = MARK_FILLERS_KEY
+            title = MARK_FILLERS_TITLE
+            setDefaultValue(MARK_FILLERS_DEFAULT)
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putBoolean(key, newValue as Boolean).commit()
+            }
+        }
+
         screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
         screen.addPreference(epTypePref)
         screen.addPreference(subLangPref)
+        screen.addPreference(markFillers)
     }
 
     // ============================= Utilities ==============================
@@ -457,5 +472,9 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "Japanese",
             "Russian",
         )
+
+        private const val MARK_FILLERS_KEY = "mark_fillers"
+        private const val MARK_FILLERS_TITLE = "Mark filler episodes"
+        private const val MARK_FILLERS_DEFAULT = true
     }
 }

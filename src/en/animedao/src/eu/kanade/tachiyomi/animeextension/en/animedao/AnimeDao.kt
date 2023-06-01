@@ -222,6 +222,9 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             episode_number = if (episodeName.contains("Episode ", true)) {
                 episodeName.substringAfter("Episode ").substringBefore(" ").toFloatOrNull() ?: 0F
             } else { 0F }
+            if (element.selectFirst("span.filler") != null && preferences.getBoolean("mark_fillers", true)) {
+                scanlator = "Filler Episode"
+            }
             date_upload = element.selectFirst("span.date")?.let { parseDate(it.text()) } ?: 0L
             setUrlWithoutDomain(element.selectFirst("a[href]")!!.attr("href"))
         }
@@ -403,10 +406,19 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putBoolean(key, new).commit()
             }
         }
+        val markFillers = SwitchPreferenceCompat(screen.context).apply {
+            key = "mark_fillers"
+            title = "Mark filler episodes"
+            setDefaultValue(true)
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putBoolean(key, newValue as Boolean).commit()
+            }
+        }
 
         screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
         screen.addPreference(videoServerPref)
         screen.addPreference(episodeSortPref)
+        screen.addPreference(markFillers)
     }
 }
