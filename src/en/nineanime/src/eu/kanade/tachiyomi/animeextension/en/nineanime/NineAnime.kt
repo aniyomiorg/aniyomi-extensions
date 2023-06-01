@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animeextension.en.nineanime.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -182,9 +183,14 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val ids = element.attr("data-ids")
         val sub = element.attr("data-sub").toInt().toBoolean()
         val dub = element.attr("data-dub").toInt().toBoolean()
+        val extraInfo = if (element.hasClass("filler") && preferences.getBoolean("mark_fillers", true)) {
+            " • Filler Episode"
+        } else {
+            ""
+        }
         episode.url = "$ids&epurl=$url/ep-$epNum"
         episode.episode_number = epNum.toFloat()
-        episode.scanlator = (if (sub) "Sub" else "") + if (dub) ", Dub" else ""
+        episode.scanlator = ((if (sub) "Sub" else "") + if (dub) ", Dub" else "") + extraInfo
         val name = element.parent()?.select("span.d-title")?.text().orEmpty()
         val namePrefix = "Episode $epNum"
         episode.name = "Episode $epNum" +
@@ -429,9 +435,19 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val markFillers = SwitchPreferenceCompat(screen.context).apply {
+            key = "mark_fillers"
+            title = "Mark filler episodes"
+            setDefaultValue(true)
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putBoolean(key, newValue as Boolean).commit()
+            }
+        }
+
         screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
         screen.addPreference(videoLanguagePref)
+        screen.addPreference(markFillers)
     }
 
     private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> = runBlocking {
