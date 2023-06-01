@@ -1,9 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.it.animeforce
 
-import android.app.Application
-import android.content.SharedPreferences
-import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -19,11 +15,9 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
 import java.lang.Exception
 
-class AnimeForce : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+class AnimeForce : ParsedAnimeHttpSource() {
 
     override val name = "AnimeForce"
 
@@ -34,10 +28,6 @@ class AnimeForce : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val supportsLatest = false
 
     override val client: OkHttpClient = network.cloudflareClient
-
-    private val preferences: SharedPreferences by lazy {
-        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
 
     // ============================== Popular ===============================
 
@@ -176,10 +166,6 @@ class AnimeForce : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
 
-    override fun animeDetailsRequest(anime: SAnime): Request {
-        return GET(baseUrl + anime.url, headers = headers)
-    }
-
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
 
@@ -309,6 +295,4 @@ class AnimeForce : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> SAnime.UNKNOWN
         }
     }
-
-    override fun setupPreferenceScreen(screen: PreferenceScreen) { }
 }
