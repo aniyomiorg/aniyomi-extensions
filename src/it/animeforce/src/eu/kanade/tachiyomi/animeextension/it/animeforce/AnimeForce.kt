@@ -68,16 +68,17 @@ class AnimeForce : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
 
     // =============================== Search ===============================
+    private val baseUrlResponse by lazy { client.newCall(GET(baseUrl)).execute() }
+    private val searchHeaders by lazy { baseUrlResponse.request.headers }
+    private val additionalQuery by lazy {
+        baseUrlResponse.asJsoup().selectFirst("input[type=hidden]")
+            ?.let { "${it.attr("name")}=${it.attr("value")}" }
+            ?: "cat=6010"
+    }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val interceptor = client.newBuilder().addInterceptor(CloudflareInterceptor()).build()
-        val cfResponse = interceptor.newCall(GET(baseUrl)).execute()
-
-        val inputEl = cfResponse.asJsoup().selectFirst("input[type=hidden]")!!
-        val headers = cfResponse.request.headers
-
         return if (query.isNotBlank()) {
-            GET("$baseUrl/?s=$query&${inputEl.attr("name")}=${inputEl.attr("value")}", headers = headers)
+            GET("$baseUrl/?s=$query&$additionalQuery", headers = searchHeaders)
         } else {
             val url = "$baseUrl/genre/".toHttpUrl().newBuilder()
             filters.forEach { filter ->
