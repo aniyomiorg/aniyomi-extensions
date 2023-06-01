@@ -13,6 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
@@ -222,12 +223,38 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .b64Decode()
             .let(Jsoup::parse)
 
-        return Pair(quality, doc.selectFirst("iframe")!!.attr("src"))
+        val url = doc.selectFirst("iframe")!!.attr("src")
+
+        return Pair(quality, url)
     }
 
     private fun getVideosFromEmbed(quality: String, link: String): List<Video> {
-        println("Quality -> $quality,  Link -> $link")
-        return emptyList()
+        return when {
+            "yourupload" in link -> {
+                val id = link.substringAfter("id=").substringBefore("&")
+                val url = "https://yourupload.com/embed/$id"
+                YourUploadExtractor(client).videoFromUrl(url, headers, "YourUpload - $quality")
+            }
+            "desustream" in link -> {
+                client.newCall(GET(link, headers)).execute().use {
+                    val doc = it.asJsoup()
+                    val script = doc.selectFirst("script:containsData(sources)")!!.data()
+                    val videoUrl = script.substringAfter("sources:[{")
+                        .substringAfter("file':'")
+                        .substringBefore("'")
+                    listOf(Video(videoUrl, "DesuStream - $quality", videoUrl, headers))
+                }
+            }
+            "mp4upload" in link -> {
+                client.newCall(GET(link, headers)).execute().use {
+                    val doc = it.asJsoup()
+                    val script = doc.selectFirst("script:containsData(player.src)")!!.data()
+                    val videoUrl = script.substringAfter("src: \"").substringBefore('"')
+                    listOf(Video(videoUrl, "Mp4upload - $quality", videoUrl, headers))
+                }
+            }
+            else -> emptyList()
+        }
     }
 
     private fun getNonce(action: String): String {

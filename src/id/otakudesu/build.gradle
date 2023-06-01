@@ -11,4 +11,8 @@ ext {
     libVersion = '13'
 }
 
+dependencies {
+    implementation(project(":lib-yourupload-extractor"))
+}
+
 apply from: "$rootDir/common.gradle"
