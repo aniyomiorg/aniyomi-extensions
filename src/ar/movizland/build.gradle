@@ -5,7 +5,7 @@ ext {
     extName = 'موفيزلاند'
     pkgNameSuffix = 'ar.movizland'
     extClass = '.Movizland'
-    extVersionCode = 10
+    extVersionCode = 11
     libVersion = '13'
 }
 
