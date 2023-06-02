@@ -559,6 +559,7 @@ package eu.kanade.tachiyomi.animeextension.en.ask4movie
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.en.ask4movie.extractors.CinegrabberExtractor
@@ -589,7 +590,7 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Ask4Movie"
 
-    override val baseUrl = "https://ask4movie.mx"
+    override val baseUrl = "https://ask4movie.net"
 
     override val lang = "en"
 
@@ -694,8 +695,11 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // https://github.com/recloudstream/cloudstream-extensions/blob/master/Ask4Movie/src/main/kotlin/com/lagradost/Ask4MovieProvider.kt
     private fun episodeListFromSeason(bodyString: String): List<EpisodeUrl> {
-        var soup = Jsoup.parse(bodyString)
-        val iframeUrl = soup.select("div#player-embed:not([class]) iframe").attr("data-src")
+        val soup = Jsoup.parse(bodyString)
+        val iframeElement = soup.select("div#player-embed:not([class]) iframe")
+        val iframeUrl = iframeElement.attr("data-src").ifEmpty {
+            iframeElement.attr("src")
+        }
 
         val episodeList = mutableListOf<EpisodeUrl>()
 
@@ -741,6 +745,7 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val url = response.request.url.toString()
+        Log.i("VIDEOURL", url)
         return when {
             url.contains("fembed") ||
                 url.contains("anime789.com") || url.contains("24hd.club") || url.contains("fembad.org") ||
