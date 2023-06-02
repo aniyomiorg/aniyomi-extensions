@@ -35,7 +35,7 @@ class Movizland : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "موفيزلاند"
 
-    override val baseUrl = "https://movizland.icu"
+    override val baseUrl = "https://eg.movizlaand.top"
 
     override val lang = "ar"
 
