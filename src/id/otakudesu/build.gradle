@@ -1,12 +1,18 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
 
 ext {
     extName = 'OtakuDesu'
     pkgNameSuffix = 'id.otakudesu'
     extClass = '.OtakuDesu'
-    extVersionCode = 18
+    extVersionCode = 19
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(":lib-yourupload-extractor"))
 }
 
 apply from: "$rootDir/common.gradle"
