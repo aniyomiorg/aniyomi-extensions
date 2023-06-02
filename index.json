@@ -401,10 +401,10 @@
   {
     "name": "Aniyomi: موفيزلاند",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.movizland",
-    "apk": "aniyomi-ar.movizland-v13.10.apk",
+    "apk": "aniyomi-ar.movizland-v13.11.apk",
     "lang": "ar",
-    "code": 10,
-    "version": "13.10",
+    "code": 11,
+    "version": "13.11",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -413,7 +413,7 @@
         "name": "موفيزلاند",
         "lang": "ar",
         "id": "7623510893043031300",
-        "baseUrl": "https://movizland.icu",
+        "baseUrl": "https://eg.movizlaand.top",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -582,27 +582,6 @@
         "lang": "de",
         "id": "6849853030287708310",
         "baseUrl": "https://aniking.cc",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: Anime24",
-    "pkg": "eu.kanade.tachiyomi.animeextension.de.anime24",
-    "apk": "aniyomi-de.anime24-v13.9.apk",
-    "lang": "de",
-    "code": 9,
-    "version": "13.9",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "Anime24",
-        "lang": "de",
-        "id": "422477623650496339",
-        "baseUrl": "https://anime24.to",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -836,27 +815,6 @@
         "baseUrl": "https://movie4k.stream",
         "versionId": 1,
         "hasCloudflare": 0
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: Moviedream",
-    "pkg": "eu.kanade.tachiyomi.animeextension.de.moviedream",
-    "apk": "aniyomi-de.moviedream-v13.4.apk",
-    "lang": "de",
-    "code": 4,
-    "version": "13.4",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "Moviedream",
-        "lang": "de",
-        "id": "1047004551606648555",
-        "baseUrl": "https://moviedream.co",
-        "versionId": 1,
-        "hasCloudflare": 1
       }
     ]
   },
@@ -1107,27 +1065,6 @@
         "lang": "en",
         "id": "9163675745699695675",
         "baseUrl": "https://animepahe.com",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: Animerush",
-    "pkg": "eu.kanade.tachiyomi.animeextension.en.animerush",
-    "apk": "aniyomi-en.animerush-v13.1.apk",
-    "lang": "en",
-    "code": 1,
-    "version": "13.1",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "Animerush",
-        "lang": "en",
-        "id": "3181577132815280624",
-        "baseUrl": "https://www.animerush.tv",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -1821,27 +1758,6 @@
         "lang": "en",
         "id": "525433677388000141",
         "baseUrl": "https://tokuzilla.net",
-        "versionId": 1,
-        "hasCloudflare": 0
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: twist.moe",
-    "pkg": "eu.kanade.tachiyomi.animeextension.en.twistmoe",
-    "apk": "aniyomi-en.twistmoe-v13.9.apk",
-    "lang": "en",
-    "code": 9,
-    "version": "13.9",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "twist.moe",
-        "lang": "en",
-        "id": "2412314583186025881",
-        "baseUrl": "https://twist.moe",
         "versionId": 1,
         "hasCloudflare": 0
       }
@@ -2617,10 +2533,10 @@
   {
     "name": "Aniyomi: Vostfree",
     "pkg": "eu.kanade.tachiyomi.animeextension.fr.vostfree",
-    "apk": "aniyomi-fr.vostfree-v13.12.apk",
+    "apk": "aniyomi-fr.vostfree-v13.13.apk",
     "lang": "fr",
-    "code": 12,
-    "version": "13.12",
+    "code": 13,
+    "version": "13.13",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2629,7 +2545,7 @@
         "name": "Vostfree",
         "lang": "fr",
         "id": "8596049504378147571",
-        "baseUrl": "https://vostfree.cx",
+        "baseUrl": "https://vostfree.ws",
         "versionId": 1,
         "hasCloudflare": 1
       }
