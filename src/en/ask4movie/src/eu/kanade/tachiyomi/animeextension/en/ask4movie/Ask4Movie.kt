@@ -589,7 +589,7 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Ask4Movie"
 
-    override val baseUrl = "https://ask4movie.mx"
+    override val baseUrl = "https://ask4movie.net"
 
     override val lang = "en"
 
@@ -694,8 +694,11 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // https://github.com/recloudstream/cloudstream-extensions/blob/master/Ask4Movie/src/main/kotlin/com/lagradost/Ask4MovieProvider.kt
     private fun episodeListFromSeason(bodyString: String): List<EpisodeUrl> {
-        var soup = Jsoup.parse(bodyString)
-        val iframeUrl = soup.select("div#player-embed:not([class]) iframe").attr("data-src")
+        val soup = Jsoup.parse(bodyString)
+        val iframeElement = soup.select("div#player-embed:not([class]) iframe")
+        val iframeUrl = iframeElement.attr("data-src").ifEmpty {
+            iframeElement.attr("src")
+        }
 
         val episodeList = mutableListOf<EpisodeUrl>()
 
