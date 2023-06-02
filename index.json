@@ -1157,10 +1157,10 @@
   {
     "name": "Aniyomi: Ask4Movie",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.ask4movie",
-    "apk": "aniyomi-en.ask4movie-v13.3.apk",
+    "apk": "aniyomi-en.ask4movie-v13.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1169,7 +1169,7 @@
         "name": "Ask4Movie",
         "lang": "en",
         "id": "7599907565344643468",
-        "baseUrl": "https://ask4movie.mx",
+        "baseUrl": "https://ask4movie.net",
         "versionId": 1,
         "hasCloudflare": 1
       }
