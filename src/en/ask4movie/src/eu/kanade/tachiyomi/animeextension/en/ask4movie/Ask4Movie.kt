@@ -559,7 +559,6 @@ package eu.kanade.tachiyomi.animeextension.en.ask4movie
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.en.ask4movie.extractors.CinegrabberExtractor
@@ -745,7 +744,6 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val url = response.request.url.toString()
-        Log.i("VIDEOURL", url)
         return when {
             url.contains("fembed") ||
                 url.contains("anime789.com") || url.contains("24hd.club") || url.contains("fembad.org") ||
