@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -100,10 +99,6 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val server = it.select("a").text()
             val url = it.select("a").attr("data-ep-url")
             when {
-                server.contains("fembed") || server.contains("yuistream") || server.contains("vivyplay") -> {
-                    val videos = FembedExtractor(client).videosFromUrl(url)
-                    videoList.addAll(videos)
-                }
                 url.contains("soraplay") -> {
                     val witAnime = "https://witanime.com/"
                     val newHeaders = headers.newBuilder()

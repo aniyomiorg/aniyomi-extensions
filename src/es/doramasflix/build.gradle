@@ -5,12 +5,11 @@ ext {
     extName = 'Doramasflix'
     pkgNameSuffix = 'es.doramasflix'
     extClass = '.Doramasflix'
-    extVersionCode = 4
+    extVersionCode = 5
     libVersion = '13'
 }
 
 dependencies {
-    implementation(project(':lib-fembed-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-okru-extractor'))
     implementation(project(':lib-streamsb-extractor'))

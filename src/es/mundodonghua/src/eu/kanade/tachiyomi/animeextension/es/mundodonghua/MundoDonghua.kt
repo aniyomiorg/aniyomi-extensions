@@ -13,7 +13,6 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
@@ -111,14 +110,6 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     it.value
                 }.toList().map {
                     val unpack = getAndUnpack(it)
-                    fetchUrls(unpack!!.first()).map { url ->
-                        if (url.contains("diasfem")) {
-                            var serverUrl = url.replace("diasfem", "embedsito")
-                            videoList.addAll(
-                                FembedExtractor(client).videosFromUrl(serverUrl),
-                            )
-                        }
-                    }
                     if (unpack!!.first()!!.contains("protea_tab")) {
                         val protearegex = Regex("(protea_tab.*slug.*,type)")
                         val slug = protearegex.findAll(unpack!!.first()).map {
@@ -159,7 +150,7 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val videoSorted = this.sortedWith(
                 compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
-            val userPreferredQuality = preferences.getString("preferred_quality", "Fembed:720p")
+            val userPreferredQuality = preferences.getString("preferred_quality", "Protea:720p")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
             if (preferredIdx != -1) {
                 videoSorted.drop(preferredIdx + 1)
@@ -273,15 +264,18 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
-            "Protea:1080p", "Protea:720p", "Protea:480p", "Protea:380p", "Protea:360p",
-            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:380p", "Fembed:360p",
+            "Protea:1080p",
+            "Protea:720p",
+            "Protea:480p",
+            "Protea:380p",
+            "Protea:360p",
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
             entries = qualities
             entryValues = qualities
-            setDefaultValue("Fembed:720p")
+            setDefaultValue("Protea:720p")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->

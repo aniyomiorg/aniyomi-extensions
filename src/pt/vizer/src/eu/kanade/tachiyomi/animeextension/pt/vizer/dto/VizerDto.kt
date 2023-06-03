@@ -59,13 +59,11 @@ data class VideoDto(
 data class PlayersDto(
     val mixdrop: String = "0",
     val streamtape: String = "0",
-    val fembed: String = "0",
 ) {
     operator fun iterator(): List<Pair<String, String>> {
         return listOf(
             "mixdrop" to mixdrop,
             "streamtape" to streamtape,
-            "fembed" to fembed,
         )
     }
 }

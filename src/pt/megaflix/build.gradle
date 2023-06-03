@@ -7,12 +7,11 @@ ext {
     extName = 'Megaflix'
     pkgNameSuffix = 'pt.megaflix'
     extClass = '.Megaflix'
-    extVersionCode = 3
+    extVersionCode = 4
     containsNsfw = true
 }
 
 dependencies {
-    implementation(project(":lib-fembed-extractor"))
     implementation(project(":lib-streamsb-extractor"))
     implementation(project(":lib-streamtape-extractor"))
     // for mixdrop and megaflix

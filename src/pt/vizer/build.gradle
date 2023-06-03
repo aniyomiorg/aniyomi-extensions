@@ -6,13 +6,12 @@ ext {
     extName = 'Vizer.tv'
     pkgNameSuffix = 'pt.vizer'
     extClass = '.Vizer'
-    extVersionCode = 7
+    extVersionCode = 8
     libVersion = '13'
     containsNsfw = true
 }
 
 dependencies {
-    implementation(project(':lib-fembed-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }

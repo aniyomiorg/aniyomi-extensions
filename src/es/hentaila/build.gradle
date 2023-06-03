@@ -5,14 +5,9 @@ ext {
     extName = 'Hentaila'
     pkgNameSuffix = 'es.hentaila'
     extClass = '.Hentaila'
-    extVersionCode = 11
+    extVersionCode = 12
     libVersion = '13'
     containsNsfw = true
 }
-
-dependencies {
-    implementation(project(':lib-fembed-extractor'))
-}
-
 
 apply from: "$rootDir/common.gradle"

@@ -5,12 +5,11 @@ ext {
     extName = 'MonosChinos'
     pkgNameSuffix = 'es.monoschinos'
     extClass = '.MonosChinos'
-    extVersionCode = 20
+    extVersionCode = 21
     libVersion = '13'
 }
 
 dependencies {
-    implementation(project(':lib-fembed-extractor'))
     implementation(project(':lib-okru-extractor'))
 }
 

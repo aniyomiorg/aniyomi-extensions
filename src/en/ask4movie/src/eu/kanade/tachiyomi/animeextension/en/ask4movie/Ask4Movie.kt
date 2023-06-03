@@ -561,7 +561,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.en.ask4movie.extractors.CinegrabberExtractor
 import eu.kanade.tachiyomi.animeextension.en.ask4movie.extractors.FilemoonExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -745,31 +744,6 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val url = response.request.url.toString()
         return when {
-            url.contains("fembed") ||
-                url.contains("anime789.com") || url.contains("24hd.club") || url.contains("fembad.org") ||
-                url.contains("vcdn.io") || url.contains("sharinglink.club") || url.contains("moviemaniac.org") ||
-                url.contains("votrefiles.club") || url.contains("femoload.xyz") || url.contains("albavido.xyz") ||
-                url.contains("feurl.com") || url.contains("dailyplanet.pw") || url.contains("ncdnstm.com") ||
-                url.contains("jplayer.net") || url.contains("xstreamcdn.com") || url.contains("fembed-hd.com") ||
-                url.contains("gcloud.live") || url.contains("vcdnplay.com") || url.contains("superplayxyz.club") ||
-                url.contains("vidohd.com") || url.contains("vidsource.me") || url.contains("cinegrabber.com") ||
-                url.contains("votrefile.xyz") || url.contains("zidiplay.com") || url.contains("ndrama.xyz") ||
-                url.contains("fcdn.stream") || url.contains("mediashore.org") || url.contains("suzihaza.com") ||
-                url.contains("there.to") || url.contains("femax20.com") || url.contains("javstream.top") ||
-                url.contains("viplayer.cc") || url.contains("sexhd.co") || url.contains("fembed.net") ||
-                url.contains("mrdhan.com") || url.contains("votrefilms.xyz") || // url.contains("") ||
-                url.contains("embedsito.com") || url.contains("dutrag.com") || // url.contains("") ||
-                url.contains("youvideos.ru") || url.contains("streamm4u.club") || // url.contains("") ||
-                url.contains("moviepl.xyz") || url.contains("asianclub.tv") || // url.contains("") ||
-                url.contains("vidcloud.fun") || url.contains("fplayer.info") || // url.contains("") ||
-                url.contains("diasfem.com") || url.contains("javpoll.com") || url.contains("reeoov.tube") ||
-                url.contains("suzihaza.com") || url.contains("ezsubz.com") || url.contains("vidsrc.xyz") ||
-                url.contains("diampokusy.com") || url.contains("diampokusy.com") || url.contains("i18n.pw") ||
-                url.contains("vanfem.com") || url.contains("fembed9hd.com") || url.contains("votrefilms.xyz") || url.contains("watchjavnow.xyz") ->
-                {
-                    val userId = Regex("""USER_ID.*?(\d+)""").find(response.body.string())?.groupValues?.getOrNull(1) ?: ""
-                    CinegrabberExtractor(client).videosFromUrl(url, userId).sort()
-                }
             "filemoon" in url -> {
                 FilemoonExtractor(client).videoFromUrl(url).sort()
             }

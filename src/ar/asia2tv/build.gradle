@@ -5,12 +5,11 @@ ext {
     extName = 'asia2tv'
     pkgNameSuffix = 'ar.asia2tv'
     extClass = '.Asia2TV'
-    extVersionCode = 10
+    extVersionCode = 11
     libVersion = '13'
 }
 
 dependencies {
-    implementation(project(':lib-fembed-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-okru-extractor'))
     implementation(project(':lib-dood-extractor'))

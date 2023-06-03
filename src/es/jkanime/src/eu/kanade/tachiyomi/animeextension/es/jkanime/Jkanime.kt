@@ -13,7 +13,6 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -104,13 +103,11 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val scriptServers = document.selectFirst("script:containsData(var video = [];)")!!
             val url = scriptServers.data().substringAfter("video[$serverId] = '<iframe class=\"player_conte\" src=\"")
                 .substringBefore("\"")
-                .replace("/jkfembed.php?u=", "https://embedsito.com/v/")
                 .replace("/jkokru.php?u=", "http://ok.ru/videoembed/")
                 .replace("/jkvmixdrop.php?u=", "https://mixdrop.co/e/")
                 .replace("/jk.php?u=", "$baseUrl/")
 
             when {
-                "embedsito" in url -> FembedExtractor(client).videosFromUrl(url, lang).forEach { videos.add(it) }
                 "ok" in url -> OkruExtractor(client).videosFromUrl(url, lang).forEach { videos.add(it) }
                 "stream/jkmedia" in url -> videos.add(Video(url, "${lang}Xtreme S", url))
                 "um2.php" in url -> JkanimeExtractor(client).getNozomiFromUrl(baseUrl + url, lang).let { if (it != null) videos.add(it) }
@@ -363,7 +360,6 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
-            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", // Fembed
             "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", // Okru
             "Xtreme S", "HentaiJk", "Nozomi", "Desu", // video servers without resolution
         )

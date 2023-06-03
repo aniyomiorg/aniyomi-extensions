@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -93,10 +92,6 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val urlEncoded = players.attr("data-player")
             val byte = android.util.Base64.decode(urlEncoded, android.util.Base64.DEFAULT)
             val url = String(byte, charset("UTF-8")).substringAfter("?url=")
-            if (server.contains("fembed")) {
-                val videos = FembedExtractor(client).videosFromUrl(url)
-                videoList.addAll(videos)
-            }
             if (server.contains("streamtape")) {
                 val video = StreamTapeExtractor(client).videoFromUrl(url)
                 if (video != null) {
@@ -134,7 +129,7 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val videoSorted = this.sortedWith(
                 compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
-            val userPreferredQuality = preferences.getString("preferred_quality", "Fembed:720p")
+            val userPreferredQuality = preferences.getString("preferred_quality", "Okru:720p")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
             if (preferredIdx != -1) {
                 videoSorted.drop(preferredIdx + 1)
@@ -278,7 +273,6 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
-            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", // Fembed
             "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
             "Uqload", "Upload", "SolidFiles", "StreamTape", // video servers without resolution
         )
@@ -287,7 +281,7 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title = "Preferred quality"
             entries = qualities
             entryValues = qualities
-            setDefaultValue("Fembed:720p")
+            setDefaultValue("Okru:720p")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->

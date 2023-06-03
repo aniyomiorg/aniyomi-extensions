@@ -19,7 +19,6 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -169,9 +168,6 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
                     StreamTapeExtractor(client)
                         .videoFromUrl(url, "StreamTape($langPrefix)")
                         ?.let(::listOf)
-                "fembed" ->
-                    FembedExtractor(client)
-                        .videosFromUrl(url, langPrefix)
                 else -> null
             }
         }.flatten()
@@ -362,7 +358,6 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
         private val PREF_PLAYER_ARRAY = arrayOf(
             "MixDrop",
             "StreamTape",
-            "Fembed",
         )
 
         private const val PREF_LANGUAGE_KEY = "pref_language"

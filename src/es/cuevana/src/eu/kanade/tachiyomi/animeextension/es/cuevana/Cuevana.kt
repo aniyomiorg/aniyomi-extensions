@@ -12,13 +12,11 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -125,32 +123,6 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             } catch (e: Exception) { "" }
             val regIsUrl = "https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)".toRegex()
             val iframe = urlServerSolver(it.attr("data-src"))
-            if (iframe.contains("api.cuevana3.me/fembed/")) {
-                val key = iframe.substringAfter("?h=")
-                val headers = headers.newBuilder()
-                    .add("authority", "api.cuevana3.me")
-                    .add("accept", "application/json, text/javascript, */*; q=0.01")
-                    .add("accept-language", "es-MX,es;q=0.9,en;q=0.8")
-                    .add("content-type", "application/x-www-form-urlencoded; charset=UTF-8")
-                    .add("origin", "https://api.cuevana3.me")
-                    .add("sec-ch-ua", "\"Chromium\";v=\"112\", \"Google Chrome\";v=\"112\", \"Not:A-Brand\";v=\"99\"")
-                    .add("sec-ch-ua-mobile", "?0")
-                    .add("sec-ch-ua-platform", "\"Windows\"")
-                    .add("sec-fetch-dest", "empty")
-                    .add("sec-fetch-mode", "cors")
-                    .add("sec-fetch-site", "same-origin")
-                    .add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36")
-                    .add("x-requested-with", "XMLHttpRequest")
-                    .build()
-                val mediaType = "application/x-www-form-urlencoded".toMediaType()
-                val requestBody = "h=$key".toRequestBody(mediaType)
-                val jsonData = client.newCall(POST("https://api.cuevana3.me/fembed/api.php", headers = headers, requestBody)).execute()
-                if (jsonData.isSuccessful) {
-                    val body = jsonData.asJsoup().body().toString()
-                    val url = body.substringAfter("\"url\":\"").substringBefore("\",").replace("\\", "")
-                    loadExtractor(url, langPrefix).map { video -> videoList.add(video) }
-                }
-            }
             if (iframe.contains("apialfa.tomatomatela.club")) {
                 try {
                     val tomkey = iframe.substringAfter("?h=")
@@ -189,7 +161,6 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 } catch (e: Exception) { }
             }
             if (regIsUrl.containsMatchIn(iframe) &&
-                !iframe.contains("api.cuevana3.me/fembed/") &&
                 !iframe.contains("apialfa.tomatomatela.club")
             ) {
                 try {
@@ -203,29 +174,6 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun loadExtractor(url: String, prefix: String = ""): List<Video> {
         val videoList = mutableListOf<Video>()
         val embedUrl = url.lowercase()
-        if (embedUrl.contains("fembed") || embedUrl.contains("anime789.com") || embedUrl.contains("24hd.club") ||
-            embedUrl.contains("fembad.org") || embedUrl.contains("vcdn.io") || embedUrl.contains("sharinglink.club") ||
-            embedUrl.contains("moviemaniac.org") || embedUrl.contains("votrefiles.club") || embedUrl.contains("femoload.xyz") ||
-            embedUrl.contains("albavido.xyz") || embedUrl.contains("feurl.com") || embedUrl.contains("dailyplanet.pw") ||
-            embedUrl.contains("ncdnstm.com") || embedUrl.contains("jplayer.net") || embedUrl.contains("xstreamcdn.com") ||
-            embedUrl.contains("fembed-hd.com") || embedUrl.contains("gcloud.live") || embedUrl.contains("vcdnplay.com") ||
-            embedUrl.contains("superplayxyz.club") || embedUrl.contains("vidohd.com") || embedUrl.contains("vidsource.me") ||
-            embedUrl.contains("cinegrabber.com") || embedUrl.contains("votrefile.xyz") || embedUrl.contains("zidiplay.com") ||
-            embedUrl.contains("ndrama.xyz") || embedUrl.contains("fcdn.stream") || embedUrl.contains("mediashore.org") ||
-            embedUrl.contains("suzihaza.com") || embedUrl.contains("there.to") || embedUrl.contains("femax20.com") ||
-            embedUrl.contains("javstream.top") || embedUrl.contains("viplayer.cc") || embedUrl.contains("sexhd.co") ||
-            embedUrl.contains("fembed.net") || embedUrl.contains("mrdhan.com") || embedUrl.contains("votrefilms.xyz") ||
-            embedUrl.contains("embedsito.com") || embedUrl.contains("dutrag.com") || embedUrl.contains("youvideos.ru") ||
-            embedUrl.contains("streamm4u.club") || embedUrl.contains("moviepl.xyz") || embedUrl.contains("asianclub.tv") ||
-            embedUrl.contains("vidcloud.fun") || embedUrl.contains("fplayer.info") || embedUrl.contains("diasfem.com") ||
-            embedUrl.contains("javpoll.com") || embedUrl.contains("reeoov.tube") || embedUrl.contains("suzihaza.com") ||
-            embedUrl.contains("ezsubz.com") || embedUrl.contains("vidsrc.xyz") || embedUrl.contains("diampokusy.com") ||
-            embedUrl.contains("diampokusy.com") || embedUrl.contains("i18n.pw") || embedUrl.contains("vanfem.com") ||
-            embedUrl.contains("fembed9hd.com") || embedUrl.contains("votrefilms.xyz") || embedUrl.contains("watchjavnow.xyz")
-        ) {
-            val videos = FembedExtractor(client).videosFromUrl(url, prefix, redirect = true)
-            videoList.addAll(videos)
-        }
         if (embedUrl.contains("tomatomatela")) {
             try {
                 val mainUrl = url.substringBefore("/embed.html#").substringAfter("https://")
@@ -393,7 +341,6 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
             "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
-            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
             "Streamlare:1080p", "Streamlare:720p", "Streamlare:480p", "Streamlare:360p", "Streamlare:240p", // Streamlare
             "StreamTape", "Amazon", "Voex", "DoodStream", "YourUpload",
         )

@@ -6,7 +6,6 @@ import eu.kanade.tachiyomi.animeextension.pt.goanimes.extractors.JsDecoder
 import eu.kanade.tachiyomi.animeextension.pt.goanimes.extractors.PlaylistExtractor
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -53,10 +52,6 @@ class GoAnimes : DooPlay(
         return when {
             "player5.goanimes.net" in url ->
                 GoAnimesExtractor(client).videosFromUrl(url)
-            "/v/" in url ->
-                runCatching {
-                    FembedExtractor(client).videosFromUrl(url)
-                }.getOrDefault(emptyList<Video>())
             listOf("/bloggerjwplayer", "/m3u8", "/multivideo").any { it in url } -> {
                 val script = client.newCall(GET(url)).execute()
                     .body.string()
