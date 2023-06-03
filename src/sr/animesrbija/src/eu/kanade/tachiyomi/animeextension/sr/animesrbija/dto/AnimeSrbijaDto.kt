@@ -62,3 +62,25 @@ data class EpisodesDto(val anime: EpisodeListDto) {
 
     val episodes by lazy { anime.episodes }
 }
+
+@Serializable
+data class EpisodeVideo(val episode: PlayersDto) {
+    @Serializable
+    data class PlayersDto(
+        val player1: String?,
+        val player2: String?,
+        val player3: String?,
+        val player4: String?,
+        val player5: String?,
+    )
+
+    val links by lazy {
+        listOfNotNull(
+            episode.player1,
+            episode.player2,
+            episode.player3,
+            episode.player4,
+            episode.player5,
+        )
+    }
+}

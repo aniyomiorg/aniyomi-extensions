@@ -11,4 +11,8 @@ ext {
     extVersionCode = 3
 }
 
+dependencies {
+    implementation("dev.datlag.jsunpacker:jsunpacker:1.0.1")
+}
+
 apply from: "$rootDir/common.gradle"

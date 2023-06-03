@@ -1,11 +1,13 @@
 package eu.kanade.tachiyomi.animeextension.sr.animesrbija
 
 import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.AnimeDetailsDto
+import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.EpisodeVideo
 import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.EpisodesDto
 import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.LatestUpdatesDto
 import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.PagePropsDto
 import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.SearchAnimeDto
 import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.SearchPageDto
+import eu.kanade.tachiyomi.animeextension.sr.animesrbija.extractors.FilemoonExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -60,12 +62,22 @@ class AnimeSrbija : AnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
-    override fun videoListRequest(episode: SEpisode): Request {
-        throw UnsupportedOperationException("Not used.")
+    override fun videoListParse(response: Response): List<Video> {
+        val links = response.asJsoup().parseAs<EpisodeVideo>().links
+        return links.flatMap(::getVideosFromURL)
     }
 
-    override fun videoListParse(response: Response): List<Video> {
-        throw UnsupportedOperationException("Not used.")
+    private fun getVideosFromURL(url: String): List<Video> {
+        val trimmedUrl = url.trim('!')
+        return runCatching {
+            when {
+                "filemoon" in trimmedUrl ->
+                    FilemoonExtractor(client).videosFromUrl(trimmedUrl)
+                ".m3u8" in trimmedUrl ->
+                    listOf(Video(trimmedUrl, "Internal Player", trimmedUrl))
+                else -> emptyList()
+            }
+        }.getOrElse { emptyList() }
     }
 
     // =========================== Anime Details ============================
