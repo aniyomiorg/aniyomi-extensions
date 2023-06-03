@@ -47,3 +47,18 @@ data class AnimeDetailsData(
 ) {
     val imgPath by lazy { "/_next/image?url=$img&w=1080&q=75" }
 }
+
+@Serializable
+data class EpisodesDto(val anime: EpisodeListDto) {
+    @Serializable
+    data class EpisodeListDto(val episodes: List<EpisodeDto>)
+
+    @Serializable
+    data class EpisodeDto(
+        val slug: String,
+        val number: Int,
+        val filler: Boolean,
+    )
+
+    val episodes by lazy { anime.episodes }
+}

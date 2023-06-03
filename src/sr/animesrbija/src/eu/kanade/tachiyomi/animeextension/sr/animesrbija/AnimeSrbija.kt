@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.sr.animesrbija
 
 import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.AnimeDetailsDto
+import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.EpisodesDto
 import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.LatestUpdatesDto
 import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.PagePropsDto
 import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.SearchAnimeDto
@@ -47,7 +48,15 @@ class AnimeSrbija : AnimeHttpSource() {
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
-        throw UnsupportedOperationException("Not used.")
+        val data = response.asJsoup().parseAs<EpisodesDto>()
+        return data.episodes.map {
+            SEpisode.create().apply {
+                setUrlWithoutDomain("/epizoda/${it.slug}")
+                name = "Epizoda ${it.number}"
+                episode_number = it.number.toFloat()
+                if (it.filler) scanlator = "filler"
+            }
+        }
     }
 
     // ============================ Video Links =============================
