@@ -108,9 +108,19 @@ class AnimeSrbija : AnimeHttpSource() {
     // =============================== Search ===============================
     override fun searchAnimeParse(response: Response) = popularAnimeParse(response)
 
-    // TODO: Implement search filters
+    override fun getFilterList() = AnimeSrbijaFilters.FILTER_LIST
+
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        return GET("$baseUrl/filter?search=$query&page=$page")
+        val params = AnimeSrbijaFilters.getSearchParameters(filters)
+        val url = buildString {
+            append("$baseUrl/filter?page=$page&sort=${params.sortby}")
+            if (query.isNotBlank()) append("&search=$query")
+            params.parsedCheckboxes.forEach {
+                if (it.isNotBlank()) append("&$it")
+            }
+        }
+
+        return GET(url)
     }
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
