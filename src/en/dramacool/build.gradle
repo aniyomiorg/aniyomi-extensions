@@ -5,12 +5,11 @@ ext {
     extName = 'DramaCool'
     pkgNameSuffix = 'en.dramacool'
     extClass = '.DramaCool'
-    extVersionCode = 34
+    extVersionCode = 35
     libVersion = '13'
 }
 
 dependencies {
-    implementation(project(':lib-fembed-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))

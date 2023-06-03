@@ -313,8 +313,12 @@ class Pelisplusph(override val name: String, override val baseUrl: String) : Pel
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
-            "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
-            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
+            "StreamSB:1080p",
+            "StreamSB:720p",
+            "StreamSB:480p",
+            "StreamSB:360p",
+            "StreamSB:240p",
+            "StreamSB:144p", // StreamSB
             "DoodStream",
         )
         val videoQualityPref = ListPreference(screen.context).apply {

@@ -13,7 +13,6 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
@@ -343,30 +342,6 @@ class Doramasflix : ConfigurableAnimeSource, AnimeHttpSource() {
                 OkruExtractor(client).videosFromUrl(link, "", true).let { videos.addAll(it) }
             } catch (_: Exception) {}
         }
-        if (link.contains("fembed") || link.contains("anime789.com") || link.contains("24hd.club") ||
-            link.contains("fembad.org") || link.contains("vcdn.io") || link.contains("sharinglink.club") ||
-            link.contains("moviemaniac.org") || link.contains("votrefiles.club") || link.contains("femoload.xyz") ||
-            link.contains("albavido.xyz") || link.contains("feurl.com") || link.contains("dailyplanet.pw") ||
-            link.contains("ncdnstm.com") || link.contains("jplayer.net") || link.contains("xstreamcdn.com") ||
-            link.contains("fembed-hd.com") || link.contains("gcloud.live") || link.contains("vcdnplay.com") ||
-            link.contains("superplayxyz.club") || link.contains("vidohd.com") || link.contains("vidsource.me") ||
-            link.contains("cinegrabber.com") || link.contains("votrefile.xyz") || link.contains("zidiplay.com") ||
-            link.contains("ndrama.xyz") || link.contains("fcdn.stream") || link.contains("mediashore.org") ||
-            link.contains("suzihaza.com") || link.contains("there.to") || link.contains("femax20.com") ||
-            link.contains("javstream.top") || link.contains("viplayer.cc") || link.contains("sexhd.co") ||
-            link.contains("fembed.net") || link.contains("mrdhan.com") || link.contains("votrefilms.xyz") ||
-            link.contains("embedsito.com") || link.contains("dutrag.com") || link.contains("youvideos.ru") ||
-            link.contains("streamm4u.club") || link.contains("moviepl.xyz") || link.contains("asianclub.tv") ||
-            link.contains("vidcloud.fun") || link.contains("fplayer.info") || link.contains("diasfem.com") ||
-            link.contains("javpoll.com") || link.contains("reeoov.tube") || link.contains("suzihaza.com") ||
-            link.contains("ezsubz.com") || link.contains("vidsrc.xyz") || link.contains("diampokusy.com") ||
-            link.contains("diampokusy.com") || link.contains("i18n.pw") || link.contains("vanfem.com") ||
-            link.contains("fembed9hd.com") || link.contains("votrefilms.xyz") || link.contains("watchjavnow.xyz")
-        ) {
-            try {
-                FembedExtractor(client).videosFromUrl(link, redirect = !link.contains("fembed")).let { videos.addAll(it) }
-            } catch (_: Exception) {}
-        }
         if (link.contains("voe")) {
             try {
                 VoeExtractor(client).videoFromUrl(link, "Voex")?.let { videos.add(it) }
@@ -394,7 +369,6 @@ class Doramasflix : ConfigurableAnimeSource, AnimeHttpSource() {
         val qualities = arrayOf(
             "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
             "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
-            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
             "Streamlare:1080p", "Streamlare:720p", "Streamlare:480p", "Streamlare:360p", "Streamlare:240p", // Streamlare
             "StreamTape", "Voex", "DoodStream", "YourUpload", "MixDrop",
         )

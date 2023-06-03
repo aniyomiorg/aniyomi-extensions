@@ -12,7 +12,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -112,11 +111,6 @@ class Animension() : ConfigurableAnimeSource, AnimeHttpSource() {
                     if (video != null) {
                         videoList.add(video)
                     }
-                }
-
-                url.contains("fembed") -> {
-                    val videos = FembedExtractor(client).videosFromUrl(url)
-                    videoList.addAll(videos)
                 }
             }
         }

@@ -12,7 +12,6 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.json.Json
@@ -97,10 +96,6 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val urlServer = server[1].replace("\\/", "/")
             val nameServer = server[0]
 
-            if (nameServer.lowercase() == "fembed") {
-                val videos = FembedExtractor(client).videosFromUrl(urlServer)
-                videoList.addAll(videos)
-            }
             if (nameServer.lowercase() == "arc") {
                 val videoUrl = urlServer.substringAfter("#")
                 videoList.add(Video(videoUrl, "Arc", videoUrl))
@@ -121,7 +116,7 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val videoSorted = this.sortedWith(
                 compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
-            val userPreferredQuality = preferences.getString("preferred_quality", "Fembed:1080p")
+            val userPreferredQuality = preferences.getString("preferred_quality", "Arc")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
             if (preferredIdx != -1) {
                 videoSorted.drop(preferredIdx + 1)
@@ -251,11 +246,6 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
-            "Fembed:1080p",
-            "Fembed:720p",
-            "Fembed:480p",
-            "Fembed:360p",
-            "Fembed:240p", // Fembed
             "Arc", // video servers without resolution
         )
         val videoQualityPref = ListPreference(screen.context).apply {
@@ -263,7 +253,7 @@ class Hentaila : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title = "Preferred quality"
             entries = qualities
             entryValues = qualities
-            setDefaultValue("Fembed:1080p")
+            setDefaultValue("Arc")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->

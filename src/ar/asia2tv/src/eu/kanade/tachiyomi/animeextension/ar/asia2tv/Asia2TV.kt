@@ -12,7 +12,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -92,9 +91,6 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (url.contains("dood")) {
                 val videosFromURL = DoodExtractor(client).videoFromUrl(url)
                 if (videosFromURL != null) videoList.add(videosFromURL)
-            } else if (url.contains("fembed")) {
-                val videosFromURL = FembedExtractor(client).videosFromUrl(url)
-                videoList.addAll(videosFromURL)
             } else if (url.contains("ok")) {
                 val videosFromURL = OkruExtractor(client).videosFromUrl(url)
                 videoList.addAll(videosFromURL)

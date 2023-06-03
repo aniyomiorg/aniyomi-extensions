@@ -5,12 +5,11 @@ ext {
     extName = 'Jkanime'
     pkgNameSuffix = 'es.jkanime'
     extClass = '.Jkanime'
-    extVersionCode = 13
+    extVersionCode = 14
     libVersion = '13'
 }
 
 dependencies {
-    implementation(project(':lib-fembed-extractor'))
     implementation(project(':lib-okru-extractor'))
 }
 

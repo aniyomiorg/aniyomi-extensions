@@ -12,7 +12,6 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -54,11 +53,6 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
         val videoList = mutableListOf<Video>()
         fetchUrls(urlResponse).map { serverUrl ->
             Log.i("bruh url", serverUrl)
-            if (serverUrl.contains("fembed") || serverUrl.contains("vanfem")) {
-                videoList.addAll(
-                    FembedExtractor(client).videosFromUrl(serverUrl, lang),
-                )
-            }
             if (serverUrl.contains("doodstream")) {
                 val video = DoodExtractor(client).videoFromUrl(serverUrl.replace("https://doodstream.com", "https://dood.wf"), lang + "DoodStream", false)
                 if (video != null) videoList.add(video)
@@ -187,7 +181,7 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
             val videoSorted = this.sortedWith(
                 compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
-            val userPreferredQuality = preferences.getString("preferred_quality", "[LAT]Fembed:720p")
+            val userPreferredQuality = preferences.getString("preferred_quality", "[LAT]DoodStream")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
             if (preferredIdx != -1) {
                 videoSorted.drop(preferredIdx + 1)
@@ -205,17 +199,19 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
-            "[LAT]Fembed:1080p", "[LAT]Fembed:720p", "[LAT]Fembed:480p", "[LAT]Fembed:360p", // Fembed
-            "[CAST]Fembed:1080p", "[CAST]Fembed:720p", "[CAST]Fembed:480p", "[CAST]Fembed:360p", // Fembed
-            "[SUB]Fembed:1080p", "[SUB]Fembed:720p", "[SUB]Fembed:480p", "[SUB]Fembed:360p", // Fembed
-            "[LAT]DoodStream", "[CAST]DoodStream", "[SUB]DoodStream", "[LAT]StreamTape", "[CAST]StreamTape", "[SUB]StreamTape", // video servers without resolution
+            "[LAT]DoodStream",
+            "[CAST]DoodStream",
+            "[SUB]DoodStream",
+            "[LAT]StreamTape",
+            "[CAST]StreamTape",
+            "[SUB]StreamTape", // video servers without resolution
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
             entries = qualities
             entryValues = qualities
-            setDefaultValue("[LAT]Fembed:720p")
+            setDefaultValue("[LAT]DoodStream")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
