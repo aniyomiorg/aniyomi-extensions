@@ -336,27 +336,6 @@
     ]
   },
   {
-    "name": "Aniyomi: CARTOONS4U",
-    "pkg": "eu.kanade.tachiyomi.animeextension.ar.cartons4u",
-    "apk": "aniyomi-ar.cartons4u-v13.3.apk",
-    "lang": "ar",
-    "code": 3,
-    "version": "13.3",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "CARTOONS4U",
-        "lang": "ar",
-        "id": "2360747518667799937",
-        "baseUrl": "https://cartoons4u.net",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: فاصل اعلاني",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.faselhd",
     "apk": "aniyomi-ar.faselhd-v13.13.apk",
@@ -435,27 +414,6 @@
         "lang": "ar",
         "id": "6019880483003007296",
         "baseUrl": "https://wecima.co",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: شاهد فور يو",
-    "pkg": "eu.kanade.tachiyomi.animeextension.ar.shahid4u",
-    "apk": "aniyomi-ar.shahid4u-v13.9.apk",
-    "lang": "ar",
-    "code": 9,
-    "version": "13.9",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "شاهد فور يو",
-        "lang": "ar",
-        "id": "6266153577074408465",
-        "baseUrl": "https://shahed4u.agency",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -708,27 +666,6 @@
         "lang": "de",
         "id": "3592180368623395225",
         "baseUrl": "https://filmpalast.to",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: FireAnime",
-    "pkg": "eu.kanade.tachiyomi.animeextension.de.fireanime",
-    "apk": "aniyomi-de.fireanime-v13.7.apk",
-    "lang": "de",
-    "code": 7,
-    "version": "13.7",
-    "nsfw": 1,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "FireAnime",
-        "lang": "de",
-        "id": "798078253076507018",
-        "baseUrl": "https://api.fireani.me",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -1338,27 +1275,6 @@
         "lang": "en",
         "id": "5688255194676032300",
         "baseUrl": "https://hstream.moe",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: Index1763686211",
-    "pkg": "eu.kanade.tachiyomi.animeextension.en.index1763686211",
-    "apk": "aniyomi-en.index1763686211-v13.1.apk",
-    "lang": "en",
-    "code": 1,
-    "version": "13.1",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "Index - 176.36.86.211",
-        "lang": "en",
-        "id": "4455728957285928158",
-        "baseUrl": "http://176.36.86.211/video/anime",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -3140,27 +3056,6 @@
     ]
   },
   {
-    "name": "Aniyomi: AnimeVibe",
-    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animevibe",
-    "apk": "aniyomi-pt.animevibe-v13.1.apk",
-    "lang": "pt-BR",
-    "code": 1,
-    "version": "13.1",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "AnimeVibe",
-        "lang": "pt-BR",
-        "id": "3172625051940242525",
-        "baseUrl": "https://animevibe.cc",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: Anitube",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.anitube",
     "apk": "aniyomi-pt.anitube-v13.10.apk",
@@ -3465,10 +3360,10 @@
   {
     "name": "Aniyomi: Anime Srbija",
     "pkg": "eu.kanade.tachiyomi.animeextension.sr.animesrbija",
-    "apk": "aniyomi-sr.animesrbija-v13.3.apk",
+    "apk": "aniyomi-sr.animesrbija-v13.4.apk",
     "lang": "sr",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3479,7 +3374,7 @@
         "id": "789279548118486310",
         "baseUrl": "https://www.animesrbija.com",
         "versionId": 1,
-        "hasCloudflare": 1
+        "hasCloudflare": 0
       }
     ]
   },
