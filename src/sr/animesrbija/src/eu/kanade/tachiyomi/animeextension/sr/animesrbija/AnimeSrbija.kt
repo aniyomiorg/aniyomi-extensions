@@ -1,5 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.sr.animesrbija
 
+import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.PagePropsDto
+import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.SearchPageDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -8,10 +10,12 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.nodes.Document
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
 
@@ -29,12 +33,20 @@ class AnimeSrbija : AnimeHttpSource() {
 
     // ============================== Popular ===============================
     override fun popularAnimeParse(response: Response): AnimesPage {
-        throw UnsupportedOperationException("Not used.")
+        val doc = response.asJsoup()
+        val animes = doc.parseAs<SearchPageDto>().anime.map {
+            SAnime.create().apply {
+                setUrlWithoutDomain("/anime/${it.slug}")
+                thumbnail_url = baseUrl + it.imgPath
+                title = it.title
+            }
+        }
+
+        val hasNextPage = doc.selectFirst("ul.pagination span.next-page:not(.disabled)") != null
+        return AnimesPage(animes, hasNextPage)
     }
 
-    override fun popularAnimeRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/filter?sort=popular&page=$page")
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
@@ -90,8 +102,12 @@ class AnimeSrbija : AnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private inline fun <reified T> Response.parseAs(): T {
-        return body.string().let(json::decodeFromString)
+    private inline fun <reified T> Document.parseAs(): T {
+        val nextData = selectFirst("script#__NEXT_DATA__")!!
+            .data()
+            .substringAfter(":")
+            .substringBeforeLast("},\"page\"") + "}"
+        return json.decodeFromString<PagePropsDto<T>>(nextData).data
     }
 
     companion object {
