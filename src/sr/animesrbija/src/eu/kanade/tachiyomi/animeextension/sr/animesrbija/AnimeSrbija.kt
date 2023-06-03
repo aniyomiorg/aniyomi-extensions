@@ -64,12 +64,11 @@ class AnimeSrbija : AnimeHttpSource() {
     }
 
     // =============================== Search ===============================
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeParse(response: Response) = popularAnimeParse(response)
 
+    // TODO: Implement search filters
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        throw UnsupportedOperationException("Not used.")
+        return GET("$baseUrl/filter?search=$query&page=$page")
     }
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
