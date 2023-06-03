@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.sr.animesrbija
 
+import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.AnimeDetailsDto
 import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.LatestUpdatesDto
 import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.PagePropsDto
 import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.SearchAnimeDto
@@ -60,7 +61,27 @@ class AnimeSrbija : AnimeHttpSource() {
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(response: Response): SAnime {
-        throw UnsupportedOperationException("Not used.")
+        val anime = response.asJsoup().parseAs<AnimeDetailsDto>().anime
+
+        return SAnime.create().apply {
+            setUrlWithoutDomain("/anime/${anime.slug}")
+            thumbnail_url = baseUrl + anime.imgPath
+            title = anime.title
+            status = when (anime.status) {
+                "Završeno" -> SAnime.COMPLETED
+                "Emituje se" -> SAnime.ONGOING
+                else -> SAnime.UNKNOWN
+            }
+            artist = anime.studios.joinToString()
+            genre = anime.genres.joinToString()
+
+            description = buildString {
+                anime.season?.let { append("Sezona: $it\n") }
+                anime.aired?.let { append("Datum: $it\n") }
+                anime.subtitle?.let { append("Alternativni naziv: $it\n") }
+                anime.desc?.let { append("\n\n$it") }
+            }
+        }
     }
 
     // =============================== Search ===============================

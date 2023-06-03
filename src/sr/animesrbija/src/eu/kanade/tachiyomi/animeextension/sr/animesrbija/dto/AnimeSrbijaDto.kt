@@ -28,3 +28,22 @@ data class LatestUpdatesDto(
 
     val animes by lazy { data.map { it.anime } }
 }
+
+@Serializable
+data class AnimeDetailsDto(val anime: AnimeDetailsData)
+
+@Serializable
+data class AnimeDetailsData(
+    val aired: String?,
+    val desc: String?,
+    val genres: List<String>,
+    val img: String,
+    val season: String?,
+    val slug: String,
+    val status: String?,
+    val studios: List<String>,
+    val subtitle: String?,
+    val title: String,
+) {
+    val imgPath by lazy { "/_next/image?url=$img&w=1080&q=75" }
+}
