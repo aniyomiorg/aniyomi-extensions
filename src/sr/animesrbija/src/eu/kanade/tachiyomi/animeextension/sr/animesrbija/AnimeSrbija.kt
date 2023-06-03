@@ -1,6 +1,8 @@
 package eu.kanade.tachiyomi.animeextension.sr.animesrbija
 
+import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.LatestUpdatesDto
 import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.PagePropsDto
+import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.SearchAnimeDto
 import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.SearchPageDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -27,20 +29,14 @@ class AnimeSrbija : AnimeHttpSource() {
 
     override val lang = "sr"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     private val json: Json by injectLazy()
 
     // ============================== Popular ===============================
     override fun popularAnimeParse(response: Response): AnimesPage {
         val doc = response.asJsoup()
-        val animes = doc.parseAs<SearchPageDto>().anime.map {
-            SAnime.create().apply {
-                setUrlWithoutDomain("/anime/${it.slug}")
-                thumbnail_url = baseUrl + it.imgPath
-                title = it.title
-            }
-        }
+        val animes = doc.parseAs<SearchPageDto>().anime.map(::parseAnime)
 
         val hasNextPage = doc.selectFirst("ul.pagination span.next-page:not(.disabled)") != null
         return AnimesPage(animes, hasNextPage)
@@ -94,12 +90,12 @@ class AnimeSrbija : AnimeHttpSource() {
 
     // =============================== Latest ===============================
     override fun latestUpdatesParse(response: Response): AnimesPage {
-        throw UnsupportedOperationException("Not used.")
+        val data = response.asJsoup().parseAs<LatestUpdatesDto>()
+        val animes = data.animes.map(::parseAnime)
+        return AnimesPage(animes, false)
     }
 
-    override fun latestUpdatesRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesRequest(page: Int) = GET(baseUrl)
 
     // ============================= Utilities ==============================
     private inline fun <reified T> Document.parseAs(): T {
@@ -108,6 +104,14 @@ class AnimeSrbija : AnimeHttpSource() {
             .substringAfter(":")
             .substringBeforeLast("},\"page\"") + "}"
         return json.decodeFromString<PagePropsDto<T>>(nextData).data
+    }
+
+    private fun parseAnime(item: SearchAnimeDto): SAnime {
+        return SAnime.create().apply {
+            setUrlWithoutDomain("/anime/${item.slug}")
+            thumbnail_url = baseUrl + item.imgPath
+            title = item.title
+        }
     }
 
     companion object {
