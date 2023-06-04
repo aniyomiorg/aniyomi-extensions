@@ -244,22 +244,28 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         )
 
         videoJson.data.episode.sourceUrls.forEach { video ->
+            val videoUrl = if (video.sourceUrl.startsWith("#")) {
+                hexToText(video.sourceUrl.substringAfter("#"))
+            } else {
+                video.sourceUrl
+            }
+
             val matchingMapping = mappings.firstOrNull { (altHoster, urlMatches) ->
-                altHosterSelection.contains(altHoster) && video.sourceUrl.containsAny(urlMatches)
+                altHosterSelection.contains(altHoster) && videoUrl.containsAny(urlMatches)
             }
 
             when {
-                video.sourceUrl.startsWith("/apivtwo/") && INTERAL_HOSTER_NAMES.any {
+                videoUrl.startsWith("/apivtwo/") && INTERAL_HOSTER_NAMES.any {
                     Regex("""\b${it.lowercase()}\b""").find(video.sourceName.lowercase()) != null &&
                         hosterSelection.contains(it.lowercase())
                 } -> {
-                    serverList.add(Server(video.sourceUrl, "internal ${video.sourceName}", video.priority))
+                    serverList.add(Server(videoUrl, "internal ${video.sourceName}", video.priority))
                 }
                 altHosterSelection.contains("player") && video.type == "player" -> {
-                    serverList.add(Server(video.sourceUrl, "player", video.priority))
+                    serverList.add(Server(videoUrl, "player", video.priority))
                 }
                 matchingMapping != null -> {
-                    serverList.add(Server(video.sourceUrl, matchingMapping.first, video.priority))
+                    serverList.add(Server(videoUrl, matchingMapping.first, video.priority))
                 }
             }
         }
@@ -340,6 +346,10 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             }.filterNotNull().flatten(),
         )
 
+        if (videoList.isEmpty()) {
+            throw Exception("No videos found")
+        }
+
         return prioritySort(videoList)
     }
 
@@ -401,6 +411,12 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun String.containsAny(keywords: List<String>): Boolean {
         return keywords.any { this.contains(it) }
+    }
+
+    fun hexToText(inputString: String): String {
+        return inputString.chunked(2).map {
+            it.toInt(16).toByte()
+        }.toByteArray().toString(Charsets.UTF_8)
     }
 
     // From Dopebox
@@ -544,7 +560,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     companion object {
         private const val PAGE_SIZE = 26 // number of items to retrieve when calling API
         private val INTERAL_HOSTER_NAMES = arrayOf(
-            "Default", "Ac", "Ak", "Kir", "Luf-mp4",
+            "Default", "Ac", "Ak", "Kir", "Rab", "Luf-mp4",
             "Si-Hls", "S-mp4", "Ac-Hls", "Uv-mp4", "Pn-Hls",
         )
 
