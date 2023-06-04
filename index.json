@@ -42,27 +42,6 @@
     ]
   },
   {
-    "name": "Aniyomi: ConsumyBili",
-    "pkg": "eu.kanade.tachiyomi.animeextension.all.consumybili",
-    "apk": "aniyomi-all.consumybili-v13.1.apk",
-    "lang": "all",
-    "code": 1,
-    "version": "13.1",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "ConsumyBili",
-        "lang": "all",
-        "id": "3851655252187277058",
-        "baseUrl": "https://api-vn.kaguya.app",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: Google Drive",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.googledrive",
     "apk": "aniyomi-all.googledrive-v13.4.apk",
@@ -800,10 +779,10 @@
   {
     "name": "Aniyomi: AllAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.allanime",
-    "apk": "aniyomi-en.allanime-v13.20.apk",
+    "apk": "aniyomi-en.allanime-v13.21.apk",
     "lang": "en",
-    "code": 20,
-    "version": "13.20",
+    "code": 21,
+    "version": "13.21",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
