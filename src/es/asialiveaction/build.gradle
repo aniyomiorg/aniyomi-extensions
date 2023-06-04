@@ -5,12 +5,11 @@ ext {
     extName = 'AsiaLiveAction'
     pkgNameSuffix = 'es.asialiveaction'
     extClass = '.AsiaLiveAction'
-    extVersionCode = 18
+    extVersionCode = 19
     libVersion = '13'
 }
 
 dependencies {
-    implementation(project(':lib-fembed-extractor'))
     implementation(project(':lib-okru-extractor'))
     implementation(project(':lib-streamsb-extractor'))
 }

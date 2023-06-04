@@ -245,7 +245,7 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val videoSorted = this.sortedWith(
                 compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
-            val userPreferredQuality = preferences.getString("preferred_quality", "[Sub] Fembed:720p")
+            val userPreferredQuality = preferences.getString("preferred_quality", "[Sub] Okru:720p")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
             if (preferredIdx != -1) {
                 videoSorted.drop(preferredIdx + 1)
@@ -417,8 +417,6 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val options = arrayOf(
-            "[Sub] Fembed:1080p", "[Sub] Fembed:720p", "[Sub] Fembed:480p", "[Sub] Fembed:360p", "[Sub] Fembed:240p", // Fembed [Sub]
-            "[Lat] Fembed:1080p", "[Lat] Fembed:720p", "[Lat] Fembed:480p", "[Lat] Fembed:360p", "[Lat] Fembed:240p", // Fembed [Lat]
             "[Sub] Okru:1080p", "[Sub] Okru:720p", "[Sub] Okru:480p", "[Sub] Okru:360p", "[Sub] Okru:240p", // Okru [Sub]
             "[Lat] Okru:1080p", "[Lat] Okru:720p", "[Lat] Okru:480p", "[Lat] Okru:360p", "[Lat] Okru:240p", // Okru [Lat]
             "[Sub] StreamSB:1080p", "[Sub] StreamSB:720p", "[Sub] StreamSB:480p", "[Sub] StreamSB:360p", "[Sub] StreamSB:240p", // StreamSB [Sub]
@@ -434,7 +432,7 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title = "Preferred quality"
             entries = options
             entryValues = options
-            setDefaultValue("[Sub] Fembed:720p")
+            setDefaultValue("[Sub] Okru:720p")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->

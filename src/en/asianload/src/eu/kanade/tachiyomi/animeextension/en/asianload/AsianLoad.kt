@@ -12,7 +12,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -117,10 +116,6 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     if (video != null) {
                         videoList.add(video)
                     }
-                }
-                url.contains("fembed") -> {
-                    val videos = FembedExtractor(client).videosFromUrl(url)
-                    videoList.addAll(videos)
                 }
                 url.contains("streamtape") -> {
                     val video = StreamTapeExtractor(client).videoFromUrl(url)

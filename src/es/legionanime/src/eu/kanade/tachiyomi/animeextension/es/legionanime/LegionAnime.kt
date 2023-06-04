@@ -16,7 +16,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
@@ -280,14 +279,6 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     emptyList()
                 }
             }
-            (url.contains("fembed") || url.contains("vanfem")) -> {
-                val newUrl = url.replace("fembed", "embedsito").replace("vanfem", "embedsito")
-                try {
-                    FembedExtractor(client).videosFromUrl(newUrl, server)
-                } catch (_: Exception) {
-                    emptyList()
-                }
-            }
             /*
             url.contains("sb") -> {
                 StreamSBExtractor(client).videosFromUrl(url, headers)
@@ -414,8 +405,6 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
-            "FHD-EMBED Fembed:1080p", "FHD-EMBED Fembed:720p", "FHD-EMBED Fembed:480p", "FHD-EMBED Fembed:360p", "FHD-EMBED Fembed:240p", // Fembed
-            "FHD-ALT Fembed:1080p", "FHD-ALT Fembed:720p", "FHD-ALT Fembed:480p", "FHD-ALT Fembed:360p", "FHD-ALT Fembed:240p", // Fembed-ALT
             "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", // Okru
             "StreamSB:360p", "StreamSB:480p", "StreamSB:720p", "StreamSB:1080p", // StreamSB
             "Xtreme S", "Nozomi", "Desu", "F1S-TAPE", "F1NIX", // video servers without resolution

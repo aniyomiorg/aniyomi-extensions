@@ -5,13 +5,12 @@ ext {
     extName = 'Hentaijk'
     pkgNameSuffix = 'es.hentaijk'
     extClass = '.Hentaijk'
-    extVersionCode = 9
+    extVersionCode = 10
     libVersion = '13'
     containsNsfw = true
 }
 
 dependencies {
-    implementation(project(':lib-fembed-extractor'))
     implementation(project(':lib-okru-extractor'))
 }
 

@@ -5,12 +5,11 @@ ext {
     extName = 'FanPelis'
     pkgNameSuffix = 'es.fanpelis'
     extClass = '.FanPelis'
-    extVersionCode = 5
+    extVersionCode = 6
     libVersion = '13'
 }
 
 dependencies {
-    implementation(project(':lib-fembed-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-okru-extractor'))
     implementation(project(':lib-streamsb-extractor'))

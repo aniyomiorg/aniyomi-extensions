@@ -16,7 +16,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -271,19 +270,6 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         url.contains("vidstreaming") -> {
                             VidstreamingExtractor(client, json).videosFromUrl(url, prefix = prefix)
                         }
-                        url.contains("sbhight") || url.contains("sbrity") || url.contains("sbembed.com") || url.contains("sbembed1.com") || url.contains("sbplay.org") ||
-                            url.contains("sbvideo.net") || url.contains("streamsb.net") || url.contains("sbplay.one") ||
-                            url.contains("cloudemb.com") || url.contains("playersb.com") || url.contains("tubesb.com") ||
-                            url.contains("sbplay1.com") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
-                            url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
-                            url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
-                            url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com") ||
-                            url.contains("vidmovie.xyz") || url.contains("sbspeed.com") || url.contains("streamsss.net") ||
-                            url.contains("sblanh.com") || url.contains("tvmshow.com") || url.contains("sbanh.com") ||
-                            url.contains("streamovies.xyz") || url.contains("vcdn.space") -> {
-                            val newUrl = url.replace("https://www.fembed.com", "https://vanfem.com")
-                            FembedExtractor(client).videosFromUrl(newUrl, prefix = prefix, redirect = true)
-                        }
                         url.contains("mixdrop") -> {
                             MixDropExtractor(client).videoFromUrl(url, prefix = prefix)
                         }
@@ -381,8 +367,8 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoServerPref = ListPreference(screen.context).apply {
             key = "preferred_server"
             title = "Preferred server"
-            entries = arrayOf("Vidstreaming", "Vidstreaming2", "Vidstreaming3", "Mixdrop", "Fembed", "StreamSB", "Streamtape", "Vidstreaming4", "Doodstream")
-            entryValues = arrayOf("vstream", "src2", "src", "mixdrop", "vcdn", "streamsb", "streamtape", "vplayer", "doodstream")
+            entries = arrayOf("Vidstreaming", "Vidstreaming2", "Vidstreaming3", "Mixdrop", "StreamSB", "Streamtape", "Vidstreaming4", "Doodstream")
+            entryValues = arrayOf("vstream", "src2", "src", "mixdrop", "streamsb", "streamtape", "vplayer", "doodstream")
             setDefaultValue("vstream")
             summary = "%s"
 

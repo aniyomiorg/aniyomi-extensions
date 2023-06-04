@@ -5,12 +5,11 @@ ext {
     extName = 'LocoPelis'
     pkgNameSuffix = 'es.locopelis'
     extClass = '.LocoPelis'
-    extVersionCode = 12
+    extVersionCode = 13
     libVersion = '13'
 }
 
 dependencies {
-    implementation(project(':lib-fembed-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-okru-extractor'))
     implementation(project(':lib-streamsb-extractor'))

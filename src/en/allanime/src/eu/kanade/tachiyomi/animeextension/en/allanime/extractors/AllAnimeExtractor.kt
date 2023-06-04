@@ -112,7 +112,7 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
                             ""
                         }
                         Track(sub.src, Locale(sub.lang).displayLanguage + label)
-                    }
+                    },
                 )
             }
 

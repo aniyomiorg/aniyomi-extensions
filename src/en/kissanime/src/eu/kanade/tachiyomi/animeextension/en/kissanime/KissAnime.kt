@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -232,31 +231,6 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val url = server.url
 
                     when {
-                        url.contains("fembed") ||
-                            url.contains("anime789.com") || url.contains("24hd.club") || url.contains("fembad.org") ||
-                            url.contains("vcdn.io") || url.contains("sharinglink.club") || url.contains("moviemaniac.org") ||
-                            url.contains("votrefiles.club") || url.contains("femoload.xyz") || url.contains("albavido.xyz") ||
-                            url.contains("feurl.com") || url.contains("dailyplanet.pw") || url.contains("ncdnstm.com") ||
-                            url.contains("jplayer.net") || url.contains("xstreamcdn.com") || url.contains("fembed-hd.com") ||
-                            url.contains("gcloud.live") || url.contains("vcdnplay.com") || url.contains("superplayxyz.club") ||
-                            url.contains("vidohd.com") || url.contains("vidsource.me") || url.contains("cinegrabber.com") ||
-                            url.contains("votrefile.xyz") || url.contains("zidiplay.com") || url.contains("ndrama.xyz") ||
-                            url.contains("fcdn.stream") || url.contains("mediashore.org") || url.contains("suzihaza.com") ||
-                            url.contains("there.to") || url.contains("femax20.com") || url.contains("javstream.top") ||
-                            url.contains("viplayer.cc") || url.contains("sexhd.co") || url.contains("fembed.net") ||
-                            url.contains("mrdhan.com") || url.contains("votrefilms.xyz") || // url.contains("") ||
-                            url.contains("embedsito.com") || url.contains("dutrag.com") || // url.contains("") ||
-                            url.contains("youvideos.ru") || url.contains("streamm4u.club") || // url.contains("") ||
-                            url.contains("moviepl.xyz") || url.contains("asianclub.tv") || // url.contains("") ||
-                            url.contains("vidcloud.fun") || url.contains("fplayer.info") || // url.contains("") ||
-                            url.contains("diasfem.com") || url.contains("javpoll.com") || url.contains("reeoov.tube") ||
-                            url.contains("suzihaza.com") || url.contains("ezsubz.com") || url.contains("vidsrc.xyz") ||
-                            url.contains("diampokusy.com") || url.contains("diampokusy.com") || url.contains("i18n.pw") ||
-                            url.contains("vanfem.com") || url.contains("fembed9hd.com") || url.contains("votrefilms.xyz") || url.contains("watchjavnow.xyz")
-                        -> {
-                            val newUrl = url.replace("https://www.fembed.com", "https://vanfem.com")
-                            FembedExtractor(client).videosFromUrl(newUrl, prefix = "${server.name} - ")
-                        }
                         url.contains("yourupload") -> {
                             YourUploadExtractor(client).videoFromUrl(url, headers = headers, name = server.name)
                         }

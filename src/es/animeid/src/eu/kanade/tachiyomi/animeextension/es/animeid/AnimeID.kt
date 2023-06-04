@@ -380,8 +380,8 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("Fembed:480p", "Fembed:720p", "Stape", "Streamtape", "hd", "sd", "low", "lowest", "mobile")
-            entryValues = arrayOf("Fembed:480p", "Fembed:720p", "Stape", "Streamtape", "hd", "sd", "low", "lowest", "mobile")
+            entries = arrayOf("Stape", "Streamtape", "hd", "sd", "low", "lowest", "mobile")
+            entryValues = arrayOf("Stape", "Streamtape", "hd", "sd", "low", "lowest", "mobile")
             setDefaultValue("Streamtape")
             summary = "%s"
 

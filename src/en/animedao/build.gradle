@@ -6,14 +6,13 @@ ext {
     extName = 'AnimeDao'
     pkgNameSuffix = 'en.animedao'
     extClass = '.AnimeDao'
-    extVersionCode = 10
+    extVersionCode = 11
     libVersion = '13'
 }
 
 dependencies {
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-streamsb-extractor'))
-    implementation(project(':lib-fembed-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
