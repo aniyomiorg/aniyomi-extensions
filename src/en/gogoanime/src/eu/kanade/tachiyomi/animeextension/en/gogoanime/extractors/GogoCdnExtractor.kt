@@ -5,7 +5,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
@@ -65,16 +64,23 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
             val array = json.decodeFromString<JsonObject>(decryptedData)["source"]!!.jsonArray
             if (array.size == 1 && array[0].jsonObject["type"]!!.jsonPrimitive.content == "hls") {
                 val fileURL = array[0].jsonObject["file"].toString().trim('"')
+
+                val separator = "#EXT-X-STREAM-INF:"
+
                 val masterPlaylist = client.newCall(GET(fileURL)).execute().body.string()
-                masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
-                    .split("#EXT-X-STREAM-INF:").forEach {
-                        val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",").substringBefore("\n") + "p"
-                        var videoUrl = it.substringAfter("\n").substringBefore("\n")
-                        if (!videoUrl.startsWith("http")) {
-                            videoUrl = fileURL.substringBeforeLast("/") + "/$videoUrl"
+                if (masterPlaylist.contains(separator)) {
+                    masterPlaylist.substringAfter(separator)
+                        .split(separator).forEach {
+                            val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",").substringBefore("\n") + "p"
+                            var videoUrl = it.substringAfter("\n").substringBefore("\n")
+                            if (!videoUrl.startsWith("http")) {
+                                videoUrl = fileURL.substringBeforeLast("/") + "/$videoUrl"
+                            }
+                            videoList.add(Video(videoUrl, qualityPrefix + quality, videoUrl))
                         }
-                        videoList.add(Video(videoUrl, qualityPrefix + quality, videoUrl))
-                    }
+                } else {
+                    videoList.add(Video(fileURL, "${qualityPrefix}Original", fileURL))
+                }
             } else {
                 array.forEach {
                     val label = it.jsonObject["label"].toString().lowercase(Locale.ROOT)
