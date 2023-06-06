@@ -24,11 +24,13 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
-class HolaMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+class PobMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "HolaMovies"
+    override val name = "PobMovies"
 
-    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://holamovies.org")!! }
+    override val id = 8957317977172284857
+
+    override val baseUrl = "https://pobmovies.cam"
 
     override val lang = "en"
 
