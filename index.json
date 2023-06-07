@@ -315,6 +315,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Egy Dead",
+    "pkg": "eu.kanade.tachiyomi.animeextension.ar.egydead",
+    "apk": "aniyomi-ar.egydead-v13.1.apk",
+    "lang": "ar",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Egy Dead",
+        "lang": "ar",
+        "id": "8402300441936118056",
+        "baseUrl": "https://w9.egydead.live/",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: فاصل اعلاني",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.faselhd",
     "apk": "aniyomi-ar.faselhd-v13.13.apk",
@@ -1218,21 +1239,21 @@
     ]
   },
   {
-    "name": "Aniyomi: HolaMovies",
+    "name": "Aniyomi: PobMovies",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.holamovies",
-    "apk": "aniyomi-en.holamovies-v13.3.apk",
+    "apk": "aniyomi-en.holamovies-v13.4.apk",
     "lang": "en",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
     "sources": [
       {
-        "name": "HolaMovies",
+        "name": "PobMovies",
         "lang": "en",
         "id": "8957317977172284857",
-        "baseUrl": "https://holamovies.org",
+        "baseUrl": "https://pobmovies.cam",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -1640,10 +1661,10 @@
   {
     "name": "Aniyomi: Tokuzilla",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.tokuzilla",
-    "apk": "aniyomi-en.tokuzilla-v13.3.apk",
+    "apk": "aniyomi-en.tokuzilla-v13.5.apk",
     "lang": "en",
-    "code": 3,
-    "version": "13.3",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
