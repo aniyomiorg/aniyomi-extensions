@@ -5,7 +5,7 @@ ext {
     extName = 'Tokuzilla'
     pkgNameSuffix = 'en.tokuzilla'
     extClass = '.Tokuzilla'
-    extVersionCode = 5
+    extVersionCode = 6
     libVersion = '13'
     containsNsfw = false
 }
