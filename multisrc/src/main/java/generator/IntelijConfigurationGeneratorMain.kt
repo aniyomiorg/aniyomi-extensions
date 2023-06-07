@@ -6,6 +6,7 @@ import java.io.File
  * Finds all themes and creates an Intellij Idea run configuration for their generators
  * Should be run after creation/deletion of each theme
  */
+@Suppress("unused")
 fun main(args: Array<String>) {
     val userDir = System.getProperty("user.dir")!!
     val sourcesDirPath = "$userDir/multisrc/src/main/java/eu/kanade/tachiyomi/multisrc"

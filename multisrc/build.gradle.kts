@@ -6,11 +6,10 @@ plugins {
 
 android {
     compileSdk = AndroidConfig.compileSdk
-    namespace = "eu.kanade.tachiyomi.lib.themesources"
+    namespace = AndroidConfig.multisrcNamespace
 
     defaultConfig {
         minSdk = 29
-        targetSdk = AndroidConfig.targetSdk
     }
 
     kotlinOptions {
@@ -36,9 +35,9 @@ dependencies {
 }
 
 tasks {
-    val generateExtensions by registering {
+    register("generateExtensions") {
         doLast {
-            val isWindows = System.getProperty("os.name").toString().toLowerCase().contains("win")
+            val isWindows = System.getProperty("os.name").toString().lowercase().contains("win")
             var classPath = (
                 configurations.compileOnly.get().asFileTree.toList() +
                     listOf(
