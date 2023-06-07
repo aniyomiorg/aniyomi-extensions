@@ -142,7 +142,7 @@ interface ThemeSourceGenerator {
                 writeSourceClasses(projectSrcPath, srcOverridePath, source, themePkg, themeClass)
                 copyThemeClasses(userDir, themePkg, projectRootPath)
                 copyThemeReadmes(userDir, themePkg, overridesPath, projectRootPath)
-                copyResFiles(resOverridePath, defaultResPath, source, projectRootPath)
+                copyResFiles(resOverridePath, defaultResPath, projectRootPath)
             }
         }
 
@@ -182,7 +182,7 @@ interface ThemeSourceGenerator {
                 }
         }
 
-        private fun copyResFiles(resOverridePath: String, defaultResPath: String, source: ThemeSourceData, projectRootPath: String): Any {
+        private fun copyResFiles(resOverridePath: String, defaultResPath: String, projectRootPath: String): Any {
             // check if res override exists if not copy default res
             val resOverride = File(resOverridePath)
             return if (resOverride.exists()) {
