@@ -5,7 +5,7 @@ import java.io.File
 /**
  * Finds and calls all `ThemeSourceGenerator`s
  */
-@Suppress("unused")
+@Suppress("unused_parameter")
 fun main(args: Array<String>) {
     val userDir = System.getProperty("user.dir")!!
     val sourcesDirPath = "$userDir/multisrc/src/main/java/eu/kanade/tachiyomi/multisrc"
