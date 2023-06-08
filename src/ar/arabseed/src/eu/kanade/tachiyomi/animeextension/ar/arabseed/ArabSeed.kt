@@ -2,6 +2,8 @@ package eu.kanade.tachiyomi.animeextension.ar.arabseed
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.widget.Toast
+import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -26,7 +28,9 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "عرب سيد"
 
-    override val baseUrl = "https://g20.arabseed.ink"
+    override val baseUrl by lazy {
+        preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!!
+    }
 
     override val lang = "ar"
 
@@ -192,6 +196,23 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =============================== Preferences ===============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val defaultDomainPref = EditTextPreference(screen.context).apply {
+            key = PREF_DOMAIN_KEY
+            title = PREF_DOMAIN_TITLE
+            dialogTitle = PREF_DOMAIN_DIALOG_TITLE
+            dialogMessage = PREF_DOMAIN_DIALOG_MESSAGE
+            setDefaultValue(PREF_DOMAIN_DEFAULT)
+            summary = PREF_DOMAIN_SUMMARY
+
+            setOnPreferenceChangeListener { _, newValue ->
+                runCatching {
+                    val value = (newValue as String).ifEmpty { PREF_DOMAIN_DEFAULT }
+                    Toast.makeText(screen.context, PREF_DOMAIN_TOAST, Toast.LENGTH_LONG).show()
+                    preferences.edit().putString(key, value).commit()
+                }.getOrDefault(false)
+            }
+        }
+
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
@@ -207,10 +228,20 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        screen.addPreference(defaultDomainPref)
         screen.addPreference(videoQualityPref)
     }
 
     companion object {
+        // From egydead(ar)
+        private const val PREF_DOMAIN_KEY = "default_domain"
+        private const val PREF_DOMAIN_TITLE = "Override default domain with a custom, different one"
+        private const val PREF_DOMAIN_DEFAULT = "https://g20.arabseed.ink"
+        private const val PREF_DOMAIN_DIALOG_TITLE = "Enter custom domain"
+        private const val PREF_DOMAIN_DIALOG_MESSAGE = "Default/Original domain: https://g20.arabseed.ink"
+        private const val PREF_DOMAIN_SUMMARY = "You can change the site domain from here"
+        private const val PREF_DOMAIN_TOAST = "Restart Aniyomi to apply changes"
+
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"
         private const val PREF_QUALITY_DEFAULT = "1080"
