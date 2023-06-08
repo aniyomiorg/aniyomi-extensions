@@ -1031,10 +1031,10 @@
   {
     "name": "Aniyomi: Ask4Movie",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.ask4movie",
-    "apk": "aniyomi-en.ask4movie-v13.4.apk",
+    "apk": "aniyomi-en.ask4movie-v13.5.apk",
     "lang": "en",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
