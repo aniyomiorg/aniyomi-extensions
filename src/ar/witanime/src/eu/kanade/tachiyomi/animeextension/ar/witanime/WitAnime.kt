@@ -17,6 +17,10 @@ import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -75,10 +79,10 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         return document.select("ul#episode-servers li a")
             .distinctBy { it.text().substringBefore(" -") } // remove duplicates by server name
-            .flatMap {
+            .parallelMap {
                 val url = it.attr("data-ep-url")
                 runCatching { extractVideos(url) }.getOrElse { emptyList() }
-            }
+            }.flatten()
     }
 
     private fun extractVideos(url: String): List<Video> {
@@ -192,6 +196,12 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         screen.addPreference(videoQualityPref)
     }
+
+    // ============================= Utilities ==============================
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 
     companion object {
         private const val PREF_QUALITY_KEY = "preferred_quality"
