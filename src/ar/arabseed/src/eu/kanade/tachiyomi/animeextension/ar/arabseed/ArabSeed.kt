@@ -28,7 +28,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "عرب سيد"
 
-    override val baseUrl = "https://a.arabseed.ink"
+    override val baseUrl = "https://g20.arabseed.ink"
 
     override val lang = "ar"
 
@@ -100,7 +100,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val watchUrl = document.select("a.watchBTn").attr("href")
-        val refererHeaders = Headers.headersOf("referer", "https://a.arabseed.ink/")
+        val refererHeaders = Headers.headersOf("referer", baseUrl)
         val document1 = client.newCall(GET(watchUrl, refererHeaders)).execute().asJsoup()
         return videosFromElement(document1)
     }
