@@ -275,10 +275,10 @@
   {
     "name": "Aniyomi: عرب سيد",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.arabseed",
-    "apk": "aniyomi-ar.arabseed-v13.6.apk",
+    "apk": "aniyomi-ar.arabseed-v13.7.apk",
     "lang": "ar",
-    "code": 6,
-    "version": "13.6",
+    "code": 7,
+    "version": "13.7",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -287,7 +287,7 @@
         "name": "عرب سيد",
         "lang": "ar",
         "id": "4544379135186887077",
-        "baseUrl": "https://a.arabseed.ink",
+        "baseUrl": "https://g20.arabseed.ink",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -443,10 +443,10 @@
   {
     "name": "Aniyomi: WIT ANIME",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.witanime",
-    "apk": "aniyomi-ar.witanime-v13.37.apk",
+    "apk": "aniyomi-ar.witanime-v13.38.apk",
     "lang": "ar",
-    "code": 37,
-    "version": "13.37",
+    "code": 38,
+    "version": "13.38",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
