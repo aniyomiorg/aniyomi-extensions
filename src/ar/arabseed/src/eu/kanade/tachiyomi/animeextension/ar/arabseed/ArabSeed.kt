@@ -217,7 +217,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
             entries = PREF_QUALITY_ENTRIES
-            entryValues = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_VALUES
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
