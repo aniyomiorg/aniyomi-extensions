@@ -1,77 +1,77 @@
 package eu.kanade.tachiyomi.animeextension.en.ask4movie.extractors
 
+import dev.datlag.jsunpacker.JsUnpacker
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
+import okhttp3.Response
+import uy.kohesive.injekt.injectLazy
 
-@Serializable
-data class CaptionElement(
-    val file: String,
-    val label: String,
-    val kind: String,
-)
+class FilemoonExtractor(private val client: OkHttpClient, private val headers: Headers) {
 
-class FilemoonExtractor(private val client: OkHttpClient) {
-    fun videoFromUrl(url: String): List<Video> {
-        try {
-            val unpacked = client.newCall(GET(url)).execute().asJsoup().select("script:containsData(eval)").map {
-                JsUnpacker(it.data()).unpack().toString()
-            }.first { it.contains("{file:") }
+    private val json: Json by injectLazy()
 
-            val subtitleTracks = mutableListOf<Track>()
-            if (unpacked.contains("fetch('")) {
-                val subtitleString = unpacked.substringAfter("fetch('").substringBefore("').")
-
-                try {
-                    if (subtitleString.isNotEmpty()) {
-                        val subResponse = client.newCall(
-                            GET(subtitleString),
-                        ).execute()
-
-                        val subtitles = Json.decodeFromString<List<CaptionElement>>(subResponse.body.string())
-                        for (sub in subtitles) {
-                            subtitleTracks.add(Track(sub.file, sub.label))
-                        }
-                    }
-                } catch (e: Error) {}
-            }
-
-            val masterUrl = unpacked.substringAfter("{file:\"").substringBefore("\"}")
-
-            val masterPlaylist = client.newCall(GET(masterUrl)).execute().body.string()
-
-            val videoList = mutableListOf<Video>()
-
-            val subtitleRegex = Regex("""#EXT-X-MEDIA:TYPE=SUBTITLES.*?NAME="(.*?)".*?URI="(.*?)"""")
-            try {
-                subtitleTracks.addAll(
-                    subtitleRegex.findAll(masterPlaylist).map {
-                        Track(
-                            it.groupValues[2],
-                            it.groupValues[1],
-                        )
+    fun videosFromUrl(url: String, prefix: String = ""): List<Video> {
+        val subtitleList = mutableListOf<Track>()
+        val subInfoUrl = url.toHttpUrl().queryParameter("sub.info")
+        runCatching {
+            if (subInfoUrl != null) {
+                val subData = client.newCall(GET(subInfoUrl, headers)).execute().parseAs<List<FMoviesSubs>>()
+                subtitleList.addAll(
+                    subData.map {
+                        Track(it.file, it.label)
                     },
                 )
-            } catch (e: Error) {}
-
-            masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:")
-                .forEach {
-                    val quality = "Filemoon:" + it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p "
-                    val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                    try {
-                        videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subtitleTracks))
-                    } catch (e: Error) {
-                        videoList.add(Video(videoUrl, quality, videoUrl))
-                    }
-                }
-            return videoList
-        } catch (e: Exception) {
-            return emptyList()
+            }
         }
+
+        val jsE = client.newCall(GET(url)).execute().asJsoup().selectFirst("script:containsData(m3u8)")!!.data()
+        val masterUrl = JsUnpacker.unpackAndCombine(jsE)?.substringAfter("{file:\"")
+            ?.substringBefore("\"}") ?: return emptyList()
+
+        val masterPlaylist = client.newCall(GET(masterUrl)).execute().body.string()
+        val videoList = mutableListOf<Video>()
+
+        val subtitleRegex = Regex("""#EXT-X-MEDIA:TYPE=SUBTITLES.*?NAME="(.*?)".*?URI="(.*?)"""")
+        subtitleList.addAll(
+            subtitleRegex.findAll(masterPlaylist).map {
+                Track(
+                    it.groupValues[2],
+                    it.groupValues[1],
+                )
+            },
+        )
+
+        masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:")
+            .forEach {
+                val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p "
+                val videoUrl = it.substringAfter("\n").substringBefore("\n")
+
+                val videoHeaders = headers.newBuilder()
+                    .add("Accept", "*/*")
+                    .add("Origin", "https://${url.toHttpUrl().host}")
+                    .add("Referer", "https://${url.toHttpUrl().host}/")
+                    .build()
+
+                videoList.add(Video(videoUrl, prefix + quality, videoUrl, headers = videoHeaders, subtitleTracks = subtitleList))
+            }
+        return videoList
+    }
+
+    @Serializable
+    data class FMoviesSubs(
+        val file: String,
+        val label: String,
+    )
+
+    private inline fun <reified T> Response.parseAs(): T {
+        val responseBody = use { it.body.string() }
+        return json.decodeFromString(responseBody)
     }
 }
