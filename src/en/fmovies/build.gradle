@@ -11,11 +11,6 @@ ext {
 }
 
 dependencies {
-    implementation(project(":lib-cryptoaes"))
-    implementation(project(":lib-synchrony"))
-    implementation(project(':lib-streamsb-extractor'))
-    implementation(project(':lib-dood-extractor'))
-    implementation(project(':lib-okru-extractor'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
 
