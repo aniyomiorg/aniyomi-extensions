@@ -26,21 +26,10 @@ class AnimesDigital : ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     // ============================== Popular ===============================
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun popularAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
+    override fun popularAnimeNextPageSelector() = null
+    override fun popularAnimeRequest(page: Int) = GET(baseUrl)
+    override fun popularAnimeSelector() = latestUpdatesSelector()
 
     // ============================== Episodes ==============================
     override fun episodeFromElement(element: Element): SEpisode {
