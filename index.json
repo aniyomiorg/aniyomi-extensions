@@ -1134,6 +1134,27 @@
     ]
   },
   {
+    "name": "Aniyomi: FMovies",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.fmovies",
+    "apk": "aniyomi-en.fmovies-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "FMovies",
+        "lang": "en",
+        "id": "539447480475024818",
+        "baseUrl": "https://fmovies.to",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: GenoAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.genoanime",
     "apk": "aniyomi-en.genoanime-v13.29.apk",
