@@ -205,35 +205,68 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup()
         val episodeList = mutableListOf<SEpisode>()
         val serversList = mutableListOf<List<EpUrl>>()
-
+        val seasonRegex = Regex("""season (\d+)""", RegexOption.IGNORE_CASE)
+        val qualityRegex = """(\d+)p""".toRegex()
+        val episodeRegex = Regex("""episode (\d+)""", RegexOption.IGNORE_CASE)
         val driveList = mutableListOf<Pair<String, String>>()
 
-        document.select("div.thecontent p:has(span:contains(Gdrive))").forEach {
-            val qualityRegex = """(\d+)p""".toRegex()
-            val quality = qualityRegex.find(it.previousElementSibling()!!.text())!!.groupValues[1]
-            driveList.add(Pair(it.selectFirst("a")!!.attr("href"), quality))
-        }
+        val seasonList = document.select("div.inline > h3:contains(Season)")
 
-        // Load episodes
-        driveList.forEach { drive ->
-            val episodesDocument = client.newCall(GET(drive.first)).execute().asJsoup()
-            serversList.add(
-                episodesDocument.select("div.entry-content > h3 > a").map {
-                    EpUrl(drive.second, it.attr("href"), it.text())
-                },
-            )
-        }
+        if (seasonList.distinctBy { seasonRegex.find(it.text())!!.groupValues[1] }.size > 1) {
+            document.select("div.thecontent p:has(span:contains(Gdrive))").forEach {
+                val titleText = it.previousElementSibling()!!.text()
 
-        transpose(serversList).forEachIndexed { index, serverList ->
-            episodeList.add(
-                SEpisode.create().apply {
-                    name = serverList.first().name
-                    episode_number = (index + 1).toFloat()
-                    setUrlWithoutDomain(
-                        json.encodeToString(serverList),
+                val quality = qualityRegex.find(titleText)!!.groupValues[1]
+                val seasonName = seasonRegex.find(titleText)!!.groupValues[1]
+
+                val episodesDocument = client.newCall(GET(it.selectFirst("a")!!.attr("href"))).execute().asJsoup()
+                episodesDocument.select("div.entry-content > h3 > a").forEach {
+                    episodeList.add(
+                        SEpisode.create().apply {
+                            name = "Season $seasonName ${it.text()}"
+                            episode_number = episodeRegex.find(it.text())?.groupValues?.get(1)?.toFloatOrNull() ?: 1F
+                            setUrlWithoutDomain(
+                                json.encodeToString(
+                                    listOf(
+                                        EpUrl(
+                                            quality = quality,
+                                            url = it.attr("href"),
+                                            name = "Season $seasonName ${it.text()}",
+                                        ),
+                                    ),
+                                ),
+                            )
+                        },
                     )
-                },
-            )
+                }
+            }
+        } else {
+            document.select("div.thecontent p:has(span:contains(Gdrive))").forEach {
+                val quality = qualityRegex.find(it.previousElementSibling()!!.text())!!.groupValues[1]
+                driveList.add(Pair(it.selectFirst("a")!!.attr("href"), quality))
+            }
+
+            // Load episodes
+            driveList.forEach { drive ->
+                val episodesDocument = client.newCall(GET(drive.first)).execute().asJsoup()
+                serversList.add(
+                    episodesDocument.select("div.entry-content > h3 > a").map {
+                        EpUrl(drive.second, it.attr("href"), it.text())
+                    },
+                )
+            }
+
+            transpose(serversList).forEachIndexed { index, serverList ->
+                episodeList.add(
+                    SEpisode.create().apply {
+                        name = serverList.first().name
+                        episode_number = (index + 1).toFloat()
+                        setUrlWithoutDomain(
+                            json.encodeToString(serverList),
+                        )
+                    },
+                )
+            }
         }
 
         return Observable.just(episodeList.reversed())
