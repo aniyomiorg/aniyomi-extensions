@@ -32,13 +32,26 @@ class AnimesDigital : ParsedAnimeHttpSource() {
     override fun popularAnimeSelector() = latestUpdatesSelector()
 
     // ============================== Episodes ==============================
-    override fun episodeFromElement(element: Element): SEpisode {
-        throw UnsupportedOperationException("Not used.")
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val doc = getRealDoc(response.asJsoup())
+        return doc.select(episodeListSelector()).map(::episodeFromElement)
     }
 
-    override fun episodeListSelector(): String {
-        throw UnsupportedOperationException("Not used.")
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        val epname = element.selectFirst("div.episode")!!.text()
+        episode_number = epname.substringAfterLast(" ").toFloatOrNull() ?: 1F
+        name = buildString {
+            append(epname)
+            element.selectFirst("div.sub_title")?.text()?.let {
+                if (!it.contains("Ainda não tem um titulo oficial")) {
+                    append(" - $it")
+                }
+            }
+        }
     }
+
+    override fun episodeListSelector() = "div.item_ep > a"
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document) = SAnime.create().apply {
