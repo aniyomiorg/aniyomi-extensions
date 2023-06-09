@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.en.gogoanime
 
 import android.app.Application
 import android.content.SharedPreferences
+import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
@@ -250,11 +251,10 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "mp4upload",
         )
 
-        private const val PREF_DOMAIN_KEY = "preferred_domain"
-        private const val PREF_DOMAIN_TITLE = "Preferred domain (requires app restart)"
-        private val PREF_DOMAIN_ENTRIES = arrayOf("gogoanime.cl", "gogoanime.llc")
-        private val PREF_DOMAIN_ENTRY_VALUES = PREF_DOMAIN_ENTRIES.map { "https://$it" }.toTypedArray()
-        private val PREF_DOMAIN_DEFAULT = "https://gogoanime.cl"
+        private const val PREF_DOMAIN_KEY = "preferred_domain_name"
+        private const val PREF_DOMAIN_TITLE = "Override BaseUrl"
+        private const val PREF_DOMAIN_SUMMARY = "Override default domain (requires app restart)"
+        private const val PREF_DOMAIN_DEFAULT = "https://gogoanime.hu"
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"
@@ -274,19 +274,17 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Settings ==============================
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        ListPreference(screen.context).apply {
+        EditTextPreference(screen.context).apply {
             key = PREF_DOMAIN_KEY
             title = PREF_DOMAIN_TITLE
-            entries = PREF_DOMAIN_ENTRIES
-            entryValues = PREF_DOMAIN_ENTRY_VALUES
+            summary = PREF_DOMAIN_SUMMARY
+            dialogTitle = PREF_DOMAIN_TITLE
+            dialogMessage = "Default: $PREF_DOMAIN_DEFAULT"
             setDefaultValue(PREF_DOMAIN_DEFAULT)
-            summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
+                val newValueString = newValue as String
+                preferences.edit().putString(key, newValueString.trim()).commit()
             }
         }.let { screen.addPreference(it) }
 
