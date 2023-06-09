@@ -41,8 +41,25 @@ class AnimesDigital : ParsedAnimeHttpSource() {
     }
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        throw UnsupportedOperationException("Not used.")
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        val doc = getRealDoc(document)
+        setUrlWithoutDomain(doc.location())
+        thumbnail_url = doc.selectFirst("div.poster > img")!!.attr("data-lazy-src")
+        status = when (doc.selectFirst("div.clw > div.playon")?.text()) {
+            "Em Lançamento" -> SAnime.ONGOING
+            "Completo" -> SAnime.COMPLETED
+            else -> SAnime.UNKNOWN
+        }
+
+        val infos = doc.selectFirst("div.crw > div.dados")!!
+
+        artist = infos.getInfo("Estúdio")
+        author = infos.getInfo("Autor") ?: infos.getInfo("Diretor")
+
+        title = infos.selectFirst("h1")!!.text()
+        genre = infos.select("div.genre a").eachText().joinToString()
+
+        description = infos.selectFirst("div.sinopse")?.text()
     }
 
     // ============================ Video Links =============================
@@ -103,6 +120,27 @@ class AnimesDigital : ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/lancamentos/page/$page")
 
     override fun latestUpdatesSelector() = "div.b_flex:nth-child(2) > div.itemE > a"
+
+    // ============================= Utilities ==============================
+    private fun getRealDoc(document: Document): Document {
+        return document.selectFirst("div.subitem > a:contains(menu)")?.let { link ->
+            client.newCall(GET(link.attr("href")))
+                .execute()
+                .asJsoup()
+        } ?: document
+    }
+
+    private fun Element.getInfo(key: String): String? {
+        return selectFirst("div.info:has(span:containsOwn($key))")
+            ?.ownText()
+            ?.trim()
+            ?.let {
+                when (it) {
+                    "", "?" -> null
+                    else -> it
+                }
+            }
+    }
 
     companion object {
         const val PREFIX_SEARCH = "id:"
