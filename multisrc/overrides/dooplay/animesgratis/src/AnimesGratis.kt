@@ -9,7 +9,6 @@ class AnimesGratis : DooPlay(
     "Animes Grátis",
     "https://animesgratis.org",
 ) {
-
     // ============================== Popular ===============================
     override fun popularAnimeSelector() = "div.imdbRating > article > a"
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/animes/")
@@ -17,4 +16,8 @@ class AnimesGratis : DooPlay(
     // =============================== Search ===============================
     override fun searchAnimeSelector() = latestUpdatesSelector()
     override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
+
+    // ============================== Filters ===============================
+    override fun genresListRequest() = GET("$baseUrl/generos")
+    override fun genresListSelector() = "ul.generos li > a"
 }
