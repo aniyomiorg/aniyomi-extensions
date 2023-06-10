@@ -124,43 +124,42 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ================================== video urls ==================================
-
     override fun videoListParse(response: Response): List<Video> {
         val requestBody = FormBody.Builder().add("View", "1").build()
         val document = client.newCall(POST(response.request.url.toString(), body = requestBody)).execute().asJsoup()
-        val videoList = mutableListOf<Video>()
-
-        document.select(videoListSelector()).forEach { it ->
+        return document.select(videoListSelector()).flatMap {
             val url = it.attr("data-link")
-            when {
-                url.contains("dood") -> {
-                    val video = DoodExtractor(client).videoFromUrl(url, "Dood mirror")
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
-                url.contains("ajmidyad") || url.contains("alhayabambi") -> {
-                    val request = client.newCall(GET(url, headers)).execute().asJsoup()
-                    val data = JsUnpacker.unpackAndCombine(request.selectFirst("script:containsData(sources)")!!.data())!!
-                    val streamLink = data.substringAfter("file:\"").substringBefore("\"}")
-                    videoList.addAll(videosFromUrl(streamLink))
-                }
-                url.contains("fanakishtuna") -> {
-                    val request = client.newCall(GET(url, headers)).execute().asJsoup()
-                    val data = request.selectFirst("script:containsData(sources)")!!.data()
-                    val streamLink = data.substringAfter("file:\"").substringBefore("\"}")
-                    videoList.add(Video(streamLink, "Mirror: High Quality", streamLink))
-                }
-                url.contains("uqload") -> {
-                    val newURL = url.replace("https://uqload.co/", "https://www.uqload.co/")
-                    val request = client.newCall(GET(newURL, headers)).execute().asJsoup()
-                    val data = request.selectFirst("script:containsData(sources)")!!.data()
-                    val streamLink = data.substringAfter("sources: [\"").substringBefore("\"]")
-                    videoList.add(Video(streamLink, "Uqload: Mirror", streamLink))
-                }
-            }
+            runCatching { extractVideos(url) }.getOrElse { emptyList() }
         }
-        return videoList
+    }
+
+    private fun extractVideos(url: String): List<Video> {
+        return when {
+            url.contains("dood") -> {
+                DoodExtractor(client).videoFromUrl(url, "Dood mirror")
+                    ?.let(::listOf)
+            }
+            url.contains("ajmidyad") || url.contains("alhayabambi") -> {
+                val request = client.newCall(GET(url, headers)).execute().asJsoup()
+                val data = JsUnpacker.unpackAndCombine(request.selectFirst("script:containsData(sources)")!!.data())!!
+                val streamLink = data.substringAfter("file:\"").substringBefore("\"}")
+                videosFromUrl(streamLink)
+            }
+            url.contains("fanakishtuna") -> {
+                val request = client.newCall(GET(url, headers)).execute().asJsoup()
+                val data = request.selectFirst("script:containsData(sources)")!!.data()
+                val streamLink = data.substringAfter("file:\"").substringBefore("\"}")
+                listOf(Video(streamLink, "Mirror: High Quality", streamLink))
+            }
+            url.contains("uqload") -> {
+                val newURL = url.replace("https://uqload.co/", "https://www.uqload.co/")
+                val request = client.newCall(GET(newURL, headers)).execute().asJsoup()
+                val data = request.selectFirst("script:containsData(sources)")!!.data()
+                val streamLink = data.substringAfter("sources: [\"").substringBefore("\"]")
+                listOf(Video(streamLink, "Uqload: Mirror", streamLink))
+            }
+            else -> null
+        } ?: emptyList()
     }
 
     private fun videosFromUrl(url: String): List<Video> {

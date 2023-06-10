@@ -1,0 +1,18 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
+}
+
+ext {
+    extName = 'Animes Digital'
+    pkgNameSuffix = 'pt.animesdigital'
+    extClass = '.AnimesDigital'
+    extVersionCode = 1
+}
+
+dependencies {
+    implementation(project(":lib-unpacker"))
+}
+
+apply from: "$rootDir/common.gradle"
