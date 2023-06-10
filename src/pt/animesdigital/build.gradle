@@ -12,7 +12,7 @@ ext {
 }
 
 dependencies {
-    implementation("dev.datlag.jsunpacker:jsunpacker:1.0.1")
+    implementation(project(":lib-unpacker"))
 }
 
 apply from: "$rootDir/common.gradle"
