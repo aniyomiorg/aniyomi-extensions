@@ -7,7 +7,7 @@ ext {
     extName = 'Animes Aria'
     pkgNameSuffix = 'pt.animesaria'
     extClass = '.AnimesAria'
-    extVersionCode = 1
+    extVersionCode = 2
 }
 
 apply from: "$rootDir/common.gradle"

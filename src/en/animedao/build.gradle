@@ -6,7 +6,7 @@ ext {
     extName = 'AnimeDao'
     pkgNameSuffix = 'en.animedao'
     extClass = '.AnimeDao'
-    extVersionCode = 11
+    extVersionCode = 12
     libVersion = '13'
 }
 
