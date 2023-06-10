@@ -24,7 +24,7 @@ object AFFilters {
     class GenreFilter : QueryPartFilter("Gênero", AFFiltersData.GENRES)
     class SeasonFilter : QueryPartFilter("Temporada", AFFiltersData.SEASONS)
 
-    val FILTER_LIST = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         AnimeFilter.Header(AFFiltersData.IGNORE_SEARCH_MSG),
         SeasonFilter(),
         AnimeFilter.Header(AFFiltersData.IGNORE_SEASON_MSG),

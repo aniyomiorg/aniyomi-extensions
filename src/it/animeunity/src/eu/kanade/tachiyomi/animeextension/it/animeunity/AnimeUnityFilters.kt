@@ -43,7 +43,7 @@ object AnimeUnityFilters {
 
     class DubFilter : QueryPartFilter("Dub ITA", AnimeUnityFiltersData.DUB)
 
-    val FILTER_LIST = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         AnimeFilter.Header("Le migliori pagine di anime"),
         AnimeFilter.Header("Nota: ignora altri filtri"),
         TopFilter(),

@@ -37,7 +37,7 @@ object VizerFilters {
         Selection(0, false),
     )
 
-    val FILTER_LIST = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         TypeFilter(),
         MinYearFilter(),
         MaxYearFilter(),

@@ -29,7 +29,7 @@ object AnimesAriaFilters {
     class YearFilter : QueryPartFilter("Ano", AnimesAriaFiltersData.YEARS)
     class SeasonFilter : QueryPartFilter("Temporada", AnimesAriaFiltersData.SEASONS)
 
-    val FILTER_LIST = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         TypeFilter(),
         GenreFilter(),
         StatusFilter(),

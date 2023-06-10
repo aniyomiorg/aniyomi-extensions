@@ -44,7 +44,7 @@ object ATCFilters {
         ATCFiltersData.GENRES.map { TriStateVal(it) },
     )
 
-    val FILTER_LIST = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         InitialLetterFilter(),
         StatusFilter(),
         SortFilter(),
