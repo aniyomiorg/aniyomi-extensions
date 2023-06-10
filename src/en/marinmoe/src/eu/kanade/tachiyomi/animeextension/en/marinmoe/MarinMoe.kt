@@ -18,7 +18,7 @@ import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.json.Json
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -32,7 +32,6 @@ import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.Date
-import kotlin.collections.ArrayList
 
 class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
 
@@ -59,23 +58,19 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================== Popular ===============================
 
-    override fun popularAnimeParse(response: Response): AnimesPage {
-        return parseAnime(response)
-    }
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/anime?sort=vwk-d&page=$page", headers)
 
-    override fun popularAnimeRequest(page: Int): Request {
-        return GET("$baseUrl/anime?sort=vwk-d&page=$page", headers = headers)
-    }
+    override fun popularAnimeParse(response: Response): AnimesPage = parseAnime(response)
 
     // =============================== Latest ===============================
 
-    override fun latestUpdatesParse(response: Response): AnimesPage {
-        return parseAnime(response)
-    }
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/anime?sort=rel-d&page=$page", headers)
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/anime?sort=rel-d&page=$page")
+    override fun latestUpdatesParse(response: Response): AnimesPage = parseAnime(response)
 
     // =============================== Search ===============================
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         val params = MarinMoeFilters.getSearchParameters(filters)
@@ -86,10 +81,8 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
             }
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
-
     private fun searchAnimeRequest(page: Int, query: String, filters: MarinMoeFilters.FilterSearchParams): Request {
-        var url = "$baseUrl/anime".toHttpUrlOrNull()!!.newBuilder()
+        var url = "$baseUrl/anime".toHttpUrl().newBuilder()
             .addQueryParameter("sort", filters.sort)
             .addQueryParameter("search", query)
             .addQueryParameter("page", page.toString())
@@ -103,12 +96,12 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         if (filters.group.isNotBlank()) url += "&filter[group][0][id]=${filters.group}&filter[group][0][opr]=include"
         if (filters.studio.isNotBlank()) url += "&filter[production][0][id]=${filters.studio}&filter[production][0][opr]=include"
 
-        return GET(url, headers = headers)
+        return GET(url, headers)
     }
 
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        return parseAnime(response)
-    }
+    override fun searchAnimeParse(response: Response): AnimesPage = parseAnime(response)
+
+    // ============================== Filters ===============================
 
     override fun getFilterList(): AnimeFilterList = MarinMoeFilters.FILTER_LIST
 
@@ -116,27 +109,26 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun animeDetailsParse(response: Response): SAnime {
         val document = response.asJsoup()
-        val anime = SAnime.create()
 
         val dataPage = document.select("div#app").attr("data-page").replace("&quot;", "\"")
         val details = json.decodeFromString<AnimeDetails>(dataPage).props.anime
 
-        anime.thumbnail_url = details.cover
-        anime.title = details.title
-        anime.genre = details.genre_list.joinToString(", ") { it.name }
-        anime.author = details.production_list.joinToString(", ") { it.name }
-        anime.status = parseStatus(details.status.name)
-
-        var description = Jsoup.parse(
+        var desc = Jsoup.parse(
             details.description.replace("<br />", "br2n"),
         ).text().replace("br2n", "\n") + "\n"
-        description += "\nContent Rating: ${details.content_rating.name}"
-        description += "\nRelease Date: ${details.release_date}"
-        description += "\nType: ${details.type.name}"
-        description += "\nSource: ${details.source_list.joinToString(separator = ", ") { it.name }}"
-        anime.description = description
+        desc += "\nContent Rating: ${details.content_rating.name}"
+        desc += "\nRelease Date: ${details.release_date}"
+        desc += "\nType: ${details.type.name}"
+        desc += "\nSource: ${details.source_list.joinToString(separator = ", ") { it.name }}"
 
-        return anime
+        return SAnime.create().apply {
+            title = details.title
+            thumbnail_url = details.cover
+            genre = details.genre_list.joinToString(", ") { it.name }
+            author = details.production_list.joinToString(", ") { it.name }
+            status = parseStatus(details.status.name)
+            description = desc
+        }
     }
 
     // ============================== Episodes ==============================
@@ -147,19 +139,20 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         val dataPage = document.select("div#app").attr("data-page").replace("&quot;", "\"")
 
         val dataJson = json.decodeFromString<AnimeDetails>(dataPage)
-        val includeSpecial = preferences.getBoolean("preferred_special", true)
+        val includeSpecial = preferences.getBoolean(PREF_SPECIAL_KEY, PREF_SPECIAL_DEFAULT)
 
         dataJson.props.episode_list.data.forEach {
-            val episode = SEpisode.create()
+            val episode = SEpisode.create().apply {
+                name = "Episode ${it.slug} ${it.title}"
+                episode_number = it.sort
+                url = "${response.request.url}/${it.slug}"
+                val parsedDate = parseDate(it.release_date)
+                if (parsedDate.time != -1L) date_upload = parsedDate.time
+            }
 
-            episode.name = "Episode ${it.slug} ${it.title}"
-            episode.episode_number = it.sort
-            episode.url = "${response.request.url}/${it.slug}"
-
-            val parsedDate = parseDate(it.release_date)
-            if (parsedDate.time != -1L) episode.date_upload = parsedDate.time
-
-            if (includeSpecial || it.type != 2) episodes.add(episode)
+            if (includeSpecial || it.type != 2) {
+                episodes.add(episode)
+            }
         }
 
         var next = dataJson.props.episode_list.links.next
@@ -170,14 +163,13 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
             val nextDataJson = json.decodeFromString<AnimeDetails>(nextDataPage)
 
             nextDataJson.props.episode_list.data.forEach {
-                val episode = SEpisode.create()
-
-                episode.name = "Episode ${it.slug} ${it.title}"
-                episode.episode_number = it.sort
-                episode.url = "${response.request.url}/${it.slug}"
-
-                val parsedDate = parseDate(it.release_date)
-                if (parsedDate.time != -1L) episode.date_upload = parsedDate.time
+                val episode = SEpisode.create().apply {
+                    name = "Episode ${it.slug} ${it.title}"
+                    episode_number = it.sort
+                    url = "${response.request.url}/${it.slug}"
+                    val parsedDate = parseDate(it.release_date)
+                    if (parsedDate.time != -1L) date_upload = parsedDate.time
+                }
 
                 episodes.add(episode)
             }
@@ -190,9 +182,7 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    override fun videoListRequest(episode: SEpisode): Request {
-        return GET(episode.url, headers = headers)
-    }
+    override fun videoListRequest(episode: SEpisode): Request = GET(episode.url, headers)
 
     override fun videoListParse(response: Response): List<Video> {
         var newHeaders = headers.newBuilder()
@@ -258,14 +248,15 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================= Utilities ==============================
 
     private fun prioritySort(pList: List<Pair<Video, Float>>): List<Video> {
-        val prefGroup = preferences.getString("preferred_group", "site_default")!!
-        val quality = preferences.getString("preferred_quality", "1080")!!
-        val subOrDub = preferences.getString("preferred_sub", "sub")!!
+        val prefGroup = preferences.getString(PREF_GROUP_KEY, PREF_GROUP_DEFAULT)!!
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val subOrDub = preferences.getString(PREF_SUBS_KEY, PREF_SUBS_DEFAULT)!!
 
         return pList.sortedWith(
             compareBy(
                 { it.first.quality.lowercase().contains(subOrDub) },
                 { it.first.quality.contains(quality) },
+                { Regex("""(\d+)p""").find(it.first.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
                 { if (prefGroup == "site_default") -it.second else it.first.quality.contains(prefGroup) },
             ),
         ).reversed().map { t -> t.first }
@@ -300,16 +291,17 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     @SuppressLint("SimpleDateFormat")
     private fun parseDate(date: String): Date {
-        val knownPatterns: MutableList<SimpleDateFormat> = ArrayList()
-        knownPatterns.add(SimpleDateFormat("dd'th of 'MMM, yyyy"))
-        knownPatterns.add(SimpleDateFormat("dd'nd of 'MMM, yyyy"))
-        knownPatterns.add(SimpleDateFormat("dd'st of 'MMM, yyyy"))
-        knownPatterns.add(SimpleDateFormat("dd'rd of 'MMM, yyyy"))
+        val patterns = arrayOf(
+            "dd'th of 'MMM, yyyy",
+            "dd'nd of 'MMM, yyyy",
+            "dd'st of 'MMM, yyyy",
+            "dd'rd of 'MMM, yyyy",
+        )
 
-        for (pattern in knownPatterns) {
+        for (pattern in patterns) {
             try {
                 // Take a try
-                return Date(pattern.parse(date)!!.time)
+                return Date(SimpleDateFormat(pattern).parse(date)!!.time)
             } catch (e: Throwable) {
                 // Loop on
             }
@@ -317,13 +309,37 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         return Date(-1L)
     }
 
+    companion object {
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private val PREF_QUALITY_ENTRY_VALUES = arrayOf("1080", "720", "480", "360")
+        private val PREF_QUALITY_ENTRIES = PREF_QUALITY_ENTRY_VALUES.map { "${it}p" }.toTypedArray()
+        private const val PREF_QUALITY_DEFAULT = "1080"
+
+        private const val PREF_GROUP_KEY = "preferred_group"
+        private const val PREF_GROUP_TITLE = "Preferred group"
+        private const val PREF_GROUP_DEFAULT = "site_default"
+
+        private const val PREF_SUBS_KEY = "preferred_sub"
+        private const val PREF_SUBS_TITLE = "Prefer subs or dubs?"
+        private val PREF_SUBS_ENTRY_VALUES = arrayOf("sub", "dub")
+        private val PREF_SUBS_ENTRIES = arrayOf("Subs", "Dubs")
+        private const val PREF_SUBS_DEFAULT = "sub"
+
+        private const val PREF_SPECIAL_KEY = "preferred_special"
+        private const val PREF_SPECIAL_TITLE = "Include Special Episodes"
+        private const val PREF_SPECIAL_DEFAULT = true
+    }
+
+    // ============================== Settings ==============================
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
-            setDefaultValue("1080")
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -332,14 +348,14 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
+        }.let { screen.addPreference(it) }
 
-        val groupPref = ListPreference(screen.context).apply {
-            key = "preferred_group"
-            title = "Preferred group"
+        ListPreference(screen.context).apply {
+            key = PREF_GROUP_KEY
+            title = PREF_GROUP_TITLE
             entries = MarinMoeConstants.GROUP_ENTRIES
             entryValues = MarinMoeConstants.GROUP_ENTRY_VALUES
-            setDefaultValue("site_default")
+            setDefaultValue(PREF_GROUP_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -348,14 +364,14 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
+        }.let { screen.addPreference(it) }
 
-        val subPref = ListPreference(screen.context).apply {
-            key = "preferred_sub"
-            title = "Prefer subs or dubs?"
-            entries = arrayOf("Subs", "Dubs")
-            entryValues = arrayOf("sub", "dub")
-            setDefaultValue("sub")
+        ListPreference(screen.context).apply {
+            key = PREF_SUBS_KEY
+            title = PREF_SUBS_TITLE
+            entries = PREF_SUBS_ENTRIES
+            entryValues = PREF_SUBS_ENTRY_VALUES
+            setDefaultValue(PREF_SUBS_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -364,22 +380,17 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
+        }.let { screen.addPreference(it) }
 
-        val specialPref = SwitchPreferenceCompat(screen.context).apply {
-            key = "preferred_special"
-            title = "Include Special Episodes"
-            setDefaultValue(true)
+        SwitchPreferenceCompat(screen.context).apply {
+            key = PREF_SPECIAL_KEY
+            title = PREF_SPECIAL_TITLE
+            setDefaultValue(PREF_SPECIAL_DEFAULT)
 
             setOnPreferenceChangeListener { _, newValue ->
                 val new = newValue as Boolean
                 preferences.edit().putBoolean(key, new).commit()
             }
-        }
-
-        screen.addPreference(videoQualityPref)
-        screen.addPreference(groupPref)
-        screen.addPreference(subPref)
-        screen.addPreference(specialPref)
+        }.let { screen.addPreference(it) }
     }
 }
