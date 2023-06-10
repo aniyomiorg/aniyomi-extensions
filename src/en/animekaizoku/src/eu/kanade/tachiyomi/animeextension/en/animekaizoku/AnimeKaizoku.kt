@@ -755,7 +755,7 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a:not([title])")!!.attr("href").toHttpUrl().encodedPath)
+            setUrlWithoutDomain(element.selectFirst("a:not([title])")!!.attr("abs:href").toHttpUrl().encodedPath)
             title = element.selectFirst("a:not([title])")!!.text()
             thumbnail_url = ""
         }
@@ -890,7 +890,7 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun searchAnimeFromElementPaginated(element: Element): SAnime {
         return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").toHttpUrl().encodedPath)
+            setUrlWithoutDomain(element.selectFirst("a")!!.attr("abs:href").toHttpUrl().encodedPath)
             thumbnail_url = element.selectFirst("img[src]")?.attr("src") ?: ""
             title = element.selectFirst("h2.post-title")!!.text().substringBefore(" Episode")
         }
@@ -899,7 +899,7 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Filters ===============================
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
-        AnimeFilter.Header("Text search only searches on selected sub-page"),
+        AnimeFilter.Header("Text search will search inside sub-page, if selected"),
         SubPageFilter(),
     )
 
