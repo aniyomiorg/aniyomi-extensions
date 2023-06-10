@@ -65,7 +65,10 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListParse(response: Response) = super.episodeListParse(response).reversed()
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val doc = getRealDoc(response.asJsoup())
+        return doc.select(episodeListSelector()).map(::episodeFromElement).reversed()
+    }
 
     override fun episodeListSelector() = "div.ehover6 > div.episodes-card-title > h3 a"
 
@@ -145,9 +148,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ================================== details ==================================
 
     override fun animeDetailsParse(document: Document) = SAnime.create().apply {
-        val doc = document.selectFirst("div.anime-page-link a")?.let {
-            client.newCall(GET(it.attr("href"), headers)).execute().asJsoup()
-        } ?: document
+        val doc = getRealDoc(document)
 
         thumbnail_url = doc.selectFirst("img.thumbnail")!!.attr("src")
         title = doc.selectFirst("h1.anime-details-title")!!.text()
@@ -206,6 +207,12 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         runBlocking {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
+
+    private fun getRealDoc(document: Document): Document {
+        return document.selectFirst("div.anime-page-link a")?.let {
+            client.newCall(GET(it.attr("href"), headers)).execute().asJsoup()
+        } ?: document
+    }
 
     companion object {
         private const val PREF_QUALITY_KEY = "preferred_quality"
