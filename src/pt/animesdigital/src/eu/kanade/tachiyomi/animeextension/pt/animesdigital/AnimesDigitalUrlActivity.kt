@@ -18,8 +18,8 @@ class AnimesDigitalUrlActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val pathSegments = intent?.data?.pathSegments
-        if (pathSegments != null && pathSegments.size > 1) {
-            val item = pathSegments[1]
+        if (pathSegments != null && pathSegments.size > 2) {
+            val item = pathSegments[2]
             val mainIntent = Intent().apply {
                 action = "eu.kanade.tachiyomi.ANIMESEARCH"
                 putExtra("query", "${AnimesDigital.PREFIX_SEARCH}$item")

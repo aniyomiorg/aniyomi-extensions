@@ -220,7 +220,7 @@ class AnimesDigital : ParsedAnimeHttpSource() {
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val id = query.removePrefix(PREFIX_SEARCH)
-            client.newCall(GET("$baseUrl/anime/$id"))
+            client.newCall(GET("$baseUrl/anime/a/$id"))
                 .asObservableSuccess()
                 .map(::searchAnimeByIdParse)
         } else {
