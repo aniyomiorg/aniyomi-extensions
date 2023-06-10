@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesdigital
 
+import dev.datlag.jsunpacker.JsUnpacker
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -24,6 +25,8 @@ class AnimesDigital : ParsedAnimeHttpSource() {
     override val lang = "pt-BR"
 
     override val supportsLatest = true
+
+    override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
 
     // ============================== Popular ===============================
     override fun popularAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
@@ -76,11 +79,65 @@ class AnimesDigital : ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
-    override fun videoFromElement(element: Element): Video {
-        throw UnsupportedOperationException("Not used.")
+    override fun videoListParse(response: Response): List<Video> {
+        val player = response.asJsoup().selectFirst("div#player")!!
+        return player.select("div.tab-video").flatMap {
+            it.select(videoListSelector()).flatMap { element ->
+                runCatching {
+                    videosFromElement(element)
+                }.getOrElse { emptyList() }
+            }
+        }
     }
 
-    override fun videoListSelector(): String {
+    private fun videosFromElement(element: Element): List<Video> {
+        return when (element.tagName()) {
+            "iframe" -> {
+                val url = element.attr("data-lazy-src").ifEmpty { element.attr("src") }
+                    .let {
+                        when {
+                            it.startsWith("/") -> baseUrl + it
+                            else -> it
+                        }
+                    }
+                client.newCall(GET(url, headers)).execute()
+                    .asJsoup()
+                    .select(videoListSelector())
+                    .flatMap(::videosFromElement)
+            }
+            "script" -> {
+                val scriptData = element.data().let {
+                    when {
+                        "eval(function" in it -> JsUnpacker.unpackAndCombine(it)
+                        else -> it
+                    }
+                }?.replace("\\", "")
+                scriptData?.let(::videosFromScript) ?: emptyList()
+            }
+            else -> emptyList()
+        }
+    }
+
+    private fun videosFromScript(script: String): List<Video> {
+        return script.substringAfter("sources:").substringAfter(".src(")
+            .substringBefore(")")
+            .substringAfter("[")
+            .substringBefore("]")
+            .split("{")
+            .drop(1)
+            .map {
+                val quality = it.substringAfter("label", "")
+                    .substringAfterKey()
+                    .ifEmpty { name }
+                val url = it.substringAfter("file").substringAfter("src")
+                    .substringAfterKey()
+                Video(url, quality, url, headers)
+            }
+    }
+
+    override fun videoListSelector() = "iframe, script:containsData(eval), script:containsData(player.src), script:containsData(this.src), script:containsData(sources:)"
+
+    override fun videoFromElement(element: Element): Video {
         throw UnsupportedOperationException("Not used.")
     }
 
@@ -154,6 +211,12 @@ class AnimesDigital : ParsedAnimeHttpSource() {
                 }
             }
     }
+
+    private fun String.substringAfterKey() = substringAfter(":")
+        .substringAfter('"')
+        .substringBefore('"')
+        .substringAfter("'")
+        .substringBefore("'")
 
     companion object {
         const val PREFIX_SEARCH = "id:"
