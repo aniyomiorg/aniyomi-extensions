@@ -14,7 +14,10 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -23,6 +26,7 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 
 class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -30,53 +34,140 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val name = "Kawaiifu"
 
     override val baseUrl = "https://kawaiifu.com"
-    private val streamUrl = "https://domdom.stream"
 
     override val lang = "en"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
+
+    private val json: Json by injectLazy()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    // Popular Anime
+    // ============================== Popular ===============================
+
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/category/tv-series/${page.toPage()}", headers)
 
     override fun popularAnimeSelector(): String = "ul.list-film li"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/category/tv-series/page/$page")
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-
-        element.select("a.mv-namevn").attr("href").toHttpUrlOrNull()?.let {
-            anime.setUrlWithoutDomain(
-                it.encodedPath,
-            )
-        }
-        anime.title = element.select("a.mv-namevn").text()
-        anime.thumbnail_url = element.select("a img").attr("src")
-
-        return anime
+    override fun popularAnimeFromElement(element: Element): SAnime = SAnime.create().apply {
+        setUrlWithoutDomain(element.selectFirst("a.mv-namevn")!!.relative())
+        title = element.selectFirst("a.mv-namevn")!!.text()
+        thumbnail_url = element.selectFirst("a img")!!.attr("src")
     }
 
     override fun popularAnimeNextPageSelector(): String = "div.wp-pagenavi a.nextpostslink"
 
-    // Episodes
+    // =============================== Latest ===============================
+
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/${page.toPage()}", headers)
+
+    override fun latestUpdatesSelector(): String = "div.today-update > div.item"
+
+    override fun latestUpdatesFromElement(element: Element): SAnime {
+        val a = element.selectFirst("div.info a:not([style])")!!
+
+        return SAnime.create().apply {
+            setUrlWithoutDomain(a.relative())
+            thumbnail_url = element.select("a.thumb img").attr("src")
+            title = a.text()
+        }
+    }
+
+    override fun latestUpdatesNextPageSelector(): String = "div.pagination-content > span.current + a"
+
+    // =============================== Search ===============================
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
+
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        val params = KawaiifuFilters.getSearchParameters(filters)
+        return client.newCall(searchAnimeRequest(page, query, params))
+            .asObservableSuccess()
+            .map { response ->
+                searchAnimeParse(response)
+            }
+    }
+
+    private fun searchAnimeRequest(page: Int, query: String, filters: KawaiifuFilters.FilterSearchParams): Request =
+        GET("$baseUrl/search-movie/${page.toPage()}?keyword=$query&cat-get=${filters.category}${filters.tags}")
+
+    override fun searchAnimeSelector(): String = latestUpdatesSelector()
+
+    override fun searchAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
+
+    override fun searchAnimeNextPageSelector(): String = latestUpdatesNextPageSelector()
+
+    // ============================== Filters ===============================
+
+    override fun getFilterList(): AnimeFilterList = KawaiifuFilters.FILTER_LIST
+
+    // =========================== Anime Details ============================
+
+    override fun animeDetailsParse(document: Document): SAnime = SAnime.create().apply {
+        genre = document.select("div.desc-top table tbody tr:has(td:contains(Genres)) td a").joinToString(", ") { it.text() }
+        description = document.select("div.sub-desc > h5:contains(Summary) ~ p:not(:has(:not(i))):not(:empty)").joinToString("\n\n") { it.text() }
+    }
+
+    // ============================== Episodes ==============================
 
     override fun episodeListSelector() = "div#1 ul.list-ep li"
 
     override fun episodeListRequest(anime: SAnime): Request {
-        return GET("$streamUrl/anime${anime.url}".removeSuffix(".html"))
+        val doc = client.newCall(
+            GET(baseUrl + anime.url, headers),
+        ).execute().asJsoup()
+        return GET(doc.selectFirst("div.list-server a")!!.attr("abs:href"), headers)
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.asJsoup()
-        val episodeList = mutableListOf<SEpisode>()
+        val epDocument = response.asJsoup()
+        val epListTop = epDocument.select("div:has(>div:contains(Episode List)) > div.list-server >ul.list-ep > li")
+        val document = if (epListTop.isEmpty()) {
+            epDocument
+        } else {
+            client.newCall(
+                GET(epListTop.first()!!.selectFirst("a[href]")!!.attr("abs:href"), headers),
+            ).execute().asJsoup()
+        }
 
-        document.select(episodeListSelector()).map { episodeList.add(episodeFromElement(it)) }
+        val episodeList = mutableListOf<SEpisode>()
+        val episodesInfo = mutableListOf<List<EpisodeInfo>>()
+
+        document.select("div#server_ep > div.list-server").forEach { server ->
+            episodesInfo.add(
+                server.select("ul.list-ep > li").map { ep ->
+                    EpisodeInfo(
+                        name = server.selectFirst("h4.server-name")!!.text(),
+                        epName = ep.selectFirst("a")!!.text(),
+                        url = ep.selectFirst("a")!!.attr("abs:href"),
+                    )
+                },
+            )
+        }
+
+        episodesInfo.flatten().groupBy {
+            it.epName
+        }.values.toList().forEach { episode ->
+            val first = episode.first()
+            episodeList.add(
+                SEpisode.create().apply {
+                    name = first.epName
+                    episode_number = first.epName.substringAfter("Ep ").toFloatOrNull() ?: 1F
+                    url = json.encodeToString(
+                        episode.map {
+                            ServerInfo(
+                                name = it.name,
+                                url = it.url,
+                            )
+                        },
+                    )
+                },
+            )
+        }
 
         return episodeList.reversed()
     }
@@ -92,158 +183,91 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episode
     }
 
-    // Video urls
+    // ============================ Video Links =============================
 
-    override fun videoListRequest(episode: SEpisode): Request {
-        return GET("$streamUrl/anime/${episode.url}")
-    }
-
-    override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
+    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val videoList = mutableListOf<Video>()
+        val parsed = json.decodeFromString<List<ServerInfo>>(episode.url)
 
-        val serverList = document.select("div#server_ep div").toList()
-        val serverName = serverList[0].select("h4").text()
-        document.select(videoListSelector()).map {
+        parsed.forEach { server ->
+            val document = client.newCall(
+                GET(server.url),
+            ).execute().asJsoup()
+
+            val source = document.selectFirst(videoListSelector()) ?: return@forEach
+
             videoList.add(
                 Video(
-                    it.select("source").attr("src"),
-                    "${it.select("source").attr("data-quality")}p ($serverName)",
-                    it.select("source").attr("src"),
+                    source.attr("src"),
+                    "${source.attr("data-quality")}p (${server.name})",
+                    source.attr("src"),
                 ),
             )
         }
 
-        val activeIndex = serverList[0].select("ul li").indexOfFirst {
-            it.select("a").hasClass("active")
-        }
-
-        // Loop over rest of sources
-        for (server in serverList.subList(1, serverList.size)) {
-            val serverUrl = server.select("ul li").toList()[activeIndex].select("a").attr("href")
-            val document = client.newCall(GET(serverUrl)).execute().asJsoup()
-            val serverName = server.select("h4").text()
-
-            document.select(videoListSelector()).map {
-                videoList.add(
-                    Video(
-                        it.select("source").attr("src"),
-                        "${it.select("source").attr("data-quality")}p ($serverName)",
-                        it.select("source").attr("src"),
-                    ),
-                )
-            }
-        }
-
-        return videoList.sort()
+        return Observable.just(videoList)
     }
 
-    override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", null)
-
-        val newList = mutableListOf<Video>()
-        if (quality != null) {
-            var preferred = 0
-            for (video in this) {
-                if (quality.contains(video.quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-
-            return newList
-        }
-        return this
-    }
-
-    override fun videoListSelector() = "div#video_box div.player video"
+    override fun videoListSelector() = "div#video_box div.player video source"
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
-    // search
+    // ============================= Utilities ==============================
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 
-        element.select("a.thumb").attr("href").toHttpUrlOrNull()?.let {
-            anime.setUrlWithoutDomain(
-                it.encodedPath,
-            )
-        }
-        anime.title = element.select("div.info h4 a:last-child").text()
-        anime.thumbnail_url = element.select("a img").attr("src")
-
-        return anime
+        return this.sortedWith(
+            compareBy(
+                { it.quality.contains(quality) },
+                { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
+            ),
+        ).reversed()
     }
 
-    override fun searchAnimeNextPageSelector(): String = "div.pagination-content a.next"
-
-    override fun searchAnimeSelector(): String = "div.today-update div.item"
-
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        val params = KawaiifuFilters.getSearchParameters(filters)
-        return client.newCall(searchAnimeRequest(page, query, params))
-            .asObservableSuccess()
-            .map { response ->
-                searchAnimeParse(response)
-            }
+    private fun Element.relative(): String {
+        return this.attr("abs:href").toHttpUrl().encodedPath
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
-
-    private fun searchAnimeRequest(page: Int, query: String, filters: KawaiifuFilters.FilterSearchParams): Request {
-        return if (query.isEmpty()) {
-            GET("$baseUrl/search-movie/page/$page?keyword=&cat-get=${filters.category}${filters.tags}")
+    private fun Int.toPage(): String {
+        return if (this == 1) {
+            ""
         } else {
-            GET("$baseUrl/search-movie/page/$page?keyword=$query&cat-get=${filters.category}${filters.tags}")
+            "page/$this"
         }
     }
 
-    // Details
+    data class EpisodeInfo(
+        val name: String,
+        val epName: String,
+        val url: String,
+    )
 
-    override fun animeDetailsRequest(anime: SAnime): Request {
-        return GET("$streamUrl/anime${anime.url.removeSuffix(".html")}")
+    @Serializable
+    data class ServerInfo(
+        val name: String,
+        val url: String,
+    )
+
+    companion object {
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private val PREF_QUALITY_ENTRY_VALUES = arrayOf("1080", "720", "480", "360", "240")
+        private val PREF_QUALITY_ENTRIES = PREF_QUALITY_ENTRY_VALUES.map { "${it}p" }.toTypedArray()
+        private const val PREF_QUALITY_DEFAULT = "720"
     }
 
-    override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
-
-        anime.genre = document.select("div.sub-desc h3 ~ a").eachText().joinToString(separator = ", ")
-        anime.title = document.select("div.desc h2.title").text()
-        anime.description = document.select("div.wrap-desc div.sub-desc p").filter { it ->
-            it.select("a").isEmpty() && it.select("iframe").isEmpty()
-        }.joinToString(separator = "\n\n") { t -> t.text() }
-
-        return anime
-    }
-
-    // Latest
-
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
-
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
-
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
-
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
-
-    // Filters
-
-    override fun getFilterList(): AnimeFilterList = KawaiifuFilters.FILTER_LIST
-
-    // settings
+    // ============================== Settings ==============================
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p", "240p")
-            entryValues = arrayOf("1080", "720", "480", "360", "240")
-            setDefaultValue("1080")
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -252,7 +276,6 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.let { screen.addPreference(it) }
     }
 }
