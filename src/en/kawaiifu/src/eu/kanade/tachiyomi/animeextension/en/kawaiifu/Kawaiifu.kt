@@ -114,8 +114,6 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Episodes ==============================
 
-    override fun episodeListSelector() = "div#1 ul.list-ep li"
-
     override fun episodeListRequest(anime: SAnime): Request {
         val doc = client.newCall(
             GET(baseUrl + anime.url, headers),
@@ -172,16 +170,9 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episodeList.reversed()
     }
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        val episode = SEpisode.create()
+    override fun episodeListSelector() = throw Exception("Not used")
 
-        episode.episode_number = """(?:Ep )?(\d+)""".toRegex().find(element.select("a").text())?.groups?.get(1)?.value?.toFloat()
-            ?: 0F
-        episode.name = element.select("a").text()
-        episode.setUrlWithoutDomain(element.select("a").attr("href").substringAfter("anime/"))
-
-        return episode
-    }
+    override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not used")
 
     // ============================ Video Links =============================
 
