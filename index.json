@@ -317,10 +317,10 @@
   {
     "name": "Aniyomi: Egy Dead",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.egydead",
-    "apk": "aniyomi-ar.egydead-v13.1.apk",
+    "apk": "aniyomi-ar.egydead-v13.2.apk",
     "lang": "ar",
-    "code": 1,
-    "version": "13.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -443,10 +443,10 @@
   {
     "name": "Aniyomi: WIT ANIME",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.witanime",
-    "apk": "aniyomi-ar.witanime-v13.38.apk",
+    "apk": "aniyomi-ar.witanime-v13.39.apk",
     "lang": "ar",
-    "code": 38,
-    "version": "13.38",
+    "code": 39,
+    "version": "13.39",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -863,10 +863,10 @@
   {
     "name": "Aniyomi: AnimeFlix",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.animeflix",
-    "apk": "aniyomi-en.animeflix-v13.2.apk",
+    "apk": "aniyomi-en.animeflix-v13.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1178,10 +1178,10 @@
   {
     "name": "Aniyomi: Gogoanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.gogoanime",
-    "apk": "aniyomi-en.gogoanime-v13.66.apk",
+    "apk": "aniyomi-en.gogoanime-v13.67.apk",
     "lang": "en",
-    "code": 66,
-    "version": "13.66",
+    "code": 67,
+    "version": "13.67",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1190,7 +1190,7 @@
         "name": "Gogoanime",
         "lang": "en",
         "id": "7055547649318749672",
-        "baseUrl": "https://gogoanime.cl",
+        "baseUrl": "https://gogoanime.hu",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -2951,6 +2951,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Animes Digital",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesdigital",
+    "apk": "aniyomi-pt.animesdigital-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Animes Digital",
+        "lang": "pt-BR",
+        "id": "4877286181768246205",
+        "baseUrl": "https://animesdigital.org",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: AnimesFox BR",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesfoxbr",
     "apk": "aniyomi-pt.animesfoxbr-v13.2.apk",
@@ -2966,6 +2987,27 @@
         "lang": "pt-BR",
         "id": "6518280198965195589",
         "baseUrl": "https://animesfoxbr.com",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: Animes Grátis",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesgratis",
+    "apk": "aniyomi-pt.animesgratis-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Animes Grátis",
+        "lang": "pt-BR",
+        "id": "2969482460524685571",
+        "baseUrl": "https://animesgratis.org",
         "versionId": 1,
         "hasCloudflare": 0
       }
@@ -3260,27 +3302,6 @@
         "lang": "pt-BR",
         "id": "8394381853778573358",
         "baseUrl": "https://meusanimes.org",
-        "versionId": 1,
-        "hasCloudflare": 0
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: Open Animes",
-    "pkg": "eu.kanade.tachiyomi.animeextension.pt.openanimes",
-    "apk": "aniyomi-pt.openanimes-v13.1.apk",
-    "lang": "pt-BR",
-    "code": 1,
-    "version": "13.1",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "Open Animes",
-        "lang": "pt-BR",
-        "id": "5304601048761984017",
-        "baseUrl": "https://openanimes.com",
         "versionId": 1,
         "hasCloudflare": 0
       }
