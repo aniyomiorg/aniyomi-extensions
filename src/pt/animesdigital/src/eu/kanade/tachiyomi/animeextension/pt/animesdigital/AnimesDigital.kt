@@ -1,6 +1,10 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesdigital
 
+import android.app.Application
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import dev.datlag.jsunpacker.JsUnpacker
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -22,9 +26,11 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 
-class AnimesDigital : ParsedAnimeHttpSource() {
+class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Animes Digital"
 
@@ -37,6 +43,10 @@ class AnimesDigital : ParsedAnimeHttpSource() {
     override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
 
     private val json: Json by injectLazy()
+
+    private val preferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     // ============================== Popular ===============================
     override fun popularAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
@@ -248,7 +258,32 @@ class AnimesDigital : ParsedAnimeHttpSource() {
 
     override fun latestUpdatesSelector() = "div.b_flex:nth-child(2) > div.itemE > a"
 
+    // ============================== Settings ==============================
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.let(screen::addPreference)
+    }
+
     // ============================= Utilities ==============================
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
+    }
+
     private fun getRealDoc(document: Document): Document {
         return document.selectFirst("div.subitem > a:contains(menu)")?.let { link ->
             client.newCall(GET(link.attr("href")))
@@ -281,5 +316,10 @@ class AnimesDigital : ParsedAnimeHttpSource() {
 
     companion object {
         const val PREFIX_SEARCH = "id:"
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Qualidade preferida"
+        private const val PREF_QUALITY_DEFAULT = "720p"
+        private val PREF_QUALITY_ENTRIES = arrayOf("360p", "480p", "720p")
     }
 }
