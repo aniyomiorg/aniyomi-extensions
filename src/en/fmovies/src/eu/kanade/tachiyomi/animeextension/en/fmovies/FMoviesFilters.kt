@@ -103,7 +103,7 @@ object FMoviesFilters {
 
     class SortFilter : QueryPartFilter("Sort", FMoviesFiltersData.SORT)
 
-    val FILTER_LIST = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         TypesFilter(),
         GenresFilter(),
         CountriesFilter(),

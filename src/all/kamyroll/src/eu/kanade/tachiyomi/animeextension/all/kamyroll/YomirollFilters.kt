@@ -50,7 +50,7 @@ object YomirollFilters {
         CrunchyFiltersData.LANGUAGE.map { CheckBoxVal(it.first, false) },
     )
 
-    val FILTER_LIST = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         AnimeFilter.Header("Search Filter (ignored if browsing)"),
         TypeFilter(),
         AnimeFilter.Separator(),

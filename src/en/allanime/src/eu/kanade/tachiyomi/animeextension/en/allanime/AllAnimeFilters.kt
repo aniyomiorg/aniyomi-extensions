@@ -61,7 +61,7 @@ object AllAnimeFilters {
         AllAnimeFiltersData.GENRES.map { CheckBoxVal(it.first, false) },
     )
 
-    val FILTER_LIST = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         OriginFilter(),
         SeasonFilter(),
         ReleaseYearFilter(),

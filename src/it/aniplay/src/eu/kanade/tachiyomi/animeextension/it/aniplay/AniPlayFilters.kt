@@ -56,7 +56,7 @@ object AniPlayFilters {
     class AnniFilter : QueryPartFilter("Anni", AniPlayFiltersData.ANNI)
     class StagioneFilter : QueryPartFilter("Stagione", AniPlayFiltersData.STAGIONE)
 
-    val FILTER_LIST = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         OrdinaFilter(),
         AnimeFilter.Separator(),
 

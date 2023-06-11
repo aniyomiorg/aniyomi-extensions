@@ -34,7 +34,7 @@ object KissAnimeFilters {
 
     class ScheduleFilter : QueryPartFilter("Schedule", KissAnimeFiltersData.SCHEDULE)
 
-    val FILTER_LIST = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         StatusFilter(),
         GenreFilter(),
         AnimeFilter.Separator(),

@@ -54,7 +54,7 @@ object MarinMoeFilters {
 
     class StudioFilter : QueryPartFilter("Studio", MarinMoeFiltersData.STUDIOS)
 
-    val FILTER_LIST = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         SortFilter(),
         AnimeFilter.Separator(),
         TypeFilter(),

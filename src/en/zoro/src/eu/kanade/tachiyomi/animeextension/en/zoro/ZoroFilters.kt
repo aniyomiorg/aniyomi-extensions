@@ -45,7 +45,7 @@ object ZoroFilters {
         ZoroFiltersData.GENRES.map { CheckBoxVal(it.first, false) },
     )
 
-    val FILTER_LIST = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         TypeFilter(),
         StatusFilter(),
         RatedFilter(),

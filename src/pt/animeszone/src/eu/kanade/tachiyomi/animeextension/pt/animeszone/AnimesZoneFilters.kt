@@ -70,7 +70,7 @@ object AnimesZoneFilters {
 
     class AdultFilter : QueryPartFilter("Adulto", AnimesZoneFiltersData.ADULT)
 
-    val FILTER_LIST = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         GenreFilter(),
         StudioFilter(),
         YearFilter(),

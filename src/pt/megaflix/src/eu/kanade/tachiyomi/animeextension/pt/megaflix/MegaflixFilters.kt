@@ -23,7 +23,7 @@ object MegaflixFilters {
 
     class GenreFilter : QueryPartFilter("Gênero", MegaflixFiltersData.GENRES)
 
-    val FILTER_LIST = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         AnimeFilter.Header(MegaflixFiltersData.IGNORE_SEARCH_MSG),
         GenreFilter(),
     )

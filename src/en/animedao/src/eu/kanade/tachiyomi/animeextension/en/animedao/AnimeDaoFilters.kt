@@ -76,7 +76,7 @@ object AnimeDaoFilters {
 
     class OrderFilter : QueryPartFilter("Order", AnimeDaoFiltersData.ORDER)
 
-    val FILTER_LIST = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         GenreFilter(),
         RatingFilter(),
         LetterFilter(),

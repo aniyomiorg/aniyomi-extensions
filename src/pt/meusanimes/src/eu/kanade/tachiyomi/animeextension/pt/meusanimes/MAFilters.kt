@@ -26,7 +26,7 @@ object MAFilters {
     class AudioFilter : QueryPartFilter("Áudio", MAFiltersData.AUDIO)
     class GenreFilter : QueryPartFilter("Gênero", MAFiltersData.GENRES)
 
-    val FILTER_LIST = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         AnimeFilter.Header(MAFiltersData.IGNORE_SEARCH_MSG),
         LetterFilter(),
         AnimeFilter.Header(MAFiltersData.IGNORE_LETTER_MSG),

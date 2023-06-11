@@ -26,7 +26,7 @@ object AnitubeFilters {
     class YearFilter : QueryPartFilter("Ano", AnitubeFiltersData.YEARS)
     class SeasonFilter : QueryPartFilter("Temporada", AnitubeFiltersData.SEASONS)
 
-    val FILTER_LIST = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         AnimeFilter.Header(AnitubeFiltersData.IGNORE_SEARCH_MSG),
         GenreFilter(),
         CharacterFilter(),
