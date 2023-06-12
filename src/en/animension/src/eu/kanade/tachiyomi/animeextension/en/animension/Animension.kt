@@ -101,9 +101,10 @@ class Animension() : ConfigurableAnimeSource, AnimeHttpSource() {
             when {
                 url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
                     url.contains("sbfast") || url.contains("sbfull.com") || url.contains("ssbstream.net") ||
-                    url.contains("p1ayerjavseen.com") || url.contains("streamsss.net") || url.contains("sbplay2.xyz")
+                    url.contains("p1ayerjavseen.com") || url.contains("streamsss.net") || url.contains("sbplay2.xyz") ||
+                    url.contains("sbasian.pro")
                 -> {
-                    videoList.addAll(StreamSBExtractor(client).videosFromUrl(url, headers, common = false))
+                    videoList.addAll(StreamSBExtractor(client).videosFromUrl(url, headers))
                 }
 
                 url.contains("dood") -> {
