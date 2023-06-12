@@ -1,6 +1,8 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
+}
 
 ext {
     extName = 'Vizer.tv'
@@ -12,8 +14,8 @@ ext {
 }
 
 dependencies {
+    implementation(project(':lib-mixdrop-extractor'))
     implementation(project(':lib-streamtape-extractor'))
-    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
 
 apply from: "$rootDir/common.gradle"

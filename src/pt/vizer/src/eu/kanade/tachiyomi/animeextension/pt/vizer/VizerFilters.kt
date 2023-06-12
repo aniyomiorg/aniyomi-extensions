@@ -17,11 +17,11 @@ object VizerFilters {
     }
 
     private inline fun <reified R> AnimeFilterList.getFirst(): R {
-        return this.filterIsInstance<R>().first()
+        return first { it is R } as R
     }
 
     private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return this.getFirst<R>().let {
+        return getFirst<R>().let {
             (it as QueryPartFilter).toQueryPart()
         }
     }
