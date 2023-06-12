@@ -21,11 +21,11 @@ object ATCFilters {
     private class TriStateVal(name: String) : AnimeFilter.TriState(name)
 
     private inline fun <reified R> AnimeFilterList.getFirst(): R {
-        return this.filterIsInstance<R>().first()
+        return first { it is R } as R
     }
 
     private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return this.getFirst<R>().let {
+        return getFirst<R>().let {
             (it as QueryPartFilter).toQueryPart()
         }
     }
@@ -41,7 +41,7 @@ object ATCFilters {
 
     class GenresFilter : TriStateFilterList(
         "Gêneros",
-        ATCFiltersData.GENRES.map { TriStateVal(it) },
+        ATCFiltersData.GENRES.map(::TriStateVal),
     )
 
     val FILTER_LIST get() = AnimeFilterList(
@@ -88,38 +88,33 @@ object ATCFilters {
         return searchParams
     }
 
-    private fun compareLower(first: String, second: String): Boolean {
-        return first.lowercase() in second.lowercase()
-    }
-
     private fun mustRemove(anime: AnimeDto, params: FilterSearchParams): Boolean {
         return when {
-            params.animeName != "" && !compareLower(params.animeName, anime.title) -> true
+            params.animeName != "" && !anime.title.contains(params.animeName, true) -> true
             params.initialLetter != "" && !anime.title.lowercase().startsWith(params.initialLetter) -> true
             params.blackListedGenres.size > 0 && params.blackListedGenres.any {
-                compareLower(it, anime.genres)
+                anime.genres.contains(it, true)
             } -> true
             params.includedGenres.size > 0 && params.includedGenres.any {
-                !compareLower(it, anime.genres)
+                !anime.genres.contains(it, true)
             } -> true
             params.status != "" && anime.status != SAnime.UNKNOWN && anime.status != params.status.toInt() -> true
             else -> false
         }
     }
 
-    private inline fun <T, R : Comparable<R>> List<out T>.sortedByIf(
-        condition: Boolean,
-        crossinline selector: (T) -> R?,
+    private inline fun <T, R : Comparable<R>> List<T>.sortedByIf(
+        isAscending: Boolean,
+        crossinline selector: (T) -> R,
     ): List<T> {
-        return if (condition) {
-            sortedBy(selector)
-        } else {
-            sortedByDescending(selector)
+        return when {
+            isAscending -> sortedBy(selector)
+            else -> sortedByDescending(selector)
         }
     }
 
     fun List<AnimeDto>.applyFilterParams(params: FilterSearchParams): List<AnimeDto> {
-        return this.filterNot { mustRemove(it, params) }.let { results ->
+        return filterNot { mustRemove(it, params) }.let { results ->
             when (params.sortBy) {
                 "A-Z" -> results.sortedByIf(params.orderAscending) { it.title.lowercase() }
                 "year" -> results.sortedByIf(params.orderAscending) { it.year ?: 0 }

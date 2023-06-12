@@ -18,7 +18,7 @@ class BAUrlActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val pathSegments = intent?.data?.pathSegments
-        if (pathSegments != null && pathSegments.size > 1) {
+        if (pathSegments != null && pathSegments.size > 2) {
             val type = pathSegments[0]
             val lang = pathSegments[1]
             val item = pathSegments[2]

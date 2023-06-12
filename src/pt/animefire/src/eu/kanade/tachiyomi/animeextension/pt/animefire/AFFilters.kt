@@ -16,7 +16,7 @@ object AFFilters {
     }
 
     private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return this.filterIsInstance<R>().joinToString("") {
+        return first { it is R }.let {
             (it as QueryPartFilter).toQueryPart()
         }
     }

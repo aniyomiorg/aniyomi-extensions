@@ -34,6 +34,7 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.io.IOException
 import java.lang.Exception
 
@@ -51,9 +52,7 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         .addInterceptor(::loginInterceptor)
         .build()
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-    }
+    private val json: Json by injectLazy()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -66,14 +65,14 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Popular ===============================
     // The site doesn't have a true popular anime tab,
     // so we use the latest added anime page instead.
-    override fun popularAnimeSelector() = latestUpdatesSelector()
-
-    override fun popularAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
+    override fun popularAnimeParse(response: Response) = latestUpdatesParse(response)
 
     override fun popularAnimeRequest(page: Int): Request =
         GET("$baseUrl/ultimosAdicionados?page=$page")
 
-    override fun popularAnimeNextPageSelector() = latestUpdatesNextPageSelector()
+    override fun popularAnimeSelector() = TODO()
+    override fun popularAnimeFromElement(element: Element) = TODO()
+    override fun popularAnimeNextPageSelector() = TODO()
 
     // ============================== Episodes ==============================
     override fun episodeListSelector(): String = "ul#episodesList > li.list-group-item-action > a"
@@ -81,13 +80,11 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListParse(response: Response) =
         super.episodeListParse(response).reversed()
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        return SEpisode.create().apply {
-            val episodeName = element.text()
-            setUrlWithoutDomain(element.attr("href"))
-            name = episodeName
-            episode_number = episodeName.substringAfterLast(" ").toFloatOrNull() ?: 0F
-        }
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        val episodeName = element.text()
+        setUrlWithoutDomain(element.attr("href"))
+        name = episodeName
+        episode_number = episodeName.substringAfterLast(" ").toFloatOrNull() ?: 0F
     }
 
     // ============================ Video Links =============================
@@ -123,17 +120,14 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val path = query.removePrefix(PREFIX_SEARCH_PATH)
             client.newCall(GET("$baseUrl/$path"))
                 .asObservableSuccess()
-                .map { response ->
-                    searchAnimeByPathParse(response, path)
-                }
+                .map(::searchAnimeByPathParse)
         } else {
             super.fetchSearchAnime(page, query, filters)
         }
     }
 
-    private fun searchAnimeByPathParse(response: Response, path: String): AnimesPage {
+    private fun searchAnimeByPathParse(response: Response): AnimesPage {
         val details = animeDetailsParse(response)
-        details.url = "/$path"
         return AnimesPage(listOf(details), false)
     }
 
@@ -171,23 +165,23 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        return SAnime.create().apply {
-            val doc = getRealDoc(document)
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        val doc = getRealDoc(document)
+        setUrlWithoutDomain(doc.location())
 
-            val infos = doc.selectFirst("div.infos_left > div.anime-info")!!
-            val img = doc.selectFirst("div.infos-img > img")!!
-            thumbnail_url = "https:" + img.attr("src")
-            title = img.attr("alt")
-            genre = infos.select("div.anime-genres > a")
-                .eachText()
-                .joinToString()
-            author = infos.getInfo("Produtor")
-            artist = infos.getInfo("Estúdio")
-            status = parseStatus(infos.getInfo("Estado"))
-            var desc = infos.selectFirst("div.anime-description")!!.text() + "\n\n"
-            desc += infos.select(">p").eachText().joinToString("\n")
-            description = desc
+        val infos = doc.selectFirst("div.infos_left > div.anime-info")!!
+        val img = doc.selectFirst("div.infos-img > img")!!
+        thumbnail_url = "https:" + img.attr("src")
+        title = img.attr("alt")
+        genre = infos.select("div.anime-genres > a")
+            .eachText()
+            .joinToString()
+        author = infos.getInfo("Produtor")
+        artist = infos.getInfo("Estúdio")
+        status = parseStatus(infos.getInfo("Estado"))
+        description = buildString {
+            append(infos.selectFirst("div.anime-description")!!.text() + "\n\n")
+            infos.select(">p").eachText().forEach { append("$it\n") }
         }
     }
 
@@ -198,14 +192,12 @@ class BetterAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request =
         GET("$baseUrl/ultimosLancamentos?page=$page")
 
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        return SAnime.create().apply {
-            val img = element.selectFirst("img")!!
-            val url = element.selectFirst("a")?.attr("href")!!
-            setUrlWithoutDomain(url)
-            title = element.selectFirst("h3")?.text()!!
-            thumbnail_url = "https:" + img.attr("src")
-        }
+    override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
+        val img = element.selectFirst("img")!!
+        val url = element.selectFirst("a")?.attr("href")!!
+        setUrlWithoutDomain(url)
+        title = element.selectFirst("h3")?.text()!!
+        thumbnail_url = "https:" + img.attr("src")
     }
 
     // ============================== Settings ==============================
