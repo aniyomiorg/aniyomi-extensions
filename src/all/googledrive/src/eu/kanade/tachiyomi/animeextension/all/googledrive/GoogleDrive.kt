@@ -102,7 +102,7 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
         query: String,
         filters: AnimeFilterList,
     ): Observable<AnimesPage> {
-        if (query.isNotEmpty()) throw Exception("Search is disabled. Use search in webview and add it as a single folder in filters.")
+        require(query.isEmpty()) { "Search is disabled. Use search in webview and add it as a single folder in filters." }
 
         val filterList = if (filters.isEmpty()) getFilterList() else filters
         val urlFilter = filterList.find { it is URLFilter } as URLFilter
