@@ -5,7 +5,6 @@ import eu.kanade.tachiyomi.network.GET
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import org.jsoup.nodes.Element
-import java.net.ProtocolException
 
 class MeusAnimesExtractor(private val client: OkHttpClient) {
 
@@ -13,14 +12,15 @@ class MeusAnimesExtractor(private val client: OkHttpClient) {
 
     fun videoListFromElement(element: Element): List<Video> {
         val headers = Headers.headersOf("Range", "bytes=0-1")
-        val urls = mutableMapOf<String, String>().apply {
+        val urls = buildMap {
             val sdUrl = element.attr("src")
             put("SD", sdUrl)
             val hdUrl = sdUrl.replace("/sd/", "/hd/")
-            try {
-                val testIt = client.newCall(head(hdUrl, headers)).execute()
+            runCatching {
+                // Check if the url is playing
+                client.newCall(head(hdUrl, headers)).execute()
                 put("HD", hdUrl)
-            } catch (e: ProtocolException) {}
+            }
         }
         return urls.map { (quality, url) -> Video(url, quality, url) }
     }

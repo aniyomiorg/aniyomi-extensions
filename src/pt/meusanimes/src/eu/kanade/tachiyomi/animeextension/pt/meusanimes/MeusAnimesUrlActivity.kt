@@ -19,10 +19,6 @@ class MeusAnimesUrlActivity : Activity() {
         super.onCreate(savedInstanceState)
         val pathSegments = intent?.data?.pathSegments
         if (pathSegments != null && pathSegments.size > 1) {
-            // https://<host>/<segment 0>/<segment 1>...
-            // ex: pattern "/animes/..*" -> pathSegments[1]
-            // ex: pattern "/animes/info/..*" -> pathSegments[2]
-            // etc..
             val item = pathSegments[1]
             val mainIntent = Intent().apply {
                 action = "eu.kanade.tachiyomi.ANIMESEARCH"
