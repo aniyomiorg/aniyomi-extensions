@@ -69,7 +69,7 @@ class ListaDeAnimes : ParsedAnimeHttpSource() {
         return Observable.just(listOf(Video(episode.url, episode.name, episode.url)))
     }
 
-    override fun videoListSelector() = "div.videos > ul"
+    override fun videoListSelector() = throw UnsupportedOperationException("Not used.")
     override fun videoListRequest(episode: SEpisode) = throw UnsupportedOperationException("Not used.")
     override fun videoListParse(response: Response) = throw UnsupportedOperationException("Not used.")
     override fun videoFromElement(element: Element) = throw UnsupportedOperationException("Not used.")
