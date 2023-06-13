@@ -27,6 +27,7 @@ data class LinkData(
     val type: String,
     val url: String,
     val info: String? = null,
+    val fragment: String? = null,
 )
 
 @Serializable
