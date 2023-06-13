@@ -54,7 +54,7 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeSelector(): String = "ul.list-film li"
 
     override fun popularAnimeFromElement(element: Element): SAnime = SAnime.create().apply {
-        setUrlWithoutDomain(element.selectFirst("a.mv-namevn")!!.relative())
+        setUrlWithoutDomain(element.selectFirst("a.mv-namevn")!!.attr("abs:href"))
         title = element.selectFirst("a.mv-namevn")!!.text()
         thumbnail_url = element.selectFirst("a img")!!.attr("src")
     }
@@ -71,7 +71,7 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val a = element.selectFirst("div.info a:not([style])")!!
 
         return SAnime.create().apply {
-            setUrlWithoutDomain(a.relative())
+            setUrlWithoutDomain(a.attr("abs:href"))
             thumbnail_url = element.select("a.thumb img").attr("src")
             title = a.text()
         }
@@ -196,6 +196,8 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             )
         }
 
+        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
+
         return Observable.just(videoList)
     }
 
@@ -216,10 +218,6 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
             ),
         ).reversed()
-    }
-
-    private fun Element.relative(): String {
-        return this.attr("abs:href").toHttpUrl().encodedPath
     }
 
     private fun Int.toPage(): String {
@@ -244,7 +242,6 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     companion object {
         private const val PREF_QUALITY_KEY = "preferred_quality"
-        private const val PREF_QUALITY_TITLE = "Preferred quality"
         private val PREF_QUALITY_ENTRY_VALUES = arrayOf("1080", "720", "480", "360", "240")
         private val PREF_QUALITY_ENTRIES = PREF_QUALITY_ENTRY_VALUES.map { "${it}p" }.toTypedArray()
         private const val PREF_QUALITY_DEFAULT = "720"
@@ -255,7 +252,7 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
-            title = PREF_QUALITY_TITLE
+            title = "Preferred quality"
             entries = PREF_QUALITY_ENTRIES
             entryValues = PREF_QUALITY_ENTRY_VALUES
             setDefaultValue(PREF_QUALITY_DEFAULT)
@@ -267,6 +264,6 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }.let { screen.addPreference(it) }
+        }.also(screen::addPreference)
     }
 }
