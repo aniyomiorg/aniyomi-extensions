@@ -104,7 +104,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         throw Exception("Not used")
 
     private fun searchAnimeRequest(page: Int, query: String, filters: NineAnimeFilters.FilterSearchParams): Request {
-        val vrf = if (query.isNotBlank()) callConsumet(query, "searchVrf") else ""
+        val vrf = if (query.isNotBlank()) callConsumet(query, "vrf") else ""
         var url = "$baseUrl/filter?keyword=$query"
 
         if (filters.genre.isNotBlank()) url += filters.genre
@@ -282,8 +282,8 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     )
                     val vidId = embedLink.substringAfterLast("/").substringBefore("?")
                     val (serverName, action) = when (server.third) {
-                        "vidstream" -> Pair("Vidstream", "vizcloud")
-                        "mycloud" -> Pair("MyCloud", "mcloud")
+                        "vidstream" -> Pair("Vidstream", "rawVizcloud")
+                        "mycloud" -> Pair("MyCloud", "rawMcloud")
                         else -> return emptyList()
                     }
                     val playlistUrl = callConsumet(vidId, action)
@@ -333,11 +333,20 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun callConsumet(query: String, action: String): String {
         return client.newCall(
-            GET("https://api.consumet.org/anime/9anime/helper?query=$query&action=$action"),
+            GET("https://9anime.eltik.net/$action?query=$query&apikey=aniyomi"),
         ).execute().body.string().let {
             when (action) {
-                "vizcloud", "mcloud" -> {
-                    it.substringAfter("file\":\"").substringBefore("\"")
+                "rawVizcloud", "rawMcloud" -> {
+                    val rawURL = json.decodeFromString<RawResponse>(it).rawURL
+                    val referer = if (action == "rawVizcloud") "https://vidstream.pro/" else "https://mcloud.to/"
+                    val apiResponse = client.newCall(
+                        GET(
+                            url = rawURL,
+                            headers = Headers.headersOf("Referer", referer),
+                        ),
+                    ).execute().body.string()
+
+                    apiResponse.substringAfter("file\":\"").substringBefore("\"")
                 }
                 "decrypt" -> {
                     json.decodeFromString<VrfResponse>(it).url
@@ -387,6 +396,11 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     data class VrfResponse(
         val url: String,
         val vrfQuery: String? = null,
+    )
+
+    @Serializable
+    data class RawResponse(
+        val rawURL: String,
     )
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
