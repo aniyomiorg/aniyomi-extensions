@@ -741,9 +741,12 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    companion object {
-        private val DDL_REGEX = Regex("""DDL\((.*?), ?(.*?), ?(.*?), ?(.*?)\)""")
-    }
+    private val xmlHeaders = headers.newBuilder()
+        .add("Accept", "*/*")
+        .add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+        .add("Host", baseUrl.toHttpUrl().host)
+        .add("Origin", baseUrl)
+        .add("X-Requested-With", "XMLHttpRequest")
 
     // ============================== Popular ===============================
 
@@ -751,15 +754,13 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "table > tbody > tr.post-row"
 
-    override fun popularAnimeNextPageSelector(): String? = null
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a:not([title])")!!.attr("abs:href").toHttpUrl().encodedPath)
-            title = element.selectFirst("a:not([title])")!!.text()
-            thumbnail_url = ""
-        }
+    override fun popularAnimeFromElement(element: Element): SAnime = SAnime.create().apply {
+        setUrlWithoutDomain(element.selectFirst("a:not([title])")!!.attr("abs:href"))
+        title = element.selectFirst("a:not([title])")!!.text()
+        thumbnail_url = ""
     }
+
+    override fun popularAnimeNextPageSelector(): String? = null
 
     // =============================== Latest ===============================
 
@@ -767,9 +768,9 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesSelector(): String = throw Exception("Not Used")
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not Used")
-
     override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not Used")
+
+    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not Used")
 
     // =============================== Search ===============================
 
@@ -821,13 +822,8 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         .add("layout", layout)
                         .add("settings", settings)
                         .build()
-                    val formHeaders = headers.newBuilder()
-                        .add("Accept", "*/*")
-                        .add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-                        .add("Host", "animekaizoku.com")
-                        .add("Origin", "https://animekaizoku.com")
+                    val formHeaders = xmlHeaders
                         .add("Referer", currentReferer)
-                        .add("X-Requested-With", "XMLHttpRequest")
                         .build()
                     POST("$baseUrl/wp-admin/admin-ajax.php", body = formBody, headers = formHeaders)
                 }
@@ -884,17 +880,15 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
 
-    override fun searchAnimeNextPageSelector(): String? = popularAnimeNextPageSelector()
-
     override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
 
-    private fun searchAnimeFromElementPaginated(element: Element): SAnime {
-        return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a")!!.attr("abs:href").toHttpUrl().encodedPath)
-            thumbnail_url = element.selectFirst("img[src]")?.attr("src") ?: ""
-            title = element.selectFirst("h2.post-title")!!.text().substringBefore(" Episode")
-        }
+    private fun searchAnimeFromElementPaginated(element: Element): SAnime = SAnime.create().apply {
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("abs:href"))
+        thumbnail_url = element.selectFirst("img[src]")?.attr("abs:src") ?: ""
+        title = element.selectFirst("h2.post-title")!!.text().substringBefore(" Episode")
     }
+
+    override fun searchAnimeNextPageSelector(): String? = popularAnimeNextPageSelector()
 
     // ============================== Filters ===============================
 
@@ -921,16 +915,14 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
 
-    override fun animeDetailsParse(document: Document): SAnime {
-        return SAnime.create().apply {
-            title = document.selectFirst("div.entry-header > h1")?.text()?.trim() ?: ""
-            thumbnail_url = document.selectFirst("script:containsData(primaryImageOfPage)")?.data()?.let {
-                it.substringAfter("primaryImageOfPage").substringAfter("@id\":\"").substringBefore("\"")
-            }
-            description = document.selectFirst("div.review-short-summary")?.text()
-            author = document.selectFirst("div.toggle-content > strong:contains(studio) + a")?.text()
-            genre = document.select("div.toggle-content > strong:contains(Genres) ~ a[href*=/genres/]").joinToString(", ") { it.text() }
+    override fun animeDetailsParse(document: Document): SAnime = SAnime.create().apply {
+        title = document.selectFirst("div.entry-header > h1")?.text()?.trim() ?: ""
+        thumbnail_url = document.selectFirst("script:containsData(primaryImageOfPage)")?.data()?.let {
+            it.substringAfter("primaryImageOfPage").substringAfter("@id\":\"").substringBefore("\"")
         }
+        description = document.selectFirst("div.review-short-summary")?.text()
+        author = document.selectFirst("div.toggle-content > strong:contains(studio) + a")?.text()
+        genre = document.select("div.toggle-content > strong:contains(Genres) ~ a[href*=/genres/]").joinToString(", ") { it.text() }
     }
 
     // ============================== Episodes ==============================
@@ -944,16 +936,11 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .substringAfter("\"postId\":\"").substringBefore("\"")
         val serversList = mutableListOf<List<EpUrl>>()
 
-        val postHeaders = headers.newBuilder()
-            .add("Accept", "*/*")
-            .add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-            .add("Host", baseUrl.toHttpUrl().host)
-            .add("Origin", baseUrl)
+        val postHeaders = xmlHeaders
             .add("Referer", baseUrl + anime.url)
-            .add("X-Requested-With", "XMLHttpRequest")
             .build()
 
-        val prefServer = preferences.getString("preferred_server", "server")!!
+        val prefServer = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
 
         DDL_REGEX.findAll(document.data()).forEach { serverType ->
             val data = serverType.groupValues
@@ -1020,9 +1007,7 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 SEpisode.create().apply {
                     name = serverList.first().name
                     episode_number = (index + 1).toFloat()
-                    setUrlWithoutDomain(
-                        serverList.toJsonString(),
-                    )
+                    url = serverList.toJsonString()
                 },
             )
         }
@@ -1044,13 +1029,8 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val parsed = json.decodeFromString<List<EpUrl>>(episode.url)
 
         parsed.forEach {
-            val postHeaders = headers.newBuilder()
-                .add("Accept", "*/*")
-                .add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-                .add("Host", baseUrl.toHttpUrl().host)
-                .add("Origin", baseUrl)
+            val postHeaders = xmlHeaders
                 .add("Referer", it.ref)
-                .add("X-Requested-With", "XMLHttpRequest")
                 .build()
 
             val ddlData = DDL_REGEX.find(it.url)!!.groupValues
@@ -1075,6 +1055,8 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 )
             }
         }
+
+        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
 
         return Observable.just(videoList)
     }
@@ -1142,7 +1124,7 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "1080")!!
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 
         return this.sortedWith(
             compareBy { it.quality.contains(quality) },
@@ -1188,13 +1170,29 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return json.encodeToString(this)
     }
 
+    companion object {
+        private val DDL_REGEX = Regex("""DDL\((.*?), ?(.*?), ?(.*?), ?(.*?)\)""")
+
+        private const val PREF_SERVER_KEY = "preferred_server"
+        private val PREF_SERVER_ENTRIES = arrayOf("Server direct", "Worker direct", "Both")
+        private val PREF_SERVER_ENTRY_VALUES = arrayOf("server", "worker", "both")
+        private const val PREF_SERVER_DEFAULT = "server"
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private val PREF_QUALITY_ENTRY_VALUES = arrayOf("1080", "720", "480", "360")
+        private val PREF_QUALITY_ENTRIES = PREF_QUALITY_ENTRY_VALUES.map { "${it}p" }.toTypedArray()
+        private const val PREF_QUALITY_DEFAULT = "1080"
+    }
+
+    // ============================== Settings ==============================
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val domainPref = ListPreference(screen.context).apply {
-            key = "preferred_server"
+        ListPreference(screen.context).apply {
+            key = PREF_SERVER_KEY
             title = "Preferred server"
-            entries = arrayOf("Server direct", "Worker direct", "Both")
-            entryValues = arrayOf("server", "worker", "both")
-            setDefaultValue("server")
+            entries = PREF_SERVER_ENTRIES
+            entryValues = PREF_SERVER_ENTRY_VALUES
+            setDefaultValue(PREF_SERVER_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -1203,13 +1201,14 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
             title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
-            setDefaultValue("1080")
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -1218,9 +1217,6 @@ class AnimeKaizoku : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-
-        screen.addPreference(domainPref)
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
     }
 }
