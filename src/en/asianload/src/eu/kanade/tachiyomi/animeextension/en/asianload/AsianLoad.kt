@@ -106,9 +106,10 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             when {
                 url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
                     url.contains("sbfast") || url.contains("sbfull.com") || url.contains("ssbstream.net") ||
-                    url.contains("p1ayerjavseen.com") || url.contains("streamsss.net") || url.contains("sbplay2.xyz")
+                    url.contains("p1ayerjavseen.com") || url.contains("streamsss.net") || url.contains("sbplay2.xyz") ||
+                    url.contains("sbasian.pro")
                 -> {
-                    val videos = StreamSBExtractor(client).videosFromUrl(url, headers, common = false)
+                    val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
                     videoList.addAll(videos)
                 }
                 url.contains("dood") -> {

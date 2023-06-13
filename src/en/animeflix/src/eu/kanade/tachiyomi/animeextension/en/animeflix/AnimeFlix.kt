@@ -80,8 +80,6 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =============================== Search ===============================
 
-    // https://animeflix.org.in/download-demon-slayer-movie-infinity-train-movie-2020-japanese-with-esubs-hevc-720p-1080p/
-
     override fun searchAnimeParse(response: Response): AnimesPage = throw Exception("Not used")
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
@@ -207,34 +205,38 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val serversList = mutableListOf<List<EpUrl>>()
         val seasonRegex = Regex("""season (\d+)""", RegexOption.IGNORE_CASE)
         val qualityRegex = """(\d+)p""".toRegex()
-        val episodeRegex = Regex("""episode (\d+)""", RegexOption.IGNORE_CASE)
         val driveList = mutableListOf<Pair<String, String>>()
 
-        val seasonList = document.select("div.inline > h3:contains(Season)")
+        val seasonList = document.select("div.inline > h3:contains(Season),div.thecontent > h3:contains(Season)")
 
         if (seasonList.distinctBy { seasonRegex.find(it.text())!!.groupValues[1] }.size > 1) {
-            document.select("div.thecontent p:has(span:contains(Gdrive))").forEach {
-                val titleText = it.previousElementSibling()!!.text()
+            val seasonsLinks = document.select("div.thecontent p:has(span:contains(Gdrive))").groupBy {
+                seasonRegex.find(it.previousElementSibling()!!.text())!!.groupValues[1]
+            }.values.toList()
+            seasonsLinks.forEach { season ->
 
-                val quality = qualityRegex.find(titleText)!!.groupValues[1]
-                val seasonName = seasonRegex.find(titleText)!!.groupValues[1]
+                val serverListSeason = mutableListOf<List<EpUrl>>()
 
-                val episodesDocument = client.newCall(GET(it.selectFirst("a")!!.attr("href"))).execute().asJsoup()
-                episodesDocument.select("div.entry-content > h3 > a").forEach {
+                season.forEach {
+                    val quality = qualityRegex.find(it.previousElementSibling()!!.text())!!.groupValues[1]
+                    val seasonNumber = seasonRegex.find(it.previousElementSibling()!!.text())!!.groupValues[1]
+
+                    val url = it.selectFirst("a")!!.attr("href")
+                    val episodesDocument = client.newCall(GET(url)).execute().asJsoup()
+                    serverListSeason.add(
+                        episodesDocument.select("div.entry-content > h3 > a").map {
+                            EpUrl(quality, it.attr("href"), "Season $seasonNumber ${it.text()}")
+                        },
+                    )
+                }
+
+                transpose(serverListSeason).forEachIndexed { index, serverList ->
                     episodeList.add(
                         SEpisode.create().apply {
-                            name = "Season $seasonName ${it.text()}"
-                            episode_number = episodeRegex.find(it.text())?.groupValues?.get(1)?.toFloatOrNull() ?: 1F
+                            name = serverList.first().name
+                            episode_number = (index + 1).toFloat()
                             setUrlWithoutDomain(
-                                json.encodeToString(
-                                    listOf(
-                                        EpUrl(
-                                            quality = quality,
-                                            url = it.attr("href"),
-                                            name = "Season $seasonName ${it.text()}",
-                                        ),
-                                    ),
-                                ),
+                                json.encodeToString(serverList),
                             )
                         },
                     )

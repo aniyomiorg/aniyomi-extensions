@@ -89,7 +89,7 @@ object NineAnimeFilters {
         NineAnimeFiltersData.RATING.map { CheckBoxVal(it.first, false) },
     )
 
-    val FILTER_LIST = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         SortFilter(),
         AnimeFilter.Separator(),
         GenreFilter(),

@@ -33,7 +33,7 @@ object KickAssAnimeFilters {
     class TypeFilter : QueryPartFilter("Type", KickAssAnimeFiltersData.TYPE)
     class SubPageFilter : QueryPartFilter("Sub-page", KickAssAnimeFiltersData.SUBPAGE)
 
-    val FILTER_LIST = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         GenreFilter(),
         YearFilter(),
         StatusFilter(),

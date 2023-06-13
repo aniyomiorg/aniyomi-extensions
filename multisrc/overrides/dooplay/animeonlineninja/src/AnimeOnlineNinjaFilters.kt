@@ -49,7 +49,7 @@ object AnimeOnlineNinjaFilters {
         return state.first { it is R }.toUriPart()
     }
 
-    val FILTER_LIST = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         InvertedResultsFilter(),
         TypeFilter(),
         LetterFilter(),

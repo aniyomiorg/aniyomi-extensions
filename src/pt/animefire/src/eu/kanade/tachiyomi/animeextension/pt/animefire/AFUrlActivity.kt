@@ -20,7 +20,7 @@ class AFUrlActivity : Activity() {
         val pathSegments = intent?.data?.pathSegments
         if (pathSegments != null && pathSegments.size > 1) {
             val id = pathSegments[1]
-            val searchQuery = AFConstants.PREFIX_SEARCH + id
+            val searchQuery = AnimeFire.PREFIX_SEARCH + id
             val mainIntent = Intent().apply {
                 action = "eu.kanade.tachiyomi.ANIMESEARCH"
                 putExtra("query", searchQuery)

@@ -11,7 +11,6 @@ import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.SearchItemDto
 import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.SearchResultDto
 import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.VideoDto
 import eu.kanade.tachiyomi.animeextension.pt.vizer.dto.VideoLanguagesDto
-import eu.kanade.tachiyomi.animeextension.pt.vizer.extractors.MixDropExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -19,6 +18,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
+import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -35,6 +35,7 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 
 class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
 
@@ -49,16 +50,13 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-    }
+    private val json: Json by injectLazy()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
     // ============================== Popular ===============================
-
     override fun popularAnimeRequest(page: Int): Request {
         val pageType = preferences.getString(PREF_POPULAR_PAGE_KEY, PREF_POPULAR_PAGE_DEFAULT)!!
         val params = FilterSearchParams(
@@ -71,41 +69,39 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val result = response.parseAs<SearchResultDto>()
-        val animes = result.list.map(::animeFromObject).toList()
+        val animes = result.list.map(::animeFromObject)
         val hasNext = result.quantity == 35
         return AnimesPage(animes, hasNext)
     }
 
-    private fun animeFromObject(item: SearchItemDto): SAnime =
-        SAnime.create().apply {
-            var slug = if (item.status.isBlank()) "filme" else "serie"
-            url = "/$slug/online/${item.url}"
-            slug = if (slug == "filme") "movies" else "series"
-            title = item.title
-            status = when (item.status) {
-                "Retornando" -> SAnime.ONGOING
-                else -> SAnime.COMPLETED
-            }
-            thumbnail_url = "$baseUrl/content/$slug/posterPt/342/${item.id}.webp"
+    private fun animeFromObject(item: SearchItemDto) = SAnime.create().apply {
+        val (urlslug, imgslug) = when {
+            item.status.isBlank() -> Pair("filme", "movies")
+            else -> Pair("serie", "series")
         }
+        url = "/$urlslug/online/${item.url}"
+        title = item.title
+        status = when (item.status) {
+            "Retornando" -> SAnime.ONGOING
+            else -> SAnime.COMPLETED
+        }
+        thumbnail_url = "$baseUrl/content/$imgslug/posterPt/342/${item.id}.webp"
+    }
 
     // ============================== Episodes ==============================
-
     private fun getSeasonEps(seasonElement: Element): List<SEpisode> {
         val id = seasonElement.attr("data-season-id")
         val sname = seasonElement.text()
         val response = client.newCall(apiRequest("getEpisodes=$id")).execute()
-        val episodes = response.parseAs<EpisodeListDto>().episodes.mapNotNull {
-            if (it.released) {
+        val episodes = response.parseAs<EpisodeListDto>().episodes
+            .filter { it.released }
+            .map {
                 SEpisode.create().apply {
                     name = "Temp $sname: Ep ${it.name} - ${it.title}"
                     episode_number = it.name.toFloatOrNull() ?: 0F
                     url = it.id
                 }
-            } else {
-                null
             }
-        }
         return episodes
     }
 
@@ -126,7 +122,6 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
-
     override fun videoListRequest(episode: SEpisode): Request {
         val url = episode.url
         return if (url.startsWith("https")) {
@@ -161,9 +156,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
             val url = getPlayerUrl(videoObj.id, name)
             when (name) {
                 "mixdrop" ->
-                    MixDropExtractor(client)
-                        .videoFromUrl(url, langPrefix)
-                        ?.let(::listOf)
+                    MixDropExtractor(client).videoFromUrl(url, langPrefix)
                 "streamtape" ->
                     StreamTapeExtractor(client)
                         .videoFromUrl(url, "StreamTape($langPrefix)")
@@ -175,7 +168,6 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // =============================== Search ===============================
-
     override fun getFilterList(): AnimeFilterList = VizerFilters.FILTER_LIST
 
     override fun searchAnimeParse(response: Response) = popularAnimeParse(response)
@@ -185,17 +177,14 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
             val path = query.removePrefix(PREFIX_SEARCH).replace("/", "/online/")
             client.newCall(GET("$baseUrl/$path"))
                 .asObservableSuccess()
-                .map { response ->
-                    searchAnimeByPathParse(response, path)
-                }
+                .map(::searchAnimeByPathParse)
         } else {
             super.fetchSearchAnime(page, query, filters)
         }
     }
 
-    private fun searchAnimeByPathParse(response: Response, path: String): AnimesPage {
+    private fun searchAnimeByPathParse(response: Response): AnimesPage {
         val details = animeDetailsParse(response)
-        details.url = "/" + path
         return AnimesPage(listOf(details), false)
     }
 
@@ -230,23 +219,22 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // =========================== Anime Details ============================
-
-    override fun animeDetailsParse(response: Response): SAnime {
+    override fun animeDetailsParse(response: Response) = SAnime.create().apply {
         val doc = response.asJsoup()
-        return SAnime.create().apply {
-            title = doc.selectFirst("section.ai > h2")!!.text()
-            thumbnail_url = doc.selectFirst("meta[property=og:image]")!!.attr("content")
-            var desc = doc.selectFirst("span.desc")!!.text() + "\n"
-            doc.selectFirst("div.year")?.let { desc += "\nAno: ${it.text()}" }
-            doc.selectFirst("div.tm")?.let { desc += "\nDuração: ${it.text()}" }
-            doc.selectFirst("a.rating")?.let { desc += "\nNota: ${it.text()}" }
-            description = desc
+        setUrlWithoutDomain(doc.location())
+        title = doc.selectFirst("section.ai > h2")!!.text()
+        thumbnail_url = doc.selectFirst("meta[property=og:image]")!!.attr("content")
+
+        description = buildString {
+            append(doc.selectFirst("span.desc")!!.text() + "\n")
+            doc.selectFirst("div.year")?.let { append("\nAno: ${it.text()}") }
+            doc.selectFirst("div.tm")?.let { append("\nDuração: ${it.text()}") }
+            doc.selectFirst("a.rating")?.let { append("\nNota: ${it.text()}") }
         }
     }
 
     // =============================== Latest ===============================
-
-    override fun latestUpdatesRequest(page: Int): Request = apiRequest("getHomeSliderSeries=1")
+    override fun latestUpdatesRequest(page: Int) = apiRequest("getHomeSliderSeries=1")
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
         val parsedData = response.parseAs<SearchResultDto>()
@@ -255,7 +243,6 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================== Settings ==============================
-
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val popularPage = ListPreference(screen.context).apply {
             key = PREF_POPULAR_PAGE_KEY
@@ -308,7 +295,6 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-
     private fun getPlayerUrl(id: String, name: String): String {
         val req = GET("$baseUrl/embed/getPlay.php?id=$id&sv=$name")
         val body = client.newCall(req).execute().body.string()
