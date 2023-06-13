@@ -66,7 +66,7 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val a = element.selectFirst("div.meta a")!!
 
         return SAnime.create().apply {
-            setUrlWithoutDomain(a.relative())
+            setUrlWithoutDomain(a.attr("abs:href"))
             thumbnail_url = element.select("div.poster img").attr("data-src")
             title = a.text()
         }
@@ -276,6 +276,8 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }.filterNotNull().flatten(),
         )
 
+        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
+
         return videoList.sort()
     }
 
@@ -346,7 +348,7 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
-        val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_TITLE)!!
+        val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
 
         return this.sortedWith(
             compareBy(
@@ -368,10 +370,6 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
 
-    private fun Element.relative(): String {
-        return this.attr("abs:href").toHttpUrl().encodedPath
-    }
-
     private fun Int.toPageQuery(first: Boolean = true): String {
         return if (this == 1) "" else "${if (first) "?" else "&"}page=$this"
     }
@@ -385,7 +383,6 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         )
 
         private const val PREF_DOMAIN_KEY = "preferred_domain"
-        private const val PREF_DOMAIN_TITLE = "Preferred domain (requires app restart)"
         private val PREF_DOMAIN_ENTRIES = arrayOf(
             "fmovies.to",
             "fmovies.wtf",
@@ -398,17 +395,14 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private val PREF_DOMAIN_DEFAULT = "https://fmovies.to"
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
-        private const val PREF_QUALITY_TITLE = "Preferred quality"
         private val PREF_QUALITY_ENTRY_VALUES = arrayOf("1080", "720", "480", "360")
         private val PREF_QUALITY_ENTRIES = PREF_QUALITY_ENTRY_VALUES.map { "${it}p" }.toTypedArray()
         private const val PREF_QUALITY_DEFAULT = "1080"
 
         private const val PREF_SERVER_KEY = "preferred_server"
-        private const val PREF_SERVER_TITLE = "Preferred server"
         private const val PREF_SERVER_DEFAULT = "Vidstream"
 
         private const val PREF_HOSTER_KEY = "hoster_selection"
-        private const val PREF_HOSTER_TITLE = "Enable/Disable Hosts"
         private val PREF_HOSTER_DEFAULT = setOf("Vidstream", "Filemoon")
     }
 
@@ -417,7 +411,7 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
             key = PREF_DOMAIN_KEY
-            title = PREF_DOMAIN_TITLE
+            title = "Preferred domain (requires app restart)"
             entries = PREF_DOMAIN_ENTRIES
             entryValues = PREF_DOMAIN_ENTRY_VALUES
             setDefaultValue(PREF_DOMAIN_DEFAULT)
@@ -429,11 +423,11 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }.let { screen.addPreference(it) }
+        }.also(screen::addPreference)
 
         ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
-            title = PREF_QUALITY_TITLE
+            title = "Preferred quality"
             entries = PREF_QUALITY_ENTRIES
             entryValues = PREF_QUALITY_ENTRY_VALUES
             setDefaultValue(PREF_QUALITY_DEFAULT)
@@ -445,11 +439,11 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }.let { screen.addPreference(it) }
+        }.also(screen::addPreference)
 
         ListPreference(screen.context).apply {
             key = PREF_SERVER_KEY
-            title = PREF_SERVER_TITLE
+            title = "Preferred server"
             entries = HOSTERS
             entryValues = HOSTERS
             setDefaultValue(PREF_SERVER_DEFAULT)
@@ -461,11 +455,11 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }.let { screen.addPreference(it) }
+        }.also(screen::addPreference)
 
         MultiSelectListPreference(screen.context).apply {
             key = PREF_HOSTER_KEY
-            title = PREF_HOSTER_TITLE
+            title = "Enable/Disable Hosts"
             entries = HOSTERS
             entryValues = HOSTERS
             setDefaultValue(PREF_HOSTER_DEFAULT)
@@ -474,6 +468,6 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 @Suppress("UNCHECKED_CAST")
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
             }
-        }.let { screen.addPreference(it) }
+        }.also(screen::addPreference)
     }
 }
