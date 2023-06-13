@@ -12,7 +12,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -48,37 +47,23 @@ class PobMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "div#content > div > div.row > div"
 
-    override fun popularAnimeNextPageSelector(): String = "nav.gridlove-pagination > span.current + a"
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").toHttpUrl().encodedPath)
-            thumbnail_url = element.selectFirst("img[src]")?.attr("src") ?: ""
-            title = element.selectFirst("h1")!!.text()
-        }
+    override fun popularAnimeFromElement(element: Element): SAnime = SAnime.create().apply {
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        thumbnail_url = element.selectFirst("img[src]")?.attr("src") ?: ""
+        title = element.selectFirst("h1")!!.text()
     }
+
+    override fun popularAnimeNextPageSelector(): String = "nav.gridlove-pagination > span.current + a"
 
     // =============================== Latest ===============================
 
-    override fun latestUpdatesRequest(page: Int): Request = GET(baseUrl)
+    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
 
-    override fun latestUpdatesSelector(): String = "div#latest-tab-pane > div.row > div.col-md-6"
+    override fun latestUpdatesSelector(): String = throw Exception("Not used")
 
-    override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
+    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
 
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        val thumbnailUrl = element.selectFirst("img")!!.attr("data-src")
-
-        return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a.animeparent")!!.attr("href"))
-            thumbnail_url = if (thumbnailUrl.contains(baseUrl.toHttpUrl().host)) {
-                thumbnailUrl
-            } else {
-                baseUrl + thumbnailUrl
-            }
-            title = element.selectFirst("span.animename")!!.text()
-        }
-    }
+    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
 
     // =============================== Search ===============================
 
@@ -113,23 +98,8 @@ class PobMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        return client.newCall(animeDetailsRequest(anime))
-            .asObservableSuccess()
-            .map { response ->
-                animeDetailsParse(response, anime).apply { initialized = true }
-            }
-    }
-
-    override fun animeDetailsParse(document: Document): SAnime = throw Exception("Not used")
-
-    private fun animeDetailsParse(response: Response, anime: SAnime): SAnime {
-        val document = response.asJsoup()
-        val oldAnime = anime
-
-        oldAnime.description = document.selectFirst("div.entry-content > p")?.text()
-
-        return oldAnime
+    override fun animeDetailsParse(document: Document): SAnime = SAnime.create().apply {
+        description = document.selectFirst("div.entry-content > p")?.text()
     }
 
     // ============================== Episodes ==============================
@@ -150,13 +120,15 @@ class PobMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                 val size = sizeRegex.find(link.text())?.groupValues?.get(1)
 
-                val episode = SEpisode.create()
-                episode.name = link.text()
-                episode.episode_number = 1F
-                episode.date_upload = -1L
-                episode.url = link.attr("href")
-                episode.scanlator = "${if (size == null) "" else "$size • "}$info"
-                episodeList.add(episode)
+                episodeList.add(
+                    SEpisode.create().apply {
+                        name = link.text()
+                        episode_number = 1F
+                        date_upload = -1L
+                        url = link.attr("href")
+                        scanlator = "${if (size == null) "" else "$size • "}$info"
+                    }
+                )
             }
         }
 
@@ -174,13 +146,15 @@ class PobMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                     val size = sizeRegex.find(link.text())?.groupValues?.get(1)
 
-                    val episode = SEpisode.create()
-                    episode.name = "Ep. $episodeNumber - ${link.text()}"
-                    episode.episode_number = episodeNumber
-                    episode.date_upload = -1L
-                    episode.url = link.attr("href")
-                    episode.scanlator = "${if (size == null) "" else "$size • "}$info"
-                    episodeList.add(episode)
+                    episodeList.add(
+                        SEpisode.create().apply {
+                            name = "Ep. $episodeNumber - ${link.text()}"
+                            episode_number = episodeNumber
+                            date_upload = -1L
+                            url = link.attr("href")
+                            scanlator = "${if (size == null) "" else "$size • "}$info"
+                        }
+                    )
                 }
             }
         }
@@ -196,13 +170,15 @@ class PobMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val size = sizeRegex.find(title)?.groupValues?.get(1)
                         ?: sizeRegex.find(link.text())?.groupValues?.get(1)
 
-                    val episode = SEpisode.create()
-                    episode.name = "$title - ${link.text()}"
-                    episode.episode_number = 1F
-                    episode.date_upload = -1L
-                    episode.scanlator = size
-                    episode.url = link.attr("href")
-                    episodeList.add(episode)
+                    episodeList.add(
+                        SEpisode.create().apply {
+                            name = "$title - ${link.text()}"
+                            episode_number = 1F
+                            date_upload = -1L
+                            scanlator = size
+                            url = link.attr("href")
+                        }
+                    )
                 }
             }
         }
@@ -218,13 +194,15 @@ class PobMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                     val size = sizeRegex.find(link.text())?.groupValues?.get(1)
 
-                    val episode = SEpisode.create()
-                    episode.name = "$title - ${link.text()}"
-                    episode.episode_number = 1F
-                    episode.date_upload = -1L
-                    episode.scanlator = size
-                    episode.url = link.attr("href")
-                    episodeList.add(episode)
+                    episodeList.add(
+                        SEpisode.create().apply {
+                            name = "$title - ${link.text()}"
+                            episode_number = 1F
+                            date_upload = -1L
+                            scanlator = size
+                            url = link.attr("href")
+                        }
+                    )
                 }
             }
         }
@@ -239,13 +217,15 @@ class PobMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                     val size = sizeRegex.find(link.text())?.groupValues?.get(1)
 
-                    val episode = SEpisode.create()
-                    episode.name = link.text()
-                    episode.episode_number = 1F
-                    episode.date_upload = -1L
-                    episode.scanlator = "${if (size == null) "" else "$size • "}$info"
-                    episode.url = link.attr("href")
-                    episodeList.add(episode)
+                    episodeList.add(
+                        SEpisode.create().apply {
+                            name = link.text()
+                            episode_number = 1F
+                            date_upload = -1L
+                            scanlator = "${if (size == null) "" else "$size • "}$info"
+                            url = link.attr("href")
+                        }
+                    )
                 }
             }
         }
@@ -260,13 +240,15 @@ class PobMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                     val size = sizeRegex.find(link.text())?.groupValues?.get(1)
 
-                    val episode = SEpisode.create()
-                    episode.name = link.text()
-                    episode.episode_number = 1F
-                    episode.date_upload = -1L
-                    episode.scanlator = "${if (size == null) "" else "$size • "}$info"
-                    episode.url = link.attr("href")
-                    episodeList.add(episode)
+                    episodeList.add(
+                        SEpisode.create().apply {
+                            name = link.text()
+                            episode_number = 1F
+                            date_upload = -1L
+                            scanlator = "${if (size == null) "" else "$size • "}$info"
+                            url = link.attr("href")
+                        }
+                    )
                 }
             }
         }
@@ -277,13 +259,15 @@ class PobMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     if (zipRegex.find(link.text()) != null) return@forEach
                     val size = sizeRegex.find(link.text())?.groupValues?.get(1)
 
-                    val episode = SEpisode.create()
-                    episode.name = link.text()
-                    episode.episode_number = 1F
-                    episode.date_upload = -1L
-                    episode.scanlator = size
-                    episode.url = link.attr("href")
-                    episodeList.add(episode)
+                    episodeList.add(
+                        SEpisode.create().apply {
+                            name = link.text()
+                            episode_number = 1F
+                            date_upload = -1L
+                            scanlator = size
+                            url = link.attr("href")
+                        }
+                    )
                 }
             }
         }
@@ -294,13 +278,15 @@ class PobMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     if (zipRegex.find(link.text()) != null) return@forEach
                     val size = sizeRegex.find(link.text())?.groupValues?.get(1)
 
-                    val episode = SEpisode.create()
-                    episode.name = link.text()
-                    episode.episode_number = 1F
-                    episode.date_upload = -1L
-                    episode.scanlator = size
-                    episode.url = link.attr("href")
-                    episodeList.add(episode)
+                    episodeList.add(
+                        SEpisode.create().apply {
+                            name = link.text()
+                            episode_number = 1F
+                            date_upload = -1L
+                            scanlator = size
+                            url = link.attr("href")
+                        }
+                    )
                 }
             }
         }
@@ -326,16 +312,20 @@ class PobMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> { throw Exception("Unsupported url: ${episode.url}") }
         }
 
+        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
+
         return Observable.just(videoList.sort())
     }
 
-    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
-
     override fun videoListSelector(): String = throw Exception("Not Used")
+
+    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
 
     override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
 
     // ============================= Utilities ==============================
+
+    // ============================== Settings ==============================
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {}
 }
