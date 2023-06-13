@@ -210,7 +210,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
-        val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_TITLE)!!
+        val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
 
         return this.sortedWith(
             compareBy(
@@ -257,17 +257,14 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_DOMAIN_DEFAULT = "https://gogoanime.hu"
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
-        private const val PREF_QUALITY_TITLE = "Preferred quality"
         private val PREF_QUALITY_ENTRY_VALUES = arrayOf("1080", "720", "480", "360")
         private val PREF_QUALITY_ENTRIES = PREF_QUALITY_ENTRY_VALUES.map { "${it}p" }.toTypedArray()
         private const val PREF_QUALITY_DEFAULT = "1080"
 
         private const val PREF_SERVER_KEY = "preferred_server"
-        private const val PREF_SERVER_TITLE = "Preferred server"
         private const val PREF_SERVER_DEFAULT = "Gogostream"
 
         private const val PREF_HOSTER_KEY = "hoster_selection"
-        private const val PREF_HOSTER_TITLE = "Enable/Disable Hosts"
         private val PREF_HOSTER_DEFAULT = HOSTERS_NAMES.toSet()
     }
 
@@ -286,11 +283,11 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val newValueString = newValue as String
                 preferences.edit().putString(key, newValueString.trim()).commit()
             }
-        }.let { screen.addPreference(it) }
+        }.also(screen::addPreference)
 
         ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
-            title = PREF_QUALITY_TITLE
+            title = "Preferred quality"
             entries = PREF_QUALITY_ENTRIES
             entryValues = PREF_QUALITY_ENTRY_VALUES
             setDefaultValue(PREF_QUALITY_DEFAULT)
@@ -302,11 +299,11 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }.let { screen.addPreference(it) }
+        }.also(screen::addPreference)
 
         ListPreference(screen.context).apply {
             key = PREF_SERVER_KEY
-            title = PREF_SERVER_TITLE
+            title = "Preferred server"
             entries = HOSTERS
             entryValues = HOSTERS
             setDefaultValue(PREF_SERVER_DEFAULT)
@@ -318,11 +315,11 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }.let { screen.addPreference(it) }
+        }.also(screen::addPreference)
 
         MultiSelectListPreference(screen.context).apply {
             key = PREF_HOSTER_KEY
-            title = PREF_HOSTER_TITLE
+            title = "Enable/Disable Hosts"
             entries = HOSTERS
             entryValues = HOSTERS_NAMES
             setDefaultValue(PREF_HOSTER_DEFAULT)
@@ -331,7 +328,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 @Suppress("UNCHECKED_CAST")
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
             }
-        }.let { screen.addPreference(it) }
+        }.also(screen::addPreference)
     }
 
     // ============================== Filters ===============================
