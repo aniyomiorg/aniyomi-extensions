@@ -25,8 +25,6 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.net.URLEncoder
-import java.text.CharacterIterator
-import java.text.StringCharacterIterator
 
 class Edytjedhgmdhm : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -42,8 +40,6 @@ class Edytjedhgmdhm : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val chunkedSize = 300
-
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
@@ -54,31 +50,30 @@ class Edytjedhgmdhm : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
-        val animeList = mutableListOf<SAnime>()
         val page = response.request.url.encodedFragment!!.toInt()
         val path = response.request.url.encodedPath
         val items = document.select(popularAnimeSelector())
 
-        items.chunked(chunkedSize)[page - 1].forEach {
+        val animeList = items.chunked(CHUNKED_SIZE)[page - 1].mapNotNull {
             val a = it.selectFirst("a")!!
             val name = a.text()
-            if (a.attr("href") == "..") return@forEach
+            if (a.attr("href") == "..") return@mapNotNull null
 
-            val anime = SAnime.create()
-            anime.title = name.removeSuffix("/")
-            anime.setUrlWithoutDomain(joinPaths(path, a.attr("href")))
-            anime.thumbnail_url = ""
-            animeList.add(anime)
+            SAnime.create().apply {
+                setUrlWithoutDomain(joinPaths(path, a.attr("href")))
+                title = name.removeSuffix("/")
+                thumbnail_url = ""
+            }
         }
 
-        return AnimesPage(animeList, (page + 1) * chunkedSize <= items.size)
+        return AnimesPage(animeList, (page + 1) * CHUNKED_SIZE <= items.size)
     }
 
     override fun popularAnimeSelector(): String = "table > tbody > tr:has(a)"
 
-    override fun popularAnimeNextPageSelector(): String? = null
-
     override fun popularAnimeFromElement(element: Element): SAnime = throw Exception("Not used")
+
+    override fun popularAnimeNextPageSelector(): String? = null
 
     // =============================== Latest ===============================
 
@@ -121,33 +116,32 @@ class Edytjedhgmdhm : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun searchAnimeParse(response: Response, query: String): AnimesPage {
         val document = response.asJsoup()
-        val animeList = mutableListOf<SAnime>()
         val page = response.request.url.encodedFragment!!.toInt()
         val path = response.request.url.encodedPath
         val items = document.select(popularAnimeSelector()).filter { t ->
             t.selectFirst("a")!!.text().contains(query, true)
         }
 
-        items.chunked(chunkedSize)[page - 1].forEach {
+        val animeList = items.chunked(CHUNKED_SIZE)[page - 1].mapNotNull {
             val a = it.selectFirst("a")!!
             val name = a.text()
-            if (a.attr("href") == "..") return@forEach
+            if (a.attr("href") == "..") return@mapNotNull null
 
-            val anime = SAnime.create()
-            anime.title = name.removeSuffix("/")
-            anime.setUrlWithoutDomain(joinPaths(path, a.attr("href")))
-            anime.thumbnail_url = ""
-            animeList.add(anime)
+            SAnime.create().apply {
+                setUrlWithoutDomain(joinPaths(path, a.attr("href")))
+                title = name.removeSuffix("/")
+                thumbnail_url = ""
+            }
         }
 
-        return AnimesPage(animeList, (page + 1) * chunkedSize <= items.size)
+        return AnimesPage(animeList, (page + 1) * CHUNKED_SIZE <= items.size)
     }
 
     override fun searchAnimeSelector(): String = throw Exception("Not used")
 
-    override fun searchAnimeNextPageSelector(): String = throw Exception("Not used")
-
     override fun searchAnimeFromElement(element: Element): SAnime = throw Exception("Not used")
+
+    override fun searchAnimeNextPageSelector(): String = throw Exception("Not used")
 
     // ============================== FILTERS ===============================
 
@@ -172,9 +166,7 @@ class Edytjedhgmdhm : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        return Observable.just(anime)
-    }
+    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> = Observable.just(anime)
 
     override fun animeDetailsParse(document: Document): SAnime = throw Exception("Not used")
 
@@ -196,7 +188,6 @@ class Edytjedhgmdhm : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         traverseDirectory(fullUrl)
                     }
                     if (videoFormats.any { t -> fullUrl.endsWith(t) }) {
-                        val episode = SEpisode.create()
                         val paths = fullUrl.toHttpUrl().pathSegments
 
                         val seasonInfoRegex = """(\([\s\w-]+\))(?: ?\[[\s\w-]+\])?${'$'}""".toRegex()
@@ -213,13 +204,15 @@ class Edytjedhgmdhm : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         }
                         val size = link.selectFirst("td[data-order]")?.let { formatBytes(it.text().toLongOrNull()) }
 
-                        episode.name = "${videoFormats.fold(paths.last()) { acc, suffix -> acc.removeSuffix(suffix).trimInfo() }}${if (size == null) "" else " - $size"}"
-                        episode.url = fullUrl
-                        episode.scanlator = seasonInfo + extraInfo
-                        episode.episode_number = counter.toFloat()
+                        episodeList.add(
+                            SEpisode.create().apply {
+                                name = videoFormats.fold(paths.last()) { acc, suffix -> acc.removeSuffix(suffix).trimInfo() }
+                                this.url = fullUrl
+                                scanlator = "${if (size == null) "" else "$size"} • $seasonInfo$extraInfo"
+                                episode_number = counter.toFloat()
+                            },
+                        )
                         counter++
-
-                        episodeList.add(episode)
                     }
                 }
             }
@@ -238,9 +231,8 @@ class Edytjedhgmdhm : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
-        return Observable.just(listOf(Video(episode.url, "Video", episode.url)))
-    }
+    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> =
+        Observable.just(listOf(Video(episode.url, "Video", episode.url)))
 
     override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
 
@@ -264,25 +256,17 @@ class Edytjedhgmdhm : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun formatBytes(bytes: Long?): String? {
-        if (bytes == null) return null
-        val absB = if (bytes == Long.MIN_VALUE) Long.MAX_VALUE else Math.abs(bytes)
-        if (absB < 1024) {
-            return "$bytes B"
+        val units = arrayOf("B", "KB", "MB", "GB", "TB", "PB", "EB")
+        var value = bytes?.toDouble() ?: return null
+        var i = 0
+        while (value >= 1024 && i < units.size - 1) {
+            value /= 1024
+            i++
         }
-        var value = absB
-        val ci: CharacterIterator = StringCharacterIterator("KMGTPE")
-        var i = 40
-        while (i >= 0 && absB > 0xfffccccccccccccL shr i) {
-            value = value shr 10
-            ci.next()
-            i -= 10
-        }
-        value *= java.lang.Long.signum(bytes).toLong()
-        return java.lang.String.format("%.1f %ciB", value / 1024.0, ci.current())
+        return String.format("%.1f %s", value, units[i])
     }
-
     private fun String.trimInfo(): String {
-        var newString = this.replaceFirst("""^\[\w+\] """.toRegex(), "")
+        var newString = this.replaceFirst("""^\[\w+\] ?""".toRegex(), "")
         val regex = """( ?\[[\s\w-]+\]| ?\([\s\w-]+\))(\.mkv|\.mp4|\.avi)?${'$'}""".toRegex()
 
         while (regex.containsMatchIn(newString)) {
@@ -294,15 +278,11 @@ class Edytjedhgmdhm : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return newString
     }
 
-    override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val ignoreExtras = SwitchPreferenceCompat(screen.context).apply {
-            key = "ignore_extras"
-            title = "Ignore \"Extras\" folder"
-            setDefaultValue(true)
-            setOnPreferenceChangeListener { _, newValue ->
-                preferences.edit().putBoolean(key, newValue as Boolean).commit()
-            }
-        }
-        screen.addPreference(ignoreExtras)
+    companion object {
+        private const val CHUNKED_SIZE = 300
     }
+
+    // ============================== Settings ==============================
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) { }
 }
