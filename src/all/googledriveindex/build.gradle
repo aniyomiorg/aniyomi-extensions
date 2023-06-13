@@ -6,7 +6,7 @@ ext {
     extName = 'GoogleDriveIndex'
     pkgNameSuffix = 'all.googledriveindex'
     extClass = '.GoogleDriveIndex'
-    extVersionCode = 5
+    extVersionCode = 6
     libVersion = '13'
 }
 
