@@ -44,7 +44,7 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AnimeDao"
 
-    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://animedao.to")!! }
+    override val baseUrl = "https://animedao.to"
 
     override val lang = "en"
 
@@ -58,19 +58,11 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    companion object {
-        private val DATE_FORMATTER by lazy {
-            SimpleDateFormat("d MMMM yyyy", Locale.ENGLISH)
-        }
-    }
-
     // ============================== Popular ===============================
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/animelist/popular")
 
     override fun popularAnimeSelector(): String = "div.container > div.row > div.col-md-6"
-
-    override fun popularAnimeNextPageSelector(): String? = null
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val thumbnailUrl = element.selectFirst("img")!!.attr("data-src")
@@ -86,13 +78,13 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
+    override fun popularAnimeNextPageSelector(): String? = null
+
     // =============================== Latest ===============================
 
     override fun latestUpdatesRequest(page: Int): Request = GET(baseUrl)
 
     override fun latestUpdatesSelector(): String = "div#latest-tab-pane > div.row > div.col-md-6"
-
-    override fun latestUpdatesNextPageSelector(): String? = popularAnimeNextPageSelector()
 
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val thumbnailUrl = element.selectFirst("img")!!.attr("data-src")
@@ -108,6 +100,8 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
+    override fun latestUpdatesNextPageSelector(): String? = popularAnimeNextPageSelector()
+
     // =============================== Search ===============================
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
@@ -119,26 +113,6 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .map { response ->
                 searchAnimeParse(response)
             }
-    }
-
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        val document = response.asJsoup()
-
-        val animes = if (response.request.url.encodedPath.startsWith("/animelist/")) {
-            document.select(searchAnimeSelectorFilter()).map { element ->
-                searchAnimeFromElement(element)
-            }
-        } else {
-            document.select(searchAnimeSelector()).map { element ->
-                searchAnimeFromElement(element)
-            }
-        }
-
-        val hasNextPage = searchAnimeNextPageSelector()?.let { selector ->
-            document.select(selector).first()
-        } != null
-
-        return AnimesPage(animes, hasNextPage)
     }
 
     private fun searchAnimeRequest(page: Int, query: String, filters: AnimeDaoFilters.FilterSearchParams): Request {
@@ -162,13 +136,32 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        val document = response.asJsoup()
+        val selector = if (response.request.url.encodedPath.startsWith("/animelist/")) {
+            searchAnimeSelectorFilter()
+        } else {
+            searchAnimeSelector()
+        }
+
+        val animes = document.select(selector).map { element ->
+            searchAnimeFromElement(element)
+        }
+
+        val hasNextPage = searchAnimeNextPageSelector().let { selector ->
+            document.select(selector).first()
+        } != null
+
+        return AnimesPage(animes, hasNextPage)
+    }
+
     override fun searchAnimeSelector(): String = popularAnimeSelector()
+
+    override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
 
     private fun searchAnimeSelectorFilter(): String = "div.container div.col-12 > div.row > div.col-md-6"
 
     override fun searchAnimeNextPageSelector(): String = "ul.pagination > li.page-item:has(i.fa-arrow-right):not(.disabled)"
-
-    override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
 
     // ============================== FILTERS ===============================
 
@@ -198,7 +191,7 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Episodes ==============================
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        return if (preferences.getBoolean("preferred_episode_sorting", false)) {
+        return if (preferences.getBoolean(PREF_EPISODE_SORT_KEY, PREF_EPISODE_SORT_DEFAULT)) {
             super.episodeListParse(response).sortedWith(
                 compareBy(
                     { it.episode_number },
@@ -221,7 +214,7 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             episode_number = if (episodeName.contains("Episode ", true)) {
                 episodeName.substringAfter("Episode ").substringBefore(" ").toFloatOrNull() ?: 0F
             } else { 0F }
-            if (element.selectFirst("span.filler") != null && preferences.getBoolean("mark_fillers", true)) {
+            if (element.selectFirst("span.filler") != null && preferences.getBoolean(PREF_MARK_FILLERS_KEY, PREF_MARK_FILLERS_DEFAULT)) {
                 scanlator = "Filler Episode"
             }
             date_upload = element.selectFirst("span.date")?.let { parseDate(it.text()) } ?: 0L
@@ -298,8 +291,8 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================= Utilities ==============================
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "1080")!!
-        val server = preferences.getString("preferred_server", "vstream")!!
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
 
         return this.sortedWith(
             compareBy(
@@ -333,28 +326,37 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
 
+    companion object {
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("d MMMM yyyy", Locale.ENGLISH)
+        }
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private val PREF_QUALITY_ENTRY_VALUES = arrayOf("1080", "720", "480", "360")
+        private val PREF_QUALITY_ENTRIES = PREF_QUALITY_ENTRY_VALUES.map { "${it}p" }.toTypedArray()
+        private const val PREF_QUALITY_DEFAULT = "1080"
+
+        private const val PREF_SERVER_KEY = "preferred_server"
+        private val PREF_SERVER_ENTRIES = arrayOf("Vidstreaming", "Vidstreaming2", "Vidstreaming3", "Mixdrop", "StreamSB", "Streamtape", "Vidstreaming4", "Doodstream")
+        private val PREF_SERVER_ENTRY_VALUES = arrayOf("vstream", "src2", "src", "mixdrop", "streamsb", "streamtape", "vplayer", "doodstream")
+        private const val PREF_SERVER_DEFAULT = "vstream"
+
+        private const val PREF_EPISODE_SORT_KEY = "preferred_episode_sorting"
+        private const val PREF_EPISODE_SORT_DEFAULT = true
+
+        private const val PREF_MARK_FILLERS_KEY = "mark_fillers"
+        private const val PREF_MARK_FILLERS_DEFAULT = true
+    }
+
+    // ============================== Settings ==============================
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val domainPref = ListPreference(screen.context).apply {
-            key = "preferred_domain"
-            title = "Preferred domain (requires app restart)"
-            entries = arrayOf("animedao.to")
-            entryValues = arrayOf("https://animedao.to")
-            setDefaultValue("https://animedao.to")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
             title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
-            setDefaultValue("1080")
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -363,13 +365,14 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        val videoServerPref = ListPreference(screen.context).apply {
-            key = "preferred_server"
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_SERVER_KEY
             title = "Preferred server"
-            entries = arrayOf("Vidstreaming", "Vidstreaming2", "Vidstreaming3", "Mixdrop", "StreamSB", "Streamtape", "Vidstreaming4", "Doodstream")
-            entryValues = arrayOf("vstream", "src2", "src", "mixdrop", "streamsb", "streamtape", "vplayer", "doodstream")
-            setDefaultValue("vstream")
+            entries = PREF_SERVER_ENTRIES
+            entryValues = PREF_SERVER_ENTRY_VALUES
+            setDefaultValue(PREF_SERVER_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -378,33 +381,29 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        val episodeSortPref = SwitchPreferenceCompat(screen.context).apply {
-            key = "preferred_episode_sorting"
+        }.also(screen::addPreference)
+
+        SwitchPreferenceCompat(screen.context).apply {
+            key = PREF_EPISODE_SORT_KEY
             title = "Attempt episode sorting"
             summary = """AnimeDao displays the episodes in either ascending or descending order,
                 | enable to attempt order or disable to set same as website.
             """.trimMargin()
-            setDefaultValue(true)
+            setDefaultValue(PREF_EPISODE_SORT_DEFAULT)
 
             setOnPreferenceChangeListener { _, newValue ->
                 val new = newValue as Boolean
                 preferences.edit().putBoolean(key, new).commit()
             }
-        }
-        val markFillers = SwitchPreferenceCompat(screen.context).apply {
-            key = "mark_fillers"
+        }.also(screen::addPreference)
+
+        SwitchPreferenceCompat(screen.context).apply {
+            key = PREF_MARK_FILLERS_KEY
             title = "Mark filler episodes"
-            setDefaultValue(true)
+            setDefaultValue(PREF_MARK_FILLERS_DEFAULT)
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putBoolean(key, newValue as Boolean).commit()
             }
-        }
-
-        screen.addPreference(domainPref)
-        screen.addPreference(videoQualityPref)
-        screen.addPreference(videoServerPref)
-        screen.addPreference(episodeSortPref)
-        screen.addPreference(markFillers)
+        }.also(screen::addPreference)
     }
 }
