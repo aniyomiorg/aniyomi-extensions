@@ -257,13 +257,9 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     companion object {
         private const val PREF_QUALITY_KEY = "preferred_quality"
-        private val PREF_QUALITY_ENTRY_VALUES = arrayOf("1080", "720", "480", "360")
-        private val PREF_QUALITY_ENTRIES = PREF_QUALITY_ENTRY_VALUES.map { "${it}p" }.toTypedArray()
         private const val PREF_QUALITY_DEFAULT = "1080"
 
         private const val PREF_SERVER_KEY = "preferred_server"
-        private val PREF_SERVER_ENTRY_VALUES = arrayOf("youtube", "dailymotion", "okru")
-        private val PREF_SERVER_ENTRIES = arrayOf("YouTube", "Dailymotion", "ok.ru")
         private const val PREF_SERVER_DEFAULT = "dailymotion"
     }
 
@@ -273,8 +269,8 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = "Preferred quality"
-            entries = PREF_QUALITY_ENTRIES
-            entryValues = PREF_QUALITY_ENTRY_VALUES
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
@@ -289,8 +285,8 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ListPreference(screen.context).apply {
             key = PREF_SERVER_KEY
             title = "Preferred server"
-            entries = PREF_SERVER_ENTRIES
-            entryValues = PREF_SERVER_ENTRY_VALUES
+            entries = arrayOf("YouTube", "Dailymotion", "ok.ru")
+            entryValues = arrayOf("youtube", "dailymotion", "okru")
             setDefaultValue(PREF_SERVER_DEFAULT)
             summary = "%s"
 

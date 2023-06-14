@@ -299,13 +299,9 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
 
         private const val PREF_DOMAIN_KEY = "preferred_domain"
-        private val PREF_DOMAIN_ENTRIES = arrayOf("kissanime.com.ru", "kissanime.co", "kissanime.sx", "kissanime.org.ru")
-        private val PREF_DOMAIN_ENTRY_VALUES = PREF_DOMAIN_ENTRIES.map { "https://$it" }.toTypedArray()
         private const val PREF_DOMAIN_DEFAULT = "https://kissanime.com.ru"
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
-        private val PREF_QUALITY_ENTRY_VALUES = arrayOf("1080", "720", "480", "360")
-        private val PREF_QUALITY_ENTRIES = PREF_QUALITY_ENTRY_VALUES.map { "${it}p" }.toTypedArray()
         private const val PREF_QUALITY_DEFAULT = "1080"
     }
 
@@ -315,8 +311,8 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ListPreference(screen.context).apply {
             key = PREF_DOMAIN_KEY
             title = "Preferred domain (requires app restart)"
-            entries = PREF_DOMAIN_ENTRIES
-            entryValues = PREF_DOMAIN_ENTRY_VALUES
+            entries = arrayOf("kissanime.com.ru", "kissanime.co", "kissanime.sx", "kissanime.org.ru")
+            entryValues = arrayOf("https://kissanime.com.ru", "https://kissanime.co", "https://kissanime.sx", "https://kissanime.org.ru")
             setDefaultValue(PREF_DOMAIN_DEFAULT)
             summary = "%s"
 
@@ -331,8 +327,8 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = "Preferred quality"
-            entries = PREF_QUALITY_ENTRIES
-            entryValues = PREF_QUALITY_ENTRY_VALUES
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 

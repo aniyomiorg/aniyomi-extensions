@@ -242,8 +242,6 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     companion object {
         private const val PREF_QUALITY_KEY = "preferred_quality"
-        private val PREF_QUALITY_ENTRY_VALUES = arrayOf("1080", "720", "480", "360", "240")
-        private val PREF_QUALITY_ENTRIES = PREF_QUALITY_ENTRY_VALUES.map { "${it}p" }.toTypedArray()
         private const val PREF_QUALITY_DEFAULT = "720"
     }
 
@@ -253,8 +251,8 @@ class Kawaiifu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = "Preferred quality"
-            entries = PREF_QUALITY_ENTRIES
-            entryValues = PREF_QUALITY_ENTRY_VALUES
+            entries = arrayOf("1080p", "720p", "480p", "360p", "240p")
+            entryValues = arrayOf("1080", "720", "480", "360", "240")
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 

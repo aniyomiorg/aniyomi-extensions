@@ -466,13 +466,9 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         )
 
         private const val PREF_SITE_DOMAIN_KEY = "preferred_site_domain"
-        private val PREF_SITE_DOMAIN_ENTRIES = arrayOf("allanime.to", "allanime.co")
-        private val PREF_SITE_DOMAIN_ENTRY_VALUES = PREF_SITE_DOMAIN_ENTRIES.map { "https://$it" }.toTypedArray()
         private const val PREF_SITE_DOMAIN_DEFAULT = "https://allanime.to"
 
         private const val PREF_DOMAIN_KEY = "preferred_domain"
-        private val PREF_DOMAIN_ENTRIES = arrayOf("api.allanime.to", "api.allanime.co")
-        private val PREF_DOMAIN_ENTRY_VALUES = PREF_DOMAIN_ENTRIES.map { "https://$it" }.toTypedArray()
         private const val PREF_DOMAIN_DEFAULT = "https://api.allanime.to"
 
         private const val PREF_SERVER_KEY = "preferred_server"
@@ -511,13 +507,9 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_QUALITY_DEFAULT = "1080"
 
         private const val PREF_TITLE_STYLE_KEY = "preferred_title_style"
-        private val PREF_TITLE_STYLE_ENTRIES = arrayOf("Romaji", "English", "Native")
-        private val PREF_TITLE_STYLE_ENTRY_VALUES = arrayOf("romaji", "eng", "native")
         private const val PREF_TITLE_STYLE_DEFAULT = "romaji"
 
         private const val PREF_SUB_KEY = "preferred_sub"
-        private val PREF_SUB_ENTRIES = arrayOf("Subs", "Dubs")
-        private val PREF_SUB_ENTRY_VALUES = arrayOf("sub", "dub")
         private const val PREF_SUB_DEFAULT = "sub"
     }
 
@@ -528,8 +520,8 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         ListPreference(screen.context).apply {
             key = PREF_SITE_DOMAIN_KEY
             title = "Preferred domain for site (requires app restart)"
-            entries = PREF_SITE_DOMAIN_ENTRIES
-            entryValues = PREF_SITE_DOMAIN_ENTRY_VALUES
+            entries = arrayOf("allanime.to", "allanime.co")
+            entryValues = arrayOf("https://allanime.to", "https://allanime.co")
             setDefaultValue(PREF_SITE_DOMAIN_DEFAULT)
             summary = "%s"
 
@@ -544,8 +536,8 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         ListPreference(screen.context).apply {
             key = PREF_DOMAIN_KEY
             title = "Preferred domain (requires app restart)"
-            entries = PREF_DOMAIN_ENTRIES
-            entryValues = PREF_DOMAIN_ENTRY_VALUES
+            entries = arrayOf("api.allanime.to", "api.allanime.co")
+            entryValues = arrayOf("https://api.allanime.to", "https://api.allanime.co")
             setDefaultValue(PREF_DOMAIN_DEFAULT)
             summary = "%s"
 
@@ -616,8 +608,8 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         ListPreference(screen.context).apply {
             key = PREF_TITLE_STYLE_KEY
             title = "Preferred Title Style"
-            entries = PREF_TITLE_STYLE_ENTRIES
-            entryValues = PREF_TITLE_STYLE_ENTRY_VALUES
+            entries = arrayOf("Romaji", "English", "Native")
+            entryValues = arrayOf("romaji", "eng", "native")
             setDefaultValue(PREF_TITLE_STYLE_DEFAULT)
             summary = "%s"
 
@@ -632,8 +624,8 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         ListPreference(screen.context).apply {
             key = PREF_SUB_KEY
             title = "Prefer subs or dubs?"
-            entries = PREF_SUB_ENTRIES
-            entryValues = PREF_SUB_ENTRY_VALUES
+            entries = arrayOf("Subs", "Dubs")
+            entryValues = arrayOf("sub", "dub")
             setDefaultValue(PREF_SUB_DEFAULT)
             summary = "%s"
 
