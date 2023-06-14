@@ -46,8 +46,6 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val maxRecursionDepth = 2
-
     private val json: Json by injectLazy()
 
     private val preferences: SharedPreferences by lazy {
