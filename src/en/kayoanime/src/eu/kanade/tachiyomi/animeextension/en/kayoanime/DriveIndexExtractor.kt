@@ -4,7 +4,6 @@ import android.util.Base64
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.network.POST
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -18,7 +17,11 @@ class DriveIndexExtractor(private val client: OkHttpClient, private val headers:
 
     private val json: Json by injectLazy()
 
-    fun getEpisodesFromIndex(indexUrl: String, path: String, flipOrder: Boolean): List<SEpisode> {
+    fun getEpisodesFromIndex(
+        indexUrl: String,
+        path: String,
+        trimName: Boolean,
+    ): List<SEpisode> {
         val episodeList = mutableListOf<SEpisode>()
 
         val basePathCounter = indexUrl.toHttpUrl().pathSegments.size
@@ -52,11 +55,21 @@ class DriveIndexExtractor(private val client: OkHttpClient, private val headers:
                         traverseDirectory(newUrl)
                     }
                     if (item.mimeType.startsWith("video/")) {
-                        val episode = SEpisode.create()
                         val epUrl = joinUrl(url, item.name)
                         val paths = epUrl.toHttpUrl().pathSegments
 
                         // Get other info
+                        val season = if (paths.size == basePathCounter) {
+                            ""
+                        } else {
+                            paths[basePathCounter - 1]
+                        }
+                        val seasonInfoRegex = """(\([\s\w-]+\))(?: ?\[[\s\w-]+\])?${'$'}""".toRegex()
+                        val seasonInfo = if (seasonInfoRegex.containsMatchIn(season)) {
+                            "${seasonInfoRegex.find(season)!!.groups[1]!!.value} • "
+                        } else {
+                            ""
+                        }
                         val extraInfo = if (paths.size > basePathCounter) {
                             "/$path/" + paths.subList(basePathCounter - 1, paths.size - 1).joinToString("/") { it.trimInfo() }
                         } else {
@@ -64,18 +77,16 @@ class DriveIndexExtractor(private val client: OkHttpClient, private val headers:
                         }
                         val size = item.size?.toLongOrNull()?.let { formatFileSize(it) }
 
-                        episode.name = item.name.trimInfo()
-                        episode.url = epUrl
-                        episode.scanlator = if (flipOrder) {
-                            "$extraInfo • ${size ?: "N/A"}"
-                        } else {
-                            "${size ?: "N/A"} • $extraInfo"
-                        }
-                        episode.episode_number = counter.toFloat()
-                        episode.date_upload = -1L
+                        episodeList.add(
+                            SEpisode.create().apply {
+                                name = if (trimName) item.name.trimInfo() else item.name
+                                this.url = epUrl
+                                scanlator = "${if (size == null) "" else "$size"} • $seasonInfo$extraInfo"
+                                date_upload = -1L
+                                episode_number = counter.toFloat()
+                            },
+                        )
                         counter++
-
-                        episodeList.add(episode)
                     }
                 }
 
