@@ -13,9 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -49,7 +47,7 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeSelector(): String = "div.all-channels div.channel-content"
 
     override fun popularAnimeFromElement(element: Element): SAnime = SAnime.create().apply {
-        setUrlWithoutDomain(element.selectFirst("p.channel-name a")!!.relative())
+        setUrlWithoutDomain(element.selectFirst("p.channel-name a")!!.attr("abs:href"))
         thumbnail_url = element.select("div.channel-avatar a img").attr("src")
         title = element.select("p.channel-name a").text()
     }
@@ -66,7 +64,7 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val a = element.selectFirst("div.main-slide a[href]")!!
 
         return SAnime.create().apply {
-            setUrlWithoutDomain(a.relative())
+            setUrlWithoutDomain(a.attr("abs:href"))
             thumbnail_url = element.select("div.item-thumb").attr("style")
                 .substringAfter("background-image: url(").substringBefore(")")
             title = a.text()
@@ -101,7 +99,7 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeSelector(): String = "div.cacus-sub-wrap > div.item,div#search-content > div.item"
 
     override fun searchAnimeFromElement(element: Element): SAnime = SAnime.create().apply {
-        setUrlWithoutDomain(element.selectFirst("div.description a")!!.relative())
+        setUrlWithoutDomain(element.selectFirst("div.description a")!!.attr("abs:href"))
         thumbnail_url = element.attr("style")
             .substringAfter("background-image: url(").substringBefore(")")
         title = element.selectFirst("div.description a")!!.text()
@@ -111,19 +109,7 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
 
-    override fun animeDetailsParse(document: Document): SAnime = throw Exception("Not used")
-
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        return client.newCall(animeDetailsRequest(anime))
-            .asObservableSuccess()
-            .map { response ->
-                animeDetailsParse(response.asJsoup(), anime).apply { initialized = true }
-            }
-    }
-
-    private fun animeDetailsParse(document: Document, oldSAnime: SAnime): SAnime = SAnime.create().apply {
-        title = oldSAnime.title
-        thumbnail_url = oldSAnime.thumbnail_url
+    override fun animeDetailsParse(document: Document): SAnime = SAnime.create().apply {
         genre = document.select("div.categories:contains(Genres) a").joinToString(", ") { it.text() }
             .ifBlank { document.selectFirst("div.channel-description > p:has(span:contains(Genre)) em")?.text() }
         description = document.selectFirst("div.custom.video-the-content p")?.ownText()
@@ -138,7 +124,7 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         // Select multiple seasons
         val seasonsList = document.select("div.row > div.cactus-sub-wrap > div.item")
-        if (seasonsList.isEmpty().not()) {
+        if (seasonsList.isNotEmpty()) {
             seasonsList.forEach { season ->
                 val link = season.selectFirst("a.btn-play-nf")!!.attr("abs:href")
                 val seasonName = "Season ${season.selectFirst("div.description p a")!!.text().substringAfter("(Season ").substringBefore(")")} "
@@ -155,17 +141,6 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
 
         return episodeList
-    }
-
-    override fun episodeListSelector() = "ul#episode_page li a"
-
-    override fun episodeFromElement(element: Element): SEpisode {
-        val ep = element.selectFirst("div.name")!!.ownText().substringAfter(" ")
-        return SEpisode.create().apply {
-            setUrlWithoutDomain(element.attr("abs:href"))
-            episode_number = ep.toFloat()
-            name = "Episode $ep"
-        }
     }
 
     // Returns episode list when episodes are in red boxes below the player
@@ -190,11 +165,15 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         )
     }
 
+    override fun episodeListSelector() = throw Exception("Not used")
+
+    override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not used")
+
     // ============================ Video Links =============================
 
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val videoList = FilemoonExtractor(client, headers).videosFromUrl(episode.url)
-        if (videoList.isEmpty()) throw Exception("Videos not found")
+        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
         return Observable.just(videoList)
     }
 
@@ -205,10 +184,6 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     // ============================= Utilities ==============================
-
-    private fun Element.relative(): String {
-        return this.attr("abs:href").toHttpUrl().encodedPath
-    }
 
     private fun Int.toPage(): String {
         return if (this == 1) {

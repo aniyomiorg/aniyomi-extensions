@@ -26,6 +26,10 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonObject
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -39,7 +43,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "AllAnime"
 
-    override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
+    override val baseUrl by lazy { preferences.baseUrl }
 
     override val lang = "en"
 
@@ -56,7 +60,12 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================== Popular ===============================
 
     override fun popularAnimeRequest(page: Int): Request {
-        val variables = """{"type":"anime","size":$PAGE_SIZE,"dateRange":7,"page":$page}"""
+        val variables = buildJsonObject {
+            put("type", "anime")
+            put("size", PAGE_SIZE)
+            put("dateRange", 7)
+            put("page", page)
+        }
         return GET("$baseUrl/allanimeapi?variables=$variables&query=$POPULAR_QUERY", headers = headers)
     }
 
@@ -64,13 +73,11 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         val parsed = json.decodeFromString<PopularResult>(response.body.string())
         val animeList = mutableListOf<SAnime>()
 
-        val titleStyle = preferences.getString(PREF_TITLE_STYLE_KEY, PREF_TITLE_STYLE_DEFAULT)!!
-
         parsed.data.queryPopular.recommendations.forEach {
             if (it.anyCard != null) {
                 animeList.add(
                     SAnime.create().apply {
-                        title = when (titleStyle) {
+                        title = when (preferences.titleStyle) {
                             "romaji" -> it.anyCard.name
                             "eng" -> it.anyCard.englishName ?: it.anyCard.name
                             else -> it.anyCard.nativeName ?: it.anyCard.name
@@ -88,15 +95,20 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     // =============================== Latest ===============================
 
     override fun latestUpdatesRequest(page: Int): Request {
-        // Could be lazily loaded along with url, but would require user to restart
-        val subPref = preferences.getString(PREF_SUB_KEY, PREF_SUB_DEFAULT)!!
-        val variables = """{"search":{"allowAdult":false,"allowUnknown":false},"limit":$PAGE_SIZE,"page":$page,"translationType":"$subPref","countryOrigin":"ALL"}"""
+        val variables = buildJsonObject {
+            putJsonObject("search") {
+                put("allowAdult", false)
+                put("allowUnknown", false)
+            }
+            put("limit", PAGE_SIZE)
+            put("page", page)
+            put("translationType", preferences.subPref)
+            put("countryOrigin", "ALL")
+        }
         return GET("$baseUrl/allanimeapi?variables=$variables&query=$SEARCH_QUERY", headers = headers)
     }
 
-    override fun latestUpdatesParse(response: Response): AnimesPage {
-        return parseAnime(response)
-    }
+    override fun latestUpdatesParse(response: Response): AnimesPage = parseAnime(response)
 
     // =============================== Search ===============================
 
@@ -112,84 +124,105 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
 
     private fun searchAnimeRequest(page: Int, query: String, filters: AllAnimeFilters.FilterSearchParams): Request {
-        val subPref = preferences.getString(PREF_SUB_KEY, PREF_SUB_DEFAULT)!!
         return if (query.isNotEmpty()) {
-            val variables = """{"search":{"query":"$query","allowAdult":false,"allowUnknown":false},"limit":$PAGE_SIZE,"page":$page,"translationType":"$subPref","countryOrigin":"ALL"}"""
+            val variables = buildJsonObject {
+                putJsonObject("search") {
+                    put("query", query)
+                    put("allowAdult", false)
+                    put("allowUnknown", false)
+                }
+                put("limit", PAGE_SIZE)
+                put("page", page)
+                put("translationType", preferences.subPref)
+                put("countryOrigin", "ALL")
+            }
             GET("$baseUrl/allanimeapi?variables=$variables&query=$SEARCH_QUERY", headers = headers)
         } else {
-            val seasonString = if (filters.season == "all") "" else ""","season":"${filters.season}""""
-            val yearString = if (filters.releaseYear == "all") "" else ""","year":${filters.releaseYear}"""
-            val genresString = if (filters.genres == "all") "" else ""","genres":${filters.genres},"excludeGenres":[]"""
-            val typesString = if (filters.types == "all") "" else ""","types":${filters.types}"""
-            val sortByString = if (filters.sortBy == "update") "" else ""","sortBy":"${filters.sortBy}""""
-
-            var variables = """{"search":{"allowAdult":false,"allowUnknown":false$seasonString$yearString$genresString$typesString$sortByString"""
-            variables += """},"limit":$PAGE_SIZE,"page":$page,"translationType":"$subPref","countryOrigin":"${filters.origin}"}"""
-
+            val variables = buildJsonObject {
+                putJsonObject("search") {
+                    put("allowAdult", false)
+                    put("allowUnknown", false)
+                    if (filters.season != "all") put("season", filters.season)
+                    if (filters.releaseYear != "all") put("year", filters.releaseYear.toInt())
+                    if (filters.genres != "all") {
+                        put("genres", json.decodeFromString(filters.genres))
+                        put("excludeGenres", buildJsonArray { })
+                    }
+                    if (filters.types != "all") put("types", json.decodeFromString(filters.types))
+                    if (filters.sortBy != "update") put("sortBy", filters.sortBy)
+                }
+                put("limit", PAGE_SIZE)
+                put("page", page)
+                put("translationType", preferences.subPref)
+                put("countryOrigin", filters.origin)
+            }
             GET("$baseUrl/allanimeapi?variables=$variables&query=$SEARCH_QUERY", headers = headers)
         }
     }
 
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        return parseAnime(response)
-    }
+    override fun searchAnimeParse(response: Response): AnimesPage = parseAnime(response)
+
+    // ============================== Filters ===============================
 
     override fun getFilterList(): AnimeFilterList = AllAnimeFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
 
-    override fun animeDetailsParse(response: Response): SAnime = throw Exception("Not used")
-
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
         return client.newCall(animeDetailsRequestInternal(anime))
             .asObservableSuccess()
             .map { response ->
-                animeDetailsParse(response, anime).apply { initialized = true }
+                animeDetailsParse(response).apply { initialized = true }
             }
     }
 
     private fun animeDetailsRequestInternal(anime: SAnime): Request {
-        val variables = """{"_id":"${anime.url.split("<&sep>").first()}"}"""
+        val variables = buildJsonObject {
+            put("_id", anime.url.split("<&sep>").first())
+        }
         return GET("$baseUrl/allanimeapi?variables=$variables&query=$DETAILS_QUERY", headers = headers)
     }
 
     override fun animeDetailsRequest(anime: SAnime): Request {
         val (id, time, slug) = anime.url.split("<&sep>")
-        val slugTime = if (time.isNotEmpty()) {
-            "-st-$time"
-        } else {
-            time
-        }
-        val siteUrl = preferences.getString(PREF_SITE_DOMAIN_KEY, PREF_SITE_DOMAIN_DEFAULT)!!
+        val slugTime = if (time.isNotEmpty()) "-st-$time" else time
+        val siteUrl = preferences.siteUrl
+
         return GET("$siteUrl/anime/$id/$slug$slugTime")
     }
 
-    private fun animeDetailsParse(response: Response, animeOld: SAnime): SAnime {
+    override fun animeDetailsParse(response: Response): SAnime {
         val show = json.decodeFromString<DetailsResult>(response.body.string()).data.show
+
         return SAnime.create().apply {
-            title = animeOld.title
             genre = show.genres?.joinToString(separator = ", ") ?: ""
             status = parseStatus(show.status)
             author = show.studios?.firstOrNull()
-            description = Jsoup.parse(
-                show.description?.replace("<br>", "br2n") ?: "",
-            ).text().replace("br2n", "\n") +
-                "\n\n" +
-                "Type: ${show.type ?: "Unknown"}" +
-                "\nAired: ${show.season?.quarter ?: "-"} ${show.season?.year ?: "-"}" +
-                "\nScore: ${show.score ?: "-"}★"
+            description = buildString {
+                append(
+                    Jsoup.parse(
+                        show.description?.replace("<br>", "br2n") ?: "",
+                    ).text().replace("br2n", "\n"),
+                )
+                append("\n\n")
+                append("Type: ${show.type ?: "Unknown"}")
+                append("\nAired: ${show.season?.quarter ?: "-"} ${show.season?.year ?: "-"}")
+                append("\nScore: ${show.score ?: "-"}★")
+            }
         }
     }
 
     // ============================== Episodes ==============================
 
     override fun episodeListRequest(anime: SAnime): Request {
-        val variables = """{"_id":"${anime.url.split("<&sep>").first()}"}"""
+        val variables = buildJsonObject {
+            put("_id", anime.url.split("<&sep>").first())
+        }
         return GET("$baseUrl/allanimeapi?variables=$variables&query=$EPISODES_QUERY", headers = headers)
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val subPref = preferences.getString(PREF_SUB_KEY, PREF_SUB_DEFAULT)!!
+        val subPref = preferences.subPref
         val medias = json.decodeFromString<SeriesResult>(response.body.string())
 
         val episodesDetail = if (subPref == "sub") {
@@ -200,7 +233,12 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
         return episodesDetail.map { ep ->
             val numName = ep.toIntOrNull() ?: (ep.toFloatOrNull() ?: "1")
-            val variables = """{"showId":"${medias.data.show._id}","translationType":"$subPref","episodeString":"$ep"}"""
+            val variables = buildJsonObject {
+                put("showId", medias.data.show._id)
+                put("translationType", subPref)
+                put("episodeString", ep)
+            }
+
             SEpisode.create().apply {
                 episode_number = ep.toFloatOrNull() ?: 0F
                 name = "Episode $numName ($subPref)"
@@ -211,27 +249,13 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================ Video Links =============================
 
-    override fun videoListRequest(episode: SEpisode): Request {
-        val headers = headers.newBuilder()
-            .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
-            .build()
-        return GET(baseUrl + episode.url, headers)
-    }
-
     override fun videoListParse(response: Response): List<Video> {
         val videoJson = json.decodeFromString<EpisodeResult>(response.body.string())
         val videoList = mutableListOf<Pair<Video, Float>>()
         val serverList = mutableListOf<Server>()
 
-        val altHosterSelection = preferences.getStringSet(
-            PREF_ALT_HOSTER_KEY,
-            ALT_HOSTER_NAMES.toSet(),
-        )!!
-
-        val hosterSelection = preferences.getStringSet(
-            PREF_HOSTER_KEY,
-            PREF_HOSTER_DEFAULT,
-        )!!
+        val hosterSelection = preferences.getHosters
+        val altHosterSelection = preferences.getAltHosters
 
         // list of alternative hosters
         val mappings = listOf(
@@ -356,9 +380,9 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================= Utilities ==============================
 
     private fun prioritySort(pList: List<Pair<Video, Float>>): List<Video> {
-        val prefServer = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
-        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
-        val subPref = preferences.getString(PREF_SUB_KEY, PREF_SUB_DEFAULT)!!
+        val prefServer = preferences.prefServer
+        val quality = preferences.quality
+        val subPref = preferences.subPref
 
         return pList.sortedWith(
             compareBy(
@@ -392,11 +416,10 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun parseAnime(response: Response): AnimesPage {
         val parsed = json.decodeFromString<SearchResult>(response.body.string())
-        val titleStyle = preferences.getString(PREF_TITLE_STYLE_KEY, PREF_TITLE_STYLE_DEFAULT)!!
 
         val animeList = parsed.data.shows.edges.map { ani ->
             SAnime.create().apply {
-                title = when (titleStyle) {
+                title = when (preferences.titleStyle) {
                     "romaji" -> ani.name
                     "eng" -> ani.englishName ?: ani.name
                     else -> ani.nativeName ?: ani.name
@@ -413,7 +436,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         return keywords.any { this.contains(it) }
     }
 
-    fun hexToText(inputString: String): String {
+    private fun hexToText(inputString: String): String {
         return inputString.chunked(2).map {
             it.toInt(16).toByte()
         }.toByteArray().toString(Charsets.UTF_8)
@@ -424,138 +447,6 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         runBlocking {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
-
-    // ============================== Settings ==============================
-
-    override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val domainSitePref = ListPreference(screen.context).apply {
-            key = PREF_SITE_DOMAIN_KEY
-            title = PREF_SITE_DOMAIN_TITLE
-            entries = PREF_SITE_DOMAIN_ENTRIES
-            entryValues = PREF_SITE_DOMAIN_ENTRY_VALUES
-            setDefaultValue(PREF_SITE_DOMAIN_DEFAULT)
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-        val domainPref = ListPreference(screen.context).apply {
-            key = PREF_DOMAIN_KEY
-            title = PREF_DOMAIN_TITLE
-            entries = PREF_DOMAIN_ENTRIES
-            entryValues = PREF_DOMAIN_ENTRY_VALUES
-            setDefaultValue(PREF_DOMAIN_DEFAULT)
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-
-        val serverPref = ListPreference(screen.context).apply {
-            key = PREF_SERVER_KEY
-            title = PREF_SERVER_TITLE
-            entries = PREF_SERVER_ENTRIES
-            entryValues = PREF_SERVER_ENTRY_VALUES
-            setDefaultValue(PREF_SERVER_DEFAULT)
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-
-        val hostSelection = MultiSelectListPreference(screen.context).apply {
-            key = PREF_HOSTER_KEY
-            title = PREF_HOSTER_TITLE
-            entries = PREF_HOSTER_ENTRIES
-            entryValues = PREF_HOSTER_ENTRY_VALUES
-            setDefaultValue(PREF_HOSTER_DEFAULT)
-
-            setOnPreferenceChangeListener { _, newValue ->
-                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
-            }
-        }
-
-        val altHostSelection = MultiSelectListPreference(screen.context).apply {
-            key = PREF_ALT_HOSTER_KEY
-            title = PREF_ALT_HOSTER_TITLE
-            entries = ALT_HOSTER_NAMES
-            entryValues = ALT_HOSTER_NAMES
-            setDefaultValue(ALT_HOSTER_NAMES.toSet())
-
-            setOnPreferenceChangeListener { _, newValue ->
-                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
-            }
-        }
-
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = PREF_QUALITY_KEY
-            title = PREF_QUALITY_TITLE
-            entries = PREF_QUALITY_ENTRIES
-            entryValues = PREF_QUALITY_ENTRY_VALUES
-            setDefaultValue(PREF_QUALITY_DEFAULT)
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-
-        val titleStylePref = ListPreference(screen.context).apply {
-            key = PREF_TITLE_STYLE_KEY
-            title = PREF_TITLE_STYLE_TITLE
-            entries = PREF_TITLE_STYLE_ENTRIES
-            entryValues = PREF_TITLE_STYLE_ENTRY_VALUES
-            setDefaultValue(PREF_TITLE_STYLE_DEFAULT)
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-
-        val subPref = ListPreference(screen.context).apply {
-            key = PREF_SUB_KEY
-            title = PREF_SUB_TITLE
-            entries = PREF_SUB_ENTRIES
-            entryValues = PREF_SUB_ENTRY_VALUES
-            setDefaultValue(PREF_SUB_DEFAULT)
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-
-        screen.addPreference(domainSitePref)
-        screen.addPreference(domainPref)
-        screen.addPreference(serverPref)
-        screen.addPreference(hostSelection)
-        screen.addPreference(altHostSelection)
-        screen.addPreference(videoQualityPref)
-        screen.addPreference(titleStylePref)
-        screen.addPreference(subPref)
-    }
 
     companion object {
         private const val PAGE_SIZE = 26 // number of items to retrieve when calling API
@@ -575,19 +466,12 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         )
 
         private const val PREF_SITE_DOMAIN_KEY = "preferred_site_domain"
-        private const val PREF_SITE_DOMAIN_TITLE = "Preferred domain for site (requires app restart)"
-        private val PREF_SITE_DOMAIN_ENTRIES = arrayOf("allanime.to", "allanime.co")
-        private val PREF_SITE_DOMAIN_ENTRY_VALUES = PREF_SITE_DOMAIN_ENTRIES.map { "https://$it" }.toTypedArray()
         private const val PREF_SITE_DOMAIN_DEFAULT = "https://allanime.to"
 
         private const val PREF_DOMAIN_KEY = "preferred_domain"
-        private const val PREF_DOMAIN_TITLE = "Preferred domain (requires app restart)"
-        private val PREF_DOMAIN_ENTRIES = arrayOf("api.allanime.to", "api.allanime.co")
-        private val PREF_DOMAIN_ENTRY_VALUES = PREF_DOMAIN_ENTRIES.map { "https://$it" }.toTypedArray()
         private const val PREF_DOMAIN_DEFAULT = "https://api.allanime.to"
 
         private const val PREF_SERVER_KEY = "preferred_server"
-        private const val PREF_SERVER_TITLE = "Preferred Video Server"
         private val PREF_SERVER_ENTRIES = arrayOf("Site Default") +
             INTERAL_HOSTER_NAMES.sliceArray(1 until INTERAL_HOSTER_NAMES.size) +
             ALT_HOSTER_NAMES
@@ -599,18 +483,14 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_SERVER_DEFAULT = "site_default"
 
         private const val PREF_HOSTER_KEY = "hoster_selection"
-        private const val PREF_HOSTER_TITLE = "Enable/Disable Hosts"
-        private val PREF_HOSTER_ENTRIES = INTERAL_HOSTER_NAMES
         private val PREF_HOSTER_ENTRY_VALUES = INTERAL_HOSTER_NAMES.map {
             it.lowercase()
         }.toTypedArray()
         private val PREF_HOSTER_DEFAULT = setOf("default", "ac", "ak", "kir", "luf-mp4", "si-hls", "s-mp4", "ac-hls")
 
         private const val PREF_ALT_HOSTER_KEY = "alt_hoster_selection"
-        private const val PREF_ALT_HOSTER_TITLE = "Enable/Disable Alternative Hosts"
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
-        private const val PREF_QUALITY_TITLE = "Preferred quality"
         private val PREF_QUALITY_ENTRIES = arrayOf(
             "1080p",
             "720p",
@@ -627,15 +507,158 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_QUALITY_DEFAULT = "1080"
 
         private const val PREF_TITLE_STYLE_KEY = "preferred_title_style"
-        private const val PREF_TITLE_STYLE_TITLE = "Preferred Title Style"
-        private val PREF_TITLE_STYLE_ENTRIES = arrayOf("Romaji", "English", "Native")
-        private val PREF_TITLE_STYLE_ENTRY_VALUES = arrayOf("romaji", "eng", "native")
         private const val PREF_TITLE_STYLE_DEFAULT = "romaji"
 
         private const val PREF_SUB_KEY = "preferred_sub"
-        private const val PREF_SUB_TITLE = "Prefer subs or dubs?"
-        private val PREF_SUB_ENTRIES = arrayOf("Subs", "Dubs")
-        private val PREF_SUB_ENTRY_VALUES = arrayOf("sub", "dub")
         private const val PREF_SUB_DEFAULT = "sub"
     }
+
+    // ============================== Settings ==============================
+
+    @Suppress("UNCHECKED_CAST")
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_SITE_DOMAIN_KEY
+            title = "Preferred domain for site (requires app restart)"
+            entries = arrayOf("allanime.to", "allanime.co")
+            entryValues = arrayOf("https://allanime.to", "https://allanime.co")
+            setDefaultValue(PREF_SITE_DOMAIN_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_DOMAIN_KEY
+            title = "Preferred domain (requires app restart)"
+            entries = arrayOf("api.allanime.to", "api.allanime.co")
+            entryValues = arrayOf("https://api.allanime.to", "https://api.allanime.co")
+            setDefaultValue(PREF_DOMAIN_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_SERVER_KEY
+            title = "Preferred Video Server"
+            entries = PREF_SERVER_ENTRIES
+            entryValues = PREF_SERVER_ENTRY_VALUES
+            setDefaultValue(PREF_SERVER_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_HOSTER_KEY
+            title = "Enable/Disable Hosts"
+            entries = INTERAL_HOSTER_NAMES
+            entryValues = PREF_HOSTER_ENTRY_VALUES
+            setDefaultValue(PREF_HOSTER_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }.also(screen::addPreference)
+
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_ALT_HOSTER_KEY
+            title = "Enable/Disable Alternative Hosts"
+            entries = ALT_HOSTER_NAMES
+            entryValues = ALT_HOSTER_NAMES
+            setDefaultValue(ALT_HOSTER_NAMES.toSet())
+
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = "Preferred quality"
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_TITLE_STYLE_KEY
+            title = "Preferred Title Style"
+            entries = arrayOf("Romaji", "English", "Native")
+            entryValues = arrayOf("romaji", "eng", "native")
+            setDefaultValue(PREF_TITLE_STYLE_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_SUB_KEY
+            title = "Prefer subs or dubs?"
+            entries = arrayOf("Subs", "Dubs")
+            entryValues = arrayOf("sub", "dub")
+            setDefaultValue(PREF_SUB_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+    }
+
+    private val SharedPreferences.subPref
+        get() = getString(PREF_SUB_KEY, PREF_SUB_DEFAULT)!!
+
+    private val SharedPreferences.baseUrl
+        get() = getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!!
+
+    private val SharedPreferences.siteUrl
+        get() = getString(PREF_SITE_DOMAIN_KEY, PREF_SITE_DOMAIN_DEFAULT)!!
+
+    private val SharedPreferences.titleStyle
+        get() = getString(PREF_TITLE_STYLE_KEY, PREF_TITLE_STYLE_DEFAULT)!!
+
+    private val SharedPreferences.quality
+        get() = getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+
+    private val SharedPreferences.prefServer
+        get() = getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
+
+    private val SharedPreferences.getHosters
+        get() = getStringSet(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
+
+    private val SharedPreferences.getAltHosters
+        get() = getStringSet(PREF_ALT_HOSTER_KEY, ALT_HOSTER_NAMES.toSet())!!
 }

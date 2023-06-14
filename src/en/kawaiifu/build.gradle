@@ -6,7 +6,7 @@ ext {
     extName = 'Kawaiifu'
     pkgNameSuffix = 'en.kawaiifu'
     extClass = '.Kawaiifu'
-    extVersionCode = 3
+    extVersionCode = 4
     libVersion = '13'
     containsNsfw = true
 }

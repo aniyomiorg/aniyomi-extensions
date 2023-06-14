@@ -11,57 +11,6 @@ import okhttp3.OkHttpClient
 import uy.kohesive.injekt.injectLazy
 import java.util.Locale
 
-@Serializable
-data class VideoLink(
-    val links: List<Link>,
-) {
-    @Serializable
-    data class Link(
-        val link: String,
-        val hls: Boolean? = null,
-        val mp4: Boolean? = null,
-        val dash: Boolean? = null,
-        val crIframe: Boolean? = null,
-        val resolutionStr: String,
-        val subtitles: List<Subtitles>? = null,
-        val rawUrls: RawUrl? = null,
-        val portData: Stream? = null,
-    ) {
-        @Serializable
-        data class Subtitles(
-            val lang: String,
-            val src: String,
-            val label: String? = null,
-        )
-
-        @Serializable
-        data class Stream(
-            val streams: List<StreamObject>,
-        ) {
-            @Serializable
-            data class StreamObject(
-                val format: String,
-                val url: String,
-                val audio_lang: String,
-                val hardsub_lang: String,
-            )
-        }
-
-        @Serializable
-        data class RawUrl(
-            val vids: List<DashStreamObject>? = null,
-            val audios: List<DashStreamObject>? = null,
-        ) {
-            @Serializable
-            data class DashStreamObject(
-                val bandwidth: Long,
-                val height: Int,
-                val url: String,
-            )
-        }
-    }
-}
-
 class AllAnimeExtractor(private val client: OkHttpClient) {
 
     private val json: Json by injectLazy()
@@ -234,5 +183,56 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
         }
 
         return videoList
+    }
+
+    @Serializable
+    data class VideoLink(
+        val links: List<Link>,
+    ) {
+        @Serializable
+        data class Link(
+            val link: String,
+            val hls: Boolean? = null,
+            val mp4: Boolean? = null,
+            val dash: Boolean? = null,
+            val crIframe: Boolean? = null,
+            val resolutionStr: String,
+            val subtitles: List<Subtitles>? = null,
+            val rawUrls: RawUrl? = null,
+            val portData: Stream? = null,
+        ) {
+            @Serializable
+            data class Subtitles(
+                val lang: String,
+                val src: String,
+                val label: String? = null,
+            )
+
+            @Serializable
+            data class Stream(
+                val streams: List<StreamObject>,
+            ) {
+                @Serializable
+                data class StreamObject(
+                    val format: String,
+                    val url: String,
+                    val audio_lang: String,
+                    val hardsub_lang: String,
+                )
+            }
+
+            @Serializable
+            data class RawUrl(
+                val vids: List<DashStreamObject>? = null,
+                val audios: List<DashStreamObject>? = null,
+            ) {
+                @Serializable
+                data class DashStreamObject(
+                    val bandwidth: Long,
+                    val height: Int,
+                    val url: String,
+                )
+            }
+        }
     }
 }

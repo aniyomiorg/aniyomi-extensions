@@ -13,7 +13,7 @@ class MixDropExtractor(private val client: OkHttpClient) {
         val unpacked = doc.selectFirst("script:containsData(eval):containsData(MDCore)")
             ?.data()
             ?.let { JsUnpacker.unpackAndCombine(it) }
-            ?: return emptyList<Video>()
+            ?: return emptyList()
         val videoUrl = "https:" + unpacked.substringAfter("Core.wurl=\"")
             .substringBefore("\"")
         val quality = ("MixDrop").let {
