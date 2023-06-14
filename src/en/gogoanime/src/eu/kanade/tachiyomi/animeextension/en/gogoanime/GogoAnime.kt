@@ -253,12 +253,9 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         private const val PREF_DOMAIN_KEY = "preferred_domain_name"
         private const val PREF_DOMAIN_TITLE = "Override BaseUrl"
-        private const val PREF_DOMAIN_SUMMARY = "Override default domain (requires app restart)"
         private const val PREF_DOMAIN_DEFAULT = "https://gogoanime.hu"
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
-        private val PREF_QUALITY_ENTRY_VALUES = arrayOf("1080", "720", "480", "360")
-        private val PREF_QUALITY_ENTRIES = PREF_QUALITY_ENTRY_VALUES.map { "${it}p" }.toTypedArray()
         private const val PREF_QUALITY_DEFAULT = "1080"
 
         private const val PREF_SERVER_KEY = "preferred_server"
@@ -274,7 +271,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         EditTextPreference(screen.context).apply {
             key = PREF_DOMAIN_KEY
             title = PREF_DOMAIN_TITLE
-            summary = PREF_DOMAIN_SUMMARY
+            summary = "Override default domain (requires app restart)"
             dialogTitle = PREF_DOMAIN_TITLE
             dialogMessage = "Default: $PREF_DOMAIN_DEFAULT"
             setDefaultValue(PREF_DOMAIN_DEFAULT)
@@ -288,8 +285,8 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = "Preferred quality"
-            entries = PREF_QUALITY_ENTRIES
-            entryValues = PREF_QUALITY_ENTRY_VALUES
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
