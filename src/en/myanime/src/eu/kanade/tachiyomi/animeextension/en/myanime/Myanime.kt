@@ -21,8 +21,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -31,9 +29,6 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import uy.kohesive.injekt.injectLazy
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -47,39 +42,23 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private var postBody = ""
-
-    private var postHeaders = headers.newBuilder()
-
-    private val json: Json by injectLazy()
-
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    companion object {
-        private val DATE_FORMATTER by lazy {
-            SimpleDateFormat("d MMMM yyyy", Locale.ENGLISH)
-        }
-    }
-
     // ============================== Popular ===============================
 
-    override fun popularAnimeRequest(page: Int): Request {
-        return GET("$baseUrl/category/donghua-list/page/$page/")
-    }
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/category/donghua-list/page/$page/")
 
     override fun popularAnimeSelector(): String = "main#main > article.post"
 
-    override fun popularAnimeNextPageSelector(): String = "script:containsData(infiniteScroll)"
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("h2.entry-header-title > a")!!.attr("href").toHttpUrl().encodedPath)
-            thumbnail_url = element.selectFirst("img[src]")?.attr("src") ?: ""
-            title = element.selectFirst("h2.entry-header-title > a")!!.text().removePrefix("Playlist ")
-        }
+    override fun popularAnimeFromElement(element: Element): SAnime = SAnime.create().apply {
+        setUrlWithoutDomain(element.selectFirst("h2.entry-header-title > a")!!.attr("href"))
+        thumbnail_url = element.selectFirst("img[src]")?.attr("src") ?: ""
+        title = element.selectFirst("h2.entry-header-title > a")!!.text().removePrefix("Playlist ")
     }
+
+    override fun popularAnimeNextPageSelector(): String = "script:containsData(infiniteScroll)"
 
     // =============================== Latest ===============================
 
@@ -87,17 +66,15 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesSelector(): String = popularAnimeSelector()
 
-    override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
-
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("h2.entry-header-title > a")!!.attr("href").toHttpUrl().encodedPath)
-            thumbnail_url = element.selectFirst("img[src]")?.attr("src") ?: ""
-            title = element.selectFirst("h2.entry-header-title > a")!!.text()
-                .substringBefore(" Episode")
-                .substringBefore(" episode")
-        }
+    override fun latestUpdatesFromElement(element: Element): SAnime = SAnime.create().apply {
+        setUrlWithoutDomain(element.selectFirst("h2.entry-header-title > a")!!.attr("href"))
+        thumbnail_url = element.selectFirst("img[src]")?.attr("src") ?: ""
+        title = element.selectFirst("h2.entry-header-title > a")!!.text()
+            .substringBefore(" Episode")
+            .substringBefore(" episode")
     }
+
+    override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
 
     // =============================== Search ===============================
 
@@ -115,9 +92,9 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
 
-    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
-
     override fun searchAnimeFromElement(element: Element): SAnime = latestUpdatesFromElement(element)
+
+    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
     // ============================== Filters ===============================
 
@@ -141,9 +118,7 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        return Observable.just(anime)
-    }
+    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> = Observable.just(anime)
 
     override fun animeDetailsParse(document: Document): SAnime = throw Exception("Not used")
 
@@ -164,7 +139,7 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     SEpisode.create().apply {
                         name = a.text()
                         episode_number = a.text().substringAfter("pisode ").substringBefore(" ").toFloatOrNull() ?: 0F
-                        setUrlWithoutDomain(a.attr("href").toHttpUrl().encodedPath)
+                        setUrlWithoutDomain(a.attr("href"))
                     }
                 },
             )
@@ -184,24 +159,26 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                 epDocument.select("main#main > article.post").forEach {
                     val a = it.selectFirst("h2.entry-header-title > a")!!
-                    val episode = SEpisode.create()
-
-                    episode.name = a.text()
-                    episode.episode_number = a.text().substringAfter("pisode ").substringBefore(" ").toFloatOrNull() ?: 0F
-                    episode.setUrlWithoutDomain(a.attr("href").toHttpUrl().encodedPath)
-                    episodeList.add(episode)
+                    episodeList.add(
+                        SEpisode.create().apply {
+                            name = a.text()
+                            episode_number = a.text().substringAfter("pisode ").substringBefore(" ").toFloatOrNull() ?: 0F
+                            setUrlWithoutDomain(a.attr("href"))
+                        },
+                    )
                 }
 
                 infiniteScroll = epDocument.selectFirst("script:containsData(infiniteScroll)") != null
                 page++
             }
         } else if (document.selectFirst("iframe.youtube-player[src]") != null) {
-            val episode = SEpisode.create()
-
-            episode.name = document.selectFirst("title")!!.text()
-            episode.episode_number = 0F
-            episode.setUrlWithoutDomain(response.request.url.encodedPath)
-            episodeList.add(episode)
+            episodeList.add(
+                SEpisode.create().apply {
+                    name = document.selectFirst("title")!!.text()
+                    episode_number = 0F
+                    setUrlWithoutDomain(response.request.url.toString())
+                },
+            )
         } else if (document.selectFirst("span > a[href*=/tag/]") != null) {
             val url = document.selectFirst("span > a[href*=/tag/]")!!.attr("href")
             episodeList.addAll(
@@ -247,20 +224,22 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }.filterNotNull().flatten(),
         )
 
+        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
+
         return videoList
     }
 
-    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
-
     override fun videoListSelector(): String = "div.entry-content iframe[src]"
+
+    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
 
     override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
 
     // ============================= Utilities ==============================
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "1080")!!
-        val server = preferences.getString("preferred_server", "dailymotion")!!
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
 
         return this.sortedWith(
             compareBy(
@@ -276,13 +255,27 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
 
+    companion object {
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private val PREF_QUALITY_ENTRY_VALUES = arrayOf("1080", "720", "480", "360")
+        private val PREF_QUALITY_ENTRIES = PREF_QUALITY_ENTRY_VALUES.map { "${it}p" }.toTypedArray()
+        private const val PREF_QUALITY_DEFAULT = "1080"
+
+        private const val PREF_SERVER_KEY = "preferred_server"
+        private val PREF_SERVER_ENTRY_VALUES = arrayOf("youtube", "dailymotion", "okru")
+        private val PREF_SERVER_ENTRIES = arrayOf("YouTube", "Dailymotion", "ok.ru")
+        private const val PREF_SERVER_DEFAULT = "dailymotion"
+    }
+
+    // ============================== Settings ==============================
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
             title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
-            setDefaultValue("1080")
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -291,13 +284,14 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        val videoServerPref = ListPreference(screen.context).apply {
-            key = "preferred_server"
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_SERVER_KEY
             title = "Preferred server"
-            entries = arrayOf("YouTube", "Dailymotion", "ok.ru")
-            entryValues = arrayOf("youtube", "dailymotion", "okru")
-            setDefaultValue("dailymotion")
+            entries = PREF_SERVER_ENTRIES
+            entryValues = PREF_SERVER_ENTRY_VALUES
+            setDefaultValue(PREF_SERVER_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -306,8 +300,6 @@ class Myanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
-        screen.addPreference(videoServerPref)
+        }.also(screen::addPreference)
     }
 }
