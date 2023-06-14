@@ -98,8 +98,6 @@ jobs:
     needs: prepare
     if: ${{ needs.prepare.outputs.isMultisrcChanged == '1' }}
     runs-on: ubuntu-latest
-    outputs:
-      status: ${{ steps.status.outputs.status }}
     strategy:
       matrix: ${{ fromJSON(needs.prepare.outputs.multisrcMatrix) }}
     steps:
@@ -129,19 +127,11 @@ jobs:
           arguments: assembleDebug
           cache-read-only: true
 
-      - name: Set status output
-        id: status
-        if: ${{ success() }}
-        run: |
-          echo "status=success" >> $GITHUB_OUTPUT
-
   build_individual:
     name: Build individual modules
     needs: prepare
     if: ${{ needs.prepare.outputs.isIndividualChanged == '1' }}
     runs-on: ubuntu-latest
-    outputs:
-      status: ${{ steps.status.outputs.status }}
     strategy:
       matrix: ${{ fromJSON(needs.prepare.outputs.individualMatrix) }}
     steps:
@@ -162,36 +152,3 @@ jobs:
         with:
           arguments: assembleDebug
           cache-read-only: true
-
-      - name: Set status output
-        id: status
-        if: ${{ success() }}
-        run: |
-          echo "status=success" >> $GITHUB_OUTPUT
-
-  status:
-    name: Workflow status
-    runs-on: ubuntu-latest
-    if: ${{ always() }}
-    needs: [prepare, build_individual, build_multisrc]
-    steps:
-      - name: Set the status of this workflow (used for branch protection rules)
-        env:
-          INDIVIDUAL_CHANGED: ${{ needs.prepare.outputs.isIndividualChanged }}
-          MULTISRC_CHANGED: ${{ needs.prepare.outputs.isMultisrcChanged }}
-          STATUS_INDIVIDUAL: ${{needs.build_individual.outputs.status}}
-          STATUS_MULTISRC: ${{needs.build_multisrc.outputs.status}}
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const isIndividualChanged = process.env.INDIVIDUAL_CHANGED == '1';
-            const isMultisrcChanged = process.env.MULTISRC_CHANGED == '1';
-            
-            const individualStatus = !isIndividualChanged || process.env.STATUS_INDIVIDUAL == 'success';
-            const multisrcStatus = !isMultisrcChanged || process.env.STATUS_MULTISRC == 'success';
-            
-            const success = individualStatus && multisrcStatus;
-            
-            if (!success) {
-              core.setFailed('Build failed');
-            }
