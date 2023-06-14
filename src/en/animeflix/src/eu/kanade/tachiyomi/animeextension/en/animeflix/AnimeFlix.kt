@@ -301,7 +301,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun extractWorkerLinks(mediaUrl: String, quality: String, type: Int): List<Video> {
         val reqLink = mediaUrl.replace("/file/", "/wfile/") + "?type=$type"
         val resp = client.newCall(GET(reqLink)).execute().asJsoup()
-        val sizeMatch = sizeRegex.find(resp.select("div.card-header").text().trim())
+        val sizeMatch = SIZE_REGEX.find(resp.select("div.card-header").text().trim())
         val size = sizeMatch?.groups?.get(1)?.value?.let { " - $it" } ?: ""
         return resp.select("div.card-body div.mb-4 > a").mapIndexed { index, linkElement ->
             val link = linkElement.attr("href")
@@ -324,7 +324,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val response = tokenClient.newCall(GET(mediaUrl)).execute().asJsoup()
         val gdBtn = response.selectFirst("div.card-body a.btn")!!
         val gdLink = gdBtn.attr("href")
-        val sizeMatch = sizeRegex.find(gdBtn.text())
+        val sizeMatch = SIZE_REGEX.find(gdBtn.text())
         val size = sizeMatch?.groups?.get(1)?.value?.let { " - $it" } ?: ""
         val gdResponse = client.newCall(GET(gdLink)).execute().asJsoup()
         val link = gdResponse.select("form#download-form")
@@ -372,7 +372,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
 
     companion object {
-        private val sizeRegex = "\\[((?:.(?!\\[))+)][ ]*\$".toRegex(RegexOption.IGNORE_CASE)
+        private val SIZE_REGEX = "\\[((?:.(?!\\[))+)][ ]*\$".toRegex(RegexOption.IGNORE_CASE)
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_DEFAULT = "1080"
