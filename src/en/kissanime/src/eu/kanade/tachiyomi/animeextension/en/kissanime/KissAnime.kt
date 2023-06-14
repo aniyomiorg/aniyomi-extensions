@@ -46,7 +46,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "kissanime.com.ru"
 
-    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://kissanime.com.ru")!! }
+    override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
 
     override val lang = "en"
 
@@ -60,27 +60,19 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    companion object {
-        private val DATE_FORMATTER by lazy {
-            SimpleDateFormat("MM/dd/yyyy", Locale.ENGLISH)
-        }
-    }
-
     // ============================== Popular ===============================
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/AnimeListOnline/Trending?page=$page")
 
     override fun popularAnimeSelector(): String = "div.listing > div.item_movies_in_cat"
 
-    override fun popularAnimeNextPageSelector(): String = "div.pagination > ul > li.current ~ li"
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").toHttpUrl().encodedPath)
-            thumbnail_url = element.selectFirst("img")!!.attr("src")
-            title = element.selectFirst("div.title_in_cat_container > a")!!.text()
-        }
+    override fun popularAnimeFromElement(element: Element): SAnime = SAnime.create().apply {
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        thumbnail_url = element.selectFirst("img")!!.attr("src")
+        title = element.selectFirst("div.title_in_cat_container > a")!!.text()
     }
+
+    override fun popularAnimeNextPageSelector(): String = "div.pagination > ul > li.current ~ li"
 
     // =============================== Latest ===============================
 
@@ -88,9 +80,9 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesSelector(): String = popularAnimeSelector()
 
-    override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
-
     override fun latestUpdatesFromElement(element: Element): SAnime = popularAnimeFromElement(element)
+
+    override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
 
     // =============================== Search ===============================
 
@@ -118,15 +110,15 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val document = response.asJsoup()
             val name = response.request.url.encodedFragment!!
 
-            val animes = document.select("div.barContent > div.schedule_container > div.schedule_item:has(div.schedule_block_title:contains($name)) div.schedule_row > div.schedule_block").map {
+            val animeList = document.select("div.barContent > div.schedule_container > div.schedule_item:has(div.schedule_block_title:contains($name)) div.schedule_row > div.schedule_block").map {
                 SAnime.create().apply {
                     title = it.selectFirst("h2 > a > span.jtitle")!!.text()
                     thumbnail_url = it.selectFirst("img")!!.attr("src")
-                    setUrlWithoutDomain(it.selectFirst("a")!!.attr("href").toHttpUrl().encodedPath)
+                    setUrlWithoutDomain(it.selectFirst("a")!!.attr("href"))
                 }
             }
 
-            AnimesPage(animes, false)
+            AnimesPage(animeList, false)
         } else {
             super.searchAnimeParse(response)
         }
@@ -134,9 +126,9 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
 
-    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
-
     override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
+
+    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
     // ============================== FILTERS ===============================
 
@@ -146,6 +138,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val rating = document.selectFirst("div.Votes > div.Prct > div[data-percent]")?.let { "\n\nUser rating: ${it.attr("data-percent")}%" } ?: ""
+
         return SAnime.create().apply {
             title = document.selectFirst("div.barContent > div.full > h2")!!.text()
             thumbnail_url = document.selectFirst("div.cover_anime img")!!.attr("src")
@@ -159,13 +152,11 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListSelector(): String = "div.listing > div:not([class])"
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        return SEpisode.create().apply {
-            name = element.selectFirst("a")!!.text()
-            episode_number = element.selectFirst("a")!!.text().substringAfter("Episode ").toFloatOrNull() ?: 0F
-            date_upload = parseDate(element.selectFirst("div:not(:has(a))")!!.text())
-            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").substringAfter(baseUrl))
-        }
+    override fun episodeFromElement(element: Element): SEpisode = SEpisode.create().apply {
+        name = element.selectFirst("a")!!.text()
+        episode_number = element.selectFirst("a")!!.text().substringAfter("Episode ").toFloatOrNull() ?: 0F
+        date_upload = parseDate(element.selectFirst("div:not(:has(a))")!!.text())
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
     }
 
     // ============================ Video Links =============================
@@ -251,19 +242,21 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }.filterNotNull().flatten(),
         )
 
+        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
+
         return Observable.just(videoList.sort())
     }
 
-    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
+    override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
 
     override fun videoListSelector(): String = throw Exception("Not Used")
 
-    override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
+    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
 
     // ============================= Utilities ==============================
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "1080")!!
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 
         return this.sortedWith(
             compareBy { it.quality.contains(quality) },
@@ -294,45 +287,61 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val domainPref = ListPreference(screen.context).apply {
-            key = "preferred_domain"
-            title = "Preferred domain (requires app restart)"
-            entries = arrayOf("kissanime.com.ru", "kissanime.co", "kissanime.sx", "kissanime.org.ru")
-            entryValues = arrayOf("https://kissanime.com.ru", "https://kissanime.co", "https://kissanime.sx", "https://kissanime.org.ru")
-            setDefaultValue("https://kissanime.com.ru")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
-            setDefaultValue("1080")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-
-        screen.addPreference(domainPref)
-        screen.addPreference(videoQualityPref)
-    }
-
     // From Dopebox
     private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
         runBlocking {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
+
+    companion object {
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("MM/dd/yyyy", Locale.ENGLISH)
+        }
+
+        private const val PREF_DOMAIN_KEY = "preferred_domain"
+        private val PREF_DOMAIN_ENTRIES = arrayOf("kissanime.com.ru", "kissanime.co", "kissanime.sx", "kissanime.org.ru")
+        private val PREF_DOMAIN_ENTRY_VALUES = PREF_DOMAIN_ENTRIES.map { "https://$it" }.toTypedArray()
+        private const val PREF_DOMAIN_DEFAULT = "https://kissanime.com.ru"
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private val PREF_QUALITY_ENTRY_VALUES = arrayOf("1080", "720", "480", "360")
+        private val PREF_QUALITY_ENTRIES = PREF_QUALITY_ENTRY_VALUES.map { "${it}p" }.toTypedArray()
+        private const val PREF_QUALITY_DEFAULT = "1080"
+    }
+
+    // ============================== Settings ==============================
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_DOMAIN_KEY
+            title = "Preferred domain (requires app restart)"
+            entries = PREF_DOMAIN_ENTRIES
+            entryValues = PREF_DOMAIN_ENTRY_VALUES
+            setDefaultValue(PREF_DOMAIN_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = "Preferred quality"
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+    }
 }
