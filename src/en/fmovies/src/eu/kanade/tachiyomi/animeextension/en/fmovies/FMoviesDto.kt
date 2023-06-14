@@ -34,3 +34,8 @@ data class FMoviesSubs(
     val file: String,
     val label: String,
 )
+
+@Serializable
+data class RawResponse(
+    val rawURL: String,
+)

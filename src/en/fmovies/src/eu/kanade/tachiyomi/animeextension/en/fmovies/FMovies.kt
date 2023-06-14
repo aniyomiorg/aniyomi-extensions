@@ -249,10 +249,11 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             )
                             val vidId = decrypted.substringAfterLast("/").substringBefore("?")
                             val (serverName, action) = when (name) {
-                                "Vidstream" -> Pair("Vidstream", "vizcloud")
-                                "MyCloud" -> Pair("MyCloud", "mcloud")
+                                "Vidstream" -> Pair("Vidstream", "rawVizcloud")
+                                "MyCloud" -> Pair("MyCloud", "rawMcloud")
                                 else -> return@parallelMap null
                             }
+
                             val playlistUrl = callConsumet(vidId, action)
                             val playlist = client.newCall(GET(playlistUrl, embedReferer)).execute()
 
@@ -291,11 +292,19 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun callConsumet(query: String, action: String): String {
         return client.newCall(
-            GET("https://api.consumet.org/anime/9anime/helper?query=$query&action=$action"),
+            GET("https://9anime.eltik.net/$action?query=$query&apikey=aniyomi"),
         ).execute().body.string().let {
             when (action) {
-                "vizcloud", "mcloud" -> {
-                    it.substringAfter("file\":\"").substringBefore("\"")
+                "rawVizcloud", "rawMcloud" -> {
+                    val rawURL = json.decodeFromString<RawResponse>(it).rawURL
+                    val referer = if (action == "rawVizcloud") "https://vidstream.pro/" else "https://mcloud.to/"
+                    val apiResponse = client.newCall(
+                        GET(
+                            url = rawURL,
+                            headers = Headers.headersOf("Referer", referer),
+                        ),
+                    ).execute().body.string()
+                    apiResponse.substringAfter("file\":\"").substringBefore("\"")
                 }
                 "fmovies-decrypt" -> {
                     json.decodeFromString<VrfResponse>(it).url
@@ -394,7 +403,6 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_HOSTER_KEY = "hoster_selection"
         private val PREF_HOSTER_DEFAULT = setOf("Vidstream", "Filemoon")
     }
-
     // ============================== Settings ==============================
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
