@@ -113,21 +113,23 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
         val dataPage = document.select("div#app").attr("data-page").replace("&quot;", "\"")
         val details = json.decodeFromString<AnimeDetails>(dataPage).props.anime
 
-        var desc = Jsoup.parse(
-            details.description.replace("<br />", "br2n"),
-        ).text().replace("br2n", "\n") + "\n"
-        desc += "\nContent Rating: ${details.content_rating.name}"
-        desc += "\nRelease Date: ${details.release_date}"
-        desc += "\nType: ${details.type.name}"
-        desc += "\nSource: ${details.source_list.joinToString(separator = ", ") { it.name }}"
-
         return SAnime.create().apply {
             title = details.title
             thumbnail_url = details.cover
             genre = details.genre_list.joinToString(", ") { it.name }
             author = details.production_list.joinToString(", ") { it.name }
             status = parseStatus(details.status.name)
-            description = desc
+            description = buildString {
+                append(
+                    Jsoup.parse(
+                        details.description.replace("<br />", "br2n"),
+                    ).text().replace("br2n", "\n"),
+                )
+                append("\n\nContent Rating: ${details.content_rating.name}")
+                append("\nRelease Date: ${details.release_date}")
+                append("\nType: ${details.type.name}")
+                append("\nSource: ${details.source_list.joinToString(separator = ", ") { it.name }}")
+            }
         }
     }
 
@@ -311,23 +313,19 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
 
     companion object {
         private const val PREF_QUALITY_KEY = "preferred_quality"
-        private const val PREF_QUALITY_TITLE = "Preferred quality"
         private val PREF_QUALITY_ENTRY_VALUES = arrayOf("1080", "720", "480", "360")
         private val PREF_QUALITY_ENTRIES = PREF_QUALITY_ENTRY_VALUES.map { "${it}p" }.toTypedArray()
         private const val PREF_QUALITY_DEFAULT = "1080"
 
         private const val PREF_GROUP_KEY = "preferred_group"
-        private const val PREF_GROUP_TITLE = "Preferred group"
         private const val PREF_GROUP_DEFAULT = "site_default"
 
         private const val PREF_SUBS_KEY = "preferred_sub"
-        private const val PREF_SUBS_TITLE = "Prefer subs or dubs?"
         private val PREF_SUBS_ENTRY_VALUES = arrayOf("sub", "dub")
         private val PREF_SUBS_ENTRIES = arrayOf("Subs", "Dubs")
         private const val PREF_SUBS_DEFAULT = "sub"
 
         private const val PREF_SPECIAL_KEY = "preferred_special"
-        private const val PREF_SPECIAL_TITLE = "Include Special Episodes"
         private const val PREF_SPECIAL_DEFAULT = true
     }
 
@@ -336,7 +334,7 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
-            title = PREF_QUALITY_TITLE
+            title = "Preferred quality"
             entries = PREF_QUALITY_ENTRIES
             entryValues = PREF_QUALITY_ENTRY_VALUES
             setDefaultValue(PREF_QUALITY_DEFAULT)
@@ -348,11 +346,11 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }.let { screen.addPreference(it) }
+        }.also(screen::addPreference)
 
         ListPreference(screen.context).apply {
             key = PREF_GROUP_KEY
-            title = PREF_GROUP_TITLE
+            title = "Preferred group"
             entries = MarinMoeConstants.GROUP_ENTRIES
             entryValues = MarinMoeConstants.GROUP_ENTRY_VALUES
             setDefaultValue(PREF_GROUP_DEFAULT)
@@ -364,11 +362,11 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }.let { screen.addPreference(it) }
+        }.also(screen::addPreference)
 
         ListPreference(screen.context).apply {
             key = PREF_SUBS_KEY
-            title = PREF_SUBS_TITLE
+            title = "Prefer subs or dubs?"
             entries = PREF_SUBS_ENTRIES
             entryValues = PREF_SUBS_ENTRY_VALUES
             setDefaultValue(PREF_SUBS_DEFAULT)
@@ -380,17 +378,17 @@ class MarinMoe : ConfigurableAnimeSource, AnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }.let { screen.addPreference(it) }
+        }.also(screen::addPreference)
 
         SwitchPreferenceCompat(screen.context).apply {
             key = PREF_SPECIAL_KEY
-            title = PREF_SPECIAL_TITLE
+            title = "Include Special Episodes"
             setDefaultValue(PREF_SPECIAL_DEFAULT)
 
             setOnPreferenceChangeListener { _, newValue ->
                 val new = newValue as Boolean
                 preferences.edit().putBoolean(key, new).commit()
             }
-        }.let { screen.addPreference(it) }
+        }.also(screen::addPreference)
     }
 }
