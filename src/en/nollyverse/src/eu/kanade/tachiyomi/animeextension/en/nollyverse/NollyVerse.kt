@@ -42,21 +42,9 @@ class NollyVerse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    // Popular Anime
+    // ============================== Popular ===============================
 
-    private fun toImgUrl(inputUrl: String): String {
-        val url = inputUrl.removeSuffix("/").toHttpUrl()
-        val pathSeg = url.encodedPathSegments.toMutableList()
-        pathSeg.add(1, "img")
-        return url.scheme +
-            "://" +
-            url.host +
-            "/" +
-            pathSeg.joinToString(separator = "/") +
-            ".jpg"
-    }
-
-    override fun popularAnimeNextPageSelector(): String = "div.loadmore ul.pagination.pagination-md li:nth-last-child(2)"
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/category/trending-movies/page/$page/")
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
@@ -77,155 +65,71 @@ class NollyVerse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "div.col-md-8 div.row div.col-md-6"
 
-    override fun popularAnimeRequest(page: Int): Request {
-        return GET("$baseUrl/category/trending-movies/page/$page/")
+    override fun popularAnimeFromElement(element: Element): SAnime = SAnime.create().apply {
+        title = element.select("div.post-body h3 a").text()
+        thumbnail_url = element.select("a.post-img img").attr("data-src")
+        setUrlWithoutDomain(element.select("a.post-img").attr("href"))
     }
 
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.title = element.select("div.post-body h3 a").text()
-        anime.thumbnail_url = element.select("a.post-img img").attr("data-src")
-        anime.setUrlWithoutDomain(element.select("a.post-img").attr("href").toHttpUrl().encodedPath)
-        return anime
-    }
+    override fun popularAnimeNextPageSelector(): String = "div.loadmore ul.pagination.pagination-md li:nth-last-child(2)"
 
-    // Episodes
+    // =============================== Latest ===============================
 
-    override fun episodeListRequest(anime: SAnime): Request {
-        return if (anime.url.startsWith("/movie/")) {
-            GET(baseUrl + anime.url + "/download/", headers)
-        } else {
-            GET(baseUrl + anime.url + "/seasons/", headers)
-        }
-    }
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/category/new-series/page/$page/")
 
-    override fun episodeListSelector() = throw Exception("not used")
-
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        val path = response.request.url.encodedPath
-
-        val document = response.asJsoup()
-        val episodeList = mutableListOf<SEpisode>()
-
-        if (path.startsWith("/movie/")) {
-            val episode = SEpisode.create()
-            episode.name = "Movie"
-            episode.episode_number = 1F
-            episode.setUrlWithoutDomain(path)
-            episodeList.add(episode)
-        } else {
-            var counter = 1
-            for (season in document.select("table.table.table-striped tbody tr").reversed()) {
-                val seasonUrl = season.select("td a[href]").attr("href")
-                val seasonSoup = client.newCall(
-                    GET(seasonUrl, headers),
-                ).execute().asJsoup()
-
-                val episodeTable = seasonSoup.select("table.table.table-striped")
-                val seasonNumber = episodeTable.select("thead th").eachText().find {
-                        t ->
-                    """Season (\d+)""".toRegex().matches(t)
-                }?.split(" ")!![1]
-
-                for (ep in episodeTable.select("tbody tr")) {
-                    val episode = SEpisode.create()
-
-                    episode.name = "Episode S${seasonNumber}E${ep.selectFirst("td")!!.text().split(" ")!![1]}"
-                    episode.episode_number = counter.toFloat()
-                    episode.setUrlWithoutDomain(seasonUrl + "#$counter")
-                    episodeList.add(episode)
-
-                    counter++
-                }
-
-                // Stop API abuse
-                Thread.sleep(500)
-            }
-        }
-
-        return episodeList.reversed()
-    }
-
-    override fun episodeFromElement(element: Element): SEpisode {
-        val episode = SEpisode.create()
-        episode.episode_number = element.select("td > span.Num").text().toFloat()
-        val seasonNum = element.ownerDocument()!!.select("div.Title span").text()
-        episode.name = "Season $seasonNum" + "x" + element.select("td span.Num").text() + " : " + element.select("td.MvTbTtl > a").text()
-        episode.setUrlWithoutDomain(element.select("td.MvTbPly > a.ClA").attr("abs:href"))
-        return episode
-    }
-
-    // Video urls
-    override fun videoListRequest(episode: SEpisode): Request {
-        return if (episode.name == "Movie") {
-            GET(baseUrl + episode.url + "#movie", headers)
-        } else {
-            val episodeIndex = """Episode S(\d+)E(?<num>\d+)""".toRegex().matchEntire(
-                episode.name,
-            )!!.groups["num"]!!.value
-            GET(baseUrl + episode.url.replaceAfterLast("#", "") + episodeIndex, headers)
-        }
-    }
-
-    override fun videoListParse(response: Response): List<Video> {
-        val videoList = mutableListOf<Video>()
+    override fun latestUpdatesParse(response: Response): AnimesPage {
         val document = response.asJsoup()
 
-        val fragment = response.request.url.fragment!!
-        if (fragment == "movie") {
-            for (res in document.select("table.table.table-striped tbody tr")) {
-                val url = res.select("td a").attr("href")
-                val name = res.select("td:not(:has(a))").text().trim()
-                videoList.add(Video(url, name, url))
+        val animes = document.select(latestUpdatesSelector()).map { element ->
+            latestUpdatesFromElement(element)
+        }
+
+        val hasNextPage = latestUpdatesNextPageSelector()?.let { selector ->
+            if (document.select(selector).text() != ">") {
+                return AnimesPage(animes, false)
             }
+            document.select(selector).first()
+        } != null
+
+        return AnimesPage(animes, hasNextPage)
+    }
+
+    override fun latestUpdatesSelector(): String = "div.section div.container div.row div.post.post-row"
+
+    override fun latestUpdatesFromElement(element: Element): SAnime = SAnime.create().apply {
+        title = element.select("div.post-body h3 a").text()
+        thumbnail_url = element.select("a.post-img img").attr("data-src").ifEmpty {
+            element.select("a.post-img img").attr("src")
+        }
+        setUrlWithoutDomain(element.select("a.post-img").attr("href"))
+    }
+
+    override fun latestUpdatesNextPageSelector(): String = "div.loadmore ul.pagination.pagination-md li:nth-last-child(2)"
+
+    // =============================== Search ===============================
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        return if (query.isNotBlank()) {
+            val body = FormBody.Builder()
+                .add("name", "$query")
+                .build()
+            POST("$baseUrl/livesearch.php", body = body)
         } else {
-            val episodeIndex = fragment.toInt() - 1
-
-            val episodeList = document.select("table.table.table-striped tbody tr").toList()
-
-            for (res in episodeList[episodeIndex].select("td").reversed()) {
-                val url = res.select("a").attr("href")
-                if (url.isNotEmpty()) {
-                    videoList.add(
-                        Video(url, res.text().trim(), url),
-                    )
+            var searchPath = ""
+            filters.filter { it.state != 0 }.forEach { filter ->
+                when (filter) {
+                    is CategoryFilter -> searchPath = if (filter.toUriPart() == "/series/") filter.toUriPart() else "${filter.toUriPart()}page/$page"
+                    is MovieGenreFilter -> searchPath = "/movies/genre/${filter.toUriPart()}/page/$page"
+                    is SeriesGenreFilter -> searchPath = "/series/genre/${filter.toUriPart()}/page/$page"
+                    else -> ""
                 }
             }
+
+            require(searchPath.isNotEmpty()) { "Search must not be empty" }
+
+            GET(baseUrl + searchPath)
         }
-
-        return videoList.sort()
     }
-
-    override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", null)
-        val codec = preferences.getString("preferred_codec", null)
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(quality)) {
-                    if (codec?.let { video.quality.contains(it) } == true) {
-                        newList.add(0, video)
-                    } else {
-                        newList.add(preferred, video)
-                    }
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
-    }
-
-    override fun videoListSelector() = throw Exception("not used")
-
-    override fun videoFromElement(element: Element) = throw Exception("not used")
-
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
-
-    // search
 
     override fun searchAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
@@ -317,141 +221,252 @@ class NollyVerse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return AnimesPage(animes, hasNextPage)
     }
 
-    private fun nextPageSelector(): String = "ul.pagination.pagination-md li:nth-last-child(2)"
-
     private fun movieGenreSelector(): String = "div.container > div.row > div.col-md-4"
 
-    private fun movieGenreFromElement(element: Element): SAnime {
-        return latestUpdatesFromElement(element)
-    }
+    private fun movieGenreFromElement(element: Element): SAnime = latestUpdatesFromElement(element)
 
     private fun seriesGenreSelector(): String = "div.row div.col-md-8 div.col-md-6"
 
-    private fun seriesGenreFromElement(element: Element): SAnime {
-        return latestUpdatesFromElement(element)
-    }
+    private fun seriesGenreFromElement(element: Element): SAnime = latestUpdatesFromElement(element)
 
     private fun koreanSelector(): String = "div.col-md-8 div.row div.col-md-6"
 
-    private fun koreanFromElement(element: Element): SAnime {
-        return latestUpdatesFromElement(element)
-    }
+    private fun koreanFromElement(element: Element): SAnime = latestUpdatesFromElement(element)
 
     private fun latestSelector(): String = latestUpdatesSelector()
 
-    private fun latestFromElement(element: Element): SAnime {
-        return latestUpdatesFromElement(element)
-    }
+    private fun latestFromElement(element: Element): SAnime = latestUpdatesFromElement(element)
 
     private fun seriesSelector(): String = "div.section-row ul.list-style li"
 
-    private fun seriesFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.title = element.select("a").text()
-        anime.thumbnail_url = toImgUrl(element.select("a").attr("href"))
-        anime.setUrlWithoutDomain(element.select("a").attr("href").toHttpUrl().encodedPath)
-        return anime
+    private fun seriesFromElement(element: Element): SAnime = SAnime.create().apply {
+        title = element.select("a").text()
+        thumbnail_url = toImgUrl(element.select("a").attr("href"))
+        setUrlWithoutDomain(element.select("a").attr("href"))
     }
 
     private fun movieSelector(): String = "div.container div.row div.col-md-12 div.col-md-4"
 
-    private fun movieFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.title = element.select("h3 a").text()
-        anime.thumbnail_url = element.select("a img").attr("src")
-        anime.setUrlWithoutDomain(element.select("a.post-img").attr("href").toHttpUrl().encodedPath)
-        return anime
+    private fun movieFromElement(element: Element): SAnime = SAnime.create().apply {
+        title = element.select("h3 a").text()
+        thumbnail_url = element.select("a img").attr("src")
+        setUrlWithoutDomain(element.select("a.post-img").attr("href"))
     }
-
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.title = element.text()
-        anime.thumbnail_url = toImgUrl(element.attr("href"))
-        anime.setUrlWithoutDomain(element.attr("href").toHttpUrl().encodedPath)
-        return anime
-    }
-
-    override fun searchAnimeNextPageSelector(): String = throw Exception("Not used")
 
     override fun searchAnimeSelector(): String = "a"
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        if (query.isNotBlank()) {
-            val body = FormBody.Builder()
-                .add("name", "$query")
-                .build()
-            return POST("$baseUrl/livesearch.php", body = body)
+    override fun searchAnimeFromElement(element: Element): SAnime = SAnime.create().apply {
+        title = element.text()
+        thumbnail_url = toImgUrl(element.attr("href"))
+        setUrlWithoutDomain(element.attr("href"))
+    }
+
+    private fun nextPageSelector(): String = "ul.pagination.pagination-md li:nth-last-child(2)"
+
+    override fun searchAnimeNextPageSelector(): String = throw Exception("Not used")
+
+    // =========================== Anime Details ============================
+
+    override fun animeDetailsParse(document: Document): SAnime = SAnime.create().apply {
+        title = document.select("div.page-header div.container div.row div.text-center h1").text()
+        description = document.select("blockquote.blockquote small").text()
+        genre = document.select("div.col-md-8 ul.list-style li").firstOrNull {
+            it.text().startsWith("Genre: ")
+        }?.text()?.substringAfter("Genre: ")?.replace(",", ", ")
+    }
+
+    // ============================== Episodes ==============================
+
+    override fun episodeListRequest(anime: SAnime): Request {
+        return if (anime.url.startsWith("/movie/")) {
+            GET(baseUrl + anime.url + "/download/", headers)
         } else {
-            var searchPath = ""
-            filters.filter { it.state != 0 }.forEach { filter ->
-                when (filter) {
-                    is CategoryFilter -> searchPath = if (filter.toUriPart() == "/series/") filter.toUriPart() else "${filter.toUriPart()}page/$page"
-                    is MovieGenreFilter -> searchPath = "/movies/genre/${filter.toUriPart()}/page/$page"
-                    is SeriesGenreFilter -> searchPath = "/series/genre/${filter.toUriPart()}/page/$page"
-                    else -> ""
+            GET(baseUrl + anime.url + "/seasons/", headers)
+        }
+    }
+
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val path = response.request.url.encodedPath
+
+        val document = response.asJsoup()
+        val episodeList = mutableListOf<SEpisode>()
+
+        if (path.startsWith("/movie/")) {
+            episodeList.add(
+                SEpisode.create().apply {
+                    name = "Movie"
+                    episode_number = 1F
+                    setUrlWithoutDomain(path)
+                },
+            )
+        } else {
+            var counter = 1
+            for (season in document.select("table.table.table-striped tbody tr").reversed()) {
+                val seasonUrl = season.select("td a[href]").attr("href")
+                val seasonSoup = client.newCall(
+                    GET(seasonUrl, headers),
+                ).execute().asJsoup()
+
+                val episodeTable = seasonSoup.select("table.table.table-striped")
+                val seasonNumber = episodeTable.select("thead th").eachText().find {
+                        t ->
+                    """Season (\d+)""".toRegex().matches(t)
+                }?.split(" ")!![1]
+
+                for (ep in episodeTable.select("tbody tr")) {
+                    episodeList.add(
+                        SEpisode.create().apply {
+                            name = "Episode S${seasonNumber}E${ep.selectFirst("td")!!.text().split(" ")!![1]}"
+                            episode_number = counter.toFloat()
+                            setUrlWithoutDomain(seasonUrl + "#$counter")
+                        },
+                    )
+                    counter++
                 }
+
+                // Stop abuse
+                Thread.sleep(500)
             }
-            if (searchPath.isEmpty()) {
-                throw Exception("Empty search")
-            }
-            return GET(baseUrl + searchPath)
+        }
+
+        return episodeList.reversed()
+    }
+
+    override fun episodeFromElement(element: Element): SEpisode {
+        val seasonNum = element.ownerDocument()!!.select("div.Title span").text()
+
+        return SEpisode.create().apply {
+            name = "Season $seasonNum" + "x" + element.select("td span.Num").text() + " : " + element.select("td.MvTbTtl > a").text()
+            episode_number = element.select("td > span.Num").text().toFloat()
+            setUrlWithoutDomain(element.select("td.MvTbPly > a.ClA").attr("abs:href"))
         }
     }
 
-    // Details
+    override fun episodeListSelector() = throw Exception("not used")
 
-    override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
-        anime.title = document.select("div.page-header div.container div.row div.text-center h1").text()
-        anime.description = document.select("blockquote.blockquote small").text()
-        document.select("div.col-md-8 ul.list-style li").forEach {
-            if (it.text().startsWith("Genre: ")) {
-                anime.genre = it.text().substringAfter("Genre: ").replace(",", ", ")
-            }
+    // ============================ Video Links =============================
+
+    override fun videoListRequest(episode: SEpisode): Request {
+        return if (episode.name == "Movie") {
+            GET(baseUrl + episode.url + "#movie", headers)
+        } else {
+            val episodeIndex = """Episode S(\d+)E(?<num>\d+)""".toRegex().matchEntire(
+                episode.name,
+            )!!.groups["num"]!!.value
+            GET(baseUrl + episode.url.replaceAfterLast("#", "") + episodeIndex, headers)
         }
-        return anime
     }
 
-    // Latest
-
-    override fun latestUpdatesNextPageSelector(): String = "div.loadmore ul.pagination.pagination-md li:nth-last-child(2)"
-
-    override fun latestUpdatesParse(response: Response): AnimesPage {
+    override fun videoListParse(response: Response): List<Video> {
+        val videoList = mutableListOf<Video>()
         val document = response.asJsoup()
 
-        val animes = document.select(latestUpdatesSelector()).map { element ->
-            latestUpdatesFromElement(element)
-        }
-
-        val hasNextPage = latestUpdatesNextPageSelector()?.let { selector ->
-            if (document.select(selector).text() != ">") {
-                return AnimesPage(animes, false)
+        val fragment = response.request.url.fragment!!
+        if (fragment == "movie") {
+            for (res in document.select("table.table.table-striped tbody tr")) {
+                val url = res.select("td a").attr("href")
+                val name = res.select("td:not(:has(a))").text().trim()
+                videoList.add(Video(url, name, url))
             }
-            document.select(selector).first()
-        } != null
+        } else {
+            val episodeIndex = fragment.toInt() - 1
 
-        return AnimesPage(animes, hasNextPage)
-    }
+            val episodeList = document.select("table.table.table-striped tbody tr").toList()
 
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-
-        anime.setUrlWithoutDomain(element.select("a.post-img").attr("href").toHttpUrl().encodedPath)
-        anime.title = element.select("div.post-body h3 a").text()
-        anime.thumbnail_url = element.select("a.post-img img").attr("data-src")
-        if (anime.thumbnail_url.toString().isEmpty()) {
-            anime.thumbnail_url = element.select("a.post-img img").attr("src")
+            for (res in episodeList[episodeIndex].select("td").reversed()) {
+                val url = res.select("a").attr("href")
+                if (url.isNotEmpty()) {
+                    videoList.add(
+                        Video(url, res.text().trim(), url),
+                    )
+                }
+            }
         }
-        return anime
+
+        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
+
+        return videoList.sort()
     }
 
-    override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/category/new-series/page/$page/")
+    override fun videoListSelector() = throw Exception("not used")
+
+    override fun videoFromElement(element: Element) = throw Exception("not used")
+
+    override fun videoUrlParse(document: Document) = throw Exception("not used")
+
+    // ============================= Utilities ==============================
+
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val codec = preferences.getString(PREF_CODEC_KEY, PREF_CODEC_KEY)!!
+
+        return this.sortedWith(
+            compareBy(
+                { it.quality.contains(quality) },
+                { it.quality.contains(codec) },
+            ),
+        ).reversed()
     }
 
-    override fun latestUpdatesSelector(): String = "div.section div.container div.row div.post.post-row"
+    private fun toImgUrl(inputUrl: String): String {
+        val url = inputUrl.removeSuffix("/").toHttpUrl()
+        val pathSeg = url.encodedPathSegments.toMutableList()
+        pathSeg.add(1, "img")
+        return url.scheme +
+            "://" +
+            url.host +
+            "/" +
+            pathSeg.joinToString(separator = "/") +
+            ".jpg"
+    }
 
-    // Filters
+    companion object {
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private val PREF_QUALITY_ENTRY_VALUES = arrayOf("1080", "720", "480", "360", "240")
+        private val PREF_QUALITY_ENTRIES = PREF_QUALITY_ENTRY_VALUES.map { "${it}p" }.toTypedArray()
+        private const val PREF_QUALITY_DEFAULT = "1080"
+
+        private const val PREF_CODEC_KEY = "preferred_codec"
+        private const val PREF_CODEC_DEFAULT = "265"
+    }
+
+    // ============================== Settings ==============================
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = "Preferred quality"
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_CODEC_KEY
+            title = "Preferred Video Codec"
+            entries = arrayOf("h265", "h264")
+            entryValues = arrayOf("265", "264")
+            setDefaultValue(PREF_CODEC_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+    }
+
+    // ============================== Filters ===============================
 
     override fun getFilterList() = AnimeFilterList(
         AnimeFilter.Header("NOTE: Only one works at a time"),
@@ -538,42 +553,5 @@ class NollyVerse : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :
         AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
-    }
-
-    // settings
-
-    override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p", "240p")
-            entryValues = arrayOf("1080", "720", "480", "360", "240")
-            setDefaultValue("1080")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-        screen.addPreference(videoQualityPref)
-        val videoCodecPref = ListPreference(screen.context).apply {
-            key = "preferred_codec"
-            title = "Preferred Video Codec"
-            entries = arrayOf("h265", "h264")
-            entryValues = arrayOf("265", "264")
-            setDefaultValue("265")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-        screen.addPreference(videoCodecPref)
     }
 }
