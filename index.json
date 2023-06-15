@@ -1724,10 +1724,10 @@
   {
     "name": "Aniyomi: UniqueStream",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.uniquestream",
-    "apk": "aniyomi-en.uniquestream-v13.1.apk",
+    "apk": "aniyomi-en.uniquestream-v13.3.apk",
     "lang": "en",
-    "code": 1,
-    "version": "13.1",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1736,7 +1736,7 @@
         "name": "UniqueStream",
         "lang": "en",
         "id": "1915898919039572670",
-        "baseUrl": "https://uniquestreaming.net",
+        "baseUrl": "https://uniquestream.net",
         "versionId": 1,
         "hasCloudflare": 1
       }
