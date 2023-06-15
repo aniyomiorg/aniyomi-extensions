@@ -25,6 +25,7 @@ class DooPlayGenerator : ThemeSourceGenerator {
         SingleLang("Multimovies", "https://multimovies.tech", "en", isNsfw = false, overrideVersionCode = 6),
         SingleLang("pactedanime", "https://pactedanime.com", "en", isNsfw = false, className = "PactedAnime", overrideVersionCode = 4),
         SingleLang("Pi Fansubs", "https://pifansubs.org", "pt-BR", isNsfw = true, overrideVersionCode = 16),
+        SingleLang("UniqueStream", "https://uniquestream.net", "en", isNsfw = false, overrideVersionCode = 2),
     )
 
     companion object {
