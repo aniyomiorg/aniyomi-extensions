@@ -190,7 +190,7 @@ apply from: "$rootDir/common.gradle"
 | `pkgNameSuffix` | A unique suffix added to `eu.kanade.tachiyomi.animeextension`. The language and the site name should be enough. Remember your extension code implementation must be placed in this package. |
 | `extClass` | Points to the class that implements `AnimeSource`. You can use a relative path starting with a dot (the package name is the base path). This is used to find and instantiate the source(s). |
 | `extVersionCode` | The extension version code. This must be a positive integer and incremented with any change to the code. |
-| `libVersion` | (Optional, defaults to `13`) The version of the [extensions library](https://github.com/jmir1/extensions-lib) used. |
+| `libVersion` | (Optional, defaults to `13`) The version of the [extensions library](https://github.com/aniyomiorg/extensions-lib) used. |
 | `containsNsfw` | (Optional, defaults to `false`) Flag to indicate that a source contains NSFW content. |
 
 The extension's version name is generated automatically by concatenating `libVersion` and `extVersionCode`. With the example used above, the version would be `12.1`.
@@ -199,7 +199,7 @@ The extension's version name is generated automatically by concatenating `libVer
 
 #### Extension API
 
-Extensions rely on [extensions-lib](https://github.com/jmir1/extensions-lib), which provides some interfaces and stubs from the [app](https://github.com/aniyomiorg/aniyomi) for compilation purposes. The actual implementations can be found [here](https://github.com/aniyomiorg/aniyomi/tree/master/app/src/main/java/eu/kanade/tachiyomi/animesource). Referencing the actual implementation will help with understanding extensions' call flow.
+Extensions rely on [extensions-lib](https://github.com/aniyomiorg/extensions-lib), which provides some interfaces and stubs from the [app](https://github.com/aniyomiorg/aniyomi) for compilation purposes. The actual implementations can be found [here](https://github.com/aniyomiorg/aniyomi/tree/master/app/src/main/java/eu/kanade/tachiyomi/animesource). Referencing the actual implementation will help with understanding extensions' call flow.
 
 #### Rate limiting library
 
@@ -306,7 +306,7 @@ open class UriPartFilter(displayName: String, private val vals: Array<Pair<Strin
 - `fetchAnimeDetails` is called to update an anime's details from when it was initialized earlier.
     - `SAnime.initialized` tells the app if it should call `fetchAnimeDetails`. If you are overriding `fetchAnimeDetails`, make sure to pass it as `true`.
     - `SAnime.genre` is a string containing list of all genres separated with `", "`.
-    - `SAnime.status` is an "enum" value. Refer to [the values in the `SAnime` companion object](https://github.com/jmir1/extensions-lib/blob/a61fa402d3dcbb1402ce0cf252259cdc1b489b7e/library/src/main/java/eu/kanade/tachiyomi/animesource/model/SAnime.kt#L24-L27).
+    - `SAnime.status` is an "enum" value. Refer to [the values in the `SAnime` companion object](https://github.com/aniyomiorg/extensions-lib/blob/a61fa402d3dcbb1402ce0cf252259cdc1b489b7e/library/src/main/java/eu/kanade/tachiyomi/animesource/model/SAnime.kt#L24-L27).
     - During a backup, only `url` and `title` are stored. To restore the rest of the anime data, the app calls `fetchAnimeDetails`, so all fields should be (re)filled in if possible.
     - If a `SAnime` is cached `fetchAnimeDetails` will be only called when the user does a manual update(Swipe-to-Refresh).
 - `fetchEpisodeList` is called to display the episode list.
