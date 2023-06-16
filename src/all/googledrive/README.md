@@ -5,19 +5,19 @@ Table of Content
   - [How do i add entries?](#how-do-i-add-entries)
   - [What are all these options for drive paths?](#what-are-all-these-options-for-drive-paths)
   - [I added the drive paths but it still get "Enter drive path(s) in extension settings."](#i-added-the-drive-paths-but-it-still-get-enter-drive-paths-in-extension-settings)
-  - [I cannot log in through webview](i-cannot-log-in-through-webview)
+  - [I cannot log in through webview](#i-cannot-log-in-through-webview)
 
 ## FAQ
 
 ### How do i add entries?
-The Google Drive Extension *only* supports google drive folders, so no shared drives. If you have a folder, which contains sub-folders of an anime, such as:
+The Google Drive Extension *only* supports google drive folders, so no shared drives (but folders inside shared drives works fine!). If you have a folder, which contains sub-folders of an anime, such as:
 ```
 https://drive.google.com/drive/folders/some-long-id
-├── anime1
+├── anime1/
 │   ├── episode 1.mkv
 │   ├── episode 2.mkv
 │   └── ...
-└── anime2
+└── anime2/
     ├── episode 1.mkv
     ├── episode 2.mkv
     └── ...
@@ -49,4 +49,6 @@ Google can sometimes think that webview isn't a secure browser, and will thus re
 1. In the top right, click the three dots then click `Clear cookies`
 2. In the top right, click the three dots then click `Refresh`
 3. Click the `Try again` button after the website doesn't let you log in
-   Try a combination of these steps, and after a few tries it should eventually let you log in.
+4. Make sure that your webview is up to date
+   
+Try a combination of these steps, and after a few tries it should eventually let you log in.
