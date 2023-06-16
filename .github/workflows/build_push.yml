@@ -28,6 +28,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: master
+          token: ${{ secrets.ANIYOMIORG_BOT_PAT }}
 
       - name: Find lib changes
         id: modified-libs
@@ -37,6 +38,15 @@ jobs:
           files_ignore: lib/**.md
           files_separator: " "
         # This step is going to commit, but this will not trigger another workflow.
+
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v5
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
       - name: Bump extensions that uses a modified lib
         if: steps.modified-libs.outputs.any_changed == 'true'
         run: |
