@@ -282,7 +282,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================= Utilities ==============================
 
-    // https://github.com/jmir1/aniyomi-extensions/blob/master/src/en/uhdmovies/src/eu/kanade/tachiyomi/animeextension/en/uhdmovies/UHDMovies.kt
+    // https://github.com/aniyomiorg/aniyomi-extensions/blob/master/src/en/uhdmovies/src/eu/kanade/tachiyomi/animeextension/en/uhdmovies/UHDMovies.kt
     private fun extractVideo(epUrl: EpUrl): Pair<List<Video>, String> {
         val videoList = mutableListOf<Video>()
 
