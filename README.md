@@ -1,11 +1,11 @@
 | Build | Support Server |
 |-------|---------|
-| ![CI](https://github.com/jmir1/aniyomi-extensions/workflows/CI/badge.svg?event=push) | [![Discord](https://img.shields.io/discord/841701076242530374?label=discord&labelColor=7289da&color=2c2f33&style=flat)](https://discord.gg/F32UjdJZrR) |
+| ![CI](https://github.com/aniyomiorg/aniyomi-extensions/workflows/CI/badge.svg?event=push) | [![Discord](https://img.shields.io/discord/841701076242530374?label=discord&labelColor=7289da&color=2c2f33&style=flat)](https://discord.gg/F32UjdJZrR) |
 
 # ![app icon](./.github/readme-images/app-icon.png)Aniyomi Extensions
 Aniyomi is a free and open source manga reader for Android 6.0 and above.
 
-This repository contains the available extension catalogues for the [Aniyomi](https://github.com/jmir1/aniyomi) fork.
+This repository contains the available extension catalogues for the [Aniyomi](https://github.com/aniyomiorg/aniyomi) fork.
 
 # Usage
 
@@ -13,7 +13,7 @@ Extension sources can be downloaded, installed, and uninstalled via the main Ani
 
 ## Downloads
 
-If you prefer to directly download the APK files, they are available via https://aniyomi.org/extensions/ or directly in this GitHub repository in the [`repo` branch](https://github.com/jmir1/aniyomi-extensions/tree/repo/apk).
+If you prefer to directly download the APK files, they are available via https://aniyomi.org/extensions/ or directly in this GitHub repository in the [`repo` branch](https://github.com/aniyomiorg/aniyomi-extensions/tree/repo/apk).
 
 # Requests
 
@@ -23,7 +23,7 @@ Source requests here are meant as up-for-grabs for any developer, thus it's impo
 
 Contributions are welcome!
 
-Check out the repo's [issue backlog](https://github.com/jmir1/aniyomi-extensions/issues) for source requests and bug reports.
+Check out the repo's [issue backlog](https://github.com/aniyomiorg/aniyomi-extensions/issues) for source requests and bug reports.
 
 To get started with development, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 

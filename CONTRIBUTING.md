@@ -2,7 +2,7 @@
 
 This guide have some instructions and tips on how to create a new Aniyomi extension. Please **read it carefully** if you're a new contributor or don't have any experience on the required languages and knowledges.
 
-This guide is not definitive and it's being updated over time. If you find any issue on it, feel free to report it through a [Meta Issue](https://github.com/jmir1/aniyomi-extensions/issues/new?assignees=&labels=Meta+request&template=request_meta.yml) or fixing it directly by submitting a Pull Request.
+This guide is not definitive and it's being updated over time. If you find any issue on it, feel free to report it through a [Meta Issue](https://github.com/aniyomiorg/aniyomi-extensions/issues/new?assignees=&labels=Meta+request&template=request_meta.yml) or fixing it directly by submitting a Pull Request.
 
 ## Table of Contents
 
@@ -190,7 +190,7 @@ apply from: "$rootDir/common.gradle"
 | `pkgNameSuffix` | A unique suffix added to `eu.kanade.tachiyomi.animeextension`. The language and the site name should be enough. Remember your extension code implementation must be placed in this package. |
 | `extClass` | Points to the class that implements `AnimeSource`. You can use a relative path starting with a dot (the package name is the base path). This is used to find and instantiate the source(s). |
 | `extVersionCode` | The extension version code. This must be a positive integer and incremented with any change to the code. |
-| `libVersion` | (Optional, defaults to `13`) The version of the [extensions library](https://github.com/jmir1/extensions-lib) used. |
+| `libVersion` | (Optional, defaults to `13`) The version of the [extensions library](https://github.com/aniyomiorg/extensions-lib) used. |
 | `containsNsfw` | (Optional, defaults to `false`) Flag to indicate that a source contains NSFW content. |
 
 The extension's version name is generated automatically by concatenating `libVersion` and `extVersionCode`. With the example used above, the version would be `12.1`.
@@ -199,11 +199,11 @@ The extension's version name is generated automatically by concatenating `libVer
 
 #### Extension API
 
-Extensions rely on [extensions-lib](https://github.com/jmir1/extensions-lib), which provides some interfaces and stubs from the [app](https://github.com/jmir1/aniyomi) for compilation purposes. The actual implementations can be found [here](https://github.com/jmir1/aniyomi/tree/master/app/src/main/java/eu/kanade/tachiyomi/animesource). Referencing the actual implementation will help with understanding extensions' call flow.
+Extensions rely on [extensions-lib](https://github.com/aniyomiorg/extensions-lib), which provides some interfaces and stubs from the [app](https://github.com/aniyomiorg/aniyomi) for compilation purposes. The actual implementations can be found [here](https://github.com/aniyomiorg/aniyomi/tree/master/app/src/main/java/eu/kanade/tachiyomi/animesource). Referencing the actual implementation will help with understanding extensions' call flow.
 
 #### Rate limiting library
 
-[`lib-ratelimit`](https://github.com/jmir1/aniyomi-extensions/tree/master/lib/ratelimit) is a library for adding rate limiting functionality as an [OkHttp interceptor](https://square.github.io/okhttp/interceptors/).
+[`lib-ratelimit`](https://github.com/aniyomiorg/aniyomi-extensions/tree/master/lib/ratelimit) is a library for adding rate limiting functionality as an [OkHttp interceptor](https://square.github.io/okhttp/interceptors/).
 
 ```gradle
 dependencies {
@@ -213,7 +213,7 @@ dependencies {
 
 #### Additional dependencies
 
-You may find yourself needing additional functionality and wanting to add more dependencies to your `build.gradle` file. Since extensions are run within the main Aniyomi app, you can make use of [its dependencies](https://github.com/jmir1/aniyomi/blob/master/app/build.gradle.kts).
+You may find yourself needing additional functionality and wanting to add more dependencies to your `build.gradle` file. Since extensions are run within the main Aniyomi app, you can make use of [its dependencies](https://github.com/aniyomiorg/aniyomi/blob/master/app/build.gradle.kts).
 
 For example, an extension that needs coroutines, it could add the following:
 
@@ -228,7 +228,7 @@ dependencies {
 
 Notice that we're using `compileOnly` instead of `implementation`, since the app already contains it. You could use `implementation` instead for a new dependency, or you prefer not to rely on whatever the main app has at the expense of app size.
 
-Note that using `compileOnly` restricts you to versions that must be compatible with those used in [Aniyomi v0.10.12+](https://github.com/jmir1/aniyomi/blob/v0.10.12/app/build.gradle.kts) for proper backwards compatibility.
+Note that using `compileOnly` restricts you to versions that must be compatible with those used in [Aniyomi v0.10.12+](https://github.com/aniyomiorg/aniyomi/blob/v0.10.12/app/build.gradle.kts) for proper backwards compatibility.
 
 ### Extension main class
 
@@ -275,7 +275,7 @@ a.k.a. the Latest source entry point in the app (invoked by tapping on the "Late
 
 ##### Filters
 
-The search flow have support to filters that can be added to a `FilterList` inside the `getFilterList` method. When the user changes the filters' state, they will be passed to the `searchRequest`, and they can be iterated to create the request (by getting the `filter.state` value, where the type varies depending on the `Filter` used). You can check the filter types available [here](https://github.com/jmir1/aniyomi/blob/master/app/src/main/java/eu/kanade/tachiyomi/source/model/Filter.kt) and in the table below.
+The search flow have support to filters that can be added to a `FilterList` inside the `getFilterList` method. When the user changes the filters' state, they will be passed to the `searchRequest`, and they can be iterated to create the request (by getting the `filter.state` value, where the type varies depending on the `Filter` used). You can check the filter types available [here](https://github.com/aniyomiorg/aniyomi/blob/master/app/src/main/java/eu/kanade/tachiyomi/source/model/Filter.kt) and in the table below.
 
 | Filter | State type | Description |
 | ------ | ---------- | ----------- |
@@ -306,7 +306,7 @@ open class UriPartFilter(displayName: String, private val vals: Array<Pair<Strin
 - `fetchAnimeDetails` is called to update an anime's details from when it was initialized earlier.
     - `SAnime.initialized` tells the app if it should call `fetchAnimeDetails`. If you are overriding `fetchAnimeDetails`, make sure to pass it as `true`.
     - `SAnime.genre` is a string containing list of all genres separated with `", "`.
-    - `SAnime.status` is an "enum" value. Refer to [the values in the `SAnime` companion object](https://github.com/jmir1/extensions-lib/blob/a61fa402d3dcbb1402ce0cf252259cdc1b489b7e/library/src/main/java/eu/kanade/tachiyomi/animesource/model/SAnime.kt#L24-L27).
+    - `SAnime.status` is an "enum" value. Refer to [the values in the `SAnime` companion object](https://github.com/aniyomiorg/extensions-lib/blob/a61fa402d3dcbb1402ce0cf252259cdc1b489b7e/library/src/main/java/eu/kanade/tachiyomi/animesource/model/SAnime.kt#L24-L27).
     - During a backup, only `url` and `title` are stored. To restore the rest of the anime data, the app calls `fetchAnimeDetails`, so all fields should be (re)filled in if possible.
     - If a `SAnime` is cached `fetchAnimeDetails` will be only called when the user does a manual update(Swipe-to-Refresh).
 - `fetchEpisodeList` is called to display the episode list.
@@ -335,7 +335,7 @@ open class UriPartFilter(displayName: String, private val vals: Array<Pair<Strin
       Make sure you make the `SimpleDateFormat` a class constant or variable so it doesn't get recreated for every episode. If you need to parse or format dates in anime description, create another instance since `SimpleDateFormat` is not thread-safe.
     - If the parsing have any problem, make sure to return `0L` so the app will use the default date instead.
     - The app will overwrite dates of existing old episodes **UNLESS** `0L` is returned.
-    - The default date has [changed](https://github.com/jmir1/aniyomi/pull/7197) in Aniyomi preview ≥ r4442 or stable > 0.13.4.
+    - The default date has [changed](https://github.com/aniyomiorg/aniyomi/pull/7197) in Aniyomi preview ≥ r4442 or stable > 0.13.4.
         - In older versions, the default date is always the fetch date.
         - In newer versions, this is the same if every (new) episode has `0L` returned.
         - However, if the source only provides the upload date of the latest episode, you can now set it to the latest episode and leave other episodes default. The app will automatically set it (instead of fetch date) to every new episode and leave old episodes' dates untouched.
@@ -356,7 +356,7 @@ open class UriPartFilter(displayName: String, private val vals: Array<Pair<Strin
 #### URL intent filter
 
 Extensions can define URL intent filters by defining it inside a custom `AndroidManifest.xml` file.
-For an example, refer to [the NHentai module's `AndroidManifest.xml` file](https://github.com/jmir1/aniyomi-extensions/blob/master/src/all/nhentai/AndroidManifest.xml) and [its corresponding `NHUrlActivity` handler](https://github.com/jmir1/aniyomi-extensions/blob/master/src/all/nhentai/src/eu/kanade/tachiyomi/extension/all/nhentai/NHUrlActivity.kt).
+For an example, refer to [the NHentai module's `AndroidManifest.xml` file](https://github.com/aniyomiorg/aniyomi-extensions/blob/master/src/all/nhentai/AndroidManifest.xml) and [its corresponding `NHUrlActivity` handler](https://github.com/aniyomiorg/aniyomi-extensions/blob/master/src/all/nhentai/src/eu/kanade/tachiyomi/extension/all/nhentai/NHUrlActivity.kt).
 
 To test if the URL intent filter is working as expected, you can try opening the website in a browser and navigating to the endpoint that was added as a filter or clicking a hyperlink. Alternatively, you can use the `adb` command below.
 
@@ -368,7 +368,7 @@ $ adb shell am start -d "<your-link>" -a android.intent.action.VIEW
 
 There is some cases where existing sources changes their name on the website. To correctly reflect these changes in the extension, you need to explicity set the `id` to the same old value, otherwise it will get changed by the new `name` value and users will be forced to migrate back to the source.
 
-To get the current `id` value before the name change, you can search the source name in the [repository JSON file](https://github.com/jmir1/aniyomi-extensions/blob/repo/index.json) by looking into the `sources` attribute of the extension. When you have the `id` copied, you can override it in the source:
+To get the current `id` value before the name change, you can search the source name in the [repository JSON file](https://github.com/aniyomiorg/aniyomi-extensions/blob/repo/index.json) by looking into the `sources` attribute of the extension. When you have the `id` copied, you can override it in the source:
 
 ```kotlin
 override val id: Long = <the-id>
