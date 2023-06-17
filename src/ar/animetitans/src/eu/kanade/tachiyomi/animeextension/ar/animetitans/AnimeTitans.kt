@@ -18,6 +18,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -175,11 +176,10 @@ class AnimeTitans : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         videoList.add(video)
                     }
                 }
-                /*embedUrl.contains("mp4upload") -> {
-                    val headers = headers.newBuilder().set("referer", "https://mp4upload.com/").build()
-                    val video = Mp4uploadExtractor().getVideoFromUrl(embedUrl, headers)
-                    videoList.add(video)
-                }*/
+                embedUrl.contains("mp4upload") -> {
+                    val videos = Mp4uploadExtractor(client).videosFromUrl(embedUrl, headers)
+                    videoList.addAll(videos)
+                }
                 embedUrl.contains("vidbom.com") ||
                     embedUrl.contains("vidbem.com") || embedUrl.contains("vidbm.com") || embedUrl.contains("vedpom.com") ||
                     embedUrl.contains("vedbom.com") || embedUrl.contains("vedbom.org") || embedUrl.contains("vadbom.com") ||

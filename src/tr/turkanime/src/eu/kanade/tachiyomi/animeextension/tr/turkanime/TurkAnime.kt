@@ -12,7 +12,6 @@ import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.FilemoonExtrac
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.GoogleDriveExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MVidooExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MailRuExtractor
-import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MytvExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.SendvidExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.SibnetExtractor
@@ -30,6 +29,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.synchrony.Deobfuscator
@@ -237,7 +237,7 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 videoList.addAll(MailRuExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: "))
             }
             "MP4UPLOAD" -> {
-                videoList.addAll(Mp4uploadExtractor(client).getVideoFromUrl(hosterLink, headers, prefix = "$subber: "))
+                videoList.addAll(Mp4uploadExtractor(client).videosFromUrl(hosterLink, headers, prefix = "$subber: "))
             }
             "MYVI" -> {
                 videoList.addAll(MytvExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))

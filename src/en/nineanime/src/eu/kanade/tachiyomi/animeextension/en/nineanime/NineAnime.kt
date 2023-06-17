@@ -6,7 +6,6 @@ import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
-import eu.kanade.tachiyomi.animeextension.en.nineanime.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -14,6 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -306,12 +306,11 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                 "streamtape" -> StreamTapeExtractor(client)
                     .videoFromUrl(embedLink, "StreamTape - ${server.first}")?.let {
-                        videoList.add(it)
-                    }
-                "mp4upload" -> Mp4uploadExtractor(client, headers)
-                    .videoFromUrl(embedLink, "Mp4Upload - ${server.first}").let {
-                        videoList.addAll(it)
-                    }
+                    videoList.add(it)
+                }
+                "mp4upload" -> Mp4uploadExtractor(client)
+                    .videosFromUrl(embedLink, headers, suffix = " - ${server.first}")
+                    .let(videoList::addAll)
                 else -> null
             }
         }

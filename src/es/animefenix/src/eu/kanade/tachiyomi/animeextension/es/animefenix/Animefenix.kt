@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.animefenix.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -12,6 +11,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
@@ -126,9 +126,8 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     )
                 }
                 realUrl.contains("mp4upload") -> {
-                    val headers = headers.newBuilder().set("referer", "https://mp4upload.com/").build()
-                    val video = Mp4uploadExtractor().getVideoFromUrl(realUrl, headers)
-                    videoList.add(video)
+                    val videos = Mp4uploadExtractor(client).videosFromUrl(realUrl, headers)
+                    videoList.addAll(videos)
                 }
             }
         }

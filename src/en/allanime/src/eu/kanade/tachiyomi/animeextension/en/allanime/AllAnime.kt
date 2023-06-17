@@ -6,7 +6,6 @@ import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.en.allanime.extractors.AllAnimeExtractor
-import eu.kanade.tachiyomi.animeextension.en.allanime.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animeextension.en.allanime.extractors.StreamlareExtractor
 import eu.kanade.tachiyomi.animeextension.en.allanime.extractors.VidstreamingExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -17,6 +16,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -349,9 +349,8 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                             } ?: emptyList()
                         }
                         sName == "mp4upload" -> {
-                            val headers = headers.newBuilder().set("referer", "https://mp4upload.com/").build()
                             runCatching {
-                                Mp4uploadExtractor(client).getVideoFromUrl(server.sourceUrl, headers)
+                                Mp4uploadExtractor(client).videosFromUrl(server.sourceUrl, headers)
                             }.getOrNull()?.map {
                                 Pair(it, server.priority)
                             } ?: emptyList()

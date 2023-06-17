@@ -7,7 +7,6 @@ import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animeextension.pl.wbijam.extractors.CdaPlExtractor
 import eu.kanade.tachiyomi.animeextension.pl.wbijam.extractors.DailymotionExtractor
-import eu.kanade.tachiyomi.animeextension.pl.wbijam.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animeextension.pl.wbijam.extractors.SibnetExtractor
 import eu.kanade.tachiyomi.animeextension.pl.wbijam.extractors.VkExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -17,6 +16,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
@@ -284,8 +284,7 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 runCatching {
                     when {
                         serverUrl.contains("mp4upload") -> {
-                            val headers = headers.newBuilder().set("referer", "https://mp4upload.com/").build()
-                            Mp4uploadExtractor(client).getVideoFromUrl(serverUrl, headers)
+                            Mp4uploadExtractor(client).videosFromUrl(serverUrl, headers)
                         }
                         serverUrl.contains("cda.pl") -> {
                             CdaPlExtractor(client).getVideosFromUrl(serverUrl, headers)
