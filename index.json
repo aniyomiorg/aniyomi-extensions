@@ -903,6 +903,27 @@
     ]
   },
   {
+    "name": "Aniyomi: AnimeKhor",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.animekhor",
+    "apk": "aniyomi-en.animekhor-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimeKhor",
+        "lang": "en",
+        "id": "2156984402743841841",
+        "baseUrl": "https://animekhor.xyz",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Animenosub",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.animenosub",
     "apk": "aniyomi-en.animenosub-v13.1.apk",
@@ -1094,10 +1115,10 @@
   {
     "name": "Aniyomi: DramaCool",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.dramacool",
-    "apk": "aniyomi-en.dramacool-v13.36.apk",
+    "apk": "aniyomi-en.dramacool-v13.37.apk",
     "lang": "en",
-    "code": 36,
-    "version": "13.36",
+    "code": 37,
+    "version": "13.37",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1106,7 +1127,7 @@
         "name": "DramaCool",
         "lang": "en",
         "id": "76017545488916387",
-        "baseUrl": "https://dramacool.cr",
+        "baseUrl": "https://dramacool.hr",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -1472,10 +1493,10 @@
   {
     "name": "Aniyomi: 9anime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.nineanime",
-    "apk": "aniyomi-en.nineanime-v13.44.apk",
+    "apk": "aniyomi-en.nineanime-v13.45.apk",
     "lang": "en",
-    "code": 44,
-    "version": "13.44",
+    "code": 45,
+    "version": "13.45",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3323,6 +3344,27 @@
         "lang": "pt-BR",
         "id": "8394381853778573358",
         "baseUrl": "https://meusanimes.org",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: Muito Hentai",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.muitohentai",
+    "apk": "aniyomi-pt.muitohentai-v12.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "12.1",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Muito Hentai",
+        "lang": "pt-BR",
+        "id": "1062606379654091909",
+        "baseUrl": "https://www.muitohentai.com",
         "versionId": 1,
         "hasCloudflare": 0
       }
