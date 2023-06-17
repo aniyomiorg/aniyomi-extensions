@@ -30,7 +30,7 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AnimeFenix"
 
-    override val baseUrl = "https://www.animefenix.com"
+    override val baseUrl = "https://www.animefenix.tv"
 
     override val lang = "es"
 
@@ -90,16 +90,6 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 client.newCall(GET(decodedUrl)).execute().asJsoup().selectFirst("script")!!
                     .data().substringAfter("src=\"").substringBefore("\"")
             } catch (e: Exception) { "" }
-            /*
-            in case this is too slow:
-            Animefenix redirect links are associated with an id, ex: id:9=Amazon ; id:2=Fembed ; etc. ( $baseUrl/redirect.php?player=$id )
-            can be obtained in an easy way by adding this line :
-            Log.i("bruh", "${server.substringAfter("?player=").substringBefore("&")} = $realUrl}")
-            and play any episode,
-            the "code" part in the url represents represents what comes after the main domain like /embed/ or /v/ or /e/
-            ex of full url: $baseUrl/redirect.php?player=2&amp;code=4mdmxtzmpe8768k&amp;
-            in this case the playerId represent fembed and the full url is : https://www.fembed.com/v/4mdmxtzmpe8768k
-             */
 
             when {
                 realUrl.contains("ok.ru") -> {
