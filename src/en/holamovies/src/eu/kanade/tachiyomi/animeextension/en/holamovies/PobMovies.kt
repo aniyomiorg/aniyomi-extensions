@@ -127,7 +127,7 @@ class PobMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         date_upload = -1L
                         url = link.attr("href")
                         scanlator = "${if (size == null) "" else "$size • "}$info"
-                    }
+                    },
                 )
             }
         }
@@ -153,7 +153,7 @@ class PobMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             date_upload = -1L
                             url = link.attr("href")
                             scanlator = "${if (size == null) "" else "$size • "}$info"
-                        }
+                        },
                     )
                 }
             }
@@ -177,7 +177,7 @@ class PobMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             date_upload = -1L
                             scanlator = size
                             url = link.attr("href")
-                        }
+                        },
                     )
                 }
             }
@@ -201,7 +201,7 @@ class PobMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             date_upload = -1L
                             scanlator = size
                             url = link.attr("href")
-                        }
+                        },
                     )
                 }
             }
@@ -224,7 +224,7 @@ class PobMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             date_upload = -1L
                             scanlator = "${if (size == null) "" else "$size • "}$info"
                             url = link.attr("href")
-                        }
+                        },
                     )
                 }
             }
@@ -247,7 +247,7 @@ class PobMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             date_upload = -1L
                             scanlator = "${if (size == null) "" else "$size • "}$info"
                             url = link.attr("href")
-                        }
+                        },
                     )
                 }
             }
@@ -266,7 +266,7 @@ class PobMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             date_upload = -1L
                             scanlator = size
                             url = link.attr("href")
-                        }
+                        },
                     )
                 }
             }
@@ -285,7 +285,7 @@ class PobMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             date_upload = -1L
                             scanlator = size
                             url = link.attr("href")
-                        }
+                        },
                     )
                 }
             }

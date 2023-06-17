@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.animeextension.en.edytjedhgmdhm
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.PreferenceScreen
-import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
