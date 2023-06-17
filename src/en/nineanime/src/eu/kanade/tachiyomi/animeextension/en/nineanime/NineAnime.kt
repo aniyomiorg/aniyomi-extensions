@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.animeextension.en.nineanime
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
+import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animeextension.en.nineanime.extractors.Mp4uploadExtractor
@@ -22,7 +23,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -44,7 +44,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "9anime"
 
-    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://9anime.to")!! }
+    override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
 
     override val lang = "en"
 
@@ -62,9 +62,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Popular ===============================
 
-    override fun popularAnimeRequest(page: Int): Request {
-        return GET("$baseUrl/filter?sort=trending&page=$page")
-    }
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/filter?sort=trending&page=$page")
 
     override fun popularAnimeSelector(): String = "div.ani.items > div.item"
 
@@ -79,9 +77,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =============================== Latest ===============================
 
-    override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/filter?sort=recently_updated&page=$page")
-    }
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/filter?sort=recently_updated&page=$page")
 
     override fun latestUpdatesSelector(): String = popularAnimeSelector()
 
@@ -128,29 +124,28 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
+    // ============================== Filters ===============================
+
     override fun getFilterList(): AnimeFilterList = NineAnimeFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
 
-    override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
-        anime.title = document.select("h1.title").text()
-        anime.genre = document.select("div:contains(Genre) > span > a").joinToString { it.text() }
-        anime.description = document.select("div.synopsis > div.shorting > div.content").text()
-        anime.author = document.select("div:contains(Studio) > span > a").text()
-        anime.status = parseStatus(document.select("div:contains(Status) > span").text())
+    override fun animeDetailsParse(document: Document): SAnime = SAnime.create().apply {
+        title = document.select("h1.title").text()
+        genre = document.select("div:contains(Genre) > span > a").joinToString { it.text() }
+        description = document.select("div.synopsis > div.shorting > div.content").text()
+        author = document.select("div:contains(Studio) > span > a").text()
+        status = parseStatus(document.select("div:contains(Status) > span").text())
 
-        // add alternative name to anime description
         val altName = "Other name(s): "
         document.select("h1.title").attr("data-jp").let {
-            if (it.isBlank().not()) {
-                anime.description = when {
-                    anime.description.isNullOrBlank() -> altName + it
-                    else -> anime.description + "\n\n$altName" + it
+            if (it.isNotBlank()) {
+                description = when {
+                    description.isNullOrBlank() -> altName + it
+                    else -> description + "\n\n$altName" + it
                 }
             }
         }
-        return anime
     }
 
     // ============================== Episodes ==============================
@@ -178,24 +173,25 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("not Used")
 
     private fun episodeFromElements(element: Element, url: String): SEpisode {
-        val episode = SEpisode.create()
         val epNum = element.attr("data-num")
         val ids = element.attr("data-ids")
         val sub = element.attr("data-sub").toInt().toBoolean()
         val dub = element.attr("data-dub").toInt().toBoolean()
-        val extraInfo = if (element.hasClass("filler") && preferences.getBoolean("mark_fillers", true)) {
+        val extraInfo = if (element.hasClass("filler") && preferences.getBoolean(PREF_MARK_FILLERS_KEY, PREF_MARK_FILLERS_DEFAULT)) {
             " • Filler Episode"
         } else {
             ""
         }
-        episode.url = "$ids&epurl=$url/ep-$epNum"
-        episode.episode_number = epNum.toFloat()
-        episode.scanlator = ((if (sub) "Sub" else "") + if (dub) ", Dub" else "") + extraInfo
         val name = element.parent()?.select("span.d-title")?.text().orEmpty()
         val namePrefix = "Episode $epNum"
-        episode.name = "Episode $epNum" +
-            if (name.isNotEmpty() && name != namePrefix) ": $name" else ""
-        return episode
+
+        return SEpisode.create().apply {
+            this.name = "Episode $epNum" +
+                if (name.isNotEmpty() && name != namePrefix) ": $name" else ""
+            this.url = "$ids&epurl=$url/ep-$epNum"
+            episode_number = epNum.toFloat()
+            scanlator = ((if (sub) "Sub" else "") + if (dub) ", Dub" else "") + extraInfo
+        }
     }
 
     // ============================ Video Links =============================
@@ -212,6 +208,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val epurl = response.request.header("url").toString()
         val responseObject = json.decodeFromString<JsonObject>(response.body.string())
         val document = Jsoup.parse(JSONUtil.unescape(responseObject["result"]!!.jsonPrimitive.content))
+        val hosterSelection = preferences.getStringSet(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
         val videoList = mutableListOf<Video>()
 
         val servers = mutableListOf<Triple<String, String, String>>()
@@ -219,15 +216,19 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .substringBefore("?")
             .split(",")
         ids.getOrNull(0)?.let { subId ->
-            document.select("li[data-ep-id=$subId]").map { serverElement ->
+            document.select("li[data-ep-id=$subId]").forEach { serverElement ->
                 val server = serverElement.text().lowercase()
+                if (hosterSelection.contains(server).not()) return@forEach
+
                 val serverId = serverElement.attr("data-link-id")
                 servers.add(Triple("Sub", serverId, server))
             }
         }
         ids.getOrNull(1)?.let { dubId ->
-            document.select("li[data-ep-id=$dubId]").map { serverElement ->
+            document.select("li[data-ep-id=$dubId]").forEach { serverElement ->
                 val server = serverElement.text().lowercase()
+                if (hosterSelection.contains(server).not()) return@forEach
+
                 val serverId = serverElement.attr("data-link-id")
                 servers.add(Triple("Dub", serverId, server))
             }
@@ -241,6 +242,8 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ids.getOrNull(0)?.let { videoList.addAll(extractVizVideo("Sub", epurl)) }
         // Dub
         ids.getOrNull(1)?.let { videoList.addAll(extractVizVideo("Dub", epurl)) }
+
+        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
 
         return videoList
     }
@@ -305,7 +308,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     .videoFromUrl(embedLink, "StreamTape - ${server.first}")?.let {
                         videoList.add(it)
                     }
-                "mp4upload" -> Mp4uploadExtractor(client)
+                "mp4upload" -> Mp4uploadExtractor(client, headers)
                     .videoFromUrl(embedLink, "Mp4Upload - ${server.first}").let {
                         videoList.addAll(it)
                     }
@@ -363,8 +366,8 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun Int.toBoolean() = this == 1
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "1080")!!
-        val lang = preferences.getString("preferred_language", "Sub")!!
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val lang = preferences.getString(PREF_LANG_KEY, PREF_LANG_DEFAULT)!!
 
         return this.sortedWith(
             compareByDescending<Video> { it.quality.contains(quality) }
@@ -378,6 +381,10 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "Completed" -> SAnime.COMPLETED
             else -> SAnime.UNKNOWN
         }
+    }
+
+    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> = runBlocking {
+        map { async(Dispatchers.Default) { f(it) } }.awaitAll()
     }
 
     @Serializable
@@ -403,13 +410,46 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val rawURL: String,
     )
 
+    companion object {
+        private const val PREF_DOMAIN_KEY = "preferred_domain"
+        private const val PREF_DOMAIN_DEFAULT = "https://9anime.to"
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
+
+        private const val PREF_LANG_KEY = "preferred_language"
+        private const val PREF_LANG_DEFAULT = "Sub"
+
+        private const val PREF_MARK_FILLERS_KEY = "mark_fillers"
+        private const val PREF_MARK_FILLERS_DEFAULT = true
+
+        private const val PREF_HOSTER_KEY = "hoster_selection"
+        private val HOSTERS = arrayOf(
+            "Vidstream",
+            "MyCloud",
+            "Filemoon",
+            "StreamTape",
+            "Mp4Upload",
+        )
+        private val HOSTERS_NAMES = arrayOf(
+            "vidstream",
+            "mycloud",
+            "filemoon",
+            "streamtape",
+            "mp4upload",
+        )
+        private val PREF_HOSTER_DEFAULT = HOSTERS_NAMES.toSet()
+    }
+
+    // ============================== Settings ==============================
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val domainPref = ListPreference(screen.context).apply {
-            key = "preferred_domain"
+        ListPreference(screen.context).apply {
+            key = PREF_DOMAIN_KEY
             title = "Preferred domain (requires app restart)"
             entries = arrayOf("9anime.to", "9anime.gs", "9anime.pl", "9animehq.to")
             entryValues = arrayOf("https://9anime.to", "https://9anime.gs", "https://9anime.pl", "https://9animehq.to")
-            setDefaultValue("https://9anime.to")
+            setDefaultValue(PREF_DOMAIN_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -418,13 +458,14 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
             title = "Preferred quality"
             entries = arrayOf("1080p", "720p", "480p", "360p")
             entryValues = arrayOf("1080", "720", "480", "360")
-            setDefaultValue("1080")
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -433,13 +474,14 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        val videoLanguagePref = ListPreference(screen.context).apply {
-            key = "preferred_language"
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_LANG_KEY
             title = "Preferred language"
             entries = arrayOf("Sub", "Dub")
             entryValues = arrayOf("Sub", "Dub")
-            setDefaultValue("Sub")
+            setDefaultValue(PREF_LANG_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -448,23 +490,28 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        val markFillers = SwitchPreferenceCompat(screen.context).apply {
-            key = "mark_fillers"
+        }.also(screen::addPreference)
+
+        SwitchPreferenceCompat(screen.context).apply {
+            key = PREF_MARK_FILLERS_KEY
             title = "Mark filler episodes"
-            setDefaultValue(true)
+            setDefaultValue(PREF_MARK_FILLERS_DEFAULT)
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putBoolean(key, newValue as Boolean).commit()
             }
-        }
+        }.also(screen::addPreference)
 
-        screen.addPreference(domainPref)
-        screen.addPreference(videoQualityPref)
-        screen.addPreference(videoLanguagePref)
-        screen.addPreference(markFillers)
-    }
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_HOSTER_KEY
+            title = "Enable/Disable Hosts"
+            entries = HOSTERS
+            entryValues = HOSTERS_NAMES
+            setDefaultValue(PREF_HOSTER_DEFAULT)
 
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> = runBlocking {
-        map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+            setOnPreferenceChangeListener { _, newValue ->
+                @Suppress("UNCHECKED_CAST")
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }.also(screen::addPreference)
     }
 }
