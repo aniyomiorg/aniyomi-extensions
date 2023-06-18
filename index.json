@@ -2722,10 +2722,10 @@
   {
     "name": "Aniyomi: AnimeUnity",
     "pkg": "eu.kanade.tachiyomi.animeextension.it.animeunity",
-    "apk": "aniyomi-it.animeunity-v13.3.apk",
+    "apk": "aniyomi-it.animeunity-v13.4.apk",
     "lang": "it",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2734,7 +2734,7 @@
         "name": "AnimeUnity",
         "lang": "it",
         "id": "7762808921754601430",
-        "baseUrl": "https://www.animeunity.tv",
+        "baseUrl": "https://www.animeunity.it",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -2764,10 +2764,10 @@
   {
     "name": "Aniyomi: AniPlay",
     "pkg": "eu.kanade.tachiyomi.animeextension.it.aniplay",
-    "apk": "aniyomi-it.aniplay-v13.4.apk",
+    "apk": "aniyomi-it.aniplay-v13.5.apk",
     "lang": "it",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2776,7 +2776,7 @@
         "name": "AniPlay",
         "lang": "it",
         "id": "9017321674111133535",
-        "baseUrl": "https://aniplay.it",
+        "baseUrl": "https://aniplay.co",
         "versionId": 1,
         "hasCloudflare": 1
       }
