@@ -19,7 +19,6 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
@@ -193,7 +192,6 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun animeDetailsRequest(anime: SAnime): Request = GET("$baseUrl/anime/${anime.url}")
 
     override fun animeDetailsParse(response: Response): SAnime {
-        val anime = SAnime.create()
         val document = response.asJsoup()
 
         val videoPlayer = document.selectFirst("video-player[episodes_count]")!!
@@ -301,7 +299,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
         val videoList = mutableListOf<Video>()
 
         val serverJson = json.decodeFromString<ServerResponse>(
-            client.newCall(GET("https://scws.work/videos/${mediaId.id}", headers = newHeaders)).execute().body.string(),
+            client.newCall(GET("$workerUrl/videos/${mediaId.id}", headers = newHeaders)).execute().body.string(),
         )
 
         val appJs = client.newCall(GET("$baseUrl/js/app.js", headers = headers)).execute().body.string()
