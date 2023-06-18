@@ -520,6 +520,6 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     companion object {
         const val PREF_DOMAIN_KEY = "pref_domain_new"
-        const val PREF_DEFAULT_DOMAIN = "https://uhdmovies.site"
+        const val PREF_DEFAULT_DOMAIN = "https://uhdmovies.cc"
     }
 }
