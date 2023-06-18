@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.JkanimeExtractor
-import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animeextension.es.legionanime.extractors.UqloadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -17,6 +16,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
@@ -303,8 +303,7 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 YourUploadExtractor(client).videoFromUrl(url, headers)
             }
             url.contains("mp4upload") -> {
-                val videoHeaders = headersBuilder().add("Referer", "https://mp4upload.com/").build()
-                listOf(Mp4uploadExtractor().getVideoFromUrl(url, videoHeaders))
+                Mp4uploadExtractor(client).videosFromUrl(url, headers)
             }
             url.contains("dood") -> {
                 try {
