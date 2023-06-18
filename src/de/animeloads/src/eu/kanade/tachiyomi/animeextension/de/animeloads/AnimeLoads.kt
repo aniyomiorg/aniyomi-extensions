@@ -29,6 +29,7 @@ import org.jsoup.nodes.Element
 import org.jsoup.select.Elements
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.net.URLDecoder
 import kotlin.Exception
 
 class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -228,16 +229,11 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                         val hoster = it.substringAfter("\"hoster\":\"").substringBefore("\",\"")
                                                         val linkpart = it.substringAfter("\"link\":\"").substringBefore("\"}]")
                                                         val leaveurl = client.newCall(GET("$baseUrl/leave/$linkpart")).execute().request.url.toString()
-                                                        if (leaveurl.contains(baseUrl)) {
-                                                            val neexurl = client.newCall(GET(leaveurl)).execute().request.url.toString()
-                                                            val neexdoc = client.newCall(GET(leaveurl)).execute().asJsoup()
-                                                            val nextlink = neexdoc.select("div#continue a").attr("href")
-                                                            val anipart = nextlink.substringAfter("$baseUrl/leave/")
-                                                            Thread.sleep(10000)
-                                                            client.newCall(GET(nextlink, headers = Headers.headersOf("referer", neexurl))).execute().asJsoup()
+                                                        val decode = "https://www." + URLDecoder.decode(leaveurl.substringAfter("www."), "utf-8")
+                                                        if (decode.contains(baseUrl)) {
+                                                            val link = client.newCall(GET(decode)).execute().request.url.toString()
                                                             when {
                                                                 hoster.contains("voesx") && hosterSelection?.contains("voe") == true -> {
-                                                                    val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
                                                                     val quality = "Voe Deutsch Sub"
                                                                     val video = try {
                                                                         VoeExtractor(client).videoFromUrl(link, quality)
@@ -250,7 +246,6 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                                 }
 
                                                                 hoster.contains("streamtapecom") && hosterSelection?.contains("stape") == true -> {
-                                                                    val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
                                                                     val quality = "Streamtape Deutsch Sub"
                                                                     val video = try {
                                                                         StreamTapeExtractor(client).videoFromUrl(link, quality)
@@ -263,7 +258,6 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                                 }
 
                                                                 hoster.contains("doodstream") && hosterSelection?.contains("dood") == true -> {
-                                                                    val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
                                                                     val quality = "Doodstreams Deutsch Sub"
                                                                     val video = try {
                                                                         DoodExtractor(client).videoFromUrl(link, quality)
@@ -364,16 +358,11 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                         val hoster = it.substringAfter("\"hoster\":\"").substringBefore("\",\"")
                                                         val linkpart = it.substringAfter("\"link\":\"").substringBefore("\"}]")
                                                         val leaveurl = client.newCall(GET("$baseUrl/leave/$linkpart")).execute().request.url.toString()
-                                                        if (leaveurl.contains(baseUrl)) {
-                                                            val neexurl = client.newCall(GET(leaveurl)).execute().request.url.toString()
-                                                            val neexdoc = client.newCall(GET(leaveurl)).execute().asJsoup()
-                                                            val nextlink = neexdoc.select("div#continue a").attr("href")
-                                                            val anipart = nextlink.substringAfter("$baseUrl/leave/")
-                                                            Thread.sleep(10000)
-                                                            client.newCall(GET(nextlink, headers = Headers.headersOf("referer", neexurl))).execute().asJsoup()
+                                                        val decode = "https://www." + URLDecoder.decode(leaveurl.substringAfter("www."), "utf-8")
+                                                        if (decode.contains(baseUrl)) {
+                                                            val link = client.newCall(GET(decode)).execute().request.url.toString()
                                                             when {
                                                                 hoster.contains("voesx") && hosterSelection?.contains("voe") == true -> {
-                                                                    val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
                                                                     val quality = "Voe Deutsch Sub"
                                                                     val video = try {
                                                                         VoeExtractor(client).videoFromUrl(link, quality)
@@ -386,7 +375,6 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                                 }
 
                                                                 hoster.contains("streamtapecom") && hosterSelection?.contains("stape") == true -> {
-                                                                    val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
                                                                     val quality = "Streamtape Deutsch Sub"
                                                                     val video = try {
                                                                         StreamTapeExtractor(client).videoFromUrl(link, quality)
@@ -399,7 +387,6 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                                 }
 
                                                                 hoster.contains("doodstream") && hosterSelection?.contains("dood") == true -> {
-                                                                    val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
                                                                     val quality = "Doodstreams Deutsch Sub"
                                                                     val video = try {
                                                                         DoodExtractor(client).videoFromUrl(link, quality)
@@ -562,16 +549,11 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                         val hoster = it.substringAfter("\"hoster\":\"").substringBefore("\",\"")
                                                         val linkpart = it.substringAfter("\"link\":\"").substringBefore("\"}]")
                                                         val leaveurl = client.newCall(GET("$baseUrl/leave/$linkpart")).execute().request.url.toString()
-                                                        if (leaveurl.contains(baseUrl)) {
-                                                            val neexurl = client.newCall(GET(leaveurl)).execute().request.url.toString()
-                                                            val neexdoc = client.newCall(GET(leaveurl)).execute().asJsoup()
-                                                            val nextlink = neexdoc.select("div#continue a").attr("href")
-                                                            val anipart = nextlink.substringAfter("$baseUrl/leave/")
-                                                            Thread.sleep(10000)
-                                                            client.newCall(GET(nextlink, headers = Headers.headersOf("referer", neexurl))).execute().asJsoup()
+                                                        val decode = "https://www." + URLDecoder.decode(leaveurl.substringAfter("www."), "utf-8")
+                                                        if (decode.contains(baseUrl)) {
+                                                            val link = client.newCall(GET(decode)).execute().request.url.toString()
                                                             when {
                                                                 hoster.contains("voesx") && hosterSelection?.contains("voe") == true -> {
-                                                                    val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
                                                                     val quality = "Voe Deutsch Dub"
                                                                     val video = try {
                                                                         VoeExtractor(client).videoFromUrl(link, quality)
@@ -584,7 +566,6 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                                 }
 
                                                                 hoster.contains("streamtapecom") && hosterSelection?.contains("stape") == true -> {
-                                                                    val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
                                                                     val quality = "Streamtape Deutsch Dub"
                                                                     val video = try {
                                                                         StreamTapeExtractor(client).videoFromUrl(link, quality)
@@ -597,7 +578,6 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                                 }
 
                                                                 hoster.contains("doodstream") && hosterSelection?.contains("dood") == true -> {
-                                                                    val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
                                                                     val quality = "Doodstream Deutsch Dub"
                                                                     val video = try {
                                                                         DoodExtractor(client).videoFromUrl(link, quality)
@@ -698,16 +678,11 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                         val hoster = it.substringAfter("\"hoster\":\"").substringBefore("\",\"")
                                                         val linkpart = it.substringAfter("\"link\":\"").substringBefore("\"}]")
                                                         val leaveurl = client.newCall(GET("$baseUrl/leave/$linkpart")).execute().request.url.toString()
-                                                        if (leaveurl.contains(baseUrl)) {
-                                                            val neexurl = client.newCall(GET(leaveurl)).execute().request.url.toString()
-                                                            val neexdoc = client.newCall(GET(leaveurl)).execute().asJsoup()
-                                                            val nextlink = neexdoc.select("div#continue a").attr("href")
-                                                            val anipart = nextlink.substringAfter("$baseUrl/leave/")
-                                                            Thread.sleep(10000)
-                                                            client.newCall(GET(nextlink, headers = Headers.headersOf("referer", neexurl))).execute().asJsoup()
+                                                        val decode = "https://www." + URLDecoder.decode(leaveurl.substringAfter("www."), "utf-8")
+                                                        if (decode.contains(baseUrl)) {
+                                                            val link = client.newCall(GET(decode)).execute().request.url.toString()
                                                             when {
                                                                 hoster.contains("voesx") && hosterSelection?.contains("voe") == true -> {
-                                                                    val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
                                                                     val quality = "Voe Deutsch Dub"
                                                                     val video = try {
                                                                         VoeExtractor(client).videoFromUrl(link, quality)
@@ -720,7 +695,6 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                                 }
 
                                                                 hoster.contains("streamtapecom") && hosterSelection?.contains("stape") == true -> {
-                                                                    val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
                                                                     val quality = "Streamtape Deutsch Dub"
                                                                     val video = try {
                                                                         StreamTapeExtractor(client).videoFromUrl(link, quality)
@@ -733,7 +707,6 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                                                 }
 
                                                                 hoster.contains("doodstream") && hosterSelection?.contains("dood") == true -> {
-                                                                    val link = client.newCall(GET("$baseUrl/leave/$anipart")).execute().request.url.toString()
                                                                     val quality = "Doodstream Deutsch Dub"
                                                                     val video = try {
                                                                         DoodExtractor(client).videoFromUrl(link, quality)
