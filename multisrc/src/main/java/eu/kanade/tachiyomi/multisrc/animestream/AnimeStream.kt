@@ -131,6 +131,7 @@ abstract class AnimeStream(
 
     // =========================== Anime Details ============================
     protected open val animeDetailsSelector = "div.info-content, div.right ul.data"
+    protected open val animeAltNameSelector = ".alter"
     protected open val animeTitleSelector = "h1.entry-title"
     protected open val animeThumbnailSelector = "div.thumb > img, div.limage > img"
     protected open val animeGenresSelector = "div.genxed > a, li:contains(Genre:) a"
@@ -140,6 +141,11 @@ abstract class AnimeStream(
     protected open val animeStatusText = "Status"
     protected open val animeArtistText = "tudio"
     protected open val animeAuthorText = "Fansub"
+
+    protected open val animeAltNamePrefix = when (lang) {
+        "pt-BR" -> "Nome(s) alternativo(s): "
+        else -> "Alternative name(s): "
+    }
 
     protected open fun getAnimeDescription(document: Document) =
         document.selectFirst(animeDescriptionSelector)?.text()
@@ -161,6 +167,10 @@ abstract class AnimeStream(
                 getAnimeDescription(document)?.let {
                     append("$it\n\n")
                 }
+
+                document.selectFirst(animeAltNameSelector)?.text()
+                    ?.takeIf(String::isNotBlank)
+                    ?.let { append("$animeAltNamePrefix$it\n") }
 
                 infos.select(animeAdditionalInfoSelector).eachText().forEach {
                     append("$it\n")
