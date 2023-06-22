@@ -1,10 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.en.edytjedhgmdhm
 
-import android.app.Application
-import android.content.SharedPreferences
-import androidx.preference.PreferenceScreen
-import androidx.preference.SwitchPreferenceCompat
-import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -22,11 +17,9 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
 import java.net.URLEncoder
 
-class Edytjedhgmdhm : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+class Edytjedhgmdhm : ParsedAnimeHttpSource() {
 
     override val name = "edytjedhgmdhm"
 
@@ -39,10 +32,6 @@ class Edytjedhgmdhm : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val supportsLatest = false
 
     override val client: OkHttpClient = network.cloudflareClient
-
-    private val preferences: SharedPreferences by lazy {
-        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
 
     // ============================== Popular ===============================
 
@@ -190,25 +179,19 @@ class Edytjedhgmdhm : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     if (videoFormats.any { t -> fullUrl.endsWith(t) }) {
                         val paths = fullUrl.toHttpUrl().pathSegments
 
-                        val seasonInfoRegex = """(\([\s\w-]+\))(?: ?\[[\s\w-]+\])?${'$'}""".toRegex()
-                        val seasonInfo = if (seasonInfoRegex.containsMatchIn(paths[1])) {
-                            "${seasonInfoRegex.find(paths[1])!!.groups[1]!!.value} • "
-                        } else {
-                            ""
-                        }
-
                         val extraInfo = if (paths.size > 3) {
                             "/" + paths.subList(2, paths.size - 1).joinToString("/") { it.trimInfo() }
                         } else {
-                            ""
+                            "/"
                         }
-                        val size = link.selectFirst("td[data-order]")?.let { formatBytes(it.text().toLongOrNull()) }
+                        val size = link.selectFirst("td[data-order]")?.let { formatBytes(it.attr("data-order").toLongOrNull()) }
 
                         episodeList.add(
                             SEpisode.create().apply {
                                 name = videoFormats.fold(paths.last()) { acc, suffix -> acc.removeSuffix(suffix).trimInfo() }
                                 this.url = fullUrl
-                                scanlator = "${if (size == null) "" else "$size"} • $seasonInfo$extraInfo"
+                                scanlator = "${if (size == null) "" else "$size • "}$extraInfo"
+                                date_upload = -1L
                                 episode_number = counter.toFloat()
                             },
                         )
@@ -259,12 +242,13 @@ class Edytjedhgmdhm : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val units = arrayOf("B", "KB", "MB", "GB", "TB", "PB", "EB")
         var value = bytes?.toDouble() ?: return null
         var i = 0
-        while (value >= 1024 && i < units.size - 1) {
-            value /= 1024
+        while (value >= 1000 && i < units.size - 1) {
+            value /= 1000
             i++
         }
-        return String.format("%.1f %s", value, units[i])
+        return String.format("%.2f %s", value, units[i])
     }
+
     private fun String.trimInfo(): String {
         var newString = this.replaceFirst("""^\[\w+\] ?""".toRegex(), "")
         val regex = """( ?\[[\s\w-]+\]| ?\([\s\w-]+\))(\.mkv|\.mp4|\.avi)?${'$'}""".toRegex()
@@ -279,10 +263,6 @@ class Edytjedhgmdhm : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     companion object {
-        private const val CHUNKED_SIZE = 300
+        private const val CHUNKED_SIZE = 100
     }
-
-    // ============================== Settings ==============================
-
-    override fun setupPreferenceScreen(screen: PreferenceScreen) { }
 }
