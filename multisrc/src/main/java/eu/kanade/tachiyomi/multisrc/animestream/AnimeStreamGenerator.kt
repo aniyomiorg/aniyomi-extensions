@@ -8,7 +8,7 @@ class AnimeStreamGenerator : ThemeSourceGenerator {
 
     override val themeClass = "AnimeStream"
 
-    override val baseVersionCode = 1
+    override val baseVersionCode = 2
 
     override val sources = listOf(
         SingleLang("AnimeXin", "https://animexin.vip", "all", isNsfw = false, overrideVersionCode = 4),
