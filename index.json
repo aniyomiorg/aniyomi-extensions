@@ -1386,6 +1386,27 @@
     ]
   },
   {
+    "name": "Aniyomi: KimoiTV",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.kimoitv",
+    "apk": "aniyomi-en.kimoitv-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "KimoiTV",
+        "lang": "en",
+        "id": "6358473316829302267",
+        "baseUrl": "https://kimoitv.com",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: KissAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.kissanime",
     "apk": "aniyomi-en.kissanime-v13.4.apk",
