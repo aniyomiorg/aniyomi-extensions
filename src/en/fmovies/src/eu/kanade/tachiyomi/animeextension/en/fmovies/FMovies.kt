@@ -410,12 +410,20 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             key = PREF_DOMAIN_KEY
             title = "Preferred domain (requires app restart)"
             entries = arrayOf(
-                "fmovies.to", "fmovies.wtf", "fmovies.taxi",
-                "fmovies.pub", "fmovies.cafe", "fmovies.world"
+                "fmovies.to",
+                "fmovies.wtf",
+                "fmovies.taxi",
+                "fmovies.pub",
+                "fmovies.cafe",
+                "fmovies.world",
             )
             entryValues = arrayOf(
-                "https://fmovies.to", "https://fmovies.wtf", "https://fmovies.taxi",
-                "https://fmovies.pub", "https://fmovies.cafe", "https://fmovies.world",
+                "https://fmovies.to",
+                "https://fmovies.wtf",
+                "https://fmovies.taxi",
+                "https://fmovies.pub",
+                "https://fmovies.cafe",
+                "https://fmovies.world",
             )
             setDefaultValue(PREF_DOMAIN_DEFAULT)
             summary = "%s"

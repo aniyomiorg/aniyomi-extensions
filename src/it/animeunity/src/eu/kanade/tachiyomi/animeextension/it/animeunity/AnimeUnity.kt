@@ -3,8 +3,11 @@ package eu.kanade.tachiyomi.animeextension.it.animeunity
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.SharedPreferences
+import android.widget.Toast
+import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -16,10 +19,10 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -36,7 +39,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "AnimeUnity"
 
-    override val baseUrl = "https://www.animeunity.tv"
+    override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
 
     private val workerUrl = "https://scws.work"
 
@@ -54,6 +57,9 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================== Popular ===============================
 
+    override fun popularAnimeRequest(page: Int): Request =
+        GET("$baseUrl/top-anime?popular=true&page=$page", headers = headers)
+
     override fun popularAnimeParse(response: Response): AnimesPage {
         val parsed = json.decodeFromString<AnimeResponse>(
             response.body.string().substringAfter("top-anime animes=\"").substringBefore("\"></top-anime>").replace("&quot;", "\""),
@@ -69,8 +75,6 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
 
         return AnimesPage(animeList, parsed.current_page < parsed.last_page)
     }
-
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/top-anime?popular=true&page=$page", headers = headers)
 
     // =============================== Latest ===============================
 
@@ -94,6 +98,8 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // =============================== Search ===============================
 
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
+
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         val params = AnimeUnityFilters.getSearchParameters(filters)
         return client.newCall(searchAnimeRequest(page, query, params))
@@ -102,8 +108,6 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
                 searchAnimeParse(response, page)
             }
     }
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
 
     private fun searchAnimeRequest(page: Int, query: String, filters: AnimeUnityFilters.FilterSearchParams): Request {
         val archivioResponse = client.newCall(
@@ -185,12 +189,9 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // =========================== Anime Details ============================
 
-    override fun animeDetailsRequest(anime: SAnime): Request {
-        return GET("$baseUrl/anime/${anime.url}")
-    }
+    override fun animeDetailsRequest(anime: SAnime): Request = GET("$baseUrl/anime/${anime.url}")
 
     override fun animeDetailsParse(response: Response): SAnime {
-        val anime = SAnime.create()
         val document = response.asJsoup()
 
         val videoPlayer = document.selectFirst("video-player[episodes_count]")!!
@@ -199,27 +200,23 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
             videoPlayer.attr("anime").replace("&quot;", "\""),
         )
 
-        anime.title = animeDetails.title_eng
-        anime.status = parseStatus(animeDetails.status)
-        anime.artist = animeDetails.studio ?: ""
-        anime.genre = animeDetails.genres.joinToString(", ") { it.name }
-
-        var description = animeDetails.plot + "\n"
-
-        description += "\nTipo: ${animeDetails.type}"
-        description += "\nStagione: ${animeDetails.season} ${animeDetails.date}"
-        description += "\nValutazione: ★${animeDetails.score ?: "-"}"
-
-        anime.description = description
-
-        return anime
+        return SAnime.create().apply {
+            title = animeDetails.title_eng
+            status = parseStatus(animeDetails.status)
+            artist = animeDetails.studio ?: ""
+            genre = animeDetails.genres.joinToString(", ") { it.name }
+            description = buildString {
+                append(animeDetails.plot)
+                append("\n\nTipo: ${animeDetails.type}")
+                append("\nStagione: ${animeDetails.season} ${animeDetails.date}")
+                append("\nValutazione: ★${animeDetails.score ?: "-"}")
+            }
+        }
     }
 
     // ============================== Episodes ==============================
 
-    override fun episodeListRequest(anime: SAnime): Request {
-        return GET("$baseUrl/anime/${anime.url}", headers = headers)
-    }
+    override fun episodeListRequest(anime: SAnime): Request = GET("$baseUrl/anime/${anime.url}", headers = headers)
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val episodeList = mutableListOf<SEpisode>()
@@ -290,20 +287,19 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================ Video Links =============================
 
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
-        val newHeaders = Headers.headersOf(
-            "Accept", "*/*",
-            "Accept-Language", "en-US,en;q=0.5",
-            "Host", "scws.work",
-            "Origin", baseUrl,
-            "Referer", "$baseUrl/",
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
-        )
+        val newHeaders = headers.newBuilder()
+            .add("Accept", "*/*")
+            .add("Accept-Language", "en-US,en;q=0.5")
+            .add("Host", workerUrl.toHttpUrl().host)
+            .add("Origin", baseUrl)
+            .add("Referer", "$baseUrl/")
+            .build()
 
         val mediaId = json.decodeFromString<LinkData>(episode.url)
         val videoList = mutableListOf<Video>()
 
         val serverJson = json.decodeFromString<ServerResponse>(
-            client.newCall(GET("https://scws.work/videos/${mediaId.id}", headers = newHeaders)).execute().body.string(),
+            client.newCall(GET("$workerUrl/videos/${mediaId.id}", headers = newHeaders)).execute().body.string(),
         )
 
         val appJs = client.newCall(GET("$baseUrl/js/app.js", headers = headers)).execute().body.string()
@@ -351,6 +347,8 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
             )
         }
 
+        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
+
         return Observable.just(videoList.sort())
     }
 
@@ -360,12 +358,10 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================= Utilities ==============================
 
-    private fun parseStatus(statusString: String): Int {
-        return when (statusString) {
-            "In Corso" -> SAnime.ONGOING
-            "Terminato" -> SAnime.COMPLETED
-            else -> SAnime.UNKNOWN
-        }
+    private fun parseStatus(statusString: String): Int = when (statusString) {
+        "In Corso" -> SAnime.ONGOING
+        "Terminato" -> SAnime.COMPLETED
+        else -> SAnime.UNKNOWN
     }
 
     private fun addFromApi(start: Int, end: Int, animeId: String, headers: Headers): List<SEpisode> {
@@ -385,17 +381,13 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
-    private fun String.falseIfEmpty(): String {
-        return if (this.isEmpty()) {
-            "false"
-        } else {
-            "\"${this}\""
-        }
+    private fun String.falseIfEmpty(): String = if (this.isEmpty()) {
+        "false"
+    } else {
+        "\"${this}\""
     }
 
-    private fun LinkData.toJsonString(): String {
-        return json.encodeToString(this)
-    }
+    private fun LinkData.toJsonString(): String = json.encodeToString(this)
 
     @SuppressLint("SimpleDateFormat")
     private fun parseDate(date: String): Long {
@@ -414,7 +406,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "1080")!!
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 
         return this.sortedWith(
             compareBy(
@@ -424,13 +416,40 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
         ).reversed()
     }
 
+    companion object {
+        private val PREF_DOMAIN_KEY = "preferred_domain_name_v${AppInfo.getVersionName()}"
+        private const val PREF_DOMAIN_TITLE = "Override BaseUrl"
+        private const val PREF_DOMAIN_DEFAULT = "https://www.animeunity.it"
+        private const val PREF_DOMAIN_SUMMARY = "For temporary uses. Updating the extension will erase this setting."
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
+    }
+
+    // ============================== Settings ==============================
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
+        EditTextPreference(screen.context).apply {
+            key = PREF_DOMAIN_KEY
+            title = PREF_DOMAIN_TITLE
+            summary = PREF_DOMAIN_SUMMARY
+            dialogTitle = PREF_DOMAIN_TITLE
+            dialogMessage = "Default: $PREF_DOMAIN_DEFAULT"
+            setDefaultValue(PREF_DOMAIN_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val newValueString = newValue as String
+                Toast.makeText(screen.context, "Restart Aniyomi to apply new setting.", Toast.LENGTH_LONG).show()
+                preferences.edit().putString(key, newValueString.trim()).commit()
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
             title = "Preferred quality"
             entries = arrayOf("1080p", "720p", "480p", "360p", "240p", "80p")
             entryValues = arrayOf("1080", "720", "480", "360", "240", "80")
-            setDefaultValue("1080")
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -439,8 +458,6 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
     }
 }

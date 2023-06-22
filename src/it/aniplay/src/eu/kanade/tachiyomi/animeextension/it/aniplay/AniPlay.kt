@@ -2,8 +2,11 @@ package eu.kanade.tachiyomi.animeextension.it.aniplay
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.widget.Toast
+import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -13,8 +16,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl
@@ -34,7 +35,7 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "AniPlay"
 
-    override val baseUrl = "https://aniplay.it"
+    override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
 
     override val lang = "it"
 
@@ -50,11 +51,10 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================== Popular ===============================
 
-    override fun popularAnimeParse(response: Response): AnimesPage {
-        return searchAnimeParse(response)
-    }
+    override fun popularAnimeParse(response: Response): AnimesPage = searchAnimeParse(response)
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/api/anime/advanced-similar-search?page=${page - 1}&size=36&sort=views,desc&sort=id")
+    override fun popularAnimeRequest(page: Int): Request =
+        GET("$baseUrl/api/anime/advanced-similar-search?page=${page - 1}&size=36&sort=views,desc&sort=id")
 
     // =============================== Latest ===============================
 
@@ -125,38 +125,44 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
         return AnimesPage(animeList, animeList.size == 36)
     }
 
+    // ============================== Filters ===============================
+
     override fun getFilterList(): AnimeFilterList = AniPlayFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
 
-    override fun animeDetailsRequest(anime: SAnime): Request {
-        return GET("$baseUrl/api/anime/${anime.url}")
+    override fun animeDetailsRequest(anime: SAnime): Request = GET("$baseUrl/anime/${anime.url}")
+
+    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
+        return client.newCall(animeDetailsRequestInternal(anime))
+            .asObservableSuccess()
+            .map { response ->
+                animeDetailsParse(response).apply { initialized = true }
+            }
     }
+
+    private fun animeDetailsRequestInternal(anime: SAnime): Request = GET("$baseUrl/api/anime/${anime.url}")
 
     override fun animeDetailsParse(response: Response): SAnime {
         val detailsJson = json.decodeFromString<AnimeResult>(response.body.string())
-        val anime = SAnime.create()
 
-        anime.title = detailsJson.title
-        anime.author = detailsJson.studio
-        anime.status = parseStatus(detailsJson.status)
-
-        var description = detailsJson.storyline + "\n"
-        description += "\nTipologia: ${detailsJson.type}"
-        description += "\nOrigine: ${detailsJson.origin}"
-        if (detailsJson.startDate != null) description += "\nData di inizio: ${detailsJson.startDate}"
-        description += "\nStato: ${detailsJson.status}"
-
-        anime.description = description
-
-        return anime
+        return SAnime.create().apply {
+            title = detailsJson.title
+            author = detailsJson.studio
+            status = parseStatus(detailsJson.status)
+            description = buildString {
+                append(detailsJson.storyline)
+                append("\n\nTipologia: ${detailsJson.type}")
+                append("\nOrigine: ${detailsJson.origin}")
+                if (detailsJson.startDate != null) append("\nData di inizio: ${detailsJson.startDate}")
+                append("\nStato: ${detailsJson.status}")
+            }
+        }
     }
 
     // ============================== Episodes ==============================
 
-    override fun episodeListRequest(anime: SAnime): Request {
-        return GET("$baseUrl/api/anime/${anime.url}")
-    }
+    override fun episodeListRequest(anime: SAnime): Request = GET("$baseUrl/api/anime/${anime.url}")
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val animeJson = json.decodeFromString<AnimeResult>(response.body.string())
@@ -169,41 +175,36 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
                 ).execute()
                 val episodesJson = json.decodeFromString<List<AnimeResult.Episode>>(episodesResponse.body.string())
 
-                for (ep in episodesJson) {
-                    val episode = SEpisode.create()
-
-                    episode.name = "Episode ${ep.episodeNumber.toIntOrNull() ?: (ep.episodeNumber.toFloatOrNull() ?: 1)} ${ep.title ?: ""}"
-                    episode.episode_number = ep.episodeNumber.toFloatOrNull() ?: 0F
-
-                    if (ep.airingDate != null) episode.date_upload = SimpleDateFormat("yyyy-MM-dd", Locale.ITALY).parse(ep.airingDate)!!.time
-
-                    episode.url = ep.id.toString()
-
-                    episodeList.add(episode)
-                }
+                episodeList.addAll(
+                    episodesJson.map { ep ->
+                        SEpisode.create().apply {
+                            name = "Episode ${ep.episodeNumber.toIntOrNull() ?: (ep.episodeNumber.toFloatOrNull() ?: 1)} ${ep.title ?: ""}"
+                            episode_number = ep.episodeNumber.toFloatOrNull() ?: 0F
+                            if (ep.airingDate != null) date_upload = SimpleDateFormat("yyyy-MM-dd", Locale.ITALY).parse(ep.airingDate)!!.time
+                            url = ep.id.toString()
+                        }
+                    },
+                )
             }
         } else if (animeJson.episodes.isNotEmpty()) {
-            for (ep in animeJson.episodes) {
-                val episode = SEpisode.create()
-                episode.name = "Episode ${ep.episodeNumber.toIntOrNull() ?: (ep.episodeNumber.toFloatOrNull() ?: 1)} ${ep.title ?: ""}"
-                episode.episode_number = ep.episodeNumber.toFloatOrNull() ?: 0F
-
-                if (ep.airingDate != null) episode.date_upload = SimpleDateFormat("yyyy-MM-dd", Locale.ITALY).parse(ep.airingDate)!!.time
-
-                episode.url = ep.id.toString()
-
-                episodeList.add(episode)
-            }
-        } else {}
+            episodeList.addAll(
+                animeJson.episodes.map { ep ->
+                    SEpisode.create().apply {
+                        name = "Episode ${ep.episodeNumber.toIntOrNull() ?: (ep.episodeNumber.toFloatOrNull() ?: 1)} ${ep.title ?: ""}"
+                        episode_number = ep.episodeNumber.toFloatOrNull() ?: 0F
+                        if (ep.airingDate != null) date_upload = SimpleDateFormat("yyyy-MM-dd", Locale.ITALY).parse(ep.airingDate)!!.time
+                        url = ep.id.toString()
+                    }
+                },
+            )
+        }
 
         return episodeList.sortedBy { it.episode_number }.reversed()
     }
 
     // ============================ Video Links =============================
 
-    override fun videoListRequest(episode: SEpisode): Request {
-        return GET("$baseUrl/api/episode/${episode.url}")
-    }
+    override fun videoListRequest(episode: SEpisode): Request = GET("$baseUrl/api/episode/${episode.url}")
 
     override fun videoListParse(response: Response): List<Video> {
         val videoList = mutableListOf<Video>()
@@ -218,13 +219,13 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
                     videoUrl,
                     headers = Headers.headersOf(
                         "Referer",
-                        "https://aniplay.it/play/${videoJson.id}",
+                        "$baseUrl/play/${videoJson.id}",
                     ),
                 ),
             )
         } else if (videoUrl.contains(".m3u8")) {
             val masterPlaylist = client.newCall(
-                GET(videoUrl, headers = Headers.headersOf("Referer", "https://aniplay.it/play/${videoJson.id}")),
+                GET(videoUrl, headers = Headers.headersOf("Referer", "$baseUrl/play/${videoJson.id}")),
             ).execute().body.string()
 
             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:")
@@ -236,22 +237,22 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
                         newUrl = videoUrl.substringBeforeLast("/") + "/" + newUrl
                     }
 
-                    videoList.add(Video(newUrl, quality, newUrl, headers = Headers.headersOf("Referer", "https://aniplay.it/")))
+                    videoList.add(Video(newUrl, quality, newUrl, headers = Headers.headersOf("Referer", "$baseUrl/")))
                 }
-        } else {}
+        }
+
+        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
 
         return videoList.sort()
     }
 
     // ============================= Utilities ==============================
 
-    private fun parseStatus(statusString: String): Int {
-        return when (statusString) {
-            "In corso" -> SAnime.ONGOING
-            "Completato" -> SAnime.COMPLETED
-            "Sospeso" -> SAnime.ON_HIATUS
-            else -> SAnime.UNKNOWN
-        }
+    private fun parseStatus(statusString: String): Int = when (statusString) {
+        "In corso" -> SAnime.ONGOING
+        "Completato" -> SAnime.COMPLETED
+        "Sospeso" -> SAnime.ON_HIATUS
+        else -> SAnime.UNKNOWN
     }
 
     private fun HttpUrl.Builder.addIfNotBlank(query: String, value: String): HttpUrl.Builder {
@@ -262,20 +263,50 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "1080")!!
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 
         return this.sortedWith(
-            compareBy { it.quality.contains(quality) },
+            compareBy(
+                { it.quality.contains(quality) },
+                { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
+            ),
         ).reversed()
     }
 
+    companion object {
+        private val PREF_DOMAIN_KEY = "preferred_domain_name_v${AppInfo.getVersionName()}"
+        private const val PREF_DOMAIN_TITLE = "Override BaseUrl"
+        private const val PREF_DOMAIN_DEFAULT = "https://aniplay.co"
+        private const val PREF_DOMAIN_SUMMARY = "For temporary uses. Updating the extension will erase this setting."
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
+    }
+
+    // ============================== Settings ==============================
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
+        EditTextPreference(screen.context).apply {
+            key = PREF_DOMAIN_KEY
+            title = PREF_DOMAIN_TITLE
+            summary = PREF_DOMAIN_SUMMARY
+            dialogTitle = PREF_DOMAIN_TITLE
+            dialogMessage = "Default: $PREF_DOMAIN_DEFAULT"
+            setDefaultValue(PREF_DOMAIN_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val newValueString = newValue as String
+                Toast.makeText(screen.context, "Restart Aniyomi to apply new setting.", Toast.LENGTH_LONG).show()
+                preferences.edit().putString(key, newValueString.trim()).commit()
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
             title = "Preferred quality"
             entries = arrayOf("1080p", "720p", "480p", "360p", "240p", "80p")
             entryValues = arrayOf("1080", "720", "480", "360", "240", "80")
-            setDefaultValue("1080")
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -284,60 +315,6 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-
-        screen.addPreference(videoQualityPref)
-    }
-
-    @Serializable
-    data class VideoResult(
-        val id: Int,
-        val videoUrl: String,
-    )
-
-    @Serializable
-    data class SearchResult(
-        val id: Int,
-        val title: String,
-        val storyline: String,
-        val verticalImages: List<Image>,
-    ) {
-        @Serializable
-        data class Image(
-            val imageFull: String,
-        )
-    }
-
-    @Serializable
-    data class AnimeResult(
-        val id: Int,
-        val title: String,
-        val startDate: String? = null,
-        val storyline: String,
-        val type: String,
-        val origin: String,
-        val status: String,
-        val studio: String,
-        val verticalImages: List<Image>,
-        val seasons: List<Season>,
-        val episodes: List<Episode>,
-    ) {
-        @Serializable
-        data class Season(
-            val id: Int,
-        )
-
-        @Serializable
-        data class Episode(
-            val id: Int,
-            val episodeNumber: String,
-            val title: String? = null,
-            val airingDate: String? = null,
-        )
-
-        @Serializable
-        data class Image(
-            val imageFull: String,
-        )
+        }.also(screen::addPreference)
     }
 }

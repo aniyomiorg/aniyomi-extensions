@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.en.kissanime.extractors.DailymotionExtractor
-import eu.kanade.tachiyomi.animeextension.en.kissanime.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animeextension.en.kissanime.extractors.VodstreamExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -14,6 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -225,8 +225,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             YourUploadExtractor(client).videoFromUrl(url, headers = headers, name = server.name)
                         }
                         url.contains("mp4upload") -> {
-                            val headers = headers.newBuilder().set("referer", "https://mp4upload.com/").build()
-                            Mp4uploadExtractor(client).getVideoFromUrl(url, headers = headers, name = server.name)
+                            Mp4uploadExtractor(client).videosFromUrl(url, headers, "(${server.name}) ")
                         }
                         url.contains("embed.vodstream.xyz") -> {
                             val referer = "$baseUrl/"

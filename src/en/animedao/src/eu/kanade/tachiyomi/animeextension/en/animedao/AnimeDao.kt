@@ -6,7 +6,6 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animeextension.en.animedao.extractors.MixDropExtractor
-import eu.kanade.tachiyomi.animeextension.en.animedao.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animeextension.en.animedao.extractors.VidstreamingExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -16,6 +15,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -270,8 +270,7 @@ class AnimeDao : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             DoodExtractor(client).videosFromUrl(url, quality = server.name)
                         }
                         url.contains("mp4upload") -> {
-                            val headers = headers.newBuilder().set("referer", "https://mp4upload.com/").build()
-                            Mp4uploadExtractor(client).getVideoFromUrl(url, headers, prefix)
+                            Mp4uploadExtractor(client).videosFromUrl(url, headers, prefix)
                         }
                         else -> null
                     }
