@@ -85,21 +85,13 @@ abstract class AnimeStream(
         return super.fetchPopularAnime(page)
     }
 
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        return SAnime.create().apply {
-            val ahref = element.selectFirst("h4 > a.series")!!
-            setUrlWithoutDomain(ahref.attr("href"))
-            title = ahref.text()
-            thumbnail_url = element.selectFirst("img")!!.getImageUrl()
-        }
-    }
+    override fun popularAnimeRequest(page: Int) = GET("$animeListUrl/?page=$page&order=popular")
 
-    override fun popularAnimeNextPageSelector() = null
+    override fun popularAnimeSelector() = searchAnimeSelector()
 
-    override fun popularAnimeRequest(page: Int) = GET(baseUrl)
+    override fun popularAnimeNextPageSelector() = searchAnimeNextPageSelector()
 
-    /* Possible classes: wpop-weekly, wpop-monthly, wpop-alltime */
-    override fun popularAnimeSelector() = "div.serieslist.wpop-alltime li"
+    override fun popularAnimeFromElement(element: Element) = searchAnimeFromElement(element)
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
