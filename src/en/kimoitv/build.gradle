@@ -1,0 +1,16 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'KimoiTV'
+    pkgNameSuffix = 'en.kimoitv'
+    extClass = '.KimoiTV'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+dependencies {
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
+}
+
+apply from: "$rootDir/common.gradle"
