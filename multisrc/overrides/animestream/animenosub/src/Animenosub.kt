@@ -7,7 +7,6 @@ import eu.kanade.tachiyomi.animeextension.en.animenosub.extractors.StreamWishExt
 import eu.kanade.tachiyomi.animeextension.en.animenosub.extractors.VidMolyExtractor
 import eu.kanade.tachiyomi.animeextension.en.animenosub.extractors.VtubeExtractor
 import eu.kanade.tachiyomi.animeextension.en.animenosub.extractors.WolfstreamExtractor
-import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
@@ -18,23 +17,11 @@ class Animenosub : AnimeStream(
     "Animenosub",
     "https://animenosub.com",
 ) {
-    // ============================== Popular ===============================
-
-    override fun popularAnimeSelector() = "div.serieslist.wpop-weekly li"
-
     // ============================== Episodes ==============================
-
-    override fun episodeFromElement(element: Element): SEpisode {
+    override fun getEpisodeName(element: Element, epNum: String): String {
         val episodeTitle = element.selectFirst("div.epl-title")?.text() ?: ""
-        return SEpisode.create().apply {
-            setUrlWithoutDomain(element.attr("href"))
-            element.selectFirst("div.epl-num")!!.text().let {
-                name = "Ep. $it ${if (episodeTitle.contains("Episode $it", true)) "" else episodeTitle}"
-                episode_number = it.substringBefore(" ").toFloatOrNull() ?: 0F
-            }
-            element.selectFirst("div.epl-sub")?.text()?.let { scanlator = it }
-            date_upload = element.selectFirst("div.epl-date")?.text().toDate()
-        }
+        val complement = if (episodeTitle.contains("Episode $epNum", true)) "" else episodeTitle
+        return "Ep. $epNum $complement"
     }
 
     // ============================ Video Links =============================
