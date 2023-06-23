@@ -33,19 +33,10 @@ object AnimeStreamFilters {
         name: String,
     ): String {
         return (getFirst<R>() as CheckBoxFilterList).state
-            .mapNotNull { checkbox ->
-                when {
-                    checkbox.state -> {
-                        options.find { it.first == checkbox.name }!!.second
-                    }
-                    else -> null
-                }
-            }.joinToString("&$name[]=").let {
-                when {
-                    it.isBlank() -> ""
-                    else -> "$name[]=$it"
-                }
-            }
+            .filter { it.state }
+            .map { checkbox -> options.find { it.first == checkbox.name }!!.second }
+            .filter(String::isNotBlank)
+            .joinToString("&") { "$name[]=$it" }
     }
 
     class GenresFilter(name: String) : CheckBoxFilterList(name, GENRES_LIST)
