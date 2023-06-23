@@ -19,7 +19,6 @@ import eu.kanade.tachiyomi.network.asObservableSuccess
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -58,15 +57,14 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun getConnId() {
-        val headers = Headers.headersOf(
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0",
-            "Accept", "application/json, text/javascript, */*; q=0.01",
-            "Accept-Language", "en-US,en;q=0.5",
-            "Content-Type", "application/json",
-            "Origin", "https://www.vvvvid.it",
-            "Referer", "https://www.vvvvid.it/channel/0/you",
-            "X-Requested-With", "XMLHttpRequest",
-        )
+        val headers = headers.newBuilder()
+            .add("Accept", "application/json, text/javascript, */*; q=0.01")
+            .add("Accept-Language", "en-US,en;q=0.5")
+            .add("Content-Type", "application/json")
+            .add("Origin", baseUrl)
+            .add("Referer", "$baseUrl/channel/0/you")
+            .add("X-Requested-With", "XMLHttpRequest")
+            .build()
 
         val body = """
             {
@@ -92,7 +90,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
         val response = client.newCall(
             POST("$baseUrl/user/login", body = body, headers = headers),
         ).execute()
-        if (response.code != 200) throw Exception("Failed to log in")
+        if (response.code != 200) error("Failed to log in")
         val parsed = json.decodeFromString<LoginResponse>(response.body.string())
 
         connId = parsed.data.conn_id
@@ -106,14 +104,13 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
             getConnId()
         }
 
-        val headers = Headers.headersOf(
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0",
-            "Accept", "application/json, text/javascript, */*; q=0.01",
-            "Accept-Language", "en-US,en;q=0.5",
-            "Cookie", "JSESSIONID=$sessionId",
-            "Referer", "https://www.vvvvid.it/",
-            "X-Requested-With", "XMLHttpRequest",
-        )
+        val headers = headers.newBuilder()
+            .add("Accept", "application/json, text/javascript, */*; q=0.01")
+            .add("Accept-Language", "en-US,en;q=0.5")
+            .add("Cookie", "JSESSIONID=$sessionId")
+            .add("Referer", "$baseUrl/")
+            .add("X-Requested-With", "XMLHttpRequest")
+            .build()
 
         if (page == 1) {
             updateFilters("anime", "Popolari")
@@ -143,14 +140,13 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
             getConnId()
         }
 
-        val headers = Headers.headersOf(
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0",
-            "Accept", "application/json, text/javascript, */*; q=0.01",
-            "Accept-Language", "en-US,en;q=0.5",
-            "Cookie", "JSESSIONID=$sessionId",
-            "Referer", "https://www.vvvvid.it/",
-            "X-Requested-With", "XMLHttpRequest",
-        )
+        val headers = headers.newBuilder()
+            .add("Accept", "application/json, text/javascript, */*; q=0.01")
+            .add("Accept-Language", "en-US,en;q=0.5")
+            .add("Cookie", "JSESSIONID=$sessionId")
+            .add("Referer", "$baseUrl/")
+            .add("X-Requested-With", "XMLHttpRequest")
+            .build()
 
         if (page == 1) {
             updateFilters("anime", "Nuove")
@@ -169,17 +165,16 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         if (query.isNotEmpty()) {
-            throw Exception("Ricerca non disponibile")
+            error("Ricerca non disponibile")
         }
 
-        val headers = Headers.headersOf(
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0",
-            "Accept", "application/json, text/javascript, */*; q=0.01",
-            "Accept-Language", "en-US,en;q=0.5",
-            "Cookie", "JSESSIONID=$sessionId",
-            "Referer", "https://www.vvvvid.it/",
-            "X-Requested-With", "XMLHttpRequest",
-        )
+        val headers = headers.newBuilder()
+            .add("Accept", "application/json, text/javascript, */*; q=0.01")
+            .add("Accept-Language", "en-US,en;q=0.5")
+            .add("Cookie", "JSESSIONID=$sessionId")
+            .add("Referer", "$baseUrl/")
+            .add("X-Requested-With", "XMLHttpRequest")
+            .build()
 
         var filterStringFinal = ""
         var filterCounter = 0
@@ -329,33 +324,30 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
             getConnId()
         }
 
-        val headers = Headers.headersOf(
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0",
-            "Accept", "application/json, text/javascript, */*; q=0.01",
-            "Accept-Language", "en-US,en;q=0.5",
-            "Cookie", "JSESSIONID=$sessionId",
-            "Referer", "https://www.vvvvid.it/",
-            "X-Requested-With", "XMLHttpRequest",
-        )
+        val headers = headers.newBuilder()
+            .add("Accept", "application/json, text/javascript, */*; q=0.01")
+            .add("Accept-Language", "en-US,en;q=0.5")
+            .add("Cookie", "JSESSIONID=$sessionId")
+            .add("Referer", "$baseUrl/")
+            .add("X-Requested-With", "XMLHttpRequest")
+            .build()
 
         return GET("$baseUrl/vvvvid/ondemand/${anime.url}/info/?conn_id=$connId", headers = headers)
     }
 
     override fun animeDetailsParse(response: Response): SAnime {
         val detailsJson = json.decodeFromString<InfoResponse>(response.body.string()).data
-        val anime = SAnime.create()
 
-        anime.title = detailsJson.title
-        anime.status = SAnime.UNKNOWN
-
-        var description = detailsJson.description + "\n"
-        description += "\nAnno pubblicato: ${detailsJson.date_published}"
-        description += "\n${detailsJson.additional_info.split(" | ").joinToString("\n")}"
-        anime.description = description
-
-        anime.genre = detailsJson.show_genres?.let { it.joinToString(", ") } ?: ""
-
-        return anime
+        return SAnime.create().apply {
+            title = detailsJson.title
+            status = SAnime.UNKNOWN
+            genre = detailsJson.show_genres?.joinToString(", ") ?: ""
+            description = buildString {
+                append(detailsJson.description)
+                append("\n\nAnno pubblicato: ${detailsJson.date_published}")
+                append("\n${detailsJson.additional_info.split(" | ").joinToString("\n")}")
+            }
+        }
     }
 
     // ============================== Episodes ==============================
@@ -365,14 +357,13 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
             getConnId()
         }
 
-        val headers = Headers.headersOf(
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0",
-            "Accept", "application/json, text/javascript, */*; q=0.01",
-            "Accept-Language", "en-US,en;q=0.5",
-            "Cookie", "JSESSIONID=$sessionId",
-            "Referer", "https://www.vvvvid.it/",
-            "X-Requested-With", "XMLHttpRequest",
-        )
+        val headers = headers.newBuilder()
+            .add("Accept", "application/json, text/javascript, */*; q=0.01")
+            .add("Accept-Language", "en-US,en;q=0.5")
+            .add("Cookie", "JSESSIONID=$sessionId")
+            .add("Referer", "$baseUrl/")
+            .add("X-Requested-With", "XMLHttpRequest")
+            .build()
 
         return GET("$baseUrl/vvvvid/ondemand/${anime.url}/seasons/?conn_id=$connId", headers = headers)
     }
@@ -380,7 +371,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> {
         val animeJson = json.decodeFromString<SeasonsResponse>(response.body.string())
         val episodeList = mutableListOf<SEpisode>()
-        val subDub = preferences.getString("preferred_sub", "none")!!
+        val subDub = preferences.getString(PREF_SUB_KEY, PREF_SUB_DEFAULT)!!
 
         var counter = 1
         animeJson.data.forEach {
@@ -395,11 +386,13 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
             }
 
             it.episodes.forEach { ep ->
-                val episode = SEpisode.create()
-                episode.name = "$prefix${ep.number} ${ep.title}"
-                episode.episode_number = counter.toFloat()
-                episode.url = LinkData(it.show_id, ep.season_id, ep.video_id).toJsonString()
-                episodeList.add(episode)
+                episodeList.add(
+                    SEpisode.create().apply {
+                        name = "$prefix${ep.number} ${ep.title}"
+                        episode_number = counter.toFloat()
+                        url = LinkData(it.show_id, ep.season_id, ep.video_id).toJsonString()
+                    },
+                )
                 counter++
             }
         }
@@ -429,14 +422,13 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
 
         val mediaId = json.decodeFromString<LinkData>(episode.url)
 
-        val headers = Headers.headersOf(
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0",
-            "Accept", "application/json, text/javascript, */*; q=0.01",
-            "Accept-Language", "en-US,en;q=0.5",
-            "Cookie", "JSESSIONID=$sessionId",
-            "Referer", "https://www.vvvvid.it/",
-            "X-Requested-With", "XMLHttpRequest",
-        )
+        val headers = headers.newBuilder()
+            .add("Accept", "application/json, text/javascript, */*; q=0.01")
+            .add("Accept-Language", "en-US,en;q=0.5")
+            .add("Cookie", "JSESSIONID=$sessionId")
+            .add("Referer", "$baseUrl/")
+            .add("X-Requested-With", "XMLHttpRequest")
+            .build()
 
         return Pair(
             GET(
@@ -528,13 +520,12 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun videoFromDash(url: String, name: String): Video {
-        val dashHeaders = Headers.headersOf(
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0",
-            "Accept", "*/*",
-            "Accept-Language", "en-US,en;q=0.5",
-            "Origin", "https://www.vvvvid.it",
-            "Referer", "https://www.vvvvid.it/",
-        )
+        val dashHeaders = headers.newBuilder()
+            .add("Accept", "*/*")
+            .add("Accept-Language", "en-US,en;q=0.5")
+            .add("Origin", baseUrl)
+            .add("Referer", "$baseUrl/")
+            .build()
 
         val dashContents = client.newCall(
             GET(url, headers = dashHeaders),
@@ -545,24 +536,14 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
         val audioUrl = dashContents.substringAfter("mimeType=\"audio").substringBefore("</BaseURL>").substringAfter("<BaseURL>")
 
         val audioTracks = mutableListOf<Track>()
-        try {
-            audioTracks.add(Track("$baseVideoUrl/$audioUrl", "Audio"))
-        } catch (_: Error) { }
+        audioTracks.add(Track("$baseVideoUrl/$audioUrl", "Audio"))
 
-        return try {
-            Video(
-                baseVideoUrl,
-                name,
-                "$baseVideoUrl/$videoUrl",
-                audioTracks = audioTracks,
-            )
-        } catch (_: Error) {
-            Video(
-                baseVideoUrl,
-                name,
-                "$baseVideoUrl/$videoUrl",
-            )
-        }
+        return Video(
+            baseVideoUrl,
+            name,
+            "$baseVideoUrl/$videoUrl",
+            audioTracks = audioTracks,
+        )
     }
 
     private fun getRandomIntString(): String {
@@ -577,7 +558,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "HD")!!
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 
         return this.sortedWith(
             compareBy { it.quality.contains(quality) },
@@ -656,13 +637,23 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
         return d
     }
 
+    companion object {
+        private const val PREF_SUB_KEY = "preferred_sub"
+        private const val PREF_SUB_DEFAULT = "none"
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_DEFAULT = "HD"
+    }
+
+    // ============================== Settings ==============================
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val subDubPref = ListPreference(screen.context).apply {
-            key = "preferred_sub"
+        ListPreference(screen.context).apply {
+            key = PREF_SUB_KEY
             title = "Preferenza sub/dub"
             entries = arrayOf("Nessuno", "Sub", "Dub")
             entryValues = arrayOf("none", "sub", "dub")
-            setDefaultValue("none")
+            setDefaultValue(PREF_SUB_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -671,14 +662,14 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
+        }.also(screen::addPreference)
 
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
             title = "Qualità preferita"
             entries = arrayOf("HD", "SD")
             entryValues = arrayOf("HD", "SD")
-            setDefaultValue("HD")
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -687,9 +678,6 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-
-        screen.addPreference(subDubPref)
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
     }
 }
