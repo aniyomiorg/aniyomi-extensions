@@ -2,6 +2,8 @@ package eu.kanade.tachiyomi.animeextension.it.animeunity
 
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 object AnimeUnityFilters {
 
@@ -28,7 +30,7 @@ object AnimeUnityFilters {
 
     class GenreFilter : CheckBoxFilterList(
         "Genere",
-        AnimeUnityFiltersData.GENERE.map { CheckBoxVal(it.first, false) },
+        AnimeUnityFiltersData.GENRE.map { CheckBoxVal(it.first, false) },
     )
 
     class YearFilter : QueryPartFilter("Anno", AnimeUnityFiltersData.YEAR)
@@ -73,15 +75,12 @@ object AnimeUnityFilters {
 
         val genre: String = filters.filterIsInstance<GenreFilter>()
             .first()
-            .state.mapNotNull { format ->
-                if (format.state) {
-                    "{\"id\":" +
-                        AnimeUnityFiltersData.GENERE.find { it.first == format.name }!!.second +
-                        ",\"name\":\"" +
-                        AnimeUnityFiltersData.GENERE.find { it.first == format.name }!!.first +
-                        "\"}"
-                } else { null }
-            }.joinToString(",")
+            .state.filter { it.state }.joinToString(",") { format ->
+                buildJsonObject {
+                    put("id", AnimeUnityFiltersData.GENRE.find { it.first == format.name }!!.second.toInt())
+                    put("name", AnimeUnityFiltersData.GENRE.find { it.first == format.name }!!.first)
+                }.toString()
+            }
 
         return FilterSearchParams(
             filters.asQueryPart<TopFilter>(),
@@ -113,7 +112,7 @@ object AnimeUnityFilters {
             Pair("Più visti", "top-anime?order=most_viewed"),
         )
 
-        val GENERE = arrayOf(
+        val GENRE = arrayOf(
             Pair("Action", "51"),
             Pair("Adventure", "21"),
             Pair("Cars", "29"),

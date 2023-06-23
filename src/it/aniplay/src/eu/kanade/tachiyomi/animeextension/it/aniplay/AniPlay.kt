@@ -76,33 +76,33 @@ class AniPlay : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
 
     private fun searchAnimeRequest(page: Int, query: String, filters: AniPlayFilters.FilterSearchParams): Request {
-        if ((filters.anni.isNotEmpty() && filters.stagione.isEmpty()) ||
-            (filters.anni.isEmpty() && filters.stagione.isNotEmpty())
+        if ((filters.year.isNotEmpty() && filters.season.isEmpty()) ||
+            (filters.year.isEmpty() && filters.season.isNotEmpty())
         ) {
-            throw Exception("Per gli anime stagionali, seleziona sia l'anno che la stagione")
+            error("Per gli anime stagionali, seleziona sia l'anno che la stagione")
         }
 
-        val url = if (filters.anni.isNotEmpty()) {
+        val url = if (filters.year.isNotEmpty()) {
             "$baseUrl/api/seasonal-view".toHttpUrlOrNull()!!.newBuilder()
-                .addPathSegment("${filters.stagione}-${filters.anni}")
+                .addPathSegment("${filters.season}-${filters.year}")
                 .addQueryParameter("page", (page - 1).toString())
                 .addQueryParameter("size", "36")
-                .addQueryParameter("sort", filters.ordina)
+                .addQueryParameter("sort", filters.order)
                 .addQueryParameter("sort", "id")
         } else {
             "$baseUrl/api/anime/advanced-similar-search".toHttpUrlOrNull()!!.newBuilder()
                 .addQueryParameter("page", (page - 1).toString())
                 .addQueryParameter("size", "36")
-                .addQueryParameter("sort", filters.ordina)
+                .addQueryParameter("sort", filters.order)
                 .addQueryParameter("sort", "id")
                 .addIfNotBlank("query", query)
-                .addIfNotBlank("genreIds", filters.genere)
-                .addIfNotBlank("typeIds", filters.tipologia)
-                .addIfNotBlank("statusIds", filters.stato)
-                .addIfNotBlank("originIds", filters.origine)
+                .addIfNotBlank("genreIds", filters.genre)
+                .addIfNotBlank("typeIds", filters.type)
+                .addIfNotBlank("statusIds", filters.status)
+                .addIfNotBlank("originIds", filters.origin)
                 .addIfNotBlank("studioIds", filters.studio)
-                .addIfNotBlank("startYear", filters.inizio)
-                .addIfNotBlank("endYear", filters.fine)
+                .addIfNotBlank("startYear", filters.start)
+                .addIfNotBlank("endYear", filters.end)
         }
 
         return GET(url.build().toString())

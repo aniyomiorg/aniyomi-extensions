@@ -15,7 +15,6 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -46,15 +45,13 @@ class AnimeLove : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "div.containerlista > div.row > div.col-6"
 
-    override fun popularAnimeNextPageSelector(): String = "div > ul.page-nav > li:last-child:not(:has(a.disabled))"
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").toHttpUrl().encodedPath)
-            thumbnail_url = element.selectFirst("img")?.attr("src")
-            title = element.selectFirst("div.default-text")!!.text()
-        }
+    override fun popularAnimeFromElement(element: Element): SAnime = SAnime.create().apply {
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        thumbnail_url = element.selectFirst("img")?.attr("src")
+        title = element.selectFirst("div.default-text")!!.text()
     }
+
+    override fun popularAnimeNextPageSelector(): String = "div > ul.page-nav > li:last-child:not(:has(a.disabled))"
 
     // =============================== Latest ===============================
 
@@ -62,9 +59,9 @@ class AnimeLove : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesSelector(): String = popularAnimeSelector()
 
-    override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
-
     override fun latestUpdatesFromElement(element: Element): SAnime = popularAnimeFromElement(element)
+
+    override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
 
     // =============================== Search ===============================
 
@@ -89,30 +86,26 @@ class AnimeLove : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             return super.searchAnimeParse(response)
         }
 
-        val document = response.asJsoup()
+        val animeList = response.asJsoup()
+            .select(searchAnimeSelectorSearch())
+            .map(::searchAnimeFromElementSearch)
 
-        val animes = document.select(searchAnimeSelectorSearch()).map { element ->
-            searchAnimeFromElementSearch(element)
-        }
-
-        return AnimesPage(animes, false)
+        return AnimesPage(animeList, false)
     }
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
 
     private fun searchAnimeSelectorSearch(): String = "div.col-md-8 > div.card > div.card-body > div.row > div.col-6"
 
-    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
+    override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
 
-    private fun searchAnimeFromElementSearch(element: Element): SAnime {
-        return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").toHttpUrl().encodedPath)
-            thumbnail_url = element.selectFirst("img")?.attr("src")
-            title = element.selectFirst("p.card-text")!!.text()
-        }
+    private fun searchAnimeFromElementSearch(element: Element): SAnime = SAnime.create().apply {
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        thumbnail_url = element.selectFirst("img")?.attr("src")
+        title = element.selectFirst("p.card-text")!!.text()
     }
 
-    override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
+    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
     // ============================== Filters ===============================
 
@@ -238,37 +231,33 @@ class AnimeLove : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =========================== Anime Details ============================
 
-    override fun animeDetailsParse(document: Document): SAnime {
-        val moreInfo = (document.selectFirst("div.card-body > p:contains(TIPO:)")?.text() ?: "") +
-            "\n" +
-            (document.selectFirst("div.card-body > p:contains(ANNO)")?.text() ?: "")
-
-        return SAnime.create().apply {
-            title = document.selectFirst("div.card-body > p:contains(TITOLO:)")?.ownText() ?: ""
-            thumbnail_url = document.selectFirst("div.card-body > div > img")?.attr("src") ?: ""
-            author = document.selectFirst("div.card-body > p:contains(STUDIO:)")?.ownText() ?: ""
-            status = document.selectFirst("div.card-body > p:contains(STATO:)")?.let {
-                parseStatus(it.ownText())
-            } ?: SAnime.UNKNOWN
-            description = (document.selectFirst("div.card-body > p:contains(TRAMA:) ~ p")?.text() ?: "") + "\n\n$moreInfo"
-            genre = document.selectFirst("div.card-body > p:contains(GENERI:)")?.ownText() ?: ""
+    override fun animeDetailsParse(document: Document): SAnime = SAnime.create().apply {
+        title = document.selectFirst("div.card-body > p:contains(TITOLO:)")?.ownText() ?: ""
+        thumbnail_url = document.selectFirst("div.card-body > div > img")?.attr("src") ?: ""
+        author = document.selectFirst("div.card-body > p:contains(STUDIO:)")?.ownText() ?: ""
+        status = document.selectFirst("div.card-body > p:contains(STATO:)")?.let {
+            parseStatus(it.ownText())
+        } ?: SAnime.UNKNOWN
+        genre = document.selectFirst("div.card-body > p:contains(GENERI:)")?.ownText() ?: ""
+        description = buildString {
+            append(document.selectFirst("div.card-body > p:contains(TRAMA:) ~ p")?.text() ?: "")
+            append("\n\n")
+            append(document.selectFirst("div.card-body > p:contains(TIPO:)")?.text() ?: "")
+            append("\n")
+            append(document.selectFirst("div.card-body > p:contains(ANNO)")?.text() ?: "")
         }
     }
 
     // ============================== Episodes ==============================
 
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        return super.episodeListParse(response).reversed()
-    }
+    override fun episodeListParse(response: Response): List<SEpisode> = super.episodeListParse(response).reversed()
 
     override fun episodeListSelector(): String = "div.card ul.page-nav-list-episodi > li"
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        return SEpisode.create().apply {
-            name = "Episodi ${element.text()}"
-            episode_number = element.selectFirst("span")?.text()?.toFloatOrNull() ?: 0F
-            setUrlWithoutDomain(element.selectFirst("a[href]")!!.attr("href").toHttpUrl().encodedPath)
-        }
+    override fun episodeFromElement(element: Element): SEpisode = SEpisode.create().apply {
+        name = "Episodi ${element.text()}"
+        episode_number = element.selectFirst("span")?.text()?.toFloatOrNull() ?: 0F
+        setUrlWithoutDomain(element.selectFirst("a[href]")!!.attr("href"))
     }
 
     // ============================ Video Links =============================
@@ -301,12 +290,14 @@ class AnimeLove : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
+        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
+
         return videoList
     }
 
-    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
-
     override fun videoListSelector(): String = throw Exception("Not Used")
+
+    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
 
     override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
 
@@ -328,7 +319,7 @@ class AnimeLove : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val server = preferences.getString("preferred_server", "AnimeLove")!!
+        val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
 
         return this.sortedWith(
             compareBy { it.quality.contains(server, true) },
@@ -343,13 +334,20 @@ class AnimeLove : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
+    companion object {
+        private const val PREF_SERVER_KEY = "preferred_server"
+        private const val PREF_SERVER_DEFAULT = "AnimeLove"
+    }
+
+    // ============================== Settings ==============================
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoServerPref = ListPreference(screen.context).apply {
-            key = "preferred_server"
+        ListPreference(screen.context).apply {
+            key = PREF_SERVER_KEY
             title = "Preferred server"
             entries = arrayOf("AnimeLove", "StreamTape")
             entryValues = arrayOf("AnimeLove", "StreamTape")
-            setDefaultValue("AnimeLove")
+            setDefaultValue(PREF_SERVER_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -358,7 +356,6 @@ class AnimeLove : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoServerPref)
+        }.also(screen::addPreference)
     }
 }
