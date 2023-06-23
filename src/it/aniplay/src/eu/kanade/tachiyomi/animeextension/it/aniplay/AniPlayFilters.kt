@@ -24,24 +24,24 @@ object AniPlayFilters {
         }
     }
 
-    class GenereFilter : CheckBoxFilterList(
+    class GenreFilter : CheckBoxFilterList(
         "Genere",
-        AniPlayFiltersData.GENERE.map { CheckBoxVal(it.first, false) },
+        AniPlayFiltersData.GENRE.map { CheckBoxVal(it.first, false) },
     )
 
-    class TipologiaFilter : CheckBoxFilterList(
+    class TypeFilter : CheckBoxFilterList(
         "Tipologia anime",
-        AniPlayFiltersData.TIPOLOGIA.map { CheckBoxVal(it.first, false) },
+        AniPlayFiltersData.TYPE.map { CheckBoxVal(it.first, false) },
     )
 
-    class StatoFilter : CheckBoxFilterList(
+    class StatusFilter : CheckBoxFilterList(
         "Stato",
-        AniPlayFiltersData.STATO.map { CheckBoxVal(it.first, false) },
+        AniPlayFiltersData.STATUS.map { CheckBoxVal(it.first, false) },
     )
 
-    class OrigineFilter : CheckBoxFilterList(
+    class OriginFilter : CheckBoxFilterList(
         "Origine",
-        AniPlayFiltersData.ORIGINE.map { CheckBoxVal(it.first, false) },
+        AniPlayFiltersData.ORIGIN.map { CheckBoxVal(it.first, false) },
     )
 
     class StudioFilter : CheckBoxFilterList(
@@ -49,110 +49,105 @@ object AniPlayFilters {
         AniPlayFiltersData.STUDIO.map { CheckBoxVal(it.first, false) },
     )
 
-    class InizioFilter : QueryPartFilter("Inizio", AniPlayFiltersData.ANNI)
-    class FineFilter : QueryPartFilter("Fine", AniPlayFiltersData.ANNI)
-    class OrdinaFilter : QueryPartFilter("Ordina per", AniPlayFiltersData.ORDINA)
+    class StartFilter : QueryPartFilter("Inizio", AniPlayFiltersData.YEAR)
+    class EndFilter : QueryPartFilter("Fine", AniPlayFiltersData.YEAR)
+    class OrderFilter : QueryPartFilter("Ordina per", AniPlayFiltersData.ORDER)
 
-    class AnniFilter : QueryPartFilter("Anni", AniPlayFiltersData.ANNI)
-    class StagioneFilter : QueryPartFilter("Stagione", AniPlayFiltersData.STAGIONE)
+    class YearFilter : QueryPartFilter("Anni", AniPlayFiltersData.YEAR)
+    class SeasonFilter : QueryPartFilter("Stagione", AniPlayFiltersData.SEASON)
 
     val FILTER_LIST get() = AnimeFilterList(
-        OrdinaFilter(),
+        OrderFilter(),
         AnimeFilter.Separator(),
 
-        GenereFilter(),
-        TipologiaFilter(),
-        StatoFilter(),
-        OrigineFilter(),
+        GenreFilter(),
+        TypeFilter(),
+        StatusFilter(),
+        OriginFilter(),
         StudioFilter(),
 
         AnimeFilter.Separator(),
         AnimeFilter.Header("Anni"),
-        InizioFilter(),
-        FineFilter(),
+        StartFilter(),
+        EndFilter(),
 
         AnimeFilter.Separator(),
         AnimeFilter.Header("Anime stagionali"),
         AnimeFilter.Header("(ignora altri filtri tranne l'ordinamento per)"),
-        AnniFilter(),
-        StagioneFilter(),
+        YearFilter(),
+        SeasonFilter(),
 
     )
 
     data class FilterSearchParams(
-        val ordina: String = "views,desc",
-        val genere: String = "",
-        val tipologia: String = "",
-        val stato: String = "",
-        val origine: String = "",
+        val order: String = "views,desc",
+        val genre: String = "",
+        val type: String = "",
+        val status: String = "",
+        val origin: String = "",
         val studio: String = "",
-        val inizio: String = "",
-        val fine: String = "",
-        val anni: String = "",
-        val stagione: String = "",
+        val start: String = "",
+        val end: String = "",
+        val year: String = "",
+        val season: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
         if (filters.isEmpty()) return FilterSearchParams()
 
-        val genere: String = filters.filterIsInstance<GenereFilter>()
+        val genre: String = filters.filterIsInstance<GenreFilter>()
             .first()
-            .state.mapNotNull { format ->
-                if (format.state) {
-                    AniPlayFiltersData.GENERE.find { it.first == format.name }!!.second
-                } else { null }
-            }.joinToString(",")
+            .state.filter { it.state }
+            .joinToString(",") { format ->
+                AniPlayFiltersData.GENRE.find { it.first == format.name }!!.second
+            }
 
-        val tipologia: String = filters.filterIsInstance<TipologiaFilter>()
+        val type: String = filters.filterIsInstance<TypeFilter>()
             .first()
-            .state.mapNotNull { format ->
-                if (format.state) {
-                    AniPlayFiltersData.TIPOLOGIA.find { it.first == format.name }!!.second
-                } else { null }
-            }.joinToString(",")
+            .state.filter { it.state }
+            .joinToString(",") { format ->
+                AniPlayFiltersData.TYPE.find { it.first == format.name }!!.second
+            }
 
-        val stato: String = filters.filterIsInstance<StatoFilter>()
+        val status: String = filters.filterIsInstance<StatusFilter>()
             .first()
-            .state.mapNotNull { format ->
-                if (format.state) {
-                    AniPlayFiltersData.STATO.find { it.first == format.name }!!.second
-                } else { null }
-            }.joinToString(",")
+            .state.filter { it.state }
+            .joinToString(",") { format ->
+                AniPlayFiltersData.STATUS.find { it.first == format.name }!!.second
+            }
 
-        val origine: String = filters.filterIsInstance<OrigineFilter>()
+        val origin: String = filters.filterIsInstance<OriginFilter>()
             .first()
-            .state.mapNotNull { format ->
-                if (format.state) {
-                    AniPlayFiltersData.ORIGINE.find { it.first == format.name }!!.second
-                } else { null }
-            }.joinToString(",")
+            .state.filter { it.state }
+            .joinToString(",") { format ->
+                AniPlayFiltersData.ORIGIN.find { it.first == format.name }!!.second
+            }
 
         val studio: String = filters.filterIsInstance<StudioFilter>()
             .first()
-            .state.mapNotNull { format ->
-                if (format.state) {
-                    AniPlayFiltersData.STUDIO.find { it.first == format.name }!!.second
-                } else { null }
-            }.joinToString(",")
+            .state.filter { it.state }
+            .joinToString(",") { format ->
+                AniPlayFiltersData.STUDIO.find { it.first == format.name }!!.second
+            }
 
         return FilterSearchParams(
-            filters.asQueryPart<OrdinaFilter>(),
-            genere,
-            tipologia,
-            stato,
-            origine,
+            filters.asQueryPart<OrderFilter>(),
+            genre,
+            type,
+            status,
+            origin,
             studio,
-            filters.asQueryPart<InizioFilter>(),
-            filters.asQueryPart<FineFilter>(),
-            filters.asQueryPart<AnniFilter>(),
-            filters.asQueryPart<StagioneFilter>(),
+            filters.asQueryPart<StartFilter>(),
+            filters.asQueryPart<EndFilter>(),
+            filters.asQueryPart<YearFilter>(),
+            filters.asQueryPart<SeasonFilter>(),
         )
     }
 
     private object AniPlayFiltersData {
         val ALL = Pair("All", "")
 
-        val ORDINA = arrayOf(
+        val ORDER = arrayOf(
             Pair("Popolarità decrescente", "views,desc"),
             Pair("Popolarità crescente", "views,asc"),
             Pair("Titolo decrescente", "title,desc"),
@@ -167,7 +162,7 @@ object AniPlayFilters {
             Pair("Data di fine aggiunta", "createdDate,asc"),
         )
 
-        val GENERE = arrayOf(
+        val GENRE = arrayOf(
             Pair("Arti marziali", "68"),
             Pair("Automobilismo", "90"),
             Pair("Avventura", "25"),
@@ -222,7 +217,7 @@ object AniPlayFilters {
             Pair("Yuri", "50"),
         )
 
-        val TIPOLOGIA = arrayOf(
+        val TYPE = arrayOf(
             Pair("Movie", "2"),
             Pair("ONA", "4"),
             Pair("OVA", "3"),
@@ -230,7 +225,7 @@ object AniPlayFilters {
             Pair("Special", "5"),
         )
 
-        val STATO = arrayOf(
+        val STATUS = arrayOf(
             Pair("Annunciato", "4"),
             Pair("Completato", "1"),
             Pair("In corso", "2"),
@@ -238,7 +233,7 @@ object AniPlayFilters {
             Pair("Sospeso", "3"),
         )
 
-        val ORIGINE = arrayOf(
+        val ORIGIN = arrayOf(
             Pair("Gioco di carte", "1"),
             Pair("Light novel", "2"),
             Pair("Mange", "3"),
@@ -568,7 +563,7 @@ object AniPlayFilters {
             Pair("Zexcs", "259"),
         )
 
-        val STAGIONE = arrayOf(
+        val SEASON = arrayOf(
             ALL,
             Pair("Inverno", "winter"),
             Pair("Primavera", "spring"),
@@ -576,7 +571,7 @@ object AniPlayFilters {
             Pair("Autunno", "fall"),
         )
 
-        val ANNI = arrayOf(ALL) + (1984..2023).map {
+        val YEAR = arrayOf(ALL) + (1984..2023).map {
             Pair(it.toString(), it.toString())
         }.reversed().toTypedArray()
     }
