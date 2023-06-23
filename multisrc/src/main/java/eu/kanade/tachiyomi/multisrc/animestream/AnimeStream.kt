@@ -85,21 +85,13 @@ abstract class AnimeStream(
         return super.fetchPopularAnime(page)
     }
 
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        return SAnime.create().apply {
-            val ahref = element.selectFirst("h4 > a.series")!!
-            setUrlWithoutDomain(ahref.attr("href"))
-            title = ahref.text()
-            thumbnail_url = element.selectFirst("img")!!.getImageUrl()
-        }
-    }
+    override fun popularAnimeRequest(page: Int) = GET("$animeListUrl/?page=$page&order=popular")
 
-    override fun popularAnimeNextPageSelector() = null
+    override fun popularAnimeSelector() = searchAnimeSelector()
 
-    override fun popularAnimeRequest(page: Int) = GET(baseUrl)
+    override fun popularAnimeNextPageSelector() = searchAnimeNextPageSelector()
 
-    /* Possible classes: wpop-weekly, wpop-monthly, wpop-alltime */
-    override fun popularAnimeSelector() = "div.serieslist.wpop-alltime li"
+    override fun popularAnimeFromElement(element: Element) = searchAnimeFromElement(element)
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
@@ -112,40 +104,67 @@ abstract class AnimeStream(
         else -> "Episode"
     }
 
+    @Suppress("unused_parameter")
+    protected open fun getEpisodeName(element: Element, epNum: String) = "$episodePrefix $epNum"
+
     override fun episodeFromElement(element: Element): SEpisode {
         return SEpisode.create().apply {
             setUrlWithoutDomain(element.attr("href"))
-            element.selectFirst("div.epl-num")!!.text().let {
-                name = "$episodePrefix $it"
+            element.selectFirst(".epl-num")!!.text().let {
+                name = getEpisodeName(element, it)
                 episode_number = it.substringBefore(" ").toFloatOrNull() ?: 0F
             }
-            element.selectFirst("div.epl-sub")?.text()?.let { scanlator = it }
-            date_upload = element.selectFirst("div.epl-date")?.text().toDate()
+            element.selectFirst(".epl-sub")?.text()?.let { scanlator = it }
+            date_upload = element.selectFirst(".epl-date")?.text().toDate()
         }
     }
 
     override fun episodeListSelector() = "div.eplister > ul > li > a"
 
     // =========================== Anime Details ============================
+    protected open val animeDetailsSelector = "div.info-content, div.right ul.data"
+    protected open val animeAltNameSelector = ".alter"
+    protected open val animeTitleSelector = "h1.entry-title"
+    protected open val animeThumbnailSelector = "div.thumb > img, div.limage > img"
+    protected open val animeGenresSelector = "div.genxed > a, li:contains(Genre:) a"
+    protected open val animeDescriptionSelector = ".entry-content[itemprop=description], .desc"
+    protected open val animeAdditionalInfoSelector = "div.spe > span, li:has(b)"
+
+    protected open val animeStatusText = "Status"
+    protected open val animeArtistText = "tudio"
+    protected open val animeAuthorText = "Fansub"
+
+    protected open val animeAltNamePrefix = when (lang) {
+        "pt-BR" -> "Nome(s) alternativo(s): "
+        else -> "Alternative name(s): "
+    }
+
+    protected open fun getAnimeDescription(document: Document) =
+        document.selectFirst(animeDescriptionSelector)?.text()
+
     override fun animeDetailsParse(document: Document): SAnime {
         return SAnime.create().apply {
             setUrlWithoutDomain(document.location())
-            title = document.selectFirst("h1.entry-title")!!.text()
-            thumbnail_url = document.selectFirst("div.thumb > img")!!.getImageUrl()
+            title = document.selectFirst(animeTitleSelector)!!.text()
+            thumbnail_url = document.selectFirst(animeThumbnailSelector)!!.getImageUrl()
 
-            val infos = document.selectFirst("div.info-content")!!
-            genre = infos.select("div.genxed > a").eachText().joinToString()
+            val infos = document.selectFirst(animeDetailsSelector)!!
+            genre = infos.select(animeGenresSelector).eachText().joinToString()
 
-            status = parseStatus(infos.getInfo("Status"))
-            artist = infos.getInfo("tudio")
-            author = infos.getInfo("Fansub")
+            status = parseStatus(infos.getInfo(animeStatusText))
+            artist = infos.getInfo(animeArtistText)
+            author = infos.getInfo(animeAuthorText)
 
             description = buildString {
-                document.selectFirst("div.entry-content")?.text()?.let {
+                getAnimeDescription(document)?.let {
                     append("$it\n\n")
                 }
 
-                infos.select("div.spe > span").eachText().forEach {
+                document.selectFirst(animeAltNameSelector)?.text()
+                    ?.takeIf(String::isNotBlank)
+                    ?.let { append("$animeAltNamePrefix$it\n") }
+
+                infos.select(animeAdditionalInfoSelector).eachText().forEach {
                     append("$it\n")
                 }
             }
@@ -153,7 +172,7 @@ abstract class AnimeStream(
     }
 
     // ============================ Video Links =============================
-    override fun videoListSelector() = "select.mirror > option[data-index]"
+    override fun videoListSelector() = "select.mirror > option[data-index], ul.mirror a[data-em]"
 
     override fun videoListParse(response: Response): List<Video> {
         val items = response.asJsoup().select(videoListSelector())
@@ -167,7 +186,17 @@ abstract class AnimeStream(
     }
 
     protected open fun getHosterUrl(element: Element): String {
-        return Base64.decode(element.attr("value"), Base64.DEFAULT)
+        val encodedData = when (element.tagName()) {
+            "option" -> element.attr("value")
+            "a" -> element.attr("data-em")
+            else -> throw Exception()
+        }
+
+        return getHosterUrl(encodedData)
+    }
+
+    protected open fun getHosterUrl(encodedData: String): String {
+        return Base64.decode(encodedData, Base64.DEFAULT)
             .let(::String) // bytearray -> string
             .let(Jsoup::parse) // string -> document
             .selectFirst("iframe[src~=.]")!!
@@ -193,7 +222,7 @@ abstract class AnimeStream(
     override fun searchAnimeFromElement(element: Element): SAnime {
         return SAnime.create().apply {
             setUrlWithoutDomain(element.attr("href"))
-            title = element.selectFirst("div.tt")!!.ownText()
+            title = element.selectFirst("div.tt, div.ttl")!!.ownText()
             thumbnail_url = element.selectFirst("img")!!.getImageUrl()
         }
     }
@@ -211,7 +240,7 @@ abstract class AnimeStream(
                 if (params.studios.isNotEmpty()) append(params.studios + "&")
             }
 
-            GET("$baseUrl/anime/?page=$page&$multiString&status=${params.status}&type=${params.type}&sub=${params.sub}&order=${params.order}")
+            GET("$animeListUrl/?page=$page&$multiString&status=${params.status}&type=${params.type}&sub=${params.sub}&order=${params.order}")
         }
     }
 
@@ -274,13 +303,15 @@ abstract class AnimeStream(
      */
     protected open val fetchFilters = true
 
+    protected open val filtersSelector = "span.sec1 > div.filter > ul"
+
     private fun fetchFilterList() {
         if (fetchFilters && !AnimeStreamFilters.filterInitialized()) {
             AnimeStreamFilters.filterElements = runBlocking {
                 withContext(Dispatchers.IO) {
                     client.newCall(GET(animeListUrl)).execute()
                         .asJsoup()
-                        .select("span.sec1 > div.filter > ul")
+                        .select(filtersSelector)
                 }
             }
         }
