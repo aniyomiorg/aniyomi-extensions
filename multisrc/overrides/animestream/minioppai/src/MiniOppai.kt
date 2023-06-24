@@ -75,6 +75,10 @@ class MiniOppai : AnimeStream(
     override fun getAnimeDescription(document: Document) =
         document.select("div.entry-content > p").eachText().joinToString("\n")
 
+    override fun animeDetailsParse(document: Document) = super.animeDetailsParse(document).apply {
+        title = title.substringBefore("Episode").substringBefore(" OVA ")
+    }
+
     // =============================== Search ===============================
     override fun searchAnimeSelector() = "div.latest article a.tip"
 
