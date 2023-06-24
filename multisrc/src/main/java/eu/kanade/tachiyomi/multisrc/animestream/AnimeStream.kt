@@ -131,8 +131,11 @@ abstract class AnimeStream(
     protected open val animeAdditionalInfoSelector = "div.spe > span, li:has(b)"
 
     protected open val animeStatusText = "Status"
-    protected open val animeArtistText = "tudio"
     protected open val animeAuthorText = "Fansub"
+    protected open val animeArtistText = when (lang) {
+        "pt-BR" -> "Estudio"
+        else -> "Studio"
+    }
 
     protected open val animeAltNamePrefix = when (lang) {
         "pt-BR" -> "Nome(s) alternativo(s): "
