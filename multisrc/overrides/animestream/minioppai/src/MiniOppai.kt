@@ -1,12 +1,15 @@
 package eu.kanade.tachiyomi.animeextension.id.minioppai
 
 import eu.kanade.tachiyomi.animeextension.id.minioppai.extractors.MiniOppaiExtractor
+import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
+import eu.kanade.tachiyomi.network.GET
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
@@ -77,8 +80,31 @@ class MiniOppai : AnimeStream(
         }
     }
 
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val params = MiniOppaiFilters.getSearchParameters(filters)
+        return if (query.isNotEmpty()) {
+            GET("$baseUrl/page/$page/?s=$query")
+        } else {
+            val multiString = listOf(
+                params.genres,
+                params.countries,
+                params.qualities,
+                params.year,
+                params.status,
+            ).filter(String::isNotBlank).joinToString("&").let {
+                when {
+                    it.isBlank() -> it
+                    else -> "&$it"
+                }
+            }
+
+            GET("$animeListUrl/page/$page/?order=${params.order}$multiString")
+        }
+    }
+
     // ============================== Filters ===============================
     override val fetchFilters = false
+    override fun getFilterList() = MiniOppaiFilters.FILTER_LIST
 
     // ============================= Utilities ==============================
     override fun Element.getInfo(text: String): String? {
