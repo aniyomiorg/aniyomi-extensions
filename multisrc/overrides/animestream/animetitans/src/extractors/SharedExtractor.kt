@@ -8,12 +8,8 @@ import okhttp3.OkHttpClient
 class SharedExtractor(private val client: OkHttpClient) {
     fun videoFromUrl(url: String, quality: String): Video? {
         val document = client.newCall(GET(url)).execute().asJsoup()
-        val check = document.select("div.error4shared").text()
-        val videoUrl = document.select("source").attr("src")
-        return if (check.contains("This file is not available any more")) {
-            Video(url, "no 1video", "https")
-        } else {
-            Video(url, quality, videoUrl)
+        return document.selectFirst("source")?.let {
+            Video(it.attr("src"), quality, it.attr("src"))
         }
     }
 }

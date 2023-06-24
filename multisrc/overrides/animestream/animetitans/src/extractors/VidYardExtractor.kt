@@ -6,17 +6,23 @@ import okhttp3.Headers
 import okhttp3.OkHttpClient
 
 class VidYardExtractor(private val client: OkHttpClient) {
+    companion object {
+        private const val VIDYARD_URL = "https://play.vidyard.com"
+    }
+
     fun videosFromUrl(url: String, headers: Headers): List<Video> {
-        val callPlayer = client.newCall(GET(url)).execute().body.string()
+        val newHeaders = headers.newBuilder().add("Referer", VIDYARD_URL).build()
+        val id = url.substringAfter("com/").substringBefore("?")
+        val playerUrl = "$VIDYARD_URL/player/" + id + ".json"
+        val callPlayer = client.newCall(GET(playerUrl, newHeaders)).execute()
+            .use { it.body.string() }
         val data = callPlayer.substringAfter("hls\":[").substringBefore("]")
         val sources = data.split("profile\":\"").drop(1)
-        val videoList = mutableListOf<Video>()
-        for (source in sources) {
+
+        return sources.map { source ->
             val src = source.substringAfter("url\":\"").substringBefore("\"")
             val quality = source.substringBefore("\"")
-            val video = Video(src, quality, src, headers = headers)
-            videoList.add(video)
+            Video(src, quality, src, headers = newHeaders)
         }
-        return videoList
     }
 }
