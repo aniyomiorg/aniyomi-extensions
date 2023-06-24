@@ -28,6 +28,12 @@ class MiniOppai : AnimeStream(
         SimpleDateFormat("MMMM d, yyyy", Locale(lang))
     }
 
+    // ============================== Popular ===============================
+    override fun popularAnimeRequest(page: Int) = GET("$animeListUrl/page/$page/?order=popular")
+
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int) = GET("$animeListUrl/page/$page/?order=update")
+
     // ============================== Episodes ==============================
     override fun episodeListSelector() = "div.epsdlist > ul > li > a"
 
