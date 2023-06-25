@@ -2596,10 +2596,10 @@
   {
     "name": "Aniyomi: MiniOppai",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.minioppai",
-    "apk": "aniyomi-id.minioppai-v13.3.apk",
+    "apk": "aniyomi-id.minioppai-v13.4.apk",
     "lang": "id",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2610,7 +2610,7 @@
         "id": "3422641844834047610",
         "baseUrl": "https://minioppai.org",
         "versionId": 1,
-        "hasCloudflare": 0
+        "hasCloudflare": 1
       }
     ]
   },
@@ -2819,6 +2819,27 @@
         "lang": "it",
         "id": "5832452298268268088",
         "baseUrl": "https://www.hentaisaturn.com",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: StreamingCommunity",
+    "pkg": "eu.kanade.tachiyomi.animeextension.it.streamingcommunity",
+    "apk": "aniyomi-it.streamingcommunity-v13.1.apk",
+    "lang": "it",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "StreamingCommunity",
+        "lang": "it",
+        "id": "8092251957420885335",
+        "baseUrl": "https://streamingcommunity.codes",
         "versionId": 1,
         "hasCloudflare": 1
       }
