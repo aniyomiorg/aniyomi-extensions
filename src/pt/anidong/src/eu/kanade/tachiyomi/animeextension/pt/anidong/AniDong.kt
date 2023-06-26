@@ -1,5 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.pt.anidong
 
+import eu.kanade.tachiyomi.animeextension.pt.anidong.dto.EpisodeDto
+import eu.kanade.tachiyomi.animeextension.pt.anidong.dto.EpisodeListDto
 import eu.kanade.tachiyomi.animeextension.pt.anidong.dto.SearchResultDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -33,6 +35,13 @@ class AniDong : ParsedAnimeHttpSource() {
 
     private val json: Json by injectLazy()
 
+    private val apiHeaders by lazy {
+        headersBuilder() // sets user-agent
+            .add("Referer", baseUrl)
+            .add("x-requested-with", "XMLHttpRequest")
+            .build()
+    }
+
     // ============================== Popular ===============================
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href"))
@@ -51,6 +60,32 @@ class AniDong : ParsedAnimeHttpSource() {
 
     override fun episodeListSelector(): String {
         throw UnsupportedOperationException("Not used.")
+    }
+
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val doc = getRealDoc(response.asJsoup())
+
+        val id = doc.selectFirst("link[rel=shortlink]")!!.attr("href").substringAfter("=")
+        val body = FormBody.Builder()
+            .add("action", "show_videos")
+            .add("anime_id", id)
+            .build()
+
+        val res = client.newCall(POST("$baseUrl/api", headers = apiHeaders, body = body)).execute()
+        val data = json.decodeFromString<EpisodeListDto>(res.body.string())
+
+        return buildList {
+            data.episodes.forEach { add(episodeFromObject(it, "Episódio")) }
+            data.movies.forEach { add(episodeFromObject(it, "Filme")) }
+            data.ovas.forEach { add(episodeFromObject(it, "OVA")) }
+            sortByDescending { it.episode_number }
+        }
+    }
+
+    private fun episodeFromObject(episode: EpisodeDto, prefix: String) = SEpisode.create().apply {
+        setUrlWithoutDomain(episode.epi_url)
+        episode_number = episode.epi_num.toFloatOrNull() ?: 0F
+        name = "$prefix ${episode.epi_num}"
     }
 
     // =========================== Anime Details ============================
@@ -150,12 +185,7 @@ class AniDong : ParsedAnimeHttpSource() {
                 params.genres.forEach { add("generos[]", it) }
             }.build()
 
-        val newHeaders = headersBuilder() // sets user-agent
-            .add("Referer", baseUrl)
-            .add("x-requested-with", "XMLHttpRequest")
-            .build()
-
-        return POST("$baseUrl/wp-admin/admin-ajax.php", headers = newHeaders, body = body)
+        return POST("$baseUrl/wp-admin/admin-ajax.php", headers = apiHeaders, body = body)
     }
 
     override fun searchAnimeSelector(): String {
