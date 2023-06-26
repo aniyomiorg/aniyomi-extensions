@@ -54,8 +54,34 @@ class AniDong : ParsedAnimeHttpSource() {
     }
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        throw UnsupportedOperationException("Not used.")
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        val doc = getRealDoc(document)
+        val infos = doc.selectFirst("div.anime_infos")!!
+
+        setUrlWithoutDomain(doc.location())
+        title = infos.selectFirst("div > h3")!!.ownText()
+        thumbnail_url = infos.selectFirst("img")!!.attr("src")
+        genre = infos.select("div[itemprop=genre] a").eachText().joinToString()
+        artist = infos.selectFirst("div[itemprop=productionCompany]")!!.text()
+
+        status = doc.selectFirst("div:contains(Status) span")?.text().let {
+            when {
+                it == null -> SAnime.UNKNOWN
+                it == "Completo" -> SAnime.COMPLETED
+                it.contains("Lançamento") -> SAnime.ONGOING
+                else -> SAnime.UNKNOWN
+            }
+        }
+
+        description = buildString {
+            infos.selectFirst("div.anime_name + div.anime_info")?.text()?.let {
+                append("Nomes alternativos: $it\n")
+            }
+
+            doc.selectFirst("div[itemprop=description]")?.text()?.let {
+                append("\n$it")
+            }
+        }
     }
 
     // ============================ Video Links =============================
@@ -160,6 +186,15 @@ class AniDong : ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/lancamentos/page/$page/")
 
     override fun latestUpdatesSelector() = "article.main_content_article > a"
+
+    // ============================= Utilities ==============================
+    private fun getRealDoc(document: Document): Document {
+        if (!document.location().contains("/video/")) return document
+
+        return document.selectFirst(".episodioControleItem:has(i.ri-grid-fill)")?.let {
+            client.newCall(GET(it.attr("href"), headers)).execute().asJsoup()
+        } ?: document
+    }
 
     companion object {
         const val PREFIX_SEARCH = "id:"
