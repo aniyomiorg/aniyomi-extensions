@@ -120,6 +120,32 @@ class AniDong : ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
+    override fun videoListParse(response: Response): List<Video> {
+        val doc = response.asJsoup()
+        return doc.select("div.player_option").flatMap {
+            val url = it.attr("data-playerlink")
+            val playerName = it.text().trim()
+            videosFromUrl(url, playerName)
+        }
+    }
+
+    private fun videosFromUrl(url: String, playerName: String): List<Video> {
+        val scriptData = client.newCall(GET(url, apiHeaders)).execute()
+            .use { it.asJsoup() }
+            .selectFirst("script:containsData(sources)")
+            ?.data() ?: return emptyList()
+
+        return scriptData.substringAfter("sources: [").substringBefore("]")
+            .split("{")
+            .drop(1)
+            .map {
+                val videoUrl = it.substringAfter("file: \"").substringBefore('"')
+                val label = it.substringAfter("label: \"", "Unknown").substringBefore('"')
+                val quality = "$playerName - $label"
+                Video(videoUrl, quality, videoUrl, headers = apiHeaders)
+            }
+    }
+
     override fun videoFromElement(element: Element): Video {
         throw UnsupportedOperationException("Not used.")
     }
