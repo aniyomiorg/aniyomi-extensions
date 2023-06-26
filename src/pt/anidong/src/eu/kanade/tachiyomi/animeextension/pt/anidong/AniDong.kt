@@ -23,7 +23,7 @@ class AniDong : ParsedAnimeHttpSource() {
 
     override val lang = "pt-BR"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     // ============================== Popular ===============================
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
@@ -97,21 +97,13 @@ class AniDong : ParsedAnimeHttpSource() {
     }
 
     // =============================== Latest ===============================
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun latestUpdatesNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesNextPageSelector() = "div.paginacao > a.next"
 
-    override fun latestUpdatesRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/lancamentos/page/$page/")
 
-    override fun latestUpdatesSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesSelector() = "article.main_content_article > a"
 
     companion object {
         const val PREFIX_SEARCH = "id:"
