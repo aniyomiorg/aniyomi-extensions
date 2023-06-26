@@ -26,21 +26,15 @@ class AniDong : ParsedAnimeHttpSource() {
     override val supportsLatest = false
 
     // ============================== Popular ===============================
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        title = element.attr("title")
+        thumbnail_url = element.selectFirst("img")?.attr("src")
     }
 
-    override fun popularAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun popularAnimeNextPageSelector() = null
+    override fun popularAnimeRequest(page: Int) = GET(baseUrl)
+    override fun popularAnimeSelector() = "article.top10_animes_item > a"
 
     // ============================== Episodes ==============================
     override fun episodeFromElement(element: Element): SEpisode {
