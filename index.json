@@ -2930,6 +2930,27 @@
     ]
   },
   {
+    "name": "Aniyomi: AniDong",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.anidong",
+    "apk": "aniyomi-pt.anidong-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AniDong",
+        "lang": "pt-BR",
+        "id": "7378153581200508732",
+        "baseUrl": "https://anidong.net",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Anime Fire",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animefire",
     "apk": "aniyomi-pt.animefire-v13.5.apk",
