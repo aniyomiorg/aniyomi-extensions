@@ -28,11 +28,11 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AnimeWorld (experimental)"
 
-    override val baseUrl = "https://anime-world.in/"
+    override val baseUrl = "https://anime-world.in"
 
     override val lang = "hi"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -40,23 +40,23 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun popularAnimeSelector(): String = "li.series, li.movies"
+    override fun popularAnimeSelector(): String = "div.col-span-1"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/")
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/advanced-search/page/$page/?s_keyword=&s_type=all&s_status=all&s_lang=all&s_sub_type=all&s_year=all&s_orderby=viewed&s_genre=")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        var url = element.selectFirst("img")!!.attr("src")
-        if (!url.contains("https")) {
-            url = "https:$url"
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        var thumbnail = element.selectFirst("img")!!.attr("src")
+        if (!thumbnail.contains("https")) {
+            thumbnail = "$baseUrl/$thumbnail"
         }
-        anime.setUrlWithoutDomain(element.select("a").attr("href"))
-        anime.thumbnail_url = url
-        anime.title = element.select("h2.entry-title").text()
+        anime.thumbnail_url = thumbnail
+        anime.title = element.select("div.font-medium.line-clamp-2.mb-3").text()
         return anime
     }
 
-    override fun popularAnimeNextPageSelector(): String = "ul.pagination li:last-child:not(.selected)"
+    override fun popularAnimeNextPageSelector(): String = "ul.page-numbers li:has(span[aria-current=\"page\"]) + li"
 
     override fun episodeListSelector() = throw Exception("not used")
 
@@ -218,13 +218,13 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
 
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
+    override fun latestUpdatesFromElement(element: Element): SAnime = popularAnimeFromElement(element)
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/advanced-search/page/$page/?s_keyword=&s_type=all&s_status=all&s_lang=all&s_sub_type=all&s_year=all&s_orderby=update&s_genre=")
 
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesSelector(): String = popularAnimeSelector()
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
