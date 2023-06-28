@@ -24,6 +24,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 
 class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -38,11 +39,15 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
+    private val json: Json by injectLazy()
+
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/advanced-search/page/$page/?s_keyword=&s_type=all&s_status=all&s_lang=all&s_sub_type=all&s_year=all&s_orderby=viewed&s_genre=")
+    private val language = "hindi"
+
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/advanced-search/page/$page/?s_keyword=&s_type=all&s_status=all&s_lang=$lang&s_sub_type=all&s_year=all&s_orderby=viewed&s_genre=")
 
     override fun popularAnimeNextPageSelector(): String = "ul.page-numbers li:has(span[aria-current=\"page\"]) + li"
 
@@ -90,7 +95,7 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
-        val seasonsJson = Json.decodeFromString<JsonArray>(
+        val seasonsJson = json.decodeFromString<JsonArray>(
             document.html()
                 .substringAfter("var season_list = ")
                 .substringBefore("var season_label =")
@@ -102,7 +107,7 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         seasonsJson.forEach { season ->
             val seasonName = if (seasonsJson.size == 1) "" else "Season $seasonNumber"
-            val episodesJson = season.jsonObject["episodes"]!!.jsonObject["all"]!!.jsonArray.reversed()
+            val episodesJson = season.jsonObject["episodes"]!!.jsonObject[language]!!.jsonArray.reversed()
 
             episodesJson.forEach {
                 val episodeTitle = it.jsonObject["metadata"]!!
@@ -126,7 +131,7 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val episode = SEpisode.create().apply {
                     name = episodeName
                     episode_number = episodeNumber
-                    url = "$baseUrl/wp-json/kiranime/v1/episode?id=${it.jsonObject["id"]}"
+                    setUrlWithoutDomain(url = "$baseUrl/wp-json/kiranime/v1/episode?id=${it.jsonObject["id"]}")
                     date_upload = it.jsonObject["metadata"]
                         ?.jsonObject?.get("released")?.toString()
                         ?.drop(1)?.dropLast(1)
@@ -148,45 +153,62 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-        val playerElement = document.select("section.player")
-        val languagesElement = playerElement.select("span.rtg")
-        for (element in languagesElement) {
-            val tabId = element.attr("tab")
-            val language = element.text()
-            val options = playerElement.select("div#$tabId li a")
-            options.map {
-                val optionId = it.attr("href")
-                val videos = videosFromElement(playerElement.select("div$optionId").first()!!, language)
-                videoList.addAll(videos)
-            }
+        val playersIndex = document.html().lastIndexOf("players")
+        val documentTrimmed = document.html().substring(playersIndex)
+            .substringAfter("players\":")
+            .substringBefore(",\"noplayer\":")
+            .trim()
+
+        val playerJson = json.decodeFromString<JsonArray>(documentTrimmed)
+
+        val filterStreams = playerJson.filter {
+            it.jsonObject["type"].toString()
+                .drop(1).dropLast(1)
+                .compareTo("stream") == 0
         }
+
+        val filterLanguages = filterStreams.filter {
+            it.jsonObject["language"].toString()
+                .drop(1).dropLast(1)
+                .compareTo(language) == 0
+        }
+
+        // Abyss - Server does not work
+
+        val abyssStreams = filterLanguages.filter {
+            it.jsonObject["server"].toString()
+                .drop(1).dropLast(1)
+                .compareTo("Abyss") == 0
+        }
+
+        // Mystream
+
+        val myStreamStreams = filterLanguages.filter {
+            it.jsonObject["server"].toString()
+                .drop(1).dropLast(1)
+                .compareTo("Mystream") == 0
+        }
+
+        // StreamSB
+
+        filterLanguages.filter {
+            it.jsonObject["server"].toString()
+                .drop(1).dropLast(1)
+                .compareTo("Streamsb") == 0
+        }.forEach {
+            val url = "https://cloudemb.com/e/${it.jsonObject["url"].toString()
+                .drop(1).dropLast(1)
+                .substringAfter("id=")}.html"
+            val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
+            videoList.addAll(videos)
+        }
+
         return videoList
     }
 
     override fun videoFromElement(element: Element): Video = throw Exception("not used")
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
-
-    private fun videosFromElement(element: Element, language: String): List<Video> {
-        val iframeElm = element.select("iframe")
-        val videoList = mutableListOf<Video>()
-        val url = iframeElm.attr("data-src")
-        when {
-            url.contains("embedsb") || url.contains("cloudemb") || url.contains("sbembed.com") ||
-                url.contains("sbembed1.com") || url.contains("sbplay.org") ||
-                url.contains("sbvideo.net") || url.contains("streamsb.net") || url.contains("sbplay.one") ||
-                url.contains("cloudemb.com") || url.contains("playersb.com") || url.contains("tubesb.com") ||
-                url.contains("sbplay1.com") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
-                url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
-                url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
-                url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com")
-            -> {
-                val videos = StreamSBExtractor(client).videosFromUrl(url, headers, "$language:")
-                videoList.addAll(videos)
-            }
-        }
-        return videoList
-    }
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", null)
@@ -223,7 +245,7 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SAnime = popularAnimeFromElement(element)
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/advanced-search/page/$page/?s_keyword=&s_type=all&s_status=all&s_lang=all&s_sub_type=all&s_year=all&s_orderby=update&s_genre=")
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/advanced-search/page/$page/?s_keyword=&s_type=all&s_status=all&s_lang=$lang&s_sub_type=all&s_year=all&s_orderby=update&s_genre=")
 
     override fun latestUpdatesSelector(): String = popularAnimeSelector()
 
@@ -231,8 +253,8 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
+            entries = arrayOf("1080p", "720p", "480p", "360p", "240p")
+            entryValues = arrayOf("1080", "720", "480", "360", "240")
             setDefaultValue("1080")
             summary = "%s"
 
