@@ -12,9 +12,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -40,9 +38,11 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun popularAnimeSelector(): String = "div.col-span-1"
-
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/advanced-search/page/$page/?s_keyword=&s_type=all&s_status=all&s_lang=all&s_sub_type=all&s_year=all&s_orderby=viewed&s_genre=")
+
+    override fun popularAnimeNextPageSelector(): String = "ul.page-numbers li:has(span[aria-current=\"page\"]) + li"
+
+    override fun popularAnimeSelector(): String = "div.col-span-1"
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -56,58 +56,39 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun popularAnimeNextPageSelector(): String = "ul.page-numbers li:has(span[aria-current=\"page\"]) + li"
+    override fun animeDetailsParse(document: Document): SAnime {
+        val anime = SAnime.create().apply {
+            genre = document.select("span.leading-6 a[class~=border-opacity-30]").joinToString(", ") { it.text() }
+            description = document.select("span.block.w-full.max-h-24.overflow-scroll.my-3.overflow-x-hidden.text-xs.text-gray-200").text()
+            author = document.select("span.leading-6 a[href*=\"producer\"]:first-child").text()
+            artist = document.select("span.leading-6 a[href*=\"studio\"]:first-child").text()
+            status = parseStatus(document)
+        }
+        return anime
+    }
 
-    override fun episodeListSelector() = throw Exception("not used")
+    private val selector = "ul li:has(div.w-1.h-1.bg-gray-500.rounded-full) + li"
 
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.asJsoup()
-        return if (response.request.url.toString().contains("movies/")) {
-            val episodeList = mutableListOf<SEpisode>()
-            val episode = SEpisode.create()
-            episode.name = document.select("h1.entry-title").text()
-            episode.episode_number = 1F
-            episode.setUrlWithoutDomain(response.request.url.toString())
-            episodeList.add(episode)
-            episodeList
-        } else {
-            val seasonDataElements = document.select("li.sel-temp")
-            val episodesList = mutableListOf<SEpisode>()
-            seasonDataElements.map {
-                val epList = episodeFromSeason(it)
-                episodesList.addAll(epList)
+    private fun parseStatus(document: Document): Int {
+        return when (document.select("$selector a:not(:contains(Ep))").text()) {
+            "Movie" -> SAnime.COMPLETED
+            else -> {
+                val episodeString = document.select("$selector a:not(:contains(TV))").text().drop(3).split("/")
+                if (episodeString[0].trim().compareTo(episodeString[1].trim()) == 0) {
+                    SAnime.COMPLETED
+                } else SAnime.ONGOING
             }
-            episodesList
         }
     }
 
-    private fun episodeFromSeason(element: Element): List<SEpisode> {
-        val seasonNo = element.select("a").attr("data-season")
-        val postNo = element.select("a").attr("data-post")
+    override fun episodeListSelector() = throw Exception("not used")
+
+    // {"title":"Naruto - Episode 162","metadata":{"number":"162","title":"The Cursed Warrior","duration":"23m","released":"1687815266","parent_id":"1221","parent_name":"Naruto","parent_slug":"naruto","download":[],"thumbnail":"","anime_type":"series","anime_season":"","anime_id":""},"id":10819,"url":"https:\/\/anime-world.in\/watch\/naruto-episode-162\/","published":"13 hours Ago","image":""}
+
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val document = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
-        val postUrl = "https://anime-world.in/wp-admin/admin-ajax.php"
-        val body = FormBody.Builder()
-            .add("action", "action_select_season")
-            .add("season", seasonNo)
-            .add("post", postNo)
-            .build()
-        val epListResponse = client.newCall(
-            POST(
-                postUrl,
-                headers,
-                body,
-            ),
-        ).execute().asJsoup()
-        val episodesElements = epListResponse.select("li")
-        episodesElements.map {
-            val episode = SEpisode.create()
-            val url = it.select("a").attr("href")
-            episode.setUrlWithoutDomain(url)
-            val epNo = it.select("span.num-epi").text()
-            episode.name = "$epNo : ${it.select("h2.entry-title").text()}"
-            episode.episode_number = epNo.substringAfter("x").toFloat()
-            episodeList.add(episode)
-        }
+
         return episodeList
     }
 
@@ -170,6 +151,7 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         return videoList
     }
+
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", null)
         if (quality != null) {
@@ -188,34 +170,17 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this
     }
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        var url = element.selectFirst("img")!!.attr("src")
-        if (!url.contains("https")) {
-            url = "https:$url"
-        }
-        anime.setUrlWithoutDomain(element.select("a").attr("href"))
-        anime.thumbnail_url = url
-        anime.title = element.select("h2.entry-title").text()
-        return anime
-    }
+    override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
 
-    override fun searchAnimeNextPageSelector(): String = "nav.navigation.pagination div.nav-links a:last-child:not(.current)"
+    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
-    override fun searchAnimeSelector(): String = "div#movies-a li"
+    override fun searchAnimeSelector(): String = popularAnimeSelector()
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         return when {
             query.isNotBlank() -> GET("$baseUrl/page/$page/?s=$query", headers)
             else -> GET("$baseUrl/")
         }
-    }
-
-    override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
-        anime.title = document.select("h1.entry-title").text()
-        anime.description = document.select("div.description").text()
-        return anime
     }
 
     override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
