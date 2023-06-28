@@ -13,6 +13,10 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -83,29 +87,61 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListSelector() = throw Exception("not used")
 
-    // {"title":"Naruto - Episode 162","metadata":{"number":"162","title":"The Cursed Warrior","duration":"23m","released":"1687815266","parent_id":"1221","parent_name":"Naruto","parent_slug":"naruto","download":[],"thumbnail":"","anime_type":"series","anime_season":"","anime_id":""},"id":10819,"url":"https:\/\/anime-world.in\/watch\/naruto-episode-162\/","published":"13 hours Ago","image":""}
-
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
+        val seasonsJson = Json.decodeFromString<JsonArray>(
+            document.html()
+                .substringAfter("var season_list = ")
+                .substringBefore("var season_label =")
+                .trim().dropLast(1),
+        )
+        var seasonNumber = 1
+        var episodeNumber = 1f
+        val isAnimeCompleted = parseStatus(document) == SAnime.COMPLETED
 
-        return episodeList
-    }
+        seasonsJson.forEach { season ->
+            val seasonName = if (seasonsJson.size == 1) "" else "Season $seasonNumber"
+            val episodesJson = season.jsonObject["episodes"]!!.jsonObject["all"]!!.jsonArray.reversed()
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        val episode = SEpisode.create()
-        episode.setUrlWithoutDomain(baseUrl + element.attr("href"))
-        val epName = element.selectFirst("div.name")!!.ownText()
-        val ep = epName.substringAfter("Episode ")
-        val epNo = try {
-            ep.substringBefore(" ").toFloat()
-        } catch (e: NumberFormatException) {
-            0.toFloat()
+            episodesJson.forEach {
+                val episodeTitle = it.jsonObject["metadata"]!!
+                    .jsonObject["title"]!!
+                    .toString()
+                    .drop(1).dropLast(1)
+
+                val epNum = it.jsonObject["metadata"]!!
+                    .jsonObject["number"]!!
+                    .toString().drop(1)
+                    .dropLast(1).toInt()
+
+                val episodeName = if (isAnimeCompleted && seasonsJson.size == 1 && episodesJson.size == 1) {
+                    "Movie"
+                } else if (episodeTitle.isNotEmpty()) {
+                    "$seasonName Ep $epNum - $episodeTitle"
+                } else {
+                    "$seasonName - Episode $epNum"
+                }
+
+                val episode = SEpisode.create().apply {
+                    name = episodeName
+                    episode_number = episodeNumber
+                    url = "$baseUrl/wp-json/kiranime/v1/episode?id=${it.jsonObject["id"]}"
+                    date_upload = it.jsonObject["metadata"]
+                        ?.jsonObject?.get("released")?.toString()
+                        ?.drop(1)?.dropLast(1)
+                        ?.toLong()?.times(1000) ?: 0L
+                }
+
+                episodeNumber += 1
+                episodeList.add(episode)
+            }
+            seasonNumber += 1
         }
-        episode.episode_number = epNo
-        episode.name = if (ep == epName) epName else "Episode $ep"
-        return episode
+        return episodeList.reversed()
     }
+
+    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
 
     override fun videoListSelector() = throw Exception("not used")
 
