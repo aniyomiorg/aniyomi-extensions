@@ -1472,10 +1472,10 @@
   {
     "name": "Aniyomi: Multimovies",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.multimovies",
-    "apk": "aniyomi-en.multimovies-v13.7.apk",
+    "apk": "aniyomi-en.multimovies-v13.8.apk",
     "lang": "en",
-    "code": 7,
-    "version": "13.7",
+    "code": 8,
+    "version": "13.8",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1484,7 +1484,7 @@
         "name": "Multimovies",
         "lang": "en",
         "id": "2268620798063111053",
-        "baseUrl": "https://multimovies.tech",
+        "baseUrl": "https://multimovies.shop",
         "versionId": 1,
         "hasCloudflare": 1
       }
