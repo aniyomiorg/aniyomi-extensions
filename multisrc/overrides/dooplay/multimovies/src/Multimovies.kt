@@ -1,7 +1,12 @@
 package eu.kanade.tachiyomi.animeextension.en.multimovies
 
+import android.app.Application
+import android.content.SharedPreferences
+import android.widget.Toast
+import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.animeextension.en.multimovies.extractors.AutoEmbedExtractor
 import eu.kanade.tachiyomi.animeextension.en.multimovies.extractors.MultimoviesCloudExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -13,18 +18,30 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.FormBody
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
 class Multimovies : DooPlay(
     "en",
     "Multimovies",
-    "https://multimovies.tech",
+    "https://multimovies.shop",
 ) {
     override val client = network.cloudflareClient
 
+    private val defaultBaseUrl = "https://multimovies.shop"
+
+    override val baseUrl by lazy { getPrefBaseUrl() }
+
+    override val preferences: SharedPreferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
     // ============================== Popular ===============================
+
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/genre/anime-series/page/$page/")
 
     override fun popularAnimeSelector() = latestUpdatesSelector()
@@ -32,6 +49,7 @@ class Multimovies : DooPlay(
     override fun popularAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
     // ============================== Episodes ==============================
+
     override val seasonListSelector = "div#seasons > div:not(:contains(no episodes this season))"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
@@ -51,6 +69,7 @@ class Multimovies : DooPlay(
     }
 
     // ============================ Video Links =============================
+
     override val prefQualityValues = arrayOf("1080p", "720p", "480p", "360p", "240p")
     override val prefQualityEntries = arrayOf("1080", "720", "480", "360", "240")
 
@@ -79,7 +98,7 @@ class Multimovies : DooPlay(
             streamSbServers.any { it in url } ->
                 StreamSBExtractor(client).videosFromUrl(url, headers = headers, prefix = "[multimovies]")
 
-            url.contains("multimovies.cloud") ->
+            url.contains(baseUrl.toHttpUrl().host, true) ->
                 MultimoviesCloudExtractor(client).videosFromUrl(url)
             url.contains("autoembed.to") || url.contains("2embed.to") -> {
                 val newHeaders = headers.newBuilder()
@@ -119,6 +138,7 @@ class Multimovies : DooPlay(
     }
 
     // =============================== Search ===============================
+
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         return if (query.isNotBlank()) {
             GET("$baseUrl/page/$page/?s=$query", headers)
@@ -140,15 +160,31 @@ class Multimovies : DooPlay(
     }
 
     // ============================== Filters ===============================
+	
     override fun getFilterList() = getMultimoviesFilterList()
     override val fetchGenres = false
 
     // =============================== Latest ===============================
+	
     override fun latestUpdatesNextPageSelector() = "div.pagination > *:last-child:not(span):not(.current)"
 
     // ============================== Settings ==============================
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoServerPref = ListPreference(screen.context).apply {
+        EditTextPreference(screen.context).apply {
+            key = BASE_URL_PREF
+            title = BASE_URL_PREF_TITLE
+            summary = BASE_URL_PREF_SUMMARY
+            this.setDefaultValue(defaultBaseUrl)
+            dialogTitle = BASE_URL_PREF_TITLE
+
+            setOnPreferenceChangeListener { _, _ ->
+                Toast.makeText(screen.context, RESTART_ANIYOMI, Toast.LENGTH_LONG).show()
+                true
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
             key = PREF_SERVER_KEY
             title = PREF_SERVER_TITLE
             entries = PREF_SERVER_ENTRIES
@@ -161,18 +197,25 @@ class Multimovies : DooPlay(
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
+        }.also(screen::addPreference)
 
-        screen.addPreference(videoServerPref)
         super.setupPreferenceScreen(screen) // quality pref
     }
 
     // ============================= Utilities ==============================
+
+    private fun getPrefBaseUrl(): String = preferences.getString(BASE_URL_PREF, defaultBaseUrl)!!
+
     private inline fun <reified R> AnimeFilterList.getFirst(): R {
         return first { it is R } as R
     }
 
     companion object {
+        private const val RESTART_ANIYOMI = "Restart Aniyomi to apply new setting."
+        private const val BASE_URL_PREF_TITLE = "Override BaseUrl"
+        private val BASE_URL_PREF = "overrideBaseUrl_v${AppInfo.getVersionName()}"
+        private const val BASE_URL_PREF_SUMMARY = "For temporary uses. Updating the extension will erase this setting."
+
         private const val PREF_SERVER_KEY = "preferred_server"
         private const val PREF_SERVER_TITLE = "Preferred Server"
         private const val PREF_SERVER_DEFAULT = "multimovies"
