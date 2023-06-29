@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.all.animeworldindia
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -40,8 +39,6 @@ open class AnimeWorldIndia(
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
-
-    override val id: Long = 8477976342439232506
 
     private val json: Json by injectLazy()
 
