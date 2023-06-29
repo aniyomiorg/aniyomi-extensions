@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.hi.animeWorld
+package eu.kanade.tachiyomi.animeextension.all.animeworldindia
 
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET

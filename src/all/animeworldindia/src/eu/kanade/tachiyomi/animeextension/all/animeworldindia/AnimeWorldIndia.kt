@@ -1,7 +1,8 @@
-package eu.kanade.tachiyomi.animeextension.hi.animeWorld
+package eu.kanade.tachiyomi.animeextension.all.animeworldindia
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -27,13 +28,14 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 
-class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+open class AnimeWorldIndia(
+    final override val lang: String,
+    private val language: String,
+) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "AnimeWorld (experimental)"
+    override val name = "AnimeWorld India"
 
     override val baseUrl = "https://anime-world.in"
-
-    override val lang = "hi"
 
     override val supportsLatest = true
 
@@ -45,15 +47,13 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val language = "hindi"
+    // =============================== Search ===============================
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/advanced-search/page/$page/?s_keyword=&s_type=all&s_status=all&s_lang=$lang&s_sub_type=all&s_year=all&s_orderby=viewed&s_genre=")
+    override fun searchAnimeNextPageSelector(): String = "ul.page-numbers li:has(span[aria-current=\"page\"]) + li"
 
-    override fun popularAnimeNextPageSelector(): String = "ul.page-numbers li:has(span[aria-current=\"page\"]) + li"
+    override fun searchAnimeSelector(): String = "div.col-span-1"
 
-    override fun popularAnimeSelector(): String = "div.col-span-1"
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
+    override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
         var thumbnail = element.selectFirst("img")!!.attr("src")
@@ -64,6 +64,35 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.title = element.select("div.font-medium.line-clamp-2.mb-3").text()
         return anime
     }
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val searchParams = AnimeWorldIndiaFilters().getSearchParams(filters)
+        return GET("$baseUrl/advanced-search/page/$page/?s_keyword=$query&s_lang=$lang$searchParams")
+    }
+
+    override fun getFilterList() = AnimeWorldIndiaFilters().filters
+
+    // ============================== Popular ===============================
+
+    override fun popularAnimeNextPageSelector(): String = searchAnimeNextPageSelector()
+
+    override fun popularAnimeSelector(): String = searchAnimeSelector()
+
+    override fun popularAnimeFromElement(element: Element): SAnime = searchAnimeFromElement(element)
+
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/advanced-search/page/$page/?s_keyword=&s_type=all&s_status=all&s_lang=$lang&s_sub_type=all&s_year=all&s_orderby=viewed&s_genre=")
+
+    // =============================== Latest ===============================
+
+    override fun latestUpdatesNextPageSelector(): String = searchAnimeNextPageSelector()
+
+    override fun latestUpdatesSelector(): String = searchAnimeSelector()
+
+    override fun latestUpdatesFromElement(element: Element): SAnime = searchAnimeFromElement(element)
+
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/advanced-search/page/$page/?s_keyword=&s_type=all&s_status=all&s_lang=$lang&s_sub_type=all&s_year=all&s_orderby=update&s_genre=")
+
+    // =========================== Anime Details ============================
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create().apply {
@@ -90,7 +119,11 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
+    // ============================== Episodes ==============================
+
     override fun episodeListSelector() = throw Exception("not used")
+
+    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
@@ -146,7 +179,11 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episodeList.reversed()
     }
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
+    // ============================ Video Links =============================
+
+    override fun videoFromElement(element: Element): Video = throw Exception("not used")
+
+    override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     override fun videoListSelector() = throw Exception("not used")
 
@@ -210,51 +247,21 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoList
     }
 
-    override fun videoFromElement(element: Element): Video = throw Exception("not used")
-
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
-
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", null)
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
+        val quality = preferences.getString("preferred_quality", "1080")!!
+        val server = preferences.getString("preferred_server", "MyStream")!!
+        return sortedWith(
+            compareBy(
+                { it.quality.lowercase().contains(quality.lowercase()) },
+                { it.quality.lowercase().contains(server.lowercase()) },
+            ),
+        ).reversed()
     }
 
-    override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
-
-    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
-
-    override fun searchAnimeSelector(): String = popularAnimeSelector()
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        return when {
-            query.isNotBlank() -> GET("$baseUrl/page/$page/?s=$query", headers)
-            else -> GET("$baseUrl/")
-        }
-    }
-
-    override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
-
-    override fun latestUpdatesFromElement(element: Element): SAnime = popularAnimeFromElement(element)
-
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/advanced-search/page/$page/?s_keyword=&s_type=all&s_status=all&s_lang=$lang&s_sub_type=all&s_year=all&s_orderby=update&s_genre=")
-
-    override fun latestUpdatesSelector(): String = popularAnimeSelector()
+    // ============================ Preferences =============================
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
+        ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
             entries = arrayOf("1080p", "720p", "480p", "360p", "240p")
@@ -268,7 +275,22 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = "preferred_server"
+            title = "Preferred server"
+            entries = arrayOf("MyStream", "StreamSB")
+            entryValues = arrayOf("MyStream", "StreamSB")
+            setDefaultValue("MyStream")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
     }
 }
