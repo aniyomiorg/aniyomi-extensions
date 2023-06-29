@@ -181,12 +181,16 @@ class AnimeWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .compareTo("Abyss") == 0
         }
 
-        // Mystream
+        // MyStream
 
-        val myStreamStreams = filterLanguages.filter {
+        filterLanguages.filter {
             it.jsonObject["server"].toString()
                 .drop(1).dropLast(1)
                 .compareTo("Mystream") == 0
+        }.forEach {
+            val url = it.jsonObject["url"].toString().drop(1).dropLast(1)
+            val videos = MyStreamExtractor().videosFromUrl(url, headers)
+            videoList.addAll(videos)
         }
 
         // StreamSB
