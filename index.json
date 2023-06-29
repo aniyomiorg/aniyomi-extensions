@@ -21,6 +21,83 @@
     ]
   },
   {
+    "name": "Aniyomi: AnimeWorld India",
+    "pkg": "eu.kanade.tachiyomi.animeextension.all.animeworldindia",
+    "apk": "aniyomi-all.animeworldindia-v13.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimeWorld India",
+        "lang": "bn",
+        "id": "1553651966725515829",
+        "baseUrl": "https://anime-world.in",
+        "versionId": 1,
+        "hasCloudflare": 1
+      },
+      {
+        "name": "AnimeWorld India",
+        "lang": "en",
+        "id": "8052146309028882026",
+        "baseUrl": "https://anime-world.in",
+        "versionId": 1,
+        "hasCloudflare": 1
+      },
+      {
+        "name": "AnimeWorld India",
+        "lang": "hi",
+        "id": "7823261278652377392",
+        "baseUrl": "https://anime-world.in",
+        "versionId": 1,
+        "hasCloudflare": 1
+      },
+      {
+        "name": "AnimeWorld India",
+        "lang": "ja",
+        "id": "2355355781711866618",
+        "baseUrl": "https://anime-world.in",
+        "versionId": 1,
+        "hasCloudflare": 1
+      },
+      {
+        "name": "AnimeWorld India",
+        "lang": "ml",
+        "id": "2763344039098801472",
+        "baseUrl": "https://anime-world.in",
+        "versionId": 1,
+        "hasCloudflare": 1
+      },
+      {
+        "name": "AnimeWorld India",
+        "lang": "mr",
+        "id": "7406666490782122257",
+        "baseUrl": "https://anime-world.in",
+        "versionId": 1,
+        "hasCloudflare": 1
+      },
+      {
+        "name": "AnimeWorld India",
+        "lang": "ta",
+        "id": "9003594241787941843",
+        "baseUrl": "https://anime-world.in",
+        "versionId": 1,
+        "hasCloudflare": 1
+      },
+      {
+        "name": "AnimeWorld India",
+        "lang": "te",
+        "id": "8757775099454174589",
+        "baseUrl": "https://anime-world.in",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: AnimeXin",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.animexin",
     "apk": "aniyomi-all.animexin-v13.6.apk",
@@ -1745,10 +1822,10 @@
   {
     "name": "Aniyomi: UHD Movies",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.uhdmovies",
-    "apk": "aniyomi-en.uhdmovies-v13.16.apk",
+    "apk": "aniyomi-en.uhdmovies-v13.17.apk",
     "lang": "en",
-    "code": 16,
-    "version": "13.16",
+    "code": 17,
+    "version": "13.17",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1757,7 +1834,7 @@
         "name": "UHD Movies",
         "lang": "en",
         "id": "582068848290425167",
-        "baseUrl": "https://uhdmovies.site",
+        "baseUrl": "https://uhdmovies.life",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -2525,27 +2602,6 @@
         "lang": "fr",
         "id": "8596049504378147571",
         "baseUrl": "https://vostfree.ws",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: AnimeWorld (experimental)",
-    "pkg": "eu.kanade.tachiyomi.animeextension.hi.animeWorld",
-    "apk": "aniyomi-hi.animeWorld-v13.20.apk",
-    "lang": "hi",
-    "code": 20,
-    "version": "13.20",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "AnimeWorld (experimental)",
-        "lang": "hi",
-        "id": "8477976342439232506",
-        "baseUrl": "https://anime-world.in/",
         "versionId": 1,
         "hasCloudflare": 1
       }
