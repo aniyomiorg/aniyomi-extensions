@@ -446,8 +446,8 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ListPreference(screen.context).apply {
             key = PREF_DOMAIN_KEY
             title = "Preferred domain (requires app restart)"
-            entries = arrayOf("9anime.to", "9anime.gs", "9anime.pl", "9anime.id", "9anime.ph", "9animehq.to", "9animeto.io")
-            entryValues = arrayOf("https://9anime.to", "https://9anime.gs", "https://9anime.pl", "https://9anime.id", "https://9anime.ph", "https://9animehq.to", "https://9animeto.io")
+            entries = arrayOf("9anime.to", "9anime.gs", "9anime.pl", "9anime.id", "9anime.ph")
+            entryValues = arrayOf("https://9anime.to", "https://9anime.gs", "https://9anime.pl", "https://9anime.id", "https://9anime.ph")
             setDefaultValue(PREF_DOMAIN_DEFAULT)
             summary = "%s"
 
