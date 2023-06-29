@@ -41,6 +41,8 @@ open class AnimeWorldIndia(
 
     override val client: OkHttpClient = network.cloudflareClient
 
+    override val id: Long = 8477976342439232506
+
     private val json: Json by injectLazy()
 
     private val preferences: SharedPreferences by lazy {
