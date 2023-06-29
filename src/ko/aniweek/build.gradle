@@ -6,7 +6,7 @@ ext {
     extName = 'Aniweek'
     pkgNameSuffix = 'ko.aniweek'
     extClass = '.Aniweek'
-    extVersionCode = 1
+    extVersionCode = 2
     libVersion = '13'
 }
 
