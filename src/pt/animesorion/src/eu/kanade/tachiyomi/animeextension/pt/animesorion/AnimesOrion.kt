@@ -93,8 +93,33 @@ class AnimesOrion : ParsedAnimeHttpSource() {
     override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        throw UnsupportedOperationException("Not used.")
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        val doc = getRealDoc(document)
+        setUrlWithoutDomain(doc.location())
+        thumbnail_url = doc.selectFirst("img.lnk-blk")!!.attr("src")
+
+        val infos = doc.selectFirst("header.hd > div.rght")!!
+        title = infos.selectFirst("h2.title")!!.text()
+        genre = infos.select(">a").eachText().joinToString()
+        status = parseStatus(infos.selectFirst("span.tag + a")?.text())
+
+        description = buildString {
+            infos.selectFirst("h2.ttl")?.text()
+                ?.takeIf(String::isNotBlank)
+                ?.let { append("Títulos alternativos: $it\n\n") }
+
+            doc.select("div.entry > p").eachText().forEach {
+                append("$it\n")
+            }
+        }
+    }
+
+    private fun parseStatus(status: String?): Int {
+        return when (status?.trim()) {
+            "Em Lançamento" -> SAnime.ONGOING
+            "Finalizado" -> SAnime.COMPLETED
+            else -> SAnime.UNKNOWN
+        }
     }
 
     // ============================== Episodes ==============================
@@ -121,6 +146,15 @@ class AnimesOrion : ParsedAnimeHttpSource() {
 
     override fun videoUrlParse(document: Document): String {
         throw UnsupportedOperationException("Not used.")
+    }
+
+    // ============================= Utilities ==============================
+    private fun getRealDoc(document: Document): Document {
+        if (!document.location().contains("/episodio/")) return document
+
+        return document.selectFirst("div.epsdsnv > a:has(i.fa-indent)")?.let {
+            client.newCall(GET(baseUrl + it.attr("href"), headers)).execute().asJsoup()
+        } ?: document
     }
 
     companion object {
