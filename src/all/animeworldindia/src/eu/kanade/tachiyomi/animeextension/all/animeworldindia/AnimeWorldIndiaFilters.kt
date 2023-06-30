@@ -141,7 +141,7 @@ class AnimeWorldIndiaFilters {
         GenreList(genresName()),
     )
 
-    fun getSearchParams(filters: AnimeFilterList) {
+    fun getSearchParams(filters: AnimeFilterList): String {
         var params = ""
         filters.forEach { filter ->
             when (filter) {
@@ -177,5 +177,6 @@ class AnimeWorldIndiaFilters {
                 else -> {}
             }
         }
+        return params
     }
 }
