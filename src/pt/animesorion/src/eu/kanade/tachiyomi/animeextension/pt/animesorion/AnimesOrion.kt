@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -69,20 +70,27 @@ class AnimesOrion : ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        throw UnsupportedOperationException("Not used.")
+        val params = AnimesOrionFilters.getSearchParameters(filters)
+        val url = "$baseUrl/animes".toHttpUrl().newBuilder().apply {
+            addQueryParameter("q", query)
+            addQueryParameter("page", page.toString())
+            addQueryParameter("tipo", params.type)
+            addQueryParameter("genero", params.genre)
+            addQueryParameter("status", params.status)
+            addQueryParameter("letra", params.letter)
+            addQueryParameter("audio", params.audio)
+            addQueryParameter("ano", params.year)
+            addQueryParameter("temporada", params.season)
+        }.build().toString()
+
+        return GET(url, headers)
     }
 
-    override fun searchAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeSelector() = latestUpdatesSelector()
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
 
-    override fun searchAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
