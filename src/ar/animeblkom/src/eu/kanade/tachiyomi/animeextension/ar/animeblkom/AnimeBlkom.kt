@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import okhttp3.Response
@@ -36,7 +37,8 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client = network.cloudflareClient
 
-    override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
+    override fun headersBuilder() = Headers.Builder()
+        .add("referer", baseUrl).add("user-agent", NEW_USER_AGENT)
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -45,7 +47,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Popular ===============================
     override fun popularAnimeSelector() = "div.contents div.poster > a"
 
-    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/animes-list/?sort_by=rate&page=$page")
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/animes-list/?sort_by=rate&page=$page", headers)
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         return SAnime.create().apply {
@@ -187,6 +189,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }.toTypedArray()
 
     private fun getTypeList() = listOf(
+        Type("اختر", ""),
         Type("قائمة الأنمي", "anime-list"),
         Type(" قائمة المسلسلات ", "series-list"),
         Type(" قائمة الأفلام ", "movie-list"),
@@ -224,6 +227,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     companion object {
+        private const val NEW_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.67"
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"
         private const val PREF_QUALITY_DEFAULT = "720p"
