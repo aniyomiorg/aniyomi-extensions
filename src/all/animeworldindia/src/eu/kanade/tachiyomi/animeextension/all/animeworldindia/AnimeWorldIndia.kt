@@ -139,7 +139,7 @@ open class AnimeWorldIndia(
 
         seasonsJson.forEach { season ->
             val seasonName = if (seasonsJson.size == 1) "" else "Season $seasonNumber"
-            val episodesJson = season.jsonObject["episodes"]!!.jsonObject[language]!!.jsonArray.reversed()
+            val episodesJson = season.jsonObject["episodes"]!!.jsonObject[language]?.jsonArray?.reversed() ?: return@forEach
 
             episodesJson.forEach {
                 val episodeTitle = it.jsonObject["metadata"]!!
