@@ -17,7 +17,7 @@ import org.jsoup.nodes.Element
 class AnimesFoxBR : DooPlay(
     "pt-BR",
     "AnimesFox BR",
-    "https://animesfoxbr.com",
+    "https://animesfox.net",
 ) {
     // ============================== Popular ===============================
     // The site doesn't have a true popular anime tab,
