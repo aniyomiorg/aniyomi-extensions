@@ -123,13 +123,24 @@ class AnimesOrion : ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector(): String {
-        throw UnsupportedOperationException("Not used.")
+    override fun episodeListSelector() = "article.epsd > a"
+
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        val num = element.selectFirst("span.ttl")!!.text()
+        episode_number = num.toFloatOrNull() ?: 1F
+        name = "Episódio $num"
+        scanlator = element.selectFirst("span.pdx")?.text() ?: "Leg"
     }
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun episodeListParse(response: Response) =
+        super.episodeListParse(response)
+            .sortedWith(
+                compareBy(
+                    { it.scanlator != "Leg" }, // Dub first
+                    { it.episode_number },
+                ),
+            ).reversed()
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
