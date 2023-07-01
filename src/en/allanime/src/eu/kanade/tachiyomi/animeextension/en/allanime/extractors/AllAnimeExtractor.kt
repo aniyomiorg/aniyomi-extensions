@@ -11,7 +11,7 @@ import okhttp3.OkHttpClient
 import uy.kohesive.injekt.injectLazy
 import java.util.Locale
 
-class AllAnimeExtractor(private val client: OkHttpClient) {
+class AllAnimeExtractor(private val client: OkHttpClient, private val headers: Headers, private val siteUrl: String) {
 
     private val json: Json by injectLazy()
 
@@ -38,8 +38,12 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
     fun videoFromUrl(url: String, name: String): List<Video> {
         val videoList = mutableListOf<Video>()
 
+        val endPoint = json.decodeFromString<VersionResponse>(
+            client.newCall(GET("$siteUrl/getVersion")).execute().body.string(),
+        ).episodeIframeHead
+
         val resp = client.newCall(
-            GET("https://blog.allanime.pro" + url.replace("/clock?", "/clock.json?")),
+            GET(endPoint + url.replace("/clock?", "/clock.json?")),
         ).execute()
 
         if (resp.code != 200) {
@@ -75,9 +79,17 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
                 )
             } else if (link.hls == true) {
                 val newClient = OkHttpClient()
+
+                val masterHeaders = headers.newBuilder()
+                    .add("Accept", "*/*")
+                    .add("Host", link.link.toHttpUrl().host)
+                    .add("Origin", endPoint)
+                    .add("Referer", "$endPoint/")
+                    .build()
+
                 val resp = runCatching {
                     newClient.newCall(
-                        GET(link.link, headers = Headers.headersOf("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")),
+                        GET(link.link, headers = masterHeaders),
                     ).execute()
                 }.getOrNull()
 
@@ -96,20 +108,10 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
                     }
 
                     if (!masterPlaylist.contains("#EXT-X-STREAM-INF:")) {
-                        val headers = Headers.headersOf(
-                            "Accept",
-                            "*/*",
-                            "Host",
-                            link.link.toHttpUrl().host,
-                            "Origin",
-                            "https://allanimenews.com",
-                            "User-Agent",
-                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
-                        )
                         return if (audioList.isEmpty()) {
-                            listOf(Video(link.link, "$name - ${link.resolutionStr}", link.link, subtitleTracks = subtitles, headers = headers))
+                            listOf(Video(link.link, "$name - ${link.resolutionStr}", link.link, subtitleTracks = subtitles, headers = masterHeaders))
                         } else {
-                            listOf(Video(link.link, "$name - ${link.resolutionStr}", link.link, subtitleTracks = subtitles, audioTracks = audioList, headers = headers))
+                            listOf(Video(link.link, "$name - ${link.resolutionStr}", link.link, subtitleTracks = subtitles, audioTracks = audioList, headers = masterHeaders))
                         }
                     }
 
@@ -128,10 +130,17 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
                                 videoUrl = resp.request.url.toString().substringBeforeLast("/") + "/$videoUrl"
                             }
 
+                            val plHeaders = headers.newBuilder()
+                                .add("Accept", "*/*")
+                                .add("Host", videoUrl.toHttpUrl().host)
+                                .add("Origin", endPoint)
+                                .add("Referer", "$endPoint/")
+                                .build()
+
                             if (audioList.isEmpty()) {
-                                videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subtitles))
+                                videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subtitles, headers = plHeaders))
                             } else {
-                                videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subtitles, audioTracks = audioList))
+                                videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subtitles, audioTracks = audioList, headers = plHeaders))
                             }
                         }
                 }
@@ -184,6 +193,11 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
 
         return videoList
     }
+
+    @Serializable
+    data class VersionResponse(
+        val episodeIframeHead: String,
+    )
 
     @Serializable
     data class VideoLink(
