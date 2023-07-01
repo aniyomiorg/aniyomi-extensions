@@ -14,7 +14,7 @@ class DooPlayGenerator : ThemeSourceGenerator {
         SingleLang("AnimeOnline360", "https://animeonline360.me", "en", isNsfw = false),
         SingleLang("AnimeOnline.Ninja", "https://www1.animeonline.ninja", "es", className = "AnimeOnlineNinja", isNsfw = false, overrideVersionCode = 27),
         SingleLang("AnimePlayer", "https://animeplayer.com.br", "pt-BR", isNsfw = true),
-        SingleLang("AnimesFox BR", "https://animesfox.net", "pt-BR", isNsfw = false, overrideVersionCode = 1),
+        SingleLang("AnimesFox BR", "https://animesfox.net", "pt-BR", isNsfw = false, overrideVersionCode = 2),
         SingleLang("Animes Grátis", "https://animesgratis.org", "pt-BR", className = "AnimesGratis", isNsfw = false),
         SingleLang("Animes House", "https://animeshouse.net", "pt-BR", isNsfw = false, overrideVersionCode = 5),
         SingleLang("Cinemathek", "https://cinemathek.net", "de", isNsfw = true, overrideVersionCode = 12),
