@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesorion
 
+import eu.kanade.tachiyomi.animeextension.pt.animesorion.extractors.LinkfunBypasser
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -9,6 +10,7 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
@@ -144,7 +146,24 @@ class AnimesOrion : ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        throw UnsupportedOperationException("Not used.")
+        val doc = response.asJsoup()
+        val url = doc.selectFirst("div.rvwf > a")!!.attr("href")
+        val bypasser = LinkfunBypasser(client)
+        return client.newCall(GET(url, headers))
+            .execute()
+            .use(bypasser::getIframeResponse)
+            .use(::extractVideoFromResponse)
+            .let(::listOf)
+    }
+
+    private fun extractVideoFromResponse(response: Response): Video {
+        val decodedBody = LinkfunBypasser.decodeAtob(response.body.string())
+        val url = decodedBody
+            .substringAfter("sources")
+            .substringAfter("file: \"")
+            .substringBefore('"')
+        val videoHeaders = Headers.headersOf("Referer", response.request.url.toString())
+        return Video(url, "default", url, videoHeaders)
     }
 
     override fun videoListSelector(): String {
