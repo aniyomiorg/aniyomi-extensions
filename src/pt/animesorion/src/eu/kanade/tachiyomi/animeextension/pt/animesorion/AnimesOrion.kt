@@ -71,6 +71,8 @@ class AnimesOrion : ParsedAnimeHttpSource() {
         return AnimesPage(listOf(details), false)
     }
 
+    override fun getFilterList() = AnimesOrionFilters.FILTER_LIST
+
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val params = AnimesOrionFilters.getSearchParameters(filters)
         val url = "$baseUrl/animes".toHttpUrl().newBuilder().apply {
