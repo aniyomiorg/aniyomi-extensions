@@ -23,10 +23,10 @@
   {
     "name": "Aniyomi: AnimeWorld India",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.animeworldindia",
-    "apk": "aniyomi-all.animeworldindia-v13.1.apk",
+    "apk": "aniyomi-all.animeworldindia-v13.2.apk",
     "lang": "all",
-    "code": 1,
-    "version": "13.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -268,10 +268,10 @@
   {
     "name": "Aniyomi: أنمي بالكوم",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.animeblkom",
-    "apk": "aniyomi-ar.animeblkom-v13.9.apk",
+    "apk": "aniyomi-ar.animeblkom-v13.10.apk",
     "lang": "ar",
-    "code": 9,
-    "version": "13.9",
+    "code": 10,
+    "version": "13.10",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -283,6 +283,27 @@
         "baseUrl": "https://animeblkom.net",
         "versionId": 1,
         "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: Animeiat",
+    "pkg": "eu.kanade.tachiyomi.animeextension.ar.animeiat",
+    "apk": "aniyomi-ar.animeiat-v13.1.apk",
+    "lang": "ar",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Animeiat",
+        "lang": "ar",
+        "id": "7117595939095792520",
+        "baseUrl": "https://api.animeiat.co/v1",
+        "versionId": 1,
+        "hasCloudflare": 0
       }
     ]
   },
@@ -449,27 +470,6 @@
         "lang": "ar",
         "id": "2018276156457227484",
         "baseUrl": "https://movies4u.cam",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: موفيزلاند",
-    "pkg": "eu.kanade.tachiyomi.animeextension.ar.movizland",
-    "apk": "aniyomi-ar.movizland-v13.11.apk",
-    "lang": "ar",
-    "code": 11,
-    "version": "13.11",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "موفيزلاند",
-        "lang": "ar",
-        "id": "7623510893043031300",
-        "baseUrl": "https://eg.movizlaand.top",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -877,10 +877,10 @@
   {
     "name": "Aniyomi: AllAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.allanime",
-    "apk": "aniyomi-en.allanime-v13.22.apk",
+    "apk": "aniyomi-en.allanime-v13.23.apk",
     "lang": "en",
-    "code": 22,
-    "version": "13.22",
+    "code": 23,
+    "version": "13.23",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -889,7 +889,7 @@
         "name": "AllAnime",
         "lang": "en",
         "id": "4709139914729853090",
-        "baseUrl": "https://api.allanime.to",
+        "baseUrl": "https://api.allanime.day",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -3093,10 +3093,10 @@
   {
     "name": "Aniyomi: AnimesFox BR",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesfoxbr",
-    "apk": "aniyomi-pt.animesfoxbr-v13.2.apk",
+    "apk": "aniyomi-pt.animesfoxbr-v13.3.apk",
     "lang": "pt-BR",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3105,7 +3105,7 @@
         "name": "AnimesFox BR",
         "lang": "pt-BR",
         "id": "6518280198965195589",
-        "baseUrl": "https://animesfoxbr.com",
+        "baseUrl": "https://animesfox.net",
         "versionId": 1,
         "hasCloudflare": 0
       }
@@ -3148,6 +3148,27 @@
         "lang": "pt-BR",
         "id": "5203260454758079991",
         "baseUrl": "https://animeshouse.net",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: Animes Órion",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesorion",
+    "apk": "aniyomi-pt.animesorion-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Animes Órion",
+        "lang": "pt-BR",
+        "id": "4313643398856661317",
+        "baseUrl": "https://animesorion.com",
         "versionId": 1,
         "hasCloudflare": 0
       }
