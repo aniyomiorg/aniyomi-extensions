@@ -45,7 +45,7 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         .add("Accept-Language", ACCEPT_LANGUAGE)
 
     // ============================== Popular ===============================
-    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/anime/page/$page")
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/anime/page/$page", headers)
     override fun popularAnimeSelector() = "div.lista_de_animes div.ani_loop_item_img > a"
 
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
@@ -72,7 +72,7 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "div.pagination:not(:has(.current)):not(:has(a:first-child + a + a:last-child)) > a:last-child"
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/?page=$page")
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/?page=$page", headers)
 
     override fun latestUpdatesSelector() = "div.threeItensPerContent > div.epi_loop_item > a"
 
@@ -84,20 +84,22 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun getFilterList(): AnimeFilterList = AnitubeFilters.FILTER_LIST
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        return if (query.isBlank()) {
+        val url = if (query.isBlank()) {
             val params = AnitubeFilters.getSearchParameters(filters)
             val season = params.season
             val genre = params.genre
             val year = params.year
             val char = params.initialChar
             when {
-                !season.isBlank() -> GET("$baseUrl/temporada/$season/$year")
-                !genre.isBlank() -> GET("$baseUrl/genero/$genre/page/$page/${char.replace("todos", "")}")
-                else -> GET("$baseUrl/anime/page/$page/letra/$char")
+                season.isNotBlank() -> "$baseUrl/temporada/$season/$year"
+                genre.isNotBlank() -> "$baseUrl/genero/$genre/page/$page/${char.replace("todos", "")}"
+                else -> "$baseUrl/anime/page/$page/letra/$char"
             }
         } else {
-            GET("$baseUrl/busca.php?s=$query&submit=Buscar")
+            "$baseUrl/busca.php?s=$query&submit=Buscar"
         }
+
+        return GET(url, headers)
     }
 
     override fun searchAnimeSelector() = popularAnimeSelector()
@@ -136,7 +138,7 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         do {
             if (isNotEmpty()) {
                 val path = doc.selectFirst(popularAnimeNextPageSelector())!!.attr("href")
-                doc = client.newCall(GET(baseUrl + path)).execute().asJsoup()
+                doc = client.newCall(GET(baseUrl + path, headers)).execute().asJsoup()
             }
             doc.select(episodeListSelector())
                 .map(::episodeFromElement)
@@ -158,7 +160,7 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
-    override fun videoListParse(response: Response) = AnitubeExtractor.getVideoList(response)
+    override fun videoListParse(response: Response) = AnitubeExtractor.getVideoList(response, headers)
     override fun videoListSelector() = throw Exception("not used")
     override fun videoFromElement(element: Element) = throw Exception("not used")
     override fun videoUrlParse(document: Document) = throw Exception("not used")
@@ -190,7 +192,7 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return document.selectFirst("div.controles_ep > a[href]:has(i.spr.listaEP)")
             ?.let {
                 val path = it.attr("href")
-                client.newCall(GET(baseUrl + path)).execute().asJsoup()
+                client.newCall(GET(baseUrl + path, headers)).execute().asJsoup()
             } ?: document
     }
 

@@ -6,10 +6,7 @@ import okhttp3.Headers
 import okhttp3.Response
 
 object AnitubeExtractor {
-
-    private val HEADERS = Headers.headersOf("Referer", "https://www.anitube.vip/")
-
-    fun getVideoList(response: Response): List<Video> {
+    fun getVideoList(response: Response, headers: Headers): List<Video> {
         val doc = response.asJsoup()
         val hasFHD = doc.selectFirst("div.abaItem:contains(FULLHD)") != null
         val serverUrl = doc.selectFirst("meta[itemprop=contentURL]")!!
@@ -27,7 +24,7 @@ object AnitubeExtractor {
         return qualities.mapIndexed { index, quality ->
             val path = paths[index]
             val url = serverUrl.replace(type, path)
-            Video(url, quality, url, headers = HEADERS)
+            Video(url, quality, url, headers = headers)
         }.reversed()
     }
 }
