@@ -7,7 +7,7 @@ ext {
     extName = 'Anitube'
     pkgNameSuffix = 'pt.anitube'
     extClass = '.Anitube'
-    extVersionCode = 11
+    extVersionCode = 12
     libVersion = '13'
 }
 

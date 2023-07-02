@@ -4,7 +4,6 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 
 object AnitubeFilters {
-
     open class QueryPartFilter(
         displayName: String,
         val vals: Array<Pair<String, String>>,
@@ -16,9 +15,7 @@ object AnitubeFilters {
     }
 
     private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return this.filterIsInstance<R>().joinToString("") {
-            (it as QueryPartFilter).toQueryPart()
-        }
+        return (first { it is R } as QueryPartFilter).toQueryPart()
     }
 
     class GenreFilter : QueryPartFilter("Gênero", AnitubeFiltersData.GENRES)
@@ -38,14 +35,16 @@ object AnitubeFilters {
     data class FilterSearchParams(
         val genre: String = "",
         val season: String = "",
-        val year: String = "",
-        val initialChar: String = "",
+        val year: String = "2023",
+        val initialChar: String = "todos",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
         return FilterSearchParams(
             filters.asQueryPart<GenreFilter>(),
             filters.asQueryPart<SeasonFilter>(),
+            filters.asQueryPart<YearFilter>(),
+            filters.asQueryPart<CharacterFilter>(),
         )
     }
 
@@ -63,7 +62,7 @@ object AnitubeFilters {
             Pair("Verão", "verao"),
         )
 
-        val YEARS = (2022 downTo 1979).map {
+        val YEARS = (2023 downTo 1979).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 

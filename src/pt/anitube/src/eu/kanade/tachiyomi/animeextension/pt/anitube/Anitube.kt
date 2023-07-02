@@ -7,7 +7,6 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.anitube.extractors.AnitubeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
-import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
@@ -46,8 +45,8 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         .add("Accept-Language", ACCEPT_LANGUAGE)
 
     // ============================== Popular ===============================
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/anime/page/$page", headers)
     override fun popularAnimeSelector() = "div.lista_de_animes div.ani_loop_item_img > a"
-    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/anime/page/$page")
 
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href"))
@@ -56,80 +55,56 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         thumbnail_url = img.attr("src")
     }
 
-    override fun popularAnimeNextPageSelector(): String = "a.page-numbers:contains(Próximo)"
+    /**
+     * Translation of this abomination:
+     * First it tries to get the `a.current` element IF its not the second-to-last,
+     * and then gets the next `a` element (only useful for the `episodeListParser`).
+     *
+     * If the first selector fails, then it tries to match a `div.pagination`
+     * element that does not have any `a.current` element inside it,
+     * and also doesn't have just three elements (previous - current - next),
+     * and finally gets the last `a` element("next" button, only useful to `episodeListParser`).
+     *
+     * I hate the antichrist.
+     */
+    override fun popularAnimeNextPageSelector() =
+        "div.pagination > a.current:not(:nth-last-child(2)) + a, " +
+            "div.pagination:not(:has(.current)):not(:has(a:first-child + a + a:last-child)) > a:last-child"
 
-    override fun popularAnimeParse(response: Response): AnimesPage {
-        val document = response.asJsoup()
-        val animes = document.select(popularAnimeSelector()).map { element ->
-            popularAnimeFromElement(element)
-        }
-        val hasNextPage = hasNextPage(document)
-        return AnimesPage(animes, hasNextPage)
-    }
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/?page=$page", headers)
 
-    // ============================== Episodes ==============================
-    override fun episodeListSelector() = "div.animepag_episodios_container > div.animepag_episodios_item > a"
+    override fun latestUpdatesSelector() = "div.threeItensPerContent > div.epi_loop_item > a"
 
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        var doc = getRealDoc(response.asJsoup())
-        var first = true
-        val epList = buildList {
-            do {
-                if (!first) {
-                    val path = doc.selectFirst(popularAnimeNextPageSelector())!!.attr("href")
-                    doc = client.newCall(GET(baseUrl + path)).execute().asJsoup()
-                }
-                first = false
-                doc.select(episodeListSelector())
-                    .map(::episodeFromElement)
-                    .let(::addAll)
-            } while (hasNextPage(doc))
-        }
-        return epList.reversed()
-    }
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
-        setUrlWithoutDomain(element.attr("href"))
-        episode_number = element.selectFirst("div.animepag_episodios_item_views")!!
-            .text()
-            .substringAfter(" ")
-            .toFloatOrNull() ?: 0F
-        name = element.selectFirst("div.animepag_episodios_item_nome")!!.text()
-        date_upload = element.selectFirst("div.animepag_episodios_item_date")!!
-            .text()
-            .toDate()
-    }
-
-    // ============================ Video Links =============================
-    override fun videoListParse(response: Response) = AnitubeExtractor.getVideoList(response)
-    override fun videoListSelector() = throw Exception("not used")
-    override fun videoFromElement(element: Element) = throw Exception("not used")
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
+    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
 
     // =============================== Search ===============================
-    override fun searchAnimeFromElement(element: Element) = throw Exception("not used")
-    override fun searchAnimeNextPageSelector() = throw Exception("not used")
-    override fun searchAnimeSelector() = throw Exception("not used")
-    override fun searchAnimeParse(response: Response) = popularAnimeParse(response)
-
     override fun getFilterList(): AnimeFilterList = AnitubeFilters.FILTER_LIST
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        return if (query.isBlank()) {
+        val url = if (query.isBlank()) {
             val params = AnitubeFilters.getSearchParameters(filters)
             val season = params.season
             val genre = params.genre
             val year = params.year
             val char = params.initialChar
             when {
-                !season.isBlank() -> GET("$baseUrl/temporada/$season/$year")
-                !genre.isBlank() -> GET("$baseUrl/genero/$genre/page/$page/${char.replace("todos", "")}")
-                else -> GET("$baseUrl/anime/page/$page/letra/$char")
+                season.isNotBlank() -> "$baseUrl/temporada/$season/$year"
+                genre.isNotBlank() -> "$baseUrl/genero/$genre/page/$page/${char.replace("todos", "")}"
+                else -> "$baseUrl/anime/page/$page/letra/$char"
             }
         } else {
-            GET("$baseUrl/busca.php?s=$query&submit=Buscar")
+            "$baseUrl/busca.php?s=$query&submit=Buscar"
         }
+
+        return GET(url, headers)
     }
+
+    override fun searchAnimeSelector() = popularAnimeSelector()
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
+    override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document) = SAnime.create().apply {
@@ -155,32 +130,44 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    // =============================== Latest ===============================
-    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
+    // ============================== Episodes ==============================
+    override fun episodeListSelector() = "div.animepag_episodios_item > a"
 
-    override fun latestUpdatesSelector() = "div.mContainer_content.threeItensPerContent > div.epi_loop_item"
-
-    override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
-        val img = element.selectFirst("img")!!
-        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
-        title = img.attr("title")
-        thumbnail_url = img.attr("src")
+    override fun episodeListParse(response: Response) = buildList {
+        var doc = getRealDoc(response.asJsoup())
+        do {
+            if (isNotEmpty()) {
+                val path = doc.selectFirst(popularAnimeNextPageSelector())!!.attr("href")
+                doc = client.newCall(GET(baseUrl + path, headers)).execute().asJsoup()
+            }
+            doc.select(episodeListSelector())
+                .map(::episodeFromElement)
+                .let(::addAll)
+        } while (doc.selectFirst(popularAnimeNextPageSelector()) != null)
+        reverse()
     }
 
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/?page=$page")
-
-    override fun latestUpdatesParse(response: Response): AnimesPage {
-        val document = response.asJsoup()
-        val animes = document.select(latestUpdatesSelector()).map { element ->
-            latestUpdatesFromElement(element)
-        }
-        val hasNextPage = hasNextPage(document)
-        return AnimesPage(animes, hasNextPage)
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        episode_number = element.selectFirst("div.animepag_episodios_item_views")!!
+            .text()
+            .substringAfter(" ")
+            .toFloatOrNull() ?: 0F
+        name = element.selectFirst("div.animepag_episodios_item_nome")!!.text()
+        date_upload = element.selectFirst("div.animepag_episodios_item_date")!!
+            .text()
+            .toDate()
     }
+
+    // ============================ Video Links =============================
+    override fun videoListParse(response: Response) = AnitubeExtractor.getVideoList(response, headers)
+    override fun videoListSelector() = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
+        ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
             entries = PREF_QUALITY_ENTRIES
@@ -193,16 +180,19 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.let(screen::addPreference)
     }
 
     // ============================= Utilities ==============================
     private fun getRealDoc(document: Document): Document {
+        if (!document.location().contains("/video/")) {
+            return document
+        }
+
         return document.selectFirst("div.controles_ep > a[href]:has(i.spr.listaEP)")
             ?.let {
                 val path = it.attr("href")
-                client.newCall(GET(baseUrl + path)).execute().asJsoup()
+                client.newCall(GET(baseUrl + path, headers)).execute().asJsoup()
             } ?: document
     }
 
@@ -214,31 +204,11 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    private fun hasNextPage(document: Document): Boolean {
-        val pagination = document.selectFirst("div.pagination")
-        val items = pagination?.select("a.page-numbers")
-        if (pagination == null || items!!.size < 2) return false
-        val currentPage = pagination.selectFirst("a.page-numbers.current")
-            ?.attr("href")
-            ?.toPageNum() ?: 1
-        val lastPage = items[items.lastIndex - 1]
-            .attr("href")
-            .toPageNum()
-        return currentPage != lastPage
-    }
-
-    private fun String.toPageNum(): Int =
-        substringAfter("page/")
-            .substringAfter("page=")
-            .substringBefore("/")
-            .substringBefore("&")
-            .toIntOrNull() ?: 1
-
     private fun Element.getInfo(key: String): String? {
-        val parent = selectFirst("b:contains($key)")?.parent()
-        val genres = parent?.select("a")
+        val element = selectFirst("div.anime_info:has(b:contains($key))")
+        val genres = element?.select("a")
         val text = if (genres?.size == 0) {
-            parent.ownText()
+            element.ownText()
         } else {
             genres?.eachText()?.joinToString()
         }
