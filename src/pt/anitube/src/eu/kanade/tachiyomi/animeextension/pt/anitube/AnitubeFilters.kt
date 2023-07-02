@@ -4,7 +4,6 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 
 object AnitubeFilters {
-
     open class QueryPartFilter(
         displayName: String,
         val vals: Array<Pair<String, String>>,
@@ -16,9 +15,7 @@ object AnitubeFilters {
     }
 
     private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return this.filterIsInstance<R>().joinToString("") {
-            (it as QueryPartFilter).toQueryPart()
-        }
+        return (first { it is R } as QueryPartFilter).toQueryPart()
     }
 
     class GenreFilter : QueryPartFilter("Gênero", AnitubeFiltersData.GENRES)
