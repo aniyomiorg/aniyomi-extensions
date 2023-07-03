@@ -23,6 +23,8 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class DonghuaNoSekai : ParsedAnimeHttpSource() {
 
@@ -173,12 +175,20 @@ class DonghuaNoSekai : ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector(): String {
-        throw UnsupportedOperationException("Not used.")
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val doc = response.use { getRealDoc(it.asJsoup()) }
+        return doc.select(episodeListSelector()).map(::episodeFromElement)
     }
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        throw UnsupportedOperationException("Not used.")
+    override fun episodeListSelector() = "div.episode_list > div.item > a"
+
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        element.selectFirst("span.episode")!!.text().let {
+            name = it
+            episode_number = it.substringAfterLast(" ").toFloatOrNull() ?: 0F
+        }
+        date_upload = element.selectFirst("div.data")?.text().orEmpty().toDate()
     }
 
     // ============================ Video Links =============================
@@ -218,7 +228,16 @@ class DonghuaNoSekai : ParsedAnimeHttpSource() {
         else -> SAnime.UNKNOWN
     }
 
+    private fun String.toDate(): Long {
+        return runCatching { DATE_FORMATTER.parse(trim())?.time }
+            .getOrNull() ?: 0L
+    }
+
     companion object {
         const val PREFIX_SEARCH = "id:"
+
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("MMMM dd, yyyy", Locale("pt", "BR"))
+        }
     }
 }
