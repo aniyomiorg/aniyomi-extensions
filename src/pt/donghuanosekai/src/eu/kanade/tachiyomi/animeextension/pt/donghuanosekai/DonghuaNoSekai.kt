@@ -39,7 +39,7 @@ import java.util.Locale
 
 class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "Donghua No Sekai"
+    override val name = "Donghua no Sekai"
 
     override val baseUrl = "https://donghuanosekai.com"
 
