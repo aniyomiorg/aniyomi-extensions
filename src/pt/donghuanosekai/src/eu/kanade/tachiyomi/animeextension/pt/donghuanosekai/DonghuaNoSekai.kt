@@ -26,21 +26,17 @@ class DonghuaNoSekai : ParsedAnimeHttpSource() {
     override val supportsLatest = false
 
     // ============================== Popular ===============================
-    override fun popularAnimeRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
+    override fun popularAnimeRequest(page: Int) = GET(baseUrl, headers)
+
+    override fun popularAnimeSelector() = "div.sidebarContent div.navItensTop li > a"
+
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        title = element.attr("title")
+        thumbnail_url = element.selectFirst("img")!!.attr("src")
     }
 
-    override fun popularAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun popularAnimeNextPageSelector() = null
 
     // =============================== Latest ===============================
     override fun latestUpdatesRequest(page: Int): Request {
