@@ -282,10 +282,9 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
 
             val popBody = "password=&page_token=$newToken&page_index=$newPageIndex".toRequestBody("application/x-www-form-urlencoded".toMediaType())
 
-            val parsedBody = client.newCall(
+            val parsed = client.newCall(
                 POST(newParsed.url, body = popBody, headers = popHeaders),
-            ).execute().body.string().decrypt()
-            val parsed = json.decodeFromString<ResponseData>(parsedBody)
+            ).execute().parseAs<ResponseData> { it.decrypt() }
 
             parsed.data.files.forEach { item ->
                 if (item.mimeType.startsWith("image/") && item.name.startsWith("cover", true)) {
@@ -386,10 +385,9 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
 
                     val popBody = "password=&page_token=$newToken&page_index=$newPageIndex".toRequestBody("application/x-www-form-urlencoded".toMediaType())
 
-                    val parsedBody = client.newCall(
+                    val parsed = client.newCall(
                         POST(url, body = popBody, headers = popHeaders),
-                    ).execute().body.string().decrypt()
-                    val parsed = json.decodeFromString<ResponseData>(parsedBody)
+                    ).execute().parseAs<ResponseData> { it.decrypt() }
 
                     parsed.data.files.forEach { item ->
                         if (item.mimeType.endsWith("folder")) {
@@ -493,6 +491,11 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================= Utilities ==============================
 
+    private inline fun <reified T> Response.parseAs(transform: (String) -> String = { it }): T {
+        val responseBody = use { transform(it.body.string()) }
+        return json.decodeFromString(responseBody)
+    }
+
     private fun HttpUrl.hostAndCred(): String {
         return if (this.password.isNotBlank() && this.username.isNotBlank()) {
             "${this.username}:${this.password}@${this.host}"
@@ -532,9 +535,9 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun formatFileSize(bytes: Long): String {
         return when {
-            bytes >= 1073741824 -> "%.2f GB".format(bytes / 1073741824.0)
-            bytes >= 1048576 -> "%.2f MB".format(bytes / 1048576.0)
-            bytes >= 1024 -> "%.2f KB".format(bytes / 1024.0)
+            bytes >= 1000000000 -> "%.2f GB".format(bytes / 1000000000.0)
+            bytes >= 100000 -> "%.2f MB".format(bytes / 1000000.0)
+            bytes >= 1000 -> "%.2f KB".format(bytes / 1000.0)
             bytes > 1 -> "$bytes bytes"
             bytes == 1L -> "$bytes byte"
             else -> ""
