@@ -18,7 +18,9 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.OkHttpClient
@@ -62,7 +64,14 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
      */
     override fun animeDetailsRequest(anime: SAnime): Request {
         val animeId = anime.getId()
-        val session = fetchSession(anime.title, animeId)
+        // We're using coroutines here to run it inside another thread and
+        // prevent android.os.NetworkOnMainThreadException when trying to open
+        // webview or share it.
+        val session = runBlocking {
+            withContext(Dispatchers.IO) {
+                fetchSession(anime.title, animeId)
+            }
+        }
         return GET("$baseUrl/anime/$session?anime_id=$animeId")
     }
 
@@ -208,12 +217,14 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         val subPreference = preferences.getString(PREF_SUB_KEY, PREF_SUB_DEFAULT)!!
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val shouldBeAv1 = preferences.getBoolean(PREF_AV1_KEY, PREF_AV1_DEFAULT)
         val shouldEndWithEng = (subPreference == "eng")
 
         return this.sortedWith(
             compareBy(
                 { it.quality.contains(quality) },
-                { it.quality.endsWith("eng", true) == shouldEndWithEng },
+                { (Regex("""\beng\b""").find(it.quality.lowercase()) != null) == shouldEndWithEng },
+                { it.quality.lowercase().contains("av1") == shouldBeAv1 },
             ),
         ).reversed()
     }
@@ -223,8 +234,8 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
-            entries = PREF_QUALITY_VALUES
-            entryValues = PREF_QUALITY_VALUES
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
@@ -276,10 +287,22 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
                 preferences.edit().putBoolean(key, new).commit()
             }
         }
+        val av1Pref = SwitchPreferenceCompat(screen.context).apply {
+            key = PREF_AV1_KEY
+            title = PREF_AV1_TITLE
+            summary = PREF_AV1_SUMMARY
+            setDefaultValue(PREF_AV1_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val new = newValue as Boolean
+                preferences.edit().putBoolean(key, new).commit()
+            }
+        }
         screen.addPreference(videoQualityPref)
         screen.addPreference(domainPref)
         screen.addPreference(subPref)
         screen.addPreference(linkPref)
+        screen.addPreference(av1Pref)
     }
 
     // ============================= Utilities ==============================
@@ -321,7 +344,7 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_QUALITY_KEY = "preffered_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"
         private const val PREF_QUALITY_DEFAULT = "1080p"
-        private val PREF_QUALITY_VALUES = arrayOf("1080p", "720p", "360p")
+        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "360p")
 
         private const val PREF_DOMAIN_KEY = "preffered_domain"
         private const val PREF_DOMAIN_TITLE = "Preferred domain (requires app restart)"
@@ -343,6 +366,16 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         private val PREF_LINK_TYPE_SUMMARY by lazy {
             """Enable this if you are having Cloudflare issues.
             |Note that this will break the ability to seek inside of the video unless the episode is downloaded in advance.
+            """.trimMargin()
+        }
+
+        // Big slap to whoever misspelled `preferred`
+        private const val PREF_AV1_KEY = "preffered_av1"
+        private const val PREF_AV1_TITLE = "Use AV1 codec"
+        private const val PREF_AV1_DEFAULT = false
+        private val PREF_AV1_SUMMARY by lazy {
+            """Enable to use AV1 if available
+            |Turn off to never select av1 as preferred codec
             """.trimMargin()
         }
     }

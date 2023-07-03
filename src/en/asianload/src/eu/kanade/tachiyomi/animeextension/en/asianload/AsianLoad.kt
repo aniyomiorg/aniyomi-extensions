@@ -12,7 +12,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -107,9 +106,10 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             when {
                 url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
                     url.contains("sbfast") || url.contains("sbfull.com") || url.contains("ssbstream.net") ||
-                    url.contains("p1ayerjavseen.com") || url.contains("streamsss.net") || url.contains("sbplay2.xyz")
+                    url.contains("p1ayerjavseen.com") || url.contains("streamsss.net") || url.contains("sbplay2.xyz") ||
+                    url.contains("sbasian.pro")
                 -> {
-                    val videos = StreamSBExtractor(client).videosFromUrl(url, headers, common = false)
+                    val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
                     videoList.addAll(videos)
                 }
                 url.contains("dood") -> {
@@ -117,10 +117,6 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     if (video != null) {
                         videoList.add(video)
                     }
-                }
-                url.contains("fembed") -> {
-                    val videos = FembedExtractor(client).videosFromUrl(url)
-                    videoList.addAll(videos)
                 }
                 url.contains("streamtape") -> {
                     val video = StreamTapeExtractor(client).videoFromUrl(url)
@@ -177,8 +173,8 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 when (filter) {
                     is TypeList -> {
                         if (filter.state > 0) {
-                            val GenreN = getTypeList()[filter.state].query
-                            val genreUrl = "$baseUrl/$GenreN?page=$page".toHttpUrlOrNull()!!.newBuilder()
+                            val genreN = getTypeList()[filter.state].query
+                            val genreUrl = "$baseUrl/$genreN?page=$page".toHttpUrlOrNull()!!.newBuilder()
                             return GET(genreUrl.toString(), headers)
                         }
                     }

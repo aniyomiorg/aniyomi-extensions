@@ -14,7 +14,7 @@ object Decryptor {
         val salt = saltedData.copyOfRange(8, 16)
         val ciphertext = saltedData.copyOfRange(16, saltedData.size)
         val password = remoteKey.toByteArray()
-        val (key, iv) = GenerateKeyAndIv(password, salt) ?: return null
+        val (key, iv) = generateKeyAndIv(password, salt) ?: return null
         val keySpec = SecretKeySpec(key, "AES")
         val ivSpec = IvParameterSpec(iv)
         val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
@@ -24,7 +24,7 @@ object Decryptor {
     }
 
     // https://stackoverflow.com/a/41434590/8166854
-    private fun GenerateKeyAndIv(
+    private fun generateKeyAndIv(
         password: ByteArray,
         salt: ByteArray,
         hashAlgorithm: String = "MD5",

@@ -11,7 +11,6 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -106,11 +105,6 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
                     videoList.addAll(videos)
                 }
-                if (content.contains("fembed")) {
-                    val url = content.substringAfter(",['FD','").substringBefore("',0,0]")
-                    val videos = FembedExtractor(client).videosFromUrl(url)
-                    videoList.addAll(videos)
-                }
                 if (content.contains("okru")) {
                     val url = content.substringAfter(",['OK','").substringBefore("',0,0]")
                     val videos = OkruExtractor(client).videosFromUrl(url)
@@ -132,7 +126,7 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val videoSorted = this.sortedWith(
                 compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
-            val userPreferredQuality = preferences.getString("preferred_quality", "Fembed:1080p")
+            val userPreferredQuality = preferences.getString("preferred_quality", "Okru:1080p")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
             if (preferredIdx != -1) {
                 videoSorted.drop(preferredIdx + 1)
@@ -214,7 +208,6 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
-            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", // Fembed
             "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", // Okru
             "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", // StreamSB
         )
@@ -223,7 +216,7 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title = "Preferred quality"
             entries = qualities
             entryValues = qualities
-            setDefaultValue("Fembed:1080p")
+            setDefaultValue("Okru:1080p")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->

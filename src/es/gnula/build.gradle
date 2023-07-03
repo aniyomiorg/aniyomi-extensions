@@ -1,0 +1,22 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Gnula'
+    pkgNameSuffix = 'es.gnula'
+    extClass = '.Gnula'
+    extVersionCode = 4
+    libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-streamtape-extractor'))
+    implementation(project(':lib-okru-extractor'))
+    implementation project(path: ':lib-yourupload-extractor')
+    implementation project(path: ':lib-voe-extractor')
+    implementation project(path: ':lib-dood-extractor')
+    implementation project(path: ':lib-streamsb-extractor')
+}
+
+
+apply from: "$rootDir/common.gradle"

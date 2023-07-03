@@ -2,9 +2,9 @@ package eu.kanade.tachiyomi.animeextension.pt.pifansubs
 
 import android.net.Uri
 import eu.kanade.tachiyomi.animeextension.pt.pifansubs.extractors.AdoroDoramasExtractor
-import eu.kanade.tachiyomi.animeextension.pt.pifansubs.extractors.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.animeextension.pt.pifansubs.extractors.JMVStreamExtractor
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
@@ -16,14 +16,14 @@ import org.jsoup.nodes.Element
 class PiFansubs : DooPlay(
     "pt-BR",
     "Pi Fansubs",
-    "https://pifansubs.org",
+    "https://pifansubs.club",
 ) {
 
     override fun headersBuilder() = super.headersBuilder()
         .add("Accept-Language", "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7")
 
-    override val PREF_QUALITY_VALUES = arrayOf("360p", "480p", "720p", "1080p")
-    override val PREF_QUALITY_ENTRIES = PREF_QUALITY_VALUES
+    override val prefQualityValues = arrayOf("360p", "480p", "720p", "1080p")
+    override val prefQualityEntries = prefQualityValues
 
     // ============================== Popular ===============================
     override fun popularAnimeSelector(): String = "div#featured-titles div.poster"
@@ -45,15 +45,15 @@ class PiFansubs : DooPlay(
     }
 
     private fun getPlayerVideos(url: String): List<Video> {
-        val streamsbDomains = listOf("sbspeed", "sbanh", "streamsb", "sbfull", "sbbrisk")
+        val streamsbDomains = listOf("sbspeed", "sbanh", "streamsb", "sbfull", "sbbrisk", "lvturbo")
         return when {
             "player.jmvstream" in url ->
                 JMVStreamExtractor(client).videosFromUrl(url)
             "gdriveplayer." in url ->
-                GdrivePlayerExtractor(client).videosFromUrl(url)
+                GdrivePlayerExtractor(client).videosFromUrl(url, "GdrivePlayer", headers)
             streamsbDomains.any { it in url } ->
                 StreamSBExtractor(client).videosFromUrl(url, headers)
-            "adorodoramas.com" in url ->
+            "https://adorodoramas.com" in url ->
                 AdoroDoramasExtractor(client).videosFromUrl(url)
             "/jwplayer/?source" in url -> {
                 val videoUrl = Uri.parse(url).getQueryParameter("source")!!

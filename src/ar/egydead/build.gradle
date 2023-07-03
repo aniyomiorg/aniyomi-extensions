@@ -1,0 +1,18 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'Egy Dead'
+    pkgNameSuffix = 'ar.egydead'
+    extClass = '.EgyDead'
+    extVersionCode = 2
+    libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-streamsb-extractor'))
+    implementation(project(':lib-dood-extractor'))
+    implementation('dev.datlag.jsunpacker:jsunpacker:1.0.1')
+}
+
+apply from: "$rootDir/common.gradle"

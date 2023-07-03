@@ -21,11 +21,9 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
@@ -45,6 +43,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     override val baseUrl = "https://crunchyroll.com"
 
     private val crUrl = "https://beta-api.crunchyroll.com"
+    private val crApiUrl = "$crUrl/content/v2"
 
     override val lang = "all"
 
@@ -58,45 +57,25 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val tokenInterceptor = AccessTokenInterceptor(crUrl, json, preferences)
+    private val tokenInterceptor by lazy {
+        AccessTokenInterceptor(crUrl, json, preferences, PREF_USE_LOCAL_TOKEN_KEY)
+    }
 
-    override val client: OkHttpClient = OkHttpClient().newBuilder()
-        .addInterceptor(tokenInterceptor).build()
-
-    companion object {
-        private val DateFormatter by lazy {
-            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ENGLISH)
-        }
-
-        private const val PREF_QLT = "preferred_quality"
-        private const val PREF_AUD = "preferred_audio"
-        private const val PREF_SUB = "preferred_sub"
-        private const val PREF_SUB_TYPE = "preferred_sub_type"
-
-        // there is one in AccessTokenInterceptor too for below
-        private const val PREF_FETCH_LOCAL_SUBS = "preferred_local_subs"
+    override val client by lazy {
+        super.client.newBuilder().addInterceptor(tokenInterceptor).build()
     }
 
     // ============================== Popular ===============================
 
     override fun popularAnimeRequest(page: Int): Request {
         val start = if (page != 1) "start=${(page - 1) * 36}&" else ""
-        return GET("$crUrl/content/v2/discover/browse?${start}n=36&sort_by=popularity&locale=en-US")
+        return GET("$crApiUrl/discover/browse?${start}n=36&sort_by=popularity&locale=en-US")
     }
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val parsed = json.decodeFromString<AnimeResult>(response.body.string())
-        val animeList = parsed.data.parallelMap { ani ->
-            runCatching {
-                ani.toSAnime()
-            }.getOrNull()
-        }.filterNotNull()
-        val queries = response.request.url.encodedQuery ?: "0"
-        val position = if (queries.contains("start=")) {
-            queries.substringAfter("start=").substringBefore("&").toInt()
-        } else {
-            0
-        }
+        val animeList = parsed.data.mapNotNull { it.toSAnimeOrNull() }
+        val position = response.request.url.queryParameter("start")?.toIntOrNull() ?: 0
         return AnimesPage(animeList, position + 36 < parsed.total)
     }
 
@@ -104,7 +83,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun latestUpdatesRequest(page: Int): Request {
         val start = if (page != 1) "start=${(page - 1) * 36}&" else ""
-        return GET("$crUrl/content/v2/discover/browse?${start}n=36&sort_by=newly_added&locale=en-US")
+        return GET("$crApiUrl/discover/browse?${start}n=36&sort_by=newly_added&locale=en-US")
     }
 
     override fun latestUpdatesParse(response: Response): AnimesPage = popularAnimeParse(response)
@@ -116,9 +95,9 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         val start = if (page != 1) "start=${(page - 1) * 36}&" else ""
         val url = if (query.isNotBlank()) {
             val cleanQuery = query.replace(" ", "+").lowercase()
-            "$crUrl/content/v2/discover/search?${start}n=36&q=$cleanQuery&type=${params.type}"
+            "$crApiUrl/discover/search?${start}n=36&q=$cleanQuery&type=${params.type}"
         } else {
-            "$crUrl/content/v2/discover/browse?${start}n=36${params.media}${params.language}&sort_by=${params.sort}${params.category}"
+            "$crApiUrl/discover/browse?${start}n=36${params.media}${params.language}&sort_by=${params.sort}${params.category}"
         }
         return GET(url)
     }
@@ -126,7 +105,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun searchAnimeParse(response: Response): AnimesPage {
         val bod = response.body.string()
         val total: Int
-        val animeList = (
+        val items =
             if (response.request.url.encodedPath.contains("search")) {
                 val parsed = json.decodeFromString<SearchAnimeResult>(bod).data.first()
                 total = parsed.count
@@ -136,21 +115,13 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                 total = parsed.total
                 parsed.data
             }
-            ).parallelMap { ani ->
-            runCatching {
-                ani.toSAnime()
-            }.getOrNull()
-        }.filterNotNull()
-        val queries = response.request.url.encodedQuery ?: "0"
-        val position = if (queries.contains("start=")) {
-            queries.substringAfter("start=").substringBefore("&").toInt()
-        } else {
-            0
-        }
+
+        val animeList = items.mapNotNull { it.toSAnimeOrNull() }
+        val position = response.request.url.queryParameter("start")?.toIntOrNull() ?: 0
         return AnimesPage(animeList, position + 36 < total)
     }
 
-    override fun getFilterList(): AnimeFilterList = YomirollFilters.filterList
+    override fun getFilterList(): AnimeFilterList = YomirollFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
 
@@ -158,9 +129,9 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         val mediaId = json.decodeFromString<LinkData>(anime.url)
         val resp = client.newCall(
             if (mediaId.media_type == "series") {
-                GET("$crUrl/content/v2/cms/series/${mediaId.id}?locale=en-US")
+                GET("$crApiUrl/cms/series/${mediaId.id}?locale=en-US")
             } else {
-                GET("$crUrl/content/v2/cms/movie_listings/${mediaId.id}?locale=en-US")
+                GET("$crApiUrl/cms/movie_listings/${mediaId.id}?locale=en-US")
             },
         ).execute()
         val info = json.decodeFromString<AnimeResult>(resp.body.string())
@@ -183,61 +154,66 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun episodeListRequest(anime: SAnime): Request {
         val mediaId = json.decodeFromString<LinkData>(anime.url)
         return if (mediaId.media_type == "series") {
-            GET("$crUrl/content/v2/cms/series/${mediaId.id}/seasons")
+            GET("$crApiUrl/cms/series/${mediaId.id}/seasons")
         } else {
-            GET("$crUrl/content/v2/cms/movie_listings/${mediaId.id}/movies")
+            GET("$crApiUrl/cms/movie_listings/${mediaId.id}/movies")
         }
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val seasons = json.decodeFromString<SeasonResult>(response.body.string())
         val series = response.request.url.encodedPath.contains("series/")
-
+        val chunkSize = Runtime.getRuntime().availableProcessors()
         return if (series) {
-            seasons.data.sortedBy { it.season_number }.chunked(6).map { chunk ->
+            seasons.data.sortedBy { it.season_number }.chunked(chunkSize).flatMap { chunk ->
                 chunk.parallelMap { seasonData ->
                     runCatching {
-                        val episodeResp =
-                            client.newCall(GET("$crUrl/content/v2/cms/seasons/${seasonData.id}/episodes"))
-                                .execute()
-                        val body = episodeResp.body.string()
-                        val episodes =
-                            json.decodeFromString<EpisodeResult>(body)
-                        episodes.data.sortedBy { it.episode_number }.parallelMap { ep ->
-                            SEpisode.create().apply {
-                                url = EpisodeData(
-                                    ep.versions?.map { Pair(it.mediaId, it.audio_locale) }
-                                        ?: listOf(
-                                            Pair(
-                                                ep.streams_link!!.substringAfter("videos/")
-                                                    .substringBefore("/streams"),
-                                                ep.audio_locale,
-                                            ),
-                                        ),
-                                ).toJsonString()
-                                name = if (ep.episode_number > 0 && ep.episode.isNumeric()) {
-                                    "Season ${seasonData.season_number} Ep ${df.format(ep.episode_number)}: " + ep.title
-                                } else {
-                                    ep.title
-                                }
-                                episode_number = ep.episode_number
-                                date_upload = ep.airDate?.let { parseDate(it) } ?: 0L
-                                scanlator = ep.versions?.sortedBy { it.audio_locale }
-                                    ?.joinToString { it.audio_locale.substringBefore("-") }
-                                    ?: ep.audio_locale.substringBefore("-")
-                            }
-                        }
+                        getEpisodes(seasonData)
                     }.getOrNull()
                 }.filterNotNull().flatten()
-            }.flatten().reversed()
+            }.reversed()
         } else {
             seasons.data.mapIndexed { index, movie ->
                 SEpisode.create().apply {
-                    this.url = EpisodeData(listOf(Pair(movie.id, ""))).toJsonString()
-                    this.name = "Movie"
-                    this.episode_number = (index + 1).toFloat()
-                    this.date_upload = movie.date?.let { parseDate(it) } ?: 0L
+                    url = EpisodeData(listOf(Pair(movie.id, ""))).toJsonString()
+                    name = "Movie"
+                    episode_number = (index + 1).toFloat()
+                    date_upload = movie.date?.let(::parseDate) ?: 0L
                 }
+            }
+        }
+    }
+
+    private fun getEpisodes(seasonData: SeasonResult.Season): List<SEpisode> {
+        val episodeResp =
+            client.newCall(GET("$crApiUrl/cms/seasons/${seasonData.id}/episodes"))
+                .execute()
+        val body = episodeResp.body.string()
+        val episodes = json.decodeFromString<EpisodeResult>(body)
+
+        return episodes.data.sortedBy { it.episode_number }.mapNotNull EpisodeMap@{ ep ->
+            SEpisode.create().apply {
+                url = EpisodeData(
+                    ep.versions?.map { Pair(it.mediaId, it.audio_locale) }
+                        ?: listOf(
+                            Pair(
+                                ep.streams_link?.substringAfter("videos/")
+                                    ?.substringBefore("/streams")
+                                    ?: return@EpisodeMap null,
+                                ep.audio_locale,
+                            ),
+                        ),
+                ).toJsonString()
+                name = if (ep.episode_number > 0 && ep.episode.isNumeric()) {
+                    "Season ${seasonData.season_number} Ep ${df.format(ep.episode_number)}: " + ep.title
+                } else {
+                    ep.title
+                }
+                episode_number = ep.episode_number
+                date_upload = ep.airDate?.let(::parseDate) ?: 0L
+                scanlator = ep.versions?.sortedBy { it.audio_locale }
+                    ?.joinToString { it.audio_locale.substringBefore("-") }
+                    ?: ep.audio_locale.substringBefore("-")
             }
         }
     }
@@ -246,14 +222,20 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val urlJson = json.decodeFromString<EpisodeData>(episode.url)
-        val dubLocale = preferences.getString("preferred_audio", "en-US")!!
-        val proxyToken = tokenInterceptor.getAccessToken()
-        val localToken = tokenInterceptor.getLocalToken()
+        val dubLocale = preferences.getString(PREF_AUD_KEY, PREF_AUD_DEFAULT)!!
+
+        if (urlJson.ids.isEmpty()) throw Exception("No IDs found for episode")
+        val isUsingLocalToken = preferences.getBoolean(PREF_USE_LOCAL_TOKEN_KEY, false)
+
         val videoList = urlJson.ids.filter {
-            it.second == dubLocale || it.second == "ja-JP" || it.second == "en-US" || it.second == ""
+            it.second == dubLocale ||
+                it.second == "ja-JP" ||
+                it.second == "en-US" ||
+                it.second == "" ||
+                if (isUsingLocalToken) it.second == urlJson.ids.first().second else false
         }.parallelMap { media ->
             runCatching {
-                extractVideo(media, proxyToken, localToken)
+                extractVideo(media)
             }.getOrNull()
         }.filterNotNull().flatten()
 
@@ -262,54 +244,26 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================= Utilities ==============================
 
-    private fun extractVideo(
-        media: Pair<String, String>,
-        proxyToken: AccessToken,
-        localToken: AccessToken?,
-    ): List<Video> {
+    private fun extractVideo(media: Pair<String, String>): List<Video> {
         val (mediaId, aud) = media
-        val response = client.newCall(getVideoRequest(mediaId, proxyToken)).execute()
+        val response = client.newCall(getVideoRequest(mediaId)).execute()
         val streams = json.decodeFromString<VideoStreams>(response.body.string())
 
-        val localStreams =
-            if (aud == "ja-JP" && preferences.getBoolean(PREF_FETCH_LOCAL_SUBS, false)) {
-                val localResponse = client.newCall(getVideoRequest(mediaId, localToken!!)).execute()
-                json.decodeFromString(localResponse.body.string())
-            } else {
-                VideoStreams()
-            }
-
-        var subsList = emptyList<Track>()
-        val subLocale = preferences.getString("preferred_sub", "en-US")!!.getLocale()
-        try {
-            val tempSubs = mutableListOf<Track>()
+        val subLocale = preferences.getString(PREF_SUB_KEY, PREF_SUB_DEFAULT)!!.getLocale()
+        val subsList = runCatching {
             streams.subtitles?.entries?.map { (_, value) ->
                 val sub = json.decodeFromString<Subtitle>(value.jsonObject.toString())
-                tempSubs.add(Track(sub.url, sub.locale.getLocale()))
-            }
-            localStreams.subtitles?.entries?.map { (_, value) ->
-                val sub = json.decodeFromString<Subtitle>(value.jsonObject.toString())
-                tempSubs.add(Track(sub.url, sub.locale.getLocale()))
-            }
-            subsList = tempSubs.sortedWith(
+                Track(sub.url, sub.locale.getLocale())
+            }?.sortedWith(
                 compareBy(
                     { it.lang },
                     { it.lang.contains(subLocale) },
                 ),
             )
-        } catch (_: Error) {
-        }
+        }.getOrNull() ?: emptyList()
 
-        val audLang = aud.ifBlank { streams.audio_locale } ?: localStreams.audio_locale ?: "ja-JP"
-        val videoList = mutableListOf<Video>()
-        videoList.addAll(
-            getStreams(streams, audLang, subsList),
-        )
-        videoList.addAll(
-            getStreams(localStreams, audLang, subsList),
-        )
-
-        return videoList.distinctBy { it.quality }
+        val audLang = aud.ifBlank { streams.audio_locale } ?: "ja-JP"
+        return getStreams(streams, audLang, subsList)
     }
 
     private fun getStreams(
@@ -348,19 +302,17 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         }?.filterNotNull()?.flatten() ?: emptyList()
     }
 
-    private fun getVideoRequest(mediaId: String, token: AccessToken): Request {
-        return GET("$crUrl/cms/v2${token.bucket}/videos/$mediaId/streams?Policy=${token.policy}&Signature=${token.signature}&Key-Pair-Id=${token.key_pair_id}")
+    private fun getVideoRequest(mediaId: String): Request {
+        return GET("$crUrl/cms/v2{0}/videos/$mediaId/streams?Policy={1}&Signature={2}&Key-Pair-Id={3}")
     }
 
-    private val df = DecimalFormat("0.#")
+    private val df by lazy { DecimalFormat("0.#") }
 
     private fun String.getLocale(): String {
         return locale.firstOrNull { it.first == this }?.second ?: ""
     }
 
-    private fun String?.isNumeric(): Boolean {
-        return this@isNumeric?.toDoubleOrNull() != null
-    }
+    private fun String?.isNumeric() = this?.toDoubleOrNull() != null
 
     // Add new locales to the bottom so it doesn't mess with pref indexes
     private val locale = arrayOf(
@@ -399,25 +351,27 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun parseDate(dateStr: String): Long {
-        return runCatching { DateFormatter.parse(dateStr)?.time }
+        return runCatching { DATE_FORMATTER.parse(dateStr)?.time }
             .getOrNull() ?: 0L
     }
+
+    private fun Anime.toSAnimeOrNull() = runCatching { toSAnime() }.getOrNull()
 
     private fun Anime.toSAnime(): SAnime =
         SAnime.create().apply {
             title = this@toSAnime.title
-            thumbnail_url = this@toSAnime.images.poster_tall?.getOrNull(0)?.thirdLast()?.source
-                ?: this@toSAnime.images.poster_tall?.getOrNull(0)?.last()?.source
-            url = LinkData(this@toSAnime.id, this@toSAnime.type!!).toJsonString()
-            genre = this@toSAnime.series_metadata?.genres?.joinToString()
-                ?: this@toSAnime.movie_metadata?.genres?.joinToString() ?: ""
+            thumbnail_url = images.poster_tall?.getOrNull(0)?.thirdLast()?.source
+                ?: images.poster_tall?.getOrNull(0)?.last()?.source
+            url = LinkData(id, type!!).toJsonString()
+            genre = series_metadata?.genres?.joinToString()
+                ?: movie_metadata?.genres?.joinToString() ?: ""
             status = SAnime.COMPLETED
             var desc = this@toSAnime.description + "\n"
             desc += "\nLanguage:" +
                 (
-                    if (this@toSAnime.series_metadata?.subtitle_locales?.any() == true ||
-                        this@toSAnime.movie_metadata?.subtitle_locales?.any() == true ||
-                        this@toSAnime.series_metadata?.is_subbed == true
+                    if (series_metadata?.subtitle_locales?.any() == true ||
+                        movie_metadata?.subtitle_locales?.any() == true ||
+                        series_metadata?.is_subbed == true
                     ) {
                         " Sub"
                     } else {
@@ -425,8 +379,8 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                     }
                     ) +
                 (
-                    if (this@toSAnime.series_metadata?.audio_locales?.any() == true ||
-                        this@toSAnime.movie_metadata?.is_dubbed == true
+                    if ((series_metadata?.audio_locales?.size ?: 0) > 1 ||
+                        movie_metadata?.is_dubbed == true
                     ) {
                         " Dub"
                     } else {
@@ -435,48 +389,47 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                     )
             desc += "\nMaturity Ratings: " +
                 (
-                    this@toSAnime.series_metadata?.maturity_ratings?.joinToString()
-                        ?: this@toSAnime.movie_metadata?.maturity_ratings?.joinToString() ?: ""
+                    series_metadata?.maturity_ratings?.joinToString()
+                        ?: movie_metadata?.maturity_ratings?.joinToString() ?: ""
                     )
-            desc += if (this@toSAnime.series_metadata?.is_simulcast == true) "\nSimulcast" else ""
+            desc += if (series_metadata?.is_simulcast == true) "\nSimulcast" else ""
             desc += "\n\nAudio: " + (
-                this@toSAnime.series_metadata?.audio_locales?.sortedBy { it.getLocale() }
+                series_metadata?.audio_locales?.sortedBy { it.getLocale() }
                     ?.joinToString { it.getLocale() } ?: ""
                 )
             desc += "\n\nSubs: " + (
-                this@toSAnime.series_metadata?.subtitle_locales?.sortedBy { it.getLocale() }
+                series_metadata?.subtitle_locales?.sortedBy { it.getLocale() }
                     ?.joinToString { it.getLocale() }
-                    ?: this@toSAnime.movie_metadata?.subtitle_locales?.sortedBy { it.getLocale() }
+                    ?: movie_metadata?.subtitle_locales?.sortedBy { it.getLocale() }
                         ?.joinToString { it.getLocale() } ?: ""
                 )
             description = desc
         }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "1080")!!
-        val dubLocale = preferences.getString("preferred_audio", "en-US")!!
-        val subLocale = preferences.getString("preferred_sub", "en-US")!!
-        val subType = preferences.getString("preferred_sub_type", "soft")!!
+        val quality = preferences.getString(PREF_QLT_KEY, PREF_QLT_DEFAULT)!!
+        val dubLocale = preferences.getString(PREF_AUD_KEY, PREF_AUD_DEFAULT)!!
+        val subLocale = preferences.getString(PREF_SUB_KEY, PREF_SUB_DEFAULT)!!
+        val subType = preferences.getString(PREF_SUB_TYPE_KEY, PREF_SUB_TYPE_DEFAULT)!!
         val shouldContainHard = subType == "hard"
 
-        return this.sortedWith(
+        return sortedWith(
             compareBy(
                 { it.quality.contains(quality) },
                 { it.quality.contains("Aud: ${dubLocale.getLocale()}") },
                 { it.quality.contains("HardSub") == shouldContainHard },
                 { it.quality.contains(subLocale) },
-                { it.quality.contains("en-US") },
             ),
         ).reversed()
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = PREF_QLT
-            title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p", "240p", "80p")
-            entryValues = arrayOf("1080", "720", "480", "360", "240", "80")
-            setDefaultValue("1080")
+            key = PREF_QLT_KEY
+            title = PREF_QLT_TITLE
+            entries = PREF_QLT_ENTRIES
+            entryValues = PREF_QLT_VALUES
+            setDefaultValue(PREF_QLT_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -488,11 +441,11 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         val audLocalePref = ListPreference(screen.context).apply {
-            key = PREF_AUD
-            title = "Preferred Audio Language"
+            key = PREF_AUD_KEY
+            title = PREF_AUD_TITLE
             entries = locale.map { it.second }.toTypedArray()
             entryValues = locale.map { it.first }.toTypedArray()
-            setDefaultValue("en-US")
+            setDefaultValue(PREF_AUD_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -504,11 +457,11 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         val subLocalePref = ListPreference(screen.context).apply {
-            key = PREF_SUB
-            title = "Preferred Sub Language"
+            key = PREF_SUB_KEY
+            title = PREF_SUB_TITLE
             entries = locale.map { it.second }.toTypedArray()
             entryValues = locale.map { it.first }.toTypedArray()
-            setDefaultValue("en-US")
+            setDefaultValue(PREF_SUB_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -520,11 +473,11 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         val subTypePref = ListPreference(screen.context).apply {
-            key = PREF_SUB_TYPE
-            title = "Preferred Sub Type"
-            entries = arrayOf("Softsub", "Hardsub")
-            entryValues = arrayOf("soft", "hard")
-            setDefaultValue("soft")
+            key = PREF_SUB_TYPE_KEY
+            title = PREF_SUB_TYPE_TITLE
+            entries = PREF_SUB_TYPE_ENTRIES
+            entryValues = PREF_SUB_TYPE_VALUES
+            setDefaultValue(PREF_SUB_TYPE_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -552,29 +505,21 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
             object : LocalSubsPreference(screen.context) {
                 override fun reload() {
                     this.apply {
-                        key = PREF_FETCH_LOCAL_SUBS
-                        title = "Fetch Local Subs (Don't Spam this please!)"
-                        runBlocking {
-                            withContext(Dispatchers.IO) { summary = getTokenDetail() }
+                        key = PREF_USE_LOCAL_TOKEN_KEY
+                        title = PREF_USE_LOCAL_TOKEN_TITLE
+                        summary = runBlocking {
+                            withContext(Dispatchers.IO) { getTokenDetail() }
                         }
                         setDefaultValue(false)
                         setOnPreferenceChangeListener { _, newValue ->
                             val new = newValue as Boolean
-                            Thread {
-                                runBlocking {
-                                    if (new) {
-                                        withContext(Dispatchers.IO) {
-                                            summary = getTokenDetail(true)
-                                        }
-                                    } else {
-                                        tokenInterceptor.removeLocalToken()
-                                        summary = """Token location:
-                                            |Expires:
-                                        """.trimMargin()
+                            preferences.edit().putBoolean(key, new).commit().also {
+                                Thread {
+                                    summary = runBlocking {
+                                        withContext(Dispatchers.IO) { getTokenDetail(true) }
                                     }
-                                }
-                            }.start()
-                            preferences.edit().putBoolean(key, new).commit()
+                                }.start()
+                            }
                         }
                     }
                 }
@@ -589,14 +534,40 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun getTokenDetail(force: Boolean = false): String {
         return try {
-            val storedToken = tokenInterceptor.getLocalToken(force)
-            """Token location: ${
-            storedToken?.bucket?.substringAfter("/")?.substringBefore("/") ?: ""
-            }
-            |Expires: ${storedToken?.policyExpire?.let { DateFormatter.format(it) } ?: ""}
-            """.trimMargin()
+            val storedToken = tokenInterceptor.getAccessToken(force)
+            "Token location: " + storedToken.bucket?.substringAfter("/")?.substringBefore("/")
         } catch (e: Exception) {
-            ""
+            tokenInterceptor.removeToken()
+            "Error: ${e.localizedMessage ?: "Something Went Wrong"}"
         }
+    }
+
+    companion object {
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.ENGLISH)
+        }
+
+        private const val PREF_QLT_KEY = "preferred_quality"
+        private const val PREF_QLT_TITLE = "Preferred quality"
+        private const val PREF_QLT_DEFAULT = "1080p"
+        private val PREF_QLT_ENTRIES = arrayOf("1080p", "720p", "480p", "360p", "240p", "80p")
+        private val PREF_QLT_VALUES = PREF_QLT_ENTRIES
+
+        private const val PREF_AUD_KEY = "preferred_audio"
+        private const val PREF_AUD_TITLE = "Preferred Audio Language"
+        private const val PREF_AUD_DEFAULT = "en-US"
+
+        private const val PREF_SUB_KEY = "preferred_sub"
+        private const val PREF_SUB_TITLE = "Preferred Sub Language"
+        private const val PREF_SUB_DEFAULT = "en-US"
+
+        private const val PREF_SUB_TYPE_KEY = "preferred_sub_type"
+        private const val PREF_SUB_TYPE_TITLE = "Preferred Sub Type"
+        private const val PREF_SUB_TYPE_DEFAULT = "soft"
+        private val PREF_SUB_TYPE_ENTRIES = arrayOf("Softsub", "Hardsub")
+        private val PREF_SUB_TYPE_VALUES = arrayOf("soft", "hard")
+
+        private const val PREF_USE_LOCAL_TOKEN_KEY = "preferred_local_Token"
+        private const val PREF_USE_LOCAL_TOKEN_TITLE = "Use Local Token (Don't Spam this please!)"
     }
 }

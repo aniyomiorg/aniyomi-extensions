@@ -28,7 +28,7 @@ class FASELHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "فاصل اعلاني"
 
-    override val baseUrl = "https://www.faselhd.ac"
+    override val baseUrl = "https://www.faselhd.vip"
 
     override val lang = "ar"
 

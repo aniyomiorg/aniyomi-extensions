@@ -5,17 +5,17 @@ ext {
     extName = 'Pelisplushd'
     pkgNameSuffix = 'es.pelisplushd'
     extClass = '.PelisplushdFactory'
-    extVersionCode = 33
+    extVersionCode = 37
     libVersion = '13'
 }
 
 dependencies {
     implementation(project(':lib-yourupload-extractor'))
-    implementation(project(':lib-fembed-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation(project(':lib-voe-extractor'))
+    implementation(project(':lib-okru-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

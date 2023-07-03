@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.en.kissanime.extractors.DailymotionExtractor
-import eu.kanade.tachiyomi.animeextension.en.kissanime.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animeextension.en.kissanime.extractors.VodstreamExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -14,7 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -25,7 +24,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -47,7 +45,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "kissanime.com.ru"
 
-    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://kissanime.com.ru")!! }
+    override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
 
     override val lang = "en"
 
@@ -61,27 +59,19 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    companion object {
-        private val DateFormatter by lazy {
-            SimpleDateFormat("MM/dd/yyyy", Locale.ENGLISH)
-        }
-    }
-
     // ============================== Popular ===============================
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/AnimeListOnline/Trending?page=$page")
 
     override fun popularAnimeSelector(): String = "div.listing > div.item_movies_in_cat"
 
-    override fun popularAnimeNextPageSelector(): String = "div.pagination > ul > li.current ~ li"
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        return SAnime.create().apply {
-            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").toHttpUrl().encodedPath)
-            thumbnail_url = element.selectFirst("img")!!.attr("src")
-            title = element.selectFirst("div.title_in_cat_container > a")!!.text()
-        }
+    override fun popularAnimeFromElement(element: Element): SAnime = SAnime.create().apply {
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        thumbnail_url = element.selectFirst("img")!!.attr("src")
+        title = element.selectFirst("div.title_in_cat_container > a")!!.text()
     }
+
+    override fun popularAnimeNextPageSelector(): String = "div.pagination > ul > li.current ~ li"
 
     // =============================== Latest ===============================
 
@@ -89,9 +79,9 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesSelector(): String = popularAnimeSelector()
 
-    override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
-
     override fun latestUpdatesFromElement(element: Element): SAnime = popularAnimeFromElement(element)
+
+    override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
 
     // =============================== Search ===============================
 
@@ -119,15 +109,15 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val document = response.asJsoup()
             val name = response.request.url.encodedFragment!!
 
-            val animes = document.select("div.barContent > div.schedule_container > div.schedule_item:has(div.schedule_block_title:contains($name)) div.schedule_row > div.schedule_block").map {
+            val animeList = document.select("div.barContent > div.schedule_container > div.schedule_item:has(div.schedule_block_title:contains($name)) div.schedule_row > div.schedule_block").map {
                 SAnime.create().apply {
                     title = it.selectFirst("h2 > a > span.jtitle")!!.text()
                     thumbnail_url = it.selectFirst("img")!!.attr("src")
-                    setUrlWithoutDomain(it.selectFirst("a")!!.attr("href").toHttpUrl().encodedPath)
+                    setUrlWithoutDomain(it.selectFirst("a")!!.attr("href"))
                 }
             }
 
-            AnimesPage(animes, false)
+            AnimesPage(animeList, false)
         } else {
             super.searchAnimeParse(response)
         }
@@ -135,18 +125,19 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
 
-    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
-
     override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
+
+    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
     // ============================== FILTERS ===============================
 
-    override fun getFilterList(): AnimeFilterList = KissAnimeFilters.filterList
+    override fun getFilterList(): AnimeFilterList = KissAnimeFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
 
     override fun animeDetailsParse(document: Document): SAnime {
         val rating = document.selectFirst("div.Votes > div.Prct > div[data-percent]")?.let { "\n\nUser rating: ${it.attr("data-percent")}%" } ?: ""
+
         return SAnime.create().apply {
             title = document.selectFirst("div.barContent > div.full > h2")!!.text()
             thumbnail_url = document.selectFirst("div.cover_anime img")!!.attr("src")
@@ -160,13 +151,11 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListSelector(): String = "div.listing > div:not([class])"
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        return SEpisode.create().apply {
-            name = element.selectFirst("a")!!.text()
-            episode_number = element.selectFirst("a")!!.text().substringAfter("Episode ").toFloatOrNull() ?: 0F
-            date_upload = parseDate(element.selectFirst("div:not(:has(a))")!!.text())
-            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").substringAfter(baseUrl))
-        }
+    override fun episodeFromElement(element: Element): SEpisode = SEpisode.create().apply {
+        name = element.selectFirst("a")!!.text()
+        episode_number = element.selectFirst("a")!!.text().substringAfter("Episode ").toFloatOrNull() ?: 0F
+        date_upload = parseDate(element.selectFirst("div:not(:has(a))")!!.text())
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
     }
 
     // ============================ Video Links =============================
@@ -232,37 +221,11 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val url = server.url
 
                     when {
-                        url.contains("fembed") ||
-                            url.contains("anime789.com") || url.contains("24hd.club") || url.contains("fembad.org") ||
-                            url.contains("vcdn.io") || url.contains("sharinglink.club") || url.contains("moviemaniac.org") ||
-                            url.contains("votrefiles.club") || url.contains("femoload.xyz") || url.contains("albavido.xyz") ||
-                            url.contains("feurl.com") || url.contains("dailyplanet.pw") || url.contains("ncdnstm.com") ||
-                            url.contains("jplayer.net") || url.contains("xstreamcdn.com") || url.contains("fembed-hd.com") ||
-                            url.contains("gcloud.live") || url.contains("vcdnplay.com") || url.contains("superplayxyz.club") ||
-                            url.contains("vidohd.com") || url.contains("vidsource.me") || url.contains("cinegrabber.com") ||
-                            url.contains("votrefile.xyz") || url.contains("zidiplay.com") || url.contains("ndrama.xyz") ||
-                            url.contains("fcdn.stream") || url.contains("mediashore.org") || url.contains("suzihaza.com") ||
-                            url.contains("there.to") || url.contains("femax20.com") || url.contains("javstream.top") ||
-                            url.contains("viplayer.cc") || url.contains("sexhd.co") || url.contains("fembed.net") ||
-                            url.contains("mrdhan.com") || url.contains("votrefilms.xyz") || // url.contains("") ||
-                            url.contains("embedsito.com") || url.contains("dutrag.com") || // url.contains("") ||
-                            url.contains("youvideos.ru") || url.contains("streamm4u.club") || // url.contains("") ||
-                            url.contains("moviepl.xyz") || url.contains("asianclub.tv") || // url.contains("") ||
-                            url.contains("vidcloud.fun") || url.contains("fplayer.info") || // url.contains("") ||
-                            url.contains("diasfem.com") || url.contains("javpoll.com") || url.contains("reeoov.tube") ||
-                            url.contains("suzihaza.com") || url.contains("ezsubz.com") || url.contains("vidsrc.xyz") ||
-                            url.contains("diampokusy.com") || url.contains("diampokusy.com") || url.contains("i18n.pw") ||
-                            url.contains("vanfem.com") || url.contains("fembed9hd.com") || url.contains("votrefilms.xyz") || url.contains("watchjavnow.xyz")
-                        -> {
-                            val newUrl = url.replace("https://www.fembed.com", "https://vanfem.com")
-                            FembedExtractor(client).videosFromUrl(newUrl, prefix = "${server.name} - ")
-                        }
                         url.contains("yourupload") -> {
                             YourUploadExtractor(client).videoFromUrl(url, headers = headers, name = server.name)
                         }
                         url.contains("mp4upload") -> {
-                            val headers = headers.newBuilder().set("referer", "https://mp4upload.com/").build()
-                            Mp4uploadExtractor(client).getVideoFromUrl(url, headers = headers, name = server.name)
+                            Mp4uploadExtractor(client).videosFromUrl(url, headers, "(${server.name}) ")
                         }
                         url.contains("embed.vodstream.xyz") -> {
                             val referer = "$baseUrl/"
@@ -277,19 +240,21 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }.filterNotNull().flatten(),
         )
 
+        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
+
         return Observable.just(videoList.sort())
     }
 
-    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
+    override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
 
     override fun videoListSelector(): String = throw Exception("Not Used")
 
-    override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
+    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
 
     // ============================= Utilities ==============================
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "1080")!!
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 
         return this.sortedWith(
             compareBy { it.quality.contains(quality) },
@@ -308,7 +273,7 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     )
 
     private fun parseDate(dateStr: String): Long {
-        return runCatching { DateFormatter.parse(dateStr)?.time }
+        return runCatching { DATE_FORMATTER.parse(dateStr)?.time }
             .getOrNull() ?: 0L
     }
 
@@ -320,45 +285,57 @@ class KissAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val domainPref = ListPreference(screen.context).apply {
-            key = "preferred_domain"
-            title = "Preferred domain (requires app restart)"
-            entries = arrayOf("kissanime.com.ru", "kissanime.co", "kissanime.sx", "kissanime.org.ru")
-            entryValues = arrayOf("https://kissanime.com.ru", "https://kissanime.co", "https://kissanime.sx", "https://kissanime.org.ru")
-            setDefaultValue("https://kissanime.com.ru")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
-            setDefaultValue("1080")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-
-        screen.addPreference(domainPref)
-        screen.addPreference(videoQualityPref)
-    }
-
     // From Dopebox
     private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
         runBlocking {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
+
+    companion object {
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("MM/dd/yyyy", Locale.ENGLISH)
+        }
+
+        private const val PREF_DOMAIN_KEY = "preferred_domain"
+        private const val PREF_DOMAIN_DEFAULT = "https://kissanime.com.ru"
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
+    }
+
+    // ============================== Settings ==============================
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_DOMAIN_KEY
+            title = "Preferred domain (requires app restart)"
+            entries = arrayOf("kissanime.com.ru", "kissanime.co", "kissanime.sx", "kissanime.org.ru")
+            entryValues = arrayOf("https://kissanime.com.ru", "https://kissanime.co", "https://kissanime.sx", "https://kissanime.org.ru")
+            setDefaultValue(PREF_DOMAIN_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = "Preferred quality"
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+    }
 }

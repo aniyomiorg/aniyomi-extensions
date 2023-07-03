@@ -1,6 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.es.legionanime
 
-val studiosMap = mapOf(
+val STUDIOS_MAP = mapOf(
     "TMS Entertainment" to 4,
     "TNK" to 39,
     "Toei Animation" to 1,
@@ -394,7 +394,7 @@ val studiosMap = mapOf(
     "Larx Entertainment" to 74,
 )
 
-val genres = mapOf(
+val GENRES = mapOf(
     "Buscar exactamente con géneros seleccionados" to 100,
     "Acción" to 1,
     "Artes Marciales" to 11,
@@ -440,25 +440,26 @@ val genres = mapOf(
     "Yaoi" to 30,
     "Yuri" to 40,
 )
-val orderby = mapOf(
-    "Fecha (Menor a Mayor)" to 0,
-    "Recientemente vistos por otros" to 1,
-    "Fecha (Mayor a Menor)" to 2,
-    "A-Z" to 3,
-    "Más Visitado" to 4,
-    "Z-A" to 5,
-    "Mejor Calificación" to 6,
-    "Peor Calificación" to 7,
-    "Últimos Agregados en app" to 8,
-    "Primeros Agregados en app" to 9,
+
+val ORDER_BY = arrayOf(
+    Pair("Fecha (Menor a Mayor)", "0"),
+    Pair("Recientemente vistos por otros", "1"),
+    Pair("Fecha (Mayor a Menor)", "2"),
+    Pair("A-Z", "3"),
+    Pair("Más Visitado", "4"),
+    Pair("Z-A", "5"),
+    Pair("Mejor Calificación", "6"),
+    Pair("Peor Calificación", "7"),
+    Pair("Últimos Agregados en app", "8"),
+    Pair("Primeros Agregados en app", "9"),
 )
 
 // this is supposed to be information about the device, it is needed to make any api calls, this could probably be randomized
 // to clarify, this is generated from an emulator so it's not a real device
-val jsonString = "{\"mob3\":\"wj2fea7esGZ44ef\",\"mob\":\"ca-app-pub-8704883736496335~2640452466\",\"mob2\":\"ca-app-pub-8704883736496335/7509635763\",\"laltx\":\"ca-app-pub-7457591504273346/96408526573970637unleinunleba\",\"language\":\"es\",\"isDeb\":false,\"mobx\":\"ca-app-pub-7457591504273346~4714978974\",\"loadLvl\":1,\"code_name\":\"emu64xa\",\"vcode\":\"2.0.2.6\",\"platform\":\"13\",\"lalt\":\"ca-app-pub-8704883736496335/71217888083970637unleinunleba\",\"kind_device\":\"0\",\"manufacturer\":\"Google\",\"som\":\"android\",\"device_name\":\"Sdk_gphone64_x86_64\",\"player_id\":\"50dfea02-9f24-4116-902b-a726146da421\",\"mobf\":\"ca-app-pub-8704883736496335/2195575817\",\"ipv6\":\"FE80::6898:34FF:FE32:E13E\",\"root\":\"0\",\"eth\":\"02:00:00:00:00:00\",\"tel\":\"XXX-XXX-XXX\",\"UUID\":\"00000000-0001-a657-0001-aad30001b11d\",\"yek\":\"bqUgI4l339bqQbnz\",\"moned\":false,\"lvl_sign\":1,\"mobfx\":\"ca-app-pub-7457591504273346/1377852271\",\"device_id\":\"\",\"orp\":false,\"modelo\":\"sdk_gphone64_x86_64\",\"market_name\":\"Sdk_gphone64_x86_64\",\"token\":\"es\",\"isSign\":true,\"malt\":\"ca-app-pub-8704883736496335/7121788808\",\"maltx\":\"ca-app-pub-7457591504273346/9640852657\",\"api_lvl\":\"33\",\"package_version\":\"26\",\"kind_release\":0,\"ipLocal\":\"10.0.2.15\",\"mob2x\":\"ca-app-pub-7457591504273346/9640852657\",\"wlan\":\"02:00:00:00:00:00\",\"inmo\":\"a3c41c881e7f4bc982db32a889eb9e57\",\"inst\":\"\",\"package_name\":\"aplicaciones.paleta.legionanimefull\",\"androidID\":\"b70a95e4fda18f3c\"}"
+val JSON_STRING = "{\"mob3\":\"wj2fea7esGZ44ef\",\"mob\":\"ca-app-pub-8704883736496335~2640452466\",\"mob2\":\"ca-app-pub-8704883736496335/7509635763\",\"laltx\":\"ca-app-pub-7457591504273346/96408526573970637unleinunleba\",\"language\":\"es\",\"isDeb\":false,\"mobx\":\"ca-app-pub-7457591504273346~4714978974\",\"loadLvl\":1,\"code_name\":\"emu64xa\",\"vcode\":\"2.0.2.6\",\"platform\":\"13\",\"lalt\":\"ca-app-pub-8704883736496335/71217888083970637unleinunleba\",\"kind_device\":\"0\",\"manufacturer\":\"Google\",\"som\":\"android\",\"device_name\":\"Sdk_gphone64_x86_64\",\"player_id\":\"50dfea02-9f24-4116-902b-a726146da421\",\"mobf\":\"ca-app-pub-8704883736496335/2195575817\",\"ipv6\":\"FE80::6898:34FF:FE32:E13E\",\"root\":\"0\",\"eth\":\"02:00:00:00:00:00\",\"tel\":\"XXX-XXX-XXX\",\"UUID\":\"00000000-0001-a657-0001-aad30001b11d\",\"yek\":\"bqUgI4l339bqQbnz\",\"moned\":false,\"lvl_sign\":1,\"mobfx\":\"ca-app-pub-7457591504273346/1377852271\",\"device_id\":\"\",\"orp\":false,\"modelo\":\"sdk_gphone64_x86_64\",\"market_name\":\"Sdk_gphone64_x86_64\",\"token\":\"es\",\"isSign\":true,\"malt\":\"ca-app-pub-8704883736496335/7121788808\",\"maltx\":\"ca-app-pub-7457591504273346/9640852657\",\"api_lvl\":\"33\",\"package_version\":\"26\",\"kind_release\":0,\"ipLocal\":\"10.0.2.15\",\"mob2x\":\"ca-app-pub-7457591504273346/9640852657\",\"wlan\":\"02:00:00:00:00:00\",\"inmo\":\"a3c41c881e7f4bc982db32a889eb9e57\",\"inst\":\"\",\"package_name\":\"aplicaciones.paleta.legionanimefull\",\"androidID\":\"b70a95e4fda18f3c\"}"
 
 // this is supposed to be the api key but apparently it is not necessary, anyway I add it to avoid any errors
-val apyki = "pM7VYr2bBG2plWQp"
+val API_KEY = "pM7VYr2bBG2plWQp"
 
 // these are the urls used for the thumbnails, apparently it doesn't matter which one to use but it would be good to check the status of the request before assigning it to the anime
-val aip = arrayOf("https://la-space-4.sfo2.digitaloceanspaces.com/", "https://la-space-5.sfo2.digitaloceanspaces.com/", "https://la-space-4.sfo2.digitaloceanspaces.com/", "https://la-space-5.sfo2.digitaloceanspaces.com/", "https://la-space-4.sfo2.cdn.digitaloceanspaces.com/")
+val AIP = arrayOf("https://la-space-4.sfo2.digitaloceanspaces.com/", "https://la-space-5.sfo2.digitaloceanspaces.com/", "https://la-space-4.sfo2.digitaloceanspaces.com/", "https://la-space-5.sfo2.digitaloceanspaces.com/", "https://la-space-4.sfo2.cdn.digitaloceanspaces.com/")

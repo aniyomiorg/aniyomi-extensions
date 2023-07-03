@@ -15,7 +15,6 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -210,7 +209,7 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val hosterSelection = preferences.getStringSet(
             "hoster_selection",
-            setOf("blogger", "linkbox", "fembed", "okru", "yourupload", "gdriveplayer"),
+            setOf("blogger", "linkbox", "okru", "yourupload", "gdriveplayer"),
         )!!
 
         document.select("div.player2 > div.embed2 > div").forEach {
@@ -224,9 +223,6 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             when {
                 hosterSelection.contains("linkbox") && link.contains("linkbox.to") -> {
                     videoList.addAll(LinkBoxExtractor(client).videosFromUrl(link, it.text()))
-                }
-                hosterSelection.contains("fembed") && link.contains("fembed.com") -> {
-                    videoList.addAll(FembedExtractor(client).videosFromUrl(link))
                 }
                 hosterSelection.contains("okru") && link.contains("ok.ru") -> {
                     videoList.addAll(OkruExtractor(client).videosFromUrl(link))
@@ -313,9 +309,9 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val hostSelection = MultiSelectListPreference(screen.context).apply {
             key = "hoster_selection"
             title = "Enable/Disable Hosts"
-            entries = arrayOf("Blogger", "Linkbox", "Fembed", "Ok.ru", "YourUpload", "GdrivePlayer")
-            entryValues = arrayOf("blogger", "linkbox", "fembed", "okru", "yourupload", "gdriveplayer")
-            setDefaultValue(setOf("blogger", "linkbox", "fembed", "okru", "yourupload", "gdriveplayer"))
+            entries = arrayOf("Blogger", "Linkbox", "Ok.ru", "YourUpload", "GdrivePlayer")
+            entryValues = arrayOf("blogger", "linkbox", "okru", "yourupload", "gdriveplayer")
+            setDefaultValue(setOf("blogger", "linkbox", "okru", "yourupload", "gdriveplayer"))
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()

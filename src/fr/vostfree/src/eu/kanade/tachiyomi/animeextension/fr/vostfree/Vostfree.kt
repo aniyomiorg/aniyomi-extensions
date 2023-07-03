@@ -33,7 +33,7 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Vostfree"
 
-    override val baseUrl = "https://vostfree.cx"
+    override val baseUrl = "https://vostfree.ws"
 
     override val lang = "fr"
 

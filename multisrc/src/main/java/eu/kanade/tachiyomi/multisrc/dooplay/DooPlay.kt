@@ -54,17 +54,17 @@ abstract class DooPlay(
         const val PREFIX_SEARCH = "path:"
     }
 
-    protected open val PREF_QUALITY_DEFAULT = "720p"
-    protected open val PREF_QUALITY_KEY = "preferred_quality"
-    protected open val PREF_QUALITY_TITLE = when (lang) {
+    protected open val prefQualityDefault = "720p"
+    protected open val prefQualityKey = "preferred_quality"
+    protected open val prefQualityTitle = when (lang) {
         "pt-BR" -> "Qualidade preferida"
         else -> "Preferred quality"
     }
-    protected open val PREF_QUALITY_VALUES = arrayOf("480p", "720p")
-    protected open val PREF_QUALITY_ENTRIES = PREF_QUALITY_VALUES
+    protected open val prefQualityValues = arrayOf("480p", "720p")
+    protected open val prefQualityEntries = prefQualityValues
 
-    protected open val VIDEO_SORT_PREF_KEY = PREF_QUALITY_KEY
-    protected open val VIDEO_SORT_PREF_DEFAULT = PREF_QUALITY_DEFAULT
+    protected open val videoSortPrefKey = prefQualityKey
+    protected open val videoSortPrefDefault = prefQualityDefault
 
     // ============================== Popular ===============================
     override fun popularAnimeSelector() = "article.w_item_a > a"
@@ -132,12 +132,12 @@ abstract class DooPlay(
         return SEpisode.create().apply {
             val epNum = element.selectFirst("div.numerando")!!.text()
                 .trim()
-                .let {
-                    episodeNumberRegex.find(it)?.groupValues?.last() ?: "0"
-                }
+                .let(episodeNumberRegex::find)
+                ?.groupValues
+                ?.last() ?: "0"
             val href = element.selectFirst("a[href]")!!
             val episodeName = href.ownText()
-            episode_number = runCatching { epNum.toFloat() }.getOrDefault(0F)
+            episode_number = epNum.toFloatOrNull() ?: 0F
             date_upload = element.selectFirst(episodeDateSelector)
                 ?.text()
                 ?.toDate() ?: 0L
@@ -250,7 +250,7 @@ abstract class DooPlay(
     override fun animeDetailsParse(document: Document): SAnime {
         val doc = getRealAnimeDoc(document)
         val sheader = doc.selectFirst("div.sheader")!!
-        val anime = SAnime.create().apply {
+        return SAnime.create().apply {
             setUrlWithoutDomain(doc.location())
             sheader.selectFirst("div.poster > img")!!.let {
                 thumbnail_url = it.getImageUrl()
@@ -261,7 +261,7 @@ abstract class DooPlay(
 
             genre = sheader.select("div.data > div.sgeneros > a")
                 .eachText()
-                .joinToString(", ")
+                .joinToString()
 
             doc.selectFirst(additionalInfoSelector)?.let { info ->
                 description = buildString {
@@ -272,7 +272,6 @@ abstract class DooPlay(
                 }
             }
         }
-        return anime
     }
 
     // =============================== Latest ===============================
@@ -297,11 +296,11 @@ abstract class DooPlay(
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = PREF_QUALITY_KEY
-            title = PREF_QUALITY_TITLE
-            entries = PREF_QUALITY_ENTRIES
-            entryValues = PREF_QUALITY_VALUES
-            setDefaultValue(PREF_QUALITY_DEFAULT)
+            key = prefQualityKey
+            title = prefQualityTitle
+            entries = prefQualityEntries
+            entryValues = prefQualityValues
+            setDefaultValue(prefQualityDefault)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -406,7 +405,7 @@ abstract class DooPlay(
 
     open class UriPartFilter(
         displayName: String,
-        val vals: FilterItems,
+        private val vals: FilterItems,
     ) : AnimeFilter.Select<String>(
         displayName,
         vals.map { it.first }.toTypedArray(),
@@ -414,6 +413,7 @@ abstract class DooPlay(
         fun toUriPart() = vals[state].second
     }
 
+    @Suppress("UNUSED")
     private inline fun <reified R> AnimeFilterList.asUriPart(): String {
         return this.first { it is R }.let { it as UriPartFilter }.toUriPart()
     }
@@ -435,12 +435,12 @@ abstract class DooPlay(
      */
     protected open fun getRealAnimeDoc(document: Document): Document {
         val menu = document.selectFirst(animeMenuSelector)
-        if (menu != null) {
+        return if (menu != null) {
             val originalUrl = menu.parent()!!.attr("href")
             val req = client.newCall(GET(originalUrl, headers)).execute()
-            return req.asJsoup()
+            req.asJsoup()
         } else {
-            return document
+            document
         }
     }
 
@@ -471,18 +471,18 @@ abstract class DooPlay(
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(VIDEO_SORT_PREF_KEY, VIDEO_SORT_PREF_DEFAULT)!!
+        val quality = preferences.getString(videoSortPrefKey, videoSortPrefDefault)!!
         return sortedWith(
             compareBy { it.quality.lowercase().contains(quality.lowercase()) },
         ).reversed()
     }
 
-    protected open val DATE_FORMATTER by lazy {
+    protected open val dateFormatter by lazy {
         SimpleDateFormat("MMMM. dd, yyyy", Locale.ENGLISH)
     }
 
-    private fun String.toDate(): Long {
-        return runCatching { DATE_FORMATTER.parse(trim())?.time }
+    protected open fun String.toDate(): Long {
+        return runCatching { dateFormatter.parse(trim())?.time }
             .getOrNull() ?: 0L
     }
 }

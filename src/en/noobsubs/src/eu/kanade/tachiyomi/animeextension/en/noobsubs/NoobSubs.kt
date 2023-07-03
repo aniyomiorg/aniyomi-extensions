@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -50,17 +49,17 @@ class NoobSubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
         val badNames = arrayOf("../", "gifs/")
-        val animeList = mutableListOf<SAnime>()
 
-        document.select(popularAnimeSelector()).forEach {
+        val animeList = document.select(popularAnimeSelector()).mapNotNull {
             val a = it.selectFirst("a")!!
             val name = a.text()
-            if (name in badNames) return@forEach
+            if (name in badNames) return@mapNotNull null
 
-            val anime = SAnime.create()
-            anime.title = name.removeSuffix("/")
-            anime.setUrlWithoutDomain(a.attr("href"))
-            animeList.add(anime)
+            SAnime.create().apply {
+                title = name.removeSuffix("/")
+                setUrlWithoutDomain(a.attr("href"))
+                thumbnail_url = ""
+            }
         }
 
         return AnimesPage(animeList, false)
@@ -68,9 +67,9 @@ class NoobSubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "table tr:has(a)"
 
-    override fun popularAnimeNextPageSelector(): String? = null
-
     override fun popularAnimeFromElement(element: Element): SAnime = throw Exception("Not used")
+
+    override fun popularAnimeNextPageSelector(): String? = null
 
     // =============================== Latest ===============================
 
@@ -78,9 +77,9 @@ class NoobSubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesSelector(): String = throw Exception("Not used")
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
-
     override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
+
+    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
 
     // =============================== Search ===============================
 
@@ -108,17 +107,17 @@ class NoobSubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun searchAnimeParse(response: Response, query: String): AnimesPage {
         val document = response.asJsoup()
         val badNames = arrayOf("../", "gifs/")
-        val animeList = mutableListOf<SAnime>()
 
-        document.select(popularAnimeSelector()).forEach {
+        val animeList = document.select(popularAnimeSelector()).mapNotNull {
             val name = it.text()
-            if (name in badNames || !name.contains(query, ignoreCase = true)) return@forEach
-            if (it.selectFirst("span.size")?.text()?.contains(" KiB") == true) return@forEach
+            if (name in badNames || !name.contains(query, ignoreCase = true)) return@mapNotNull null
+            if (it.selectFirst("span.size")?.text()?.contains(" KiB") == true) return@mapNotNull null
 
-            val anime = SAnime.create()
-            anime.title = name.removeSuffix("/")
-            anime.setUrlWithoutDomain(it.selectFirst("a")!!.attr("href"))
-            animeList.add(anime)
+            SAnime.create().apply {
+                title = name.removeSuffix("/")
+                setUrlWithoutDomain(it.selectFirst("a")!!.attr("href"))
+                thumbnail_url = ""
+            }
         }
 
         return AnimesPage(animeList, false)
@@ -126,16 +125,13 @@ class NoobSubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = throw Exception("Not used")
 
-    override fun searchAnimeNextPageSelector(): String = throw Exception("Not used")
-
     override fun searchAnimeFromElement(element: Element): SAnime = throw Exception("Not used")
 
+    override fun searchAnimeNextPageSelector(): String = throw Exception("Not used")
 
     // =========================== Anime Details ============================
 
-    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
-        return Observable.just(anime)
-    }
+    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> = Observable.just(anime)
 
     override fun animeDetailsParse(document: Document): SAnime = throw Exception("Not used")
 
@@ -152,7 +148,7 @@ class NoobSubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val href = link.selectFirst("a")!!.attr("href")
                 val text = link.selectFirst("a")!!.text()
                 if ("""\bOST\b""".toRegex().matches(text) || text.contains("original sound", true)) return@forEach
-                if (preferences.getBoolean("ignore_extras", true) && text.equals("extras", ignoreCase = true)) return@forEach
+                if (preferences.getBoolean(PREF_IGNORE_EXTRA_KEY, PREF_IGNORE_EXTRA_DEFAULT) && text.equals("extras", ignoreCase = true)) return@forEach
 
                 if (href.isNotBlank() && href != "..") {
                     val fullUrl = baseUrl + href
@@ -160,7 +156,6 @@ class NoobSubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         traverseDirectory(fullUrl)
                     }
                     if (videoFormats.any { t -> fullUrl.endsWith(t) }) {
-                        val episode = SEpisode.create()
                         val paths = fullUrl.toHttpUrl().pathSegments
 
                         val seasonInfoRegex = """(\([\s\w-]+\))(?: ?\[[\s\w-]+\])?${'$'}""".toRegex()
@@ -183,13 +178,15 @@ class NoobSubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         }
                         val size = link.selectFirst("td.fb-s")?.text()
 
-                        episode.name = "${season}${videoFormats.fold(paths.last()) { acc, suffix -> acc.removeSuffix(suffix).trimInfo() }}${if (size == null) "" else " - $size"}"
-                        episode.url = fullUrl
-                        episode.scanlator = seasonInfo + extraInfo
-                        episode.episode_number = counter.toFloat()
+                        episodeList.add(
+                            SEpisode.create().apply {
+                                name = "${season}${videoFormats.fold(paths.last()) { acc, suffix -> acc.removeSuffix(suffix).trimInfo() }}"
+                                this.url = fullUrl
+                                scanlator = "${if (size == null) "" else "$size • "}$seasonInfo$extraInfo"
+                                episode_number = counter.toFloat()
+                            },
+                        )
                         counter++
-
-                        episodeList.add(episode)
                     }
                 }
             }
@@ -202,19 +199,18 @@ class NoobSubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> = throw Exception("Not used")
 
-    override fun episodeListSelector(): String = throw Exception("Not Used")
-
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not used")
+
+    override fun episodeListSelector(): String = throw Exception("Not Used")
 
     // ============================ Video Links =============================
 
-    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
-        return Observable.just(listOf(Video(episode.url, "Video", episode.url)))
-    }
-
-    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
+    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> =
+        Observable.just(listOf(Video(episode.url, "Video", episode.url)))
 
     override fun videoListSelector(): String = throw Exception("Not Used")
+
+    override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
 
     override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
 
@@ -233,15 +229,21 @@ class NoobSubs : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return newString
     }
 
+    companion object {
+        private const val PREF_IGNORE_EXTRA_KEY = "ignore_extras"
+        private const val PREF_IGNORE_EXTRA_DEFAULT = true
+    }
+
+    // ============================== Settings ==============================
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val ignoreExtras = SwitchPreferenceCompat(screen.context).apply {
-            key = "ignore_extras"
+        SwitchPreferenceCompat(screen.context).apply {
+            key = PREF_IGNORE_EXTRA_KEY
             title = "Ignore \"Extras\" folder"
-            setDefaultValue(true)
+            setDefaultValue(PREF_IGNORE_EXTRA_DEFAULT)
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putBoolean(key, newValue as Boolean).commit()
             }
-        }
-        screen.addPreference(ignoreExtras)
+        }.also(screen::addPreference)
     }
 }

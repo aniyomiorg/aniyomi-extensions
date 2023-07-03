@@ -11,6 +11,8 @@ on:
 jobs:
   lock:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
     steps:
       - uses: dessant/lock-threads@v4
         with:

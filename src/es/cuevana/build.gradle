@@ -5,16 +5,16 @@ ext {
     extName = 'Cuevana'
     pkgNameSuffix = 'es.cuevana'
     extClass = '.Cuevana'
-    extVersionCode = 12
+    extVersionCode = 16
     libVersion = '13'
 }
 
 dependencies {
     implementation(project(':lib-yourupload-extractor'))
-    implementation(project(':lib-fembed-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation project(path: ':lib-streamsb-extractor')
     implementation project(path: ':lib-okru-extractor')
+    implementation project(path: ':lib-voe-extractor')
 }
 
 apply from: "$rootDir/common.gradle"

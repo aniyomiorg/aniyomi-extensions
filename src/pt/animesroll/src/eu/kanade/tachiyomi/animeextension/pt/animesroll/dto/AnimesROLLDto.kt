@@ -15,8 +15,11 @@ data class DataPropDto<T>(val data: T)
 @Serializable
 data class LatestAnimeDto(
     @SerialName("data_releases")
-    val animes: List<AnimeDataDto>,
-)
+    val episodes: List<EpisodeAnimeDto>,
+) {
+    @Serializable
+    data class EpisodeAnimeDto(val episode: EpisodeDto)
+}
 
 @Serializable
 data class MovieInfoDto(
@@ -58,6 +61,7 @@ data class EpisodeListDto(
 data class EpisodeDto(
     @SerialName("n_episodio")
     val episodeNumber: String,
+    val anime: AnimeDataDto? = null,
 )
 
 @Serializable

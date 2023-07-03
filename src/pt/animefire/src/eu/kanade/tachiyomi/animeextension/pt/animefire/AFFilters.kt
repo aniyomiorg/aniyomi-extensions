@@ -16,15 +16,15 @@ object AFFilters {
     }
 
     private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return this.filterIsInstance<R>().joinToString("") {
+        return first { it is R }.let {
             (it as QueryPartFilter).toQueryPart()
         }
     }
 
-    class GenreFilter : QueryPartFilter("Gênero", AFFiltersData.genres)
-    class SeasonFilter : QueryPartFilter("Temporada", AFFiltersData.seasons)
+    class GenreFilter : QueryPartFilter("Gênero", AFFiltersData.GENRES)
+    class SeasonFilter : QueryPartFilter("Temporada", AFFiltersData.SEASONS)
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         AnimeFilter.Header(AFFiltersData.IGNORE_SEARCH_MSG),
         SeasonFilter(),
         AnimeFilter.Header(AFFiltersData.IGNORE_SEASON_MSG),
@@ -47,17 +47,17 @@ object AFFilters {
 
         const val IGNORE_SEARCH_MSG = "NOTA: Os filtros abaixos são IGNORADOS durante a pesquisa."
         const val IGNORE_SEASON_MSG = "NOTA: O filtro de gêneros IGNORA o de temporadas."
-        val every = Pair("Qualquer um", "")
+        val EVERY = Pair("Qualquer um", "")
 
-        val seasons = arrayOf(
-            every,
+        val SEASONS = arrayOf(
+            EVERY,
             Pair("Outono", "outono"),
             Pair("Inverno", "inverno"),
             Pair("Primavera", "primavera"),
             Pair("Verão", "verao"),
         )
 
-        val genres = arrayOf(
+        val GENRES = arrayOf(
             Pair("Ação", "acao"),
             Pair("Artes Marciais", "artes-marciais"),
             Pair("Aventura", "aventura"),

@@ -18,7 +18,6 @@ import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -37,7 +36,7 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Aniweek"
 
-    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://aniweek.com")!! }
+    override val baseUrl = "https://aniweek.com"
 
     override val lang = "ko"
 
@@ -51,22 +50,15 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    companion object {
-        private val DateFormatter by lazy {
-            SimpleDateFormat("yyyy-MM-dd", Locale.KOREAN)
-        }
-    }
-
     // ============================== Popular ===============================
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/bbs/board.php?bo_table=ing")
 
     override fun popularAnimeSelector(): String = "div.list-board > div.list-body > div.list-row"
 
-    override fun popularAnimeNextPageSelector(): String = "ul.pagination > li.active ~ li:not(.disabled):matches(.)"
-
     override fun popularAnimeFromElement(element: Element): SAnime {
         val thumbnailUrl = element.selectFirst("img")!!.attr("src")
+
         return SAnime.create().apply {
             setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
             thumbnail_url = if (thumbnailUrl.startsWith("..")) {
@@ -78,15 +70,17 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
+    override fun popularAnimeNextPageSelector(): String = "ul.pagination > li.active ~ li:not(.disabled):matches(.)"
+
     // =============================== Latest ===============================
 
     override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not Used")
 
     override fun latestUpdatesSelector(): String = throw Exception("Not Used")
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not Used")
-
     override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not Used")
+
+    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not Used")
 
     // =============================== Search ===============================
 
@@ -110,9 +104,9 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
 
-    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
-
     override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
+
+    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
     // ============================== FILTERS ===============================
 
@@ -183,6 +177,7 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val thumbnailUrl = document.selectFirst("div.view-info > div.image img")!!.attr("src")
+
         return SAnime.create().apply {
             title = document.selectFirst("div.view-title")!!.text()
             thumbnail_url = if (thumbnailUrl.startsWith("..")) {
@@ -201,14 +196,11 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeListSelector(): String = "div.serial-list > ul.list-body > li"
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        val episode = SEpisode.create()
-        episode.episode_number = element.selectFirst("div.wr-num")?.let { it.text()?.toFloatOrNull() ?: 1F } ?: 1F
-        episode.name = element.selectFirst("a")!!.text()
-        episode.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
-        episode.date_upload = element.selectFirst("div.wr-date")?.let { parseDate(it.text()) } ?: 0L
-
-        return episode
+    override fun episodeFromElement(element: Element): SEpisode = SEpisode.create().apply {
+        episode_number = element.selectFirst("div.wr-num")?.let { it.text()?.toFloatOrNull() ?: 1F } ?: 1F
+        name = element.selectFirst("a")!!.text()
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        date_upload = element.selectFirst("div.wr-date")?.let { parseDate(it.text()) } ?: 0L
     }
 
     // ============================ Video Links =============================
@@ -217,19 +209,28 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
 
-        val iframeUrl = document.selectFirst("iframe")!!.attr("src")
+        val iframeElement = document.selectFirst("iframe")
+        val iframeUrl = if (iframeElement == null) {
+            val script = document.selectFirst("script:containsData(movie_player)")?.data() ?: error("Failed to extract iframe")
+            val newDoc = client.newCall(
+                GET(baseUrl + script.substringAfter("url : \"..").substringBefore("\"")),
+            ).execute().asJsoup()
+            newDoc.selectFirst("iframe")?.attr("src") ?: error("Failed to extract iframe")
+        } else {
+            iframeElement.attr("src")
+        }
 
-        val iframeHeaders = Headers.headersOf(
-            "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-            "Host", iframeUrl.toHttpUrl().host,
-            "Referer", "$baseUrl/",
-            "Sec-Fetch-Dest", "iframe",
-            "Sec-Fetch-Mode", "navigate",
-            "Sec-Fetch-Site", "cross-site",
-            "Upgrade-Insecure-Requests", "1",
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
-        )
-        var iframeResponse = client.newCall(
+        val iframeHeaders = headers.newBuilder()
+            .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+            .add("Host", iframeUrl.toHttpUrl().host)
+            .add("Referer", "$baseUrl/")
+            .add("Sec-Fetch-Dest", "iframe")
+            .add("Sec-Fetch-Mode", "navigate")
+            .add("Sec-Fetch-Site", "cross-site")
+            .add("Upgrade-Insecure-Requests", "1")
+            .build()
+
+        val iframeResponse = client.newCall(
             GET(iframeUrl, headers = iframeHeaders),
         ).execute()
 
@@ -238,14 +239,12 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (scriptElement != null) {
             val string = scriptElement.data().substringAfter("var playerjsSubtitle = \"").substringBefore("\"")
             if (string.isNotEmpty()) {
-                try {
-                    subtitleList.add(
-                        Track(
-                            "https:" + string.substringAfter("https:"),
-                            string.substringBefore("https:"),
-                        ),
-                    )
-                } catch (a: Exception) { }
+                subtitleList.add(
+                    Track(
+                        "https:" + string.substringAfter("https:"),
+                        string.substringBefore("https:"),
+                    ),
+                )
             }
         }
 
@@ -264,15 +263,14 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             iframeUrl.substringAfter("data=")
         }
 
-        val postHeaders = Headers.headersOf(
-            "Accept", "*/*",
-            "Content-Type", "application/x-www-form-urlencoded; charset=UTF-8",
-            "Origin", "https://${iframeUrl.toHttpUrl().host}",
-            "Referer", iframeUrl,
-            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
-            "X-Requested-With", "XMLHttpRequest",
-            "Cookie", cookieValue.substringBefore(";"),
-        )
+        val postHeaders = headers.newBuilder()
+            .add("Accept", "*/*")
+            .add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+            .add("Origin", "https://${iframeUrl.toHttpUrl().host}")
+            .add("Referer", iframeUrl)
+            .add("X-Requested-With", "XMLHttpRequest")
+            .add("Cookie", cookieValue.substringBefore(";"))
+            .build()
 
         val postBody = "hash=$hash&r=${java.net.URLEncoder.encode("$baseUrl/", "utf-8")}"
             .toRequestBody("application/x-www-form-urlencoded".toMediaType())
@@ -284,31 +282,29 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val parsed = json.decodeFromString<IframeResponse>(postResponse.body.string())
 
         if (parsed.hls) {
-            val playlistHeaders = Headers.headersOf(
-                "Accept", "*/*",
-                "Cookie", cookieValue.substringBefore(";"),
-                "Host", iframeUrl.toHttpUrl().host,
-                "Referer", iframeUrl,
-                "Sec-Fetch-Dest", "empty",
-                "Sec-Fetch-Mode", "cors",
-                "Sec-Fetch-Site", "same-origin",
-                "TE", "trailers",
-                "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
-            )
+            val playlistHeaders = headers.newBuilder()
+                .add("Accept", "*/*")
+                .add("Cookie", cookieValue.substringBefore(";"))
+                .add("Host", iframeUrl.toHttpUrl().host)
+                .add("Referer", iframeUrl)
+                .add("Sec-Fetch-Dest", "empty")
+                .add("Sec-Fetch-Mode", "cors")
+                .add("Sec-Fetch-Site", "same-origin")
+                .add("TE", "trailers")
+                .build()
 
             val masterPlaylist = client.newCall(
                 GET(parsed.videoSource, headers = playlistHeaders),
             ).execute().body.string()
 
-            val videoHeaders = Headers.headersOf(
-                "Accept", "*/*",
-                "Origin", baseUrl,
-                "Referer", "$baseUrl/",
-                "Sec-Fetch-Dest", "empty",
-                "Sec-Fetch-Mode", "cors",
-                "Sec-Fetch-Site", "same-origin",
-                "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
-            )
+            val videoHeaders = headers.newBuilder()
+                .add("Accept", "*/*")
+                .add("Origin", baseUrl)
+                .add("Referer", "$baseUrl/")
+                .add("Sec-Fetch-Dest", "empty")
+                .add("Sec-Fetch-Mode", "cors")
+                .add("Sec-Fetch-Site", "same-origin")
+                .build()
 
             masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:")
                 .forEach {
@@ -316,13 +312,11 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         .substringBefore(",").substringBefore("\n") + "p"
                     val videoUrl = it.substringAfter("\n").substringBefore("\n")
 
-                    try {
-                        videoList.add(Video(videoUrl, quality, videoUrl, headers = videoHeaders, subtitleTracks = subtitleList))
-                    } catch (a: Exception) {
-                        videoList.add(Video(videoUrl, quality, videoUrl, headers = videoHeaders))
-                    }
+                    videoList.add(Video(videoUrl, quality, videoUrl, headers = videoHeaders, subtitleTracks = subtitleList))
                 }
         }
+
+        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
 
         return videoList.sort()
     }
@@ -336,7 +330,7 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================= Utilities ==============================
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "1080")!!
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 
         return this.sortedWith(
             compareBy(
@@ -353,32 +347,28 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     )
 
     private fun parseDate(dateStr: String): Long {
-        return runCatching { DateFormatter.parse(dateStr)?.time }
+        return runCatching { DATE_FORMATTER.parse(dateStr)?.time }
             .getOrNull() ?: 0L
     }
 
-    override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val domainPref = ListPreference(screen.context).apply {
-            key = "preferred_domain"
-            title = "Preferred domain (requires app restart)"
-            entries = arrayOf("aniweek.com")
-            entryValues = arrayOf("https://aniweek.com")
-            setDefaultValue("https://aniweek.com")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
+    companion object {
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("yyyy-MM-dd", Locale.KOREAN)
         }
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
+    }
+
+    // ============================== Settings ==============================
+
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
             title = "Preferred quality"
             entries = arrayOf("1080p", "720p", "480p", "360p")
             entryValues = arrayOf("1080", "720", "480", "360")
-            setDefaultValue("1080")
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -387,9 +377,6 @@ class Aniweek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-
-        screen.addPreference(domainPref)
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
     }
 }

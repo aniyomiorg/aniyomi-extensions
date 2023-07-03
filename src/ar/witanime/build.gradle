@@ -1,11 +1,13 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
 
 ext {
     extName = 'WIT ANIME'
     pkgNameSuffix = 'ar.witanime'
     extClass = '.WitAnime'
-    extVersionCode = 33
+    extVersionCode = 39
     libVersion = '13'
 }
 
@@ -13,7 +15,6 @@ dependencies {
     implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation(project(':lib-okru-extractor'))
-    implementation(project(':lib-fembed-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

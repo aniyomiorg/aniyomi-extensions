@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.animefenix.extractors.Mp4uploadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -12,7 +11,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
@@ -31,7 +30,7 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AnimeFenix"
 
-    override val baseUrl = "https://www.animefenix.com"
+    override val baseUrl = "https://www.animefenix.tv"
 
     override val lang = "es"
 
@@ -91,25 +90,11 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 client.newCall(GET(decodedUrl)).execute().asJsoup().selectFirst("script")!!
                     .data().substringAfter("src=\"").substringBefore("\"")
             } catch (e: Exception) { "" }
-            /*
-            in case this is too slow:
-            Animefenix redirect links are associated with an id, ex: id:9=Amazon ; id:2=Fembed ; etc. ( $baseUrl/redirect.php?player=$id )
-            can be obtained in an easy way by adding this line :
-            Log.i("bruh", "${server.substringAfter("?player=").substringBefore("&")} = $realUrl}")
-            and play any episode,
-            the "code" part in the url represents represents what comes after the main domain like /embed/ or /v/ or /e/
-            ex of full url: $baseUrl/redirect.php?player=2&amp;code=4mdmxtzmpe8768k&amp;
-            in this case the playerId represent fembed and the full url is : https://www.fembed.com/v/4mdmxtzmpe8768k
-             */
 
             when {
                 realUrl.contains("ok.ru") -> {
                     val okruVideos = OkruExtractor(client).videosFromUrl(realUrl)
                     videoList.addAll(okruVideos)
-                }
-                realUrl.contains("fembed") -> {
-                    val fbedVideos = FembedExtractor(client).videosFromUrl(realUrl)
-                    videoList.addAll(fbedVideos)
                 }
                 realUrl.contains("/stream/amz.php?") -> {
                     val video = amazonExtractor(baseUrl + realUrl.substringAfter(".."))
@@ -141,9 +126,8 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     )
                 }
                 realUrl.contains("mp4upload") -> {
-                    val headers = headers.newBuilder().set("referer", "https://mp4upload.com/").build()
-                    val video = Mp4uploadExtractor().getVideoFromUrl(realUrl, headers)
-                    videoList.add(video)
+                    val videos = Mp4uploadExtractor(client).videosFromUrl(realUrl, headers)
+                    videoList.addAll(videos)
                 }
             }
         }
@@ -349,13 +333,11 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title = "Preferred quality"
             entries = arrayOf(
                 "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
-                "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
                 "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
                 "Amazon", "AmazonES", "StreamTape", "Fireload", "Mp4upload",
             )
             entryValues = arrayOf(
                 "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
-                "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
                 "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
                 "Amazon", "AmazonES", "StreamTape", "Fireload", "Mp4upload",
             )

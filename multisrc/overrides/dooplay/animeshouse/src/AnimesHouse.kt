@@ -25,7 +25,9 @@ class AnimesHouse : DooPlay(
         .add("Accept-Language", "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7")
 
     // ============================== Popular ===============================
-    override fun popularAnimeSelector(): String = "div#featured-titles div.poster"
+    // This source does not have a "popular" animes page, so we're going to
+    // use latest updates page instead.
+    override fun fetchPopularAnime(page: Int) = fetchLatestUpdates(page)
 
     // =============================== Latest ===============================
     override fun latestUpdatesNextPageSelector(): String = "div.resppages > a > span.icon-chevron-right"
@@ -42,10 +44,10 @@ class AnimesHouse : DooPlay(
             .execute()
             .use { it.asJsoup().selectFirst("iframe")!!.attr("src") }
             .let {
-                if (it.startsWith("/redplay")) {
-                    RedplayBypasser(client, headers).fromUrl(baseUrl + it)
-                } else {
-                    it
+                when {
+                    it.startsWith("/redplay") ->
+                        RedplayBypasser(client, headers).fromUrl(baseUrl + it)
+                    else -> it
                 }
             }
     }
@@ -56,7 +58,7 @@ class AnimesHouse : DooPlay(
             runCatching {
                 val url = getPlayerUrl(player)
                 getPlayerVideos(url)
-            }.getOrDefault(emptyList<Video>())
+            }.getOrElse { emptyList<Video>() }
         }
     }
 
@@ -82,7 +84,7 @@ class AnimesHouse : DooPlay(
     }
 
     // ============================== Settings ==============================
-    override val PREF_QUALITY_ENTRIES = arrayOf(
+    override val prefQualityEntries = arrayOf(
         "SD - 240p",
         "SD - 360p",
         "SD - 480p",
@@ -90,7 +92,7 @@ class AnimesHouse : DooPlay(
         "FULLHD - 1080p",
     )
 
-    override val PREF_QUALITY_VALUES = arrayOf("240p", "360p", "480p", "720p", "1080p")
+    override val prefQualityValues = arrayOf("240p", "360p", "480p", "720p", "1080p")
 
     // ============================= Utilities ==============================
     override val animeMenuSelector = "div.pag_episodes div.item a[href] i.icon-bars"

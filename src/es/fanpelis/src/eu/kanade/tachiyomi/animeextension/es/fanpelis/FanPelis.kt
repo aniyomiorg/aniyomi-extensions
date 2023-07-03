@@ -12,13 +12,17 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -107,41 +111,25 @@ class FanPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 embedUrl.contains("sbfast") || embedUrl.contains("sbfull.com") || embedUrl.contains("javplaya.com") ||
                 embedUrl.contains("ssbstream.net") || embedUrl.contains("p1ayerjavseen.com") || embedUrl.contains("sbthe.com") ||
                 embedUrl.contains("vidmovie.xyz") || embedUrl.contains("sbspeed.com") || embedUrl.contains("streamsss.net") ||
-                embedUrl.contains("sblanh.com") || embedUrl.contains("sbbrisk.com")
+                embedUrl.contains("sblanh.com") || embedUrl.contains("sbbrisk.com") || embedUrl.contains("lvturbo.com")
             ) {
                 val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
                 videoList.addAll(videos)
             }
-            if (embedUrl.contains("fembed") || embedUrl.contains("anime789.com") || embedUrl.contains("24hd.club") ||
-                embedUrl.contains("fembad.org") || embedUrl.contains("vcdn.io") || embedUrl.contains("sharinglink.club") ||
-                embedUrl.contains("moviemaniac.org") || embedUrl.contains("votrefiles.club") || embedUrl.contains("femoload.xyz") ||
-                embedUrl.contains("albavido.xyz") || embedUrl.contains("feurl.com") || embedUrl.contains("dailyplanet.pw") ||
-                embedUrl.contains("ncdnstm.com") || embedUrl.contains("jplayer.net") || embedUrl.contains("xstreamcdn.com") ||
-                embedUrl.contains("fembed-hd.com") || embedUrl.contains("gcloud.live") || embedUrl.contains("vcdnplay.com") ||
-                embedUrl.contains("superplayxyz.club") || embedUrl.contains("vidohd.com") || embedUrl.contains("vidsource.me") ||
-                embedUrl.contains("cinegrabber.com") || embedUrl.contains("votrefile.xyz") || embedUrl.contains("zidiplay.com") ||
-                embedUrl.contains("ndrama.xyz") || embedUrl.contains("fcdn.stream") || embedUrl.contains("mediashore.org") ||
-                embedUrl.contains("suzihaza.com") || embedUrl.contains("there.to") || embedUrl.contains("femax20.com") ||
-                embedUrl.contains("javstream.top") || embedUrl.contains("viplayer.cc") || embedUrl.contains("sexhd.co") ||
-                embedUrl.contains("fembed.net") || embedUrl.contains("mrdhan.com") || embedUrl.contains("votrefilms.xyz") ||
-                embedUrl.contains("embedsito.com") || embedUrl.contains("dutrag.com") || embedUrl.contains("youvideos.ru") ||
-                embedUrl.contains("streamm4u.club") || embedUrl.contains("moviepl.xyz") || embedUrl.contains("asianclub.tv") ||
-                embedUrl.contains("vidcloud.fun") || embedUrl.contains("fplayer.info") || embedUrl.contains("diasfem.com") ||
-                embedUrl.contains("javpoll.com") || embedUrl.contains("reeoov.tube") || embedUrl.contains("suzihaza.com") ||
-                embedUrl.contains("ezsubz.com") || embedUrl.contains("vidsrc.xyz") || embedUrl.contains("diampokusy.com") ||
-                embedUrl.contains("diampokusy.com") || embedUrl.contains("i18n.pw") || embedUrl.contains("vanfem.com") ||
-                embedUrl.contains("fembed9hd.com") || embedUrl.contains("votrefilms.xyz") || embedUrl.contains("watchjavnow.xyz")
-            ) {
-                val videos = FembedExtractor(client).videosFromUrl(url, redirect = true)
-                videoList.addAll(videos)
-            }
-            if (url.lowercase().contains("streamtape")) {
+            if (embedUrl.contains("streamtape")) {
                 val video = StreamTapeExtractor(client).videoFromUrl(url, "Streamtape")
                 if (video != null) {
                     videoList.add(video)
                 }
             }
-            if (url.lowercase().contains("doodstream") || url.lowercase().contains("dood")) {
+            if (embedUrl.contains("streamlare")) {
+                try {
+                    StreamlareExtractor(client).videosFromUrl(url)?.let {
+                        videoList.add(it)
+                    }
+                } catch (_: Exception) {}
+            }
+            if (embedUrl.contains("doodstream") || embedUrl.contains("dood")) {
                 val video = try {
                     DoodExtractor(client).videoFromUrl(url, "DoodStream", true)
                 } catch (e: Exception) {
@@ -151,7 +139,7 @@ class FanPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     videoList.add(video)
                 }
             }
-            if (url.lowercase().contains("okru")) {
+            if (embedUrl.contains("okru") || embedUrl.contains("ok.ru")) {
                 val videos = OkruExtractor(client).videosFromUrl(url)
                 videoList.addAll(videos)
             }
@@ -258,13 +246,11 @@ class FanPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             key = "preferred_quality"
             title = "Preferred quality"
             entries = arrayOf(
-                "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
                 "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
                 "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
                 "YourUpload", "DoodStream", "StreamTape",
             ) // video servers without resolution
             entryValues = arrayOf(
-                "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
                 "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
                 "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
                 "DoodStream", "StreamTape",
@@ -280,5 +266,49 @@ class FanPelis : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         screen.addPreference(videoQualityPref)
+    }
+
+    class StreamlareExtractor(private val client: OkHttpClient) {
+        private val json: Json by injectLazy()
+        fun videosFromUrl(url: String): Video? {
+            val id = url.substringAfter("/e/").substringBefore("?poster")
+            val videoUrlResponse =
+                client.newCall(POST("https://slwatch.co/api/video/stream/get?id=$id")).execute()
+                    .asJsoup()
+            json.decodeFromString<JsonObject>(
+                videoUrlResponse.select("body").text(),
+            )["result"]?.jsonObject?.forEach { quality ->
+                if (quality.toString().contains("file=\"")) {
+                    val videoUrl = quality.toString().substringAfter("file=\"").substringBefore("\"").trim()
+                    val type = if (videoUrl.contains(".m3u8")) "HSL" else "MP4"
+                    val headers = Headers.Builder()
+                        .add("authority", videoUrl.substringBefore("/hls").substringBefore("/mp4"))
+                        .add("origin", "https://slwatch.co")
+                        .add("referer", "https://slwatch.co/e/" + url.substringAfter("/e/"))
+                        .add(
+                            "sec-ch-ua",
+                            "\"Not?A_Brand\";v=\"8\", \"Chromium\";v=\"108\", \"Google Chrome\";v=\"108\"",
+                        )
+                        .add("sec-ch-ua-mobile", "?0")
+                        .add("sec-ch-ua-platform", "\"Windows\"")
+                        .add("sec-fetch-dest", "empty")
+                        .add("sec-fetch-mode", "cors")
+                        .add("sec-fetch-site", "cross-site")
+                        .add(
+                            "user-agent",
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/),108.0.0.0 Safari/537.36",
+                        )
+                        .add("Accept-Encoding", "gzip, deflate, br")
+                        .add("accept", "*/*")
+                        .add(
+                            "accept-language",
+                            "es-MX,es-419;q=0.9,es;q=0.8,en;q=0.7,zh-TW;q=0.6,zh-CN;q=0.5,zh;q=0.4",
+                        )
+                        .build()
+                    return Video(videoUrl, "Streamlare:$type", videoUrl, headers = headers)
+                }
+            }
+            return null
+        }
     }
 }

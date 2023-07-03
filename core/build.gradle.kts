@@ -4,6 +4,7 @@ plugins {
 
 android {
     compileSdk = AndroidConfig.compileSdk
+    namespace = AndroidConfig.coreNamespace
 
     defaultConfig {
         minSdk = AndroidConfig.minSdk

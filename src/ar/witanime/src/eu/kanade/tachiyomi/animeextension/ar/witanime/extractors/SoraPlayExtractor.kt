@@ -7,23 +7,15 @@ import okhttp3.Headers
 import okhttp3.OkHttpClient
 
 class SoraPlayExtractor(private val client: OkHttpClient) {
+    fun videosFromUrl(url: String, headers: Headers): List<Video> {
+        val doc = client.newCall(GET(url)).execute().asJsoup()
+        val script = doc.selectFirst("script:containsData(sources)")!!
+        val data = script.data().substringAfter("sources: [").substringBefore("],")
 
-    fun videosFromUrl(url: String, newHeaders: Headers): List<Video> {
-        val document = client.newCall(GET(url, newHeaders)).execute().asJsoup()
-
-        // val videoList = mutableListOf<Video>()
-        /*val script = element.select("script")
-            .firstOrNull { it.data().contains("sources:") }*/
-
-        val data = document.data().substringAfter("sources: [").substringBefore("],")
-        val sources = data.split("\"file\":\"").drop(1)
-        val videoList = mutableListOf<Video>()
-        for (source in sources) {
+        return data.split("\"file\":\"").drop(1).map { source ->
             val src = source.substringBefore("\"")
-            val quality = "Soraplay: " + source.substringAfter("\"label\":\"").substringBefore("\"") // .substringAfter("format: '")
-            val video = Video(src, quality, src, headers = newHeaders)
-            videoList.add(video)
+            val quality = "Soraplay: " + source.substringAfter("\"label\":\"").substringBefore("\"")
+            Video(src, quality, src, headers = headers)
         }
-        return videoList
     }
 }

@@ -47,7 +47,7 @@ object JSONUtil {
                 index++
 
                 val unescaped = when (ch) {
-                    '\\', '/', '"', '\'' -> ch /*"*/
+                    '\\', '/', '"', '\'' -> ch // "
                     'b' -> '\b'
                     'f' -> '\u000C' // '\f' in java
                     'n' -> '\n'

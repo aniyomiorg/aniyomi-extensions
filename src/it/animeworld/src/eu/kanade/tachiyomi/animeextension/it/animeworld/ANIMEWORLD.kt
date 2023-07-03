@@ -4,6 +4,8 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.it.animeworld.extractors.FilemoonExtractor
+import eu.kanade.tachiyomi.animeextension.it.animeworld.extractors.StreamHideExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -16,7 +18,13 @@ import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -24,6 +32,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 
 class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -37,6 +46,8 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
+
+    private val json: Json by injectLazy()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -85,7 +96,10 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videosFromElement(document)
     }
 
-    override fun videoListSelector() = "center a[href*=dood], center a[href*=streamtape], center a[href*=animeworld.biz], center a[href*=streamingaw.online][id=alternativeDownloadLink]"
+    override fun videoListSelector() = "center a[href*=https://doo]," +
+        "center a[href*=streamtape]," +
+        "center a[href*=animeworld.biz]," +
+        "center a[href*=streamingaw.online][id=alternativeDownloadLink]"
 
     private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
@@ -93,42 +107,84 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         // displaying Videolist empty show the element's text
         val copyrightError = document.select("div.alert.alert-primary:contains(Copyright)")
         if (copyrightError.hasText()) throw Exception(copyrightError.text())
+
+        val serverList = mutableListOf<Pair<String, String>>()
+
         val elements = document.select(videoListSelector())
-        for (element in elements) {
-            val url = element.attr("href")
-            val location = element.ownerDocument()!!.location()
-            val videoHeaders = Headers.headersOf("Referer", location)
-            when {
-                url.contains("animeworld.biz") || url.contains("sbembed.com") || url.contains("sbembed1.com") || url.contains("sbplay.org") ||
-                    url.contains("sbvideo.net") || url.contains("streamsb.net") || url.contains("sbplay.one") ||
-                    url.contains("cloudemb.com") || url.contains("playersb.com") || url.contains("tubesb.com") ||
-                    url.contains("sbplay1.com") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
-                    url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
-                    url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
-                    url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com")
-                -> {
-                    val videos = StreamSBExtractor(client).videosFromUrl(url.replace("/d/", "/e/"), headers)
-                    videoList.addAll(videos)
-                }
-                url.contains("streamingaw") -> {
-                    videoList.add(
-                        Video(url, "AnimeWorld Server", url),
-                    )
-                }
-                url.contains("dood") -> {
-                    val video = DoodExtractor(client).videoFromUrl(url.replace("/d/", "/e/"))
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
-                url.contains("streamtape") -> {
-                    val video = StreamTapeExtractor(client).videoFromUrl(url.replace("/v/", "/e/"))
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
+        val epId = document.selectFirst("div#player[data-episode-id]")?.attr("data-episode-id")
+
+        val altServers = mutableListOf<Pair<String, String>>()
+        val altList = listOf("StreamHide", "FileMoon", "StreamSB")
+        document.select("div.servers > div.widget-title span.server-tab").forEach {
+            val name = it.text()
+            if (altList.any { t -> t.contains(name, true) }) {
+                altServers.add(Pair(name, it.attr("data-name")))
             }
         }
+
+        altServers.forEach { serverPair ->
+            val dataId = document.selectFirst("div.server[data-name=${serverPair.second}] li.episode a[data-episode-id=$epId]")?.attr("data-id")
+            dataId?.let {
+                val apiUrl = "$baseUrl/api/episode/info?id=$it&alt=0"
+                val apiHeaders = headers.newBuilder()
+                    .add("Accept", "application/json, text/javascript, */*; q=0.01")
+                    .add("Content-Type", "application/json")
+                    .add("Host", baseUrl.toHttpUrl().host)
+                    .add("Referer", document.location())
+                    .add("X-Requested-With", "XMLHttpRequest")
+                    .build()
+                val target = json.decodeFromString<ServerResponse>(
+                    client.newCall(GET(apiUrl, headers = apiHeaders)).execute().body.string(),
+                ).target
+                serverList.add(Pair(serverPair.first, target))
+            }
+        }
+
+        for (element in elements) {
+            val url = element.attr("href")
+            val name = element.text().substringAfter("ownload ").substringBefore(" ")
+            serverList.add(Pair(name, url))
+        }
+
+        videoList.addAll(
+            serverList.parallelMap { server ->
+                runCatching {
+                    val url = server.second
+                    when {
+                        url.contains("animeworld.biz") || url.contains("sbembed.com") || url.contains("sbembed1.com") || url.contains("sbplay.org") ||
+                            url.contains("sbvideo.net") || url.contains("streamsb.net") || url.contains("sbplay.one") ||
+                            url.contains("cloudemb.com") || url.contains("playersb.com") || url.contains("tubesb.com") ||
+                            url.contains("sbplay1.com") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
+                            url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
+                            url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
+                            url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com") ||
+                            url.contains("animeworld.biz")
+                        -> {
+                            StreamSBExtractor(client).videosFromUrl(url.replace("/d/", "/e/"), headers)
+                        }
+                        url.contains("streamingaw") -> {
+                            listOf(Video(url, "AnimeWorld Server", url))
+                        }
+                        url.contains("https://doo") -> {
+                            val video = DoodExtractor(client).videoFromUrl(url, redirect = true)
+                            video?.let { listOf(it) }
+                        }
+                        url.contains("streamtape") -> {
+                            val video = StreamTapeExtractor(client).videoFromUrl(url.replace("/v/", "/e/"))
+                            video?.let { listOf(it) }
+                        }
+                        url.contains("filemoon") -> {
+                            FilemoonExtractor(client, headers).videosFromUrl(url, prefix = "${server.first} - ")
+                        }
+                        server.first.contains("streamhide", true) -> {
+                            StreamHideExtractor(client).videosFromUrl(url, headers)
+                        }
+                        else -> null
+                    }
+                }.getOrNull()
+            }.filterNotNull().flatten(),
+        )
+
         return videoList
     }
 
@@ -137,21 +193,15 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", null)
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
+        val quality = preferences.getString("preferred_quality", "1080")!!
+        val server = preferences.getString("preferred_server", "Animeworld server")!!
+
+        return sortedWith(
+            compareBy(
+                { it.quality.lowercase().contains(server.lowercase()) },
+                { it.quality.lowercase().contains(quality.lowercase()) },
+            ),
+        ).reversed()
     }
 
     // search
@@ -474,8 +524,8 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p", "Doodstream", "StreamTape")
-            entryValues = arrayOf("1080", "720", "480", "360", "Doodstream", "StreamTape")
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
             setDefaultValue("1080")
             summary = "%s"
 
@@ -486,6 +536,35 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val serverPref = ListPreference(screen.context).apply {
+            key = "preferred_server"
+            title = "Preferred server"
+            entries = arrayOf("Animeworld server", "FileMoon", "StreamHide", "StreamSB", "Doodstream", "StreamTape")
+            entryValues = arrayOf("Animeworld server", "FileMoon", "StreamHide", "StreamSB", "Doodstream", "StreamTape")
+            setDefaultValue("Animeworld server")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
         screen.addPreference(videoQualityPref)
+        screen.addPreference(serverPref)
     }
+
+    // Utilities
+
+    @Serializable
+    data class ServerResponse(
+        val target: String,
+    )
+
+    // From Dopebox
+    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 }

@@ -45,16 +45,12 @@ class MeusAnimes : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeSelector(): String = "div.ultAnisContainerItem > a"
 
     // ============================== Episodes ==============================
-    override fun episodeFromElement(element: Element): SEpisode {
-        return SEpisode.create().apply {
-            element.attr("href")!!.also {
-                setUrlWithoutDomain(it)
-                episode_number = try {
-                    it.substringAfterLast("/").toFloat()
-                } catch (e: NumberFormatException) { 0F }
-            }
-            name = element.text()
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        element.attr("href")!!.also {
+            setUrlWithoutDomain(it)
+            episode_number = it.substringAfterLast("/").toFloatOrNull() ?: 0F
         }
+        name = element.text()
     }
 
     override fun episodeListSelector(): String = "div#aba_epi > a"
@@ -62,23 +58,21 @@ class MeusAnimes : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListParse(response: Response) = super.episodeListParse(response).reversed()
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        return SAnime.create().apply {
-            val infos = document.selectFirst("div.animeInfos")!!
-            val right = document.selectFirst("div.right")!!
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        val infos = document.selectFirst("div.animeInfos")!!
+        val right = document.selectFirst("div.right")!!
 
-            setUrlWithoutDomain(document.location())
-            title = right.selectFirst("h1")!!.text()
-            genre = right.select("ul.animeGen a").joinToString(", ") { it.text() }
+        setUrlWithoutDomain(document.location())
+        title = right.selectFirst("h1")!!.text()
+        genre = right.select("ul.animeGen a").eachText().joinToString()
 
-            thumbnail_url = infos.selectFirst("img")!!.attr("data-lazy-src")
-            description = right.selectFirst("div.animeSecondContainer > p:gt(0)")!!.text()
-        }
+        thumbnail_url = infos.selectFirst("img")!!.attr("data-lazy-src")
+        description = right.selectFirst("div.animeSecondContainer > p:gt(0)")!!.text()
     }
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val document: Document = response.asJsoup()
+        val document = response.asJsoup()
         val videoElement = document.selectFirst("div.playerBox > *")!!
         return if (videoElement.tagName() == "video") {
             MeusAnimesExtractor(client).videoListFromElement(videoElement)
@@ -92,19 +86,19 @@ class MeusAnimes : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     // =============================== Search ===============================
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
     override fun searchAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
     override fun searchAnimeSelector() = popularAnimeSelector()
     override fun searchAnimeNextPageSelector() = "div.paginacao > a.next"
-    override fun getFilterList(): AnimeFilterList = MAFilters.filterList
+    override fun getFilterList(): AnimeFilterList = MAFilters.FILTER_LIST
 
-    private fun searchAnimeRequest(page: Int, query: String, filters: MAFilters.FilterSearchParams): Request {
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val defaultUrl = "$baseUrl/lista-de-animes/$page"
+        val params = MAFilters.getSearchParameters(filters)
         return when {
-            filters.letter.isNotBlank() -> GET("$defaultUrl?letra=${filters.letter}")
-            filters.year.isNotBlank() -> GET("$defaultUrl?ano=${filters.year}")
-            filters.audio.isNotBlank() -> GET("$defaultUrl?audio=${filters.audio}")
-            filters.genre.isNotBlank() -> GET("$defaultUrl?genero=${filters.genre}")
+            params.letter.isNotBlank() -> GET("$defaultUrl?letra=${params.letter}")
+            params.year.isNotBlank() -> GET("$defaultUrl?ano=${params.year}")
+            params.audio.isNotBlank() -> GET("$defaultUrl?audio=${params.audio}")
+            params.genre.isNotBlank() -> GET("$defaultUrl?genero=${params.genre}")
             query.isNotBlank() -> GET("$defaultUrl?s=$query")
             else -> GET(defaultUrl)
         }
@@ -115,36 +109,26 @@ class MeusAnimes : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val id = query.removePrefix(PREFIX_SEARCH)
             client.newCall(GET("$baseUrl/animes/$id"))
                 .asObservableSuccess()
-                .map { response ->
-                    searchAnimeByIdParse(response, id)
-                }
+                .map(::searchAnimeByIdParse)
         } else {
-            val params = MAFilters.getSearchParameters(filters)
-            client.newCall(searchAnimeRequest(page, query, params))
-                .asObservableSuccess()
-                .map { response ->
-                    searchAnimeParse(response)
-                }
+            super.fetchSearchAnime(page, query, filters)
         }
     }
 
-    private fun searchAnimeByIdParse(response: Response, id: String): AnimesPage {
+    private fun searchAnimeByIdParse(response: Response): AnimesPage {
         val details = animeDetailsParse(response.asJsoup())
-        details.url = "/animes/$id"
         return AnimesPage(listOf(details), false)
     }
 
     // =============================== Latest ===============================
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        return SAnime.create().apply {
-            title = element.attr("title")
-            thumbnail_url = element.selectFirst("img")?.attr("data-lazy-src")
-            val epUrl = element.attr("href")
+    override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
+        title = element.attr("title")
+        thumbnail_url = element.selectFirst("img")?.attr("data-lazy-src")
+        val epUrl = element.attr("href")
 
-            if (epUrl.substringAfterLast("/").toIntOrNull() != null) {
-                setUrlWithoutDomain(epUrl.substringBeforeLast("/") + "-todos-os-episodios")
-            } else { setUrlWithoutDomain(epUrl) }
-        }
+        if (epUrl.substringAfterLast("/").toIntOrNull() != null) {
+            setUrlWithoutDomain(epUrl.substringBeforeLast("/") + "-todos-os-episodios")
+        } else { setUrlWithoutDomain(epUrl) }
     }
 
     override fun latestUpdatesNextPageSelector(): String? = null
@@ -156,9 +140,9 @@ class MeusAnimes : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
-            entries = PREF_QUALITY_VALUES
-            entryValues = PREF_QUALITY_VALUES
-            setDefaultValue(PREF_QUALITY_VALUES.last())
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -172,7 +156,7 @@ class MeusAnimes : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================= Utilities ==============================
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(PREF_QUALITY_KEY, "HD")!!
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
         return sortedWith(
             compareBy { it.quality.contains(quality) },
         ).reversed()
@@ -183,6 +167,7 @@ class MeusAnimes : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         private const val PREF_QUALITY_KEY = "pref_quality"
         private const val PREF_QUALITY_TITLE = "Qualidade preferida"
-        private val PREF_QUALITY_VALUES = arrayOf("SD", "HD")
+        private const val PREF_QUALITY_DEFAULT = "HD"
+        private val PREF_QUALITY_ENTRIES = arrayOf("SD", "HD")
     }
 }

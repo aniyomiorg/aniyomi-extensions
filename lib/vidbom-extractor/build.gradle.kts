@@ -9,14 +9,9 @@ android {
 
     defaultConfig {
         minSdk = AndroidConfig.minSdk
-        targetSdk = AndroidConfig.targetSdk
     }
 }
 
 dependencies {
-    compileOnly(libs.kotlin.stdlib)
-    compileOnly(libs.okhttp)
-    compileOnly(libs.aniyomi.lib)
-    compileOnly(libs.jsoup)
+    compileOnly(libs.bundles.common)
 }
-// BUMPS: 0

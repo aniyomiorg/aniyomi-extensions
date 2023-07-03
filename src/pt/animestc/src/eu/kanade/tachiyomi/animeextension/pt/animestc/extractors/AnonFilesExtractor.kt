@@ -6,13 +6,13 @@ import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
 
 class AnonFilesExtractor(private val client: OkHttpClient) {
-    private val PLAYER_NAME = "AnonFiles"
+    private val playerName = "AnonFiles"
 
     fun videoFromUrl(url: String, quality: String): Video? {
         val doc = client.newCall(GET(url)).execute().asJsoup()
         val downloadUrl = doc.selectFirst("a#download-url")?.attr("href")
         return downloadUrl?.let {
-            Video(it, "$PLAYER_NAME - $quality", it)
+            Video(it, "$playerName - $quality", it)
         }
     }
 }

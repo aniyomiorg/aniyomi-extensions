@@ -4,8 +4,8 @@ apply plugin: 'kotlin-android'
 ext {
     extName = 'edytjedhgmdhm'
     pkgNameSuffix = 'en.edytjedhgmdhm'
-    extClass = '.edytjedhgmdhm'
-    extVersionCode = 1
+    extClass = '.Edytjedhgmdhm'
+    extVersionCode = 2
     libVersion = '13'
 }
 

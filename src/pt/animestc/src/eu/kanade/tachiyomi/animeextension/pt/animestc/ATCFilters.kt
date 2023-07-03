@@ -21,30 +21,30 @@ object ATCFilters {
     private class TriStateVal(name: String) : AnimeFilter.TriState(name)
 
     private inline fun <reified R> AnimeFilterList.getFirst(): R {
-        return this.filterIsInstance<R>().first()
+        return first { it is R } as R
     }
 
     private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return this.getFirst<R>().let {
+        return getFirst<R>().let {
             (it as QueryPartFilter).toQueryPart()
         }
     }
 
-    class InitialLetterFilter : QueryPartFilter("Primeira letra", ATCFiltersData.initialLetter)
-    class StatusFilter : QueryPartFilter("Status", ATCFiltersData.status)
+    class InitialLetterFilter : QueryPartFilter("Primeira letra", ATCFiltersData.INITIAL_LETTER)
+    class StatusFilter : QueryPartFilter("Status", ATCFiltersData.STATUS)
 
     class SortFilter : AnimeFilter.Sort(
         "Ordenar",
-        ATCFiltersData.orders.map { it.first }.toTypedArray(),
+        ATCFiltersData.ORDERS.map { it.first }.toTypedArray(),
         Selection(0, true),
     )
 
     class GenresFilter : TriStateFilterList(
         "Gêneros",
-        ATCFiltersData.genres.map { TriStateVal(it) },
+        ATCFiltersData.GENRES.map(::TriStateVal),
     )
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         InitialLetterFilter(),
         StatusFilter(),
         SortFilter(),
@@ -71,7 +71,7 @@ object ATCFilters {
         )
 
         filters.getFirst<SortFilter>().state?.let {
-            val order = ATCFiltersData.orders[it.index].second
+            val order = ATCFiltersData.ORDERS[it.index].second
             searchParams.orderAscending = it.ascending
             searchParams.sortBy = order
         }
@@ -88,38 +88,33 @@ object ATCFilters {
         return searchParams
     }
 
-    private fun compareLower(first: String, second: String): Boolean {
-        return first.lowercase() in second.lowercase()
-    }
-
     private fun mustRemove(anime: AnimeDto, params: FilterSearchParams): Boolean {
         return when {
-            params.animeName != "" && !compareLower(params.animeName, anime.title) -> true
+            params.animeName != "" && !anime.title.contains(params.animeName, true) -> true
             params.initialLetter != "" && !anime.title.lowercase().startsWith(params.initialLetter) -> true
             params.blackListedGenres.size > 0 && params.blackListedGenres.any {
-                compareLower(it, anime.genres)
+                anime.genres.contains(it, true)
             } -> true
             params.includedGenres.size > 0 && params.includedGenres.any {
-                !compareLower(it, anime.genres)
+                !anime.genres.contains(it, true)
             } -> true
             params.status != "" && anime.status != SAnime.UNKNOWN && anime.status != params.status.toInt() -> true
             else -> false
         }
     }
 
-    private inline fun <T, R : Comparable<R>> List<out T>.sortedByIf(
-        condition: Boolean,
-        crossinline selector: (T) -> R?,
+    private inline fun <T, R : Comparable<R>> List<T>.sortedByIf(
+        isAscending: Boolean,
+        crossinline selector: (T) -> R,
     ): List<T> {
-        return if (condition) {
-            sortedBy(selector)
-        } else {
-            sortedByDescending(selector)
+        return when {
+            isAscending -> sortedBy(selector)
+            else -> sortedByDescending(selector)
         }
     }
 
     fun List<AnimeDto>.applyFilterParams(params: FilterSearchParams): List<AnimeDto> {
-        return this.filterNot { mustRemove(it, params) }.let { results ->
+        return filterNot { mustRemove(it, params) }.let { results ->
             when (params.sortBy) {
                 "A-Z" -> results.sortedByIf(params.orderAscending) { it.title.lowercase() }
                 "year" -> results.sortedByIf(params.orderAscending) { it.year ?: 0 }
@@ -130,22 +125,22 @@ object ATCFilters {
 
     private object ATCFiltersData {
 
-        val orders = arrayOf(
+        val ORDERS = arrayOf(
             Pair("Alfabeticamente", "A-Z"),
             Pair("Por ano", "year"),
         )
 
-        val status = arrayOf(
+        val STATUS = arrayOf(
             Pair("Selecione", ""),
             Pair("Completo", SAnime.COMPLETED.toString()),
             Pair("Em Lançamento", SAnime.ONGOING.toString()),
         )
 
-        val initialLetter = arrayOf(Pair("Selecione", "")) + ('A'..'Z').map {
+        val INITIAL_LETTER = arrayOf(Pair("Selecione", "")) + ('A'..'Z').map {
             Pair(it.toString(), it.toString().lowercase())
         }.toTypedArray()
 
-        val genres = arrayOf(
+        val GENRES = arrayOf(
             "Ação",
             "Action",
             "Adventure",

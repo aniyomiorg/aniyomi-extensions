@@ -34,7 +34,7 @@ class KissKH : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "KissKH"
 
-    override val baseUrl = "https://kisskh.me"
+    override val baseUrl = "https://kisskh.co"
 
     override val lang = "en"
 
@@ -111,7 +111,7 @@ class KissKH : ConfigurableAnimeSource, AnimeHttpSource() {
             episode.setUrlWithoutDomain("$baseUrl/api/DramaList/Episode/$id.png?err=false&ts=&time=")
             episodeList.add(episode)
         }
-        return episodeList.reversed()
+        return episodeList
     }
 
     // Video Extractor

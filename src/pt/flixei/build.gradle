@@ -1,0 +1,19 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
+}
+
+ext {
+    extName = 'Flixei'
+    pkgNameSuffix = 'pt.flixei'
+    extClass = '.Flixei'
+    extVersionCode = 1
+}
+
+dependencies {
+    implementation(project(":lib-streamtape-extractor"))
+    implementation(project(":lib-mixdrop-extractor"))
+}
+
+apply from: "$rootDir/common.gradle"

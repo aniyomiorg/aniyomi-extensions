@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.animeextension.en.uhdmovies
 import android.app.Application
 import android.content.SharedPreferences
 import android.util.Base64
+import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -21,13 +22,13 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -41,7 +42,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "UHD Movies"
 
-    override val baseUrl by lazy { preferences.getString("pref_domain", "https://uhdmovies.vip")!! }
+    override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DEFAULT_DOMAIN)!! }
 
     override val lang = "en"
 
@@ -65,7 +66,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         when (resp.code) {
                             301 -> {
                                 (resp.headers["location"]?.substringBeforeLast("/") ?: baseUrl).also {
-                                    preferences.edit().putString("pref_domain", it).apply()
+                                    preferences.edit().putString(PREF_DOMAIN_KEY, it).apply()
                                 }
                             }
                             else -> baseUrl
@@ -121,8 +122,8 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         return SAnime.create().apply {
             initialized = true
-            title = document.selectFirst(".entry-title")!!.text()
-                .replace("Download", "", true).trim()
+            title = document.selectFirst(".entry-title")?.text()
+                ?.replace("Download", "", true)?.trim() ?: "Movie"
             status = SAnime.COMPLETED
             description = document.selectFirst("pre:contains(plot)")?.text()
         }
@@ -135,7 +136,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodeList = mutableListOf<SEpisode>()
         val episodeElements = resp.select("p:has(a[href*=?id=],a[href*=r?key=]):has(a[class*=maxbutton])[style*=center]")
         val qualityRegex = "\\d{3,4}p".toRegex(RegexOption.IGNORE_CASE)
-        val firstText = episodeElements.first()!!.text()
+        val firstText = episodeElements.first()?.text() ?: ""
         if (firstText.contains("Episode", true) ||
             firstText.contains("Zip", true) ||
             firstText.contains("Pack", true)
@@ -151,9 +152,9 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         part = partRegex.find(prevP.text())?.groups?.get(1)?.value ?: ""
                     } ?: let {
                         val prevPre = row.previousElementSiblings().prev("pre,div.mks_separator")
-                        val preResult = seasonRegex.find(prevPre.first()!!.text())
+                        val preResult = seasonRegex.find(prevPre.first()?.text() ?: "")
                         preResult?.groups?.get(1)?.value?.also {
-                            part = partRegex.find(prevPre.first()!!.text())?.groups?.get(1)?.value ?: ""
+                            part = partRegex.find(prevPre.first()?.text() ?: "")?.groups?.get(1)?.value ?: ""
                         } ?: let {
                             val title = resp.select("h1.entry-title")
                             val titleResult = "[ .\\[(]?S(?:eason)?[ .]?(\\d{1,2})[ .\\])]?"
@@ -182,7 +183,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         ?.trim()?.toIntOrNull() ?: (index + 1)
                     Triple(
                         season + "_$episode" + "_$part",
-                        linkElement.attr("href") ?: return@mapIndexed null,
+                        linkElement?.attr("href") ?: return@mapIndexed null,
                         quality,
                     )
                 }.filterNotNull()
@@ -292,28 +293,46 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 // ============================= Utilities ==============================
 
     private fun extractVideo(epUrl: EpUrl): Pair<List<Video>, String> {
+        val noRedirectClient = client.newBuilder().followRedirects(false).build()
         val mediaResponse = if (epUrl.url.contains("?id=")) {
             val postLink = epUrl.url.substringBefore("?id=").substringAfter("/?")
-            val formData = FormBody.Builder().add("_wp_http_c", epUrl.url.substringAfter("?id=")).build()
-            val response = client.newCall(POST(postLink, body = formData)).execute().body.string()
-            val (longC, catC, _) = getCookiesDetail(response)
-            val cookieHeader = Headers.headersOf("Cookie", "$longC; $catC")
-            val parsedSoup = Jsoup.parse(response)
-            val link = parsedSoup.selectFirst("center > a")!!.attr("href")
+            val initailUrl = epUrl.url.substringAfter("/?http").let {
+                if (it.startsWith("http")) {
+                    it
+                } else {
+                    "http$it"
+                }
+            }
+            val initialResp = noRedirectClient.newCall(GET(initailUrl)).execute().asJsoup()
+            val (tokenUrl, tokenCookie) = if (initialResp.selectFirst("form#landing input[name=_wp_http_c]") != null) {
+                val formData = FormBody.Builder().add("_wp_http_c", epUrl.url.substringAfter("?id=")).build()
+                val response = client.newCall(POST(postLink, body = formData)).execute().body.string()
+                val (longC, catC, _) = getCookiesDetail(response)
+                val cookieHeader = Headers.headersOf("Cookie", "$longC; $catC")
+                val parsedSoup = Jsoup.parse(response)
+                val link = parsedSoup.selectFirst("center > a")!!.attr("href")
 
-            val response2 = client.newCall(GET(link, cookieHeader)).execute().body.string()
-            val (longC2, _, postC) = getCookiesDetail(response2)
-            val cookieHeader2 = Headers.headersOf("Cookie", "$catC; $longC2; $postC")
-            val parsedSoup2 = Jsoup.parse(response2)
-            val link2 = parsedSoup2.selectFirst("center > a")!!.attr("href")
+                val response2 = client.newCall(GET(link, cookieHeader)).execute().body.string()
+                val (longC2, _, postC) = getCookiesDetail(response2)
+                val cookieHeader2 = Headers.headersOf("Cookie", "$catC; $longC2; $postC")
+                val parsedSoup2 = Jsoup.parse(response2)
+                val link2 = parsedSoup2.selectFirst("center > a")!!.attr("href")
+                val tokenResp = client.newCall(GET(link2, cookieHeader2)).execute().body.string()
+                val goToken = tokenResp.substringAfter("?go=").substringBefore("\"")
+                val tokenUrl = "$postLink?go=$goToken"
+                val newLongC = "$goToken=" + longC2.substringAfter("=")
+                val tokenCookie = Headers.headersOf("Cookie", "$catC; rdst_post=; $newLongC")
+                Pair(tokenUrl, tokenCookie)
+            } else {
+                val secondResp = initialResp.getNextResp().asJsoup()
+                val thirdResp = secondResp.getNextResp().body.string()
+                val goToken = thirdResp.substringAfter("?go=").substringBefore("\"")
+                val tokenUrl = "$postLink?go=$goToken"
+                val cookie = secondResp.selectFirst("form#landing input[name=_wp_http2]")?.attr("value")
+                val tokenCookie = Headers.headersOf("Cookie", "$goToken=$cookie")
+                Pair(tokenUrl, tokenCookie)
+            }
 
-            val tokenResp = client.newCall(GET(link2, cookieHeader2)).execute().body.string()
-            val goToken = tokenResp.substringAfter("?go=").substringBefore("\"")
-            val tokenUrl = "$postLink?go=$goToken"
-            val newLongC = "$goToken=" + longC2.substringAfter("=")
-            val tokenCookie = Headers.headersOf("Cookie", "$catC; rdst_post=; $newLongC")
-
-            val noRedirectClient = client.newBuilder().followRedirects(false).build()
             val tokenResponse = noRedirectClient.newCall(GET(tokenUrl, tokenCookie)).execute().asJsoup()
             val redirectUrl = tokenResponse.select("meta[http-equiv=refresh]").attr("content")
                 .substringAfter("url=").substringBefore("\"")
@@ -333,6 +352,19 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             )
         }
         return Pair(videoList, mediaUrl)
+    }
+
+    private fun Document.getNextResp(): Response {
+        val form = this.selectFirst("form#landing") ?: throw Exception("Failed to find form")
+        val postLink = form.attr("action")
+        val formData = FormBody.Builder().let { fd ->
+            form.select("input").map {
+                fd.add(it.attr("name"), it.attr("value"))
+            }
+            fd.build()
+        }
+
+        return client.newCall(POST(postLink, body = formData)).execute()
     }
 
     private fun getCookiesDetail(page: String): Triple<String, String, String> {
@@ -395,7 +427,7 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val size = sizeMatch?.groups?.get(1)?.value?.let { " - $it" } ?: ""
         val gdResponse = client.newCall(GET(gdLink)).execute().asJsoup()
         val link = gdResponse.select("form#download-form")
-        return if (link.isNullOrEmpty()) {
+        return if (link.isEmpty()) {
             listOf()
         } else {
             val realLink = link.attr("action")
@@ -450,7 +482,9 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             entries = arrayOf("Ascending", "Descending")
             entryValues = arrayOf("asc", "dec")
             setDefaultValue("asc")
-            summary = "%s -  Sort order to be used after the videos are sorted by their quality."
+            summary = """%s
+                |Sort order to be used after the videos are sorted by their quality.
+            """.trimMargin()
 
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -459,9 +493,29 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+        val domainPref = EditTextPreference(screen.context).apply {
+            key = PREF_DOMAIN_KEY
+            title = "Currently used domain"
+            dialogTitle = title
+            setDefaultValue(PREF_DEFAULT_DOMAIN)
+            val tempText = preferences.getString(key, PREF_DEFAULT_DOMAIN)
+            summary = """$tempText
+                |For any change to be applied App restart is required.
+            """.trimMargin()
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val newValueString = newValue as String
+                preferences.edit().putString(key, newValueString.trim()).commit().also {
+                    summary = """$newValueString
+                        |For any change to be applied App restart is required.
+                    """.trimMargin()
+                }
+            }
+        }
 
         screen.addPreference(videoQualityPref)
         screen.addPreference(sizeSortPref)
+        screen.addPreference(domainPref)
     }
 
     @Serializable
@@ -484,4 +538,9 @@ class UHDMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         runBlocking {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
+
+    companion object {
+        const val PREF_DOMAIN_KEY = "pref_domain_new"
+        const val PREF_DEFAULT_DOMAIN = "https://uhdmovies.life"
+    }
 }

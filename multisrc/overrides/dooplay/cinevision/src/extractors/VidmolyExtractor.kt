@@ -7,12 +7,12 @@ import okhttp3.OkHttpClient
 
 class VidmolyExtractor(private val client: OkHttpClient) {
 
-    private val REGEX_PLAYLIST = Regex("file:\"(\\S+?)\"")
+    private val regexPlaylist = Regex("file:\"(\\S+?)\"")
 
     fun getVideoList(url: String, lang: String): List<Video> {
         val body = client.newCall(GET(url)).execute()
             .use { it.body.string() }
-        val playlistUrl = REGEX_PLAYLIST.find(body)!!.groupValues.get(1)
+        val playlistUrl = regexPlaylist.find(body)!!.groupValues.get(1)
         val headers = Headers.headersOf("Referer", "https://vidmoly.to")
         val playlistData = client.newCall(GET(playlistUrl, headers)).execute()
             .use { it.body.string() }

@@ -29,12 +29,10 @@ class AnimesAria : ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     // ============================== Popular ===============================
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        return SAnime.create().apply {
-            setUrlWithoutDomain(element.attr("href"))
-            title = element.attr("title")
-            thumbnail_url = element.selectFirst("img")!!.attr("src")
-        }
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        title = element.attr("title")
+        thumbnail_url = element.selectFirst("img")!!.attr("src")
     }
 
     override fun popularAnimeNextPageSelector() = latestUpdatesNextPageSelector()
@@ -46,46 +44,43 @@ class AnimesAria : ParsedAnimeHttpSource() {
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response) = super.episodeListParse(response).reversed()
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        return SEpisode.create().apply {
-            element.parent()!!.selectFirst("a > b")!!.ownText().let {
-                name = it
-                episode_number = it.substringAfter(" ").toFloat()
-            }
-            setUrlWithoutDomain(element.attr("href"))
-            scanlator = element.text().substringAfter(" ") // sub/dub
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        element.parent()!!.selectFirst("a > b")!!.ownText().let {
+            name = it
+            episode_number = it.substringAfter(" ").toFloatOrNull() ?: 0F
         }
+        setUrlWithoutDomain(element.attr("href"))
+        scanlator = element.text().substringAfter(" ") // sub/dub
     }
 
     override fun episodeListSelector() = "td div.clear > a.btn-xs"
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        return SAnime.create().apply {
-            val row = document.selectFirst("div.anime_background_w div.row")!!
-            title = row.selectFirst("h1 > span")!!.text()
-            status = row.selectFirst("div.clear span.btn")?.text().toStatus()
-            thumbnail_url = document.selectFirst("link[as=image]")!!.attr("href")
-            genre = row.select("div.clear a.btn").eachText().joinToString()
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        setUrlWithoutDomain(document.location())
+        val row = document.selectFirst("div.anime_background_w div.row")!!
+        title = row.selectFirst("h1 > span")!!.text()
+        status = row.selectFirst("div.clear span.btn")?.text().toStatus()
+        thumbnail_url = document.selectFirst("link[as=image]")!!.attr("href")
+        genre = row.select("div.clear a.btn").eachText().joinToString()
 
-            description = buildString {
-                document.selectFirst("li.active > small")!!
-                    .ownText()
-                    .substringAfter(": ")
-                    .let(::append)
+        description = buildString {
+            document.selectFirst("li.active > small")!!
+                .ownText()
+                .substringAfter(": ")
+                .let(::append)
 
-                append("\n\n")
+            append("\n\n")
 
-                row.selectFirst("h1 > small")?.text()?.let {
-                    append("Títulos Alternativos: $it\n")
-                }
+            row.selectFirst("h1 > small")?.text()?.let {
+                append("Títulos Alternativos: $it\n")
+            }
 
-                // Additional info
-                row.select("div.pull-right > a").forEach {
-                    val title = it.selectFirst("small")!!.text()
-                    val value = it.selectFirst("span")!!.text()
-                    append("$title: $value\n")
-                }
+            // Additional info
+            row.select("div.pull-right > a").forEach {
+                val title = it.selectFirst("small")!!.text()
+                val value = it.selectFirst("span")!!.text()
+                append("$title: $value\n")
             }
         }
     }
@@ -129,7 +124,7 @@ class AnimesAria : ParsedAnimeHttpSource() {
 
     override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
-    override fun getFilterList(): AnimeFilterList = AnimesAriaFilters.filterList
+    override fun getFilterList(): AnimeFilterList = AnimesAriaFilters.FILTER_LIST
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val params = AnimesAriaFilters.getSearchParameters(filters)
@@ -154,28 +149,23 @@ class AnimesAria : ParsedAnimeHttpSource() {
             val id = query.removePrefix(PREFIX_SEARCH)
             client.newCall(GET("$baseUrl/anime/$id"))
                 .asObservableSuccess()
-                .map { response ->
-                    searchAnimeByIdParse(response, id)
-                }
+                .map(::searchAnimeByIdParse)
         } else {
             super.fetchSearchAnime(page, query, filters)
         }
     }
 
-    private fun searchAnimeByIdParse(response: Response, id: String): AnimesPage {
+    private fun searchAnimeByIdParse(response: Response): AnimesPage {
         val details = animeDetailsParse(response.asJsoup())
-        details.url = "/anime/$id"
         return AnimesPage(listOf(details), false)
     }
 
     // =============================== Latest ===============================
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        return SAnime.create().apply {
-            thumbnail_url = element.selectFirst("img")!!.attr("src")
-            val ahref = element.selectFirst("a")!!
-            title = ahref.attr("title")
-            setUrlWithoutDomain(ahref.attr("href").substringBefore("/episodio/"))
-        }
+    override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
+        thumbnail_url = element.selectFirst("img")!!.attr("src")
+        val ahref = element.selectFirst("a")!!
+        title = ahref.attr("title")
+        setUrlWithoutDomain(ahref.attr("href").substringBefore("/episodio/"))
     }
 
     override fun latestUpdatesNextPageSelector() = "a:containsOwn(Próximo):not(.disabled)"

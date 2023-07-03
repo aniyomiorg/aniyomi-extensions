@@ -4,7 +4,6 @@ import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -12,47 +11,11 @@ import okhttp3.OkHttpClient
 import uy.kohesive.injekt.injectLazy
 import java.util.Locale
 
-@Serializable
-data class VideoLink(
-    val links: List<Link>,
-) {
-    @Serializable
-    data class Link(
-        val link: String,
-        val hls: Boolean? = null,
-        val mp4: Boolean? = null,
-        val crIframe: Boolean? = null,
-        val resolutionStr: String,
-        val subtitles: List<Subtitles>? = null,
-        val portData: Stream? = null,
-    ) {
-        @Serializable
-        data class Subtitles(
-            val lang: String,
-            val src: String,
-            val label: String? = null,
-        )
-
-        @Serializable
-        data class Stream(
-            val streams: List<StreamObject>,
-        ) {
-            @Serializable
-            data class StreamObject(
-                val format: String,
-                val url: String,
-                val audio_lang: String,
-                val hardsub_lang: String,
-            )
-        }
-    }
-}
-
-class AllAnimeExtractor(private val client: OkHttpClient) {
+class AllAnimeExtractor(private val client: OkHttpClient, private val headers: Headers, private val siteUrl: String) {
 
     private val json: Json by injectLazy()
 
-    private fun bytesIntoHumanReadable(bytes: Long): String? {
+    private fun bytesIntoHumanReadable(bytes: Long): String {
         val kilobyte: Long = 1000
         val megabyte = kilobyte * 1000
         val gigabyte = megabyte * 1000
@@ -75,8 +38,12 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
     fun videoFromUrl(url: String, name: String): List<Video> {
         val videoList = mutableListOf<Video>()
 
+        val endPoint = json.decodeFromString<VersionResponse>(
+            client.newCall(GET("$siteUrl/getVersion")).execute().body.string(),
+        ).episodeIframeHead
+
         val resp = client.newCall(
-            GET("https://blog.allanime.pro" + url.replace("/clock?", "/clock.json?")),
+            GET(endPoint + url.replace("/clock?", "/clock.json?")),
         ).execute()
 
         if (resp.code != 200) {
@@ -89,42 +56,40 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
         for (link in linkJson.links) {
             val subtitles = mutableListOf<Track>()
             if (!link.subtitles.isNullOrEmpty()) {
-                try {
-                    for (sub in link.subtitles) {
+                subtitles.addAll(
+                    link.subtitles.map { sub ->
                         val label = if (sub.label != null) {
                             " - ${sub.label}"
                         } else {
                             ""
                         }
-                        subtitles.add(Track(sub.src, Locale(sub.lang).displayLanguage + label))
-                    }
-                } catch (_: Error) {}
+                        Track(sub.src, Locale(sub.lang).displayLanguage + label)
+                    },
+                )
             }
 
             if (link.mp4 == true) {
-                try {
-                    videoList.add(
-                        Video(
-                            link.link,
-                            "Original ($name - ${link.resolutionStr})",
-                            link.link,
-                            subtitleTracks = subtitles,
-                        ),
-                    )
-                } catch (_: Error) {
-                    videoList.add(
-                        Video(
-                            link.link,
-                            "Original ($name - ${link.resolutionStr})",
-                            link.link,
-                        ),
-                    )
-                }
+                videoList.add(
+                    Video(
+                        link.link,
+                        "Original ($name - ${link.resolutionStr})",
+                        link.link,
+                        subtitleTracks = subtitles,
+                    ),
+                )
             } else if (link.hls == true) {
                 val newClient = OkHttpClient()
+
+                val masterHeaders = headers.newBuilder()
+                    .add("Accept", "*/*")
+                    .add("Host", link.link.toHttpUrl().host)
+                    .add("Origin", endPoint)
+                    .add("Referer", "$endPoint/")
+                    .build()
+
                 val resp = runCatching {
                     newClient.newCall(
-                        GET(link.link, headers = Headers.headersOf("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")),
+                        GET(link.link, headers = masterHeaders),
                     ).execute()
                 }.getOrNull()
 
@@ -143,24 +108,10 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
                     }
 
                     if (!masterPlaylist.contains("#EXT-X-STREAM-INF:")) {
-                        val headers = Headers.headersOf(
-                            "Accept",
-                            "*/*",
-                            "Host",
-                            link.link.toHttpUrl().host,
-                            "Origin",
-                            "https://allanimenews.com",
-                            "User-Agent",
-                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0",
-                        )
-                        return try {
-                            if (audioList.isEmpty()) {
-                                listOf(Video(link.link, "$name - ${link.resolutionStr}", link.link, subtitleTracks = subtitles, headers = headers))
-                            } else {
-                                listOf(Video(link.link, "$name - ${link.resolutionStr}", link.link, subtitleTracks = subtitles, audioTracks = audioList, headers = headers))
-                            }
-                        } catch (_: Error) {
-                            listOf(Video(link.link, "$name - ${link.resolutionStr}", link.link, headers = headers))
+                        return if (audioList.isEmpty()) {
+                            listOf(Video(link.link, "$name - ${link.resolutionStr}", link.link, subtitleTracks = subtitles, headers = masterHeaders))
+                        } else {
+                            listOf(Video(link.link, "$name - ${link.resolutionStr}", link.link, subtitleTracks = subtitles, audioTracks = audioList, headers = masterHeaders))
                         }
                     }
 
@@ -179,38 +130,31 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
                                 videoUrl = resp.request.url.toString().substringBeforeLast("/") + "/$videoUrl"
                             }
 
-                            try {
-                                if (audioList.isEmpty()) {
-                                    videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subtitles))
-                                } else {
-                                    videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subtitles, audioTracks = audioList))
-                                }
-                            } catch (_: Error) {
-                                videoList.add(Video(videoUrl, quality, videoUrl))
+                            val plHeaders = headers.newBuilder()
+                                .add("Accept", "*/*")
+                                .add("Host", videoUrl.toHttpUrl().host)
+                                .add("Origin", endPoint)
+                                .add("Referer", "$endPoint/")
+                                .build()
+
+                            if (audioList.isEmpty()) {
+                                videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subtitles, headers = plHeaders))
+                            } else {
+                                videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subtitles, audioTracks = audioList, headers = plHeaders))
                             }
                         }
                 }
             } else if (link.crIframe == true) {
                 link.portData!!.streams.forEach {
                     if (it.format == "adaptive_dash") {
-                        try {
-                            videoList.add(
-                                Video(
-                                    it.url,
-                                    "Original (AC - Dash${if (it.hardsub_lang.isEmpty()) "" else " - Hardsub: ${it.hardsub_lang}"})",
-                                    it.url,
-                                    subtitleTracks = subtitles,
-                                ),
-                            )
-                        } catch (a: Error) {
-                            videoList.add(
-                                Video(
-                                    it.url,
-                                    "Original (AC - Dash${if (it.hardsub_lang.isEmpty()) "" else " - Hardsub: ${it.hardsub_lang}"})",
-                                    it.url,
-                                ),
-                            )
-                        }
+                        videoList.add(
+                            Video(
+                                it.url,
+                                "Original (AC - Dash${if (it.hardsub_lang.isEmpty()) "" else " - Hardsub: ${it.hardsub_lang}"})",
+                                it.url,
+                                subtitleTracks = subtitles,
+                            ),
+                        )
                     } else if (it.format == "adaptive_hls") {
                         val resp = runCatching {
                             client.newCall(
@@ -225,18 +169,84 @@ class AllAnimeExtractor(private val client: OkHttpClient) {
                                     val quality = t.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p (AC - HLS${if (it.hardsub_lang.isEmpty()) "" else " - Hardsub: ${it.hardsub_lang}"})"
                                     var videoUrl = t.substringAfter("\n").substringBefore("\n")
 
-                                    try {
-                                        videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subtitles))
-                                    } catch (_: Error) {
-                                        videoList.add(Video(videoUrl, quality, videoUrl))
-                                    }
+                                    videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subtitles))
                                 }
                         }
                     }
+                }
+            } else if (link.dash == true) {
+                val audioList = link.rawUrls?.audios?.map {
+                    Track(it.url, bytesIntoHumanReadable(it.bandwidth))
+                }
+                val videos = link.rawUrls?.vids?.map {
+                    if (audioList == null) {
+                        Video(it.url, "$name - ${it.height} ${bytesIntoHumanReadable(it.bandwidth)}", it.url, subtitleTracks = subtitles)
+                    } else {
+                        Video(it.url, "$name - ${it.height} ${bytesIntoHumanReadable(it.bandwidth)}", it.url, audioTracks = audioList, subtitleTracks = subtitles)
+                    }
+                }
+                if (videos != null) {
+                    videoList.addAll(videos)
                 }
             } else {}
         }
 
         return videoList
+    }
+
+    @Serializable
+    data class VersionResponse(
+        val episodeIframeHead: String,
+    )
+
+    @Serializable
+    data class VideoLink(
+        val links: List<Link>,
+    ) {
+        @Serializable
+        data class Link(
+            val link: String,
+            val hls: Boolean? = null,
+            val mp4: Boolean? = null,
+            val dash: Boolean? = null,
+            val crIframe: Boolean? = null,
+            val resolutionStr: String,
+            val subtitles: List<Subtitles>? = null,
+            val rawUrls: RawUrl? = null,
+            val portData: Stream? = null,
+        ) {
+            @Serializable
+            data class Subtitles(
+                val lang: String,
+                val src: String,
+                val label: String? = null,
+            )
+
+            @Serializable
+            data class Stream(
+                val streams: List<StreamObject>,
+            ) {
+                @Serializable
+                data class StreamObject(
+                    val format: String,
+                    val url: String,
+                    val audio_lang: String,
+                    val hardsub_lang: String,
+                )
+            }
+
+            @Serializable
+            data class RawUrl(
+                val vids: List<DashStreamObject>? = null,
+                val audios: List<DashStreamObject>? = null,
+            ) {
+                @Serializable
+                data class DashStreamObject(
+                    val bandwidth: Long,
+                    val height: Int,
+                    val url: String,
+                )
+            }
+        }
     }
 }

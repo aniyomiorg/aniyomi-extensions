@@ -1,0 +1,14 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
+}
+
+ext {
+    extName = 'AniDong'
+    pkgNameSuffix = 'pt.anidong'
+    extClass = '.AniDong'
+    extVersionCode = 1
+}
+
+apply from: "$rootDir/common.gradle"

@@ -2,14 +2,18 @@ package eu.kanade.tachiyomi.animeextension.es.pelisplushd
 
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.FilemoonExtractor
+import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamlareExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
+import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
+import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
@@ -106,36 +110,81 @@ class Pelisplusto(override val name: String, override val baseUrl: String) : Pel
         val videoList = mutableListOf<Video>()
         document.select(".bg-tabs li").map { it ->
             val link = it.attr("data-server")
-                .replace("https://owodeuwu.xyz", "https://fembed.com")
                 .replace("https://sblanh.com", "https://watchsb.com")
                 .replace(Regex("([a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+)=https:\\/\\/ww3.pelisplus.to.*"), "")
 
-            if (link.contains("https://dood.")) {
-                try {
-                    DoodExtractor(client).videoFromUrl(link, "DoodStream", false)!!.let { video ->
-                        videoList.add(video)
-                    }
-                } catch (_: Exception) {}
+            loadExtractor(link).let { videos ->
+                videoList.addAll(videos)
             }
-            if (link.contains("fembed")) {
-                try {
-                    FembedExtractor(client).videosFromUrl(link).map { video ->
-                        videoList.add(video)
-                    }
-                } catch (_: Exception) {}
+        }
+        return videoList
+    }
+
+    private fun loadExtractor(url: String, prefix: String = ""): List<Video> {
+        val videoList = mutableListOf<Video>()
+        val embedUrl = url.lowercase()
+        if (embedUrl.contains("tomatomatela")) {
+            try {
+                val mainUrl = url.substringBefore("/embed.html#").substringAfter("https://")
+                val headers = headers.newBuilder()
+                    .set("authority", mainUrl)
+                    .set("accept", "application/json, text/javascript, */*; q=0.01")
+                    .set("accept-language", "es-MX,es-419;q=0.9,es;q=0.8,en;q=0.7")
+                    .set("sec-ch-ua", "\"Chromium\";v=\"106\", \"Google Chrome\";v=\"106\", \"Not;A=Brand\";v=\"99\"")
+                    .set("sec-ch-ua-mobile", "?0")
+                    .set("sec-ch-ua-platform", "Windows")
+                    .set("sec-fetch-dest", "empty")
+                    .set("sec-fetch-mode", "cors")
+                    .set("sec-fetch-site", "same-origin")
+                    .set("x-requested-with", "XMLHttpRequest")
+                    .build()
+                val token = url.substringAfter("/embed.html#")
+                val urlRequest = "https://$mainUrl/details.php?v=$token"
+                val response = client.newCall(GET(urlRequest, headers = headers)).execute().asJsoup()
+                val bodyText = response.select("body").text()
+                val json = json.decodeFromString<JsonObject>(bodyText)
+                val status = json["status"]!!.jsonPrimitive!!.content
+                val file = json["file"]!!.jsonPrimitive!!.content
+                if (status == "200") { videoList.add(Video(file, "$prefix Tomatomatela", file, headers = null)) }
+            } catch (e: Exception) { }
+        }
+        if (embedUrl.contains("yourupload")) {
+            val videos = YourUploadExtractor(client).videoFromUrl(url, headers = headers)
+            videoList.addAll(videos)
+        }
+        if (embedUrl.contains("doodstream") || embedUrl.contains("dood.")) {
+            DoodExtractor(client).videoFromUrl(url, "$prefix DoodStream", false)
+                ?.let { videoList.add(it) }
+        }
+        if (embedUrl.contains("sbembed.com") || embedUrl.contains("sbembed1.com") || embedUrl.contains("sbplay.org") ||
+            embedUrl.contains("sbvideo.net") || embedUrl.contains("streamsb.net") || embedUrl.contains("sbplay.one") ||
+            embedUrl.contains("cloudemb.com") || embedUrl.contains("playersb.com") || embedUrl.contains("tubesb.com") ||
+            embedUrl.contains("sbplay1.com") || embedUrl.contains("embedsb.com") || embedUrl.contains("watchsb.com") ||
+            embedUrl.contains("sbplay2.com") || embedUrl.contains("japopav.tv") || embedUrl.contains("viewsb.com") ||
+            embedUrl.contains("sbfast") || embedUrl.contains("sbfull.com") || embedUrl.contains("javplaya.com") ||
+            embedUrl.contains("ssbstream.net") || embedUrl.contains("p1ayerjavseen.com") || embedUrl.contains("sbthe.com") ||
+            embedUrl.contains("vidmovie.xyz") || embedUrl.contains("sbspeed.com") || embedUrl.contains("streamsss.net") ||
+            embedUrl.contains("sblanh.com") || embedUrl.contains("sbbrisk.com") || embedUrl.contains("lvturbo.com")
+        ) {
+            runCatching {
+                StreamSBExtractor(client).videosFromUrl(url, headers, prefix = prefix)
+            }.getOrNull()?.let { videoList.addAll(it) }
+        }
+        if (embedUrl.contains("okru") || embedUrl.contains("ok.ru")) {
+            videoList.addAll(
+                OkruExtractor(client).videosFromUrl(url, prefix, true),
+            )
+        }
+        if (embedUrl.contains("voe")) {
+            VoeExtractor(client).videoFromUrl(url)?.let { videoList.add(it) }
+        }
+        if (embedUrl.contains("filemoon") || embedUrl.contains("moonplayer")) {
+            FilemoonExtractor(client).videoFromUrl(url, prefix)?.let {
+                videoList.addAll(it)
             }
-            if (link.contains("watchsb")) {
-                try {
-                    val newHeaders = headers.newBuilder()
-                        .set("referer", link)
-                        .set("watchsb", "sbstream")
-                        .set("authority", link.substringBefore("/e/").substringAfter("https://"))
-                        .build()
-                    StreamSBExtractor(client).videosFromDecryptedUrl(fixUrl(link), headers = newHeaders).map { video ->
-                        videoList.add(video)
-                    }
-                } catch (_: Exception) {}
-            }
+        }
+        if (embedUrl.contains("streamlare")) {
+            StreamlareExtractor(client).videosFromUrl(url)?.let { videoList.add(it) }
         }
         return videoList
     }
@@ -187,8 +236,12 @@ class Pelisplusto(override val name: String, override val baseUrl: String) : Pel
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
-            "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
-            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
+            "StreamSB:1080p",
+            "StreamSB:720p",
+            "StreamSB:480p",
+            "StreamSB:360p",
+            "StreamSB:240p",
+            "StreamSB:144p", // StreamSB
             "DoodStream",
         )
         val videoQualityPref = ListPreference(screen.context).apply {

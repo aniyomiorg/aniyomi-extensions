@@ -1,0 +1,18 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'FMovies'
+    pkgNameSuffix = 'en.fmovies'
+    extClass = '.FMovies'
+    extVersionCode = 4
+    libVersion = '13'
+}
+
+dependencies {
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
+}
+
+
+apply from: "$rootDir/common.gradle"

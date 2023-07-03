@@ -15,8 +15,6 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -37,14 +35,13 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client = network.cloudflareClient
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun headersBuilder(): Headers.Builder = Headers.Builder()
-        .add("Referer", baseUrl)
+    override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
 
     // ============================== Popular ===============================
     override fun popularAnimeSelector() = "div.FsssItem:contains(Mais Vistos) > a"
@@ -58,21 +55,22 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Episodes ==============================
     override fun episodeListSelector() = "div.aniContainer a"
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val totalEpisodes = mutableListOf<SEpisode>()
         var doc = getRealDoc(response.asJsoup())
         val originalUrl = doc.location()
         var pageNum = 1
-        do {
-            if (pageNum > 1) {
-                doc = client.newCall(GET(originalUrl + "/page/$pageNum"))
-                    .execute()
-                    .asJsoup()
-            }
-            doc.select(episodeListSelector()).forEach {
-                totalEpisodes.add(episodeFromElement(it))
-            }
-            pageNum++
-        } while (hasNextPage(doc))
+        val totalEpisodes = buildList {
+            do {
+                if (pageNum > 1) {
+                    doc = client.newCall(GET(originalUrl + "/page/$pageNum"))
+                        .execute()
+                        .asJsoup()
+                }
+                doc.select(episodeListSelector()).forEach {
+                    add(episodeFromElement(it))
+                }
+                pageNum++
+            } while (hasNextPage(doc))
+        }
         return totalEpisodes.reversed()
     }
 
@@ -80,8 +78,7 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val title = element.attr("title")
         setUrlWithoutDomain(element.attr("href"))
         name = title
-        episode_number = runCatching { title.substringAfterLast(" ").toFloat() }
-            .getOrNull() ?: 0F
+        episode_number = title.substringAfterLast(" ").toFloatOrNull() ?: 0F
         date_upload = element.selectFirst("div.lancaster_episodio_info_data")!!
             .text()
             .toDate()
@@ -120,21 +117,14 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val slug = query.removePrefix(PREFIX_SEARCH)
             client.newCall(GET("$baseUrl/animes/$slug"))
                 .asObservableSuccess()
-                .map { response ->
-                    searchAnimeBySlugParse(response, slug)
-                }
+                .map(::searchAnimeBySlugParse)
         } else {
-            client.newCall(searchAnimeRequest(page, query, filters))
-                .asObservableSuccess()
-                .map { response ->
-                    searchAnimeParse(response)
-                }
+            super.fetchSearchAnime(page, query, filters)
         }
     }
 
-    private fun searchAnimeBySlugParse(response: Response, slug: String): AnimesPage {
+    private fun searchAnimeBySlugParse(response: Response): AnimesPage {
         val details = animeDetailsParse(response)
-        details.url = "/animes/$slug"
         return AnimesPage(listOf(details), false)
     }
 
@@ -142,51 +132,53 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         GET("$baseUrl/busca?busca=$query&page=$page")
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
         val doc = getRealDoc(document)
+        setUrlWithoutDomain(doc.location())
         val infos = doc.selectFirst("div.aniInfosSingle")!!
         val img = infos.selectFirst("img")!!
-        anime.thumbnail_url = img.attr("src")
-        anime.title = img.attr("alt")
-        anime.genre = infos.select("div.aniInfosSingleGeneros > span")
-            .joinToString(", ") { it.text() }
+        thumbnail_url = img.attr("src")
+        title = img.attr("alt")
+        genre = infos.select("div.aniInfosSingleGeneros > span")
+            .eachText()
+            .joinToString()
 
-        anime.author = infos.getInfo("AUTOR")
-        anime.artist = infos.getInfo("ESTÚDIO")
-        anime.status = parseStatus(infos.selectFirst("div.anime_status")!!)
+        author = infos.getInfo("AUTOR")
+        artist = infos.getInfo("ESTÚDIO")
+        status = parseStatus(infos.selectFirst("div.anime_status")!!)
 
-        var desc = infos.selectFirst("div.aniInfosSingleSinopse > p")!!.text() + "\n"
-        infos.getInfo("Título")?.let { desc += "\nTítulos Alternativos: $it" }
-        infos.selectFirst("div.aniInfosSingleNumsItem:contains(Ano)")?.let {
-            desc += "\nAno: ${it.ownText()}"
+        description = buildString {
+            append(infos.selectFirst("div.aniInfosSingleSinopse > p")!!.text() + "\n")
+            infos.getInfo("Título")?.also { append("\nTítulos Alternativos: $it") }
+            infos.selectFirst("div.aniInfosSingleNumsItem:contains(Ano)")?.also {
+                append("\nAno: ${it.ownText()}")
+            }
+            infos.getInfo("Temporada")?.also { append("\nTemporada: $it") }
         }
-        infos.getInfo("Temporada")?.let { desc += "\nTemporada: $it" }
-        anime.description = desc
-
-        return anime
     }
 
     // =============================== Latest ===============================
     override fun latestUpdatesNextPageSelector(): String? = null
     override fun latestUpdatesSelector(): String =
         "div.tituloContainer:contains(lançamento) + div.epiContainer a"
+
     override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href"))
         val img = element.selectFirst("img")!!
         thumbnail_url = img.attr("src")
         title = img.attr("alt")
     }
+
     override fun latestUpdatesRequest(page: Int): Request = GET(baseUrl)
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = PREFERRED_QUALITY
-            title = "Qualidade preferida"
-            entries = QUALITY_LIST
-            entryValues = QUALITY_LIST
-            setDefaultValue(QUALITY_LIST.last())
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_VALUES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
@@ -194,13 +186,10 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
     }
 
     // ============================= Utilities ==============================
-
     private fun parseStatus(element: Element): Int {
         return when {
             element.hasClass("completed") -> SAnime.COMPLETED
@@ -213,26 +202,20 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val currentUrl = doc.location()
         val nextUrl = doc.selectFirst("a:contains(»)")!!.attr("href")
         val endings = listOf("/1", "page=1")
-        return !endings.any { nextUrl.endsWith(it) } && currentUrl != nextUrl
+        return !endings.any(nextUrl::endsWith) && currentUrl != nextUrl
     }
 
-    private val animeMenuSelector = "div.controlesBoxItem > a > i.iconLista"
+    private val animeMenuSelector = "div.controlesBoxItem > a:has(i.iconLista)"
     private fun getRealDoc(document: Document): Document {
-        val menu = document.selectFirst(animeMenuSelector)
-        if (menu != null) {
-            val originalUrl = menu.parent()!!.attr("href")
-            val req = client.newCall(GET(originalUrl, headers)).execute()
-            return req.asJsoup()
-        } else {
-            return document
-        }
+        return document.selectFirst(animeMenuSelector)?.let {
+            client.newCall(GET(it.attr("href"), headers)).execute().asJsoup()
+        } ?: document
     }
 
     private fun Element.getInfo(key: String): String? {
-        val div = this.selectFirst("div.aniInfosSingleInfoItem:contains($key)")
-        if (div == null) return div
-        val span = div.selectFirst("span")
-        return span?.text()
+        return selectFirst("div.aniInfosSingleInfoItem:contains($key) span")
+            ?.text()
+            ?.trim()
     }
 
     private fun String.toDate(): Long {
@@ -241,18 +224,10 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(PREFERRED_QUALITY, "FULLHD")!!
-        val newList = mutableListOf<Video>()
-        var preferred = 0
-        for (video in this) {
-            if (video.quality.trim() == quality) {
-                newList.add(preferred, video)
-                preferred++
-            } else {
-                newList.add(video)
-            }
-        }
-        return newList
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
     }
 
     companion object {
@@ -260,9 +235,11 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             SimpleDateFormat("dd/MM/yyyy à's' HH:mm", Locale.ENGLISH)
         }
 
-        private const val PREFERRED_QUALITY = "preferred_quality"
-        private val QUALITY_LIST = arrayOf("SD", "HD", "FULLHD")
-
         const val PREFIX_SEARCH = "slug:"
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Qualidade preferida"
+        private const val PREF_QUALITY_DEFAULT = "FULLHD"
+        private val PREF_QUALITY_VALUES = arrayOf("SD", "HD", "FULLHD")
     }
 }

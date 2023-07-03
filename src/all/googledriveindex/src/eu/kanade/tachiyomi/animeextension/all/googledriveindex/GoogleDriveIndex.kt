@@ -2,7 +2,11 @@ package eu.kanade.tachiyomi.animeextension.all.googledriveindex
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Base64
+import android.widget.Button
+import android.widget.EditText
 import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
@@ -19,7 +23,6 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.Credentials
@@ -41,7 +44,7 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
     override val name = "GoogleDriveIndex"
 
     override val baseUrl by lazy {
-        preferences.getString("domain_list", "")!!.split(",").first()
+        preferences.domainList.split(",").first().removeName()
     }
 
     override val lang = "all"
@@ -84,12 +87,9 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================== Popular ===============================
 
     override fun popularAnimeRequest(page: Int): Request {
-        if (baseUrl.isEmpty()) {
-            throw Exception("Enter drive path(s) in extension settings.")
-        }
-
-        if (baseUrl.toHttpUrl().host == "drive.google.com") {
-            throw Exception("This extension is only for Google Drive Index sites, not drive.google.com folders.")
+        require(baseUrl.isNotEmpty()) { "Enter drive path(s) in extension settings." }
+        require(baseUrl.toHttpUrl().host != "drive.google.com") {
+            "This extension is only for Google Drive Index sites, not drive.google.com folders."
         }
 
         if (page == 1) pageToken = ""
@@ -98,7 +98,7 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
             .add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
             .add("Host", baseUrl.toHttpUrl().host)
             .add("Origin", "https://${baseUrl.toHttpUrl().host}")
-            .add("Referer", URLEncoder.encode(baseUrl, "UTF-8"))
+            .add("Referer", baseUrl.asReferer())
             .add("X-Requested-With", "XMLHttpRequest")
             .build()
 
@@ -107,9 +107,7 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
         return POST(baseUrl, body = popBody, headers = popHeaders)
     }
 
-    override fun popularAnimeParse(response: Response): AnimesPage {
-        return parsePage(response, baseUrl)
-    }
+    override fun popularAnimeParse(response: Response): AnimesPage = parsePage(response, baseUrl)
 
     // =============================== Latest ===============================
 
@@ -126,33 +124,50 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
         query: String,
         filters: AnimeFilterList,
     ): Observable<AnimesPage> {
-        val req = searchAnimeRequest(page, query, filters)
-        return Observable.defer {
-            try {
-                client.newCall(req).asObservableSuccess()
-            } catch (e: NoClassDefFoundError) {
-                // RxJava doesn't handle Errors, which tends to happen during global searches
-                // if an old extension using non-existent classes is still around
-                throw RuntimeException(e)
-            }
-        }
-            .map { response ->
+        val filterList = if (filters.isEmpty()) getFilterList() else filters
+        val urlFilter = filterList.find { it is URLFilter } as URLFilter
+
+        return if (urlFilter.state.isEmpty()) {
+            val req = searchAnimeRequest(page, query, filters)
+            Observable.defer {
+                try {
+                    client.newCall(req).asObservableSuccess()
+                } catch (e: NoClassDefFoundError) {
+                    // RxJava doesn't handle Errors, which tends to happen during global searches
+                    // if an old extension using non-existent classes is still around
+                    throw RuntimeException(e)
+                }
+            }.map { response ->
                 searchAnimeParse(response, req.url.toString())
             }
+        } else {
+            Observable.just(addSinglePage(urlFilter.state))
+        }
+    }
+
+    private fun addSinglePage(inputUrl: String): AnimesPage {
+        val match = URL_REGEX.matchEntire(inputUrl) ?: throw Exception("Invalid url")
+        val anime = SAnime.create().apply {
+            title = match.groups["name"]?.value?.substringAfter("[")?.substringBeforeLast("]") ?: "Folder"
+            url = LinkData(
+                type = "multi",
+                url = match.groups["url"]!!.value,
+                fragment = inputUrl.removeName().toHttpUrl().encodedFragment,
+            ).toJsonString()
+            thumbnail_url = ""
+        }
+        return AnimesPage(listOf(anime), false)
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        if (baseUrl.isEmpty()) {
-            throw Exception("Enter drive path(s) in extension settings.")
+        require(baseUrl.isNotEmpty()) { "Enter drive path(s) in extension settings." }
+        require(baseUrl.toHttpUrl().host != "drive.google.com") {
+            "This extension is only for Google Drive Index sites, not drive.google.com folders."
         }
 
         val filterList = if (filters.isEmpty()) getFilterList() else filters
         val serverFilter = filterList.find { it is ServerFilter } as ServerFilter
         val serverUrl = serverFilter.toUriPart()
-
-        if (serverUrl.toHttpUrl().host == "drive.google.com") {
-            throw Exception("This extension is only for Google Drive Index sites, not drive.google.com folders.")
-        }
 
         if (page == 1) pageToken = ""
         val searchHeaders = headers.newBuilder()
@@ -162,37 +177,39 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
             .add("Origin", "https://${serverUrl.toHttpUrl().host}")
             .add("X-Requested-With", "XMLHttpRequest")
 
-        return if (query.isBlank()) {
-            val popBody = "password=&page_token=$pageToken&page_index=${page - 1}".toRequestBody("application/x-www-form-urlencoded".toMediaType())
-            POST(
-                serverUrl,
-                body = popBody,
-                headers = searchHeaders.add("Referer", URLEncoder.encode(serverUrl, "UTF-8")).build(),
-            )
-        } else {
-            val cleanQuery = query.replace(" ", "+")
+        return when {
+            query.isBlank() -> {
+                val popBody = "password=&page_token=$pageToken&page_index=${page - 1}".toRequestBody("application/x-www-form-urlencoded".toMediaType())
 
-            val searchUrl = "https://${serverUrl.toHttpUrl().hostAndCred()}/${serverUrl.toHttpUrl().pathSegments[0]}search"
+                POST(
+                    serverUrl,
+                    body = popBody,
+                    headers = searchHeaders.add("Referer", serverUrl.asReferer()).build(),
+                )
+            }
+            else -> {
+                val cleanQuery = query.replace(" ", "+")
+                val searchUrl = "https://${serverUrl.toHttpUrl().hostAndCred()}/${serverUrl.toHttpUrl().pathSegments[0]}search"
+                val popBody = "q=$cleanQuery&page_token=$pageToken&page_index=${page - 1}".toRequestBody("application/x-www-form-urlencoded".toMediaType())
 
-            val popBody = "q=$cleanQuery&page_token=$pageToken&page_index=${page - 1}".toRequestBody("application/x-www-form-urlencoded".toMediaType())
-
-            POST(
-                searchUrl,
-                body = popBody,
-                headers = searchHeaders.add("Referer", "$searchUrl?q=$cleanQuery").build(),
-            )
+                POST(
+                    searchUrl,
+                    body = popBody,
+                    headers = searchHeaders.add("Referer", "$searchUrl?q=$cleanQuery").build(),
+                )
+            }
         }
     }
 
-    private fun searchAnimeParse(response: Response, url: String): AnimesPage {
-        return parsePage(response, url)
-    }
+    private fun searchAnimeParse(response: Response, url: String): AnimesPage = parsePage(response, url)
 
     // ============================== FILTERS ===============================
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("Text search will only search inside selected server"),
         ServerFilter(getDomains()),
+        AnimeFilter.Header("Add single folder"),
+        URLFilter(),
     )
 
     private class ServerFilter(domains: Array<Pair<String, String>>) : UriPartFilter(
@@ -201,8 +218,13 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
     )
 
     private fun getDomains(): Array<Pair<String, String>> {
-        return preferences.getString("domain_list", "")!!.split(",").map {
-            Pair(it.substringAfter("https://"), it)
+        if (preferences.domainList.isBlank()) return emptyArray()
+        return preferences.domainList.split(",").map {
+            val match = URL_REGEX.matchEntire(it)!!
+            val name = match.groups["name"]?.let {
+                it.value.substringAfter("[").substringBeforeLast("]")
+            }
+            Pair(name ?: it.toHttpUrl().encodedPath, it.removeName())
         }.toTypedArray()
     }
 
@@ -210,6 +232,8 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
         AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
     }
+
+    private class URLFilter : AnimeFilter.Text("Url")
 
     // =========================== Anime Details ============================
 
@@ -297,6 +321,12 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
         val episodeList = mutableListOf<SEpisode>()
         val parsed = json.decodeFromString<LinkData>(anime.url)
         var counter = 1
+        val maxRecursionDepth = parsed.fragment?.substringBefore(",")?.toInt() ?: 2
+        val (start, stop) = if (parsed.fragment?.contains(",") == true) {
+            parsed.fragment.substringAfter(",").split(",").map { it.toInt() }
+        } else {
+            listOf(null, null)
+        }
 
         val newParsed = if (parsed.type != "search") {
             parsed
@@ -324,22 +354,23 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         if (newParsed.type == "single") {
-            val episode = SEpisode.create()
-            val size = if (newParsed.info == null) {
-                ""
-            } else {
-                " - ${newParsed.info}"
-            }
-            episode.name = "${newParsed.url.toHttpUrl().pathSegments.last()}$size"
-            episode.url = newParsed.url
-            episode.episode_number = 1F
-            episodeList.add(episode)
+            val titleName = newParsed.url.toHttpUrl().pathSegments.last()
+            episodeList.add(
+                SEpisode.create().apply {
+                    name = if (preferences.trimEpisodeName) titleName.trimInfo() else titleName
+                    url = newParsed.url
+                    episode_number = 1F
+                    date_upload = -1L
+                    scanlator = newParsed.info
+                },
+            )
         }
 
         if (newParsed.type == "multi") {
             val basePathCounter = newParsed.url.toHttpUrl().pathSize
 
-            fun traverseDirectory(url: String) {
+            fun traverseDirectory(url: String, recursionDepth: Int = 0) {
+                if (recursionDepth == maxRecursionDepth) return
                 var newToken: String? = ""
                 var newPageIndex = 0
 
@@ -362,18 +393,16 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
 
                     parsed.data.files.forEach { item ->
                         if (item.mimeType.endsWith("folder")) {
-                            if (
-                                preferences.getString("blacklist_folders", "")!!.split("/")
-                                    .any { it.equals(item.name, ignoreCase = true) }
-                            ) {
-                                return@forEach
-                            }
-
                             val newUrl = joinUrl(url, item.name).addSuffix("/")
-                            traverseDirectory(newUrl)
+                            traverseDirectory(newUrl, recursionDepth + 1)
                         }
                         if (item.mimeType.startsWith("video/")) {
-                            val episode = SEpisode.create()
+                            if (start != null && maxRecursionDepth == 1 && counter < start) {
+                                counter++
+                                return@forEach
+                            }
+                            if (stop != null && maxRecursionDepth == 1 && counter > stop) return
+
                             val epUrl = joinUrl(url, item.name)
                             val paths = epUrl.toHttpUrl().pathSegments
 
@@ -394,17 +423,20 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
                             val extraInfo = if (paths.size > basePathCounter) {
                                 "/" + paths.subList(basePathCounter - 1, paths.size - 1).joinToString("/") { it.trimInfo() }
                             } else {
-                                ""
+                                "/"
                             }
                             val size = item.size?.toLongOrNull()?.let { formatFileSize(it) }
 
-                            episode.name = "${item.name.trimInfo()}${if (size == null) "" else " - $size"}"
-                            episode.url = epUrl
-                            episode.scanlator = seasonInfo + extraInfo
-                            episode.episode_number = counter.toFloat()
+                            episodeList.add(
+                                SEpisode.create().apply {
+                                    name = if (preferences.trimEpisodeName) item.name.trimInfo() else item.name
+                                    this.url = epUrl
+                                    scanlator = "${if (size == null) "" else "$size"} • $seasonInfo$extraInfo"
+                                    date_upload = -1L
+                                    episode_number = counter.toFloat()
+                                },
+                            )
                             counter++
-
-                            episodeList.add(episode)
                         }
                     }
 
@@ -433,6 +465,10 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
         val script = doc.selectFirst("script:containsData(videodomain)")?.data()
             ?: doc.selectFirst("script:containsData(downloaddomain)")?.data()
             ?: return Observable.just(listOf(Video(url, "Video", url)))
+
+        if (script.contains("\"second_domain_for_dl\":false")) {
+            return Observable.just(listOf(Video(url, "Video", url)))
+        }
 
         val domainUrl = if (script.contains("videodomain", true)) {
             script
@@ -482,7 +518,7 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun String.trimInfo(): String {
-        var newString = this.replaceFirst("""^\[\w+\] ?""".toRegex(), "")
+        var newString = this.replaceFirst("""^\[[\w-]+\] ?""".toRegex(), "")
         val regex = """( ?\[[\s\w-]+\]| ?\([\s\w-]+\))(\.mkv|\.mp4|\.avi)?${'$'}""".toRegex()
 
         while (regex.containsMatchIn(newString)) {
@@ -505,6 +541,17 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
+    private fun String.asReferer(): String {
+        return URLEncoder.encode(
+            this.toHttpUrl().let {
+                "https://${it.host}${it.encodedPath}"
+            },
+            "UTF-8",
+        )
+    }
+
+    private fun String.removeName(): String = Regex("""^(\[[^\[\];]+\])""").replace(this, "")
+
     private fun LinkData.toJsonString(): String {
         return json.encodeToString(this)
     }
@@ -520,63 +567,59 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
 
         parsed.data.files.forEach { item ->
             if (item.mimeType.endsWith("folder")) {
-                val anime = SAnime.create()
-                anime.title = item.name.trimInfo()
-                anime.thumbnail_url = ""
-
-                if (isSearch) {
-                    anime.setUrlWithoutDomain(
-                        LinkData(
-                            "search",
-                            IdUrl(
-                                item.id,
-                                url.substringBeforeLast("search"),
-                                response.request.header("Referer")!!,
+                animeList.add(
+                    SAnime.create().apply {
+                        title = if (preferences.trimAnimeName) item.name.trimInfo() else item.name
+                        thumbnail_url = ""
+                        this.url = if (isSearch) {
+                            LinkData(
+                                "search",
+                                IdUrl(
+                                    item.id,
+                                    url.substringBeforeLast("search"),
+                                    response.request.header("Referer")!!,
+                                    "multi",
+                                ).toJsonString(),
+                            ).toJsonString()
+                        } else {
+                            LinkData(
                                 "multi",
-                            ).toJsonString(),
-                        ).toJsonString(),
-                    )
-                } else {
-                    anime.setUrlWithoutDomain(
-                        LinkData(
-                            "multi",
-                            joinUrl(url, item.name).addSuffix("/"),
-                        ).toJsonString(),
-                    )
-                }
-                animeList.add(anime)
+                                joinUrl(URL_REGEX.matchEntire(url)!!.groups["url"]!!.value, item.name).addSuffix("/"),
+                                fragment = url.toHttpUrl().encodedFragment,
+                            ).toJsonString()
+                        }
+                    },
+                )
             }
             if (
                 item.mimeType.startsWith("video/") &&
-                !(preferences.getBoolean("ignore_non_folder", true) && isSearch)
+                !(preferences.ignoreFolder && isSearch)
             ) {
-                val anime = SAnime.create()
-                anime.title = item.name.trimInfo()
-                anime.thumbnail_url = ""
-
-                if (isSearch) {
-                    anime.setUrlWithoutDomain(
-                        LinkData(
-                            "search",
-                            IdUrl(
-                                item.id,
-                                url.substringBeforeLast("search"),
-                                response.request.header("Referer")!!,
+                animeList.add(
+                    SAnime.create().apply {
+                        title = if (preferences.trimAnimeName) item.name.trimInfo() else item.name
+                        thumbnail_url = ""
+                        this.url = if (isSearch) {
+                            LinkData(
+                                "search",
+                                IdUrl(
+                                    item.id,
+                                    url.substringBeforeLast("search"),
+                                    response.request.header("Referer")!!,
+                                    "single",
+                                ).toJsonString(),
+                                item.size?.toLongOrNull()?.let { formatFileSize(it) },
+                            ).toJsonString()
+                        } else {
+                            LinkData(
                                 "single",
-                            ).toJsonString(),
-                            item.size?.toLongOrNull()?.let { formatFileSize(it) },
-                        ).toJsonString(),
-                    )
-                } else {
-                    anime.setUrlWithoutDomain(
-                        LinkData(
-                            "single",
-                            joinUrl(url, item.name),
-                            item.size?.toLongOrNull()?.let { formatFileSize(it) },
-                        ).toJsonString(),
-                    )
-                }
-                animeList.add(anime)
+                                joinUrl(URL_REGEX.matchEntire(url)!!.groups["url"]!!.value, item.name),
+                                item.size?.toLongOrNull()?.let { formatFileSize(it) },
+                                fragment = url.toHttpUrl().encodedFragment,
+                            ).toJsonString()
+                        }
+                    },
+                )
             }
         }
 
@@ -585,22 +628,95 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
         return AnimesPage(animeList, parsed.nextPageToken != null)
     }
 
+    private fun isUrl(text: String) = URL_REGEX matches text
+
+    /*
+     * Stolen from the MangaDex manga extension
+     *
+     * This will likely need to be removed or revisited when the app migrates the
+     * extension preferences screen to Compose.
+     */
+    private fun setupEditTextUrlValidator(editText: EditText) {
+        editText.addTextChangedListener(
+            object : TextWatcher {
+
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                    // Do nothing.
+                }
+
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                    // Do nothing.
+                }
+
+                override fun afterTextChanged(editable: Editable?) {
+                    requireNotNull(editable)
+
+                    val text = editable.toString()
+
+                    val isValid = text.isBlank() || text
+                        .split(",")
+                        .map(String::trim)
+                        .all(::isUrl)
+
+                    editText.error = if (!isValid) "${text.split(",").first { !isUrl(it) }} is not a valid url" else null
+                    editText.rootView.findViewById<Button>(android.R.id.button1)
+                        ?.isEnabled = editText.error == null
+                }
+            },
+        )
+    }
+
+    companion object {
+        private const val DOMAIN_PREF_KEY = "domain_list"
+        private const val DOMAIN_PREF_DEFAULT = ""
+
+        private const val SEARCH_FOLDER_IGNORE_KEY = "ignore_non_folder"
+        private const val SEARCH_FOLDER_IGNORE_DEFAULT = true
+
+        private const val TRIM_EPISODE_NAME_KEY = "trim_episode_name"
+        private const val TRIM_EPISODE_NAME_DEFAULT = true
+
+        private const val TRIM_ANIME_NAME_KEY = "trim_anime_name"
+        private const val TRIM_ANIME_NAME_DEFAULT = true
+
+        private val URL_REGEX = Regex("""(?<name>\[[^\[\];]+\])?(?<url>https(?:[^,#]+))(?<depth>#\d+(?<range>,\d+,\d+)?)?${'$'}""")
+    }
+
+    private val SharedPreferences.domainList
+        get() = getString(DOMAIN_PREF_KEY, DOMAIN_PREF_DEFAULT)!!
+
+    private val SharedPreferences.ignoreFolder
+        get() = getBoolean(SEARCH_FOLDER_IGNORE_KEY, SEARCH_FOLDER_IGNORE_DEFAULT)
+
+    private val SharedPreferences.trimEpisodeName
+        get() = getBoolean(TRIM_EPISODE_NAME_KEY, TRIM_EPISODE_NAME_DEFAULT)
+
+    private val SharedPreferences.trimAnimeName
+        get() = getBoolean(TRIM_ANIME_NAME_KEY, TRIM_ANIME_NAME_DEFAULT)
+
+    // ============================== Settings ==============================
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val domainListPref = EditTextPreference(screen.context).apply {
-            key = "domain_list"
+        EditTextPreference(screen.context).apply {
+            key = DOMAIN_PREF_KEY
             title = "Enter drive paths to be shown in extension"
             summary = """Enter drive paths to be shown in extension
                 |Enter as comma separated list
             """.trimMargin()
-            this.setDefaultValue("")
+            this.setDefaultValue(DOMAIN_PREF_DEFAULT)
             dialogTitle = "Path list"
             dialogMessage = """Separate paths with a comma. For password protected sites,
                 |format as: "https://username:password@example.worker.dev/0:/"
+                |- (optional) Add [] before url to customize name. For example: [drive 5]https://site.workers.dev/0:
+                |- (optional) add #<integer> to limit the depth of recursion when loading episodes, defaults is 2. For example: https://site.workers.dev/0:#5
+                |- (optional) add #depth,start,stop (all integers) to specify range when loading episodes. Only works if depth is 1. For example: https://site.workers.dev/0:#1,2,6
             """.trimMargin()
+
+            setOnBindEditTextListener(::setupEditTextUrlValidator)
 
             setOnPreferenceChangeListener { _, newValue ->
                 try {
-                    val res = preferences.edit().putString("domain_list", newValue as String).commit()
+                    val res = preferences.edit().putString(DOMAIN_PREF_KEY, newValue as String).commit()
                     Toast.makeText(screen.context, "Restart Aniyomi to apply changes", Toast.LENGTH_LONG).show()
                     res
                 } catch (e: java.lang.Exception) {
@@ -608,40 +724,33 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
                     false
                 }
             }
-        }
-        val blacklistFolders = EditTextPreference(screen.context).apply {
-            key = "blacklist_folders"
-            title = "Blacklist folder names"
-            summary = """Enter names of folders to skip over
-                |Enter as slash / separated list
-            """.trimMargin()
-            this.setDefaultValue("NC/Extras")
-            dialogTitle = "Blacklisted folders"
-            dialogMessage = "Separate folders with a slash (case insensitive)"
+        }.also(screen::addPreference)
 
-            setOnPreferenceChangeListener { _, newValue ->
-                try {
-                    val res = preferences.edit().putString("blacklist_folders", newValue as String).commit()
-                    Toast.makeText(screen.context, "Restart Aniyomi to apply changes", Toast.LENGTH_LONG).show()
-                    res
-                } catch (e: java.lang.Exception) {
-                    e.printStackTrace()
-                    false
-                }
-            }
-        }
-
-        val ignoreNonFolder = SwitchPreferenceCompat(screen.context).apply {
-            key = "ignore_non_folder"
+        SwitchPreferenceCompat(screen.context).apply {
+            key = SEARCH_FOLDER_IGNORE_KEY
             title = "Only include folders on search"
-            setDefaultValue(true)
+            setDefaultValue(SEARCH_FOLDER_IGNORE_DEFAULT)
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putBoolean(key, newValue as Boolean).commit()
             }
-        }
+        }.also(screen::addPreference)
 
-        screen.addPreference(domainListPref)
-        screen.addPreference(blacklistFolders)
-        screen.addPreference(ignoreNonFolder)
+        SwitchPreferenceCompat(screen.context).apply {
+            key = TRIM_EPISODE_NAME_KEY
+            title = "Trim info from episode name"
+            setDefaultValue(TRIM_EPISODE_NAME_DEFAULT)
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putBoolean(key, newValue as Boolean).commit()
+            }
+        }.also(screen::addPreference)
+
+        SwitchPreferenceCompat(screen.context).apply {
+            key = TRIM_ANIME_NAME_KEY
+            title = "Trim info from anime name"
+            setDefaultValue(TRIM_ANIME_NAME_DEFAULT)
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putBoolean(key, newValue as Boolean).commit()
+            }
+        }.also(screen::addPreference)
     }
 }

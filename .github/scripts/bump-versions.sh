@@ -89,13 +89,11 @@ findAndBump() {
 }
 
 commitChanges() {
-    # this will NOT trigger another workflow, because it will use $GITHUB_TOKEN.
-    # so the build-action will run fine with the bumped-up extensions
     if [[ -n "$@" ]]; then
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git config --global user.name "github-actions[bot]"
+        git config --global user.email "aniyomi-bot@aniyomi.org"
+        git config --global user.name "aniyomi-bot[bot]"
         git add $@
-        git commit -m "Mass-bump on extensions"
+        git commit -S -m "[skip ci] chore: Mass-bump on extensions"
         git push
     fi
 }

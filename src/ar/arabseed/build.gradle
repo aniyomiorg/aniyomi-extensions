@@ -1,11 +1,13 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
 
 ext {
     extName = 'عرب سيد'
     pkgNameSuffix = 'ar.arabseed'
     extClass = '.ArabSeed'
-    extVersionCode = 6
+    extVersionCode = 7
     libVersion = '13'
 }
 

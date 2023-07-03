@@ -5,12 +5,11 @@ ext {
     extName = 'GenoAnime'
     pkgNameSuffix = 'en.genoanime'
     extClass = '.GenoAnime'
-    extVersionCode = 27
+    extVersionCode = 29
     libVersion = '13'
 }
 
 dependencies {
-    implementation(project(':lib-fembed-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))

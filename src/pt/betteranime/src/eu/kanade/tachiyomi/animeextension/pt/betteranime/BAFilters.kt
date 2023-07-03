@@ -29,15 +29,15 @@ object BAFilters {
         }
     }
 
-    class LanguageFilter : QueryPartFilter("Idioma", BAFiltersData.languages)
-    class YearFilter : QueryPartFilter("Ano", BAFiltersData.years)
+    class LanguageFilter : QueryPartFilter("Idioma", BAFiltersData.LANGUAGES)
+    class YearFilter : QueryPartFilter("Ano", BAFiltersData.YEARS)
 
     class GenresFilter : CheckBoxFilterList(
         "Gêneros",
-        BAFiltersData.genres.map { CheckBoxVal(it.first, false) },
+        BAFiltersData.GENRES.map { CheckBoxVal(it.first, false) },
     )
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         LanguageFilter(),
         YearFilter(),
         GenresFilter(),
@@ -55,7 +55,7 @@ object BAFilters {
         val genres = listOf(" ") + filters.getFirst<GenresFilter>().state
             .mapNotNull { genre ->
                 if (genre.state) {
-                    BAFiltersData.genres.find { it.first == genre.name }!!.second
+                    BAFiltersData.GENRES.find { it.first == genre.name }!!.second
                 } else { null }
             }.toList()
 
@@ -67,19 +67,19 @@ object BAFilters {
     }
 
     private object BAFiltersData {
-        val every = Pair("Qualquer um", "")
+        val EVERY = Pair("Qualquer um", "")
 
-        val languages = arrayOf(
-            every,
+        val LANGUAGES = arrayOf(
+            EVERY,
             Pair("Legendado", "legendado"),
             Pair("Dublado", "dublado"),
         )
 
-        val years = arrayOf(every) + (2023 downTo 1976).map {
+        val YEARS = arrayOf(EVERY) + (2023 downTo 1976).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 
-        val genres = arrayOf(
+        val GENRES = arrayOf(
             Pair("Ação", "acao"),
             Pair("Artes Marciais", "artes-marciais"),
             Pair("Aventura", "aventura"),

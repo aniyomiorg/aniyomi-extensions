@@ -8,7 +8,7 @@ class DopeFlixGenerator : ThemeSourceGenerator {
 
     override val themeClass = "DopeFlix"
 
-    override val baseVersionCode = 16
+    override val baseVersionCode = 17
 
     override val sources = listOf(
         SingleLang("DopeBox", "https://dopebox.to", "en", isNsfw = false, overrideVersionCode = 1),

@@ -12,7 +12,7 @@ class YourUploadExtractor(private val client: OkHttpClient) {
         return runCatching {
             val request = client.newCall(GET(url, headers = newHeaders)).execute()
             val document = request.asJsoup()
-            val baseData = document.selectFirst("script:containsData(jwplayerOptions)")!!.data()
+            val baseData = document.selectFirst("script:containsData(jwplayerOptions)")?.data()
             if (!baseData.isNullOrEmpty()) {
                 val basicUrl = baseData.substringAfter("file: '").substringBefore("',")
                 val quality = prefix + name

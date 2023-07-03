@@ -13,16 +13,12 @@ import kotlin.system.exitProcess
  */
 class MeusAnimesUrlActivity : Activity() {
 
-    private val TAG = javaClass.simpleName
+    private val tag = javaClass.simpleName
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val pathSegments = intent?.data?.pathSegments
         if (pathSegments != null && pathSegments.size > 1) {
-            // https://<host>/<segment 0>/<segment 1>...
-            // ex: pattern "/animes/..*" -> pathSegments[1]
-            // ex: pattern "/animes/info/..*" -> pathSegments[2]
-            // etc..
             val item = pathSegments[1]
             val mainIntent = Intent().apply {
                 action = "eu.kanade.tachiyomi.ANIMESEARCH"
@@ -33,10 +29,10 @@ class MeusAnimesUrlActivity : Activity() {
             try {
                 startActivity(mainIntent)
             } catch (e: ActivityNotFoundException) {
-                Log.e(TAG, e.toString())
+                Log.e(tag, e.toString())
             }
         } else {
-            Log.e(TAG, "could not parse uri from intent $intent")
+            Log.e(tag, "could not parse uri from intent $intent")
         }
 
         finish()

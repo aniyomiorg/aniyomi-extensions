@@ -25,15 +25,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.CacheControl
-import okhttp3.Headers
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit.DAYS
@@ -48,16 +47,14 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val supportsLatest = true
 
-    override fun headersBuilder() = Headers.Builder()
+    override fun headersBuilder() = super.headersBuilder()
         .add("Referer", "https://www.animestc.net/")
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-    }
+    private val json: Json by injectLazy()
 
     // ============================== Popular ===============================
     // This source doesnt have a popular animes page,
@@ -78,20 +75,20 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun getEpisodeList(animeId: Int, page: Int = 1): List<SEpisode> {
         val response = client.newCall(episodeListRequest(animeId, page)).execute()
         val parsed = response.parseAs<ResponseDto<EpisodeDto>>()
-        val episodes = parsed.items.map {
-            SEpisode.create().apply {
-                name = it.title
-                setUrlWithoutDomain("/episodes?slug=${it.slug}")
-                episode_number = it.number.toFloat()
-                date_upload = it.created_at.toDate()
-            }
-        }
+        val episodes = parsed.items.map(::episodeFromObject)
 
         if (parsed.page < parsed.lastPage) {
             return episodes + getEpisodeList(animeId, page + 1)
         } else {
             return episodes
         }
+    }
+
+    private fun episodeFromObject(episode: EpisodeDto) = SEpisode.create().apply {
+        name = episode.title
+        setUrlWithoutDomain("/episodes?slug=${episode.slug}")
+        episode_number = episode.number.toFloat()
+        date_upload = episode.created_at.toDate()
     }
 
     // ============================ Video Links =============================
@@ -126,15 +123,13 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(response: Response): SAnime {
+    override fun animeDetailsParse(response: Response) = SAnime.create().apply {
         val anime = response.getAnimeDto()
-        return SAnime.create().apply {
-            setUrlWithoutDomain("/series/${anime.id}")
-            title = anime.title
-            status = anime.status
-            genre = anime.genres
-            description = anime.synopsis
-        }
+        setUrlWithoutDomain("/series/${anime.id}")
+        title = anime.title
+        status = anime.status
+        genre = anime.genres
+        description = anime.synopsis
     }
 
     // =============================== Search ===============================
@@ -151,12 +146,9 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
             val slug = query.removePrefix(PREFIX_SEARCH)
             client.newCall(GET("$baseUrl/series?slug=$slug"))
                 .asObservableSuccess()
-                .map { response ->
-                    searchAnimeBySlugParse(response)
-                }
+                .map(::searchAnimeBySlugParse)
         } else {
-            val params = ATCFilters.getSearchParameters(filters)
-            return Observable.just(searchAnime(page, query, params))
+            return Observable.just(searchAnime(page, query, filters))
         }
     }
 
@@ -169,11 +161,13 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         }.flatten()
     }
 
-    override fun getFilterList(): AnimeFilterList = ATCFilters.filterList
+    override fun getFilterList(): AnimeFilterList = ATCFilters.FILTER_LIST
 
-    private fun searchAnime(page: Int, query: String, filterParams: ATCFilters.FilterSearchParams): AnimesPage {
-        filterParams.animeName = query
-        val filtered = allAnimesList.applyFilterParams(filterParams)
+    private fun searchAnime(page: Int, query: String, filters: AnimeFilterList): AnimesPage {
+        val params = ATCFilters.getSearchParameters(filters).apply {
+            animeName = query
+        }
+        val filtered = allAnimesList.applyFilterParams(params)
         val results = filtered.chunked(30)
         val hasNextPage = results.size > page
         val currentPage = if (results.size == 0) {
@@ -219,8 +213,8 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
-            entries = PREF_QUALITY_VALUES
-            entryValues = PREF_QUALITY_VALUES
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
@@ -268,12 +262,12 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun String.toDate(): Long {
         return runCatching {
-            DATE_FORMATTER.parse(this)?.time ?: 0L
+            DATE_FORMATTER.parse(this)?.time
         }.getOrNull() ?: 0L
     }
 
     private inline fun <reified T> Response.parseAs(preloaded: String? = null): T {
-        val responseBody = preloaded ?: body.string()
+        val responseBody = preloaded ?: use { it.body.string() }
         return json.decodeFromString(responseBody)
     }
 
@@ -298,7 +292,7 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_QUALITY_KEY = "pref_quality"
         private const val PREF_QUALITY_TITLE = "Qualidade preferida"
         private const val PREF_QUALITY_DEFAULT = "HD"
-        private val PREF_QUALITY_VALUES = arrayOf("SD", "HD", "FULLHD")
+        private val PREF_QUALITY_ENTRIES = arrayOf("SD", "HD", "FULLHD")
 
         private const val PREF_PLAYER_KEY = "pref_player"
         private const val PREF_PLAYER_TITLE = "Player preferido"

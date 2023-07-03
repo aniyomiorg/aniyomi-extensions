@@ -6,13 +6,13 @@ ext {
     extName = 'KissAnime'
     pkgNameSuffix = 'en.kissanime'
     extClass = '.KissAnime'
-    extVersionCode = 1
+    extVersionCode = 4
     libVersion = '13'
 }
 
 dependencies {
+    implementation(project(':lib-mp4upload-extractor'))
     implementation(project(':lib-yourupload-extractor'))
-    implementation(project(':lib-fembed-extractor'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
 

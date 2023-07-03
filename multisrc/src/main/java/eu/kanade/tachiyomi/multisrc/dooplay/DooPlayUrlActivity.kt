@@ -9,7 +9,7 @@ import kotlin.system.exitProcess
 
 class DooPlayUrlActivity : Activity() {
 
-    private val TAG = "DooPlayUrlActivity"
+    private val tag = "DooPlayUrlActivity"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,10 +27,10 @@ class DooPlayUrlActivity : Activity() {
             try {
                 startActivity(mainIntent)
             } catch (e: ActivityNotFoundException) {
-                Log.e(TAG, e.toString())
+                Log.e(tag, e.toString())
             }
         } else {
-            Log.e(TAG, "could not parse uri from intent $intent")
+            Log.e(tag, "could not parse uri from intent $intent")
         }
 
         finish()

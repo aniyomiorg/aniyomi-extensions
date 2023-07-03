@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.fembedextractor.FembedExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
@@ -158,32 +157,18 @@ open class Pelisplushd(override val name: String, override val baseUrl: String) 
         return String(hexChars)
     }
 
-    public fun fixUrl(url: String): String {
-        val sbUrl = url.substringBefore("/e/")
-        val id = url.substringAfter("/e/").substringBefore("?").substringBefore(".html")
-        val hexBytes = bytesToHex(id.toByteArray())
-        return "$sbUrl/sources51/33436f7a4d3656496f4973597c7c${hexBytes}7c7c6877624978704c39796936737c7c73747265616d7362"
-    }
-
-    public fun serverVideoResolver(url: String, server: String): List<Video>? {
+    private fun serverVideoResolver(url: String, server: String): List<Video>? {
         val videoList = mutableListOf<Video>()
         try {
             if (server.lowercase() == "sbfast") {
-                val newHeaders = headers.newBuilder()
-                    .set("referer", url)
-                    .set("watchsb", "sbstream")
-                    .set("authority", url.substringBefore("/e/").substringAfter("https://"))
-                    .build()
-                return StreamSBExtractor(client).videosFromDecryptedUrl(fixUrl(url), headers = newHeaders)
-            } else if (server.lowercase() == "plusto") {
-                return FembedExtractor(client).videosFromUrl(url)
+                return StreamSBExtractor(client).videosFromUrl(url, headers)
             } else if (server.lowercase() == "stp") {
                 StreamTapeExtractor(client).videoFromUrl(url, "StreamTape")?.let { videoList.add(it) }
             } else if (server.lowercase() == "uwu") {
                 if (!url.contains("disable")) {
                     val body = client.newCall(GET(url)).execute().asJsoup()
                     if (body.select("script:containsData(var shareId)").toString()
-                        .isNotBlank()
+                            .isNotBlank()
                     ) {
                         val shareId =
                             body.selectFirst("script:containsData(var shareId)")!!.data()
@@ -238,7 +223,7 @@ open class Pelisplushd(override val name: String, override val baseUrl: String) 
         }
     }
 
-    private fun getNumberFromString(epsStr: String): String {
+    fun getNumberFromString(epsStr: String): String {
         return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
     }
 
@@ -327,7 +312,6 @@ open class Pelisplushd(override val name: String, override val baseUrl: String) 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
             "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
-            "Fembed:1080p", "Fembed:720p", "Fembed:480p", "Fembed:360p", "Fembed:240p", "Fembed:144p", // Fembed
             "Streamlare:1080p", "Streamlare:720p", "Streamlare:480p", "Streamlare:360p", "Streamlare:240p", // Streamlare
             "StreamTape", "Amazon", "Voex", "DoodStream", "YourUpload",
         )
