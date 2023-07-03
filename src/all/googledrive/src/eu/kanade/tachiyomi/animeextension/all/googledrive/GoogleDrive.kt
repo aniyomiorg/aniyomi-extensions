@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -24,6 +25,7 @@ import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -69,6 +71,7 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun fetchPopularAnime(page: Int): Observable<AnimesPage> = Observable.just(parsePage(popularAnimeRequest(page), page))
 
     override fun popularAnimeRequest(page: Int): Request {
+        Log.i("SOMETHING", headers.toString())
         require(!baseUrlInternal.isNullOrEmpty()) { "Enter drive path(s) in extension settings." }
 
         val match = DRIVE_FOLDER_REGEX.matchEntire(baseUrlInternal!!)!!
@@ -341,7 +344,7 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
                 if (parsed.items == null) throw Exception("Failed to load items, please log in through webview")
                 parsed.items.forEachIndexed { index, it ->
                     if (it.mimeType.startsWith("video")) {
-                        val size = formatBytes(it.fileSize?.toLongOrNull())
+                        val size = it.fileSize?.toLongOrNull()?.let { formatBytes(it) } ?: ""
                         val itemNumberRegex = """ - (?:S\d+E)?(\d+)""".toRegex()
                         val pathName = if (preferences.trimEpisodeInfo) path.trimInfo() else path
 
@@ -492,7 +495,7 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
                         url = LinkData(
                             "https://drive.google.com/uc?id=${it.id}",
                             "single",
-                            LinkDataInfo(it.title, formatBytes(it.fileSize?.toLongOrNull()) ?: ""),
+                            LinkDataInfo(it.title, it.fileSize?.toLongOrNull()?.let { formatBytes(it) } ?: ""),
                         ).toJsonString()
                         thumbnail_url = ""
                     },
@@ -541,15 +544,15 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
         return newString.trim()
     }
 
-    private fun formatBytes(bytes: Long?): String? {
-        val units = arrayOf("B", "KB", "MB", "GB", "TB", "PB", "EB")
-        var value = bytes?.toDouble() ?: return null
-        var i = 0
-        while (value >= 1024 && i < units.size - 1) {
-            value /= 1024
-            i++
+    private fun formatBytes(bytes: Long): String {
+        return when {
+            bytes >= 1_000_000_000 -> "%.2f GB".format(bytes / 1_000_000_000.0)
+            bytes >= 1_000_000 -> "%.2f MB".format(bytes / 1_000_000.0)
+            bytes >= 1_000 -> "%.2f KB".format(bytes / 1_000.0)
+            bytes > 1 -> "$bytes bytes"
+            bytes == 1L -> "$bytes byte"
+            else -> ""
         }
-        return String.format("%.1f %s", value, units[i])
     }
 
     private fun getCookie(url: String): String {
