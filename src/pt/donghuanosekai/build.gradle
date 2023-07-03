@@ -1,0 +1,18 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
+}
+
+ext {
+    extName = 'Donghua no Sekai'
+    pkgNameSuffix = 'pt.donghuanosekai'
+    extClass = '.DonghuaNoSekai'
+    extVersionCode = 1
+}
+
+dependencies {
+    implementation(project(":lib-streamsb-extractor"))
+}
+
+apply from: "$rootDir/common.gradle"
