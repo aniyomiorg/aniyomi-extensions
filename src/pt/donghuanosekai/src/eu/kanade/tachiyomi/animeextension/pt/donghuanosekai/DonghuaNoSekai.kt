@@ -146,8 +146,30 @@ class DonghuaNoSekai : ParsedAnimeHttpSource() {
     }
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        throw UnsupportedOperationException("Not used.")
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        val doc = getRealDoc(document)
+        setUrlWithoutDomain(doc.location())
+        thumbnail_url = doc.selectFirst("div.poster > img")!!.attr("src")
+        val infos = doc.selectFirst("div.dados")!!
+
+        title = infos.selectFirst("h1")!!.text()
+        genre = infos.select("div.genresL > a").eachText().joinToString()
+        artist = infos.selectFirst("ul > li:contains(Estúdio)")?.ownText()
+        author = infos.selectFirst("ul > li:contains(Fansub)")?.ownText()
+        status = infos.selectFirst("ul > li:contains(Status)")?.ownText().parseStatus()
+
+        description = buildString {
+            doc.select("div.articleContent:has(div:contains(Sinopse)) > div.context > p")
+                .eachText()
+                .joinToString("\n\n")
+                .let(::append)
+
+            append("\n")
+
+            infos.select("ul.b_flex > li")
+                .eachText()
+                .forEach { append("\n$it") }
+        }
     }
 
     // ============================== Episodes ==============================
@@ -179,6 +201,21 @@ class DonghuaNoSekai : ParsedAnimeHttpSource() {
     // ============================= Utilities ==============================
     private inline fun <reified T> Response.parseAs(): T {
         return use { it.body.string() }.let(json::decodeFromString)
+    }
+
+    private fun getRealDoc(document: Document): Document {
+        return document.selectFirst("div.controles li.list-ep > a")?.let { link ->
+            client.newCall(GET(link.attr("href")))
+                .execute()
+                .use { it.asJsoup() }
+        } ?: document
+    }
+
+    private fun String?.parseStatus() = when (this?.trim()?.lowercase()) {
+        "completo" -> SAnime.COMPLETED
+        "em lançamento" -> SAnime.ONGOING
+        "em pausa" -> SAnime.ON_HIATUS
+        else -> SAnime.UNKNOWN
     }
 
     companion object {
