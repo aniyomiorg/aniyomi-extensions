@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.donghuanosekai
 
+import eu.kanade.tachiyomi.animeextension.pt.donghuanosekai.extractors.DonghuaNoSekaiExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -10,6 +11,10 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -193,7 +198,16 @@ class DonghuaNoSekai : ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        throw UnsupportedOperationException("Not used.")
+        val doc = response.use { it.asJsoup() }
+        val extractor = DonghuaNoSekaiExtractor(client, headers)
+
+        return doc.select("div.slideItem[data-video-url]").parallelMap {
+            runCatching {
+                client.newCall(GET(it.attr("data-video-url"), headers)).execute()
+                    .use { it.asJsoup() }
+                    .let(extractor::videosFromDocument)
+            }.getOrElse { emptyList() }
+        }.flatten()
     }
 
     override fun videoListSelector(): String {
@@ -232,6 +246,11 @@ class DonghuaNoSekai : ParsedAnimeHttpSource() {
         return runCatching { DATE_FORMATTER.parse(trim())?.time }
             .getOrNull() ?: 0L
     }
+
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 
     companion object {
         const val PREFIX_SEARCH = "id:"
