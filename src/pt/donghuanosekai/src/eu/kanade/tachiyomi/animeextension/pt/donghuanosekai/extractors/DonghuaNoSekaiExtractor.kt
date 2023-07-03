@@ -57,7 +57,16 @@ class DonghuaNoSekaiExtractor(
                         .drop(1)
                         .map {
                             val url = it.substringAfter("file: \"").substringBefore('"')
-                            val quality = it.substringAfter("label: \"").substringBefore('"')
+                            val quality = it.substringAfter("label: \"")
+                                .substringBefore('"')
+                                .let { label ->
+                                    when (label) {
+                                        "SD" -> "480p"
+                                        "HD" -> "720p"
+                                        "FHD", "FULLHD" -> "1080p"
+                                        else -> label
+                                    }
+                                }
                             Video(url, "$playerName - $quality", url, headers)
                         }
                 }
