@@ -25,7 +25,6 @@ import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -71,7 +70,6 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun fetchPopularAnime(page: Int): Observable<AnimesPage> = Observable.just(parsePage(popularAnimeRequest(page), page))
 
     override fun popularAnimeRequest(page: Int): Request {
-        Log.i("SOMETHING", headers.toString())
         require(!baseUrlInternal.isNullOrEmpty()) { "Enter drive path(s) in extension settings." }
 
         val match = DRIVE_FOLDER_REGEX.matchEntire(baseUrlInternal!!)!!
