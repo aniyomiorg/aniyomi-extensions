@@ -535,9 +535,9 @@ class GoogleDriveIndex : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun formatFileSize(bytes: Long): String {
         return when {
-            bytes >= 1000000000 -> "%.2f GB".format(bytes / 1000000000.0)
-            bytes >= 100000 -> "%.2f MB".format(bytes / 1000000.0)
-            bytes >= 1000 -> "%.2f KB".format(bytes / 1000.0)
+            bytes >= 1_000_000_000 -> "%.2f GB".format(bytes / 1_000_000_000.0)
+            bytes >= 1_000_000 -> "%.2f MB".format(bytes / 1_000_000.0)
+            bytes >= 1_000 -> "%.2f KB".format(bytes / 1_000.0)
             bytes > 1 -> "$bytes bytes"
             bytes == 1L -> "$bytes byte"
             else -> ""
