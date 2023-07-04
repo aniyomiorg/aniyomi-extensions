@@ -36,7 +36,7 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Wcofun"
 
-    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://www.wcofun.com")!! }
+    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://www.wcofun.org")!! }
 
     override val lang = "en"
 
@@ -236,9 +236,9 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val domainPref = ListPreference(screen.context).apply {
             key = "preferred_domain"
             title = "Preferred domain (requires app restart)"
-            entries = arrayOf("www.wcofun.com", "www.wcofun.net", "www.wcofun.tv")
-            entryValues = arrayOf("https://www.wcofun.com", "https://www.wcofun.net", "https://www.wcofun.tv")
-            setDefaultValue("https://www.wcofun.com")
+            entries = arrayOf("www.wcofun.org")
+            entryValues = arrayOf("https://www.wcofun.org")
+            setDefaultValue("https://www.wcofun.org")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
