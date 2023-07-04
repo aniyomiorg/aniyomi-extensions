@@ -17,7 +17,6 @@ import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -45,11 +44,7 @@ class Aniking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "div.item-container div.item"
 
-    override fun popularAnimeRequest(page: Int): Request {
-        val interceptor = client.newBuilder().addInterceptor(CloudflareInterceptor()).build()
-        val headers = interceptor.newCall(GET(baseUrl)).execute().request.headers
-        return GET("$baseUrl/page/$page/?order=rating", headers = headers)
-    }
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/page/$page/?order=rating", headers = headers)
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -63,19 +58,6 @@ class Aniking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector(): String = "footer"
 
     // episodes
-
-    override fun episodeListRequest(anime: SAnime): Request {
-        val interceptor = client.newBuilder().addInterceptor(CloudflareInterceptor()).build()
-        val headers = interceptor.newCall(
-            GET(
-                "$baseUrl${anime.url}",
-                headers =
-                Headers.headersOf("user-agent", "Mozilla/5.0 (Linux; Android 12; SM-T870 Build/SP2A.220305.013; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/106.0.5249.126 Safari/537.36"),
-            ),
-        )
-            .execute().request.headers
-        return GET("$baseUrl${anime.url}", headers = headers)
-    }
 
     override fun episodeListSelector() = throw Exception("not used")
 
@@ -276,19 +258,6 @@ class Aniking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // Details
-
-    override fun animeDetailsRequest(anime: SAnime): Request {
-        val interceptor = client.newBuilder().addInterceptor(CloudflareInterceptor()).build()
-        val headers = interceptor.newCall(
-            GET(
-                "$baseUrl${anime.url}",
-                headers =
-                Headers.headersOf("user-agent", "Mozilla/5.0 (Linux; Android 12; SM-T870 Build/SP2A.220305.013; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/106.0.5249.126 Safari/537.36"),
-            ),
-        )
-            .execute().request.headers
-        return GET("$baseUrl${anime.url}", headers = headers)
-    }
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
