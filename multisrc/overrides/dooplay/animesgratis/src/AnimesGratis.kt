@@ -18,6 +18,10 @@ class AnimesGratis : DooPlay(
     "Animes Grátis",
     "https://animesgratis.org",
 ) {
+    override val client by lazy {
+        super.client.newBuilder().addInterceptor(VrfInterceptor()).build()
+    }
+
     // ============================== Popular ===============================
     override fun popularAnimeSelector() = "div.imdbRating > article > a"
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/animes/")
@@ -71,6 +75,6 @@ class AnimesGratis : DooPlay(
     }
 
     // ============================== Filters ===============================
-    override fun genresListRequest() = GET("$baseUrl/generos")
+    override fun genresListRequest() = GET("$baseUrl/generos/")
     override fun genresListSelector() = "ul.generos li > a"
 }
