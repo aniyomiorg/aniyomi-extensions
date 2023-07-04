@@ -2,10 +2,10 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 ext {
-    extName = 'zoro.to (experimental)'
+    extName = 'aniwatch.to'
     pkgNameSuffix = 'en.zoro'
     extClass = '.Zoro'
-    extVersionCode = 29
+    extVersionCode = 30
     libVersion = '13'
 }
 

@@ -45,7 +45,7 @@ import java.lang.Exception
 
 class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "zoro.to (experimental)"
+    override val name = "aniwatch.to"
 
     override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
 
@@ -456,9 +456,9 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         private const val PREF_DOMAIN_KEY = "preferred_domain"
         private const val PREF_DOMAIN_TITLE = "Preferred domain (requires app restart)"
-        private const val PREF_DOMAIN_DEFAULT = "https://zoro.to"
-        private val PREF_DOMAIN_ENTRIES = arrayOf("zoro.to", "zoro.moe", "zoro.sx", "zoro.pm", "sanji.to")
-        private val PREF_DOMAIN_ENTRY_VALUES = arrayOf("https://zoro.to", "https://zoro.moe", "https://zoro.sx", "https://zoro.pm", "https://sanji.to")
+        private const val PREF_DOMAIN_DEFAULT = "https://aniwatch.to"
+        private val PREF_DOMAIN_ENTRIES = arrayOf("aniwatch.to")
+        private val PREF_DOMAIN_ENTRY_VALUES = arrayOf("https://aniwatch.to")
 
         private const val PREF_SUB_KEY = "preferred_subLang"
         private const val PREF_SUB_TITLE = "Preferred sub language"

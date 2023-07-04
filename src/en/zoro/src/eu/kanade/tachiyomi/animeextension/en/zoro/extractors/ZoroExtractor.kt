@@ -17,9 +17,9 @@ class ZoroExtractor(private val client: OkHttpClient) {
         .build()
 
     companion object {
-        private const val SERVER_URL = "https://rapid-cloud.co"
-        private const val JS_URL = SERVER_URL + "/js/player/prod/e6-player.min.js"
-        private const val SOURCES_URL = SERVER_URL + "/ajax/embed-6/getSources?id="
+        private const val SERVER_URL = "https://megacloud.tv"
+        private const val JS_URL = SERVER_URL + "/js/player/a/prod/e1-player.min.js"
+        private const val SOURCES_URL = SERVER_URL + "/embed-2/ajax/e-1/getSources?id="
     }
 
     // This will create a lag of 1~3s at the initialization of the class, but the
@@ -31,7 +31,7 @@ class ZoroExtractor(private val client: OkHttpClient) {
     init { cachedJs }
 
     fun getSourcesJson(url: String): String? {
-        val id = url.substringAfter("/embed-6/", "")
+        val id = url.substringAfter("/e-1/", "")
             .substringBefore("?", "").ifEmpty { return null }
         val srcRes = newClient.newCall(GET(SOURCES_URL + id, cache = cacheControl))
             .execute()
