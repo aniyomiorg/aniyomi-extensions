@@ -2,9 +2,10 @@ package eu.kanade.tachiyomi.animeextension.pt.animesvision.extractors
 
 import eu.kanade.tachiyomi.animesource.model.Video
 class GlobalVisionExtractor {
-
-    private val REGEX_URL = Regex(""""file":"(\S+?)",.*?"label":"(.*?)"""")
-    private val PREFIX = "GlobalVision"
+    companion object {
+        private val REGEX_URL = Regex(""""file":"(\S+?)",.*?"label":"(.*?)"""")
+        private const val PREFIX = "GlobalVision"
+    }
 
     fun videoListFromHtml(html: String): List<Video> {
         return REGEX_URL.findAll(html).map {

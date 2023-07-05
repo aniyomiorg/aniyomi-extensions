@@ -18,29 +18,41 @@ object AVFilters {
     open class CheckBoxFilterList(name: String, values: List<CheckBox>) : AnimeFilter.Group<AnimeFilter.CheckBox>(name, values)
     private class CheckBoxVal(name: String, state: Boolean = false) : AnimeFilter.CheckBox(name, state)
 
-    private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return this.filterIsInstance<R>().joinToString("") {
-            (it as QueryPartFilter).toQueryPart()
-        }
+    private inline fun <reified R> AnimeFilterList.getFirst(): R {
+        return first { it is R } as R
     }
 
-    class TypeFilter : QueryPartFilter("Tipo", AVFiltersData.types)
-    class StatusFilter : QueryPartFilter("Status", AVFiltersData.status)
-    class LanguageFilter : QueryPartFilter("Idioma", AVFiltersData.languages)
-    class SortFilter : QueryPartFilter("Ordenar", AVFiltersData.orders)
-    class InitialYearFilter : QueryPartFilter("Ano Inicial", AVFiltersData.initialYear)
-    class LastYearFilter : QueryPartFilter("Ano Final", AVFiltersData.lastYear)
-    class FansubFilter : QueryPartFilter("Fansubs", AVFiltersData.fansubs)
-    class SeasonFilter : QueryPartFilter("Temporada", AVFiltersData.seasons)
-    class StudioFilter : QueryPartFilter("Estúdio", AVFiltersData.studios)
-    class ProducerFilter : QueryPartFilter("Produtora", AVFiltersData.producers)
+    private inline fun <reified R> AnimeFilterList.parseCheckbox(
+        options: Array<Pair<String, String>>,
+    ): String {
+        return (getFirst<R>() as CheckBoxFilterList).state
+            .filter { it.state }
+            .map { checkbox -> options.find { it.first == checkbox.name }!!.second }
+            .filter(String::isNotBlank)
+            .joinToString(",")
+    }
+
+    private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
+        return (getFirst<R>() as QueryPartFilter).toQueryPart()
+    }
+
+    class TypeFilter : QueryPartFilter("Tipo", AVFiltersData.TYPES)
+    class StatusFilter : QueryPartFilter("Status", AVFiltersData.STATUS)
+    class LanguageFilter : QueryPartFilter("Idioma", AVFiltersData.LANGUAGES)
+    class SortFilter : QueryPartFilter("Ordenar", AVFiltersData.ORDERS)
+    class InitialYearFilter : QueryPartFilter("Ano Inicial", AVFiltersData.INITIAL_YEAR)
+    class LastYearFilter : QueryPartFilter("Ano Final", AVFiltersData.LAST_YEAR)
+    class FansubFilter : QueryPartFilter("Fansubs", AVFiltersData.FANSUBS)
+    class SeasonFilter : QueryPartFilter("Temporada", AVFiltersData.SEASONS)
+    class StudioFilter : QueryPartFilter("Estúdio", AVFiltersData.STUDIOS)
+    class ProducerFilter : QueryPartFilter("Produtora", AVFiltersData.PRODUCERS)
 
     class GenresFilter : CheckBoxFilterList(
         "Gêneros",
-        AVFiltersData.genres.map { CheckBoxVal(it.first, false) },
+        AVFiltersData.GENRES.map { CheckBoxVal(it.first, false) },
     )
 
-    val filterList = AnimeFilterList(
+    val FILTER_LIST get() = AnimeFilterList(
         TypeFilter(),
         StatusFilter(),
         LanguageFilter(),
@@ -71,15 +83,6 @@ object AVFilters {
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
         if (filters.isEmpty()) return FilterSearchParams()
 
-        val genres: String = filters.filterIsInstance<GenresFilter>()
-            .mapNotNull { filter ->
-                filter.state.mapNotNull { format ->
-                    if (format.state) {
-                        AVFiltersData.genres.find { it.first == format.name }!!.second
-                    } else { null }
-                }.joinToString(",")
-            }.joinToString("")
-
         return FilterSearchParams(
             filters.asQueryPart<TypeFilter>(),
             filters.asQueryPart<StatusFilter>(),
@@ -91,15 +94,14 @@ object AVFilters {
             filters.asQueryPart<SeasonFilter>(),
             filters.asQueryPart<StudioFilter>(),
             filters.asQueryPart<ProducerFilter>(),
-            genres,
+            filters.parseCheckbox<GenresFilter>(AVFiltersData.GENRES),
         )
     }
 
     private object AVFiltersData {
-
-        val every = Pair("Todos", "")
-        val types = arrayOf(
-            every,
+        val EVERY = Pair("Todos", "")
+        val TYPES = arrayOf(
+            EVERY,
             Pair("Animes", "1"),
             Pair("Filmes", "2"),
             Pair("Doramas", "4"),
@@ -107,20 +109,20 @@ object AVFilters {
             Pair("Live Actions", "6"),
         )
 
-        val status = arrayOf(
-            every,
+        val STATUS = arrayOf(
+            EVERY,
             Pair("Finalizado", "1"),
             Pair("Sendo exibido", "2"),
             Pair("Ainda não exibido", "3"),
         )
 
-        val languages = arrayOf(
-            every,
+        val LANGUAGES = arrayOf(
+            EVERY,
             Pair("Legendados", "1"),
             Pair("Dublados", "2"),
         )
 
-        val orders = arrayOf(
+        val ORDERS = arrayOf(
             Pair("Padrão", ""),
             Pair("Adicionado Recentemente", "adicionado_recentemente"),
             Pair("Atualizado Recentemente", "atualizado_recentemente"),
@@ -128,14 +130,14 @@ object AVFilters {
             Pair("Mais visualizados", "mais_visualizados"),
         )
 
-        val initialYear = (1917..2023).map {
+        val INITIAL_YEAR = (1917..2023).map {
             Pair(it.toString(), it.toString())
         }.toTypedArray()
 
-        val lastYear = initialYear.reversed().toTypedArray()
+        val LAST_YEAR = INITIAL_YEAR.reversed().toTypedArray()
 
-        val seasons = arrayOf(
-            every,
+        val SEASONS = arrayOf(
+            EVERY,
             Pair("Inverno 2023", "164"),
             Pair("Inverno 2022", "157"),
             Pair("Primavera 2022", "159"),
@@ -287,8 +289,9 @@ object AVFilters {
             Pair("Inverno 1978", "16"),
             Pair("Outono 1978", "17"),
         )
-        val fansubs = arrayOf(
-            every,
+
+        val FANSUBS = arrayOf(
+            EVERY,
             Pair("AMA", "ama"),
             Pair("ANSK", "ansk"),
             Pair("Absolute", "absolute"),
@@ -314,8 +317,8 @@ object AVFilters {
             Pair("SubVision", "subvision"),
         )
 
-        val studios = arrayOf(
-            every,
+        val STUDIOS = arrayOf(
+            EVERY,
             Pair("3xCube", "329"),
             Pair("8bit", "75"),
             Pair("A-1 Pictures", "39"),
@@ -662,8 +665,8 @@ object AVFilters {
             Pair("Zexcs", "162"),
         )
 
-        val producers = arrayOf(
-            every,
+        val PRODUCERS = arrayOf(
+            EVERY,
             Pair("12 Diary Holders", "67"),
             Pair("1st PLACE", "432"),
             Pair("3xCube", "482"),
@@ -1444,7 +1447,7 @@ object AVFilters {
             Pair("ZOOM ENTERPRISE", "667"),
         )
 
-        val genres = arrayOf(
+        val GENRES = arrayOf(
             Pair("Amor de meninas", "amor-de-meninas"),
             Pair("Amor de meninos", "amor-de-meninos"),
             Pair("Artes Marciais", "artes-marciais"),

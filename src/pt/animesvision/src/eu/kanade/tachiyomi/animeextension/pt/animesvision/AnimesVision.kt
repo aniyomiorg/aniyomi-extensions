@@ -31,7 +31,6 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
@@ -40,6 +39,7 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import java.io.IOException
 import java.lang.Exception
 
@@ -53,13 +53,11 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient.newBuilder()
+    override val client = network.cloudflareClient.newBuilder()
         .addInterceptor(::loginInterceptor)
         .build()
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-    }
+    private val json: Json by injectLazy()
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -309,7 +307,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         screen.addPreference(videoQualityPref)
     }
 
-    override fun getFilterList(): AnimeFilterList = AVFilters.filterList
+    override fun getFilterList(): AnimeFilterList = AVFilters.FILTER_LIST
 
     // ============================= Utilities ==============================
     private fun loginInterceptor(chain: Interceptor.Chain): Response {
