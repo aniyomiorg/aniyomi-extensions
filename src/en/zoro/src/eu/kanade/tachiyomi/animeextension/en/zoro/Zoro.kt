@@ -45,9 +45,11 @@ import java.lang.Exception
 
 class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "aniwatch.to"
+    override val name = "AniWatch.to"
 
-    override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
+    override val baseUrl = "https://aniwatch.to"
+
+    override val id = 6706411382606718900L
 
     override val lang = "en"
 
@@ -328,21 +330,6 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val domainPref = ListPreference(screen.context).apply {
-            key = PREF_DOMAIN_KEY
-            title = PREF_DOMAIN_TITLE
-            entries = PREF_DOMAIN_ENTRIES
-            entryValues = PREF_DOMAIN_ENTRY_VALUES
-            setDefaultValue(PREF_DOMAIN_DEFAULT)
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
@@ -400,7 +387,6 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
-        screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
         screen.addPreference(epTypePref)
         screen.addPreference(subLangPref)
@@ -454,12 +440,6 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_TYPE_TITLE = "Preferred episode type/mode"
         private val PREF_TYPE_ENTRIES = arrayOf("sub", "dub")
 
-        private const val PREF_DOMAIN_KEY = "preferred_domain"
-        private const val PREF_DOMAIN_TITLE = "Preferred domain (requires app restart)"
-        private const val PREF_DOMAIN_DEFAULT = "https://aniwatch.to"
-        private val PREF_DOMAIN_ENTRIES = arrayOf("aniwatch.to")
-        private val PREF_DOMAIN_ENTRY_VALUES = arrayOf("https://aniwatch.to")
-
         private const val PREF_SUB_KEY = "preferred_subLang"
         private const val PREF_SUB_TITLE = "Preferred sub language"
         private val PREF_SUB_ENTRIES = arrayOf(
@@ -471,6 +451,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "Italian",
             "Japanese",
             "Russian",
+            "Arabic",
         )
 
         private const val MARK_FILLERS_KEY = "mark_fillers"
