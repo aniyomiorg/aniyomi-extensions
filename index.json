@@ -1925,21 +1925,21 @@
     ]
   },
   {
-    "name": "Aniyomi: zoro.to (experimental)",
+    "name": "Aniyomi: AniWatch.to",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.zoro",
-    "apk": "aniyomi-en.zoro-v13.29.apk",
+    "apk": "aniyomi-en.zoro-v13.30.apk",
     "lang": "en",
-    "code": 29,
-    "version": "13.29",
+    "code": 30,
+    "version": "13.30",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
     "sources": [
       {
-        "name": "zoro.to (experimental)",
+        "name": "AniWatch.to",
         "lang": "en",
         "id": "6706411382606718900",
-        "baseUrl": "https://zoro.to",
+        "baseUrl": "https://aniwatch.to",
         "versionId": 1,
         "hasCloudflare": 1
       }
