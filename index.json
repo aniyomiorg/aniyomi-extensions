@@ -604,10 +604,10 @@
   {
     "name": "Aniyomi: Aniking",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.aniking",
-    "apk": "aniyomi-de.aniking-v13.12.apk",
+    "apk": "aniyomi-de.aniking-v13.13.apk",
     "lang": "de",
-    "code": 12,
-    "version": "13.12",
+    "code": 13,
+    "version": "13.13",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3114,10 +3114,10 @@
   {
     "name": "Aniyomi: Animes Grátis",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesgratis",
-    "apk": "aniyomi-pt.animesgratis-v13.1.apk",
+    "apk": "aniyomi-pt.animesgratis-v13.2.apk",
     "lang": "pt-BR",
-    "code": 1,
-    "version": "13.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3213,6 +3213,27 @@
         "baseUrl": "https://api2.animestc.com",
         "versionId": 1,
         "hasCloudflare": 0
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: AnimesVision",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesvision",
+    "apk": "aniyomi-pt.animesvision-v13.17.apk",
+    "lang": "pt-BR",
+    "code": 17,
+    "version": "13.17",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimesVision",
+        "lang": "pt-BR",
+        "id": "7211886220891821251",
+        "baseUrl": "https://animes.vision",
+        "versionId": 1,
+        "hasCloudflare": 1
       }
     ]
   },
