@@ -25,7 +25,7 @@ import java.lang.Exception
 class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val name = "Kuramanime"
 
-    override val baseUrl = "https://kuramanime.art"
+    override val baseUrl = "https://kuramanime.xyz"
 
     override val lang = "id"
 
