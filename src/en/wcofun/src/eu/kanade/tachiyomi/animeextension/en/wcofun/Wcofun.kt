@@ -36,7 +36,7 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Wcofun"
 
-    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://www.wcofun.com")!! }
+    override val baseUrl = "https://www.wcofun.org"
 
     override val lang = "en"
 
@@ -233,21 +233,6 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesSelector(): String = throw Exception("Not used")
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val domainPref = ListPreference(screen.context).apply {
-            key = "preferred_domain"
-            title = "Preferred domain (requires app restart)"
-            entries = arrayOf("www.wcofun.com", "www.wcofun.net", "www.wcofun.tv")
-            entryValues = arrayOf("https://www.wcofun.com", "https://www.wcofun.net", "https://www.wcofun.tv")
-            setDefaultValue("https://www.wcofun.com")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
@@ -263,7 +248,6 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
-        screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
     }
 }

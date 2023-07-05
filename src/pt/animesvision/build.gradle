@@ -5,17 +5,17 @@ plugins {
 }
 
 ext {
-    extName = 'Aniking'
-    pkgNameSuffix = 'de.aniking'
-    extClass = '.Aniking'
-    extVersionCode = 13
+    extName = 'AnimesVision'
+    pkgNameSuffix = 'pt.animesvision'
+    extClass = '.AnimesVision'
+    extVersionCode = 17
     libVersion = '13'
 }
 
 dependencies {
+    implementation(project(':lib-voe-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-dood-extractor'))
-    implementation(project(':lib-streamsb-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

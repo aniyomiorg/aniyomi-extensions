@@ -7,20 +7,22 @@ import okhttp3.OkHttpClient
 
 class BloggerExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String, headers: Headers): List<Video> {
-        return client.newCall(GET(url)).execute()
+        return client.newCall(GET(url, headers)).execute()
             .use { it.body.string() }
+            .takeIf { !it.contains("errorContainer") }
+            .let { it ?: return emptyList() }
             .substringAfter("\"streams\":[")
             .substringBefore("]")
             .split("},")
             .map {
-                val url = it.substringAfter("{\"play_url\":\"").substringBefore('"')
+                val videoUrl = it.substringAfter("{\"play_url\":\"").substringBefore('"')
                 val format = it.substringAfter("\"format_id\":").substringBefore("}")
                 val quality = when (format) {
                     "18" -> "360p"
                     "22" -> "720p"
                     else -> "Unknown"
                 }
-                Video(url, quality, url, headers = headers)
+                Video(videoUrl, quality, videoUrl, headers = headers)
             }
     }
 }
