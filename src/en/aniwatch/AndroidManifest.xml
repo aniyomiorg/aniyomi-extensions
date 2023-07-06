@@ -3,7 +3,7 @@
 
     <application>
         <activity
-            android:name=".en.zoro.ZoroUrlActivity"
+            android:name=".en.zoro.AniWatchUrlActivity"
             android:excludeFromRecents="true"
             android:exported="true"
             android:theme="@android:style/Theme.NoDisplay">

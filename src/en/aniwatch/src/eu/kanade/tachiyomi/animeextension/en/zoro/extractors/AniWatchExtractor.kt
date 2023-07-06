@@ -5,7 +5,7 @@ import eu.kanade.tachiyomi.network.GET
 import okhttp3.CacheControl
 import okhttp3.OkHttpClient
 
-class ZoroExtractor(private val client: OkHttpClient) {
+class AniWatchExtractor(private val client: OkHttpClient) {
 
     // Prevent (automatic) caching the .JS file for different episodes, because it
     // changes everytime, and a cached old .js will have a invalid AES password,
