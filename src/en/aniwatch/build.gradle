@@ -4,8 +4,8 @@ apply plugin: 'kotlin-android'
 ext {
     extName = 'AniWatch.to'
     pkgNameSuffix = 'en.zoro'
-    extClass = '.Zoro'
-    extVersionCode = 30
+    extClass = '.AniWatch'
+    extVersionCode = 31
     libVersion = '13'
 }
 

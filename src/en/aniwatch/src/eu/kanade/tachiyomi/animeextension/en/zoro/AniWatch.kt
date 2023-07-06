@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
-import eu.kanade.tachiyomi.animeextension.en.zoro.extractors.ZoroExtractor
+import eu.kanade.tachiyomi.animeextension.en.zoro.extractors.AniWatchExtractor
 import eu.kanade.tachiyomi.animeextension.en.zoro.utils.JSONUtil
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -43,7 +43,7 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 
-class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+class AniWatch : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AniWatch.to"
 
@@ -120,7 +120,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val data = body.substringAfter("\"html\":\"").substringBefore("<script>")
         val unescapedData = JSONUtil.unescape(data)
         val serversHtml = Jsoup.parse(unescapedData)
-        val extractor = ZoroExtractor(client)
+        val extractor = AniWatchExtractor(client)
         val videoList = serversHtml.select("div.server-item")
             .parallelMap { server ->
                 val name = server.text()
@@ -248,7 +248,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     searchAnimeBySlugParse(response, slug)
                 }
         } else {
-            val params = ZoroFilters.getSearchParameters(filters)
+            val params = AniWatchFilters.getSearchParameters(filters)
             client.newCall(searchAnimeRequest(page, query, params))
                 .asObservableSuccess()
                 .map { response ->
@@ -268,7 +268,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun searchAnimeRequest(
         page: Int,
         query: String,
-        filters: ZoroFilters.FilterSearchParams,
+        filters: AniWatchFilters.FilterSearchParams,
     ): Request {
         val url = if (query.isEmpty()) {
             "$baseUrl/filter".toHttpUrlOrNull()!!.newBuilder()
@@ -295,7 +295,7 @@ class Zoro : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return GET(url.build().toString())
     }
 
-    override fun getFilterList(): AnimeFilterList = ZoroFilters.FILTER_LIST
+    override fun getFilterList(): AnimeFilterList = AniWatchFilters.FILTER_LIST
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
