@@ -1381,10 +1381,10 @@
   {
     "name": "Aniyomi: Hstream",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.hstream",
-    "apk": "aniyomi-en.hstream-v13.4.apk",
+    "apk": "aniyomi-en.hstream-v13.5.apk",
     "lang": "en",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1927,10 +1927,10 @@
   {
     "name": "Aniyomi: AniWatch.to",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.zoro",
-    "apk": "aniyomi-en.zoro-v13.30.apk",
+    "apk": "aniyomi-en.zoro-v13.31.apk",
     "lang": "en",
-    "code": 30,
-    "version": "13.30",
+    "code": 31,
+    "version": "13.31",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2610,10 +2610,10 @@
   {
     "name": "Aniyomi: Kuramanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.kuramanime",
-    "apk": "aniyomi-id.kuramanime-v13.6.apk",
+    "apk": "aniyomi-id.kuramanime-v13.7.apk",
     "lang": "id",
-    "code": 6,
-    "version": "13.6",
+    "code": 7,
+    "version": "13.7",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2622,7 +2622,7 @@
         "name": "Kuramanime",
         "lang": "id",
         "id": "4677878836897500878",
-        "baseUrl": "https://kuramanime.art",
+        "baseUrl": "https://kuramanime.xyz",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -2631,10 +2631,10 @@
   {
     "name": "Aniyomi: Kuronime",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.kuronime",
-    "apk": "aniyomi-id.kuronime-v13.5.apk",
+    "apk": "aniyomi-id.kuronime-v13.6.apk",
     "lang": "id",
-    "code": 5,
-    "version": "13.5",
+    "code": 6,
+    "version": "13.6",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2643,7 +2643,7 @@
         "name": "Kuronime",
         "lang": "id",
         "id": "2083695115646974607",
-        "baseUrl": "https://45.12.2.2",
+        "baseUrl": "https://45.12.2.26",
         "versionId": 1,
         "hasCloudflare": 0
       }
