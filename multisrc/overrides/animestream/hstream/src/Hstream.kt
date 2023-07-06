@@ -73,6 +73,8 @@ class Hstream : AnimeStream(
         thumbnail_url = "$baseUrl/images$href/cover.webp"
     }
 
+    override fun searchAnimeNextPageSelector() = "ul.pagination button[rel=next]"
+
     // ============================== Filters ===============================
     override val fetchFilters = false
 
