@@ -40,7 +40,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "EmpireStreaming"
 
-    override val baseUrl = "https://empire-streaming.co"
+    override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
 
     override val lang = "fr"
 
@@ -130,14 +130,14 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun videosFromElement(document: Document, season: Int, ep: Int): List<Video> {
         val videoList = mutableListOf<Video>()
-        val hosterSelection = preferences.getStringSet("hoster_selection", setOf("voe", "streamsb", "dood"))
+        val hosterSelection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
         if (document.select("div.c-w span.ff-fb.tt-u").text().contains("film")) {
             val script = document.select("script:containsData(const result = [)").toString()
             val hosts = script.split("},{")
             hosts.forEach {
                 val hostn = it.substringAfter("\"property\":\"").substringBefore("\",")
                 when {
-                    hostn.contains("voe") && hosterSelection?.contains("voe") == true -> {
+                    hostn.contains("voe") && hosterSelection.contains("voe") -> {
                         val id = it.substringAfter("\"code\":\"").substringBefore("\",")
                         val url = "https://voe.sx/e/$id"
                         val video = VoeExtractor(vclient).videoFromUrl(url)
@@ -146,14 +146,14 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         }
                     }
 
-                    hostn.contains("streamsb") && hosterSelection?.contains("streamsb") == true -> {
+                    hostn.contains("streamsb") && hosterSelection.contains("streamsb") -> {
                         val id = it.substringAfter("\"code\":\"").substringBefore("\",")
                         val url = "https://playersb.com/e/$id"
                         val video = StreamSBExtractor(vclient).videosFromUrl(url, headers, common = false)
                         videoList.addAll(video)
                     }
 
-                    hostn.contains("doodstream") && hosterSelection?.contains("dood") == true -> {
+                    hostn.contains("doodstream") && hosterSelection.contains("dood") -> {
                         val id = it.substringAfter("\"code\":\"").substringBefore("\",")
                         val url = "https://dood.pm/e/$id"
                         val quality = "Dood"
@@ -172,7 +172,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     videos.forEach { videofile ->
                         val hostn = videofile.substringAfter("\"property\":\"").substringBefore("\",")
                         when {
-                            hostn.contains("voe") && hosterSelection?.contains("voe") == true -> {
+                            hostn.contains("voe") && hosterSelection.contains("voe") -> {
                                 val id = videofile.substringAfter("\"code\":\"").substringBefore("\",")
                                 val version = videofile.substringAfter("\"version\":\"").substringBefore("\"")
                                 val quality = "Voe $version"
@@ -183,7 +183,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                 }
                             }
 
-                            hostn.contains("streamsb") && hosterSelection?.contains("streamsb") == true -> {
+                            hostn.contains("streamsb") && hosterSelection.contains("streamsb") -> {
                                 val id = videofile.substringAfter("\"code\":\"").substringBefore("\",")
                                 val quality = videofile.substringAfter("\"version\":\"").substringBefore("\"")
                                 val url = "https://playersb.com/e/$id"
@@ -191,7 +191,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                 videoList.addAll(video)
                             }
 
-                            hostn.contains("doodstream") && hosterSelection?.contains("dood") == true -> {
+                            hostn.contains("doodstream") && hosterSelection.contains("dood") -> {
                                 val id = videofile.substringAfter("\"code\":\"").substringBefore("\",")
                                 val url = "https://dood.pm/e/$id"
                                 val version = videofile.substringAfter("\"version\":\"").substringBefore("\"")
@@ -208,39 +208,10 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val hoster = preferences.getString("preferred_hoster", null)
-        val hosterList = mutableListOf<Video>()
-        val otherList = mutableListOf<Video>()
-        if (hoster != null) {
-            for (video in this) {
-                if (video.url.contains(hoster)) {
-                    hosterList.add(video)
-                } else {
-                    otherList.add(video)
-                }
-            }
-        } else {
-            otherList += this
-        }
-        val newList = mutableListOf<Video>()
-        var preferred = 0
-        for (video in hosterList) {
-            if (hoster?.let { video.quality.contains(it) } == true) {
-                newList.add(preferred, video)
-                preferred++
-            } else {
-                newList.add(video)
-            }
-        }
-        for (video in otherList) {
-            if (hoster?.let { video.quality.contains(it) } == true) {
-                newList.add(preferred, video)
-                preferred++
-            } else {
-                newList.add(video)
-            }
-        }
-        return newList
+        val hoster = preferences.getString(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
+        return sortedWith(
+            compareByDescending { it.url.contains(hoster) },
+        ).reversed()
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -319,12 +290,12 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // Preferences
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val hosterPref = ListPreference(screen.context).apply {
-            key = "preferred_hoster"
-            title = "Hébergeur standard"
-            entries = arrayOf("Voe", "StreamSB", "Dood")
-            entryValues = arrayOf("https://voe.sx", "https://playersb.com", "https://dood")
-            setDefaultValue("https://voe.sx")
+        ListPreference(screen.context).apply {
+            key = PREF_DOMAIN_KEY
+            title = PREF_DOMAIN_TITLE
+            entries = PREF_DOMAIN_ENTRIES
+            entryValues = PREF_DOMAIN_VALUES
+            setDefaultValue(PREF_DOMAIN_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -333,19 +304,55 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        val subSelection = MultiSelectListPreference(screen.context).apply {
-            key = "hoster_selection"
-            title = "Sélectionnez l'hôte"
-            entries = arrayOf("Voe", "StreamSB", "Dood")
-            entryValues = arrayOf("voe", "streamsb", "dood")
-            setDefaultValue(setOf("voe", "streamsb", "dood"))
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_HOSTER_KEY
+            title = PREF_HOSTER_TITLE
+            entries = PREF_HOSTER_ENTRIES
+            entryValues = PREF_HOSTER_VALUES
+            setDefaultValue(PREF_HOSTER_DEFAULT)
+            summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_HOSTER_SELECTION_KEY
+            title = PREF_HOSTER_SELECTION_TITLE
+            entries = PREF_HOSTER_SELECTION_ENTRIES
+            entryValues = PREF_HOSTER_SELECTION_VALUES
+            setDefaultValue(PREF_HOSTER_SELECTION_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                @Suppress("UNCHECKED_CAST")
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
             }
-        }
-        screen.addPreference(hosterPref)
-        screen.addPreference(subSelection)
+        }.also(screen::addPreference)
+    }
+
+    companion object {
+        private const val PREF_DOMAIN_KEY = "preferred_domain"
+        private const val PREF_DOMAIN_TITLE = "Preferred domain (requires app restart)"
+        private const val PREF_DOMAIN_DEFAULT = "https://empire-stream.net"
+        private val PREF_DOMAIN_ENTRIES = arrayOf("https://empire-stream.net", "https://empire-streaming.app")
+        private val PREF_DOMAIN_VALUES = PREF_DOMAIN_ENTRIES
+
+        private const val PREF_HOSTER_KEY = "preferred_hoster"
+        private const val PREF_HOSTER_TITLE = "Hébergeur standard"
+        private const val PREF_HOSTER_DEFAULT = "https://voe.sx"
+        private val PREF_HOSTER_ENTRIES = arrayOf("Voe", "StreamSB", "Dood")
+        private val PREF_HOSTER_VALUES = arrayOf("https://voe.sx", "https://playersb.com", "https://dood")
+
+        private const val PREF_HOSTER_SELECTION_KEY = "hoster_selection"
+        private const val PREF_HOSTER_SELECTION_TITLE = "Sélectionnez l'hôte"
+        private val PREF_HOSTER_SELECTION_ENTRIES = arrayOf("Voe", "StreamSB", "Dood")
+        private val PREF_HOSTER_SELECTION_VALUES = arrayOf("voe", "streamsb", "dood")
+        private val PREF_HOSTER_SELECTION_DEFAULT = setOf("voe", "streamsb", "dood")
     }
 }
