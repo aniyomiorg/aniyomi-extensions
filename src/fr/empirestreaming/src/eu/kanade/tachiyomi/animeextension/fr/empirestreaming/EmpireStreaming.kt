@@ -46,9 +46,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = false
 
-    override val client: OkHttpClient = network.client.newBuilder()
-        .addInterceptor(CloudflareInterceptor())
-        .build()
+    override val client = network.cloudflareClient
 
     private val vclient: OkHttpClient = network.client
 
