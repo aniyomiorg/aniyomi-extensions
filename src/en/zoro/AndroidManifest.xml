@@ -14,7 +14,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="zoro.to"
+                    android:host="aniwatch.to"
                     android:pathPattern="/..*"
                     android:scheme="https" />
             </intent-filter>

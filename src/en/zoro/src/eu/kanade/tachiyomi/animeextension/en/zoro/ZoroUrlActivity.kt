@@ -8,7 +8,7 @@ import android.util.Log
 import kotlin.system.exitProcess
 
 /**
- * Springboard that accepts https://zoro.to/<slug> intents
+ * Springboard that accepts https://aniwatch.to/<slug> intents
  * and redirects them to the main Aniyomi process.
  */
 class ZoroUrlActivity : Activity() {
