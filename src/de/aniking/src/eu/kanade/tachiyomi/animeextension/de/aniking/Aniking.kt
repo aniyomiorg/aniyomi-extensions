@@ -17,7 +17,6 @@ import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -43,77 +42,52 @@ class Aniking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun popularAnimeSelector(): String = "div.item-container div.item"
+    // ============================== Popular ===============================
+    override fun popularAnimeSelector() = "div.item-container div.item > a"
 
-    override fun popularAnimeRequest(page: Int): Request {
-        val interceptor = client.newBuilder().addInterceptor(CloudflareInterceptor()).build()
-        val headers = interceptor.newCall(GET(baseUrl)).execute().request.headers
-        return GET("$baseUrl/page/$page/?order=rating", headers = headers)
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/page/$page/?order=rating", headers = headers)
+
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        thumbnail_url = element.selectFirst("img")!!.attr("data-src")
+        title = element.selectFirst("h2")!!.text()
     }
 
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        val postid = element.attr("id").replace("post-", "")
-        anime.setUrlWithoutDomain(element.select("a").attr("href"))
-        anime.thumbnail_url = element.select("a img").attr("data-src")
-        anime.title = element.select("a h2").text()
-        return anime
-    }
+    override fun popularAnimeNextPageSelector() = "div.pagination i#nextpagination"
 
-    override fun popularAnimeNextPageSelector(): String = "footer"
-
-    // episodes
-
-    override fun episodeListRequest(anime: SAnime): Request {
-        val interceptor = client.newBuilder().addInterceptor(CloudflareInterceptor()).build()
-        val headers = interceptor.newCall(
-            GET(
-                "$baseUrl${anime.url}",
-                headers =
-                Headers.headersOf("user-agent", "Mozilla/5.0 (Linux; Android 12; SM-T870 Build/SP2A.220305.013; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/106.0.5249.126 Safari/537.36"),
-            ),
-        )
-            .execute().request.headers
-        return GET("$baseUrl${anime.url}", headers = headers)
-    }
-
+    // ============================== Episodes ==============================
     override fun episodeListSelector() = throw Exception("not used")
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.asJsoup()
-        val episodeList = mutableListOf<SEpisode>()
-        if (document.select("#movie-js-extra").isNullOrEmpty()) {
-            val episodeElement = document.select("script[id=\"tv-js-after\"]")
-            val episodeString = episodeElement.toString()
-                .substringAfter("var streaming = {").substringBefore("}; var").split(",")
-            episodeString.forEach {
-                val episode = episodeFromString(it)
-                episodeList.add(episode)
-            }
+        val document = response.use { it.asJsoup() }
+        return if (document.selectFirst("#movie-js-extra") == null) {
+            val episodeElement = document.selectFirst("script[id=\"tv-js-after\"]")!!
+            episodeElement.data()
+                .substringAfter("var streaming = {")
+                .substringBefore("}; var")
+                .split(",")
+                .map(::episodeFromString)
+                .reversed()
         } else {
-            val episode = SEpisode.create()
-            episode.name = document.select("h1.entry-title").text()
-            episode.episode_number = 1F
-            episode.setUrlWithoutDomain(document.select("meta[property=\"og:url\"]").attr("content"))
-            episodeList.add(episode)
+            SEpisode.create().apply {
+                name = document.selectFirst("h1.entry-title")!!.text()
+                episode_number = 1F
+                setUrlWithoutDomain(document.location())
+            }.let(::listOf)
         }
-        return episodeList.reversed()
     }
 
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("not Used")
 
-    private fun episodeFromString(string: String): SEpisode {
-        val episode = SEpisode.create()
+    private fun episodeFromString(string: String) = SEpisode.create().apply {
         val season = string.substringAfter("\"s").substringBefore("_")
         val ep = string.substringAfter("_").substringBefore("\":")
-        episode.episode_number = ep.toFloat()
-        episode.name = "Staffel $season Folge $ep"
-        episode.url = (string.replace("\\", "").replace("\"", "").replace("s${season}_$ep:", ""))
-        return episode
+        episode_number = ep.toFloatOrNull() ?: 1F
+        name = "Staffel $season Folge $ep"
+        url = string.substringAfter(":\"").substringBefore('"').replace("\\", "")
     }
 
-    // Video Extractor
-
+    // ============================ Video Links =============================
     override fun videoListRequest(episode: SEpisode): Request {
         if (!episode.url.contains("https://")) {
             return GET("$baseUrl${episode.url}")
@@ -124,127 +98,59 @@ class Aniking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val url = response.request.url.toString()
-        return videosFromElement(url)
-    }
-
-    private fun videosFromElement(url: String): List<Video> {
-        val videoList = mutableListOf<Video>()
-        val hosterSelection = preferences.getStringSet("hoster_selection", setOf("dood", "stape", "streamz", "streamsb"))
-        if (!url.contains(baseUrl)) {
-            when {
-                url.contains("https://dood") && hosterSelection?.contains("dood") == true -> {
-                    val quality = "Doodstream"
-                    val video = try {
-                        DoodExtractor(client).videoFromUrl(url, quality, redirect = false)
-                    } catch (e: Exception) {
-                        null
-                    }
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
-
-                url.contains("https://streamtape") && hosterSelection?.contains("stape") == true -> {
-                    val quality = "Streamtape"
-                    val video = StreamTapeExtractor(client).videoFromUrl(url, quality)
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
-
-                url.contains("https://streamz") && hosterSelection?.contains("streamz") == true -> {
-                    val quality = "StreamZ"
-                    val video = StreamZExtractor(client).videoFromUrl(url, quality)
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
-
-                url.contains("https://viewsb.com") || url.contains("https://watchsb.com") && hosterSelection?.contains("streamsb") == true -> {
-                    val video = try {
-                        StreamSBExtractor(client).videosFromUrl(url, headers)
-                    } catch (e: Exception) {
-                        null
-                    }
-                    if (video != null) {
-                        videoList.addAll(video)
-                    }
-                }
-            }
+        val hosterSelection = preferences.getStringSet(PREF_SELECTION_KEY, PREF_SELECTION_DEFAULT)!!
+        return if (!url.contains(baseUrl)) {
+            videoListFromUrl(url, hosterSelection)
         } else {
-            val document = client.newCall(GET(url)).execute().asJsoup()
-            val elements = document.select("div.multi a")
-            elements.forEach {
-                when {
-                    it.attr("href").contains("https://dood") && hosterSelection?.contains("dood") == true -> {
-                        val quality = "Doodstream"
-                        val video = try {
-                            DoodExtractor(client).videoFromUrl(it.attr("href"), quality, redirect = false)
-                        } catch (e: Exception) {
-                            null
-                        }
-                        if (video != null) {
-                            videoList.add(video)
-                        }
-                    }
-
-                    it.attr("href").contains("https://streamtape") && hosterSelection?.contains("stape") == true -> {
-                        val quality = "Streamtape"
-                        val video = StreamTapeExtractor(client).videoFromUrl(it.attr("href"), quality)
-                        if (video != null) {
-                            videoList.add(video)
-                        }
-                    }
-
-                    it.attr("href").contains("https://streamz") || it.attr("href").contains("https://streamcrypt.net") && hosterSelection?.contains("streamz") == true -> {
-                        if (it.attr("href").contains("https://streamcrypt.net")) {
-                            val zurl = client.newCall(GET(it.attr("href"))).execute().request.url.toString()
-                            val quality = "StreamZ"
-                            val video = StreamZExtractor(client).videoFromUrl(zurl, quality)
-                            if (video != null) {
-                                videoList.add(video)
-                            }
-                        } else {
-                            val quality = "StreamZ"
-                            val video = StreamZExtractor(client).videoFromUrl(it.attr("href"), quality)
-                            if (video != null) {
-                                videoList.add(video)
-                            }
-                        }
-                    }
-
-                    it.attr("href").contains("https://viewsb.com") || url.contains("https://watchsb.com") && hosterSelection?.contains("streamsb") == true -> {
-                        val video = try {
-                            StreamSBExtractor(client).videosFromUrl(it.attr("href"), headers)
-                        } catch (e: Exception) {
-                            null
-                        }
-                        if (video != null) {
-                            videoList.addAll(video)
-                        }
-                    }
-                }
+            val document = response.asJsoup()
+            document.select("div.multi a").flatMap {
+                videoListFromUrl(it.attr("href"), hosterSelection)
             }
         }
-        return videoList.reversed()
+    }
+
+    private fun videoListFromUrl(url: String, hosterSelection: Set<String>): List<Video> {
+        return runCatching {
+            when {
+                "https://dood" in url && "dood" in hosterSelection -> {
+                    DoodExtractor(client)
+                        .videoFromUrl(url, "Doodstream", redirect = false)
+                        ?.let(::listOf)
+                }
+
+                "https://streamtape" in url && "stape" in hosterSelection -> {
+                    StreamTapeExtractor(client).videoFromUrl(url, "Streamtape")
+                        ?.let(::listOf)
+                }
+
+                ("https://streamz" in url || "https://streamcrypt.net" in url) && "streamz" in hosterSelection -> {
+                    val realUrl = when {
+                        "https://streamcrypt.net" in url -> {
+                            client.newCall(GET(url, headers)).execute().use {
+                                it.request.url.toString()
+                            }
+                        }
+                        else -> url
+                    }
+
+                    StreamZExtractor(client).videoFromUrl(realUrl, "StreamZ")
+                        ?.let(::listOf)
+                }
+
+                ("https://viewsb.com" in url || "https://watchsb.com" in url) && "streamsb" in hosterSelection -> {
+                    StreamSBExtractor(client).videosFromUrl(url, headers)
+                }
+
+                else -> null
+            }
+        }.getOrNull() ?: emptyList()
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val hoster = preferences.getString("preferred_hoster", null)
-        if (hoster != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(hoster)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
+        val quality = preferences.getString(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -253,63 +159,34 @@ class Aniking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
-    // Search
-
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a").attr("href"))
-        anime.thumbnail_url = element.select("a img").attr("data-src")
-        anime.title = element.select("a h2").text()
-        return anime
-    }
-
-    override fun searchAnimeNextPageSelector(): String = "footer"
-
-    override fun searchAnimeSelector(): String = "div.item-container div.item"
+    // =============================== Search ===============================
+    // TODO: Implement search filters
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
+    override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
+    override fun searchAnimeSelector() = popularAnimeSelector()
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        if (client.newCall(GET("$baseUrl/page/$page/?s=$query")).execute().code == 404) {
-            throw Exception("Ignorieren")
-        } else {
-            return GET("$baseUrl/page/$page/?s=$query")
-        }
+        return GET("$baseUrl/page/$page/?s=$query", headers)
     }
 
-    // Details
-
-    override fun animeDetailsRequest(anime: SAnime): Request {
-        val interceptor = client.newBuilder().addInterceptor(CloudflareInterceptor()).build()
-        val headers = interceptor.newCall(
-            GET(
-                "$baseUrl${anime.url}",
-                headers =
-                Headers.headersOf("user-agent", "Mozilla/5.0 (Linux; Android 12; SM-T870 Build/SP2A.220305.013; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/106.0.5249.126 Safari/537.36"),
-            ),
-        )
-            .execute().request.headers
-        return GET("$baseUrl${anime.url}", headers = headers)
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        thumbnail_url = document.selectFirst("div.tv-poster img")!!.attr("src")
+        title = document.selectFirst("h1.entry-title")!!.text()
+        genre = document.select("span[itemprop=genre] a").eachText().joinToString()
+        description = document.selectFirst("p.movie-description > span")!!
+            .ownText()
+            .substringBefore("Tags:")
+        author = document.select("div.name a").eachText().joinToString().takeIf(String::isNotBlank)
+        status = parseStatus(document.selectFirst("span.stato")?.text())
     }
 
-    override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
-        anime.thumbnail_url = document.select("div.tv-poster img").attr("src")
-        anime.title = document.select("h1.entry-title").text()
-        anime.genre = document.select("span[itemprop=genre] a").joinToString(", ") { it.text() }
-        anime.description = document.select("p.movie-description").toString()
-            .substringAfter("trama\">").substringBefore("<br>")
-        anime.author = document.select("div.name a").joinToString(", ") { it.text() }
-        anime.status = parseStatus(document.select("span.stato").text())
-        return anime
-    }
-
-    private fun parseStatus(status: String?) = when {
-        status == null -> SAnime.UNKNOWN
-        status.contains("Returning Series", ignoreCase = true) -> SAnime.ONGOING
+    private fun parseStatus(status: String?) = when (status) {
+        "Returning Series" -> SAnime.ONGOING
         else -> SAnime.COMPLETED
     }
 
-    // Latest
-
+    // =============================== Latest ===============================
     override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
 
     override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
@@ -318,15 +195,14 @@ class Aniking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesSelector(): String = throw Exception("Not used")
 
-    // Preferences
-
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val hosterPref = ListPreference(screen.context).apply {
-            key = "preferred_hoster"
-            title = "Standard-Hoster"
-            entries = arrayOf("Streamtape", "Doodstream", "StreamZ", "StreamSB")
-            entryValues = arrayOf("https://streamz.ws", "https://dood", "https://voe.sx", "https://viewsb.com")
-            setDefaultValue("https://streamtape.com")
+        ListPreference(screen.context).apply {
+            key = PREF_HOSTER_KEY
+            title = PREF_HOSTER_TITLE
+            entries = PREF_HOSTER_ENTRIES
+            entryValues = PREF_HOSTER_VALUES
+            setDefaultValue(PREF_HOSTER_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -335,19 +211,33 @@ class Aniking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        val subSelection = MultiSelectListPreference(screen.context).apply {
-            key = "hoster_selection"
-            title = "Hoster auswählen"
-            entries = arrayOf("Streamtape", "Doodstream", "StreamZ", "StreamSB")
-            entryValues = arrayOf("stape", "dood", "streamz", "streamsb")
-            setDefaultValue(setOf("stape", "dood", "streamz", "streamsb"))
+        }.also(screen::addPreference)
+
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_SELECTION_KEY
+            title = PREF_SELECTION_TITLE
+            entries = PREF_SELECTION_ENTRIES
+            entryValues = PREF_SELECTION_VALUES
+            setDefaultValue(PREF_SELECTION_DEFAULT)
 
             setOnPreferenceChangeListener { _, newValue ->
+                @Suppress("UNCHECKED_CAST")
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
             }
-        }
-        screen.addPreference(hosterPref)
-        screen.addPreference(subSelection)
+        }.also(screen::addPreference)
+    }
+
+    companion object {
+        private const val PREF_HOSTER_KEY = "preferred_hoster"
+        private const val PREF_HOSTER_TITLE = "Standard-Hoster"
+        private const val PREF_HOSTER_DEFAULT = "https://streamtape.com"
+        private val PREF_HOSTER_ENTRIES = arrayOf("Streamtape", "Doodstream", "StreamZ", "StreamSB")
+        private val PREF_HOSTER_VALUES = arrayOf("https://streamz.ws", "https://dood", "https://voe.sx", "https://viewsb.com")
+
+        private const val PREF_SELECTION_KEY = "hoster_selection"
+        private const val PREF_SELECTION_TITLE = "Hoster auswählen"
+        private val PREF_SELECTION_ENTRIES = PREF_HOSTER_ENTRIES
+        private val PREF_SELECTION_VALUES = arrayOf("stape", "dood", "streamz", "streamsb")
+        private val PREF_SELECTION_DEFAULT = PREF_SELECTION_VALUES.toSet()
     }
 }

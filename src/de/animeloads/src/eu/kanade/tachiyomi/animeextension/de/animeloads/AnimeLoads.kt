@@ -54,11 +54,7 @@ class AnimeLoads : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "div.row div.col-sm-6 div.panel-body"
 
-    override fun popularAnimeRequest(page: Int): Request {
-        val interceptor = client.newBuilder().addInterceptor(RedirectInterceptor()).build()
-        interceptor.newCall(GET(baseUrl)).execute().headers
-        return GET("$baseUrl/anime-series/page/$page")
-    }
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/anime-series/page/$page")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()

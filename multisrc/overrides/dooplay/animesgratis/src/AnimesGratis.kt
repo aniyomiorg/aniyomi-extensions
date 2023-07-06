@@ -9,6 +9,10 @@ import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.FormBody
 import okhttp3.Response
 import org.jsoup.nodes.Element
@@ -18,6 +22,10 @@ class AnimesGratis : DooPlay(
     "Animes Grátis",
     "https://animesgratis.org",
 ) {
+    override val client by lazy {
+        super.client.newBuilder().addInterceptor(VrfInterceptor()).build()
+    }
+
     // ============================== Popular ===============================
     override fun popularAnimeSelector() = "div.imdbRating > article > a"
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/animes/")
@@ -30,7 +38,7 @@ class AnimesGratis : DooPlay(
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val players = document.select("ul#playeroptionsul li")
-        return players.flatMap(::getPlayerVideos)
+        return players.parallelMap(::getPlayerVideos).flatten()
     }
 
     override val prefQualityValues = arrayOf("360p", "480p", "720p", "1080p")
@@ -71,6 +79,12 @@ class AnimesGratis : DooPlay(
     }
 
     // ============================== Filters ===============================
-    override fun genresListRequest() = GET("$baseUrl/generos")
+    override fun genresListRequest() = GET("$baseUrl/generos/")
     override fun genresListSelector() = "ul.generos li > a"
+
+    // ============================= Utilities ==============================
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 }
