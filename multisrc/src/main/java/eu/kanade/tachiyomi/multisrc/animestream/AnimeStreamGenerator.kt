@@ -13,6 +13,7 @@ class AnimeStreamGenerator : ThemeSourceGenerator {
     override val sources = listOf(
         SingleLang("AnimeXin", "https://animexin.vip", "all", isNsfw = false, overrideVersionCode = 4),
         SingleLang("LMAnime", "https://lmanime.com", "all", isNsfw = false, overrideVersionCode = 2),
+        SingleLang("Hstream", "https://hstream.moe", "en", isNsfw = true, overrideVersionCode = 2),
         SingleLang("RineCloud", "https://rine.cloud", "pt-BR", isNsfw = false),
         SingleLang("Animenosub", "https://animenosub.com", "en", isNsfw = true),
         SingleLang("MiniOppai", "https://minioppai.org", "id", isNsfw = true, overrideVersionCode = 2),
