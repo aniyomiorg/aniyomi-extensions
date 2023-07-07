@@ -5,7 +5,7 @@ ext {
     extName = 'توك توك سينما'
     pkgNameSuffix = 'ar.tuktukcinema'
     extClass = '.Tuktukcinema'
-    extVersionCode = 6
+    extVersionCode = 7
     libVersion = '13'
 }
 
@@ -13,6 +13,8 @@ dependencies {
     implementation(project(':lib-okru-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation(project(':lib-streamtape-extractor'))
+    implementation(project(':lib-vidbom-extractor'))
+    implementation(project(':lib-unpacker'))
 }
 
 apply from: "$rootDir/common.gradle"

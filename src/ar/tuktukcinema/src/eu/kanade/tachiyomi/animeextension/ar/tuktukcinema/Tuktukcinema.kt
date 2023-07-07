@@ -7,7 +7,7 @@ import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.tuktukcinema.extractors.UQLoadExtractor
-import eu.kanade.tachiyomi.animeextension.ar.tuktukcinema.extractors.VidBomExtractor
+import eu.kanade.tachiyomi.animeextension.ar.tuktukcinema.extractors.UpStreamExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -18,6 +18,7 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
@@ -145,12 +146,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     videos.addAll(videosFromURL)
                 }
                 Regex("vidbom|vidshare|govid", RegexOption.IGNORE_CASE).containsMatchIn(text) -> {
-                    val linkSplit = link.split(".")
-                    val finalUrl = if(linkSplit.count() == 2)
-                        link.replace("//","//www.")
-                        else if(linkSplit.count() == 3) "https://www.${linkSplit[1]}.${linkSplit[2]}"
-                        else link
-                    val videosFromURL = VidBomExtractor(client).videosFromUrl(finalUrl)
+                    val videosFromURL = VidBomExtractor(client).videosFromUrl(adjustURL(link))
                     videos.addAll(videosFromURL)
                 }
                 text.contains("dood", ignoreCase = true) ->{
@@ -165,11 +161,22 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val videosFromURL = StreamTapeExtractor(client).videoFromUrl(link)
                     if (videosFromURL != null) videos.add(videosFromURL)
                 }
+                text.contains("upstream", ignoreCase = true) ->{
+                    val videosFromURL = UpStreamExtractor(client).videosFromUrl(adjustURL(link))
+                    videos.addAll(videosFromURL)
+                }
             }
         }
         return videos
     }
 
+    private fun adjustURL(url:String): String {
+        val linkSplit = url.split(".")
+        return if(linkSplit.count() == 2)
+            url.replace("//","//www.")
+        else if(linkSplit.count() == 3) "https://www.${linkSplit[1]}.${linkSplit[2]}"
+        else url
+    }
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", null)
         if (quality != null) {
