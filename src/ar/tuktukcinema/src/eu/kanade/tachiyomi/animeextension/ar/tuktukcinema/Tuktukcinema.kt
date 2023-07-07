@@ -7,7 +7,7 @@ import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.tuktukcinema.extractors.UQLoadExtractor
-import eu.kanade.tachiyomi.animeextension.ar.tuktukcinema.extractors.UpStreamExtractor
+import eu.kanade.tachiyomi.animeextension.ar.tuktukcinema.extractors.UpstreamExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -21,6 +21,10 @@ import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -136,47 +140,49 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val videos = mutableListOf<Video>()
-        document.select(videoListSelector()).forEach { server ->
-            val link = server.attr("data-link")
-            val text = server.text()
-            when{
-                link.contains("ok") -> {
-                    val videosFromURL = OkruExtractor(client).videosFromUrl(link)
-                    videos.addAll(videosFromURL)
-                }
-                Regex("vidbom|vidshare|govid", RegexOption.IGNORE_CASE).containsMatchIn(text) -> {
-                    val videosFromURL = VidBomExtractor(client).videosFromUrl(adjustURL(link))
-                    videos.addAll(videosFromURL)
-                }
-                text.contains("dood", ignoreCase = true) ->{
-                    val videosFromURL = DoodExtractor(client).videoFromUrl(link)
-                    if (videosFromURL != null) videos.add(videosFromURL)
-                }
-                text.contains("uqload", ignoreCase = true) ->{
-                    val videosFromURL = UQLoadExtractor(client).videoFromUrl(link, "Uqload mirror")
-                    if (videosFromURL != null) videos.add(videosFromURL)
-                }
-                text.contains("tape", ignoreCase = true) ->{
-                    val videosFromURL = StreamTapeExtractor(client).videoFromUrl(link)
-                    if (videosFromURL != null) videos.add(videosFromURL)
-                }
-                text.contains("upstream", ignoreCase = true) ->{
-                    val videosFromURL = UpStreamExtractor(client).videosFromUrl(adjustURL(link))
-                    videos.addAll(videosFromURL)
-                }
-            }
-        }
-        return videos
+        return document.select(videoListSelector()).parallelMap {
+            runCatching { extractVideos(it) }.getOrElse { emptyList() }
+        }.flatten()
     }
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 
+    private fun extractVideos(server: Element): List<Video> {
+        val link = server.attr("data-link")
+        val text = server.text()
+        return when {
+            link.contains("ok") -> {
+                OkruExtractor(client).videosFromUrl(link)
+            }
+            Regex("vidbom|vidshare|govid", RegexOption.IGNORE_CASE).containsMatchIn(text) -> {
+                VidBomExtractor(client).videosFromUrl(adjustURL(link))
+            }
+            text.contains("dood", ignoreCase = true) ->{
+                DoodExtractor(client).videoFromUrl(link)?.let(::listOf)
+            }
+            text.contains("uqload", ignoreCase = true) ->{
+               UQLoadExtractor(client).videoFromUrl(link, "Uqload mirror")?.let(::listOf)
+            }
+            text.contains("tape", ignoreCase = true) ->{
+                StreamTapeExtractor(client).videoFromUrl(link)?.let(::listOf)
+            }
+            text.contains("upstream", ignoreCase = true) ->{
+                UpstreamExtractor(client).videoFromUrl(adjustURL(link))
+            }
+            else -> null
+        } ?: emptyList()
+    }
     private fun adjustURL(url:String): String {
         val linkSplit = url.split(".")
-        return if(linkSplit.count() == 2)
-            url.replace("//","//www.")
-        else if(linkSplit.count() == 3) "https://www.${linkSplit[1]}.${linkSplit[2]}"
-        else url
+        return when(linkSplit.count()){
+            2 -> url.replace("//","//www.")
+            3 -> "https://www.${linkSplit[1]}.${linkSplit[2]}"
+            else -> url
+        }
     }
+
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", null)
         if (quality != null) {
