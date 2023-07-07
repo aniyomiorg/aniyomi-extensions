@@ -141,7 +141,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         return document.select(videoListSelector()).parallelMap {
-            runCatching { extractVideos(it) }.getOrElse { emptyList() }
+            runCatching { extractVideos(it.attr("data-link")) }.getOrElse { emptyList() }
         }.flatten()
     }
     private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
@@ -149,38 +149,30 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
 
-    private fun extractVideos(server: Element): List<Video> {
-        val link = server.attr("data-link")
-        val text = server.text()
+    private fun extractVideos(url: String): List<Video> {
         return when {
-            link.contains("ok") -> {
-                OkruExtractor(client).videosFromUrl(link)
+            url.contains("ok") -> {
+                OkruExtractor(client).videosFromUrl(url)
             }
-            Regex("vidbom|vidshare|govid", RegexOption.IGNORE_CASE).containsMatchIn(text) -> {
-                VidBomExtractor(client).videosFromUrl(adjustURL(link))
+            VIDBOM_REGEX.containsMatchIn(url) -> {
+                val finalUrl = VIDBOM_REGEX.find(url)!!.groupValues[0]
+                VidBomExtractor(client).videosFromUrl("https://www.$finalUrl")
             }
-            text.contains("dood", ignoreCase = true) -> {
-                DoodExtractor(client).videoFromUrl(link, redirect = false)?.let(::listOf)
+            DOOD_REGEX.containsMatchIn(url) -> {
+                val finalUrl = DOOD_REGEX.find(url)!!.groupValues[0]
+                DoodExtractor(client).videoFromUrl("https://www.$finalUrl", "Dood mirror", false)?.let(::listOf)
             }
-            text.contains("uqload", ignoreCase = true) -> {
-               UQLoadExtractor(client).videoFromUrl(link, "Uqload mirror")?.let(::listOf)
+            url.contains("uqload") -> {
+               UQLoadExtractor(client).videoFromUrl(url, "Uqload mirror")?.let(::listOf)
             }
-            text.contains("tape", ignoreCase = true) -> {
-                StreamTapeExtractor(client).videoFromUrl(link)?.let(::listOf)
+            url.contains("tape") -> {
+                StreamTapeExtractor(client).videoFromUrl(url)?.let(::listOf)
             }
-            text.contains("upstream", ignoreCase = true) -> {
-                UpStreamExtractor(client).videoFromUrl(adjustURL(link))
+            url.contains("upstream", ignoreCase = true) -> {
+                UpStreamExtractor(client).videoFromUrl(url.replace("//","//www."))
             }
             else -> null
         } ?: emptyList()
-    }
-    private fun adjustURL(url: String): String {
-        val linkSplit = url.split(".")
-        val count = linkSplit.count()
-        return when {
-            (count == 2 || (count == 3 && url.contains(".html"))) -> url.replace("//", "//www.")
-            else -> "https://www.${linkSplit.drop(1).joinToString(".")}"
-        }
     }
 
     override fun List<Video>.sort(): List<Video> {
@@ -342,5 +334,10 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         screen.addPreference(defaultDomain)
         screen.addPreference(videoQualityPref)
+    }
+    companion object {
+        private val VIDBOM_REGEX = Regex("(?:v[aie]d[bp][aoe]?m|myvii?d|govad|segavid|v[aei]{1,2}dshar[er]?)\\.(?:com|net|org|xyz)(?::\\d+)?/(?:embed[/-])?([A-Za-z0-9]+).html")
+        private val DOOD_REGEX = Regex("(do*d(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream))/(?:d|e)/([0-9a-zA-Z]+)")
+
     }
 }
