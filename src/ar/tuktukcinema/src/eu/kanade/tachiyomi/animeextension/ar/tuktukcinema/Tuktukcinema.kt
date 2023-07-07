@@ -6,7 +6,8 @@ import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.ar.tuktukcinema.extractors.MoshahdaExtractor
+import eu.kanade.tachiyomi.animeextension.ar.tuktukcinema.extractors.UQLoadExtractor
+import eu.kanade.tachiyomi.animeextension.ar.tuktukcinema.extractors.VidBomExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -14,9 +15,11 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -135,24 +138,34 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videos = mutableListOf<Video>()
         document.select(videoListSelector()).forEach { server ->
             val link = server.attr("data-link")
-            if (link.contains("moshahda")) {
-                val refererHeaders = Headers.headersOf("referer", response.request.url.toString())
-                val videosFromURL = MoshahdaExtractor(client).videosFromUrl(link, refererHeaders)
-                videos.addAll(videosFromURL)
+            val text = server.text()
+            when{
+                link.contains("ok") -> {
+                    val videosFromURL = OkruExtractor(client).videosFromUrl(link)
+                    videos.addAll(videosFromURL)
+                }
+                Regex("vidbom|vidshare|govid", RegexOption.IGNORE_CASE).containsMatchIn(text) -> {
+                    val linkSplit = link.split(".")
+                    val finalUrl = if(linkSplit.count() == 2)
+                        link.replace("//","//www.")
+                        else if(linkSplit.count() == 3) "https://www.${linkSplit[1]}.${linkSplit[2]}"
+                        else link
+                    val videosFromURL = VidBomExtractor(client).videosFromUrl(finalUrl)
+                    videos.addAll(videosFromURL)
+                }
+                text.contains("dood", ignoreCase = true) ->{
+                    val videosFromURL = DoodExtractor(client).videoFromUrl(link)
+                    if (videosFromURL != null) videos.add(videosFromURL)
+                }
+                text.contains("uqload", ignoreCase = true) ->{
+                    val videosFromURL = UQLoadExtractor(client).videoFromUrl(link, "Uqload mirror")
+                    if (videosFromURL != null) videos.add(videosFromURL)
+                }
+                text.contains("tape", ignoreCase = true) ->{
+                    val videosFromURL = StreamTapeExtractor(client).videoFromUrl(link)
+                    if (videosFromURL != null) videos.add(videosFromURL)
+                }
             }
-            /* else if (link.contains("ok")) {
-                val videosFromURL = OkruExtractor(client).videosFromUrl(link)
-                videos.addAll(videosFromURL)
-            } else if (server.text().contains("vidbom", ignoreCase = true) or server.text().contains("vidshare", ignoreCase = true)) {
-                val videosFromURL = VidBomExtractor(client).videosFromUrl(link)
-                videos.addAll(videosFromURL)
-            } else if (server.text().contains("dood", ignoreCase = true)) {
-                val videosFromURL = DoodExtractor(client).videoFromUrl(link)
-                if (videosFromURL != null) videos.add(videosFromURL)
-            } else if (server.text().contains("uqload", ignoreCase = true)) {
-                val videosFromURL = UQLoadExtractor(client).videoFromUrl(link, "Uqload mirror")
-                if (videosFromURL != null) videos.add(videosFromURL)
-            } */
         }
         return videos
     }
