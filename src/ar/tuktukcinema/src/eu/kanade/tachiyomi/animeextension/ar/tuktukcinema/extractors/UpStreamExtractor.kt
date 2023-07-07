@@ -7,7 +7,7 @@ import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 
-class UpstreamExtractor(private val client: OkHttpClient) {
+class UpStreamExtractor(private val client: OkHttpClient) {
 
     fun videoFromUrl(url: String): List<Video> {
         try {

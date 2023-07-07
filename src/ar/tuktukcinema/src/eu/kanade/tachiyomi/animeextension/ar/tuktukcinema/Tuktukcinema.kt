@@ -7,7 +7,7 @@ import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.tuktukcinema.extractors.UQLoadExtractor
-import eu.kanade.tachiyomi.animeextension.ar.tuktukcinema.extractors.UpstreamExtractor
+import eu.kanade.tachiyomi.animeextension.ar.tuktukcinema.extractors.UpStreamExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -159,25 +159,25 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Regex("vidbom|vidshare|govid", RegexOption.IGNORE_CASE).containsMatchIn(text) -> {
                 VidBomExtractor(client).videosFromUrl(adjustURL(link))
             }
-            text.contains("dood", ignoreCase = true) ->{
+            text.contains("dood", ignoreCase = true) -> {
                 DoodExtractor(client).videoFromUrl(link)?.let(::listOf)
             }
-            text.contains("uqload", ignoreCase = true) ->{
+            text.contains("uqload", ignoreCase = true) -> {
                UQLoadExtractor(client).videoFromUrl(link, "Uqload mirror")?.let(::listOf)
             }
-            text.contains("tape", ignoreCase = true) ->{
+            text.contains("tape", ignoreCase = true) -> {
                 StreamTapeExtractor(client).videoFromUrl(link)?.let(::listOf)
             }
-            text.contains("upstream", ignoreCase = true) ->{
-                UpstreamExtractor(client).videoFromUrl(adjustURL(link))
+            text.contains("upstream", ignoreCase = true) -> {
+                UpStreamExtractor(client).videoFromUrl(adjustURL(link))
             }
             else -> null
         } ?: emptyList()
     }
-    private fun adjustURL(url:String): String {
+    private fun adjustURL(url: String): String {
         val linkSplit = url.split(".")
-        return when(linkSplit.count()){
-            2 -> url.replace("//","//www.")
+        return when (linkSplit.count()) {
+            2 -> url.replace("//", "//www.")
             3 -> "https://www.${linkSplit[1]}.${linkSplit[2]}"
             else -> url
         }
