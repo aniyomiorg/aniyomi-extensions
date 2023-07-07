@@ -176,8 +176,9 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
     private fun adjustURL(url: String): String {
         val linkSplit = url.split(".")
-        return when (linkSplit.count()) {
-            2 -> url.replace("//", "//www.")
+        val count = linkSplit.count()
+        return when {
+            (count == 2 || (count == 3 && url.contains(".html"))) -> url.replace("//", "//www.")
             else -> "https://www.${linkSplit.drop(1).joinToString(".")}"
         }
     }
