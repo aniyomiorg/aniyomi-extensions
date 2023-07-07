@@ -12,8 +12,6 @@ class UpStreamExtractor(private val client: OkHttpClient) {
         val script = doc.selectFirst("script:containsData(sources)")?.data() ?: return emptyList()
         val scriptData = if("eval" in script) JsUnpacker.unpackAndCombine(script)!! else script
         val m3u8 = Regex("sources:\\s*\\[\\{\\s*\\t*file:\\s*[\"']([^\"']+)").find(scriptData)!!.groupValues[1]
-        val qualities = scriptData.substringAfter("'qualityLabels':").substringBefore("},")
-        val quality = qualities.substringAfter(": \"").substringBefore("\"")
-        return Video(m3u8, "Upstream: $quality", m3u8).let(::listOf)
+        return Video(m3u8, "Upstream", m3u8).let(::listOf)
     }
 }
