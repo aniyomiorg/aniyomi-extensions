@@ -812,6 +812,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Movie2k",
+    "pkg": "eu.kanade.tachiyomi.animeextension.de.movie2k",
+    "apk": "aniyomi-de.movie2k-v13.1.apk",
+    "lang": "de",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Movie2k",
+        "lang": "de",
+        "id": "7903273888239611491",
+        "baseUrl": "https://movie2k.skin",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Movie4k",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.movie4k",
     "apk": "aniyomi-de.movie4k-v13.5.apk",
