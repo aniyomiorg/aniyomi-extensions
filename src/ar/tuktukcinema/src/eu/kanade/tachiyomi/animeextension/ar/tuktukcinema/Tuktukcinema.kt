@@ -160,7 +160,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 VidBomExtractor(client).videosFromUrl(adjustURL(link))
             }
             text.contains("dood", ignoreCase = true) -> {
-                DoodExtractor(client).videoFromUrl(link)?.let(::listOf)
+                DoodExtractor(client).videoFromUrl(link, redirect = false)?.let(::listOf)
             }
             text.contains("uqload", ignoreCase = true) -> {
                UQLoadExtractor(client).videoFromUrl(link, "Uqload mirror")?.let(::listOf)
@@ -178,7 +178,7 @@ class Tuktukcinema : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val linkSplit = url.split(".")
         return when (linkSplit.count()) {
             2 -> url.replace("//", "//www.")
-            3 -> "https://www.${linkSplit[1]}.${linkSplit[2]}"
+            3 -> "https://www.${linkSplit.drop(1).joinToString(".")}"
             else -> url
         }
     }
