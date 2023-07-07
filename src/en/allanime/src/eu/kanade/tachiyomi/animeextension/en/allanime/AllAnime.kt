@@ -361,11 +361,22 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                             } ?: emptyList()
                         }
                         sName == "player" -> {
+                            val endPoint = client.newCall(GET("${preferences.siteUrl}/getVersion")).execute()
+                                .parseAs<AllAnimeExtractor.VersionResponse>()
+                                .episodeIframeHead
+
+                            val videoHeaders = headers.newBuilder()
+                                .add("Accept", "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5")
+                                .add("Host", server.sourceUrl.toHttpUrl().host)
+                                .add("Referer", "$endPoint/")
+                                .build()
+
                             listOf(
                                 Video(
                                     server.sourceUrl,
                                     "Original (player ${server.sourceName})",
                                     server.sourceUrl,
+                                    headers = videoHeaders,
                                 ) to server.priority,
                             )
                         }
@@ -428,6 +439,11 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
+
+    private inline fun <reified T> Response.parseAs(transform: (String) -> String = { it }): T {
+        val responseBody = use { transform(it.body.string()) }
+        return json.decodeFromString(responseBody)
+    }
 
     private fun prioritySort(pList: List<Pair<Video, Float>>): List<Video> {
         val prefServer = preferences.prefServer
