@@ -13,6 +13,7 @@ ext {
 dependencies {
     implementation(project(':lib-dood-extractor'))
     implementation(project(':lib-streamtape-extractor'))
+    implementation(project(':lib-mixdrop-extractor'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
 

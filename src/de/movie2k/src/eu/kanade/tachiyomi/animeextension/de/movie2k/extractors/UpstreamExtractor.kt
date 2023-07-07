@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.de.movie2k.extractors
 
+import dev.datlag.jsunpacker.JsUnpacker
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -11,7 +12,7 @@ class UpstreamExtractor(private val client: OkHttpClient) {
     fun videoFromUrl(url: String): MutableList<Video>? {
         try {
             val jsE = client.newCall(GET(url)).execute().asJsoup().selectFirst("script:containsData(eval)")!!.data()
-            val masterUrl = JsUnpacker(jsE).unpack().toString()
+            val masterUrl = JsUnpacker.unpackAndCombine(jsE).toString()
                 .substringAfter("{file:\"").substringBefore("\"}")
             val masterBase = masterUrl.substringBefore("master")
             val masterPlaylist = client.newCall(GET(masterUrl)).execute().body.string()
