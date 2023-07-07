@@ -156,19 +156,24 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 VoeExtractor(client).videoFromUrl(url)?.let(::listOf)
             }
             DOOD_REGEX.containsMatchIn(url) -> {
-                val finalUrl = DOOD_REGEX.find(url)!!.groupValues[0]
-                DoodExtractor(client).videoFromUrl("https://www.$finalUrl", "Dood mirror")?.let(::listOf)
+                DoodExtractor(client).videoFromUrl(url, "Dood mirror")?.let(::listOf)
             }
             VIDBOM_REGEX.containsMatchIn(url) -> {
                 val finalUrl = VIDBOM_REGEX.find(url)!!.groupValues[0]
                 VidBomExtractor(client).videosFromUrl("https://www.$finalUrl.html")
             }
+            STREAMWISH_REGEX.containsMatchIn(url)  -> {
+                val headers = headers.newBuilder()
+                    .set("Referer", url)
+                    .set("Accept-Encoding", "gzip, deflate, br")
+                    .set("Accept-Language", "en-US,en;q=0.5")
+                    .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
+                    .build()
+                val finalUrl = STREAMWISH_REGEX.find(url)!!.groupValues[0]
+                StreamWishExtractor(client).videosFromUrl("https://www.$finalUrl", headers)
+            }
             STREAMSB_REGEX.containsMatchIn(url) -> {
                 StreamSBExtractor(client).videosFromUrl(url, headers)
-            }
-            STREAMWISH_REGEX.containsMatchIn(url)  -> {
-                val finalUrl = STREAMWISH_REGEX.find(url)!!.groupValues[0]
-                StreamWishExtractor(client).videosFromUrl("https://www.$finalUrl")
             }
             else -> null
         } ?: emptyList()
@@ -375,7 +380,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Type("Special", "special1"),
         Type("TV", "tv2"),
 
-    )
+        )
 
     private fun getStatusList() = listOf(
         Status("أختر", ""),
@@ -383,11 +388,11 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Status("مكتمل", "complete"),
         Status("يعرض الان", "%d9%8a%d8%b9%d8%b1%d8%b6-%d8%a7%d9%84%d8%a7%d9%86-1"),
 
-    )
+        )
     companion object {
         private val VIDBOM_REGEX = Regex("(?:v[aie]d[bp][aoe]?m|myvii?d|segavid|v[aei]{1,2}dshar[er]?)\\.(?:com|net|org|xyz)(?::\\d+)?/(?:embed[/-])?([A-Za-z0-9]+)")
         private val STREAMSB_REGEX = Regex("(?:view|watch|embed(?:tv)?|tube|player|cloudemb|japopav|javplaya|p1ayerjavseen|gomovizplay|stream(?:ovies)?|vidmovie|javside|aintahalu|finaltayibin|yahlusubh|taeyabathuna|)?s{0,2}b?(?:embed\\d?|play\\d?|video|fast|full|streams{0,3}|the|speed|l?anh|tvmshow|longvu|arslanrocky|chill|rity|hight|brisk|face|lvturbo|net|one|asian|ani|rapid|sonic|lona)?\\.(?:com|net|org|one|tv|xyz|fun|pro|sbs)")
-        private val DOOD_REGEX = Regex("(do*d(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream))/(?:d|e)/([0-9a-zA-Z]+)")
+        private val DOOD_REGEX = Regex("(do*d(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream))/[de]/([0-9a-zA-Z]+)")
         private val STREAMWISH_REGEX = Regex("((?:streamwish|anime7u|animezd|ajmidyad|khadhnayad|yadmalik|hayaatieadhab)\\.(?:com|to|sbs))/(?:e/|v/|f/)?([0-9a-zA-Z]+)")
     }
 }
