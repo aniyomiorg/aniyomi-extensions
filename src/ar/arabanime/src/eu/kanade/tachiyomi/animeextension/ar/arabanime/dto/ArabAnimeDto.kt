@@ -47,3 +47,11 @@ data class Show(
     val show_episode_count: Int,
     val wallpapaer: String
 )
+@Serializable
+data class Episode(
+    val ep_info: List<EpInfo>
+)
+@Serializable
+data class EpInfo(
+    val stream_servers: List<String>
+)

@@ -7,6 +7,7 @@ import androidx.annotation.RequiresApi
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.arabanime.dto.AnimeItem
+import eu.kanade.tachiyomi.animeextension.ar.arabanime.dto.Episode
 import eu.kanade.tachiyomi.animeextension.ar.arabanime.dto.PopularAnimeResponse
 import eu.kanade.tachiyomi.animeextension.ar.arabanime.dto.ShowItem
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -81,7 +82,24 @@ class ArabAnime: ConfigurableAnimeSource, AnimeHttpSource() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun videoListParse(response: Response): List<Video> {
-        return emptyList()
+        val watchData = response.asJsoup().select("div#datawatch").text()
+        val serversJson = json.decodeFromString<Episode>(String(Base64.getDecoder().decode(watchData)))
+        val selectServer = String(Base64.getDecoder().decode(serversJson.ep_info[0].stream_servers[0]))
+        val watchPage = client.newCall(GET(selectServer)).execute().asJsoup()
+        val videoList = mutableListOf<Video>()
+        watchPage.select("option").forEach {
+            val link = String(Base64.getDecoder().decode(it.attr("data-src")))
+            if (link.contains("www.arabanime.net/embed")){
+                val sources = client.newCall(GET(link)).execute().asJsoup().select("source")
+                sources.forEach { source ->
+                    if(!source.attr("src").contains("static"))
+                        videoList.add(
+                            Video(source.attr("src"),source.attr("label"),source.attr("src"))
+                        )
+                }
+            }
+        }
+        return videoList
     }
 
     override fun List<Video>.sort(): List<Video> {
