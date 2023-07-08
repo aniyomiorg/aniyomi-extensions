@@ -44,7 +44,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "fr"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     override val client = network.cloudflareClient
 
@@ -60,9 +60,9 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Popular ===============================
-    override fun popularAnimeSelector() = "div.block-forme:has(p:contains(Les plus vus)) div.content-card"
-
     override fun popularAnimeRequest(page: Int) = GET(baseUrl, headers)
+
+    override fun popularAnimeSelector() = "div.block-forme:has(p:contains(Les plus vus)) div.content-card"
 
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.selectFirst("a.play")!!.attr("abs:href"))
@@ -71,6 +71,15 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun popularAnimeNextPageSelector() = null
+
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int) = GET(baseUrl, headers)
+
+    override fun latestUpdatesSelector() = "div.block-forme:has(p:contains(Ajout récents)) div.content-card"
+
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
+
+    override fun latestUpdatesNextPageSelector() = null
 
     // episodes
 
@@ -272,16 +281,6 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.status = SAnime.COMPLETED
         return anime
     }
-
-    // Latest
-
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
-
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
-
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
-
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
 
     // Preferences
 
