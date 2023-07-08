@@ -2547,10 +2547,10 @@
   {
     "name": "Aniyomi: EmpireStreaming",
     "pkg": "eu.kanade.tachiyomi.animeextension.fr.empirestreaming",
-    "apk": "aniyomi-fr.empirestreaming-v13.10.apk",
+    "apk": "aniyomi-fr.empirestreaming-v13.11.apk",
     "lang": "fr",
-    "code": 10,
-    "version": "13.10",
+    "code": 11,
+    "version": "13.11",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2559,9 +2559,9 @@
         "name": "EmpireStreaming",
         "lang": "fr",
         "id": "1449801594109278557",
-        "baseUrl": "https://empire-streaming.co",
+        "baseUrl": "https://empire-stream.net",
         "versionId": 1,
-        "hasCloudflare": 0
+        "hasCloudflare": 1
       }
     ]
   },
