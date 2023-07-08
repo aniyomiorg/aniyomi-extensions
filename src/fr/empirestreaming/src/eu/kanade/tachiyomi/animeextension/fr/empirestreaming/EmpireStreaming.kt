@@ -22,6 +22,10 @@ import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
@@ -153,97 +157,37 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         date_upload = obj.date.toDate()
     }
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not Used")
+    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
 
-    // Video Extractor
-
-    override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        val season = response.request.url.toString()
-            .substringAfter("saison=").substringBefore("&").toInt()
-        val ep = response.request.url.toString()
-            .substringAfter("episode=").toInt()
-        return videosFromElement(document, season, ep)
-    }
-
-    private fun videosFromElement(document: Document, season: Int, ep: Int): List<Video> {
-        val videoList = mutableListOf<Video>()
+    // ============================ Video Links =============================
+    // val hosterSelection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
+    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val hosterSelection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
-        if (document.select("div.c-w span.ff-fb.tt-u").text().contains("film")) {
-            val script = document.select("script:containsData(const result = [)").toString()
-            val hosts = script.split("},{")
-            hosts.forEach {
-                val hostn = it.substringAfter("\"property\":\"").substringBefore("\",")
-                when {
-                    hostn.contains("voe") && hosterSelection.contains("voe") -> {
-                        val id = it.substringAfter("\"code\":\"").substringBefore("\",")
-                        val url = "https://voe.sx/e/$id"
-                        val video = VoeExtractor(vclient).videoFromUrl(url)
-                        if (video != null) {
-                            videoList.add(video)
-                        }
-                    }
-
-                    hostn.contains("streamsb") && hosterSelection.contains("streamsb") -> {
-                        val id = it.substringAfter("\"code\":\"").substringBefore("\",")
-                        val url = "https://playersb.com/e/$id"
-                        val video = StreamSBExtractor(vclient).videosFromUrl(url, headers, common = false)
-                        videoList.addAll(video)
-                    }
-
-                    hostn.contains("doodstream") && hosterSelection.contains("dood") -> {
-                        val id = it.substringAfter("\"code\":\"").substringBefore("\",")
-                        val url = "https://dood.pm/e/$id"
-                        val quality = "Dood"
-                        val video = DoodExtractor(vclient).videosFromUrl(url, quality)
-                        videoList.addAll(video)
-                    }
-                }
-            }
-        } else {
-            val script = document.select("script:containsData(const result = {\"1\")").toString()
-            val hosts = script.split("]},{")
-            hosts.forEach { host ->
-                if (host.substringAfter("\"episode\":").substringBefore(",").toInt() == ep && host.substringAfter("\"saison\":").substringBefore(",").toInt() == season) {
-                    val videoarray = host.substringAfter("\"video\":[").substringBefore("],")
-                    val videos = videoarray.split("},{")
-                    videos.forEach { videofile ->
-                        val hostn = videofile.substringAfter("\"property\":\"").substringBefore("\",")
-                        when {
-                            hostn.contains("voe") && hosterSelection.contains("voe") -> {
-                                val id = videofile.substringAfter("\"code\":\"").substringBefore("\",")
-                                val version = videofile.substringAfter("\"version\":\"").substringBefore("\"")
-                                val quality = "Voe $version"
-                                val url = "https://voe.sx/e/$id"
-                                val video = VoeExtractor(vclient).videoFromUrl(url, quality)
-                                if (video != null) {
-                                    videoList.add(video)
-                                }
-                            }
-
-                            hostn.contains("streamsb") && hosterSelection.contains("streamsb") -> {
-                                val id = videofile.substringAfter("\"code\":\"").substringBefore("\",")
-                                val quality = videofile.substringAfter("\"version\":\"").substringBefore("\"")
-                                val url = "https://playersb.com/e/$id"
-                                val video = StreamSBExtractor(vclient).videosFromUrl(url, headers, quality, common = false)
-                                videoList.addAll(video)
-                            }
-
-                            hostn.contains("doodstream") && hosterSelection.contains("dood") -> {
-                                val id = videofile.substringAfter("\"code\":\"").substringBefore("\",")
-                                val url = "https://dood.pm/e/$id"
-                                val version = videofile.substringAfter("\"version\":\"").substringBefore("\"")
-                                val quality = "Dood $version"
-                                val video = DoodExtractor(vclient).videosFromUrl(url, quality)
-                                videoList.addAll(video)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return videoList
+        val videos = episode.url.split(", ").parallelMap {
+            runCatching {
+                val (id, type, hoster) = it.split("|")
+                if (hoster !in hosterSelection) return@parallelMap emptyList()
+                videosFromPath("$id/$type", hoster)
+            }.getOrElse { emptyList() }
+        }.flatten()
+        return Observable.just(videos)
     }
+
+    private fun videosFromPath(path: String, hoster: String): List<Video> {
+        val url = client.newCall(GET("$baseUrl/player_submit/$path", headers)).execute()
+            .use { it.body.string() }
+            .substringAfter("window.location.href = \"")
+            .substringBefore('"')
+
+        return when (hoster) {
+            "doodstream" -> DoodExtractor(vclient).videosFromUrl(url)
+            "voe" -> VoeExtractor(vclient).videoFromUrl(url)?.let(::listOf)
+            "streamsb" -> StreamSBExtractor(vclient).videosFromUrl(url, headers, common = false)
+            else -> null
+        } ?: emptyList()
+    }
+
+    override fun videoListParse(response: Response) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
         val hoster = preferences.getString(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
@@ -315,6 +259,11 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun List<VideoDto>.encode() = joinToString { it.encoded }
 
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
+
     companion object {
         private val DATE_FORMATTER by lazy {
             SimpleDateFormat("yyyy-MM-dd", Locale.US)
@@ -332,10 +281,10 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private val PREF_HOSTER_ENTRIES = arrayOf("Voe", "StreamSB", "Dood")
         private val PREF_HOSTER_VALUES = arrayOf("https://voe.sx", "https://playersb.com", "https://dood")
 
-        private const val PREF_HOSTER_SELECTION_KEY = "hoster_selection"
+        private const val PREF_HOSTER_SELECTION_KEY = "hoster_selection_new"
         private const val PREF_HOSTER_SELECTION_TITLE = "Sélectionnez l'hôte"
         private val PREF_HOSTER_SELECTION_ENTRIES = arrayOf("Voe", "StreamSB", "Dood")
-        private val PREF_HOSTER_SELECTION_VALUES = arrayOf("voe", "streamsb", "dood")
-        private val PREF_HOSTER_SELECTION_DEFAULT = setOf("voe", "streamsb", "dood")
+        private val PREF_HOSTER_SELECTION_VALUES = arrayOf("voe", "streamsb", "doodstream")
+        private val PREF_HOSTER_SELECTION_DEFAULT = setOf("voe", "streamsb", "doodstream")
     }
 }
