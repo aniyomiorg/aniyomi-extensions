@@ -5,7 +5,11 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.fr.empirestreaming.dto.EpisodeDto
+import eu.kanade.tachiyomi.animeextension.fr.empirestreaming.dto.MovieInfoDto
 import eu.kanade.tachiyomi.animeextension.fr.empirestreaming.dto.SearchResultsDto
+import eu.kanade.tachiyomi.animeextension.fr.empirestreaming.dto.SerieEpisodesDto
+import eu.kanade.tachiyomi.animeextension.fr.empirestreaming.dto.VideoDto
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -27,6 +31,9 @@ import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
+import java.text.SimpleDateFormat
+import java.util.Locale
 import kotlin.Exception
 
 class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -47,10 +54,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val json = Json {
-        isLenient = true
-        ignoreUnknownKeys = true
-    }
+    private val json: Json by injectLazy()
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET(baseUrl, headers)
@@ -116,43 +120,37 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         status = SAnime.UNKNOWN
     }
 
-    // episodes
-
+    // ============================== Episodes ==============================
     override fun episodeListSelector() = throw Exception("not used")
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.asJsoup()
-        val episodeList = mutableListOf<SEpisode>()
-        if (document.select("div.c-w span.ff-fb.tt-u").text().contains("serie")) {
-            val season = document.select("div.episode.w-100 ul.episode-by-season")
-            season.forEach {
-                val episode = parseEpisodesFromSeries(it, response)
-                episodeList.addAll(episode)
-            }
+        val doc = response.asJsoup()
+        val scriptJson = doc.selectFirst("script:containsData(window.empire):containsData(data:)")!!
+            .data()
+            .substringAfter("data:")
+            .substringBefore("countpremiumaccount:")
+            .substringBeforeLast(",")
+        return if (doc.location().contains("serie")) {
+            val data = json.decodeFromString<SerieEpisodesDto>(scriptJson)
+            data.seasons.values
+                .flatMap { it.map(::episodeFromObject) }
+                .sortedByDescending { it.episode_number }
         } else {
-            val episode = SEpisode.create()
-            episode.name = document.select("h1.fs-84").text()
-            episode.episode_number = 1F
-            episode.setUrlWithoutDomain(response.request.url.toString())
-            episodeList.add(episode)
+            val data = json.decodeFromString<MovieInfoDto>(scriptJson)
+            SEpisode.create().apply {
+                name = data.title
+                date_upload = data.date.toDate()
+                url = data.videos.encode()
+                episode_number = 1F
+            }.let(::listOf)
         }
-        return episodeList.reversed()
     }
 
-    private fun parseEpisodesFromSeries(element: Element, response: Response): List<SEpisode> {
-        val episodeElements = element.select("li.card-serie")
-        return episodeElements.map { episodeFromElementR(it, response) }
-    }
-
-    private fun episodeFromElementR(element: Element, response: Response): SEpisode {
-        val episode = SEpisode.create()
-        val url = response.request.url.toString()
-        val season = element.attr("data-season")
-        val ep = element.attr("data-episode")
-        episode.name = "Saison $season Épisode $ep : " + element.select("p.mb-0.fs-14").text()
-        episode.episode_number = element.attr("data-episode").toFloat()
-        episode.setUrlWithoutDomain("$url?saison=$season&episode=$ep")
-        return episode
+    private fun episodeFromObject(obj: EpisodeDto) = SEpisode.create().apply {
+        name = "Saison ${obj.season} Épisode ${obj.episode} : ${obj.title}"
+        episode_number = "${obj.season}.${obj.episode}".toFloatOrNull() ?: 1F
+        url = obj.video.encode()
+        date_upload = obj.date.toDate()
     }
 
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("not Used")
@@ -309,7 +307,19 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }.also(screen::addPreference)
     }
 
+    // ============================= Utilities ==============================
+    private fun String.toDate(): Long {
+        return runCatching { DATE_FORMATTER.parse(trim())?.time }
+            .getOrNull() ?: 0L
+    }
+
+    private fun List<VideoDto>.encode() = joinToString { it.encoded }
+
     companion object {
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        }
+
         private const val PREF_DOMAIN_KEY = "preferred_domain"
         private const val PREF_DOMAIN_TITLE = "Preferred domain (requires app restart)"
         private const val PREF_DOMAIN_DEFAULT = "https://empire-stream.net"
