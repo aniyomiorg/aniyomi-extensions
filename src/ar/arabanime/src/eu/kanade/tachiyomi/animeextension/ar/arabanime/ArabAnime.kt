@@ -120,8 +120,12 @@ class ArabAnime: ConfigurableAnimeSource, AnimeHttpSource() {
         } else {
             var type = ""
             var status = ""
+            var order = ""
             (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
                 when (filter) {
+                    is OrderCategoryList -> {
+                        order = getOrderFilterList()[filter.state].query
+                    }
                     is TypeCategoryList -> {
                         type = getTypeFilterList()[filter.state].query
                     }
@@ -131,9 +135,7 @@ class ArabAnime: ConfigurableAnimeSource, AnimeHttpSource() {
                     else -> {}
                 }
             }
-            type = if (type.isEmpty()) "" else "&type=$type"
-            status = if (status.isEmpty()) "" else "&status=$status"
-            return GET("$baseUrl/anime?page=$page$type$status")
+            return GET("$baseUrl/api?order=$order&type=$type&stat=$status&tags=&page=$page")
         }
     }
 
@@ -142,7 +144,8 @@ class ArabAnime: ConfigurableAnimeSource, AnimeHttpSource() {
         val latestEpisodes = response.asJsoup().select("div.as-episode")
         val animeList = latestEpisodes.map {
             SAnime.create().apply {
-                val url = it.select("a.as-info").attr("href").substringBeforeLast("/")
+                val url = it.select("a.as-info").attr("href")
+                    .replace("watch","show").substringBeforeLast("/")
                 setUrlWithoutDomain(url)
                 title = it.select("a.as-info").text()
                 thumbnail_url = it.select("img").attr("src")
