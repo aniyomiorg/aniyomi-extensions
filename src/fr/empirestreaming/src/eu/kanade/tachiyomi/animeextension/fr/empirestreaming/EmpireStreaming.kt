@@ -10,6 +10,8 @@ import eu.kanade.tachiyomi.animeextension.fr.empirestreaming.dto.MovieInfoDto
 import eu.kanade.tachiyomi.animeextension.fr.empirestreaming.dto.SearchResultsDto
 import eu.kanade.tachiyomi.animeextension.fr.empirestreaming.dto.SerieEpisodesDto
 import eu.kanade.tachiyomi.animeextension.fr.empirestreaming.dto.VideoDto
+import eu.kanade.tachiyomi.animeextension.fr.empirestreaming.extractors.EPLAYER_HOST
+import eu.kanade.tachiyomi.animeextension.fr.empirestreaming.extractors.EplayerExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -183,6 +185,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "doodstream" -> DoodExtractor(vclient).videosFromUrl(url)
             "voe" -> VoeExtractor(vclient).videoFromUrl(url)?.let(::listOf)
             "streamsb" -> StreamSBExtractor(vclient).videosFromUrl(url, headers, common = false)
+            "Eplayer" -> EplayerExtractor(client).videosFromUrl(url)
             else -> null
         } ?: emptyList()
     }
@@ -278,13 +281,13 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_HOSTER_KEY = "preferred_hoster"
         private const val PREF_HOSTER_TITLE = "Hébergeur standard"
         private const val PREF_HOSTER_DEFAULT = "https://voe.sx"
-        private val PREF_HOSTER_ENTRIES = arrayOf("Voe", "StreamSB", "Dood")
-        private val PREF_HOSTER_VALUES = arrayOf("https://voe.sx", "https://playersb.com", "https://dood")
+        private val PREF_HOSTER_ENTRIES = arrayOf("Voe", "StreamSB", "Dood", "Eplayer")
+        private val PREF_HOSTER_VALUES = arrayOf("https://voe.sx", "https://playersb.com", "https://dood", EPLAYER_HOST)
 
         private const val PREF_HOSTER_SELECTION_KEY = "hoster_selection_new"
         private const val PREF_HOSTER_SELECTION_TITLE = "Sélectionnez l'hôte"
-        private val PREF_HOSTER_SELECTION_ENTRIES = arrayOf("Voe", "StreamSB", "Dood")
-        private val PREF_HOSTER_SELECTION_VALUES = arrayOf("voe", "streamsb", "doodstream")
-        private val PREF_HOSTER_SELECTION_DEFAULT = setOf("voe", "streamsb", "doodstream")
+        private val PREF_HOSTER_SELECTION_ENTRIES = arrayOf("Voe", "StreamSB", "Dood", "Eplayer")
+        private val PREF_HOSTER_SELECTION_VALUES = arrayOf("voe", "streamsb", "doodstream", "Eplayer")
+        private val PREF_HOSTER_SELECTION_DEFAULT by lazy { PREF_HOSTER_SELECTION_VALUES.toSet() }
     }
 }
