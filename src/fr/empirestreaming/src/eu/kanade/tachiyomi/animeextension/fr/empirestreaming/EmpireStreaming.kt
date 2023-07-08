@@ -2,10 +2,10 @@ package eu.kanade.tachiyomi.animeextension.fr.empirestreaming
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.fr.empirestreaming.dto.SearchResultsDto
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -17,21 +17,14 @@ import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import kotlin.Exception
@@ -80,6 +73,37 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
 
     override fun latestUpdatesNextPageSelector() = null
+
+    // =============================== Search ===============================
+    override fun searchAnimeFromElement(element: Element) = throw Exception("not used")
+    override fun searchAnimeNextPageSelector() = null
+    override fun searchAnimeSelector() = throw Exception("not used")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = throw Exception("not used")
+    override fun searchAnimeParse(response: Response) = throw Exception("not used")
+
+    private val searchItems by lazy {
+        client.newCall(GET("$baseUrl/api/views/contenitem", headers)).execute()
+            .use {
+                json.decodeFromString<SearchResultsDto>(it.body.string()).items
+            }
+    }
+
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        val entriesPages = searchItems.filter { it.title.contains(query, true) }
+            .sortedBy { it.title }
+            .chunked(30) // to prevent exploding the user screen with 984948984 results
+
+        val hasNextPage = entriesPages.size > page
+        val entries = entriesPages.getOrNull(page - 1)?.map {
+            SAnime.create().apply {
+                title = it.title
+                setUrlWithoutDomain("/${it.urlPath}")
+                thumbnail_url = "$baseUrl/images/medias/${it.thumbnailPath}"
+            }
+        } ?: emptyList()
+
+        return Observable.just(AnimesPage(entries, hasNextPage))
+    }
 
     // episodes
 
@@ -224,52 +248,6 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
-
-    // Search
-
-    override fun searchAnimeFromElement(element: Element): SAnime = throw Exception("not Used")
-
-    override fun searchAnimeNextPageSelector(): String? = null
-
-    override fun searchAnimeSelector(): String = throw Exception("not Used")
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = POST("$baseUrl/api/views/search", body = "{\"search\":\"$query\"}".toRequestBody("application/json".toMediaType()))
-
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        val responseString = response.body.string()
-        return parseSearchAnimeJson(responseString)
-    }
-
-    private fun parseSearchAnimeJson(jsonLine: String?): AnimesPage {
-        val jsonData = jsonLine ?: return AnimesPage(emptyList(), false)
-        val jObject = json.decodeFromString<JsonObject>(jsonData)
-        val animeList = mutableListOf<SAnime>()
-        val data = jObject["data"]!!.jsonObject
-        val arrayf = data.jsonObject["films"]!!.jsonArray
-        Log.i("search", arrayf.toString())
-        for (item in arrayf) {
-            val anime = SAnime.create()
-            anime.title = item.jsonObject["title"]!!.jsonPrimitive.content
-            val urlpath = item.jsonObject["urlPath"]!!.jsonPrimitive.content
-            anime.setUrlWithoutDomain("/$urlpath")
-            val symimage = item.jsonObject["sym_image"]!!.jsonObject
-            val poster = symimage.jsonObject["poster"]!!.jsonPrimitive.content
-            anime.thumbnail_url = "$baseUrl/images/medias/$poster"
-            animeList.add(anime)
-        }
-        val arrays = data.jsonObject["series"]!!.jsonArray
-        for (item in arrays) {
-            val anime = SAnime.create()
-            anime.title = item.jsonObject["title"]!!.jsonPrimitive.content
-            val urlpath = item.jsonObject["urlPath"]!!.jsonPrimitive.content
-            anime.setUrlWithoutDomain("/$urlpath")
-            val symimage = item.jsonObject["sym_image"]!!.jsonObject
-            val poster = symimage.jsonObject["poster"]!!.jsonPrimitive.content
-            anime.thumbnail_url = "$baseUrl/images/medias/$poster"
-            animeList.add(anime)
-        }
-        return AnimesPage(animeList, hasNextPage = false)
-    }
 
     // Details
 
