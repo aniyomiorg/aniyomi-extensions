@@ -87,15 +87,19 @@ class ArabAnime: ConfigurableAnimeSource, AnimeHttpSource() {
         val selectServer = String(Base64.getDecoder().decode(serversJson.ep_info[0].stream_servers[0]))
         val watchPage = client.newCall(GET(selectServer)).execute().asJsoup()
         val videoList = mutableListOf<Video>()
-        watchPage.select("option").forEach {
+        watchPage.select("option").forEach { it ->
             val link = String(Base64.getDecoder().decode(it.attr("data-src")))
             if (link.contains("www.arabanime.net/embed")){
                 val sources = client.newCall(GET(link)).execute().asJsoup().select("source")
                 sources.forEach { source ->
-                    if(!source.attr("src").contains("static"))
+                    if(!source.attr("src").contains("static")){
+                        val quality = source.attr("label").let {q ->
+                            if(q.contains("p")) q else q + "p"
+                        }
                         videoList.add(
-                            Video(source.attr("src"),source.attr("label"),source.attr("src"))
+                            Video(source.attr("src"), "${it.text()}: $quality" ,source.attr("src"))
                         )
+                    }
                 }
             }
         }
