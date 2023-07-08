@@ -19,8 +19,11 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.json.Json
+import okhttp3.FormBody
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
@@ -134,11 +137,25 @@ class ArabAnime: ConfigurableAnimeSource, AnimeHttpSource() {
 
     // =============================== Search ===============================
     @RequiresApi(Build.VERSION_CODES.O)
-    override fun searchAnimeParse(response: Response): AnimesPage = popularAnimeParse(response)
-
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        return if(response.body.contentType() == "application/json".toMediaType()){
+            popularAnimeParse(response)
+        } else {
+            val searchResult = response.asJsoup().select("div.show")
+            val animeList = searchResult.map {
+                SAnime.create().apply {
+                    setUrlWithoutDomain(it.select("a").attr("href"))
+                    title = it.select("h3").text()
+                    thumbnail_url = it.select("img").attr("src")
+                }
+            }
+            return AnimesPage(animeList, false)
+        }
+    }
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         if (query.isNotEmpty()) {
-            return GET("$baseUrl/anime?q=$query&page=$page")
+            val body = FormBody.Builder().add("searchq", query).build()
+            return POST("$baseUrl/searchq", body = body)
         } else {
             var type = ""
             var status = ""
