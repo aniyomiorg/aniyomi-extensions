@@ -305,7 +305,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         // list of alternative hosters
         val mappings = listOf(
             "streamsb" to listOf("streamsb"),
-            "vidstreaming" to listOf("vidstreaming", "https://gogo", "playgo1.cc"),
+            "vidstreaming" to listOf("vidstreaming", "https://gogo", "playgo1.cc", "playtaku"),
             "doodstream" to listOf("dood"),
             "okru" to listOf("ok.ru"),
             "mp4upload" to listOf("mp4upload.com"),
@@ -339,7 +339,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                     serverList.add(Server(videoUrl, "internal ${video.sourceName}", video.priority))
                 }
                 altHosterSelection.contains("player") && video.type == "player" -> {
-                    serverList.add(Server(videoUrl, "player", video.priority))
+                    serverList.add(Server(videoUrl, "player@${video.sourceName}", video.priority))
                 }
                 matchingMapping != null -> {
                     serverList.add(Server(videoUrl, matchingMapping.first, video.priority))
@@ -360,7 +360,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                                 Pair(it, server.priority)
                             } ?: emptyList()
                         }
-                        sName == "player" -> {
+                        sName.startsWith("player@") -> {
                             val endPoint = client.newCall(GET("${preferences.siteUrl}/getVersion")).execute()
                                 .parseAs<AllAnimeExtractor.VersionResponse>()
                                 .episodeIframeHead
@@ -374,7 +374,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                             listOf(
                                 Video(
                                     server.sourceUrl,
-                                    "Original (player ${server.sourceName})",
+                                    "Original (player ${server.sourceName.substringAfter("player@")})",
                                     server.sourceUrl,
                                     headers = videoHeaders,
                                 ) to server.priority,
@@ -388,7 +388,7 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                                 Pair(it, server.priority)
                             } ?: emptyList()
                         }
-                        sName == "gogo" -> {
+                        sName == "vidstreaming" -> {
                             val extractor = VidstreamingExtractor(client, json)
                             runCatching {
                                 extractor.videosFromUrl(server.sourceUrl.replace(Regex("^//"), "https://"))
@@ -569,14 +569,14 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private val PREF_QUALITY_ENTRIES = arrayOf(
+            "2160p",
+            "1440p",
             "1080p",
             "720p",
             "480p",
             "360p",
             "240p",
             "80p",
-            "1440p (okru only)",
-            "2160p (okru only)",
         )
         private val PREF_QUALITY_ENTRY_VALUES = PREF_QUALITY_ENTRIES.map {
             it.substringBefore("p")
