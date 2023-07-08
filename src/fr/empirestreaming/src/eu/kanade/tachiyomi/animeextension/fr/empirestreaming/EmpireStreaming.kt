@@ -59,20 +59,18 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ignoreUnknownKeys = true
     }
 
-    override fun popularAnimeSelector(): String = "div.d-f.fd-r.h-100.ox-s.w-100.py-2 div.card-custom-4"
+    // ============================== Popular ===============================
+    override fun popularAnimeSelector() = "div.block-forme:has(p:contains(Les plus vus)) div.content-card"
 
-    override fun popularAnimeRequest(page: Int): Request = GET(baseUrl)
+    override fun popularAnimeRequest(page: Int) = GET(baseUrl, headers)
 
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.url = "/" + element.select("a.btn-link-card-5").attr("href")
-        Log.i("animeUrl", anime.url)
-        anime.thumbnail_url = baseUrl + element.select("picture img").attr("data-src")
-        anime.title = element.select("h3.line-h-s").text()
-        return anime
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.selectFirst("a.play")!!.attr("abs:href"))
+        thumbnail_url = baseUrl + element.selectFirst("picture img")!!.attr("data-src")
+        title = element.selectFirst("h3.line-h-s, p.line-h-s")!!.text()
     }
 
-    override fun popularAnimeNextPageSelector(): String? = null
+    override fun popularAnimeNextPageSelector() = null
 
     // episodes
 
