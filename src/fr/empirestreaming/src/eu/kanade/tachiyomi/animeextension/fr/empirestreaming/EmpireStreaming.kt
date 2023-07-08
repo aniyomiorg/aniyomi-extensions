@@ -10,7 +10,6 @@ import eu.kanade.tachiyomi.animeextension.fr.empirestreaming.dto.MovieInfoDto
 import eu.kanade.tachiyomi.animeextension.fr.empirestreaming.dto.SearchResultsDto
 import eu.kanade.tachiyomi.animeextension.fr.empirestreaming.dto.SerieEpisodesDto
 import eu.kanade.tachiyomi.animeextension.fr.empirestreaming.dto.VideoDto
-import eu.kanade.tachiyomi.animeextension.fr.empirestreaming.extractors.EPLAYER_HOST
 import eu.kanade.tachiyomi.animeextension.fr.empirestreaming.extractors.EplayerExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -171,7 +170,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 if (hoster !in hosterSelection) return@parallelMap emptyList()
                 videosFromPath("$id/$type", hoster)
             }.getOrElse { emptyList() }
-        }.flatten()
+        }.flatten().sort()
         return Observable.just(videos)
     }
 
@@ -194,8 +193,12 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun List<Video>.sort(): List<Video> {
         val hoster = preferences.getString(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
         return sortedWith(
-            compareByDescending { it.url.contains(hoster) },
+            compareBy(
+                { it.quality.contains(hoster) },
+                { it.quality.contains(quality) },
+            ),
         ).reversed()
     }
 
@@ -205,8 +208,7 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
-    // Preferences
-
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
             key = PREF_DOMAIN_KEY
@@ -232,6 +234,21 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             setDefaultValue(PREF_HOSTER_DEFAULT)
             summary = "%s"
 
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
                 val index = findIndexOfValue(selected)
@@ -278,11 +295,16 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private val PREF_DOMAIN_ENTRIES = arrayOf("https://empire-stream.net", "https://empire-streaming.app")
         private val PREF_DOMAIN_VALUES = PREF_DOMAIN_ENTRIES
 
-        private const val PREF_HOSTER_KEY = "preferred_hoster"
+        private const val PREF_HOSTER_KEY = "preferred_hoster_new"
         private const val PREF_HOSTER_TITLE = "Hébergeur standard"
-        private const val PREF_HOSTER_DEFAULT = "https://voe.sx"
-        private val PREF_HOSTER_ENTRIES = arrayOf("Voe", "StreamSB", "Dood", "Eplayer")
-        private val PREF_HOSTER_VALUES = arrayOf("https://voe.sx", "https://playersb.com", "https://dood", EPLAYER_HOST)
+        private const val PREF_HOSTER_DEFAULT = "StreamSB"
+        private val PREF_HOSTER_ENTRIES = arrayOf("Voe", "StreamSB", "Dood", "E-Player")
+        private val PREF_HOSTER_VALUES = PREF_HOSTER_ENTRIES
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Qualité préférée" // DeepL
+        private const val PREF_QUALITY_DEFAULT = "720p"
+        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "800p", "720p", "480p")
 
         private const val PREF_HOSTER_SELECTION_KEY = "hoster_selection_new"
         private const val PREF_HOSTER_SELECTION_TITLE = "Sélectionnez l'hôte"

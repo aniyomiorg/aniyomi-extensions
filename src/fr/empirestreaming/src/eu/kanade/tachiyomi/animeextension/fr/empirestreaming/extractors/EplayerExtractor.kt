@@ -48,6 +48,8 @@ class EplayerExtractor(private val client: OkHttpClient) {
                 Video(videoUrl, "E-Player - $resolution", videoUrl, headers)
             }
     }
-}
 
-const val EPLAYER_HOST = "https://e-player-stream.app"
+    companion object {
+        private const val EPLAYER_HOST = "https://e-player-stream.app"
+    }
+}
