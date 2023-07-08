@@ -105,6 +105,17 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return Observable.just(AnimesPage(entries, hasNextPage))
     }
 
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        setUrlWithoutDomain(document.location())
+        title = document.selectFirst("h3#title_media")!!.text()
+        val thumbPath = document.html().substringAfter("backdrop\":\"").substringBefore('"')
+        thumbnail_url = "$baseUrl/images/medias/$thumbPath".replace("\\", "")
+        genre = document.select("div > button.bc-w.fs-12.ml-1.c-b").eachText().joinToString()
+        description = document.selectFirst("div.target-media-desc p.content")!!.text()
+        status = SAnime.UNKNOWN
+    }
+
     // episodes
 
     override fun episodeListSelector() = throw Exception("not used")
@@ -248,17 +259,6 @@ class EmpireStreaming : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
-
-    // Details
-
-    override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
-        anime.title = document.select("h1.fs-40").text()
-        anime.genre = document.select("ul.d-f li.mr-1 font").joinToString(", ") { it.text() }
-        anime.description = document.select("p.description").text()
-        anime.status = SAnime.COMPLETED
-        return anime
-    }
 
     // Preferences
 
