@@ -23,6 +23,7 @@ import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.VudeoExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.WolfstreamExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
@@ -96,7 +97,7 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             .substringBefore(" izle")
         val img = element.select("img.media-object")
         val animeId = element.select("a.reactions").first()!!.attr("data-unique-id")
-        val animeUrl = ("https:" + animeTitle.attr("href")).toHttpUrl()
+        val animeUrl = animeTitle.attr("abs:href").toHttpUrl()
             .newBuilder()
             .addQueryParameter("animeId", animeId)
             .build().toString()
@@ -106,6 +107,57 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             thumbnail_url = "https:" + img.attr("data-src")
         }
     }
+
+    // =============================== Latest ===============================
+
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/ajax/yenieklenenseriler?sayfa=$page", xmlHeader)
+
+    override fun latestUpdatesSelector() = popularAnimeSelector()
+
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
+
+    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
+
+    // =============================== Search ===============================
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) =
+        POST(
+            "$baseUrl/arama?sayfa=$page",
+            Headers.headersOf("content-type", "application/x-www-form-urlencoded"),
+            FormBody.Builder().add("arama", query).build(),
+        )
+
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        val document = response.asJsoup()
+        val scriptElement = document.selectFirst("div.panel-body > script:containsData(window.location)")
+        return if (scriptElement == null) {
+            val animeList = document.select(searchAnimeSelector()).map(::searchAnimeFromElement)
+            AnimesPage(animeList, document.selectFirst(searchAnimeSelector()) != null)
+        } else {
+            val location = scriptElement.data()
+                .substringAfter("window.location")
+                .substringAfter("\"")
+                .substringBefore("\"")
+
+            val slug = if (location.startsWith("/")) location else "/$location"
+
+            val animeList = listOf(
+                SAnime.create().apply {
+                    setUrlWithoutDomain(slug)
+                    thumbnail_url = ""
+                    title = slug.substringAfter("anime/")
+                },
+            )
+
+            AnimesPage(animeList, false)
+        }
+    }
+
+    override fun searchAnimeSelector() = popularAnimeSelector()
+
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
+
+    override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
 
     // =========================== Anime Details ============================
 
@@ -127,7 +179,9 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Episodes ==============================
 
     override fun episodeListRequest(anime: SAnime): Request {
-        val animeId = (baseUrl + anime.url).toHttpUrl().queryParameter("animeId")!!
+        val animeId = (baseUrl + anime.url).toHttpUrl().queryParameter("animeId")
+            ?: client.newCall(GET(baseUrl + anime.url)).execute().asJsoup()
+                .selectFirst("a[data-unique-id]")!!.attr("data-unique-id")
         return GET("https://www.turkanime.co/ajax/bolumler?animeId=$animeId", xmlHeader)
     }
 
@@ -146,9 +200,8 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        return super.episodeListParse(response).reversed()
-    }
+    override fun episodeListParse(response: Response): List<SEpisode> =
+        super.episodeListParse(response).reversed()
 
     // ============================ Video Links =============================
 
@@ -172,10 +225,7 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val selectedHoster = document.select("div#videodetay div.btn-group:not(.pull-right) > button.btn-danger")
         val hosters = document.select("div#videodetay div.btn-group:not(.pull-right) > button.btn-default[onclick*=videosec]")
 
-        val hosterSelection = preferences.getStringSet(
-            "hoster_selection",
-            setOf("GDRIVE", "STREAMSB", "VOE"),
-        )!!
+        val hosterSelection = preferences.getStringSet(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
 
         val videoList = mutableListOf<Video>()
         val selectedHosterName = selectedHoster.text().trim()
@@ -190,7 +240,9 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val url = it.attr("onclick").trimOnClick()
             val videoDoc = client.newCall(GET(url, xmlHeader)).execute().asJsoup()
             val src = videoDoc.select("iframe").attr("src").replace("^//".toRegex(), "https://")
-            videoList.addAll(getVideosFromSource(src, hosterName, subber))
+            runCatching {
+                videoList.addAll(getVideosFromSource(src, hosterName, subber))
+            }
         }
         return videoList
     }
@@ -283,6 +335,25 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoList
     }
 
+    override fun videoFromElement(element: Element): Video = throw Exception("not used")
+
+    override fun videoListSelector(): String = throw Exception("not used")
+
+    override fun videoUrlParse(document: Document): String = throw Exception("not used")
+
+    // ============================= Utilities ==============================
+
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+
+        return this.sortedWith(
+            compareBy(
+                { it.quality.contains(quality) },
+                { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
+            ),
+        ).reversed()
+    }
+
     @Serializable
     private data class CipherParams(
         @Serializable
@@ -294,84 +365,6 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     )
 
     private fun String.trimOnClick() = baseUrl + "/" + this.substringAfter("IndexIcerik('").substringBefore("'")
-
-    override fun videoFromElement(element: Element): Video = throw Exception("not used")
-    override fun videoListSelector(): String = throw Exception("not used")
-    override fun videoUrlParse(document: Document): String = throw Exception("not used")
-
-    // =============================== Search ===============================
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) =
-        POST(
-            "$baseUrl/arama?sayfa=$page",
-            Headers.headersOf("content-type", "application/x-www-form-urlencoded"),
-            FormBody.Builder().add("arama", query).build(),
-        )
-
-    override fun searchAnimeSelector() = popularAnimeSelector()
-    override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
-    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
-
-    // =============================== Latest ===============================
-
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/ajax/yenieklenenseriler?sayfa=$page", xmlHeader)
-
-    override fun latestUpdatesSelector() = popularAnimeSelector()
-    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
-    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
-
-    // =============================== Preferences ===============================
-
-    override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
-            setDefaultValue("1080")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-        val hostSelection = MultiSelectListPreference(screen.context).apply {
-            key = "hoster_selection"
-            title = "Enable/Disable Hosts"
-            entries = SUPPORTED_HOSTERS.toTypedArray()
-            entryValues = SUPPORTED_HOSTERS.toTypedArray()
-            setDefaultValue(setOf("GDRIVE", "STREAMSB", "VOE"))
-
-            setOnPreferenceChangeListener { _, newValue ->
-                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
-            }
-        }
-        screen.addPreference(videoQualityPref)
-        screen.addPreference(hostSelection)
-    }
-
-    override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "1080")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
-    }
-
-    // ============================= Utilities ==============================
 
     private val xmlHeader = Headers.headersOf("X-Requested-With", "XMLHttpRequest")
     private val refererHeader = Headers.headersOf("Referer", baseUrl)
@@ -400,31 +393,72 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             withContext(Dispatchers.IO) { getKey() }
         }
     }
+
+    companion object {
+        private val SUPPORTED_HOSTERS = listOf(
+            // TODO: Fix Alucard
+            // "ALUCARD(BETA)",
+            "DOODSTREAM",
+            "EMBEDGRAM",
+            "FILEMOON",
+            "GDRIVE",
+            "MAIL",
+            "MP4UPLOAD",
+            "MYVI",
+            "MVIDOO",
+            "ODNOKLASSNIKI",
+            "SENDVID",
+            "SIBNET",
+            "STREAMSB",
+            "STREAMVID",
+            "UQLOAD",
+            "VK",
+            "VOE",
+            "VTUBE",
+            "VUDEA",
+            "WOLFSTREAM",
+        )
+
+        private const val PREF_KEY_KEY = "key"
+        private const val DEFAULT_KEY = "710^8A@3@>T2}#zN5xK?kR7KNKb@-A!LzYL5~M1qU0UfdWsZoBm4UUat%}ueUv6E--*hDPPbH7K2bp9^3o41hw,khL:}Kx8080@M"
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
+
+        private const val PREF_HOSTER_KEY = "hoster_selection"
+        private val PREF_HOSTER_DEFAULT = setOf("GDRIVE", "STREAMSB", "VOE")
+    }
+
+    // =============================== Preferences ===============================
+
+    @Suppress("UNCHECKED_CAST")
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = "Preferred quality"
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_HOSTER_KEY
+            title = "Enable/Disable Hosts"
+            entries = SUPPORTED_HOSTERS.toTypedArray()
+            entryValues = SUPPORTED_HOSTERS.toTypedArray()
+            setDefaultValue(PREF_HOSTER_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }.also(screen::addPreference)
+    }
 }
-
-private val SUPPORTED_HOSTERS = listOf(
-    // TODO: Fix Alucard
-    // "ALUCARD(BETA)",
-    "DOODSTREAM",
-    "EMBEDGRAM",
-    "FILEMOON",
-    "GDRIVE",
-    "MAIL",
-    "MP4UPLOAD",
-    "MYVI",
-    "MVIDOO",
-    "ODNOKLASSNIKI",
-    "SENDVID",
-    "SIBNET",
-    "STREAMSB",
-    "STREAMVID",
-    "UQLOAD",
-    "VK",
-    "VOE",
-    "VTUBE",
-    "VUDEA",
-    "WOLFSTREAM",
-)
-
-private const val PREF_KEY_KEY = "key"
-private const val DEFAULT_KEY = "710^8A@3@>T2}#zN5xK?kR7KNKb@-A!LzYL5~M1qU0UfdWsZoBm4UUat%}ueUv6E--*hDPPbH7K2bp9^3o41hw,khL:}Kx8080@M"
