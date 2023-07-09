@@ -47,7 +47,7 @@ class AniWatch : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AniWatch.to"
 
-    override val baseUrl = "https://aniwatch.to"
+    override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
 
     override val id = 6706411382606718900L
 
@@ -83,7 +83,9 @@ class AniWatch : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListRequest(anime: SAnime): Request {
         val id = anime.url.substringAfterLast("-")
         val referer = Headers.headersOf("Referer", baseUrl + anime.url)
-        return GET("$baseUrl/ajax/v2/episode/list/$id", referer)
+        val ajaxRoute = if (baseUrl == "https://kaido.to") "" else "/v2"
+
+        return GET("$baseUrl/ajax$ajaxRoute/episode/list/$id", referer)
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
@@ -111,7 +113,9 @@ class AniWatch : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListRequest(episode: SEpisode): Request {
         val id = episode.url.substringAfterLast("?ep=")
         val referer = Headers.headersOf("Referer", baseUrl + episode.url)
-        return GET("$baseUrl/ajax/v2/episode/servers?episodeId=$id", referer)
+        val ajaxRoute = if (baseUrl == "https://kaido.to") "" else "/v2"
+
+        return GET("$baseUrl/ajax$ajaxRoute/episode/servers?episodeId=$id", referer)
     }
 
     override fun videoListParse(response: Response): List<Video> {
@@ -126,7 +130,9 @@ class AniWatch : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val name = server.text()
                 val id = server.attr("data-id")
                 val subDub = server.attr("data-type")
-                val url = "$baseUrl/ajax/v2/episode/sources?id=$id"
+                val ajaxRoute = if (baseUrl == "https://kaido.to") "" else "/v2"
+
+                val url = "$baseUrl/ajax$ajaxRoute/episode/sources?id=$id"
                 val reqBody = client.newCall(GET(url, episodeReferer)).execute()
                     .body.string()
                 val sourceUrl = reqBody.substringAfter("\"link\":\"")
@@ -330,6 +336,22 @@ class AniWatch : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val domainPref = ListPreference(screen.context).apply {
+            key = PREF_DOMAIN_KEY
+            title = PREF_DOMAIN_TITLE
+            entries = PREF_DOMAIN_ENTRIES
+            entryValues = PREF_DOMAIN_ENTRY_VALUES
+            setDefaultValue(PREF_DOMAIN_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }
+
         val videoQualityPref = ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
@@ -387,6 +409,7 @@ class AniWatch : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
 
+        screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
         screen.addPreference(epTypePref)
         screen.addPreference(subLangPref)
@@ -435,6 +458,12 @@ class AniWatch : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred video quality"
         private val PREF_QUALITY_ENTRIES = arrayOf("360p", "720p", "1080p")
+
+        private const val PREF_DOMAIN_KEY = "preferred_domain"
+        private const val PREF_DOMAIN_TITLE = "Preferred domain (requires app restart)"
+        private const val PREF_DOMAIN_DEFAULT = "https://kaido.to"
+        private val PREF_DOMAIN_ENTRIES = arrayOf("kaido.to", "aniwatch.to")
+        private val PREF_DOMAIN_ENTRY_VALUES = arrayOf("https://kaido.to", "https://aniwatch.to")
 
         private const val PREF_TYPE_KEY = "preferred_type"
         private const val PREF_TYPE_TITLE = "Preferred episode type/mode"
