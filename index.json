@@ -371,6 +371,27 @@
     ]
   },
   {
+    "name": "Aniyomi: ArabAnime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.ar.arabanime",
+    "apk": "aniyomi-ar.arabanime-v13.1.apk",
+    "lang": "ar",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "ArabAnime",
+        "lang": "ar",
+        "id": "7694781769943581537",
+        "baseUrl": "https://www.arabanime.net",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: عرب سيد",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.arabseed",
     "apk": "aniyomi-ar.arabseed-v13.7.apk",
@@ -1948,10 +1969,10 @@
   {
     "name": "Aniyomi: AniWatch.to",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.zoro",
-    "apk": "aniyomi-en.zoro-v13.31.apk",
+    "apk": "aniyomi-en.zoro-v13.32.apk",
     "lang": "en",
-    "code": 31,
-    "version": "13.31",
+    "code": 32,
+    "version": "13.32",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1960,7 +1981,7 @@
         "name": "AniWatch.to",
         "lang": "en",
         "id": "6706411382606718900",
-        "baseUrl": "https://aniwatch.to",
+        "baseUrl": "https://kaido.to",
         "versionId": 1,
         "hasCloudflare": 1
       }
