@@ -10,4 +10,8 @@ ext {
     libVersion = '13'
 }
 
+dependencies {
+    implementation("de.peilicke.sascha:kase64:1.0.6")
+}
+
 apply from: "$rootDir/common.gradle"

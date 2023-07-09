@@ -2,8 +2,6 @@ package eu.kanade.tachiyomi.animeextension.ar.arabanime
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.arabanime.dto.AnimeItem
@@ -26,9 +24,9 @@ import okhttp3.FormBody
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.Response
+import saschpe.kase64.base64Decoded
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.util.Base64
 
 class ArabAnime: ConfigurableAnimeSource, AnimeHttpSource() {
 
@@ -49,11 +47,10 @@ class ArabAnime: ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================== Popular ===============================
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun popularAnimeParse(response: Response): AnimesPage {
         val responseJson = json.decodeFromString<PopularAnimeResponse>(response.body.string())
         val animeList = responseJson.Shows.map {
-            val animeJson = json.decodeFromString<AnimeItem>(String(Base64.getDecoder().decode(it)))
+            val animeJson = json.decodeFromString<AnimeItem>(it.base64Decoded)
             SAnime.create().apply {
                 setUrlWithoutDomain(animeJson.info_src)
                 title = animeJson.anime_name
@@ -67,10 +64,9 @@ class ArabAnime: ConfigurableAnimeSource, AnimeHttpSource() {
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/api?page=$page")
 
     // ============================== Episodes ==============================
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val showData = response.asJsoup().select("div#data").text()
-        val episodesJson = json.decodeFromString<ShowItem>(String(Base64.getDecoder().decode(showData)))
+        val showData = response.asJsoup().select("div#data").text().base64Decoded
+        val episodesJson = json.decodeFromString<ShowItem>(showData)
         return episodesJson.EPS.map {
             SEpisode.create().apply {
                 name = it.episode_name
@@ -83,15 +79,14 @@ class ArabAnime: ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================ Video Links =============================
     override fun videoListRequest(episode: SEpisode): Request = GET("$baseUrl/${episode.url}")
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun videoListParse(response: Response): List<Video> {
-        val watchData = response.asJsoup().select("div#datawatch").text()
-        val serversJson = json.decodeFromString<Episode>(String(Base64.getDecoder().decode(watchData)))
-        val selectServer = String(Base64.getDecoder().decode(serversJson.ep_info[0].stream_servers[0]))
+        val watchData = response.asJsoup().select("div#datawatch").text().base64Decoded
+        val serversJson = json.decodeFromString<Episode>(watchData)
+        val selectServer = serversJson.ep_info[0].stream_servers[0].base64Decoded
         val watchPage = client.newCall(GET(selectServer)).execute().asJsoup()
         val videoList = mutableListOf<Video>()
         watchPage.select("option").forEach { it ->
-            val link = String(Base64.getDecoder().decode(it.attr("data-src")))
+            val link = it.attr("data-src").base64Decoded
             if (link.contains("www.arabanime.net/embed")){
                 val sources = client.newCall(GET(link)).execute().asJsoup().select("source")
                 sources.forEach { source ->
@@ -117,10 +112,9 @@ class ArabAnime: ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // =========================== Anime Details ============================
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun animeDetailsParse(response: Response): SAnime {
-        val showData = response.asJsoup().select("div#data").text()
-        val details = json.decodeFromString<ShowItem>(String(Base64.getDecoder().decode(showData))).show[0]
+        val showData = response.asJsoup().select("div#data").text().base64Decoded
+        val details = json.decodeFromString<ShowItem>(showData).show[0]
         return SAnime.create().apply {
             url = "/show-${details.anime_id}/${details.anime_slug}"
             title = details.anime_name
@@ -136,7 +130,6 @@ class ArabAnime: ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // =============================== Search ===============================
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun searchAnimeParse(response: Response): AnimesPage {
         return if(response.body.contentType() == "application/json".toMediaType()){
             popularAnimeParse(response)
