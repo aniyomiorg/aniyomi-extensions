@@ -137,12 +137,14 @@ class HentaisTube : ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun episodeListParse(response: Response) = super.episodeListParse(response).reversed()
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        throw UnsupportedOperationException("Not used.")
+    override fun episodeListSelector() = "div.pagAniListaContainer > li > a"
+
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        name = element.text()
+        episode_number = element.text().substringAfter(" ").toFloatOrNull() ?: 1F
     }
 
     // ============================ Video Links =============================
