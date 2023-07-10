@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.pt.hentaistube
 
 import eu.kanade.tachiyomi.animeextension.pt.hentaistube.HentaisTubeFilters.applyFilterParams
 import eu.kanade.tachiyomi.animeextension.pt.hentaistube.dto.ItemsListDto
+import eu.kanade.tachiyomi.animeextension.pt.hentaistube.extractors.BloggerExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -11,6 +12,10 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Request
@@ -149,12 +154,39 @@ class HentaisTube : ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        throw UnsupportedOperationException("Not used.")
+        return response.asJsoup().select(videoListSelector()).parallelMap {
+            runCatching {
+                client.newCall(GET(it.attr("src"), headers)).execute().use { res ->
+                    extractVideosFromIframe(res.asJsoup())
+                }
+            }.getOrElse { emptyList() }
+        }.flatten()
     }
 
-    override fun videoListSelector(): String {
-        throw UnsupportedOperationException("Not used.")
+    private fun extractVideosFromIframe(iframe: Document): List<Video> {
+        val url = iframe.location()
+        return when {
+            url.contains("/hd.php") -> {
+                val video = iframe.selectFirst("video > source")!!
+                val videoUrl = video.attr("src")
+                val quality = video.attr("label").ifEmpty { "Unknown" }
+                listOf(Video(videoUrl, "Principal - $quality", videoUrl, headers))
+            }
+            url.contains("/index.php") -> {
+                val bloggerUrl = iframe.selectFirst("iframe")!!.attr("src")
+                BloggerExtractor(client).videosFromUrl(bloggerUrl, headers)
+            }
+            url.contains("/player.php") -> {
+                val ahref = iframe.selectFirst("a")!!.attr("href")
+                val internal = client.newCall(GET(ahref, headers)).execute().asJsoup()
+                val videoUrl = internal.selectFirst("video > source")!!.attr("src")
+                listOf(Video(videoUrl, "Alternativo", videoUrl, headers))
+            }
+            else -> emptyList()
+        }
     }
+
+    override fun videoListSelector() = "iframe.meu-player"
 
     override fun videoFromElement(element: Element): Video {
         throw UnsupportedOperationException("Not used.")
@@ -169,6 +201,11 @@ class HentaisTube : ParsedAnimeHttpSource() {
         select("div.boxAnimeSobreLinha:has(b:contains($key)) > a")
             .eachText()
             .joinToString()
+
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 
     companion object {
         const val PREFIX_SEARCH = "id:"
