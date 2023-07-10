@@ -520,10 +520,10 @@
   {
     "name": "Aniyomi: توك توك سينما",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.tuktukcinema",
-    "apk": "aniyomi-ar.tuktukcinema-v13.6.apk",
+    "apk": "aniyomi-ar.tuktukcinema-v13.7.apk",
     "lang": "ar",
-    "code": 6,
-    "version": "13.6",
+    "code": 7,
+    "version": "13.7",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3450,10 +3450,10 @@
   {
     "name": "Aniyomi: GoAnimes",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.goanimes",
-    "apk": "aniyomi-pt.goanimes-v13.2.apk",
+    "apk": "aniyomi-pt.goanimes-v13.3.apk",
     "lang": "pt-BR",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3463,6 +3463,27 @@
         "lang": "pt-BR",
         "id": "6911038002626470519",
         "baseUrl": "https://goanimes.net",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: HentaisTube",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.hentaistube",
+    "apk": "aniyomi-pt.hentaistube-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "HentaisTube",
+        "lang": "pt-BR",
+        "id": "5035104637271805422",
+        "baseUrl": "https://www.hentaistube.com",
         "versionId": 1,
         "hasCloudflare": 0
       }
