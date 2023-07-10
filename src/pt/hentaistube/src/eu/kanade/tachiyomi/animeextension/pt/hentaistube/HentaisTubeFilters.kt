@@ -36,8 +36,8 @@ object HentaisTubeFilters {
             .map { filter -> filter.state to filter.name }
             .groupBy { it.first } // group by state
             .let {
-                val included = it.get(TriState.STATE_INCLUDE)?.map { it.toString() } ?: emptyList<String>()
-                val excluded = it.get(TriState.STATE_EXCLUDE)?.map { it.toString() } ?: emptyList<String>()
+                val included = it.get(TriState.STATE_INCLUDE)?.map { it.second } ?: emptyList<String>()
+                val excluded = it.get(TriState.STATE_EXCLUDE)?.map { it.second } ?: emptyList<String>()
                 listOf(included, excluded)
             }
     }
