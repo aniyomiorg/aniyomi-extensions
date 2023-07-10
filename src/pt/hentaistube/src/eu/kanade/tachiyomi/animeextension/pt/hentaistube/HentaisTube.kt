@@ -26,21 +26,19 @@ class HentaisTube : ParsedAnimeHttpSource() {
     override val supportsLatest = false
 
     // ============================== Popular ===============================
-    override fun popularAnimeRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/ranking-hentais?paginacao=$page", headers)
+
+    override fun popularAnimeSelector() = "ul.ul_sidebar > li"
+
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        thumbnail_url = element.selectFirst("img")!!.attr("src")
+        element.selectFirst("div.rt a.series")!!.also {
+            setUrlWithoutDomain(it.attr("href"))
+            title = it.text().substringBefore(" - Episódios")
+        }
     }
 
-    override fun popularAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun popularAnimeNextPageSelector() = "div.paginacao > a:contains(»)"
 
     // =============================== Latest ===============================
     override fun latestUpdatesRequest(page: Int): Request {
