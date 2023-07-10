@@ -1,5 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.pt.hentaistube
 
+import eu.kanade.tachiyomi.animeextension.pt.hentaistube.HentaisTubeFilters.applyFilterParams
+import eu.kanade.tachiyomi.animeextension.pt.hentaistube.dto.ItemsListDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -9,11 +11,14 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.injectLazy
 
 class HentaisTube : ParsedAnimeHttpSource() {
 
@@ -24,6 +29,12 @@ class HentaisTube : ParsedAnimeHttpSource() {
     override val lang = "pt-BR"
 
     override val supportsLatest = true
+
+    private val json: Json by injectLazy()
+
+    override fun headersBuilder() = super.headersBuilder()
+        .add("Referer", baseUrl)
+        .add("Origin", baseUrl)
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/ranking-hentais?paginacao=$page", headers)
@@ -54,6 +65,15 @@ class HentaisTube : ParsedAnimeHttpSource() {
     override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
 
     // =============================== Search ===============================
+    private val animeList by lazy {
+        val headers = headersBuilder().add("X-Requested-With", "XMLHttpRequest").build()
+        client.newCall(GET("$baseUrl/json-lista-capas.php", headers)).execute()
+            .use { it.body.string() }
+            .let { json.decodeFromString<ItemsListDto>(it) }
+            .items
+            .asSequence()
+    }
+
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val id = query.removePrefix(PREFIX_SEARCH)
@@ -61,9 +81,28 @@ class HentaisTube : ParsedAnimeHttpSource() {
                 .asObservableSuccess()
                 .map(::searchAnimeByIdParse)
         } else {
-            super.fetchSearchAnime(page, query, filters)
+            val params = HentaisTubeFilters.getSearchParameters(filters).apply {
+                animeName = query
+            }
+            val filtered = animeList.applyFilterParams(params)
+            val results = filtered.chunked(30).toList()
+            val hasNextPage = results.size > page
+            val currentPage = if (results.size == 0) {
+                emptyList<SAnime>()
+            } else {
+                results.get(page - 1).map {
+                    SAnime.create().apply {
+                        title = it.title.substringBefore("- Episódios")
+                        url = "/" + it.url
+                        thumbnail_url = it.thumbnail
+                    }
+                }
+            }
+            Observable.just(AnimesPage(currentPage, hasNextPage))
         }
     }
+
+    override fun getFilterList(): AnimeFilterList = HentaisTubeFilters.FILTER_LIST
 
     private fun searchAnimeByIdParse(response: Response): AnimesPage {
         val details = animeDetailsParse(response.asJsoup())
