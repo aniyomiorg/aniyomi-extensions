@@ -2820,10 +2820,10 @@
   {
     "name": "Aniyomi: AnimeUnity",
     "pkg": "eu.kanade.tachiyomi.animeextension.it.animeunity",
-    "apk": "aniyomi-it.animeunity-v13.4.apk",
+    "apk": "aniyomi-it.animeunity-v13.5.apk",
     "lang": "it",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2832,7 +2832,7 @@
         "name": "AnimeUnity",
         "lang": "it",
         "id": "7762808921754601430",
-        "baseUrl": "https://www.animeunity.it",
+        "baseUrl": "https://www.animeunity.cc",
         "versionId": 1,
         "hasCloudflare": 1
       }
