@@ -21,8 +21,7 @@ data class AnimeResponse(
 data class Episode(
     val number: String,
     val created_at: String,
-    val scws_id: Int? = null,
-    val file_name: String? = null,
+    val id: Int? = null,
 )
 
 @Serializable
