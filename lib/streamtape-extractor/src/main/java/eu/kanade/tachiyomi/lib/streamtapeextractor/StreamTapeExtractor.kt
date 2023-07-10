@@ -7,7 +7,7 @@ import okhttp3.OkHttpClient
 
 class StreamTapeExtractor(private val client: OkHttpClient) {
     fun videoFromUrl(url: String, quality: String = "StreamTape"): Video? {
-        val baseUrl = "https://tapewithadblock.org/e/"
+        val baseUrl = "https://streamtape.com/e/"
         val newUrl = if (!url.startsWith(baseUrl)) {
             // ["https", "", "<domain>", "<???>", "<id>", ...]
             val id = url.split("/").getOrNull(4) ?: return null
