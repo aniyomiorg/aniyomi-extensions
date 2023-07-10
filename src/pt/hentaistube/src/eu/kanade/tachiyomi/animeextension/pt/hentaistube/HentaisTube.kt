@@ -126,8 +126,14 @@ class HentaisTube : ParsedAnimeHttpSource() {
     }
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        throw UnsupportedOperationException("Not used.")
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        setUrlWithoutDomain(document.location())
+        val infos = document.selectFirst("div#anime")!!
+        thumbnail_url = infos.selectFirst("img")!!.attr("src")
+        title = infos.getInfo("Hentai:")
+        genre = infos.getInfo("Tags")
+        artist = infos.getInfo("Estúdio")
+        description = infos.selectFirst("div#sinopse2")?.text().orEmpty()
     }
 
     // ============================== Episodes ==============================
@@ -155,6 +161,12 @@ class HentaisTube : ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document): String {
         throw UnsupportedOperationException("Not used.")
     }
+
+    // ============================= Utilities ==============================
+    private fun Element.getInfo(key: String): String =
+        select("div.boxAnimeSobreLinha:has(b:contains($key)) > a")
+            .eachText()
+            .joinToString()
 
     companion object {
         const val PREFIX_SEARCH = "id:"
