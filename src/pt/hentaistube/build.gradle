@@ -9,6 +9,7 @@ ext {
     pkgNameSuffix = 'pt.hentaistube'
     extClass = '.HentaisTube'
     extVersionCode = 1
+    containsNsfw = true
 }
 
 apply from: "$rootDir/common.gradle"
