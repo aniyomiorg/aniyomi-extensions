@@ -84,23 +84,23 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Episodes ==============================
     override fun episodeListSelector() = "div.container div.screen-items > div.item"
 
-    private fun getAllEps(response: Response): List<SEpisode> {
+    override fun episodeListParse(response: Response): List<SEpisode> {
         var doc = getRealDoc(response.use { it.asJsoup() })
 
         return buildList {
             do {
-                addAll(doc.select(episodeListSelector()).map(::episodeFromElement))
-                if (doc.hasNextPage()) {
+                if (isNotEmpty()) {
                     val nextUrl = doc.selectFirst(nextPageSelector())!!
                         .selectFirst("a")!!
                         .attr("href")
                     doc = client.newCall(GET(nextUrl)).execute().use { it.asJsoup() }
                 }
-            } while(doc.hasNextPage())
+                doc.select(episodeListSelector())
+                    .map(::episodeFromElement)
+                    .also(::addAll)
+            } while (doc.selectFirst(nextPageSelector()) != null)
+            reverse()
         }
-    }
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        return getAllEps(response).reversed()
     }
 
     override fun episodeFromElement(element: Element) = SEpisode.create().apply {
@@ -313,8 +313,6 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> SAnime.UNKNOWN
         }
     }
-
-    private fun Element.hasNextPage() = selectFirst(nextPageSelector()) != null
 
     private fun Element.getInfo(key: String): String? {
         val div = selectFirst("div.item:contains($key)")
