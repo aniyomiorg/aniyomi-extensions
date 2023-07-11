@@ -877,10 +877,10 @@
   {
     "name": "Aniyomi: Serienstream",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.serienstream",
-    "apk": "aniyomi-de.serienstream-v13.8.apk",
+    "apk": "aniyomi-de.serienstream-v13.9.apk",
     "lang": "de",
-    "code": 8,
-    "version": "13.8",
+    "code": 9,
+    "version": "13.9",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
