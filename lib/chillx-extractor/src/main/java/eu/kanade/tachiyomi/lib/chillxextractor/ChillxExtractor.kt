@@ -683,7 +683,7 @@ import android.util.Base64
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -707,37 +707,16 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
         ).execute().asJsoup().html()
 
         val master = Regex("""MasterJS\s*=\s*'([^']+)""").find(document)?.groupValues?.get(1)
-        val aesJson = Json.decodeFromString<JsonObject>(base64Decode(master ?: return null).toString(Charsets.UTF_8))
+        val aesJson = Json.decodeFromString<CryptoInfo>(base64Decode(master ?: return null).toString(Charsets.UTF_8))
 
-        val encData =
-            try {
-                AESData(
-                    aesJson["ciphertext"]!!.jsonPrimitive.content,
-                    aesJson["iv"]!!.jsonPrimitive.content,
-                    aesJson["salt"]!!.jsonPrimitive.content,
-                    aesJson["iterations"]!!.jsonPrimitive.content,
-                )
-            } catch(_: Exception) {
-                null
-            }
+        val decrypt = cryptoAESHandler(aesJson ?: return null, KEY)
 
-        val decrypt = cryptoAESHandler(encData ?: return null, KEY)
         val playlistUrl = Regex("""sources:\s*\[\{"file":"([^"]+)""").find(decrypt)?.groupValues?.get(1) ?: return null
 
         val tracks = Regex("""tracks:\s*\[(.+)]""").find(decrypt)?.groupValues?.get(1)
-        val trackJson = Json.decodeFromString<JsonObject>(tracks ?: return null)
-        // TODO: Add subtitle support when a site is found that uses it
-        val trackData =
-            try {
 
-                SubtitleTrack(
-                    trackJson["file"]!!.jsonPrimitive.content,
-                    trackJson["label"]!!.jsonPrimitive.content,
-                    trackJson["kind"]!!.jsonPrimitive.content,
-                )
-            } catch(_: Exception) {
-                null
-            }
+        // TODO: Add subtitle support when a site is found that uses it
+        val trackJson = Json.decodeFromString<SubtitleTrack>(tracks ?: return null)
 
         val masterHeaders = Headers.headersOf(
             "Accept", "*/*",
@@ -752,8 +731,8 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
         val response = client.newCall(GET(playlistUrl, headers = masterHeaders)).execute()
         val masterPlaylist = response.body.string()
 
-        masterPlaylist?.substringAfter("#EXT-X-STREAM-INF:")
-            ?.split("#EXT-X-STREAM-INF:")?.map {
+        masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
+                .split("#EXT-X-STREAM-INF:").map {
                 val quality = it.substringAfter("RESOLUTION=").split(",")[0].split("\n")[0].substringAfter("x") + "p"
 
                 var videoUrl = it.substringAfter("\n").substringBefore("\n")
@@ -771,14 +750,14 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
     }
 
     private fun cryptoAESHandler(
-        data: AESData,
+        data: CryptoInfo,
         pass: String,
     ): String {
         val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512")
         val spec = PBEKeySpec(
             pass.toCharArray(),
             data.salt?.hexToByteArray(),
-            data.iterations?.toIntOrNull() ?: 1,
+            data.iterations ?: 1,
             256
         )
         val key = factory.generateSecret(spec)
@@ -795,6 +774,14 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
         return Base64.decode(string, Base64.DEFAULT)
     }
 
+    @Serializable
+    data class CryptoInfo(
+        val ciphertext: String? = null,
+        val iv: String? = null,
+        val salt: String? = null,
+        val iterations: Int? = null,
+    )
+
     private fun String.hexToByteArray(): ByteArray {
         check(length % 2 == 0) { "Must have an even length" }
         return chunked(2)
@@ -803,13 +790,7 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
             .toByteArray()
     }
 
-    data class AESData(
-        val ciphertext: String? = null,
-        val iv: String? = null,
-        val salt: String? = null,
-        val iterations: String? = null,
-    )
-
+    @Serializable
     data class SubtitleTrack(
         val file: String? = null,
         val label: String? = null,
@@ -817,6 +798,6 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
     )
 
     companion object {
-        private const val KEY = "4VqE3#N7zt&HEP^a"
+        private const val KEY = "11x&W5UBrcqn\$9Yl"
     }
 }
