@@ -239,7 +239,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             append(infos.getInfo("Sinopse") + "\n")
             infos.getInfo("Inglês")?.let { append("\nTítulo em inglês: $it") }
             infos.getInfo("Japonês")?.let { append("\nTítulo em japonês: $it") }
-            infos.getInfo("Foi")?.let { append("\nFoi ao ar em: $it") }
+            infos.getInfo("Foi ao ar em")?.let { append("\nFoi ao ar em: $it") }
             infos.getInfo("Temporada")?.let { append("\nTemporada: $it") }
             infos.getInfo("Duração")?.let { append("\nDuração: $it") }
             infos.getInfo("Fansub")?.let { append("\nFansub: $it") }
