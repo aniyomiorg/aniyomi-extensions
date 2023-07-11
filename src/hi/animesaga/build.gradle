@@ -1,0 +1,17 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'AnimeSAGA'
+    pkgNameSuffix = 'hi.animesaga'
+    extClass = '.AnimeSAGA'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-streamsb-extractor'))
+    implementation(project(':lib-chillx-extractor'))
+}
+
+apply from: "$rootDir/common.gradle"
