@@ -1843,10 +1843,10 @@
   {
     "name": "Aniyomi: Tokuzilla",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.tokuzilla",
-    "apk": "aniyomi-en.tokuzilla-v13.6.apk",
+    "apk": "aniyomi-en.tokuzilla-v13.7.apk",
     "lang": "en",
-    "code": 6,
-    "version": "13.6",
+    "code": 7,
+    "version": "13.7",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2644,6 +2644,27 @@
         "lang": "fr",
         "id": "8596049504378147571",
         "baseUrl": "https://vostfree.ws",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: AnimeSAGA",
+    "pkg": "eu.kanade.tachiyomi.animeextension.hi.animesaga",
+    "apk": "aniyomi-hi.animesaga-v13.2.apk",
+    "lang": "hi",
+    "code": 2,
+    "version": "13.2",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimeSAGA",
+        "lang": "hi",
+        "id": "3168615925539503340",
+        "baseUrl": "https://www.animesaga.in",
         "versionId": 1,
         "hasCloudflare": 1
       }
