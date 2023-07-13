@@ -144,7 +144,12 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
 
         return if (query.isNotEmpty()) {
-            GET("$baseUrl/search/$query/?flag1=${categoryFilter.toUriPart()}&sort_by=$sortType&from_videos=$page&tag_ids=all%2C${tagSearch.toUriPart()}")
+            if (query.startsWith("slug:")) {
+                var newQuery = query.split(':')[1].dropLastWhile { it.isDigit() }
+                GET("$baseUrl/search/$newQuery")
+            } else {
+                GET("$baseUrl/search/${query.replace(Regex("\\s"), "-")}/?flag1=${categoryFilter.toUriPart()}&sort_by=$sortType&from_videos=$page&tag_ids=all%2C${tagSearch.toUriPart()}")
+            }
         } else {
             GET("$baseUrl/search/?flag1=${categoryFilter.toUriPart()}&sort_by=$sortType&from_videos=$page&tag_ids=all%2C${tagSearch.toUriPart()}")
         }
@@ -245,5 +250,9 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
         AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
+    }
+
+    companion object {
+        const val PREFIX_SEARCH = "slug:"
     }
 }
