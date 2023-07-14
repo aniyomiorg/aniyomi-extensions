@@ -1001,27 +1001,6 @@
     ]
   },
   {
-    "name": "Aniyomi: AnimeKaizoku",
-    "pkg": "eu.kanade.tachiyomi.animeextension.en.animekaizoku",
-    "apk": "aniyomi-en.animekaizoku-v13.4.apk",
-    "lang": "en",
-    "code": 4,
-    "version": "13.4",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "AnimeKaizoku",
-        "lang": "en",
-        "id": "2418492215854196017",
-        "baseUrl": "https://animekaizoku.com",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: AnimeKhor",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.animekhor",
     "apk": "aniyomi-en.animekhor-v13.2.apk",
