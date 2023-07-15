@@ -6,4 +6,8 @@ class Pobreflix : DooPlay(
     "pt-BR",
     "Pobreflix",
     "https://pobreflix.biz",
-)
+) {
+
+    // ============================== Popular ===============================
+    override fun popularAnimeSelector() = "div.featured div.poster"
+}
