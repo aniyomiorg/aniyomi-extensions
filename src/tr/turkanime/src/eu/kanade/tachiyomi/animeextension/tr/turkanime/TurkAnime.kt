@@ -13,7 +13,6 @@ import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.GoogleDriveExt
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MVidooExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MailRuExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MytvExtractor
-import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.SendvidExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.SibnetExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.StreamVidExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.UqloadExtractor
@@ -32,6 +31,7 @@ import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.synchrony.Deobfuscator
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor

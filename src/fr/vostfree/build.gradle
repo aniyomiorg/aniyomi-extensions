@@ -10,8 +10,9 @@ ext {
 }
 
 dependencies {
-    implementation(project(':lib-okru-extractor'))
     implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib-mytv-extractor'))
+    implementation(project(':lib-okru-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"
