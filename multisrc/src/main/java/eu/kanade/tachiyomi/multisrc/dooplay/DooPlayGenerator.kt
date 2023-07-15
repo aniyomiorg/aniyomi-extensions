@@ -25,6 +25,7 @@ class DooPlayGenerator : ThemeSourceGenerator {
         SingleLang("Multimovies", "https://multimovies.shop", "en", isNsfw = false, overrideVersionCode = 7),
         SingleLang("pactedanime", "https://pactedanime.com", "en", isNsfw = false, className = "PactedAnime", overrideVersionCode = 4),
         SingleLang("Pi Fansubs", "https://pifansubs.org", "pt-BR", isNsfw = true, overrideVersionCode = 16),
+        SingleLang("Pobreflix", "https://pobreflix.biz", "pt-BR", isNsfw = true),
         SingleLang("UniqueStream", "https://uniquestream.net", "en", isNsfw = false, overrideVersionCode = 2),
     )
 
