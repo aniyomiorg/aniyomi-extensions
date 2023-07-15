@@ -1,0 +1,21 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'FrAnime'
+    pkgNameSuffix = 'fr.franime'
+    extClass = '.FrAnime'
+    extVersionCode = 1
+    libVersion = '13'
+    containsNsfw = true
+}
+
+dependencies {
+    implementation(project(':lib-mytv-extractor'))
+    implementation(project(':lib-sendvid-extractor'))
+    implementation(project(':lib-sibnet-extractor'))
+    implementation(project(':lib-streamsb-extractor'))
+}
+
+apply from: "$rootDir/common.gradle"
