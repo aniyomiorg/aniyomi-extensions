@@ -10,7 +10,8 @@ import okhttp3.OkHttpClient
 import okhttp3.internal.commonEmptyHeaders
 
 class PlaylistUtils(private val client: OkHttpClient, private val headers: Headers = commonEmptyHeaders) {
-// ================================ M3U8 ================================
+
+    // ================================ M3U8 ================================
 
     /**
      * Extracts videos from a .m3u8 file.
