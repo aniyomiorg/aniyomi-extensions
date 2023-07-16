@@ -100,24 +100,20 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
             .substringBeforeLast("/") + "/"
 
         // Get subtitles
-        val subtitleTracks = subtitleList.ifEmpty {
-            SUBTITLE_REGEX.findAll(masterPlaylist).mapNotNull {
-                Track(
-                    getAbsoluteUrl(it.groupValues[2], playlistUrl, masterBase) ?: return@mapNotNull null,
-                    it.groupValues[1]
-                )
-            }.toList()
-        }
+        val subtitleTracks = subtitleList + SUBTITLE_REGEX.findAll(masterPlaylist).mapNotNull {
+            Track(
+                getAbsoluteUrl(it.groupValues[2], playlistUrl, masterBase) ?: return@mapNotNull null,
+                it.groupValues[1]
+            )
+        }.toList()
 
         // Get audio tracks
-        val audioTracks = audioList.ifEmpty {
-            AUDIO_REGEX.findAll(masterPlaylist).mapNotNull {
-                Track(
-                    getAbsoluteUrl(it.groupValues[2], playlistUrl, masterBase) ?: return@mapNotNull null,
-                    it.groupValues[1]
-                )
-            }.toList()
-        }
+        val audioTracks = audioList + AUDIO_REGEX.findAll(masterPlaylist).mapNotNull {
+            Track(
+                getAbsoluteUrl(it.groupValues[2], playlistUrl, masterBase) ?: return@mapNotNull null,
+                it.groupValues[1]
+            )
+        }.toList()
 
         return masterPlaylist.substringAfter(PLAYLIST_SEPARATOR).split(PLAYLIST_SEPARATOR).mapNotNull {
             val resolution = it.substringAfter("RESOLUTION=")
@@ -284,11 +280,9 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
         ).execute().asJsoup()
 
         // Get audio tracks
-        val audioTracks = audioList.ifEmpty {
-            doc.select("Representation[mimetype~=audio]").map { audioSrc ->
-                val bandwidth = audioSrc.attr("bandwidth").toLongOrNull()
-                Track(audioSrc.text(), formatBytes(bandwidth))
-            }
+        val audioTracks = audioList + doc.select("Representation[mimetype~=audio]").map { audioSrc ->
+            val bandwidth = audioSrc.attr("bandwidth").toLongOrNull()
+            Track(audioSrc.text(), formatBytes(bandwidth))
         }
 
         return doc.select("Representation[mimetype~=video]").map { videoSrc ->
