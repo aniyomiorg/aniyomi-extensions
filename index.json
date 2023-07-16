@@ -2568,10 +2568,10 @@
   {
     "name": "Aniyomi: FrAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.fr.franime",
-    "apk": "aniyomi-fr.franime-v13.2.apk",
+    "apk": "aniyomi-fr.franime-v13.3.apk",
     "lang": "fr",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
