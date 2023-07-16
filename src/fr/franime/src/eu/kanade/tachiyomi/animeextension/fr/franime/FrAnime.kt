@@ -51,6 +51,8 @@ class FrAnime : AnimeHttpSource() {
 
     // === Anime Details
 
+    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> = Observable.just(anime)
+
     override fun animeDetailsParse(response: Response): SAnime = throw Exception("not used")
 
     // === Episodes
@@ -140,7 +142,8 @@ class FrAnime : AnimeHttpSource() {
                 it.originalTitle.contains(query, true) ||
                 it.titlesAlt.en?.contains(query, true) == true ||
                 it.titlesAlt.enJp?.contains(query, true) == true ||
-                it.titlesAlt.jaJp?.contains(query, true) == true
+                it.titlesAlt.jaJp?.contains(query, true) == true ||
+                titleToUrl(it.originalTitle).contains(query)
         }.chunked(50)
         val hasNextPage = pages.size > page
         val entries = pageToSAnimes(pages.getOrNull(page - 1))
@@ -193,7 +196,7 @@ class FrAnime : AnimeHttpSource() {
     private fun parseStatus(statusString: String?, seasonCount: Int = 1, season: Int = 1): Int {
         if (season < seasonCount) return SAnime.COMPLETED
         return when (statusString?.trim()) {
-            "EN COURS" -> SAnime.COMPLETED
+            "EN COURS" -> SAnime.ONGOING
             "TERMINÉ" -> SAnime.COMPLETED
             else -> SAnime.UNKNOWN
         }
