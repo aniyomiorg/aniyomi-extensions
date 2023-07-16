@@ -10,7 +10,7 @@ class UpStreamExtractor(private val client: OkHttpClient) {
     fun videoFromUrl(url: String): List<Video> {
         val doc = client.newCall(GET(url)).execute().asJsoup()
         val script = doc.selectFirst("script:containsData(sources)")?.data() ?: return emptyList()
-        val scriptData = if("eval" in script) JsUnpacker.unpackAndCombine(script)!! else script
+        val scriptData = if ("eval" in script) JsUnpacker.unpackAndCombine(script)!! else script
         val m3u8 = Regex("sources:\\s*\\[\\{\\s*\\t*file:\\s*[\"']([^\"']+)").find(scriptData)!!.groupValues[1]
         return Video(m3u8, "Upstream", m3u8).let(::listOf)
     }

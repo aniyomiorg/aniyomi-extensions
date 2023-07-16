@@ -27,7 +27,7 @@ import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
-class ArabAnime: ConfigurableAnimeSource, AnimeHttpSource() {
+class ArabAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "ArabAnime"
 
@@ -81,20 +81,20 @@ class ArabAnime: ConfigurableAnimeSource, AnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val watchData = response.asJsoup().select("div#datawatch").text().decodeBase64()
         val serversJson = json.decodeFromString<Episode>(watchData)
-        val selectServer =serversJson.ep_info[0].stream_servers[0].decodeBase64()
+        val selectServer = serversJson.ep_info[0].stream_servers[0].decodeBase64()
         val watchPage = client.newCall(GET(selectServer)).execute().asJsoup()
         val videoList = mutableListOf<Video>()
         watchPage.select("option").forEach { it ->
             val link = it.attr("data-src").decodeBase64()
-            if (link.contains("www.arabanime.net/embed")){
+            if (link.contains("www.arabanime.net/embed")) {
                 val sources = client.newCall(GET(link)).execute().asJsoup().select("source")
                 sources.forEach { source ->
-                    if(!source.attr("src").contains("static")){
-                        val quality = source.attr("label").let {q ->
-                            if(q.contains("p")) q else q + "p"
+                    if (!source.attr("src").contains("static")) {
+                        val quality = source.attr("label").let { q ->
+                            if (q.contains("p")) q else q + "p"
                         }
                         videoList.add(
-                            Video(source.attr("src"), "${it.text()}: $quality" ,source.attr("src"))
+                            Video(source.attr("src"), "${it.text()}: $quality", source.attr("src")),
                         )
                     }
                 }
@@ -132,7 +132,7 @@ class ArabAnime: ConfigurableAnimeSource, AnimeHttpSource() {
     // =============================== Search ===============================
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        return if(response.body.contentType() == "application/json".toMediaType()){
+        return if (response.body.contentType() == "application/json".toMediaType()) {
             popularAnimeParse(response)
         } else {
             val searchResult = response.asJsoup().select("div.show")
@@ -178,7 +178,7 @@ class ArabAnime: ConfigurableAnimeSource, AnimeHttpSource() {
         val animeList = latestEpisodes.map {
             SAnime.create().apply {
                 val url = it.select("a.as-info").attr("href")
-                    .replace("watch","show").substringBeforeLast("/")
+                    .replace("watch", "show").substringBeforeLast("/")
                 setUrlWithoutDomain(url)
                 title = it.select("a.as-info").text()
                 thumbnail_url = it.select("img").attr("src")
@@ -210,20 +210,20 @@ class ArabAnime: ConfigurableAnimeSource, AnimeHttpSource() {
         CatUnit("اختر", ""),
         CatUnit("التقييم", "2"),
         CatUnit("اخر الانميات المضافة", "1"),
-        CatUnit("الابجدية", "0")
+        CatUnit("الابجدية", "0"),
     )
 
     private fun getTypeFilterList() = listOf(
         CatUnit("اختر", ""),
         CatUnit("الكل", ""),
         CatUnit("فيلم", "0"),
-        CatUnit("انمى", "1")
+        CatUnit("انمى", "1"),
     )
     private fun getStatFilterList() = listOf(
         CatUnit("اختر", ""),
         CatUnit("الكل", ""),
         CatUnit("مستمر", "1"),
-        CatUnit("مكتمل", "0")
+        CatUnit("مكتمل", "0"),
     )
 
     // =============================== Preferences ===============================
