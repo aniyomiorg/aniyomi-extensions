@@ -6,7 +6,6 @@ import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.megaflix.extractors.MegaflixExtractor
-import eu.kanade.tachiyomi.animeextension.pt.megaflix.extractors.MixDropExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -14,6 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -135,7 +135,7 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun getVideoList(url: String, language: String): List<Video>? {
         return when {
             "mixdrop.co" in url ->
-                MixDropExtractor(client).videoFromUrl(url, language)?.let(::listOf)
+                MixDropExtractor(client).videoFromUrl(url, language)
             "streamtape.com" in url ->
                 StreamTapeExtractor(client).videoFromUrl(url, "StreamTape - $language")?.let(::listOf)
             "watchsb.com" in url ->

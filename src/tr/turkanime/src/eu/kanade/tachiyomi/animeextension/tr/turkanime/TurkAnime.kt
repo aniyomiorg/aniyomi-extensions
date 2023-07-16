@@ -13,7 +13,6 @@ import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.GoogleDriveExt
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MVidooExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MailRuExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MytvExtractor
-import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.SendvidExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.SibnetExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.StreamVidExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.UqloadExtractor
@@ -32,24 +31,21 @@ import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.synchrony.Deobfuscator
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonPrimitive
 import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -79,9 +75,6 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
-
-    private val key: String
-        get() = preferences.getString(PREF_KEY_KEY, DEFAULT_KEY)!!
 
     // ============================== Popular ===============================
 
@@ -208,17 +201,21 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val fansubbers = document.select("div#videodetay div.pull-right button")
-        return if (fansubbers.size == 1) {
+        val videoList = if (fansubbers.size == 1) {
             getVideosFromHosters(document, fansubbers.first()!!.text().trim())
         } else {
-            val videoList = mutableListOf<Video>()
+            val videos = mutableListOf<Video>()
             fansubbers.parallelMap {
                 val url = it.attr("onclick").trimOnClick()
                 val subDoc = client.newCall(GET(url, xmlHeader)).execute().asJsoup()
-                videoList.addAll(getVideosFromHosters(subDoc, it.text().trim()))
+                videos.addAll(getVideosFromHosters(subDoc, it.text().trim()))
             }
-            videoList
+            videos
         }
+
+        require(videoList.isNotEmpty()) { "Failed to extract videos" }
+
+        return videoList
     }
 
     private fun getVideosFromHosters(document: Document, subber: String): List<Video> {
@@ -240,9 +237,7 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val url = it.attr("onclick").trimOnClick()
             val videoDoc = client.newCall(GET(url, xmlHeader)).execute().asJsoup()
             val src = videoDoc.select("iframe").attr("src").replace("^//".toRegex(), "https://")
-            runCatching {
-                videoList.addAll(getVideosFromSource(src, hosterName, subber))
-            }
+            videoList.addAll(getVideosFromSource(src, hosterName, subber))
         }
         return videoList
     }
@@ -259,79 +254,77 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             ),
         )
 
-        val hosterLink = "https:" + json.decodeFromString<JsonPrimitive>(
-            CryptoAES.decryptWithSalt(
-                cipherParams.ct,
-                cipherParams.s,
-                key,
-            ),
-        ).content
+        val hosterLink = "https:" + decryptParams(cipherParams)
 
-        when (hosterName) {
-            "ALUCARD(BETA)" -> {
-                videoList.addAll(AlucardExtractor(client, json, baseUrl).extractVideos(hosterLink, subber))
-            }
-            "DOODSTREAM" -> {
-                videoList.addAll(DoodExtractor(client).videosFromUrl(hosterLink, "$subber: DOODSTREAM", redirect = false))
-            }
-            "EMBEDGRAM" -> {
-                videoList.addAll(EmbedgramExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: "))
-            }
-            "FILEMOON" -> {
-                videoList.addAll(FilemoonExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: "))
-            }
-            "GDRIVE" -> {
-                Regex("""[\w-]{28,}""").find(hosterLink)?.groupValues?.get(0)?.let {
-                    videoList.addAll(GoogleDriveExtractor(client, headers).videosFromUrl("https://drive.google.com/uc?id=$it", "$subber: Gdrive"))
+        runCatching {
+            when (hosterName) {
+                "ALUCARD(BETA)" -> {
+                    videoList.addAll(AlucardExtractor(client, json, baseUrl).extractVideos(hosterLink, subber))
                 }
-            }
-            "MAIL" -> {
-                videoList.addAll(MailRuExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: "))
-            }
-            "MP4UPLOAD" -> {
-                videoList.addAll(Mp4uploadExtractor(client).videosFromUrl(hosterLink, headers, prefix = "$subber: "))
-            }
-            "MYVI" -> {
-                videoList.addAll(MytvExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
-            }
-            "MVIDOO" -> {
-                videoList.addAll(MVidooExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
-            }
-            "ODNOKLASSNIKI" -> {
-                videoList.addAll(OkruExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
-            }
-            "SENDVID" -> {
-                videoList.addAll(SendvidExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: "))
-            }
-            "SIBNET" -> {
-                videoList.addAll(SibnetExtractor(client).getVideosFromUrl(hosterLink, prefix = "$subber: "))
-            }
-            "STREAMSB" -> {
-                videoList.addAll(StreamSBExtractor(client).videosFromUrl(hosterLink, refererHeader, prefix = "$subber: "))
-            }
-            "STREAMVID" -> {
-                videoList.addAll(StreamVidExtractor(client).videosFromUrl(hosterLink, headers, prefix = "$subber: "))
-            }
-            "UQLOAD" -> {
-                videoList.addAll(UqloadExtractor(client).videosFromUrl(hosterLink, headers, "$subber: Uqload"))
-            }
-            "VK" -> {
-                val vkUrl = "https://vk.com" + hosterLink.substringAfter("vk.com")
-                videoList.addAll(VkExtractor(client).getVideosFromUrl(vkUrl, prefix = "$subber: "))
-            }
-            "VOE" -> {
-                VoeExtractor(client).videoFromUrl(hosterLink, "$subber: VOE")?.let { video -> videoList.add(video) }
-            }
-            "VTUBE" -> {
-                videoList.addAll(VTubeExtractor(client, headers).videosFromUrl(hosterLink, baseUrl, prefix = "$subber: "))
-            }
-            "VUDEA" -> {
-                videoList.addAll(VudeoExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
-            }
-            "WOLFSTREAM" -> {
-                videoList.addAll(WolfstreamExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
+                "DOODSTREAM" -> {
+                    videoList.addAll(DoodExtractor(client).videosFromUrl(hosterLink, "$subber: DOODSTREAM", redirect = false))
+                }
+                "EMBEDGRAM" -> {
+                    videoList.addAll(EmbedgramExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: "))
+                }
+                "FILEMOON" -> {
+                    videoList.addAll(FilemoonExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: "))
+                }
+                "GDRIVE" -> {
+                    Regex("""[\w-]{28,}""").find(hosterLink)?.groupValues?.get(0)?.let {
+                        videoList.addAll(GoogleDriveExtractor(client, headers).videosFromUrl("https://drive.google.com/uc?id=$it", "$subber: Gdrive"))
+                    }
+                }
+                "MAIL" -> {
+                    videoList.addAll(MailRuExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: "))
+                }
+                "MP4UPLOAD" -> {
+                    videoList.addAll(Mp4uploadExtractor(client).videosFromUrl(hosterLink, headers, prefix = "$subber: "))
+                }
+                "MYVI" -> {
+                    videoList.addAll(MytvExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
+                }
+                "MVIDOO" -> {
+                    videoList.addAll(MVidooExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
+                }
+                "ODNOKLASSNIKI" -> {
+                    videoList.addAll(OkruExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
+                }
+                "SENDVID" -> {
+                    videoList.addAll(SendvidExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: "))
+                }
+                "SIBNET" -> {
+                    videoList.addAll(SibnetExtractor(client).getVideosFromUrl(hosterLink, prefix = "$subber: "))
+                }
+                "STREAMSB" -> {
+                    videoList.addAll(StreamSBExtractor(client).videosFromUrl(hosterLink, refererHeader, prefix = "$subber: "))
+                }
+                "STREAMVID" -> {
+                    videoList.addAll(StreamVidExtractor(client).videosFromUrl(hosterLink, headers, prefix = "$subber: "))
+                }
+                "UQLOAD" -> {
+                    videoList.addAll(UqloadExtractor(client).videosFromUrl(hosterLink, headers, "$subber: Uqload"))
+                }
+                "VK" -> {
+                    val vkUrl = "https://vk.com" + hosterLink.substringAfter("vk.com")
+                    videoList.addAll(VkExtractor(client).getVideosFromUrl(vkUrl, prefix = "$subber: "))
+                }
+                "VOE" -> {
+                    VoeExtractor(client).videoFromUrl(hosterLink, "$subber: VOE")?.let { video -> videoList.add(video) }
+                }
+                "VTUBE" -> {
+                    videoList.addAll(VTubeExtractor(client, headers).videosFromUrl(hosterLink, baseUrl, prefix = "$subber: "))
+                }
+                "VUDEA" -> {
+                    videoList.addAll(VudeoExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
+                }
+                "WOLFSTREAM" -> {
+                    videoList.addAll(WolfstreamExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
+                }
+                else -> {}
             }
         }
+
         return videoList
     }
 
@@ -374,27 +367,56 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             map { async { f(it) } }.awaitAll()
         }
 
-    private fun getKey() {
+    private val mutex = Mutex()
+    private var shouldUpdateKey = false
+
+    private val key: String
+        get() {
+            return runBlocking(Dispatchers.IO) {
+                mutex.withLock {
+                    if (shouldUpdateKey) {
+                        updateKey()
+                        shouldUpdateKey = false
+                    }
+                    preferences.getString(PREF_KEY_KEY, DEFAULT_KEY)!!
+                }
+            }
+        }
+
+    private fun decryptParams(params: CipherParams, tried: Boolean = false): String {
+        val decrypted = CryptoAES.decryptWithSalt(
+            params.ct,
+            params.s,
+            key,
+        ).ifEmpty {
+            if (tried) {
+                ""
+            } else {
+                shouldUpdateKey = true
+                decryptParams(params, true)
+            }
+        }
+
+        return json.decodeFromString<String>(decrypted)
+    }
+
+    private fun updateKey() {
         val script4 = client.newCall(GET("$baseUrl/embed/#/")).execute().asJsoup()
             .select("script[defer]").getOrNull(1)
             ?.attr("src") ?: return
         val embeds4 = client.newCall(GET(baseUrl + script4)).execute().body.string()
-        val name = "(?<=')[0-9a-f]{16}(?=')".toRegex().findAll(embeds4).toList().firstOrNull()?.value
+        val name = JS_NAME_REGEX.findAll(embeds4).toList().firstOrNull()?.value
 
         val file5 = client.newCall(GET("$baseUrl/embed/js/embeds.$name.js")).execute().body.string()
         val embeds5 = Deobfuscator.deobfuscateScript(file5) ?: return
-        val key = "(?<=')\\S{100}(?=')".toRegex().find(embeds5)?.value ?: return
+        val key = KEY_REGEX.find(embeds5)?.value ?: return
         preferences.edit().putString(PREF_KEY_KEY, key).apply()
     }
 
-    init {
-        @OptIn(DelicateCoroutinesApi::class)
-        GlobalScope.launch {
-            withContext(Dispatchers.IO) { getKey() }
-        }
-    }
-
     companion object {
+        private val JS_NAME_REGEX by lazy { "(?<=')[0-9a-f]{16}(?=')".toRegex() }
+        private val KEY_REGEX by lazy { "(?<=')\\S{100}(?=')".toRegex() }
+
         private val SUPPORTED_HOSTERS = listOf(
             // TODO: Fix Alucard
             // "ALUCARD(BETA)",

@@ -13,15 +13,16 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
+import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -41,8 +42,6 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
 
-    private val workerUrl = "https://scws.work"
-
     override val lang = "it"
 
     override val supportsLatest = true
@@ -61,9 +60,11 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
         GET("$baseUrl/top-anime?popular=true&page=$page", headers = headers)
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val parsed = json.decodeFromString<AnimeResponse>(
-            response.body.string().substringAfter("top-anime animes=\"").substringBefore("\"></top-anime>").replace("&quot;", "\""),
-        )
+        val parsed = response.parseAs<AnimeResponse> {
+            it.substringAfter("top-anime animes=\"")
+                .substringBefore("\"></top-anime>")
+                .replace("&quot;", "\"")
+        }
 
         val animeList = parsed.data.map { ani ->
             SAnime.create().apply {
@@ -167,9 +168,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun searchAnimeParse(response: Response, page: Int): AnimesPage {
         return if (response.request.method == "POST") {
-            val data = json.decodeFromString<SearchResponse>(
-                response.body.string(),
-            )
+            val data = response.parseAs<SearchResponse>()
 
             val animeList = data.records.map {
                 SAnime.create().apply {
@@ -251,13 +250,17 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
 
         episodeList.addAll(
             episodes.filter {
-                it.scws_id != null && it.file_name != null
+                it.id != null
             }.map {
                 SEpisode.create().apply {
                     name = "Episode ${it.number}"
-                    url = LinkData(it.scws_id.toString(), it.file_name!!).toJsonString()
                     date_upload = parseDate(it.created_at)
                     episode_number = it.number.split("-")[0].toFloatOrNull() ?: 0F
+                    setUrlWithoutDomain(
+                        response.request.url.newBuilder()
+                            .addPathSegment(it.id.toString())
+                            .toString(),
+                    )
                 }
             },
         )
@@ -268,7 +271,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
 
             while (end < episodeCount) {
                 episodeList.addAll(
-                    addFromApi(start, end, animeId, newHeaders),
+                    addFromApi(start, end, animeId, newHeaders, response.request.url),
                 )
                 start += 120
                 end += 120
@@ -276,7 +279,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
 
             if (episodeCount >= start) {
                 episodeList.addAll(
-                    addFromApi(start, episodeCount, animeId, newHeaders),
+                    addFromApi(start, episodeCount, animeId, newHeaders, response.request.url),
                 )
             }
         }
@@ -287,64 +290,50 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================ Video Links =============================
 
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
-        val newHeaders = headers.newBuilder()
-            .add("Accept", "*/*")
-            .add("Accept-Language", "en-US,en;q=0.5")
-            .add("Host", workerUrl.toHttpUrl().host)
-            .add("Origin", baseUrl)
+        val videoList = mutableListOf<Video>()
+
+        val doc = client.newCall(
+            GET(baseUrl + episode.url, headers),
+        ).execute().asJsoup()
+        val iframeUrl = doc.selectFirst("video-player[embed_url]")?.attr("abs:embed_url") ?: error("Failed to extract iframe")
+
+        val iframeHeaders = headers.newBuilder()
+            .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+            .add("Host", iframeUrl.toHttpUrl().host)
             .add("Referer", "$baseUrl/")
             .build()
 
-        val mediaId = json.decodeFromString<LinkData>(episode.url)
-        val videoList = mutableListOf<Video>()
+        val iframe = client.newCall(
+            GET(iframeUrl, headers = iframeHeaders),
+        ).execute().asJsoup()
+        val script = iframe.selectFirst("script:containsData(masterPlaylistParams)")!!.data()
 
-        val serverJson = json.decodeFromString<ServerResponse>(
-            client.newCall(GET("$workerUrl/videos/${mediaId.id}", headers = newHeaders)).execute().body.string(),
-        )
+        val playlistUrl = Regex("""masterPlaylistUrl.*?'(.*?)'""").find(script)!!.groupValues[1]
+        val expires = Regex("""'expires': ?'(\d+)'""").find(script)!!.groupValues[1]
+        val canCast = Regex("""'canCast': ?'(\d*)'""").find(script)!!.groupValues[1]
+        val token = Regex("""'token': ?'([\w-]+)'""").find(script)!!.groupValues[1]
 
-        val appJs = client.newCall(GET("$baseUrl/js/app.js", headers = headers)).execute().body.string()
+        // Get subtitles
+        val masterPlUrl = "$playlistUrl?token=$token&expires=$expires&canCast=$canCast&n=1"
+        val masterPl = client.newCall(GET(masterPlUrl)).execute().body.string()
+        val subList = Regex("""#EXT-X-MEDIA:TYPE=SUBTITLES.*?NAME="(.*?)".*?URI="(.*?)"""").findAll(masterPl).map {
+            Track(it.groupValues[2], it.groupValues[1])
+        }.toList()
 
-        val tokenRegex = """(\d+),(?:\w+)\.client_ip,"(\w+)"""".toRegex()
-        val (multiplier, key) = tokenRegex.find(appJs)!!.destructured
+        Regex("""'token(\d+p?)': ?'([\w-]+)'""").findAll(script).forEach { match ->
+            val quality = match.groupValues[1]
 
-        val pKeyRegex = """(\d+),u,"(\w+)"""".toRegex()
-        val (pMultiplier, pKey) = pKeyRegex.find(appJs)!!.destructured
-
-        val playListToken = getToken(multiplier.toInt(), serverJson.client_ip, key)
-        val downloadToken = getToken(pMultiplier.toInt(), serverJson.client_ip, pKey)
-
-        val masterPlaylist = client.newCall(
-            GET("$workerUrl/master/${mediaId.id}?token=$playListToken", headers = headers),
-        ).execute().body.string()
-
-        val qualities = mutableListOf<String>()
-        masterPlaylist.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:").forEach {
-            qualities.add(
-                it.substringAfter("\n").substringBefore("\n").substringBefore("p/").substringAfterLast("/"),
-            )
-        }
-
-        qualities.forEach {
-            val url = "https://au-d1-0" +
-                serverJson.proxy_download +
-                ".scws-content.net/download/" +
-                serverJson.storage_download.number +
-                "/" +
-                serverJson.folder_id +
-                "/" +
-                it +
-                "p.mp4?token=" +
-                downloadToken +
-                "&filename=" +
-                mediaId.file_name.replace("&", ".")
-            videoList.add(
-                Video(
-                    "https://au-d1-0${serverJson.proxy_download}.scws-content.net",
-                    "${it}p",
-                    url,
-                    headers = headers,
-                ),
-            )
+            val videoUrl = buildString {
+                append(playlistUrl)
+                append("?type=video&rendition=")
+                append(quality)
+                append("&token=")
+                append(match.groupValues[2])
+                append("&expires=$expires")
+                append("&canCast=$canCast")
+                append("&n=1")
+            }
+            videoList.add(Video(videoUrl, quality, videoUrl, subtitleTracks = subList))
         }
 
         require(videoList.isNotEmpty()) { "Failed to fetch videos" }
@@ -358,25 +347,34 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================= Utilities ==============================
 
+    private inline fun <reified T> Response.parseAs(transform: (String) -> String = { it }): T {
+        val responseBody = use { transform(it.body.string()) }
+        return json.decodeFromString(responseBody)
+    }
+
     private fun parseStatus(statusString: String): Int = when (statusString) {
         "In Corso" -> SAnime.ONGOING
         "Terminato" -> SAnime.COMPLETED
         else -> SAnime.UNKNOWN
     }
 
-    private fun addFromApi(start: Int, end: Int, animeId: String, headers: Headers): List<SEpisode> {
+    private fun addFromApi(start: Int, end: Int, animeId: String, headers: Headers, url: HttpUrl): List<SEpisode> {
         val response = client.newCall(
             GET("$baseUrl/info_api/$animeId/1?start_range=$start&end_range=$end", headers = headers),
         ).execute()
-        val json = json.decodeFromString<ApiResponse>(response.body.string())
+        val json = response.parseAs<ApiResponse>()
         return json.episodes.filter {
-            it.scws_id != null && it.file_name != null
+            it.id != null
         }.map {
             SEpisode.create().apply {
                 name = "Episode ${it.number}"
-                url = LinkData(it.scws_id.toString(), it.file_name!!).toJsonString()
                 date_upload = parseDate(it.created_at)
                 episode_number = it.number.split("-")[0].toFloatOrNull() ?: 0F
+                setUrlWithoutDomain(
+                    url.newBuilder()
+                        .addPathSegment(it.id.toString())
+                        .toString(),
+                )
             }
         }
     }
@@ -386,8 +384,6 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
     } else {
         "\"${this}\""
     }
-
-    private fun LinkData.toJsonString(): String = json.encodeToString(this)
 
     @SuppressLint("SimpleDateFormat")
     private fun parseDate(date: String): Long {
@@ -419,7 +415,7 @@ class AnimeUnity : ConfigurableAnimeSource, AnimeHttpSource() {
     companion object {
         private val PREF_DOMAIN_KEY = "preferred_domain_name_v${AppInfo.getVersionName()}"
         private const val PREF_DOMAIN_TITLE = "Override BaseUrl"
-        private const val PREF_DOMAIN_DEFAULT = "https://www.animeunity.it"
+        private const val PREF_DOMAIN_DEFAULT = "https://www.animeunity.cc"
         private const val PREF_DOMAIN_SUMMARY = "For temporary uses. Updating the extension will erase this setting."
 
         private const val PREF_QUALITY_KEY = "preferred_quality"

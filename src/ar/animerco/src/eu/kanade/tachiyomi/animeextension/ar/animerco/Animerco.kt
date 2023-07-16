@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.SharedExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.UQLoadExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.VidBomExtractor
@@ -15,6 +14,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -189,7 +189,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 embedUrl.contains("drive.google")
                 -> {
                     val embedUrlG = "https://gdriveplayer.to/embed2.php?link=" + embedUrl
-                    val videos = GdrivePlayerExtractor(client).videosFromUrl(embedUrlG)
+                    val videos = GdrivePlayerExtractor(client).videosFromUrl(embedUrlG, "GdrivePlayer", headers = headers)
                     videoList.addAll(videos)
                 }
                 embedUrl.contains("streamtape") -> {

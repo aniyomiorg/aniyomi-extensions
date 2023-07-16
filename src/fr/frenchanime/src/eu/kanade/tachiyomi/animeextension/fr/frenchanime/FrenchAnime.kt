@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.fr.frenchanime.extractors.SibnetExtractor
 import eu.kanade.tachiyomi.animeextension.fr.frenchanime.extractors.StreamHideExtractor
 import eu.kanade.tachiyomi.animeextension.fr.frenchanime.extractors.StreamVidExtractor
 import eu.kanade.tachiyomi.animeextension.fr.frenchanime.extractors.UpstreamExtractor
@@ -20,6 +19,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -284,7 +284,7 @@ class FrenchAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                     source.contains("sibnet") -> {
                         videoList.addAll(
-                            SibnetExtractor(client).getVideosFromUrl(source),
+                            SibnetExtractor(client).videosFromUrl(source),
                         )
                     }
                     source.contains("ok.ru") -> {

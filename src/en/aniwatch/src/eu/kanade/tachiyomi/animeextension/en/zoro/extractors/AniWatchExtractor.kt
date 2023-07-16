@@ -17,27 +17,23 @@ class AniWatchExtractor(private val client: OkHttpClient) {
         .build()
 
     companion object {
-        private const val SERVER_URL = "https://megacloud.tv"
-        private const val JS_URL = SERVER_URL + "/js/player/a/prod/e1-player.min.js"
-        private const val SOURCES_URL = SERVER_URL + "/embed-2/ajax/e-1/getSources?id="
+        private val SERVER_URL = arrayOf("https://megacloud.tv", "https://rapid-cloud.co")
+        private val SOURCES_URL = arrayOf("/embed-2/ajax/e-1/getSources?id=", "/ajax/embed-6/getSources?id=")
+        private val SOURCES_SPLITTER = arrayOf("/e-1/", "/embed-6/")
+        private val SOURCES_KEY = arrayOf("6", "0")
     }
-
-    // This will create a lag of 1~3s at the initialization of the class, but the
-    // speedup of the manual cache will be worth it.
-    private val cachedJs by lazy {
-        newClient.newCall(GET(JS_URL, cache = cacheControl)).execute()
-            .body.string()
-    }
-    init { cachedJs }
 
     fun getSourcesJson(url: String): String? {
-        val id = url.substringAfter("/e-1/", "")
+        val type = if (url.startsWith("https://megacloud.tv")) 0 else 1
+        val keyType = SOURCES_KEY[type]
+
+        val id = url.substringAfter(SOURCES_SPLITTER[type], "")
             .substringBefore("?", "").ifEmpty { return null }
-        val srcRes = newClient.newCall(GET(SOURCES_URL + id, cache = cacheControl))
+        val srcRes = newClient.newCall(GET(SERVER_URL[type] + SOURCES_URL[type] + id, cache = cacheControl))
             .execute()
             .body.string()
 
-        val key = newClient.newCall(GET("https://raw.githubusercontent.com/enimax-anime/key/e6/key.txt"))
+        val key = newClient.newCall(GET("https://raw.githubusercontent.com/enimax-anime/key/e$keyType/key.txt"))
             .execute()
             .body.string()
 
