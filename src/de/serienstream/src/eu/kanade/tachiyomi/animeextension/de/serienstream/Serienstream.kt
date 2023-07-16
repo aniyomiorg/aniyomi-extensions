@@ -82,7 +82,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val anime = SAnime.create()
         val linkElement = element.selectFirst("a")!!
         anime.url = linkElement.attr("href")
-        anime.thumbnail_url = linkElement.selectFirst("img")!!.attr("data-src")
+        anime.thumbnail_url = baseUrl + linkElement.selectFirst("img")!!.attr("data-src")
         anime.title = element.selectFirst("h3")!!.text()
         return anime
     }
@@ -143,7 +143,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val link = result["link"]!!.jsonPrimitive.content
         anime.title = title.replace("<em>", "").replace("</em>", "")
         val thumpage = client.newCall(GET("$baseUrl$link")).execute().asJsoup()
-        anime.thumbnail_url = thumpage.selectFirst("div.seriesCoverBox img")!!.attr("data-src")
+        anime.thumbnail_url = baseUrl + thumpage.selectFirst("div.seriesCoverBox img")!!.attr("data-src")
         anime.url = link
         return anime
     }
@@ -154,7 +154,7 @@ class Serienstream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.selectFirst("div.series-title h1 span")!!.text()
-        anime.thumbnail_url = document.selectFirst("div.seriesCoverBox img")!!.attr("data-src")
+        anime.thumbnail_url = baseUrl + document.selectFirst("div.seriesCoverBox img")!!.attr("data-src")
         anime.genre = document.select("div.genres ul li").joinToString { it.text() }
         anime.description = document.selectFirst("p.seri_des")!!.attr("data-full-description")
         document.selectFirst("div.cast li:contains(Produzent:) ul")?.let {
