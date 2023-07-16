@@ -24,7 +24,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.util.Base64
+import android.util.Base64
 import kotlin.Exception
 
 class AnimeStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -95,7 +95,7 @@ class AnimeStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val hosterSelection = preferences.getStringSet("hoster_selection", setOf("stape", "voe"))
         val options = document.select("select.mirror option")
         options.forEach {
-            val url = String(Base64.getDecoder().decode(it.attr("value").toString()))
+            val url = String(Base64.decode(it.attr("value").toString(), Base64.DEFAULT))
                 .substringAfter("src=\"").substringBefore("\"")
             when {
                 url.contains("https://streamtape") || url.contains("https://adblockeronstape") && hosterSelection?.contains("stape") == true -> {
