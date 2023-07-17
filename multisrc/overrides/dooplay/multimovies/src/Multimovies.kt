@@ -12,6 +12,7 @@ import eu.kanade.tachiyomi.animeextension.en.multimovies.extractors.MultimoviesC
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
@@ -106,6 +107,7 @@ class Multimovies : DooPlay(
                     .build()
                 AutoEmbedExtractor(client).videosFromUrl(url, headers = newHeaders)
             }
+            url.contains("streamlare.com") -> StreamlareExtractor(client).videosFromUrl(url)
             else -> emptyList()
         }
     }
@@ -160,12 +162,12 @@ class Multimovies : DooPlay(
     }
 
     // ============================== Filters ===============================
-	
+
     override fun getFilterList() = getMultimoviesFilterList()
     override val fetchGenres = false
 
     // =============================== Latest ===============================
-	
+
     override fun latestUpdatesNextPageSelector() = "div.pagination > *:last-child:not(span):not(.current)"
 
     // ============================== Settings ==============================

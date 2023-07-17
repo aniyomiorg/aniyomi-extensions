@@ -7,7 +7,6 @@ import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animeextension.pl.wbijam.extractors.CdaPlExtractor
 import eu.kanade.tachiyomi.animeextension.pl.wbijam.extractors.DailymotionExtractor
-import eu.kanade.tachiyomi.animeextension.pl.wbijam.extractors.SibnetExtractor
 import eu.kanade.tachiyomi.animeextension.pl.wbijam.extractors.VkExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -17,6 +16,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
+import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
@@ -25,7 +25,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -290,7 +289,7 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             CdaPlExtractor(client).getVideosFromUrl(serverUrl, headers)
                         }
                         serverUrl.contains("sibnet.ru") -> {
-                            SibnetExtractor(client).getVideosFromUrl(serverUrl)
+                            SibnetExtractor(client).videosFromUrl(serverUrl)
                         }
                         serverUrl.contains("vk.com") -> {
                             VkExtractor(client).getVideosFromUrl(serverUrl, headers)
