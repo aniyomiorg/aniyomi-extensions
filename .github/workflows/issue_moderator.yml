@@ -14,10 +14,16 @@ jobs:
         uses: tachiyomiorg/issue-moderator-action@v2
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          duplicate-label: Duplicate
+
           duplicate-check-enabled: true
-          duplicate-check-label: Source request
+          duplicate-check-labels: |
+            ["Source request", "Domain changed"]
+
           existing-check-enabled: true
-          existing-check-label: Source request
+          existing-check-labels: |
+            ["Source request", "Domain changed"]
+
           auto-close-rules: |
             [
               {
@@ -37,7 +43,7 @@ jobs:
               },
               {
                 "type": "both",
-                "regex": ".*(?:fail(?:ed|ure)?|can\\s*(?:no|')?t|unable|get past|(?<!n[o']?t )blocked by|error) (?:to )?(?:bypass|penetrate)?.*cloudfl?are.*",
+                "regex": ".*(?:fail(?:ed|ure|s)?|can\\s*(?:no|')?t|(?:not|un).*able|(?<!n[o']?t )blocked by|error) (?:to )?(?:get past|by ?pass|penetrate)?.*cloud ?fl?are.*",
                 "ignoreCase": true,
                 "message": "Refer to the **Solving Cloudflare issues** section at https://aniyomi.org/help/guides/troubleshooting/#solving-cloudflare-issues. If it doesn't work, migrate to other sources or wait until they lower their protection."
               }

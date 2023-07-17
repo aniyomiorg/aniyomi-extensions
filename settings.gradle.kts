@@ -16,6 +16,7 @@ pluginManagement {
 
 include(":core")
 
+// all the directories under /lib instead of manually adding each to a list
 File(rootDir, "lib").eachDir {
     val libName = it.name
     include(":lib-$libName")
@@ -36,13 +37,13 @@ if (System.getenv("CI") == null || System.getenv("CI_MODULE_GEN") == "true") {
             project(name).projectDir = File("src/${dir.name}/${subdir.name}")
         }
     }
-    // Loads generated extensions from multisrc
+    // Loads all generated extensions from multisrc
     File(rootDir, "generated-src").eachDir { dir ->
-       dir.eachDir { subdir ->
-           val name = ":extensions:multisrc:${dir.name}:${subdir.name}"
-           include(name)
-           project(name).projectDir = File("generated-src/${dir.name}/${subdir.name}")
-       }
+        dir.eachDir { subdir ->
+            val name = ":extensions:multisrc:${dir.name}:${subdir.name}"
+            include(name)
+            project(name).projectDir = File("generated-src/${dir.name}/${subdir.name}")
+        }
     }
 
     /**
@@ -67,7 +68,7 @@ if (System.getenv("CI") == null || System.getenv("CI_MODULE_GEN") == "true") {
         include(":multisrc")
         project(":multisrc").projectDir = File("multisrc")
 
-        // Loads generated extensions from multisrc
+        // Loads all generated extensions from multisrc
         File(rootDir, "generated-src").getChunk(chunk, chunkSize)?.forEach {
             val name = ":extensions:multisrc:${it.parentFile.name}:${it.name}"
             println(name)

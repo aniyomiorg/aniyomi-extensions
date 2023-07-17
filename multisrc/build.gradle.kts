@@ -35,40 +35,20 @@ dependencies {
 }
 
 tasks {
-    register("generateExtensions") {
-        doLast {
-            val isWindows = System.getProperty("os.name").toString().lowercase().contains("win")
-            var classPath = (
-                configurations.compileOnly.get().asFileTree.toList() +
-                    listOf(
-                        configurations.androidApis.get().asFileTree.first().absolutePath, // android.jar path
-                        "$projectDir/build/intermediates/aar_main_jar/debug/classes.jar", // jar made from this module
-                    )
-                )
-                .joinToString(if (isWindows) ";" else ":")
+    register<JavaExec>("generateExtensions") {
+        classpath = configurations.compileOnly.get() +
+            configurations.androidApis.get() + // android.jar path
+            files("$buildDir/intermediates/aar_main_jar/debug/classes.jar") // jar made from this module
+        mainClass.set("generator.GeneratorMainKt")
 
-            var javaPath = "${System.getProperty("java.home")}/bin/java"
+        workingDir = workingDir.parentFile // project root
 
-            val mainClass = "generator.GeneratorMainKt" // Main class we want to execute
+        errorOutput = System.out // for GitHub workflow commands
 
-            if (isWindows) {
-                classPath = classPath.replace("/", "\\")
-                javaPath = javaPath.replace("/", "\\")
-            }
-
-            val javaProcess = ProcessBuilder()
-                .directory(null).command(javaPath, "-classpath", classPath, mainClass)
-                .redirectErrorStream(true).start()
-
-            javaProcess.inputStream
-                .bufferedReader()
-                .forEachLine(logger::info)
-
-            val exitCode = javaProcess.waitFor()
-            if (exitCode != 0) {
-                throw Exception("Java process failed with exit code: $exitCode")
-            }
+        if (!logger.isInfoEnabled) {
+            standardOutput = org.gradle.internal.io.NullOutputStream.INSTANCE
         }
+
         dependsOn("ktFormat", "ktLint", "assembleDebug")
     }
 

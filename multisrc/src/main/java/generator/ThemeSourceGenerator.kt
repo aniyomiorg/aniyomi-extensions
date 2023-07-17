@@ -132,9 +132,9 @@ interface ThemeSourceGenerator {
             File(projectRootPath).let { projectRootFile ->
                 println("Generating $source")
 
-                projectRootFile.mkdirs()
                 // remove everything from past runs
-                cleanDirectory(projectRootFile)
+                projectRootFile.deleteRecursively()
+                projectRootFile.mkdirs()
 
                 writeGradle(projectGradleFile, source, themePkg, baseVersionCode, defaultAdditionalGradlePath, additionalGradleOverridePath)
                 writeAndroidManifest(projectAndroidManifestFile, manifestOverridePath, defaultAndroidManifestPath)
@@ -173,7 +173,7 @@ interface ThemeSourceGenerator {
 
             File(themeSrcPath).walk()
                 .map { it.toString().replace(themeSrcPath, "") }
-                .filter { it.endsWith(".kt") && !it.endsWith("Generator.kt") }
+                .filter { it.endsWith(".kt") && !it.endsWith("Generator.kt") && !it.endsWith("Gen.kt") }
                 .forEach {
                     File("$themeSrcPath/$it").copyTo(
                         File("$themeDestPath/$it"),
@@ -238,15 +238,6 @@ interface ThemeSourceGenerator {
                 |${factoryClassText()}
                 """.trimMargin(),
             )
-        }
-
-        private fun cleanDirectory(dir: File) {
-            dir.listFiles()?.forEach {
-                if (it.isDirectory) {
-                    cleanDirectory(it)
-                }
-                it.delete()
-            }
         }
     }
 }
