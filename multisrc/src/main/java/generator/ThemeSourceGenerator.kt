@@ -173,7 +173,7 @@ interface ThemeSourceGenerator {
 
             File(themeSrcPath).walk()
                 .map { it.toString().replace(themeSrcPath, "") }
-                .filter { it.endsWith(".kt") && !it.endsWith("Generator.kt") && !it.endsWith("Gen.kt")}
+                .filter { it.endsWith(".kt") && !it.endsWith("Generator.kt") && !it.endsWith("Gen.kt") }
                 .forEach {
                     File("$themeSrcPath/$it").copyTo(
                         File("$themeDestPath/$it"),

@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.animeextension.de.animestream
 import android.app.Application
 import android.content.SharedPreferences
 import android.os.Build
+import android.util.Base64
 import androidx.annotation.RequiresApi
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
@@ -24,7 +25,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import android.util.Base64
 import kotlin.Exception
 
 class AnimeStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
