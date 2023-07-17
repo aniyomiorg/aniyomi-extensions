@@ -8,10 +8,11 @@ import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES
 import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES.decodeHex
 import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.json.Json
+import okhttp3.CacheControl
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
-import okhttp3.Request
+import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import java.security.MessageDigest
@@ -23,27 +24,56 @@ class KickAssAnimeExtractor(
     private val json: Json,
     private val headers: Headers,
 ) {
+    // Stolen from AniWatch
+    // Prevent (automatic) caching the .JS file for different episodes, because it
+    // changes everytime, and a cached old .js will have a invalid AES password,
+    // invalidating the decryption algorithm.
+    // We cache it manually when initializing the class.
+    private val cacheControl = CacheControl.Builder().noStore().build()
+    private val newClient = client.newBuilder()
+        .cache(null)
+        .build()
 
-    fun videosFromUrl(url: String): List<Video> {
-        val query = url.substringAfterLast("?")
-        val baseUrl = url.substringBeforeLast("/") // baseUrl + endpoint/player
+    private val keyMaps by lazy {
+        buildMap {
+            put("bird", newClient.newCall(GET("https://raw.githubusercontent.com/enimax-anime/kaas/bird/key.txt", cache = cacheControl)).execute().body.string().toByteArray())
+            put("duck", newClient.newCall(GET("https://raw.githubusercontent.com/enimax-anime/kaas/duck/key.txt", cache = cacheControl)).execute().body.string().toByteArray())
+        }
+    }
+
+    private val signaturesMap by lazy {
+        newClient.newCall(GET("https://raw.githubusercontent.com/enimax-anime/gogo/main/KAA.json", cache = cacheControl)).execute().parseAs<Map<String, List<String>>>()
+    }
+
+    fun videosFromUrl(url: String, name: String): List<Video> {
+        val host = url.toHttpUrl().host
+        val mid = if (name == "DuckStream") "mid" else "id"
+        val isBird = (name == "BirdStream")
+
+        val query = url.toHttpUrl().queryParameter(mid)!!
 
         val html = client.newCall(GET(url, headers)).execute().body.string()
 
-        val prefix = if ("pink" in url) "PinkBird" else "SapphireDuck"
-        val key = AESKeyExtractor.KEY_MAP.get(prefix)
-            ?: AESKeyExtractor(client).getKeyFromHtml(baseUrl, html, prefix)
+        val key = when (name) {
+            "VidStreaming" -> keyMaps["duck"]!!
+            "DuckStream" -> keyMaps["duck"]!!
+            "BirdStream" -> keyMaps["bird"]!!
+            else -> return emptyList()
+        }
 
-        val request = sourcesRequest(baseUrl, url, html, query, key)
+        val (sig, timeStamp, route) = getSignature(html, name, query, key) ?: return emptyList()
+        val sourceUrl = buildString {
+            append("https://")
+            append(host)
+            append(route)
+            append("?$mid=$query")
+            if (!isBird) append("&e=$timeStamp")
+            append("&s=$sig")
+        }
 
+        val request = GET(sourceUrl, headers.newBuilder().add("Referer", url).build())
         val response = client.newCall(request).execute()
             .body.string()
-            .ifEmpty { // Http 403 moment
-                val newkey = AESKeyExtractor(client).getKeyFromUrl(url, prefix)
-                sourcesRequest(baseUrl, url, html, query, newkey)
-                    .let(client::newCall).execute()
-                    .body.string()
-            }
 
         val (encryptedData, ivhex) = response.substringAfter(":\"")
             .substringBefore('"')
@@ -54,10 +84,6 @@ class KickAssAnimeExtractor(
 
         val videoObject = try {
             val decrypted = CryptoAES.decrypt(encryptedData, key, iv)
-                .ifEmpty { // Maybe the key did change.. AGAIN.
-                    val newkey = AESKeyExtractor(client).getKeyFromUrl(url, prefix)
-                    CryptoAES.decrypt(encryptedData, newkey, iv)
-                }
             json.decodeFromString<VideoDto>(decrypted)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -66,8 +92,10 @@ class KickAssAnimeExtractor(
 
         val subtitles = videoObject.subtitles.map {
             val subUrl: String = it.src.let { src ->
-                if (src.startsWith("/")) {
-                    baseUrl.substringBeforeLast("/") + "/$src"
+                if (src.startsWith("//")) {
+                    "https:$src"
+                } else if (src.startsWith("/")) {
+                    "https://$host$src"
                 } else {
                     src
                 }
@@ -83,23 +111,39 @@ class KickAssAnimeExtractor(
 
         return when {
             videoObject.hls.isBlank() ->
-                extractVideosFromDash(masterPlaylist, prefix, subtitles)
-            else -> extractVideosFromHLS(masterPlaylist, prefix, subtitles, videoObject.playlistUrl)
+                extractVideosFromDash(masterPlaylist, name, subtitles)
+            else -> extractVideosFromHLS(masterPlaylist, name, subtitles, videoObject.playlistUrl)
         }
     }
 
-    private fun sourcesRequest(baseUrl: String, url: String, html: String, query: String, key: ByteArray): Request {
-        val timestamp = ((System.currentTimeMillis() / 1000) + 60).toString()
-        val cid = html.substringAfter("cid: '").substringBefore("'").decodeHex()
-        val ip = String(cid).substringBefore("|")
-        val path = "/" + baseUrl.substringAfterLast("/") + "/source.php"
-        val userAgent = headers.get("User-Agent") ?: ""
-        val localHeaders = Headers.headersOf("User-Agent", userAgent, "referer", url)
-        val idQuery = query.substringAfter("=")
-        val items = listOf(timestamp, ip, userAgent, path.replace("player", "source"), idQuery, String(key))
-        val signature = sha1sum(items.joinToString(""))
+    private fun getSignature(html: String, server: String, query: String, key: ByteArray): Triple<String, String, String>? {
+        val order = when (server) {
+            "VidStreaming" -> signaturesMap["vid"]!!
+            "DuckStream" -> signaturesMap["duck"]!!
+            "BirdStream" -> signaturesMap["bird"]!!
+            else -> return null
+        }
 
-        return GET("$baseUrl/source.php?$query&e=$timestamp&s=$signature", localHeaders)
+        val cid = String(html.substringAfter("cid: '").substringBefore("'").decodeHex()).split("|")
+        val timeStamp = ((System.currentTimeMillis() / 1000) + 60).toString()
+        val route = cid[1].replace("player.php", "source.php")
+
+        val signature = buildString {
+            order.forEach {
+                when (it) {
+                    "IP" -> append(cid[0])
+                    "USERAGENT" -> append(headers["User-Agent"] ?: "")
+                    "ROUTE" -> append(route)
+                    "MID" -> append(query)
+                    "TIMESTAMP" -> append(timeStamp)
+                    "KEY" -> append(String(key))
+                    "SIG" -> append(html.substringAfter("signature: '").substringBefore("'"))
+                    else -> {}
+                }
+            }
+        }
+
+        return Triple(sha1sum(signature), timeStamp, route)
     }
 
     private fun sha1sum(value: String): String {
@@ -114,6 +158,18 @@ class KickAssAnimeExtractor(
 
     private fun extractVideosFromHLS(playlist: String, prefix: String, subs: List<Track>, playlistUrl: String): List<Video> {
         val separator = "#EXT-X-STREAM-INF"
+
+        val masterBase = "https://${playlistUrl.toHttpUrl().host}${playlistUrl.toHttpUrl().encodedPath}"
+            .substringBeforeLast("/") + "/"
+
+        // Get audio tracks
+        val audioTracks = AUDIO_REGEX.findAll(playlist).mapNotNull {
+            Track(
+                getAbsoluteUrl(it.groupValues[2], playlistUrl, masterBase) ?: return@mapNotNull null,
+                it.groupValues[1],
+            )
+        }.toList()
+
         return playlist.substringAfter(separator).split(separator).mapNotNull {
             val resolution = it.substringAfter("RESOLUTION=")
                 .substringBefore("\n")
@@ -121,13 +177,10 @@ class KickAssAnimeExtractor(
                 .substringBefore(",") + "p"
 
             val videoUrl = it.substringAfter("\n").substringBefore("\n").let { url ->
-                when {
-                    url.startsWith("/") -> "https://" + playlistUrl.toHttpUrl().host + url
-                    else -> url
-                }
-            }.ifEmpty { return@mapNotNull null }
+                getAbsoluteUrl(url, playlistUrl, masterBase)
+            } ?: return@mapNotNull null
 
-            Video(videoUrl, "$prefix - $resolution", videoUrl, subtitleTracks = subs)
+            Video(videoUrl, "$prefix - $resolution", videoUrl, audioTracks = audioTracks, subtitleTracks = subs)
         }
     }
 
@@ -149,6 +202,25 @@ class KickAssAnimeExtractor(
     }
 
     // ============================= Utilities ==============================
+
+    companion object {
+        private val AUDIO_REGEX by lazy { Regex("""#EXT-X-MEDIA:TYPE=AUDIO.*?NAME="(.*?)".*?URI="(.*?)"""") }
+    }
+
+    private fun getAbsoluteUrl(url: String, playlistUrl: String, masterBase: String): String? {
+        return when {
+            url.isEmpty() -> null
+            url.startsWith("http") -> url
+            url.startsWith("//") -> "https:$url"
+            url.startsWith("/") -> "https://" + playlistUrl.toHttpUrl().host + url
+            else -> masterBase + url
+        }
+    }
+
+    private inline fun <reified T> Response.parseAs(): T {
+        return body.string().let(json::decodeFromString)
+    }
+
     @SuppressLint("DefaultLocale")
     private fun Element.formatBits(attribute: String = "bandwidth"): String? {
         var bits = attr(attribute).toLongOrNull() ?: 0L
