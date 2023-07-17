@@ -5,9 +5,9 @@ import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.de.cinemathek.extractors.FilemoonExtractor
 import eu.kanade.tachiyomi.animeextension.de.cinemathek.extractors.StreamHideExtractor
-import eu.kanade.tachiyomi.animeextension.de.cinemathek.extractors.StreamlareExtractor
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
