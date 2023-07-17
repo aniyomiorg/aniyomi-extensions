@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.animeextension.en.kickassanime
 import android.app.Application
 import android.content.SharedPreferences
 import android.util.Base64
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
@@ -129,7 +128,6 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================ Video Links =============================
     override fun videoListRequest(episode: SEpisode): Request {
         val url = apiUrl + episode.url.replace("/ep-", "/episode/ep-")
-        Log.i("SOMETHING1", url)
         return GET(url)
     }
 
