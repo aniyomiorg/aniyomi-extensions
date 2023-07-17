@@ -686,6 +686,27 @@
     ]
   },
   {
+    "name": "Aniyomi: AnimeStream",
+    "pkg": "eu.kanade.tachiyomi.animeextension.de.animestream",
+    "apk": "aniyomi-de.animestream-v13.1.apk",
+    "lang": "de",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimeStream",
+        "lang": "de",
+        "id": "314593699490737068",
+        "baseUrl": "https://animestream.world",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: AnimeToast",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.animetoast",
     "apk": "aniyomi-de.animetoast-v13.7.apk",
