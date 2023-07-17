@@ -2883,10 +2883,10 @@
   {
     "name": "Aniyomi: ANIMEWORLD.tv",
     "pkg": "eu.kanade.tachiyomi.animeextension.it.animeworld",
-    "apk": "aniyomi-it.animeworld-v13.26.apk",
+    "apk": "aniyomi-it.animeworld-v13.27.apk",
     "lang": "it",
-    "code": 26,
-    "version": "13.26",
+    "code": 27,
+    "version": "13.27",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2895,7 +2895,7 @@
         "name": "ANIMEWORLD.tv",
         "lang": "it",
         "id": "6601315231151625432",
-        "baseUrl": "https://www.animeworld.tv",
+        "baseUrl": "https://www.animeworld.so",
         "versionId": 1,
         "hasCloudflare": 1
       }
