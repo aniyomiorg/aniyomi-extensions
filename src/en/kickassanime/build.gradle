@@ -14,6 +14,7 @@ ext {
 
 dependencies {
     implementation(project(":lib-cryptoaes"))
+    implementation(project(":lib-playlist-utils"))
 }
 
 apply from: "$rootDir/common.gradle"
