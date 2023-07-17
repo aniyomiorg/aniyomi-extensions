@@ -1486,10 +1486,10 @@
   {
     "name": "Aniyomi: KickAssAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.kickassanime",
-    "apk": "aniyomi-en.kickassanime-v13.28.apk",
+    "apk": "aniyomi-en.kickassanime-v13.29.apk",
     "lang": "en",
-    "code": 28,
-    "version": "13.28",
+    "code": 29,
+    "version": "13.29",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1498,7 +1498,7 @@
         "name": "KickAssAnime",
         "lang": "en",
         "id": "2081771513481539599",
-        "baseUrl": "https://kaas.am",
+        "baseUrl": "https://kickassanime.am",
         "versionId": 1,
         "hasCloudflare": 0
       }
