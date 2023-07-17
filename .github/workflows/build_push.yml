@@ -6,6 +6,7 @@ on:
       - master
     paths-ignore:
       - '**.md'
+      - '.github/workflows/issue_moderator.yml'
 
 concurrency:
   group: ${{ github.workflow }}
@@ -62,7 +63,7 @@ jobs:
           distribution: adopt
 
       - name: Generate multisrc sources
-        uses: gradle/gradle-command-action@v2
+        uses: gradle/gradle-build-action@v2
         with:
           arguments: :multisrc:generateExtensions
 
@@ -115,14 +116,14 @@ jobs:
           echo ${{ secrets.SIGNING_KEY }} | base64 -d > signingkey.jks
 
       - name: Generate sources from the multi-source library
-        uses: gradle/gradle-command-action@v2
+        uses: gradle/gradle-build-action@v2
         env:
           CI_MODULE_GEN: "true"
         with:
           arguments: :multisrc:generateExtensions
 
       - name: Build extensions (chunk ${{ matrix.chunk }})
-        uses: gradle/gradle-command-action@v2
+        uses: gradle/gradle-build-action@v2
         env:
           CI_MULTISRC: "true"
           CI_CHUNK_NUM: ${{ matrix.chunk }}
@@ -166,7 +167,7 @@ jobs:
           echo ${{ secrets.SIGNING_KEY }} | base64 -d > signingkey.jks
 
       - name: Build extensions (chunk ${{ matrix.chunk }})
-        uses: gradle/gradle-command-action@v2
+        uses: gradle/gradle-build-action@v2
         env:
           CI_MULTISRC: "false"
           CI_CHUNK_NUM: ${{ matrix.chunk }}
@@ -190,8 +191,8 @@ jobs:
   publish_repo:
     name: Publish repo
     needs:
-      - build_individual
       - build_multisrc
+      - build_individual
     if: "github.repository == 'aniyomiorg/aniyomi-extensions'"
     runs-on: ubuntu-latest
     steps:
