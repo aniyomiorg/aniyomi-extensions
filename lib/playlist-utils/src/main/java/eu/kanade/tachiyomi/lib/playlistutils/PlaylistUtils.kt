@@ -287,7 +287,7 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
 
         return doc.select("Representation[mimetype~=video]").map { videoSrc ->
             val bandwidth = videoSrc.attr("bandwidth")
-            val res = videoSrc.attr("height")
+            val res = videoSrc.attr("height") + "p"
 
             Video(
                 videoSrc.text(),
