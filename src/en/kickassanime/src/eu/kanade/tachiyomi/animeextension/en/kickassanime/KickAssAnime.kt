@@ -289,8 +289,8 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
             compareBy(
                 { it.quality.contains(quality) },
                 { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
-                { Regex("""([\d,]+)[kMGTPE]bs""").find(it.quality)?.groupValues?.get(1)?.replace(",", ".")?.toFloatOrNull() ?: 0F },
                 { it.quality.contains(server, true) },
+                { Regex("""([\d,]+) [KMGTPE]B/s""").find(it.quality)?.groupValues?.get(1)?.replace(",", ".")?.toFloatOrNull() ?: 0F },
             ),
         ).reversed()
     }

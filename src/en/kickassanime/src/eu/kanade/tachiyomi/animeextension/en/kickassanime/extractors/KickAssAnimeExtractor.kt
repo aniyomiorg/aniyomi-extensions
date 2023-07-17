@@ -1,11 +1,11 @@
 package eu.kanade.tachiyomi.animeextension.en.kickassanime.extractors
 
-import android.annotation.SuppressLint
 import eu.kanade.tachiyomi.animeextension.en.kickassanime.dto.VideoDto
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES
 import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES.decodeHex
+import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.json.Json
 import okhttp3.CacheControl
@@ -13,11 +13,7 @@ import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Response
-import org.jsoup.Jsoup
-import org.jsoup.nodes.Element
 import java.security.MessageDigest
-import java.text.CharacterIterator
-import java.text.StringCharacterIterator
 
 class KickAssAnimeExtractor(
     private val client: OkHttpClient,
@@ -106,13 +102,10 @@ class KickAssAnimeExtractor(
             Track(subUrl, language)
         }
 
-        val masterPlaylist = client.newCall(GET(videoObject.playlistUrl)).execute()
-            .body.string()
-
         return when {
             videoObject.hls.isBlank() ->
-                extractVideosFromDash(masterPlaylist, name, subtitles)
-            else -> extractVideosFromHLS(masterPlaylist, name, subtitles, videoObject.playlistUrl)
+                PlaylistUtils(client, headers).extractFromDash(videoObject.playlistUrl, videoNameGen = { res -> "$name - $res" }, subtitleList = subtitles)
+            else -> PlaylistUtils(client, headers).extractFromHls(videoObject.playlistUrl, videoNameGen = { "$name - $it" }, subtitleList = subtitles)
         }
     }
 
@@ -156,82 +149,8 @@ class KickAssAnimeExtractor(
         }
     }
 
-    private fun extractVideosFromHLS(playlist: String, prefix: String, subs: List<Track>, playlistUrl: String): List<Video> {
-        val separator = "#EXT-X-STREAM-INF"
-
-        val masterBase = "https://${playlistUrl.toHttpUrl().host}${playlistUrl.toHttpUrl().encodedPath}"
-            .substringBeforeLast("/") + "/"
-
-        // Get audio tracks
-        val audioTracks = AUDIO_REGEX.findAll(playlist).mapNotNull {
-            Track(
-                getAbsoluteUrl(it.groupValues[2], playlistUrl, masterBase) ?: return@mapNotNull null,
-                it.groupValues[1],
-            )
-        }.toList()
-
-        return playlist.substringAfter(separator).split(separator).mapNotNull {
-            val resolution = it.substringAfter("RESOLUTION=")
-                .substringBefore("\n")
-                .substringAfter("x")
-                .substringBefore(",") + "p"
-
-            val videoUrl = it.substringAfter("\n").substringBefore("\n").let { url ->
-                getAbsoluteUrl(url, playlistUrl, masterBase)
-            } ?: return@mapNotNull null
-
-            Video(videoUrl, "$prefix - $resolution", videoUrl, audioTracks = audioTracks, subtitleTracks = subs)
-        }
-    }
-
-    private fun extractVideosFromDash(playlist: String, prefix: String, subs: List<Track>): List<Video> {
-        // Parsing dash with Jsoup :YEP:
-        val document = Jsoup.parse(playlist)
-        val audioList = document.select("Representation[mimetype~=audio]").map { audioSrc ->
-            Track(audioSrc.text(), audioSrc.formatBits() ?: "audio")
-        }
-        return document.select("Representation[mimetype~=video]").map { videoSrc ->
-            Video(
-                videoSrc.text(),
-                "$prefix - ${videoSrc.attr("height")}p - ${videoSrc.formatBits()}",
-                videoSrc.text(),
-                audioTracks = audioList,
-                subtitleTracks = subs,
-            )
-        }
-    }
-
     // ============================= Utilities ==============================
-
-    companion object {
-        private val AUDIO_REGEX by lazy { Regex("""#EXT-X-MEDIA:TYPE=AUDIO.*?NAME="(.*?)".*?URI="(.*?)"""") }
-    }
-
-    private fun getAbsoluteUrl(url: String, playlistUrl: String, masterBase: String): String? {
-        return when {
-            url.isEmpty() -> null
-            url.startsWith("http") -> url
-            url.startsWith("//") -> "https:$url"
-            url.startsWith("/") -> "https://" + playlistUrl.toHttpUrl().host + url
-            else -> masterBase + url
-        }
-    }
-
     private inline fun <reified T> Response.parseAs(): T {
         return body.string().let(json::decodeFromString)
-    }
-
-    @SuppressLint("DefaultLocale")
-    private fun Element.formatBits(attribute: String = "bandwidth"): String? {
-        var bits = attr(attribute).toLongOrNull() ?: 0L
-        if (-1000 < bits && bits < 1000) {
-            return "${bits}b"
-        }
-        val ci: CharacterIterator = StringCharacterIterator("kMGTPE")
-        while (bits <= -999950 || bits >= 999950) {
-            bits /= 1000
-            ci.next()
-        }
-        return java.lang.String.format("%.2f%cbs", bits / 1000.0, ci.current())
     }
 }
