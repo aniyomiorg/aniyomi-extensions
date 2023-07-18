@@ -155,20 +155,28 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val request = client.newCall(GET(url, headers)).execute().asJsoup()
                 val script = request.selectFirst("script:containsData(sources)")!!.data()
                 val scriptData = if (script.contains("eval")) JsUnpacker.unpackAndCombine(script)!! else script
-                val streamLink = scriptData.substringAfter("file:").substringAfter("\"").substringBefore("\"")
+                val streamLink = Regex("sources:\\s*\\[\\{\\s*\\t*file:\\s*[\"']([^\"']+)").find(scriptData)!!.groupValues[1]
                 val quality = Regex("'qualityLabels'\\s*:\\s*\\{\\s*\".*?\"\\s*:\\s*\"(.*?)\"").find(scriptData)!!.groupValues[1]
-                Video(streamLink, "Mirror: $quality", streamLink).let(::listOf)
+                Video(streamLink, "${ if (script.contains("eval")) "Filelions" else "Ahvsh"}: $quality", streamLink).let(::listOf)
             }
             url.contains("ajmidyad") || url.contains("alhayabambi") || url.contains("atabknhk") -> {
                 val request = client.newCall(GET(url, headers)).execute().asJsoup()
                 val data = JsUnpacker.unpackAndCombine(request.selectFirst("script:containsData(sources)")!!.data())!!
-                val streamLink = data.substringAfter("file: \"").substringBefore("\"}")
-                videosFromUrl(streamLink)
+                val m3u8 = Regex("sources:\\s*\\[\\{\\s*\\t*file:\\s*[\"']([^\"']+)").find(data)!!.groupValues[1]
+                val streamLink = Regex("(.*)_,(.*),\\.urlset/master(.*)").find(m3u8)!!
+                val qualities = data.substringAfter("qualityLabels").substringBefore("}")
+                val streamQuality = streamLink.groupValues[2].split(",").reversed()
+                val qRegex = Regex("\".*?\":\\s*\"(.*?)\"").findAll(qualities)
+                qRegex.mapIndexed { index, matchResult ->
+                    val src = streamLink.groupValues[1] + "_" + streamQuality[index] + "/index-v1-a1" + streamLink.groupValues[3]
+                    val quality = "Mirror: " + matchResult.groupValues[1]
+                    Video(src, quality, src, headers)
+                }.toList()
             }
             url.contains("fanakishtuna") -> {
                 val request = client.newCall(GET(url, headers)).execute().asJsoup()
                 val data = request.selectFirst("script:containsData(sources)")!!.data()
-                val streamLink = data.substringAfter("file:\"").substringBefore("\"}")
+                val streamLink = Regex("sources:\\s*\\[\\{\\s*\\t*file:\\s*[\"']([^\"']+)").find(data)!!.groupValues[1]
                 listOf(Video(streamLink, "Mirror: High Quality", streamLink))
             }
             url.contains("uqload") -> {
