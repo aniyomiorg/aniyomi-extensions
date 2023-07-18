@@ -151,7 +151,7 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             url.contains("mixdrop") -> {
                 MixDropExtractor(client).videoFromUrl(url)
             }
-            url.contains("ahvsh") || url.contains("filelions") -> {
+            url.contains("ahvsh") || url.contains("file") -> {
                 val request = client.newCall(GET(url, headers)).execute().asJsoup()
                 val script = request.selectFirst("script:containsData(sources)")!!.data()
                 val scriptData = if (script.contains("eval")) JsUnpacker.unpackAndCombine(script)!! else script
