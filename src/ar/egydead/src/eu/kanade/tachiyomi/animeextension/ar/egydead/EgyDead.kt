@@ -15,9 +15,15 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
+import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -127,22 +133,36 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val requestBody = FormBody.Builder().add("View", "1").build()
         val document = client.newCall(POST(response.request.url.toString(), body = requestBody)).execute().asJsoup()
-        return document.select(videoListSelector()).flatMap {
+        return document.select(videoListSelector()).parallelMap {
             val url = it.attr("data-link")
             runCatching { extractVideos(url) }.getOrElse { emptyList() }
-        }
+        }.flatten()
     }
 
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
     private fun extractVideos(url: String): List<Video> {
         return when {
-            url.contains("dood") -> {
-                DoodExtractor(client).videoFromUrl(url, "Dood mirror")
-                    ?.let(::listOf)
+            DOOD_REGEX.containsMatchIn(url) -> {
+                DoodExtractor(client).videoFromUrl(url, "Dood mirror")?.let(::listOf)
             }
-            url.contains("ajmidyad") || url.contains("alhayabambi") -> {
+            url.contains("mixdrop") -> {
+                MixDropExtractor(client).videoFromUrl(url)
+            }
+            url.contains("ahvsh") || url.contains("filelions") -> {
+                val request = client.newCall(GET(url, headers)).execute().asJsoup()
+                val script = request.selectFirst("script:containsData(sources)")!!.data()
+                val scriptData = if (script.contains("eval")) JsUnpacker.unpackAndCombine(script)!! else script
+                val streamLink = scriptData.substringAfter("file:").substringAfter("\"").substringBefore("\"")
+                val quality = Regex("'qualityLabels'\\s*:\\s*\\{\\s*\".*?\"\\s*:\\s*\"(.*?)\"").find(scriptData)!!.groupValues[1]
+                Video(streamLink, "Mirror: $quality", streamLink).let(::listOf)
+            }
+            url.contains("ajmidyad") || url.contains("alhayabambi") || url.contains("atabknhk") -> {
                 val request = client.newCall(GET(url, headers)).execute().asJsoup()
                 val data = JsUnpacker.unpackAndCombine(request.selectFirst("script:containsData(sources)")!!.data())!!
-                val streamLink = data.substringAfter("file:\"").substringBefore("\"}")
+                val streamLink = data.substringAfter("file: \"").substringBefore("\"}")
                 videosFromUrl(streamLink)
             }
             url.contains("fanakishtuna") -> {
@@ -157,6 +177,9 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val data = request.selectFirst("script:containsData(sources)")!!.data()
                 val streamLink = data.substringAfter("sources: [\"").substringBefore("\"]")
                 listOf(Video(streamLink, "Uqload: Mirror", streamLink))
+            }
+            STREAMSB_REGEX.containsMatchIn(url) -> {
+                StreamSBExtractor(client).videosFromUrl(url, headers)
             }
             else -> null
         } ?: emptyList()
@@ -341,5 +364,10 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         screen.addPreference(defaultDomain)
         screen.addPreference(videoQualityPref)
+    }
+    //like|kharabnahk
+    companion object {
+        private val STREAMSB_REGEX = Regex("(?:view|watch|embed(?:tv)?|tube|player|cloudemb|japopav|javplaya|p1ayerjavseen|gomovizplay|stream(?:ovies)?|vidmovie|javside|aintahalu|finaltayibin|yahlusubh|taeyabathuna|like|kharabnahk)?s{0,2}b?(?:embed\\d?|play\\d?|video|fast|full|streams{0,3}|the|speed|l?anh|tvmshow|longvu|arslanrocky|chill|rity|hight|brisk|face|lvturbo|net|one|asian|ani|rapid|sonic|lona)?\\.(?:com|net|org|one|tv|xyz|fun|pro|sbs)")
+        private val DOOD_REGEX = Regex("(do*d(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream))/[de]/([0-9a-zA-Z]+)")
     }
 }
