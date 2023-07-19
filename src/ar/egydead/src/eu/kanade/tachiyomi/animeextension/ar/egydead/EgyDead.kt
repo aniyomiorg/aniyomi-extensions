@@ -146,7 +146,7 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun extractVideos(url: String): List<Video> {
         return when {
             DOOD_REGEX.containsMatchIn(url) -> {
-                DoodExtractor(client).videoFromUrl(url, "Dood mirror")?.let(::listOf)
+                DoodExtractor(client).videoFromUrl(url, "Dood mirror", false)?.let(::listOf)
             }
             url.contains("mixdrop") -> {
                 MixDropExtractor(client).videoFromUrl(url)
@@ -159,7 +159,7 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val quality = Regex("'qualityLabels'\\s*:\\s*\\{\\s*\".*?\"\\s*:\\s*\"(.*?)\"").find(scriptData)!!.groupValues[1]
                 Video(streamLink, "${ if (script.contains("eval")) "Filelions" else "Ahvsh"}: $quality", streamLink).let(::listOf)
             }
-            url.contains("ajmidyad") || url.contains("alhayabambi") || url.contains("atabknhk") -> {
+            STREAMWISH_REGEX.containsMatchIn(url) -> {
                 val request = client.newCall(GET(url, headers)).execute().asJsoup()
                 val data = JsUnpacker.unpackAndCombine(request.selectFirst("script:containsData(sources)")!!.data())!!
                 val m3u8 = Regex("sources:\\s*\\[\\{\\s*\\t*file:\\s*[\"']([^\"']+)").find(data)!!.groupValues[1]
@@ -377,5 +377,6 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     companion object {
         private val STREAMSB_REGEX = Regex("(?:view|watch|embed(?:tv)?|tube|player|cloudemb|japopav|javplaya|p1ayerjavseen|gomovizplay|stream(?:ovies)?|vidmovie|javside|aintahalu|finaltayibin|yahlusubh|taeyabathuna|like|kharabnahk)?s{0,2}b?(?:embed\\d?|play\\d?|video|fast|full|streams{0,3}|the|speed|l?anh|tvmshow|longvu|arslanrocky|chill|rity|hight|brisk|face|lvturbo|net|one|asian|ani|rapid|sonic|lona)?\\.(?:com|net|org|one|tv|xyz|fun|pro|sbs)")
         private val DOOD_REGEX = Regex("(do*d(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream))/[de]/([0-9a-zA-Z]+)")
+        private val STREAMWISH_REGEX = Regex("ajmidyad|alhayabambi|atabknh[ks]")
     }
 }
