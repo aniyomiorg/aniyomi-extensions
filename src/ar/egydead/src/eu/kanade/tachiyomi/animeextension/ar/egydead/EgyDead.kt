@@ -146,7 +146,7 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun extractVideos(url: String): List<Video> {
         return when {
             DOOD_REGEX.containsMatchIn(url) -> {
-                DoodExtractor(client).videoFromUrl(url, "Dood mirror", false)?.let(::listOf)
+                DoodExtractor(client).videoFromUrl(url, "Dood mirror")?.let(::listOf)
             }
             url.contains("mixdrop") -> {
                 MixDropExtractor(client).videoFromUrl(url)
@@ -154,10 +154,9 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             url.contains("ahvsh") -> {
                 val request = client.newCall(GET(url, headers)).execute().asJsoup()
                 val script = request.selectFirst("script:containsData(sources)")!!.data()
-                val scriptData = if (script.contains("eval")) JsUnpacker.unpackAndCombine(script)!! else script
-                val streamLink = Regex("sources:\\s*\\[\\{\\s*\\t*file:\\s*[\"']([^\"']+)").find(scriptData)!!.groupValues[1]
-                val quality = Regex("'qualityLabels'\\s*:\\s*\\{\\s*\".*?\"\\s*:\\s*\"(.*?)\"").find(scriptData)!!.groupValues[1]
-                Video(streamLink, "${ if (script.contains("eval")) "Filelions" else "Ahvsh"}: $quality", streamLink).let(::listOf)
+                val streamLink = Regex("sources:\\s*\\[\\{\\s*\\t*file:\\s*[\"']([^\"']+)").find(script)!!.groupValues[1]
+                val quality = Regex("'qualityLabels'\\s*:\\s*\\{\\s*\".*?\"\\s*:\\s*\"(.*?)\"").find(script)!!.groupValues[1]
+                Video(streamLink, "StreamHide: $quality", streamLink).let(::listOf)
             }
             STREAMWISH_REGEX.containsMatchIn(url) -> {
                 val request = client.newCall(GET(url, headers)).execute().asJsoup()
@@ -170,7 +169,7 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val qRegex = Regex("\".*?\":\\s*\"(.*?)\"").findAll(qualities)
                     qRegex.mapIndexed { index, matchResult ->
                         val src = streamLink.groupValues[1] + "_" + streamQuality[index] + "/index-v1-a1" + streamLink.groupValues[3]
-                        val quality = "Mirror: " + matchResult.groupValues[1]
+                        val quality = "StreamWish: " + matchResult.groupValues[1]
                         Video(src, quality, src, headers)
                     }.toList()
                 } else {
@@ -198,20 +197,6 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             else -> null
         } ?: emptyList()
-    }
-
-    private fun videosFromUrl(url: String): List<Video> {
-        val prefix = url.substringBefore("master.m3u8")
-        val data = client.newCall(GET(url)).execute().body.string()
-        val videoList = mutableListOf<Video>()
-        data.substringAfter("#EXT-X-STREAM-INF:").split("#EXT-X-STREAM-INF:")
-            .forEach {
-                val quality = it.substringAfter("RESOLUTION=").substringAfter("x")
-                    .substringBefore(",") + "p"
-                val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                videoList.add(Video(prefix + videoUrl, "EgyDead: $quality", prefix + videoUrl))
-            }
-        return videoList
     }
 
     override fun videoListSelector() = "ul.serversList li"
