@@ -24,7 +24,9 @@ android {
         applicationIdSuffix pkgNameSuffix
         versionCode extVersionCode
         versionName project.ext.properties.getOrDefault("libVersion", "13") + ".$extVersionCode"
-        setProperty("archivesBaseName", "aniyomi-$pkgNameSuffix-v$versionName")
+        base {
+            archivesBaseName = "aniyomi-$pkgNameSuffix-v$versionName"
+        }
         def readmes = project.projectDir.listFiles({ File file ->
             file.name.equals("README.md") ||
                     file.name.equals("CHANGELOG.md")
