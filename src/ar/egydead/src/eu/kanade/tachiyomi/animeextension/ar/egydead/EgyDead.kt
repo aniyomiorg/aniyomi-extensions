@@ -151,7 +151,7 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             url.contains("mixdrop") -> {
                 MixDropExtractor(client).videoFromUrl(url)
             }
-            url.contains("ahvsh") || url.contains("file") -> {
+            url.contains("ahvsh") -> {
                 val request = client.newCall(GET(url, headers)).execute().asJsoup()
                 val script = request.selectFirst("script:containsData(sources)")!!.data()
                 val scriptData = if (script.contains("eval")) JsUnpacker.unpackAndCombine(script)!! else script
@@ -162,16 +162,23 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             STREAMWISH_REGEX.containsMatchIn(url) -> {
                 val request = client.newCall(GET(url, headers)).execute().asJsoup()
                 val data = JsUnpacker.unpackAndCombine(request.selectFirst("script:containsData(sources)")!!.data())!!
-                val m3u8 = Regex("sources:\\s*\\[\\{\\s*\\t*file:\\s*[\"']([^\"']+)").find(data)!!.groupValues[1]
-                val streamLink = Regex("(.*)_,(.*),\\.urlset/master(.*)").find(m3u8)!!
-                val qualities = data.substringAfter("qualityLabels").substringBefore("}")
-                val streamQuality = streamLink.groupValues[2].split(",").reversed()
-                val qRegex = Regex("\".*?\":\\s*\"(.*?)\"").findAll(qualities)
-                qRegex.mapIndexed { index, matchResult ->
-                    val src = streamLink.groupValues[1] + "_" + streamQuality[index] + "/index-v1-a1" + streamLink.groupValues[3]
-                    val quality = "Mirror: " + matchResult.groupValues[1]
-                    Video(src, quality, src, headers)
-                }.toList()
+                val m3u8 = SOURCE_URL_REGEX.find(data)!!.groupValues[1]
+                if(M38U_Qualities_REGEX.containsMatchIn(m3u8)){
+                    val streamLink = M38U_Qualities_REGEX.find(m3u8)!!
+                    val streamQuality = streamLink.groupValues[2].split(",").reversed()
+                    val qualities = data.substringAfter("qualityLabels").substringBefore("}")
+                    val qRegex = Regex("\".*?\":\\s*\"(.*?)\"").findAll(qualities)
+                    qRegex.mapIndexed { index, matchResult ->
+                        val src = streamLink.groupValues[1] + "_" + streamQuality[index] + "/index-v1-a1" + streamLink.groupValues[3]
+                        val quality = "Mirror: " + matchResult.groupValues[1]
+                        Video(src, quality, src, headers)
+                    }.toList()
+                } else {
+                    val qualities = data.substringAfter("qualityLabels").substringBefore("}")
+                    val qRegex = Regex("\".*?\"\\s*:\\s*\"(.*?)\"").find(qualities)!!
+                    Video(m3u8, qRegex.groupValues[1], m3u8).let(::listOf)
+                }
+
             }
             url.contains("fanakishtuna") -> {
                 val request = client.newCall(GET(url, headers)).execute().asJsoup()
@@ -377,6 +384,8 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     companion object {
         private val STREAMSB_REGEX = Regex("(?:view|watch|embed(?:tv)?|tube|player|cloudemb|japopav|javplaya|p1ayerjavseen|gomovizplay|stream(?:ovies)?|vidmovie|javside|aintahalu|finaltayibin|yahlusubh|taeyabathuna|like|kharabnahk)?s{0,2}b?(?:embed\\d?|play\\d?|video|fast|full|streams{0,3}|the|speed|l?anh|tvmshow|longvu|arslanrocky|chill|rity|hight|brisk|face|lvturbo|net|one|asian|ani|rapid|sonic|lona)?\\.(?:com|net|org|one|tv|xyz|fun|pro|sbs)")
         private val DOOD_REGEX = Regex("(do*d(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream))/[de]/([0-9a-zA-Z]+)")
-        private val STREAMWISH_REGEX = Regex("ajmidyad|alhayabambi|atabknh[ks]")
+        private val STREAMWISH_REGEX = Regex("ajmidyad|alhayabambi|atabknh[ks]|file")
+        private val SOURCE_URL_REGEX = Regex("sources:\\s*\\[\\{\\s*\\t*file:\\s*[\"']([^\"']+)")
+        private val M38U_Qualities_REGEX = Regex("(.*)_,(.*),\\.urlset/master(.*)")
     }
 }
