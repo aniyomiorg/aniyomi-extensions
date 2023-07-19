@@ -163,8 +163,8 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val request = client.newCall(GET(url, headers)).execute().asJsoup()
                 val data = JsUnpacker.unpackAndCombine(request.selectFirst("script:containsData(sources)")!!.data())!!
                 val m3u8 = SOURCE_URL_REGEX.find(data)!!.groupValues[1]
-                if(M38U_Qualities_REGEX.containsMatchIn(m3u8)){
-                    val streamLink = M38U_Qualities_REGEX.find(m3u8)!!
+                if(QUALITIES_REGEX.containsMatchIn(m3u8)){
+                    val streamLink = QUALITIES_REGEX.find(m3u8)!!
                     val streamQuality = streamLink.groupValues[2].split(",").reversed()
                     val qualities = data.substringAfter("qualityLabels").substringBefore("}")
                     val qRegex = Regex("\".*?\":\\s*\"(.*?)\"").findAll(qualities)
@@ -386,6 +386,6 @@ class EgyDead : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private val DOOD_REGEX = Regex("(do*d(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream))/[de]/([0-9a-zA-Z]+)")
         private val STREAMWISH_REGEX = Regex("ajmidyad|alhayabambi|atabknh[ks]|file")
         private val SOURCE_URL_REGEX = Regex("sources:\\s*\\[\\{\\s*\\t*file:\\s*[\"']([^\"']+)")
-        private val M38U_Qualities_REGEX = Regex("(.*)_,(.*),\\.urlset/master(.*)")
+        private val QUALITIES_REGEX = Regex("(.*)_,(.*),\\.urlset/master(.*)")
     }
 }
