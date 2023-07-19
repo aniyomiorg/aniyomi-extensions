@@ -7,7 +7,6 @@ import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.AppInfo
-import eu.kanade.tachiyomi.animeextension.it.animeworld.extractors.FilemoonExtractor
 import eu.kanade.tachiyomi.animeextension.it.animeworld.extractors.StreamHideExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -17,6 +16,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -169,15 +169,15 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             listOf(Video(url, "AnimeWorld Server", url))
                         }
                         url.contains("https://doo") -> {
-                            val video = DoodExtractor(client).videoFromUrl(url, redirect = true)
-                            video?.let { listOf(it) }
+                            DoodExtractor(client).videoFromUrl(url, redirect = true)
+                                ?.let(::listOf)
                         }
                         url.contains("streamtape") -> {
-                            val video = StreamTapeExtractor(client).videoFromUrl(url.replace("/v/", "/e/"))
-                            video?.let { listOf(it) }
+                            StreamTapeExtractor(client).videoFromUrl(url.replace("/v/", "/e/"))
+                                ?.let(::listOf)
                         }
                         url.contains("filemoon") -> {
-                            FilemoonExtractor(client, headers).videosFromUrl(url, prefix = "${server.first} - ")
+                            FilemoonExtractor(client).videosFromUrl(url, prefix = "${server.first} - ", headers = headers)
                         }
                         server.first.contains("streamhide", true) -> {
                             StreamHideExtractor(client).videosFromUrl(url, headers)

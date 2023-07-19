@@ -13,6 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -301,9 +302,9 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     )
                 }
                 "filemoon" -> FilemoonExtractor(client)
-                    .videoFromUrl(embedLink, "Filemoon - ${server.first}").let {
-                        videoList.addAll(it)
-                    }
+                    .videosFromUrl(embedLink, "Filemoon - ${server.first} ")
+                    .also(videoList::addAll)
+
                 "streamtape" -> StreamTapeExtractor(client)
                     .videoFromUrl(embedLink, "StreamTape - ${server.first}")?.let {
                         videoList.add(it)

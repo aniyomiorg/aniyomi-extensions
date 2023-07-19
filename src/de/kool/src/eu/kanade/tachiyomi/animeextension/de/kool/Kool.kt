@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.de.kool.extractors.FilemoonExtractor
 import eu.kanade.tachiyomi.animeextension.de.movie4k.extractors.VidozaExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -16,6 +15,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.POST
@@ -418,10 +418,7 @@ class Kool : ConfigurableAnimeSource, AnimeHttpSource() {
                 }
                 item.jsonObject["url"]!!.jsonPrimitive.content.contains("https://filemoon.sx") && hosterSelection?.contains("fmoon") == true -> {
                     val videoUrl = item.jsonObject["url"]!!.jsonPrimitive.content
-                    val videos = FilemoonExtractor(client).videoFromUrl(videoUrl)
-                    if (videos != null) {
-                        videoList.addAll(videos)
-                    }
+                    videoList.addAll(FilemoonExtractor(client).videosFromUrl(videoUrl))
                 }
                 response.request.url.toString().contains("kool-cluster/mediahubmx-resolve.json") -> {
                     val videoUrl = item.jsonObject["url"]!!.jsonPrimitive.content

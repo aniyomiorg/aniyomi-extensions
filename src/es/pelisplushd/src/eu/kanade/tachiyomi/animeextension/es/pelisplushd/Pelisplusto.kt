@@ -2,13 +2,13 @@ package eu.kanade.tachiyomi.animeextension.es.pelisplushd
 
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.FilemoonExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
@@ -179,9 +179,8 @@ class Pelisplusto(override val name: String, override val baseUrl: String) : Pel
             VoeExtractor(client).videoFromUrl(url)?.let { videoList.add(it) }
         }
         if (embedUrl.contains("filemoon") || embedUrl.contains("moonplayer")) {
-            FilemoonExtractor(client).videoFromUrl(url, prefix)?.let {
-                videoList.addAll(it)
-            }
+            FilemoonExtractor(client).videosFromUrl(url, prefix)
+                .also(videoList::addAll)
         }
         if (embedUrl.contains("streamlare")) {
             videoList.addAll(StreamlareExtractor(client).videosFromUrl(url))

@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.animeextension.en.ask4movie
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.en.ask4movie.extractors.FilemoonExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -12,6 +11,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
@@ -172,7 +172,7 @@ class Ask4Movie : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
 
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
-        val videoList = FilemoonExtractor(client, headers).videosFromUrl(episode.url)
+        val videoList = FilemoonExtractor(client).videosFromUrl(episode.url, headers = headers)
         require(videoList.isNotEmpty()) { "Failed to fetch videos" }
         return Observable.just(videoList)
     }
