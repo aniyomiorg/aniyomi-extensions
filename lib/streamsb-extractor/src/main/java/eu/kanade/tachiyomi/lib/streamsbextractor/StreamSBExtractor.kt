@@ -74,6 +74,7 @@ class StreamSBExtractor(private val client: OkHttpClient) {
         suffix: String = "",
         common: Boolean = true,
         manualData: Boolean = false,
+        externalSubs: List<Track> = emptyList(),
     ): List<Video> {
         val trimmedUrl = url.trim() // Prevents some crashes
         val newHeaders = if (manualData) {
@@ -133,7 +134,7 @@ class StreamSBExtractor(private val client: OkHttpClient) {
                     }
                 }
                 val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                Video(videoUrl, quality, videoUrl, headers = newHeaders, subtitleTracks = subtitleList, audioTracks = audioList)
+                Video(videoUrl, quality, videoUrl, headers = newHeaders, subtitleTracks = subtitleList + externalSubs, audioTracks = audioList)
             }
         }.getOrNull() ?: emptyList<Video>()
     }

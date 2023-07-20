@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.lib.doodextractor
 
+import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.Headers
@@ -11,6 +12,7 @@ class DoodExtractor(private val client: OkHttpClient) {
         url: String,
         quality: String? = null,
         redirect: Boolean = true,
+        externalSubs: List<Track> = emptyList(),
     ): Video? {
         val newQuality = quality ?: ("Doodstream" + if (redirect) " mirror" else "")
 
@@ -32,7 +34,7 @@ class DoodExtractor(private val client: OkHttpClient) {
                 ),
             ).execute().body.string()
             val videoUrl = "$videoUrlStart$randomString?token=$token&expiry=$expiry"
-            Video(newUrl, newQuality, videoUrl, headers = doodHeaders(doodHost))
+            Video(newUrl, newQuality, videoUrl, headers = doodHeaders(doodHost), subtitleTracks = externalSubs)
         }.getOrNull()
     }
 
