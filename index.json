@@ -268,10 +268,10 @@
   {
     "name": "Aniyomi: أنمي بالكوم",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.animeblkom",
-    "apk": "aniyomi-ar.animeblkom-v13.10.apk",
+    "apk": "aniyomi-ar.animeblkom-v13.11.apk",
     "lang": "ar",
-    "code": 10,
-    "version": "13.10",
+    "code": 11,
+    "version": "13.11",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
