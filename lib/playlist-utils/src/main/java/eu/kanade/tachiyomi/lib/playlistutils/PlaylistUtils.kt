@@ -23,8 +23,8 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
      * @param videoNameGen a function that generates a custom name for each video based on its quality
      *     - The parameter `quality` represents the quality of the video
      *     - Returns the custom name for the video (default: identity function)
-     * @param subtitleList a list of subtitle tracks associated with the HLS playlist, non-empty values will override subtitles present in the m3u8 playlist (default: empty list)
-     * @param audioList a list of audio tracks associated with the HLS playlist, non-empty values will override audio tracks present in the m3u8 playlist (default: empty list)
+     * @param subtitleList a list of subtitle tracks associated with the HLS playlist, will append to subtitles present in the m3u8 playlist (default: empty list)
+     * @param audioList a list of audio tracks associated with the HLS playlist, will append to audio tracks present in the m3u8 playlist (default: empty list)
      * @return a list of Video objects
      */
     fun extractFromHls(
@@ -64,8 +64,8 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
      * @param videoNameGen a function that generates a custom name for each video based on its quality
      *     - The parameter `quality` represents the quality of the video
      *     - Returns the custom name for the video (default: identity function)
-     * @param subtitleList a list of subtitle tracks associated with the HLS playlist, non-empty values will override subtitles present in the m3u8 playlist (default: empty list)
-     * @param audioList a list of audio tracks associated with the HLS playlist, non-empty values will override audio tracks present in the m3u8 playlist (default: empty list)
+     * @param subtitleList a list of subtitle tracks associated with the HLS playlist, will append to subtitles present in the m3u8 playlist (default: empty list)
+     * @param audioList a list of audio tracks associated with the HLS playlist, will append to audio tracks present in the m3u8 playlist (default: empty list)
      * @return a list of Video objects
      */
     fun extractFromHls(
@@ -165,8 +165,8 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
      * @param mpdHeaders the headers to be sent in the HTTP request for the MPD file
      * @param videoHeaders the headers to be sent in the HTTP requests for video segments
      * @param referer the referer header value to be sent in the HTTP requests (default: "")
-     * @param subtitleList a list of subtitle tracks associated with the DASH file, non-empty values will override subtitles present in the m3u8 playlist (default: empty list)
-     * @param audioList a list of audio tracks associated with the DASH file, non-empty values will override audio tracks present in the m3u8 playlist (default: empty list)
+     * @param subtitleList a list of subtitle tracks associated with the DASH file, will append to subtitles present in the dash file (default: empty list)
+     * @param audioList a list of audio tracks associated with the DASH file, will append to audio tracks present in the dash file (default: empty list)
      * @return a list of Video objects
      */
     fun extractFromDash(
@@ -208,8 +208,8 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
      *     - The second parameter `referer` represents the referer header value
      *     - The third parameter `videoUrl` represents the URL of the video
      *     - Returns the updated headers for the video segment request (default: generateMasterHeaders(baseHeaders, referer))
-     * @param subtitleList a list of subtitle tracks associated with the DASH file, non-empty values will override subtitles present in the dash file (default: empty list)
-     * @param audioList a list of audio tracks associated with the DASH file, non-empty values will override audio tracks present in the dash file (default: empty list)
+     * @param subtitleList a list of subtitle tracks associated with the DASH file, will append to subtitles present in the dash file (default: empty list)
+     * @param audioList a list of audio tracks associated with the DASH file, will append to audio tracks present in the dash file (default: empty list)
      * @return a list of Video objects
      */
     fun extractFromDash(
@@ -256,8 +256,8 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
      *     - The second parameter `referer` represents the referer header value
      *     - The third parameter `videoUrl` represents the URL of the video
      *     - Returns the updated headers for the video segment request (default: generateMasterHeaders(baseHeaders, referer))
-     * @param subtitleList a list of subtitle tracks associated with the DASH file, non-empty values will override subtitles present in the dash file (default: empty list)
-     * @param audioList a list of audio tracks associated with the DASH file, non-empty values will override audio tracks present in the dash file (default: empty list)
+     * @param subtitleList a list of subtitle tracks associated with the DASH file, will append to subtitles present in the dash file (default: empty list)
+     * @param audioList a list of audio tracks associated with the DASH file, will append to audio tracks present in the dash file (default: empty list)
      * @return a list of Video objects
      */
     fun extractFromDash(
