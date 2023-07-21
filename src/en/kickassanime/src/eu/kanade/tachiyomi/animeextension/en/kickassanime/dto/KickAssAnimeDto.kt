@@ -56,7 +56,7 @@ data class EpisodeResponseDto(
     @Serializable
     data class EpisodeDto(
         val slug: String,
-        val title: String,
+        val title: String? = "",
         val episode_string: String,
     )
 }
