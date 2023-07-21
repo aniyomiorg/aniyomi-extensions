@@ -163,11 +163,11 @@
   {
     "name": "Aniyomi: Jav Guru",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.javguru",
-    "apk": "aniyomi-all.javguru-v13.1.apk",
+    "apk": "aniyomi-all.javguru-v13.2.apk",
     "lang": "all",
-    "code": 1,
-    "version": "13.1",
-    "nsfw": 0,
+    "code": 2,
+    "version": "13.2",
+    "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
     "sources": [
@@ -1001,27 +1001,6 @@
     ]
   },
   {
-    "name": "Aniyomi: AnimeDao",
-    "pkg": "eu.kanade.tachiyomi.animeextension.en.animedao",
-    "apk": "aniyomi-en.animedao-v13.13.apk",
-    "lang": "en",
-    "code": 13,
-    "version": "13.13",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "AnimeDao",
-        "lang": "en",
-        "id": "8300253866246786109",
-        "baseUrl": "https://animedao.to",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: AnimeFlix",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.animeflix",
     "apk": "aniyomi-en.animeflix-v13.5.apk",
@@ -1507,10 +1486,10 @@
   {
     "name": "Aniyomi: KickAssAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.kickassanime",
-    "apk": "aniyomi-en.kickassanime-v13.30.apk",
+    "apk": "aniyomi-en.kickassanime-v13.31.apk",
     "lang": "en",
-    "code": 30,
-    "version": "13.30",
+    "code": 31,
+    "version": "13.31",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2707,6 +2686,27 @@
         "lang": "hi",
         "id": "3168615925539503340",
         "baseUrl": "https://www.animesaga.in",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: YoMovies",
+    "pkg": "eu.kanade.tachiyomi.animeextension.hi.yomovies",
+    "apk": "aniyomi-hi.yomovies-v13.1.apk",
+    "lang": "hi",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "YoMovies",
+        "lang": "hi",
+        "id": "2486904751081872151",
+        "baseUrl": "https://yomovies.baby",
         "versionId": 1,
         "hasCloudflare": 1
       }
