@@ -7,8 +7,8 @@ ext {
     extName = 'Jav Guru'
     pkgNameSuffix = 'all.javguru'
     extClass = '.JavGuru'
-    extVersionCode = 1
-    isNsfw = true
+    extVersionCode = 2
+    containsNsfw = true
 }
 
 dependencies {
