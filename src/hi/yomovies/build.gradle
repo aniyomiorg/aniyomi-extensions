@@ -1,0 +1,21 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'YoMovies'
+    pkgNameSuffix = 'hi.yomovies'
+    extClass = '.YoMovies'
+    extVersionCode = 1
+    libVersion = '13'
+    containsNsfw = true
+}
+
+dependencies {
+    implementation(project(':lib-streamsb-extractor'))
+    implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib-mixdrop-extractor'))
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
+    implementation(project(':lib-playlist-utils'))
+}
+
+apply from: "$rootDir/common.gradle"

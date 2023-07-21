@@ -10,7 +10,12 @@ import okhttp3.OkHttpClient
 import java.net.URLDecoder
 
 class MixDropExtractor(private val client: OkHttpClient) {
-    fun videoFromUrl(url: String, lang: String = "", prefix: String = ""): List<Video> {
+    fun videoFromUrl(
+        url: String,
+        lang: String = "",
+        prefix: String = "",
+        externalSubs: List<Track> = emptyList(),
+    ): List<Video> {
         val doc = client.newCall(GET(url)).execute().asJsoup()
         val unpacked = doc.selectFirst("script:containsData(eval):containsData(MDCore)")
             ?.data()
@@ -35,6 +40,6 @@ class MixDropExtractor(private val client: OkHttpClient) {
         }
 
         val headers = Headers.headersOf("Referer", "https://mixdrop.co/")
-        return listOf(Video(videoUrl, quality, videoUrl, headers = headers, subtitleTracks = subs))
+        return listOf(Video(videoUrl, quality, videoUrl, headers = headers, subtitleTracks = subs + externalSubs))
     }
 }
