@@ -6,9 +6,19 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
+import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
+import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -118,7 +128,47 @@ class Okanime : ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        throw UnsupportedOperationException("Not used.")
+        return response.use { it.asJsoup() }
+            .select("a.ep-link")
+            .parallelMap { element ->
+                val quality = element.selectFirst("span")?.text().orEmpty().let {
+                    when (it) {
+                        "HD" -> "720p"
+                        "FHD" -> "1080p"
+                        else -> "480p"
+                    }
+                }
+                val url = element.attr("data-src")
+                extractVideosFromUrl(url, quality)
+            }.flatten()
+    }
+
+    private fun extractVideosFromUrl(url: String, quality: String): List<Video> {
+        return runCatching {
+            when {
+                "https://doo" in url && "/e/" in url -> {
+                    DoodExtractor(client).videoFromUrl(url, "DoodStream - $quality")
+                        ?.let(::listOf)
+                }
+                "mp4upload" in url -> {
+                    Mp4uploadExtractor(client).videosFromUrl(url, headers)
+                }
+                "ok.ru" in url -> {
+                    OkruExtractor(client).videosFromUrl(url)
+                }
+                "voe.sx" in url -> {
+                    VoeExtractor(client).videoFromUrl(url, "VoeSX ($quality)")
+                        ?.let(::listOf)
+                }
+                STREAM_SB_DOMAINS.any(url::contains) -> {
+                    StreamSBExtractor(client).videosFromUrl(url, headers)
+                }
+                VID_BOM_DOMAINS.any(url::contains) -> {
+                    VidBomExtractor(client).videosFromUrl(url)
+                }
+                else -> null
+            }
+        }.getOrNull() ?: emptyList()
     }
 
     override fun videoListSelector(): String {
@@ -133,7 +183,26 @@ class Okanime : ParsedAnimeHttpSource() {
         throw UnsupportedOperationException("Not used.")
     }
 
+    // ============================= Utilities ==============================
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
+
     companion object {
         const val PREFIX_SEARCH = "id:"
+
+        private val STREAM_SB_DOMAINS = listOf(
+            "sbhight", "sbrity", "sbembed.com", "sbembed1.com", "sbplay.org",
+            "sbvideo.net", "streamsb.net", "sbplay.one", "cloudemb.com",
+            "playersb.com", "tubesb.com", "sbplay1.com", "embedsb.com",
+            "watchsb.com", "sbplay2.com", "japopav.tv", "viewsb.com",
+            "sbfast", "sbfull.com", "javplaya.com", "ssbstream.net",
+            "p1ayerjavseen.com", "sbthe.com", "vidmovie.xyz", "sbspeed.com",
+            "streamsss.net", "sblanh.com", "tvmshow.com", "sbanh.com",
+            "streamovies.xyz", "sblona.com", "likessb.com",
+        )
+
+        private val VID_BOM_DOMAINS = listOf("vidbam", "vadbam", "vidbom", "vidbm")
     }
 }

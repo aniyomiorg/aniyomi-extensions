@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-
 }
 
 ext {
@@ -9,6 +8,15 @@ ext {
     pkgNameSuffix = 'ar.okanime'
     extClass = '.Okanime'
     extVersionCode = 1
+}
+
+dependencies {
+    implementation(project(":lib-dood-extractor"))
+    implementation(project(":lib-voe-extractor"))
+    implementation(project(":lib-streamsb-extractor"))
+    implementation(project(":lib-okru-extractor"))
+    implementation(project(":lib-vidbom-extractor"))
+    implementation(project(":lib-mp4upload-extractor"))
 }
 
 apply from: "$rootDir/common.gradle"
