@@ -2629,6 +2629,27 @@
     ]
   },
   {
+    "name": "Aniyomi: JetAnime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.fr.jetanime",
+    "apk": "aniyomi-fr.jetanime-v13.1.apk",
+    "lang": "fr",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "JetAnime",
+        "lang": "fr",
+        "id": "8914615515692839881",
+        "baseUrl": "https://ssl.jetanimes.com",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: NekoSama",
     "pkg": "eu.kanade.tachiyomi.animeextension.fr.nekosama",
     "apk": "aniyomi-fr.nekosama-v13.4.apk",
