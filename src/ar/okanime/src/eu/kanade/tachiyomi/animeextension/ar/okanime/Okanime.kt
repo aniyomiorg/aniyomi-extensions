@@ -106,12 +106,14 @@ class Okanime : ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun episodeListSelector() = "div.row div.episode-card div.anime-title a"
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        throw UnsupportedOperationException("Not used.")
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        element.text().also {
+            name = it
+            episode_number = it.substringAfterLast(" ").toFloatOrNull() ?: 1F
+        }
     }
 
     // ============================ Video Links =============================
