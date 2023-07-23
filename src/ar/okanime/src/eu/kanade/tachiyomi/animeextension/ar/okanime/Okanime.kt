@@ -156,28 +156,36 @@ class Okanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }.flatten()
     }
 
+    // Inspirated by JavGuru(all)
+    private val doodExtractor by lazy { DoodExtractor(client) }
+    private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
+    private val okruExtractor by lazy { OkruExtractor(client) }
+    private val voeExtractor by lazy { VoeExtractor(client) }
+    private val streamSbExtractor by lazy { StreamSBExtractor(client) }
+    private val vidBomExtractor by lazy { VidBomExtractor(client) }
+
     private fun extractVideosFromUrl(url: String, quality: String, selection: Set<String>): List<Video> {
         return runCatching {
             when {
                 ("https://doo" in url && "/e/" in url) && selection.contains("Dood") -> {
-                    DoodExtractor(client).videoFromUrl(url, "DoodStream - $quality")
+                    doodExtractor.videoFromUrl(url, "DoodStream - $quality")
                         ?.let(::listOf)
                 }
                 "mp4upload" in url && selection.contains("Mp4upload") -> {
-                    Mp4uploadExtractor(client).videosFromUrl(url, headers)
+                    mp4uploadExtractor.videosFromUrl(url, headers)
                 }
                 "ok.ru" in url && selection.contains("Okru") -> {
-                    OkruExtractor(client).videosFromUrl(url)
+                    okruExtractor.videosFromUrl(url)
                 }
                 "voe.sx" in url && selection.contains("Voe") -> {
-                    VoeExtractor(client).videoFromUrl(url, "VoeSX ($quality)")
+                    voeExtractor.videoFromUrl(url, "VoeSX ($quality)")
                         ?.let(::listOf)
                 }
                 STREAM_SB_DOMAINS.any(url::contains) && selection.contains("StreamSB") -> {
-                    StreamSBExtractor(client).videosFromUrl(url, headers)
+                    streamSbExtractor.videosFromUrl(url, headers)
                 }
                 VID_BOM_DOMAINS.any(url::contains) && selection.contains("VidBom") -> {
-                    VidBomExtractor(client).videosFromUrl(url)
+                    vidBomExtractor.videosFromUrl(url)
                 }
                 else -> null
             }
