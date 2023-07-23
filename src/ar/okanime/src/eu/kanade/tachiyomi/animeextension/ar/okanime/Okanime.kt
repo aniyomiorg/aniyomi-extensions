@@ -9,7 +9,6 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -66,21 +65,16 @@ class Okanime : ParsedAnimeHttpSource() {
         return AnimesPage(listOf(details), false)
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) =
+        ("$baseUrl/search/?s=$query")
+            .let { if (page > 1) "$it&page=$page" else it }
+            .let(::GET)
 
-    override fun searchAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeSelector() = popularAnimeSelector()
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun searchAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
