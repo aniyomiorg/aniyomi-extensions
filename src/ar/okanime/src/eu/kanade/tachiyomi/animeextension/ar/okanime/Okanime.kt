@@ -77,8 +77,32 @@ class Okanime : ParsedAnimeHttpSource() {
     override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        throw UnsupportedOperationException("Not used.")
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        setUrlWithoutDomain(document.location())
+        title = document.selectFirst("div.author-info-title > h1")!!.text()
+        genre = document.select("div.review-author-info a").eachText().joinToString()
+
+        val infosdiv = document.selectFirst("div.text-right")!!
+        thumbnail_url = infosdiv.selectFirst("img")!!.attr("src")
+        status = infosdiv.selectFirst("div.full-list-info:contains(حالة الأنمي) a").let {
+            when (it?.text() ?: "") {
+                "يعرض الان" -> SAnime.ONGOING
+                "مكتمل" -> SAnime.COMPLETED
+                else -> SAnime.UNKNOWN
+            }
+        }
+        description = buildString {
+            document.selectFirst("div.review-content")
+                ?.text()
+                ?.let { append("$it\n") }
+
+            infosdiv.select("div.full-list-info").forEach { info ->
+                info.select("small")
+                    .eachText()
+                    .joinToString(": ")
+                    .let { append("\n$it") }
+            }
+        }
     }
 
     // ============================== Episodes ==============================
