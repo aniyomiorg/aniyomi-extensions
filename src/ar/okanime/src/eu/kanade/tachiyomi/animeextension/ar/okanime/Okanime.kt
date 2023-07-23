@@ -1,5 +1,9 @@
 package eu.kanade.tachiyomi.animeextension.ar.okanime
 
+import android.app.Application
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -23,8 +27,10 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
-class Okanime : ParsedAnimeHttpSource() {
+class Okanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Okanime"
 
@@ -33,6 +39,10 @@ class Okanime : ParsedAnimeHttpSource() {
     override val lang = "ar"
 
     override val supportsLatest = true
+
+    private val preferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET(baseUrl)
@@ -135,7 +145,8 @@ class Okanime : ParsedAnimeHttpSource() {
                     when (it) {
                         "HD" -> "720p"
                         "FHD" -> "1080p"
-                        else -> "480p"
+                        "SD" -> "480p"
+                        else -> "240p"
                     }
                 }
                 val url = element.attr("data-src")
@@ -183,6 +194,31 @@ class Okanime : ParsedAnimeHttpSource() {
         throw UnsupportedOperationException("Not used.")
     }
 
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
+    }
+
+    // ============================== Settings ==============================
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+    }
+
     // ============================= Utilities ==============================
     private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
         runBlocking {
@@ -204,5 +240,10 @@ class Okanime : ParsedAnimeHttpSource() {
         )
 
         private val VID_BOM_DOMAINS = listOf("vidbam", "vadbam", "vidbom", "vidbm")
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "1080p"
+        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p", "240p")
     }
 }
