@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.ar.okanime
 
 import android.app.Application
 import androidx.preference.ListPreference
+import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -138,6 +139,7 @@ class Okanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
+        val hosterSelection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
         return response.use { it.asJsoup() }
             .select("a.ep-link")
             .parallelMap { element ->
@@ -150,31 +152,31 @@ class Okanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                 }
                 val url = element.attr("data-src")
-                extractVideosFromUrl(url, quality)
+                extractVideosFromUrl(url, quality, hosterSelection)
             }.flatten()
     }
 
-    private fun extractVideosFromUrl(url: String, quality: String): List<Video> {
+    private fun extractVideosFromUrl(url: String, quality: String, selection: Set<String>): List<Video> {
         return runCatching {
             when {
-                "https://doo" in url && "/e/" in url -> {
+                ("https://doo" in url && "/e/" in url) && selection.contains("Dood") -> {
                     DoodExtractor(client).videoFromUrl(url, "DoodStream - $quality")
                         ?.let(::listOf)
                 }
-                "mp4upload" in url -> {
+                "mp4upload" in url && selection.contains("Mp4upload") -> {
                     Mp4uploadExtractor(client).videosFromUrl(url, headers)
                 }
-                "ok.ru" in url -> {
+                "ok.ru" in url && selection.contains("Okru") -> {
                     OkruExtractor(client).videosFromUrl(url)
                 }
-                "voe.sx" in url -> {
+                "voe.sx" in url && selection.contains("Voe") -> {
                     VoeExtractor(client).videoFromUrl(url, "VoeSX ($quality)")
                         ?.let(::listOf)
                 }
-                STREAM_SB_DOMAINS.any(url::contains) -> {
+                STREAM_SB_DOMAINS.any(url::contains) && selection.contains("StreamSB") -> {
                     StreamSBExtractor(client).videosFromUrl(url, headers)
                 }
-                VID_BOM_DOMAINS.any(url::contains) -> {
+                VID_BOM_DOMAINS.any(url::contains) && selection.contains("VidBom") -> {
                     VidBomExtractor(client).videosFromUrl(url)
                 }
                 else -> null
@@ -217,6 +219,19 @@ class Okanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }.also(screen::addPreference)
+
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_HOSTER_SELECTION_KEY
+            title = PREF_HOSTER_SELECTION_TITLE
+            entries = PREF_HOSTER_SELECTION_ENTRIES
+            entryValues = PREF_HOSTER_SELECTION_ENTRIES
+            setDefaultValue(PREF_HOSTER_SELECTION_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                @Suppress("UNCHECKED_CAST")
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }.also(screen::addPreference)
     }
 
     // ============================= Utilities ==============================
@@ -245,5 +260,10 @@ class Okanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_QUALITY_TITLE = "Preferred quality"
         private const val PREF_QUALITY_DEFAULT = "1080p"
         private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p", "240p")
+
+        private const val PREF_HOSTER_SELECTION_KEY = "pref_hoster_selection"
+        private const val PREF_HOSTER_SELECTION_TITLE = "Enable/Disable hosts"
+        private val PREF_HOSTER_SELECTION_ENTRIES = arrayOf("Dood", "StreamSB", "Voe", "Mp4upload", "VidBom", "Okru")
+        private val PREF_HOSTER_SELECTION_DEFAULT by lazy { PREF_HOSTER_SELECTION_ENTRIES.toSet() }
     }
 }
