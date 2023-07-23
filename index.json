@@ -539,6 +539,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Okanime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.ar.okanime",
+    "apk": "aniyomi-ar.okanime-v13.1.apk",
+    "lang": "ar",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Okanime",
+        "lang": "ar",
+        "id": "2275740574829569178",
+        "baseUrl": "https://www.okanime.xyz",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: توك توك سينما",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.tuktukcinema",
     "apk": "aniyomi-ar.tuktukcinema-v13.8.apk",
