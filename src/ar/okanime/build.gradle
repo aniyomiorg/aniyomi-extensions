@@ -1,0 +1,14 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+
+}
+
+ext {
+    extName = 'Okanime'
+    pkgNameSuffix = 'ar.okanime'
+    extClass = '.Okanime'
+    extVersionCode = 1
+}
+
+apply from: "$rootDir/common.gradle"
