@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.all.javguru
 
 import android.util.Base64
+import eu.kanade.tachiyomi.animeextension.all.javguru.extractors.EmTurboExtractor
 import eu.kanade.tachiyomi.animeextension.all.javguru.extractors.MaxStreamExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -17,6 +18,10 @@ import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.Call
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -40,28 +45,12 @@ class JavGuru : AnimeHttpSource() {
         .rateLimit(2)
         .build()
 
+    private val noRedirectClient = client.newBuilder()
+        .followRedirects(false)
+        .build()
+
     override fun headersBuilder() = super.headersBuilder()
         .add("Referer", "$baseUrl/")
-
-    private val streamSbExtractor: StreamSBExtractor by lazy {
-        StreamSBExtractor(client)
-    }
-
-    private val streamTapeExtractor: StreamTapeExtractor by lazy {
-        StreamTapeExtractor(client)
-    }
-
-    private val doodExtractor: DoodExtractor by lazy {
-        DoodExtractor(client)
-    }
-
-    private val mixDropExtractor: MixDropExtractor by lazy {
-        MixDropExtractor(client)
-    }
-
-    private val maxStreamExtractor: MaxStreamExtractor by lazy {
-        MaxStreamExtractor(client)
-    }
 
     private lateinit var popularElements: Elements
 
@@ -121,12 +110,12 @@ class JavGuru : AnimeHttpSource() {
         }
 
         val page = document.location()
-            .substringBeforeLast("/").toHttpUrlOrNull()
-            ?.pathSegments?.last()?.toIntOrNull() ?: 1
+            .pageNumberFromUrlOrNull() ?: 1
 
         val lastPage = document.select("div.wp-pagenavi a")
-            .last()?.attr("href")?.substringBeforeLast("/")
-            ?.toHttpUrlOrNull()?.pathSegments?.last()?.toIntOrNull() ?: 1
+            .last()
+            ?.attr("href")
+            .pageNumberFromUrlOrNull() ?: 1
 
         return AnimesPage(entries, page < lastPage)
     }
@@ -157,7 +146,7 @@ class JavGuru : AnimeHttpSource() {
                             val url = "$baseUrl${filter.toUrlPart()}" + if (page > 1) "page/$page/" else ""
                             val request = GET(url, headers)
                             return client.newCall(request)
-                                .asObservableIgnoreCode(404)
+                                .asObservableSuccess()
                                 .map(::searchAnimeParse)
                         }
                     }
@@ -238,54 +227,93 @@ class JavGuru : AnimeHttpSource() {
             .map { Base64.decode(it, Base64.DEFAULT).let(::String) }
             .toList()
 
-        return iframeUrls.mapNotNull { url ->
-            runCatching {
-                val iframeResponse = client.newCall(GET(url, headers)).execute()
-
-                if (iframeResponse.isSuccessful.not()) {
-                    iframeResponse.close()
-                    return@mapNotNull null
-                }
-
-                val iframeDocument = iframeResponse.asJsoup()
-
-                val script = iframeDocument.selectFirst("script:containsData(start_player)")
-                    ?.html() ?: return@mapNotNull null
-
-                val olid = IFRAME_OLID_REGEX.find(script)?.groupValues?.get(1)?.reversed()
-                    ?: return@mapNotNull null
-
-                val olidUrl = IFRAME_OLID_URL.find(script)?.groupValues?.get(1)?.substringBeforeLast("=")?.let { "$it=$olid" }
-                    ?: return@mapNotNull null
-
-                val newHeaders = headersBuilder()
-                    .set("Referer", url)
-                    .build()
-
-                val redirectUrl = client.newCall(GET(olidUrl, newHeaders))
-                    .execute().request.url.toString()
-
-                when {
-                    STREAM_SB_DOMAINS.any { it in redirectUrl } -> {
-                        streamSbExtractor.videosFromUrl(redirectUrl, headers)
-                    }
-                    redirectUrl.contains("streamtape") -> {
-                        streamTapeExtractor.videoFromUrl(redirectUrl)?.let { listOf(it) }
-                    }
-                    redirectUrl.contains("dood") -> {
-                        doodExtractor.videosFromUrl(redirectUrl)
-                    }
-                    MIXDROP_DOMAINS.any { it in redirectUrl } -> {
-                        mixDropExtractor.videoFromUrl(redirectUrl)
-                    }
-                    redirectUrl.contains("maxstream") -> {
-                        maxStreamExtractor.videoFromUrl(redirectUrl)
-                    }
-                    else -> { null }
-                }
-            }.getOrNull()
-        }.flatten()
+        return iframeUrls
+            .mapNotNull(::resolveHosterUrl)
+            .parallelMap(::getVideos)
+            .flatten()
     }
+
+    private fun resolveHosterUrl(iframeUrl: String): String? {
+        val iframeResponse = client.newCall(GET(iframeUrl, headers)).execute()
+
+        if (iframeResponse.isSuccessful.not()) {
+            iframeResponse.close()
+            return null
+        }
+
+        val iframeDocument = iframeResponse.asJsoup()
+
+        val script = iframeDocument.selectFirst("script:containsData(start_player)")
+            ?.html() ?: return null
+
+        val olid = IFRAME_OLID_REGEX.find(script)?.groupValues?.get(1)?.reversed()
+            ?: return null
+
+        val olidUrl = IFRAME_OLID_URL.find(script)?.groupValues?.get(1)
+            ?.substringBeforeLast("=")?.let { "$it=$olid" }
+            ?: return null
+
+        val newHeaders = headersBuilder()
+            .set("Referer", iframeUrl)
+            .build()
+
+        val redirectUrl = noRedirectClient.newCall(GET(olidUrl, newHeaders))
+            .execute().header("location")
+            ?: return null
+
+        if (redirectUrl.toHttpUrlOrNull() == null) {
+            return null
+        }
+
+        return redirectUrl
+    }
+
+    private val streamSbExtractor by lazy { StreamSBExtractor(client) }
+    private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val doodExtractor by lazy { DoodExtractor(client) }
+    private val mixDropExtractor by lazy { MixDropExtractor(client) }
+    private val maxStreamExtractor by lazy { MaxStreamExtractor(client) }
+    private val emTurboExtractor by lazy { EmTurboExtractor(client) }
+
+    private fun getVideos(hosterUrl: String): List<Video> {
+        return runCatching {
+            when {
+                hosterUrl.contains("streamtape") -> {
+                    streamTapeExtractor.videoFromUrl(hosterUrl)
+                        ?.let(::listOf) ?: emptyList()
+                }
+
+                hosterUrl.contains("dood") -> {
+                    doodExtractor.videosFromUrl(hosterUrl)
+                }
+
+                MIXDROP_DOMAINS.any { it in hosterUrl } -> {
+                    mixDropExtractor.videoFromUrl(hosterUrl)
+                }
+
+                hosterUrl.contains("maxstream") -> {
+                    maxStreamExtractor.videoFromUrl(hosterUrl)
+                }
+
+                hosterUrl.contains("emturbovid") -> {
+                    emTurboExtractor.getVideos(hosterUrl)
+                }
+
+                STREAM_SB_DOMAINS.any { it in hosterUrl } -> {
+                    streamSbExtractor.videosFromUrl(hosterUrl, headers)
+                }
+
+                else -> {
+                    emptyList()
+                }
+            }
+        }.getOrDefault(emptyList())
+    }
+
+    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 
     private fun getIDFromUrl(element: Elements): String? {
         return element.attr("abs:href")
@@ -296,6 +324,14 @@ class JavGuru : AnimeHttpSource() {
             ?.toString()
             ?.let { "/$it/" }
     }
+
+    private fun String?.pageNumberFromUrlOrNull() =
+        this
+            ?.substringBeforeLast("/")
+            ?.toHttpUrlOrNull()
+            ?.pathSegments
+            ?.last()
+            ?.toIntOrNull()
 
     private fun Call.asObservableIgnoreCode(code: Int): Observable<Response> {
         return asObservable().doOnNext { response ->
@@ -321,7 +357,7 @@ class JavGuru : AnimeHttpSource() {
             "sbfast", "sbfull.com", "javplaya.com", "ssbstream.net",
             "p1ayerjavseen.com", "sbthe.com", "vidmovie.xyz", "sbspeed.com",
             "streamsss.net", "sblanh.com", "tvmshow.com", "sbanh.com",
-            "streamovies.xyz", "sblona.com",
+            "streamovies.xyz", "sblona.com", "likessb.com",
         )
         private val MIXDROP_DOMAINS = listOf(
             "mixdrop",

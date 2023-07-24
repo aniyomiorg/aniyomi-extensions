@@ -10,9 +10,7 @@ import okhttp3.OkHttpClient
 
 class MaxStreamExtractor(private val client: OkHttpClient) {
 
-    private val playListUtils: PlaylistUtils by lazy {
-        PlaylistUtils(client)
-    }
+    private val playListUtils by lazy { PlaylistUtils(client) }
 
     fun videoFromUrl(url: String): List<Video> {
         val document = client.newCall(GET(url)).execute().asJsoup()
