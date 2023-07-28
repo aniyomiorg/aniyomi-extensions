@@ -38,6 +38,8 @@ class FrAnime : AnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
+    override fun headersBuilder() = super.headersBuilder().add("Referer", "$baseUrl/")
+
     private val json: Json by injectLazy()
 
     private val database by lazy {
@@ -92,7 +94,7 @@ class FrAnime : AnimeHttpSource() {
 
         val videos = players.flatMapIndexed { index, playerName ->
             val apiUrl = "$videoBaseUrl/$episodeLang/$index"
-            val playerUrl = client.newCall(GET(apiUrl)).execute().body.string()
+            val playerUrl = client.newCall(GET(apiUrl, headers)).execute().body.string()
             when (playerName) {
                 "franime_myvi" -> listOf(Video(playerUrl, "FRAnime", playerUrl))
                 "myvi" -> MytvExtractor(client).videosFromUrl(playerUrl)
