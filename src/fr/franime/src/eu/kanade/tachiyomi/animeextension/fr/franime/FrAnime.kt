@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.fr.franime
 
-import android.net.UrlQuerySanitizer
 import eu.kanade.tachiyomi.animeextension.fr.franime.dto.Anime
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -14,15 +13,13 @@ import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.json.Json
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
-import java.net.URI
-import kotlin.io.path.Path
-import kotlin.io.path.name
 
 class FrAnime : AnimeHttpSource() {
 
@@ -58,9 +55,10 @@ class FrAnime : AnimeHttpSource() {
     // === Episodes
 
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
-        val stem = Path(URI(anime.url).path).name // WILL break on API update ! name becomes fileName in new versions !
-        val language = UrlQuerySanitizer(anime.url).getValue("lang")
-        val season = UrlQuerySanitizer(anime.url).getValue("s").toInt()
+        val url = (baseUrl + anime.url).toHttpUrl()
+        val stem = url.encodedPathSegments.last()
+        val language = url.queryParameter("lang") ?: "vo"
+        val season = url.queryParameter("s")?.toIntOrNull() ?: 1
         val animeData = database.first { titleToUrl(it.originalTitle) == stem }
         val episodes = mutableListOf<SEpisode>()
         animeData.seasons[season - 1].episodes.forEachIndexed { index, episode ->
@@ -81,30 +79,30 @@ class FrAnime : AnimeHttpSource() {
     // === Players
 
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
-        val seasonNumber = UrlQuerySanitizer(episode.url).getValue("s").toInt()
-        val episodeNumber = UrlQuerySanitizer(episode.url).getValue("ep").toInt()
-        val episodeLang = UrlQuerySanitizer(episode.url).getValue("lang")
-        val stem = Path(URI(episode.url).path).name
+        val url = (baseUrl + episode.url).toHttpUrl()
+        val seasonNumber = url.queryParameter("s")?.toIntOrNull() ?: 1
+        val episodeNumber = url.queryParameter("ep")?.toIntOrNull() ?: 1
+        val episodeLang = url.queryParameter("lang") ?: "vo"
+        val stem = url.encodedPathSegments.last()
         val animeData = database.first { titleToUrl(it.originalTitle) == stem }
         val episodeData = animeData.seasons[seasonNumber - 1].episodes[episodeNumber - 1]
         val videoBaseUrl = "$baseApiAnimeUrl/${animeData.id}/${seasonNumber - 1}/${episodeNumber - 1}"
 
-        val videos = mutableListOf<Video>()
         val players = if (episodeLang == "vo") episodeData.languages.vo.players else episodeData.languages.vf.players
 
-        players.forEachIndexed { index, playerName ->
+        val videos = players.flatMapIndexed { index, playerName ->
             val apiUrl = "$videoBaseUrl/$episodeLang/$index"
             val playerUrl = client.newCall(GET(apiUrl)).execute().body.string()
-            val playerVideos = when (playerName) {
+            when (playerName) {
                 "franime_myvi" -> listOf(Video(playerUrl, "FRAnime", playerUrl))
                 "myvi" -> MytvExtractor(client).videosFromUrl(playerUrl)
                 "sendvid" -> SendvidExtractor(client, headers).videosFromUrl(playerUrl)
                 "sibnet" -> SibnetExtractor(client).videosFromUrl(playerUrl)
                 "sbfull" -> StreamSBExtractor(client).videosFromUrl(playerUrl, headers)
-                else -> null
+                else -> emptyList()
             }
-            if (playerVideos != null) videos.addAll(playerVideos)
         }
+
         return Observable.just(videos)
     }
 
@@ -165,26 +163,21 @@ class FrAnime : AnimeHttpSource() {
                 val seasonTitle = it.title + if (it.seasons.size > 1) " S${index + 1}" else ""
                 val hasVostfr = season.episodes.fold(false) { v, e -> v or e.languages.vo.players.isNotEmpty() }
                 val hasVf = season.episodes.fold(false) { v, e -> v or e.languages.vf.players.isNotEmpty() }
+
                 // I want to die for writing this
-                if (hasVostfr) {
+                val languages = listOfNotNull(
+                    if (hasVostfr) Triple("VOSTFR", "vo", hasVf) else null,
+                    if (hasVf) Triple("VF", "vf", hasVostfr) else null,
+                )
+
+                languages.forEach { lang ->
                     entries += SAnime.create().apply {
-                        title = seasonTitle + if (hasVf) " (VOSTFR)" else ""
+                        title = seasonTitle + if (lang.third) " (${lang.first})" else ""
                         thumbnail_url = it.poster
                         genre = it.genres.joinToString()
                         status = parseStatus(it.status, it.seasons.size, index + 1)
                         description = it.description
-                        setUrlWithoutDomain("/anime/${titleToUrl(it.originalTitle)}?lang=vo&s=${index + 1}")
-                        initialized = true
-                    }
-                }
-                if (hasVf) {
-                    entries += SAnime.create().apply {
-                        title = seasonTitle + if (hasVostfr) " (VF)" else ""
-                        thumbnail_url = it.poster
-                        genre = it.genres.joinToString()
-                        status = parseStatus(it.status, it.seasons.size, index + 1)
-                        description = it.description
-                        setUrlWithoutDomain("/anime/${titleToUrl(it.originalTitle)}?lang=vf&s=${index + 1}")
+                        setUrlWithoutDomain("/anime/${titleToUrl(it.originalTitle)}?lang=${lang.second}&s=${index + 1}")
                         initialized = true
                     }
                 }
