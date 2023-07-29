@@ -3385,6 +3385,27 @@
     ]
   },
   {
+    "name": "Aniyomi: AnimeSync",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesync",
+    "apk": "aniyomi-pt.animesync-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimeSync",
+        "lang": "pt-BR",
+        "id": "8964606233228929038",
+        "baseUrl": "https://animesync.org",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: AnimesZone",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animeszone",
     "apk": "aniyomi-pt.animeszone-v13.4.apk",
@@ -3465,27 +3486,6 @@
         "baseUrl": "https://betteranime.net",
         "versionId": 1,
         "hasCloudflare": 1
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: CineVision",
-    "pkg": "eu.kanade.tachiyomi.animeextension.pt.cinevision",
-    "apk": "aniyomi-pt.cinevision-v13.6.apk",
-    "lang": "pt-BR",
-    "code": 6,
-    "version": "13.6",
-    "nsfw": 1,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "CineVision",
-        "lang": "pt-BR",
-        "id": "4986568999330167770",
-        "baseUrl": "https://cinevisionv3.online",
-        "versionId": 1,
-        "hasCloudflare": 0
       }
     ]
   },
