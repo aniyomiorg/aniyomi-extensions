@@ -22,8 +22,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -52,10 +50,6 @@ abstract class DopeFlix(
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
-
-    private val json = Json {
-        ignoreUnknownKeys = true
     }
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
@@ -143,11 +137,11 @@ abstract class DopeFlix(
     }
 
     // ============================ Video Links =============================
+    private val extractor by lazy { DopeFlixExtractor(client) }
 
     override fun videoListParse(response: Response): List<Video> {
         val doc = response.asJsoup()
         val episodeReferer = Headers.headersOf("Referer", response.request.header("referer")!!)
-        val extractor = DopeFlixExtractor(client)
         val videoList = doc.select("ul.fss-list a.btn-play")
             .parallelMap { server ->
                 val name = server.selectFirst("span")!!.text()
@@ -164,8 +158,8 @@ abstract class DopeFlix(
                                 listOf(it)
                             }
                         "Vidcloud" in name || "UpCloud" in name -> {
-                            val source = extractor.getSourcesJson(sourceUrl)
-                            source?.let { getVideosFromServer(it, name) }
+                            val video = extractor.getVideoDto(sourceUrl)
+                            getVideosFromServer(video, name)
                         }
                         else -> null
                     }
@@ -176,15 +170,12 @@ abstract class DopeFlix(
         return videoList
     }
 
-    private fun getVideosFromServer(source: String, name: String): List<Video>? {
-        if (!source.contains("{\"sources\":[{\"file\":\"")) return null
-        val response = json.decodeFromString<VideoDto>(source)
-        val masterUrl = response.sources.first().file
-        val subs2 = response.tracks
+    private fun getVideosFromServer(video: VideoDto, name: String): List<Video> {
+        val masterUrl = video.sources.first().file
+        val subs2 = video.tracks
             ?.filter { it.kind == "captions" }
-            ?.mapNotNull {
-                runCatching { Track(it.file, it.label) }.getOrNull()
-            } ?: emptyList<Track>()
+            ?.mapNotNull { Track(it.file, it.label) }
+            ?: emptyList<Track>()
         val subs = subLangOrder(subs2)
         if (masterUrl.contains("playlist.m3u8")) {
             val prefix = "#EXT-X-STREAM-INF:"
