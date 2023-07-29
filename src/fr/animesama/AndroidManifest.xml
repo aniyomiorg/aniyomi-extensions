@@ -13,8 +13,8 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="www.anime-sama.fr"
-                    android:pathPattern="/anime/..*"
+                    android:host="anime-sama.fr"
+                    android:pathPattern="/catalogue/..*"
                     android:scheme="https" />
             </intent-filter>
         </activity>
