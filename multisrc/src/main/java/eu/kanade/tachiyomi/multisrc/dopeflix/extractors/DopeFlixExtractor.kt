@@ -1,9 +1,9 @@
 package eu.kanade.tachiyomi.multisrc.dopeflix.extractors
 
+import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES
 import eu.kanade.tachiyomi.multisrc.dopeflix.dto.SourceResponseDto
 import eu.kanade.tachiyomi.multisrc.dopeflix.dto.VideoDto
 import eu.kanade.tachiyomi.multisrc.dopeflix.dto.VideoLink
-import eu.kanade.tachiyomi.multisrc.dopeflix.utils.Decryptor
 import eu.kanade.tachiyomi.network.GET
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -83,7 +83,7 @@ class DopeFlixExtractor(private val client: OkHttpClient) {
     private fun tryDecrypting(ciphered: String, attempts: Int = 0): String {
         if (attempts > 2) throw Exception("PLEASE NUKE DOPEBOX AND SFLIX")
         val (ciphertext, password) = cipherTextCleaner(ciphered)
-        return Decryptor.decrypt(ciphertext, password) ?: run {
+        return CryptoAES.decrypt(ciphertext, password).ifEmpty {
             indexPairs = emptyList() // force re-creation
             tryDecrypting(ciphered, attempts + 1)
         }
