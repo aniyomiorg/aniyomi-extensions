@@ -13,14 +13,14 @@ class BloggerExtractor(private val client: OkHttpClient) {
             .substringBefore("]")
             .split("},")
             .map {
-                val url = it.substringAfter("{\"play_url\":\"").substringBefore('"')
+                val videoUrl = it.substringAfter("{\"play_url\":\"").substringBefore('"')
                 val format = it.substringAfter("\"format_id\":").substringBefore("}")
                 val quality = when (format) {
                     "18" -> "360p"
                     "22" -> "720p"
                     else -> "Unknown"
                 }
-                Video(url, quality, url, headers = headers)
+                Video(videoUrl, quality, videoUrl, headers = headers)
             }
     }
 }
