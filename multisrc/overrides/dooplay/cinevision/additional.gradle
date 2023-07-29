@@ -1,4 +1,0 @@
-dependencies {
-    implementation(project(":lib-streamlare-extractor"))
-    implementation("dev.datlag.jsunpacker:jsunpacker:1.0.1")
-}

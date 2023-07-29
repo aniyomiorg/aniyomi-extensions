@@ -19,7 +19,6 @@ class DooPlayGenerator : ThemeSourceGenerator {
         SingleLang("Animes Grátis", "https://animesgratis.org", "pt-BR", className = "AnimesGratis", isNsfw = false, overrideVersionCode = 1),
         SingleLang("Animes House", "https://animeshouse.net", "pt-BR", isNsfw = false, overrideVersionCode = 5),
         SingleLang("Cinemathek", "https://cinemathek.net", "de", isNsfw = true, overrideVersionCode = 13),
-        SingleLang("CineVision", "https://cinevisionv3.online", "pt-BR", isNsfw = true, overrideVersionCode = 5),
         SingleLang("DonghuaX", "https://donghuax.com", "pt-BR", isNsfw = false),
         SingleLang("GoAnimes", "https://goanimes.net", "pt-BR", isNsfw = true, overrideVersionCode = 2),
         SingleLang("JetAnime", "https://ssl.jetanimes.com", "fr", isNsfw = false),
