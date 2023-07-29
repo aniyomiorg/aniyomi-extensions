@@ -2841,10 +2841,10 @@
   {
     "name": "Aniyomi: Oploverz",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.oploverz",
-    "apk": "aniyomi-id.oploverz-v13.14.apk",
+    "apk": "aniyomi-id.oploverz-v13.15.apk",
     "lang": "id",
-    "code": 14,
-    "version": "13.14",
+    "code": 15,
+    "version": "13.15",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2853,7 +2853,7 @@
         "name": "Oploverz",
         "lang": "id",
         "id": "2573103800968432770",
-        "baseUrl": "https://oploverz.top",
+        "baseUrl": "https://oploverz.win",
         "versionId": 1,
         "hasCloudflare": 0
       }
