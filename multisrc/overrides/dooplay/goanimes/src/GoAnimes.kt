@@ -26,7 +26,7 @@ class GoAnimes : DooPlay(
     override fun getSeasonEpisodes(season: Element): List<SEpisode> {
         // All episodes are listed under a single page
         season.selectFirst(episodeListSelector())?.let {
-            return super.getSeasonEpisodes(season)
+            return getSeasonEpisodesRecursive(season)
         }
 
         // Episodes are listed at another page
@@ -34,7 +34,26 @@ class GoAnimes : DooPlay(
         return client.newCall(GET(url))
             .execute()
             .asJsoup()
-            .let { super.getSeasonEpisodes(it) }
+            .let(::getSeasonEpisodes)
+    }
+
+    private val episodeListNextPageSelector = "div.pagination span.current + a:not(.arrow_pag)"
+
+    private fun getSeasonEpisodesRecursive(season: Element): List<SEpisode> {
+        var doc = season.root()
+        return buildList {
+            do {
+                if (isNotEmpty()) {
+                    doc.selectFirst(episodeListNextPageSelector)?.let {
+                        val url = it.attr("abs:href")
+                        doc = client.newCall(GET(url, headers)).execute()
+                            .use { it.asJsoup() }
+                    }
+                }
+                addAll(super.getSeasonEpisodes(doc))
+            } while (doc.selectFirst(episodeListNextPageSelector) != null)
+            reversed()
+        }
     }
 
     // ============================ Video Links =============================

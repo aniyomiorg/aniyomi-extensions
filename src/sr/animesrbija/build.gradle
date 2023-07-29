@@ -12,6 +12,7 @@ ext {
 }
 
 dependencies {
+    implementation(project(':lib-filemoon-extractor'))
     implementation("dev.datlag.jsunpacker:jsunpacker:1.0.1")
 }
 

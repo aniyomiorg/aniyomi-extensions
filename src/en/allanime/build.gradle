@@ -6,11 +6,12 @@ ext {
     extName = 'AllAnime'
     pkgNameSuffix = 'en.allanime'
     extClass = '.AllAnime'
-    extVersionCode = 23
+    extVersionCode = 25
     libVersion = '13'
 }
 
 dependencies {
+    implementation(project(':lib-streamlare-extractor'))
     implementation(project(':lib-mp4upload-extractor'))
     implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))

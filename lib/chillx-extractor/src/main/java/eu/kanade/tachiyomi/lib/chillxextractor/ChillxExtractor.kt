@@ -680,13 +680,12 @@ Public License instead of this License.  But first, please read
 package eu.kanade.tachiyomi.lib.chillxextractor
 
 import android.util.Base64
+import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -698,7 +697,7 @@ import javax.crypto.spec.SecretKeySpec
 
 class ChillxExtractor(private val client: OkHttpClient, private val headers: Headers) {
 
-    fun videoFromUrl(url: String, referer: String): List<Video>? {
+    fun videoFromUrl(url: String, referer: String, prefix: String = "Chillx - "): List<Video> {
         val videoList = mutableListOf<Video>()
         val mainUrl = "https://${url.toHttpUrl().host}"
 
@@ -707,37 +706,12 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
         ).execute().asJsoup().html()
 
         val master = Regex("""MasterJS\s*=\s*'([^']+)""").find(document)?.groupValues?.get(1)
-        val aesJson = Json.decodeFromString<JsonObject>(base64Decode(master ?: return null).toString(Charsets.UTF_8))
+        val aesJson = Json.decodeFromString<CryptoInfo>(base64Decode(master ?: return emptyList()).toString(Charsets.UTF_8))
+        val decrypt = cryptoAESHandler(aesJson, KEY)
 
-        val encData =
-            try {
-                AESData(
-                    aesJson["ciphertext"]!!.jsonPrimitive.content,
-                    aesJson["iv"]!!.jsonPrimitive.content,
-                    aesJson["salt"]!!.jsonPrimitive.content,
-                    aesJson["iterations"]!!.jsonPrimitive.content,
-                )
-            } catch(_: Exception) {
-                null
-            }
-
-        val decrypt = cryptoAESHandler(encData ?: return null, KEY)
-        val playlistUrl = Regex("""sources:\s*\[\{"file":"([^"]+)""").find(decrypt)?.groupValues?.get(1) ?: return null
-
-        val tracks = Regex("""tracks:\s*\[(.+)]""").find(decrypt)?.groupValues?.get(1)
-        val trackJson = Json.decodeFromString<JsonObject>(tracks ?: return null)
-        // TODO: Add subtitle support when a site is found that uses it
-        val trackData =
-            try {
-
-                SubtitleTrack(
-                    trackJson["file"]!!.jsonPrimitive.content,
-                    trackJson["label"]!!.jsonPrimitive.content,
-                    trackJson["kind"]!!.jsonPrimitive.content,
-                )
-            } catch(_: Exception) {
-                null
-            }
+        val masterUrl = Regex("""sources:\s*\[\{"file":"([^"]+)""").find(decrypt)?.groupValues?.get(1)
+            ?: Regex("""file: ?"([^"]+)"""").find(decrypt)?.groupValues?.get(1)
+            ?: return emptyList()
 
         val masterHeaders = Headers.headersOf(
             "Accept", "*/*",
@@ -749,36 +723,70 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
             "Referer", "$mainUrl/",
         )
 
-        val response = client.newCall(GET(playlistUrl, headers = masterHeaders)).execute()
-        val masterPlaylist = response.body.string()
+        val response = client.newCall(GET(masterUrl, headers = masterHeaders)).execute()
 
-        masterPlaylist?.substringAfter("#EXT-X-STREAM-INF:")
-            ?.split("#EXT-X-STREAM-INF:")?.map {
+        val masterPlaylist = response.body.string()
+        val masterBase = "https://${masterUrl.toHttpUrl().host}${masterUrl.toHttpUrl().encodedPath}"
+            .substringBeforeLast("/") + "/"
+
+        val audioRegex = Regex("""#EXT-X-MEDIA:TYPE=AUDIO.*?NAME="(.*?)".*?URI="(.*?)"""")
+        val audioList: List<Track> = audioRegex.findAll(masterPlaylist)
+            .map {
+                var audioUrl = it.groupValues[2]
+                if (audioUrl.startsWith("https").not()) {
+                    audioUrl = masterBase + audioUrl
+                }
+
+                Track(
+                    audioUrl, // Url
+                    it.groupValues[1], // Name
+                )
+            }.toList()
+
+        val subtitleList = mutableListOf<Track>()
+        if (decrypt.contains("subtitle: ")) {
+            val subtitleStr = decrypt.substringAfter("subtitle: ").substringBefore("\n")
+            val subtitleRegex = Regex("""\[(.*?)\](.*?)"?\,""")
+            subtitleRegex.findAll(subtitleStr).forEach {
+                subtitleList.add(
+                    Track(
+                        it.groupValues[2],
+                        it.groupValues[1],
+                    )
+                )
+            }
+        }
+
+        masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
+            .split("#EXT-X-STREAM-INF:").map {
                 val quality = it.substringAfter("RESOLUTION=").split(",")[0].split("\n")[0].substringAfter("x") + "p"
 
                 var videoUrl = it.substringAfter("\n").substringBefore("\n")
                 if (videoUrl.startsWith("https").not()) {
-                    val plUrl = playlistUrl.toHttpUrl()
-                    videoUrl = "https://${plUrl.host}${plUrl.encodedPath.substringBeforeLast("/")}/$videoUrl"
+                    videoUrl = masterBase + videoUrl
                 }
                 val videoHeaders = headers.newBuilder()
                     .addAll(masterHeaders)
                     .build()
 
-                videoList.add(Video(videoUrl, quality, videoUrl, headers = videoHeaders))
+                if (audioList.isEmpty()) {
+                    videoList.add(Video(videoUrl, prefix + quality, videoUrl, headers = videoHeaders, subtitleTracks = subtitleList))
+                } else {
+                    videoList.add(Video(videoUrl, prefix + quality, videoUrl, headers = videoHeaders, audioTracks = audioList, subtitleTracks = subtitleList))
+                }
             }
         return videoList
     }
 
     private fun cryptoAESHandler(
-        data: AESData,
+        data: CryptoInfo,
         pass: String,
     ): String {
         val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512")
         val spec = PBEKeySpec(
             pass.toCharArray(),
             data.salt?.hexToByteArray(),
-            data.iterations?.toIntOrNull() ?: 1,
+            data.iterations ?: 1,
             256
         )
         val key = factory.generateSecret(spec)
@@ -795,6 +803,14 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
         return Base64.decode(string, Base64.DEFAULT)
     }
 
+    @Serializable
+    data class CryptoInfo(
+        val ciphertext: String? = null,
+        val iv: String? = null,
+        val salt: String? = null,
+        val iterations: Int? = null,
+    )
+
     private fun String.hexToByteArray(): ByteArray {
         check(length % 2 == 0) { "Must have an even length" }
         return chunked(2)
@@ -803,20 +819,7 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
             .toByteArray()
     }
 
-    data class AESData(
-        val ciphertext: String? = null,
-        val iv: String? = null,
-        val salt: String? = null,
-        val iterations: String? = null,
-    )
-
-    data class SubtitleTrack(
-        val file: String? = null,
-        val label: String? = null,
-        val kind: String? = null,
-    )
-
     companion object {
-        private const val KEY = "4VqE3#N7zt&HEP^a"
+        private const val KEY = "11x&W5UBrcqn\$9Yl"
     }
 }

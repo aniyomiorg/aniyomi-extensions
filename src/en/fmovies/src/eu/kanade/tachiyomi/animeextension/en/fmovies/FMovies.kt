@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.en.fmovies.extractors.FilemoonExtractor
 import eu.kanade.tachiyomi.animeextension.en.fmovies.extractors.StreamtapeExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -15,6 +14,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
@@ -266,7 +266,7 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             )
                         }
                         "Filemoon" -> {
-                            FilemoonExtractor(client, headers).videosFromUrl(decrypted, prefix = "Filemoon - ")
+                            FilemoonExtractor(client).videosFromUrl(decrypted, headers = headers)
                         }
                         "Streamtape" -> {
                             StreamtapeExtractor(client, headers).videosFromUrl(decrypted)

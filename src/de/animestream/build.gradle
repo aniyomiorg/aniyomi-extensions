@@ -1,0 +1,19 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
+
+ext {
+    extName = 'AnimeStream'
+    pkgNameSuffix = 'de.animestream'
+    extClass = '.AnimeStream'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-voe-extractor'))
+    implementation(project(':lib-streamtape-extractor'))
+}
+
+
+apply from: "$rootDir/common.gradle"

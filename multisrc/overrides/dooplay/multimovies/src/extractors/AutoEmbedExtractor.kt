@@ -684,6 +684,7 @@ import app.cash.quickjs.QuickJs
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
+import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET

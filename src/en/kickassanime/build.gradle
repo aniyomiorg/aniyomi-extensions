@@ -9,11 +9,12 @@ ext {
     pkgNameSuffix = 'en.kickassanime'
     extClass = '.KickAssAnime'
     libVersion = '13'
-    extVersionCode = 28
+    extVersionCode = 31
 }
 
 dependencies {
     implementation(project(":lib-cryptoaes"))
+    implementation(project(":lib-playlist-utils"))
 }
 
 apply from: "$rootDir/common.gradle"

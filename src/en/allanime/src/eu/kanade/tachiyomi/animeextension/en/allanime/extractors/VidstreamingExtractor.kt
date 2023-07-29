@@ -5,7 +5,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray

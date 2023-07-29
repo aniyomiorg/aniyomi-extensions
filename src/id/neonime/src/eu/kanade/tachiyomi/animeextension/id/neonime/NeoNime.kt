@@ -6,7 +6,6 @@ import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.id.neonime.extractors.BloggerExtractor
-import eu.kanade.tachiyomi.animeextension.id.neonime.extractors.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.animeextension.id.neonime.extractors.LinkBoxExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -15,6 +14,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -254,7 +254,8 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
                     when {
                         iframeUrl.contains("gdriveplayer.to") -> {
-                            videoList.addAll(GdrivePlayerExtractor(client).videosFromUrl(iframeUrl, it.text()))
+                            val newHeaders = headersBuilder().add("Referer", baseUrl).build()
+                            videoList.addAll(GdrivePlayerExtractor(client).videosFromUrl(iframeUrl, it.text(), headers = newHeaders))
                         }
                     }
                 }

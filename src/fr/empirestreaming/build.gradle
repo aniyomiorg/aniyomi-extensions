@@ -1,12 +1,14 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
+} 
 
 ext {
     extName = 'EmpireStreaming'
     pkgNameSuffix = 'fr.empirestreaming'
     extClass = '.EmpireStreaming'
-    extVersionCode = 10
+    extVersionCode = 12
     libVersion = '13'
 }
 

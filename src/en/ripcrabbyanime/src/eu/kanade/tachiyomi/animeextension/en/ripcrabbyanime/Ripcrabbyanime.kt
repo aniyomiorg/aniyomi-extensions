@@ -2,8 +2,11 @@ package eu.kanade.tachiyomi.animeextension.en.ripcrabbyanime
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.widget.Toast
+import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.animeextension.en.ripcrabbyanime.extractors.GoogleDriveExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -38,7 +41,7 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val id = 623659475482363776
 
-    override val baseUrl = "https://ripcrabbyanime.in"
+    override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
 
     override val lang = "en"
 
@@ -106,11 +109,9 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return if (response.request.url.encodedPath.startsWith("/search/")) {
             popularAnimeParse(response)
         } else {
-            val document = response.asJsoup()
-
-            val animeList = document.select(searchAnimeSelector()).map { element ->
-                popularAnimeFromElement(element)
-            }
+            val animeList = response.asJsoup()
+                .select(searchAnimeSelector())
+                .map(::popularAnimeFromElement)
 
             return AnimesPage(animeList, animeList.size == 40)
         }
@@ -211,6 +212,7 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val driveDocument = client.newCall(
                 GET(url, headers = driveHeaders),
             ).execute().asJsoup()
+
             if (driveDocument.selectFirst("title:contains(Error 404 \\(Not found\\))") != null) return
 
             val keyScript = driveDocument.select("script").first { script ->
@@ -228,7 +230,7 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
             var pageToken: String? = ""
             while (pageToken != null) {
-                val requestUrl = "/drive/v2beta/files?openDrive=true&reason=102&syncType=0&errorRecovery=false&q=trashed%20%3D%20false%20and%20'$folderId'%20in%20parents&fields=kind%2CnextPageToken%2Citems(kind%2CmodifiedDate%2CmodifiedByMeDate%2ClastViewedByMeDate%2CfileSize%2Cowners(kind%2CpermissionId%2Cid)%2ClastModifyingUser(kind%2CpermissionId%2Cid)%2ChasThumbnail%2CthumbnailVersion%2Ctitle%2Cid%2CresourceKey%2Cshared%2CsharedWithMeDate%2CuserPermission(role)%2CexplicitlyTrashed%2CmimeType%2CquotaBytesUsed%2Ccopyable%2CfileExtension%2CsharingUser(kind%2CpermissionId%2Cid)%2Cspaces%2Cversion%2CteamDriveId%2ChasAugmentedPermissions%2CcreatedDate%2CtrashingUser(kind%2CpermissionId%2Cid)%2CtrashedDate%2Cparents(id)%2CshortcutDetails(targetId%2CtargetMimeType%2CtargetLookupStatus)%2Ccapabilities(canCopy%2CcanDownload%2CcanEdit%2CcanAddChildren%2CcanDelete%2CcanRemoveChildren%2CcanShare%2CcanTrash%2CcanRename%2CcanReadTeamDrive%2CcanMoveTeamDriveItem)%2Clabels(starred%2Ctrashed%2Crestricted%2Cviewed))%2CincompleteSearch&appDataFilter=NO_APP_DATA&spaces=drive&pageToken=$pageToken&maxResults=50&supportsTeamDrives=true&includeItemsFromAllDrives=true&corpora=default&orderBy=folder%2Ctitle_natural%20asc&retryCount=0&key=$key HTTP/1.1"
+                val requestUrl = "/drive/v2internal/files?openDrive=false&reason=102&syncType=0&errorRecovery=false&q=trashed%20%3D%20false%20and%20'$folderId'%20in%20parents&fields=kind%2CnextPageToken%2Citems(kind%2CmodifiedDate%2ChasVisitorPermissions%2CcontainsUnsubscribedChildren%2CmodifiedByMeDate%2ClastViewedByMeDate%2CalternateLink%2CfileSize%2Cowners(kind%2CpermissionId%2CemailAddressFromAccount%2Cdomain%2Cid)%2ClastModifyingUser(kind%2CpermissionId%2CemailAddressFromAccount%2Cid)%2CcustomerId%2CancestorHasAugmentedPermissions%2ChasThumbnail%2CthumbnailVersion%2Ctitle%2Cid%2CresourceKey%2CabuseIsAppealable%2CabuseNoticeReason%2Cshared%2CaccessRequestsCount%2CsharedWithMeDate%2CuserPermission(role)%2CexplicitlyTrashed%2CmimeType%2CquotaBytesUsed%2Ccopyable%2Csubscribed%2CfolderColor%2ChasChildFolders%2CfileExtension%2CprimarySyncParentId%2CsharingUser(kind%2CpermissionId%2CemailAddressFromAccount%2Cid)%2CflaggedForAbuse%2CfolderFeatures%2Cspaces%2CsourceAppId%2Crecency%2CrecencyReason%2Cversion%2CactionItems%2CteamDriveId%2ChasAugmentedPermissions%2CcreatedDate%2CprimaryDomainName%2CorganizationDisplayName%2CpassivelySubscribed%2CtrashingUser(kind%2CpermissionId%2CemailAddressFromAccount%2Cid)%2CtrashedDate%2Cparents(id)%2Ccapabilities(canMoveItemIntoTeamDrive%2CcanUntrash%2CcanMoveItemWithinTeamDrive%2CcanMoveItemOutOfTeamDrive%2CcanDeleteChildren%2CcanTrashChildren%2CcanRequestApproval%2CcanReadCategoryMetadata%2CcanEditCategoryMetadata%2CcanAddMyDriveParent%2CcanRemoveMyDriveParent%2CcanShareChildFiles%2CcanShareChildFolders%2CcanRead%2CcanMoveItemWithinDrive%2CcanMoveChildrenWithinDrive%2CcanAddFolderFromAnotherDrive%2CcanChangeSecurityUpdateEnabled%2CcanBlockOwner%2CcanReportSpamOrAbuse%2CcanCopy%2CcanDownload%2CcanEdit%2CcanAddChildren%2CcanDelete%2CcanRemoveChildren%2CcanShare%2CcanTrash%2CcanRename%2CcanReadTeamDrive%2CcanMoveTeamDriveItem)%2CcontentRestrictions(readOnly)%2CapprovalMetadata(approvalVersion%2CapprovalSummaries%2ChasIncomingApproval)%2CshortcutDetails(targetId%2CtargetMimeType%2CtargetLookupStatus%2CtargetFile%2CcanRequestAccessToTarget)%2CspamMetadata(markedAsSpamDate%2CinSpamView)%2Clabels(starred%2Ctrashed%2Crestricted%2Cviewed))%2CincompleteSearch&appDataFilter=NO_APP_DATA&spaces=drive&pageToken=$pageToken&maxResults=100&supportsTeamDrives=true&includeItemsFromAllDrives=true&corpora=default&orderBy=folder%2Ctitle_natural%20asc&retryCount=0&key=$key HTTP/1.1"
                 val body = """--$BOUNDARY
                     |content-type: application/http
                     |content-transfer-encoding: binary
@@ -238,15 +240,13 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     |authorization: ${generateSapisidhashHeader(sapisid)}
                     |x-goog-authuser: 0
                     |
-                    |--$BOUNDARY
-                    |
-                    """.trimMargin("|").toRequestBody("multipart/mixed; boundary=\"$BOUNDARY\"".toMediaType())
+                    |--$BOUNDARY--""".trimMargin("|").toRequestBody("multipart/mixed; boundary=\"$BOUNDARY\"".toMediaType())
 
-                val postUrl = "https://clients6.google.com/batch/drive/v2beta".toHttpUrl().newBuilder()
-                    .addQueryParameter("${'$'}ct", "multipart/mixed;boundary=\"$BOUNDARY\"")
-                    .addQueryParameter("key", key)
-                    .build()
-                    .toString()
+                val postUrl = buildString {
+                    append("https://clients6.google.com/batch/drive/v2internal")
+                    append("?${'$'}ct=multipart/mixed; boundary=\"$BOUNDARY\"")
+                    append("&key=$key")
+                }
 
                 val postHeaders = headers.newBuilder()
                     .add("Content-Type", "text/plain; charset=UTF-8")
@@ -257,14 +257,15 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val response = client.newCall(
                     POST(postUrl, body = body, headers = postHeaders),
                 ).execute()
-                val parsed = json.decodeFromString<PostResponse>(
-                    JSON_REGEX.find(response.body.string())!!.groupValues[1],
-                )
+
+                val parsed = response.parseAs<PostResponse> {
+                    JSON_REGEX.find(it)!!.groupValues[1]
+                }
+
                 if (parsed.items == null) throw Exception("Failed to load items, please log in to google drive through webview")
                 parsed.items.forEachIndexed { index, it ->
                     if (it.mimeType.startsWith("video")) {
-                        val size = formatBytes(it.fileSize?.toLongOrNull())
-                        val pathName = path.trimInfo()
+                        val size = it.fileSize?.toLongOrNull()?.let { formatBytes(it) }
 
                         episodeList.add(
                             SEpisode.create().apply {
@@ -272,7 +273,7 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                 this.url = "https://drive.google.com/uc?id=${it.id}"
                                 episode_number = ITEM_NUMBER_REGEX.find(it.title.trimInfo())?.groupValues?.get(1)?.toFloatOrNull() ?: index.toFloat()
                                 date_upload = -1L
-                                scanlator = "$size • /$pathName"
+                                scanlator = "$size • /$path"
                             },
                         )
                     }
@@ -291,18 +292,26 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         document.select("div.tokha > div > a[href]").distinctBy { t ->
             t.text()
-        }.forEach {
-            val url = it.attr("href").toHttpUrl()
+        }.filter { t -> t.attr("href").isNotEmpty() }.forEach {
+            val url = it.attr("abs:href").toHttpUrl()
             val noRedirectClient = client.newBuilder().followRedirects(false).build()
 
             if (url.host.contains("drive.google.com")) {
-                traverseFolder(url.toString().substringBeforeLast("?usp=shar"), it.text())
+                val id = Regex("[\\w-]{28,}").find(
+                    url.toString().substringBeforeLast("?usp=shar"),
+                )!!.groupValues[0]
+
+                traverseFolder("https://drive.google.com/drive/folders/$id", it.text())
             }
             if (url.host.contains("tinyurl")) {
                 val redirected = noRedirectClient.newCall(GET(url.toString())).execute()
                 redirected.headers["location"]?.let { location ->
                     if (location.toHttpUrl().host.contains("drive.google.com")) {
-                        traverseFolder(location.substringBeforeLast("?usp=shar"), it.text())
+                        val id = Regex("[\\w-]{28,}").find(
+                            location.substringBeforeLast("?usp=shar"),
+                        )!!.groupValues[0]
+
+                        traverseFolder("https://drive.google.com/drive/folders/$id", it.text())
                     }
                 }
             }
@@ -329,6 +338,11 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
 
     // ============================= Utilities ==============================
+
+    private inline fun <reified T> Response.parseAs(transform: (String) -> String = { it }): T {
+        val responseBody = use { transform(it.body.string()) }
+        return json.decodeFromString(responseBody)
+    }
 
     // https://github.com/yt-dlp/yt-dlp/blob/8f0be90ecb3b8d862397177bb226f17b245ef933/yt_dlp/extractor/youtube.py#L573
     private fun generateSapisidhashHeader(SAPISID: String, origin: String = "https://drive.google.com"): String {
@@ -368,15 +382,15 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return newString.trim()
     }
 
-    private fun formatBytes(bytes: Long?): String? {
-        val units = arrayOf("B", "KB", "MB", "GB", "TB", "PB", "EB")
-        var value = bytes?.toDouble() ?: return null
-        var i = 0
-        while (value >= 1024 && i < units.size - 1) {
-            value /= 1024
-            i++
+    private fun formatBytes(bytes: Long): String {
+        return when {
+            bytes >= 1_000_000_000 -> "%.2f GB".format(bytes / 1_000_000_000.0)
+            bytes >= 1_000_000 -> "%.2f MB".format(bytes / 1_000_000.0)
+            bytes >= 1_000 -> "%.2f KB".format(bytes / 1_000.0)
+            bytes > 1 -> "$bytes bytes"
+            bytes == 1L -> "$bytes byte"
+            else -> ""
         }
-        return String.format("%.1f %s", value, units[i])
     }
 
     private fun getCookie(url: String): String {
@@ -407,6 +421,11 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         private const val TRIM_EPISODE_NAME_KEY = "trim_episode"
         private const val TRIM_EPISODE_NAME_DEFAULT = true
+
+        private val PREF_DOMAIN_KEY = "preferred_domain_name_v${AppInfo.getVersionName()}"
+        private const val PREF_DOMAIN_TITLE = "Override BaseUrl"
+        private const val PREF_DOMAIN_DEFAULT = "https://ripcrabbyanimes.com"
+        private const val PREF_DOMAIN_SUMMARY = "For temporary uses. Updating the extension will erase this setting."
     }
 
     private val SharedPreferences.trimEpisodeName
@@ -415,6 +434,21 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Settings ==============================
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        EditTextPreference(screen.context).apply {
+            key = PREF_DOMAIN_KEY
+            title = PREF_DOMAIN_TITLE
+            summary = PREF_DOMAIN_SUMMARY
+            dialogTitle = PREF_DOMAIN_TITLE
+            dialogMessage = "Default: $PREF_DOMAIN_DEFAULT"
+            setDefaultValue(PREF_DOMAIN_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val newValueString = newValue as String
+                Toast.makeText(screen.context, "Restart Aniyomi to apply new setting.", Toast.LENGTH_LONG).show()
+                preferences.edit().putString(key, newValueString.trim()).commit()
+            }
+        }.also(screen::addPreference)
+
         SwitchPreferenceCompat(screen.context).apply {
             key = TRIM_EPISODE_NAME_KEY
             title = "Trim info from episode name"

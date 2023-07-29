@@ -1,4 +1,5 @@
 dependencies {
+    implementation(project(':lib-streamlare-extractor'))
     implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-voe-extractor'))
     implementation(project(':lib-dood-extractor'))

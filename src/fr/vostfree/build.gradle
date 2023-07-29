@@ -5,13 +5,14 @@ ext {
     extName = 'Vostfree'
     pkgNameSuffix = 'fr.vostfree'
     extClass = '.Vostfree'
-    extVersionCode = 13
+    extVersionCode = 14
     libVersion = '13'
 }
 
 dependencies {
-    implementation(project(':lib-okru-extractor'))
     implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib-mytv-extractor'))
+    implementation(project(':lib-okru-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

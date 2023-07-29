@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.lib.doodextractor
 
+import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.Headers
@@ -11,14 +12,15 @@ class DoodExtractor(private val client: OkHttpClient) {
         url: String,
         quality: String? = null,
         redirect: Boolean = true,
+        externalSubs: List<Track> = emptyList(),
     ): Video? {
-        val newQuality = quality ?: "Doodstream" + if (redirect) " mirror" else ""
+        val newQuality = quality ?: ("Doodstream" + if (redirect) " mirror" else "")
 
         return runCatching {
             val response = client.newCall(GET(url)).execute()
             val newUrl = if (redirect) response.request.url.toString() else url
 
-            val doodTld = newUrl.substringAfter("https://dood.").substringBefore("/")
+            val doodHost = Regex("https://(.*?)/").find(newUrl)!!.groupValues[1]
             val content = response.body.string()
             if (!content.contains("'/pass_md5/")) return null
             val md5 = content.substringAfter("'/pass_md5/").substringBefore("',")
@@ -27,12 +29,12 @@ class DoodExtractor(private val client: OkHttpClient) {
             val expiry = System.currentTimeMillis()
             val videoUrlStart = client.newCall(
                 GET(
-                    "https://dood.$doodTld/pass_md5/$md5",
+                    "https://$doodHost/pass_md5/$md5",
                     Headers.headersOf("referer", newUrl),
                 ),
             ).execute().body.string()
             val videoUrl = "$videoUrlStart$randomString?token=$token&expiry=$expiry"
-            Video(newUrl, newQuality, videoUrl, headers = doodHeaders(doodTld))
+            Video(newUrl, newQuality, videoUrl, headers = doodHeaders(doodHost), subtitleTracks = externalSubs)
         }.getOrNull()
     }
 
@@ -52,8 +54,8 @@ class DoodExtractor(private val client: OkHttpClient) {
             .joinToString("")
     }
 
-    private fun doodHeaders(tld: String) = Headers.Builder().apply {
+    private fun doodHeaders(host: String) = Headers.Builder().apply {
         add("User-Agent", "Aniyomi")
-        add("Referer", "https://dood.$tld/")
+        add("Referer", "https://$host/")
     }.build()
 }

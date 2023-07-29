@@ -6,8 +6,8 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.ar.anime4up.extractors.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.animeextension.ar.anime4up.extractors.SharedExtractor
+import eu.kanade.tachiyomi.animeextension.ar.anime4up.extractors.StreamWishExtractor
 import eu.kanade.tachiyomi.animeextension.ar.anime4up.extractors.VidYardExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -17,6 +17,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
@@ -134,7 +135,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             url.contains("drive.google") -> {
                 val embedUrlG = "https://gdriveplayer.to/embed2.php?link=$url"
-                GdrivePlayerExtractor(client).videosFromUrl(embedUrlG)
+                GdrivePlayerExtractor(client).videosFromUrl(embedUrlG, "GdrivePlayer", headers = headers)
             }
             url.contains("vidyard") -> {
                 val headers = headers.newBuilder()
@@ -154,14 +155,24 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             url.contains("voe") -> {
                 VoeExtractor(client).videoFromUrl(url)?.let(::listOf)
             }
-            Regex("(do*d(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream))").containsMatchIn(url) -> {
+            DOOD_REGEX.containsMatchIn(url) -> {
                 DoodExtractor(client).videoFromUrl(url, "Dood mirror")?.let(::listOf)
             }
-            Regex("(?:v[aie]d[bp][aoe]?m|myvii?d|v[aei]{1,2}dshar[er]?)\\.(?:com|net|org|xyz)").containsMatchIn(url) -> {
-                VidBomExtractor(client).videosFromUrl(url)
+            VIDBOM_REGEX.containsMatchIn(url) -> {
+                val finalUrl = VIDBOM_REGEX.find(url)!!.groupValues[0]
+                VidBomExtractor(client).videosFromUrl("https://www.$finalUrl.html")
             }
-            Regex("(?:view|watch|embed(?:tv)?|tube|player|cloudemb|japopav|javplaya|p1ayerjavseen|gomovizplay|stream(?:ovies)?|vidmovie|javside|aintahalu|finaltayibin|yahlusubh|taeyabathuna|)?s{0,2}b?(?:embed\\d?|play\\d?|video|fast|full|streams{0,3}|the|speed|l?anh|tvmshow|longvu|arslanrocky|chill|rity|hight|brisk|face|lvturbo|net|one|asian|ani|rapid|sonic|lona)?\\.(?:com|net|org|one|tv|xyz|fun|pro|sbs)").containsMatchIn(url)
-            -> {
+            STREAMWISH_REGEX.containsMatchIn(url) -> {
+                val headers = headers.newBuilder()
+                    .set("Referer", url)
+                    .set("Accept-Encoding", "gzip, deflate, br")
+                    .set("Accept-Language", "en-US,en;q=0.5")
+                    .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
+                    .build()
+                val finalUrl = STREAMWISH_REGEX.find(url)!!.groupValues[0]
+                StreamWishExtractor(client).videosFromUrl("https://www.$finalUrl", headers)
+            }
+            STREAMSB_REGEX.containsMatchIn(url) -> {
                 StreamSBExtractor(client).videosFromUrl(url, headers)
             }
             else -> null
@@ -250,7 +261,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.title = document.select("h1.anime-details-title").text()
         anime.genre = document.select("ul.anime-genres > li > a, div.anime-info > a").joinToString(", ") { it.text() }
         anime.description = document.select("p.anime-story").text()
-        document.select("div.anime-info a").text()?.also { statusText ->
+        document.select("div.anime-info a").text().also { statusText ->
             when {
                 statusText.contains("يعرض الان", true) -> anime.status = SAnime.ONGOING
                 statusText.contains("مكتمل", true) -> anime.status = SAnime.COMPLETED
@@ -263,7 +274,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Latest
 
-    override fun latestUpdatesNextPageSelector(): String? = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
 
     override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
 
@@ -379,4 +390,10 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Status("يعرض الان", "%d9%8a%d8%b9%d8%b1%d8%b6-%d8%a7%d9%84%d8%a7%d9%86-1"),
 
     )
+    companion object {
+        private val VIDBOM_REGEX = Regex("(?:v[aie]d[bp][aoe]?m|myvii?d|segavid|v[aei]{1,2}dshar[er]?)\\.(?:com|net|org|xyz)(?::\\d+)?/(?:embed[/-])?([A-Za-z0-9]+)")
+        private val STREAMSB_REGEX = Regex("(?:view|watch|embed(?:tv)?|tube|player|cloudemb|japopav|javplaya|p1ayerjavseen|gomovizplay|stream(?:ovies)?|vidmovie|javside|aintahalu|finaltayibin|yahlusubh|taeyabathuna|)?s{0,2}b?(?:embed\\d?|play\\d?|video|fast|full|streams{0,3}|the|speed|l?anh|tvmshow|longvu|arslanrocky|chill|rity|hight|brisk|face|lvturbo|net|one|asian|ani|rapid|sonic|lona)?\\.(?:com|net|org|one|tv|xyz|fun|pro|sbs)")
+        private val DOOD_REGEX = Regex("(do*d(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream))/[de]/([0-9a-zA-Z]+)")
+        private val STREAMWISH_REGEX = Regex("((?:streamwish|anime7u|animezd|ajmidyad|khadhnayad|yadmalik|hayaatieadhab)\\.(?:com|to|sbs))/(?:e/|v/|f/)?([0-9a-zA-Z]+)")
+    }
 }

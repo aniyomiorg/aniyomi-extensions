@@ -5,11 +5,12 @@ ext {
     extName = 'Anime4up'
     pkgNameSuffix = 'ar.anime4up'
     extClass = '.Anime4Up'
-    extVersionCode = 45
+    extVersionCode = 48
     libVersion = '13'
 }
 
 dependencies {
+    implementation(project(':lib-gdriveplayer-extractor'))
     implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation(project(':lib-voe-extractor'))

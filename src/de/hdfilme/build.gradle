@@ -6,13 +6,13 @@ ext {
     extName = 'HDFilme'
     pkgNameSuffix = 'de.hdfilme'
     extClass = '.HDFilme'
-    extVersionCode = 1
+    extVersionCode = 2
     libVersion = '13'
 }
 
 dependencies {
+    implementation(project(':lib-mixdrop-extractor'))
     implementation(project(':lib-dood-extractor'))
-    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
 
 

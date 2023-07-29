@@ -7,13 +7,13 @@ import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.LatestUpdatesDto
 import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.PagePropsDto
 import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.SearchAnimeDto
 import eu.kanade.tachiyomi.animeextension.sr.animesrbija.dto.SearchPageDto
-import eu.kanade.tachiyomi.animeextension.sr.animesrbija.extractors.FilemoonExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
