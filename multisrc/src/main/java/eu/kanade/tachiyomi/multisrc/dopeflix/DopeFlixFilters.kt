@@ -4,7 +4,6 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 
 object DopeFlixFilters {
-
     open class QueryPartFilter(
         displayName: String,
         val vals: Array<Pair<String, String>>,
@@ -20,30 +19,20 @@ object DopeFlixFilters {
     private class CheckBoxVal(name: String, state: Boolean = false) : AnimeFilter.CheckBox(name, state)
 
     private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return (this.getFirst<R>() as QueryPartFilter).toQueryPart()
+        return (getFirst<R>() as QueryPartFilter).toQueryPart()
     }
 
     private inline fun <reified R> AnimeFilterList.getFirst(): R {
-        return this.filterIsInstance<R>().first()
+        return first { it is R } as R
     }
 
     private inline fun <reified R> AnimeFilterList.parseCheckbox(
         options: Array<Pair<String, String>>,
     ): String {
-        return (this.getFirst<R>() as CheckBoxFilterList).state
-            .mapNotNull { checkbox ->
-                if (checkbox.state) {
-                    options.find { it.first == checkbox.name }!!.second
-                } else {
-                    null
-                }
-            }.joinToString("-").let {
-                if (it.isBlank()) {
-                    "all"
-                } else {
-                    it
-                }
-            }
+        return (getFirst<R>() as CheckBoxFilterList).state
+            .filter { it.state }
+            .map { checkbox -> options.find { it.first == checkbox.name }!!.second }
+            .joinToString("-") { it.ifBlank { "all" } }
     }
 
     class TypeFilter : QueryPartFilter("Type", DopeFlixFiltersData.TYPES)
@@ -106,6 +95,7 @@ object DopeFlixFilters {
 
         val YEARS = arrayOf(
             ALL,
+            Pair("2023", "2023"),
             Pair("2022", "2022"),
             Pair("2021", "2021"),
             Pair("2020", "2020"),

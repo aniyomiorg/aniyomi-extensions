@@ -147,8 +147,15 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val orderByFilter = filterList.find { it is OrderByFilter } as OrderByFilter
         val sortModifiers = filterList.find { it is SortModifiers } as SortModifiers
         val tagFilter = filters.find { it is Tags } as Tags
+        val dayFilter = filters.find { it is DayFilter } as DayFilter
 
         var url = baseUrl
+
+        if (dayFilter.state != 0) {
+            val day = dayFilter.toUriPart()
+            return GET("$url/horario/#$day", headers)
+        }
+
         if (query.isNotBlank()) {
             val types = listOf("TV", "Movie", "Special", "OVA", "ONA")
             url += "/buscar/$query/$page/"
@@ -171,6 +178,18 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
+        if (document.location().startsWith("$baseUrl/horario")) {
+            val day = document.location().substringAfterLast("#")
+            val animeBox = document.selectFirst("div.horarybox div.box.semana:has(h2:contains($day))")
+            val animeList = animeBox!!.select("div.box.img").map {
+                SAnime.create().apply {
+                    setUrlWithoutDomain(it.select("a").attr("abs:href"))
+                    title = it.select("a > h3").text()
+                    thumbnail_url = it.select("a > img").attr("abs:src")
+                }
+            }
+            return AnimesPage(animeList, false)
+        }
         val hasNextPage = document.select("section.contenido.spad div.container div.navigation a.nav-next").any()
         val isSearch = document.select(".col-lg-2.col-md-6.col-sm-6").any()
         val animeList = if (isSearch) {
@@ -244,6 +263,7 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto no incluye todos los filtros"),
+        DayFilter(),
         GenreFilter(),
         TypeFilter(),
         StateFilter(),
@@ -299,6 +319,20 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("Psicologico", "psicologico"),
             Pair("Thriller", "thriller"),
             Pair("Isekai", "isekai"),
+        ),
+    )
+
+    private class DayFilter : UriPartFilter(
+        "Dia de emisión",
+        arrayOf(
+            Pair("<Selecionar>", ""),
+            Pair("Lunes", "Lunes"),
+            Pair("Martes", "Martes"),
+            Pair("Miércoles", "Miércoles"),
+            Pair("Jueves", "Jueves"),
+            Pair("Viernes", "Viernes"),
+            Pair("Sábado", "Sábado"),
+            Pair("Domingo", "Domingo"),
         ),
     )
 
