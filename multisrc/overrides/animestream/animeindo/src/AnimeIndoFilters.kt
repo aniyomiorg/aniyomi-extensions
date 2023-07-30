@@ -5,6 +5,7 @@ import eu.kanade.tachiyomi.multisrc.animestream.AnimeStreamFilters.CheckBoxFilte
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStreamFilters.QueryPartFilter
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStreamFilters.asQueryPart
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStreamFilters.filterElements
+import eu.kanade.tachiyomi.multisrc.animestream.AnimeStreamFilters.filterInitialized
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStreamFilters.parseCheckbox
 
 object AnimeIndoFilters {
@@ -27,6 +28,7 @@ object AnimeIndoFilters {
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
         if (filters.isEmpty()) return FilterSearchParams()
+        if (!filterInitialized()) return FilterSearchParams()
 
         return FilterSearchParams(
             filters.parseCheckbox<GenresFilter>(GENRES_LIST, "genre"),
