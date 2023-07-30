@@ -297,7 +297,7 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private val VOICES = arrayOf(
             "Préférer VOSTFR",
             "Préférer VF",
-            "Afficher VO et VOSTFR",
+            "Afficher VF et VOSTFR",
         )
 
         private val VOICES_VALUES = arrayOf(
