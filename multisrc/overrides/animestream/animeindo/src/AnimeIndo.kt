@@ -48,7 +48,7 @@ class AnimeIndo : AnimeStream(
         thumbnail_url = element.selectFirst("img")!!.getImageUrl()
     }
 
-    override fun searchAnimeNextPageSelector() = "div.pagination a:contains(i#nextpagination)"
+    override fun searchAnimeNextPageSelector() = "div.pagination a:has(i#nextpagination)"
 
     // ============================== Filters ===============================
     override val filtersSelector = "div.filtersearch tbody > tr:not(:has(td.filter_title:contains(Search))) > td.filter_act"
