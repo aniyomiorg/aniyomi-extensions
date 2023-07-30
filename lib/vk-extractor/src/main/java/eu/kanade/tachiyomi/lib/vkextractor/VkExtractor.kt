@@ -8,7 +8,6 @@ import okhttp3.OkHttpClient
 
 class VkExtractor(private val client: OkHttpClient, private val headers: Headers) {
     fun videosFromUrl(url: String, prefix: String = ""): List<Video> {
-        val videoList = mutableListOf<Video>()
         val documentHeaders = headers.newBuilder()
             .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
             .add("Host", "vk.com")
@@ -18,7 +17,7 @@ class VkExtractor(private val client: OkHttpClient, private val headers: Headers
             GET(url, headers = documentHeaders),
         ).execute().body.string()
 
-        val videoRegex = """\"url(\d+)\":\"(.*?)\"""".toRegex()
+        val videoRegex = """"url(\d+)":"(.*?)"""".toRegex()
         return videoRegex.findAll(data).map {
             val quality = it.groupValues[1]
             val videoUrl = it.groupValues[2].replace("\\/", "/")
