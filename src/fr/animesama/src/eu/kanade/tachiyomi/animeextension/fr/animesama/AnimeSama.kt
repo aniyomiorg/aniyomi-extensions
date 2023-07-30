@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.fr.animesama
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -32,7 +31,6 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
 import java.text.Normalizer
-import kotlin.io.path.name
 
 class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -54,12 +52,10 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Popular ===============================
     override fun fetchPopularAnime(page: Int): Observable<AnimesPage> {
-        val seasons = mutableListOf<SAnime>()
         val animes = client.newCall(popularAnimeRequest(page)).execute().use { it.asJsoup() }
-        animes.select(popularAnimeSelector()).forEach { animeElement ->
-            val animeUrl = animeElement.getElementsByTag("a").attr("href")
-            val animeSeasons = fetchAnimeSeasons(animeUrl)
-            seasons.addAll(animeSeasons)
+        val seasons = animes.select(popularAnimeSelector()).flatMap {
+            val animeUrl = it.getElementsByTag("a").attr("href")
+            fetchAnimeSeasons(animeUrl)
         }
         return Observable.just(AnimesPage(seasons, false))
     }
@@ -74,12 +70,10 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =============================== Latest ===============================
     override fun fetchLatestUpdates(page: Int): Observable<AnimesPage> {
-        val seasons = mutableListOf<SAnime>()
         val animes = client.newCall(latestUpdatesRequest(page)).execute().use { it.asJsoup() }
-        animes.select(latestUpdatesSelector()).forEach { animeElement ->
-            val animeUrl = animeElement.getElementsByTag("a").attr("href")
-            val animeSeasons = fetchAnimeSeasons(animeUrl)
-            seasons.addAll(animeSeasons)
+        val seasons = animes.select(latestUpdatesSelector()).flatMap {
+            val animeUrl = it.getElementsByTag("a").attr("href")
+            fetchAnimeSeasons(animeUrl)
         }
         return Observable.just(AnimesPage(seasons, false))
     }
@@ -130,15 +124,13 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Episodes ==============================
     @OptIn(ExperimentalStdlibApi::class)
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
-        Log.d(name, "anime.url ${anime.url.substringBeforeLast("/")}")
         val animeUrl = "$baseUrl${anime.url.substringBeforeLast("/")}".toHttpUrl()
 
         val voices = preferences.getString(PREF_VOICES_KEY, PREF_VOICES_DEFAULT)!!.split(",")
         val episodes = voices.mapNotNull {
-            Log.d(name, "Get: $animeUrl/$it")
             playersToEpisodes(fetchPlayers("$animeUrl/$it"), it.uppercase())
         }.ifEmpty {
-            VOICES_VALUES.mapNotNull { if (!voices.contains(it)) it else null }.mapNotNull {
+            VOICES_VALUES.filterNot(voices::contains).mapNotNull {
                 playersToEpisodes(fetchPlayers("$animeUrl/$it"), it.uppercase())
             }
         }
@@ -163,17 +155,14 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val playerUrls = json.decodeFromString<List<String>>(episode.url)
         val videos = playerUrls.flatMap { playerUrl ->
-            Log.d(name, "Player: $playerUrl")
             with(playerUrl) {
                 when {
                     contains("anime-sama.fr") -> listOf(Video(playerUrl, "AS Player", playerUrl))
                     contains("sibnet.ru") -> SibnetExtractor(client).videosFromUrl(playerUrl)
                     contains("myvi.") -> MytvExtractor(client).videosFromUrl(playerUrl)
-                    contains("vk.") -> VkExtractor(client).videosFromUrl(playerUrl)
+                    contains("vk.") -> VkExtractor(client, headers).videosFromUrl(playerUrl)
                     contains("sendvid.com") -> SendvidExtractor(client, headers).videosFromUrl(playerUrl)
-                    else -> {
-                        Log.d(name, "Unknown player: $playerUrl"); emptyList()
-                    }
+                    else -> emptyList()
                 }
             }
         }
@@ -188,6 +177,13 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Utils =============================
     private fun removeDiacritics(string: String) = Normalizer.normalize(string, Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
+
+    private fun sanitizeEpisodesJs(doc: String) = doc
+        .replace("'", "\"") // Fix quotes
+        .replace(Regex("/\\*.*?\\*/", setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL)), "") // Remove block comments
+        .replace(Regex("(^|,|\\[)\\s*//.*?$", RegexOption.MULTILINE), "$1") // Remove line comments
+        .replace(Regex(",\\s*]"), "]") // Remove trailing comma
+
     private fun fetchAnimeSeasons(animeUrl: String): List<SAnime> {
         val animeDoc = client.newCall(GET(animeUrl)).execute().use { it.asJsoup() }
         val animeName = animeDoc.getElementById("titreOeuvre")?.text() ?: ""
@@ -216,7 +212,6 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
 
         return animes.map {
-            Log.d(name, "Creating: ${it.first} @ ${it.second}")
             SAnime.create().apply {
                 title = it.first
                 thumbnail_url = animeDoc.getElementById("coverOeuvre")?.attr("src")
@@ -233,7 +228,7 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         List(players?.getOrNull(0)?.size ?: 0) { i ->
             SEpisode.create().apply {
                 name = "Episode ${i + 1}"
-                url = "[${players!!.toSet().joinToString { "\"${it[i]}\"" }}]"
+                url = "[${players!!.distinct().joinToString { "\"${it[i]}\"" }}]"
                 episode_number = i.toFloat()
                 scanlator = voices
             }
@@ -246,7 +241,7 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (it.code != 200) return null
             it.body.string()
         }
-        val sanitizedDoc = doc.replace("'", "\"").replace(Regex(",\\s*]"), "]")
+        val sanitizedDoc = sanitizeEpisodesJs(doc)
         for (i in 1..8) {
             val numPlayers = getPlayers("eps$i", sanitizedDoc)
             if (numPlayers != null) players.add(numPlayers)
