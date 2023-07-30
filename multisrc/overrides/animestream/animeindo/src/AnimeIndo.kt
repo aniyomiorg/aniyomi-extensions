@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.animeextension.id.animeindo.AnimeIndoFilters.TypeFilt
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
+import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStreamFilters
 import eu.kanade.tachiyomi.network.GET
@@ -76,5 +77,17 @@ class AnimeIndo : AnimeStream(
             "currently airing" -> SAnime.ONGOING
             else -> SAnime.UNKNOWN
         }
+    }
+
+    // ============================== Episodes ==============================
+    override fun episodeListSelector() = "div.listeps li:has(.epsleft)"
+
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        val ahref = element.selectFirst("a")!!
+        setUrlWithoutDomain(ahref.attr("href"))
+        val num = ahref.text()
+        name = "Episode $num"
+        episode_number = num.trim().toFloatOrNull() ?: 0F
+        date_upload = element.selectFirst("span.date")?.text().toDate()
     }
 }
