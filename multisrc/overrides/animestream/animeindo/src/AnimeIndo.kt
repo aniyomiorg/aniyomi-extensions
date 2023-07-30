@@ -68,4 +68,13 @@ class AnimeIndo : AnimeStream(
             AnimeFilterList(AnimeFilter.Header(filtersMissingWarning))
         }
     }
+
+    // =========================== Anime Details ============================
+    override fun parseStatus(statusString: String?): Int {
+        return when (statusString?.trim()?.lowercase()) {
+            "finished airing" -> SAnime.COMPLETED
+            "currently airing" -> SAnime.ONGOING
+            else -> SAnime.UNKNOWN
+        }
+    }
 }
