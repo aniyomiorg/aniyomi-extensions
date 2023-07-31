@@ -26,21 +26,17 @@ class NimeGami : ParsedAnimeHttpSource() {
     override val supportsLatest = false
 
     // ============================== Popular ===============================
-    override fun popularAnimeRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
+    override fun popularAnimeRequest(page: Int) = GET(baseUrl)
+
+    override fun popularAnimeSelector() = "div.wrapper-2-a > article > a"
+
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        thumbnail_url = element.selectFirst("img")!!.attr("data-lazy-src")
+        title = element.selectFirst("div.title-post2")!!.text()
     }
 
-    override fun popularAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun popularAnimeNextPageSelector() = null
 
     // =============================== Latest ===============================
     override fun latestUpdatesRequest(page: Int): Request {
