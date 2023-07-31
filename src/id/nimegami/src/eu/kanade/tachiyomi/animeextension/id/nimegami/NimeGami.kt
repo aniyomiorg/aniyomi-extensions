@@ -23,7 +23,7 @@ class NimeGami : ParsedAnimeHttpSource() {
 
     override val lang = "id"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET(baseUrl)
@@ -39,21 +39,19 @@ class NimeGami : ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector() = null
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/page/$page")
+
+    override fun latestUpdatesSelector() = "div.post article"
+
+    override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
+        element.selectFirst("div.info a")!!.let {
+            setUrlWithoutDomain(it.attr("href"))
+            title = it.text()
+        }
+        thumbnail_url = element.selectFirst("img")!!.attr("srcset").substringBefore(" ")
     }
 
-    override fun latestUpdatesSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun latestUpdatesNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesNextPageSelector() = "ul.pagination > li > a:contains(Next)"
 
     // =============================== Search ===============================
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
