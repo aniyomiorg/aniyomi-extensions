@@ -2305,10 +2305,10 @@
   {
     "name": "Aniyomi: Hentaila",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.hentaila",
-    "apk": "aniyomi-es.hentaila-v13.12.apk",
+    "apk": "aniyomi-es.hentaila-v13.14.apk",
     "lang": "es",
-    "code": 12,
-    "version": "13.12",
+    "code": 14,
+    "version": "13.14",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2502,10 +2502,10 @@
   {
     "name": "Aniyomi: Pelisplushd",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.pelisplushd",
-    "apk": "aniyomi-es.pelisplushd-v13.38.apk",
+    "apk": "aniyomi-es.pelisplushd-v13.39.apk",
     "lang": "es",
-    "code": 38,
-    "version": "13.38",
+    "code": 39,
+    "version": "13.39",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2749,6 +2749,27 @@
         "lang": "hi",
         "id": "2486904751081872151",
         "baseUrl": "https://yomovies.baby",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: AnimeIndo",
+    "pkg": "eu.kanade.tachiyomi.animeextension.id.animeindo",
+    "apk": "aniyomi-id.animeindo-v13.2.apk",
+    "lang": "id",
+    "code": 2,
+    "version": "13.2",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimeIndo",
+        "lang": "id",
+        "id": "2019695674801188380",
+        "baseUrl": "https://animeindo.quest",
         "versionId": 1,
         "hasCloudflare": 1
       }
