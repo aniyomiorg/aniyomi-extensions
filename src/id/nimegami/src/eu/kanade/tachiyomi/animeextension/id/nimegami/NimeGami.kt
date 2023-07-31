@@ -113,12 +113,15 @@ class NimeGami : ParsedAnimeHttpSource() {
         selectFirst("tr:has(td.tablex:contains($info))")?.text()?.substringAfter(": ")
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun episodeListParse(response: Response) = super.episodeListParse(response).reversed()
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        throw UnsupportedOperationException("Not used.")
+    override fun episodeListSelector() = "div.list_eps_stream > li.select-eps"
+
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        val num = element.attr("id").substringAfterLast("_")
+        episode_number = num.toFloatOrNull() ?: 1F
+        name = "Episode $num"
+        url = element.attr("data")
     }
 
     // ============================ Video Links =============================
