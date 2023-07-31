@@ -182,7 +182,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 when (filter) {
                     is SearchCategoryList -> {
                         val catQ = getSearchCategoryList()[filter.state].query
-                        val catUrl = "$baseUrl/search/$query/$catQ$page"
+                        val catUrl = "$baseUrl/search/$query/" + if(catQ == "page/" && page == 1) "" else "$catQ$page"
                         return GET(catUrl, headers)
                     }
                     else -> {}
@@ -263,7 +263,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }.toTypedArray()
 
     private fun getSearchCategoryList() = listOf(
-        CatUnit("فيلم", "/page/"),
+        CatUnit("فيلم", "page/"),
         CatUnit("مسلسل", "list/series/?page_number="),
         CatUnit("انمى", "list/anime/?page_number="),
         CatUnit("برنامج", "list/tv/?page_number="),
