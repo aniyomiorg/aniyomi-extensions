@@ -1,0 +1,14 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+
+}
+
+ext {
+    extName = 'NimeGami'
+    pkgNameSuffix = 'id.nimegami'
+    extClass = '.NimeGami'
+    extVersionCode = 1
+}
+
+apply from: "$rootDir/common.gradle"
