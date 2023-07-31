@@ -9,7 +9,6 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -44,7 +43,7 @@ class NimeGami : ParsedAnimeHttpSource() {
     override fun latestUpdatesSelector() = "div.post article"
 
     override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
-        element.selectFirst("div.info a")!!.let {
+        element.selectFirst("h2 > a")!!.let {
             setUrlWithoutDomain(it.attr("href"))
             title = it.text()
         }
@@ -70,21 +69,15 @@ class NimeGami : ParsedAnimeHttpSource() {
         return AnimesPage(listOf(details), false)
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
+    // TODO: Add support for search filters
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) =
+        GET("$baseUrl/page/$page/?s=$query&post_type=post")
 
-    override fun searchAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeSelector() = "div.archive > div > article"
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
 
-    override fun searchAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
