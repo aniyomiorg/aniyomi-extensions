@@ -80,9 +80,37 @@ class NimeGami : ParsedAnimeHttpSource() {
     override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        throw UnsupportedOperationException("Not used.")
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        setUrlWithoutDomain(document.location())
+        thumbnail_url = document.selectFirst("div.coverthumbnail img")!!.attr("src")
+        val infosDiv = document.selectFirst("div.info2 > table > tbody")!!
+        title = infosDiv.getInfo("Judul:")
+            ?: document.selectFirst("h2[itemprop=name]")!!.text()
+        genre = infosDiv.getInfo("Kategori")
+        artist = infosDiv.getInfo("Studio")
+        status = with(document.selectFirst("h1.title")?.text().orEmpty()) {
+            when {
+                contains("(On-Going)") -> SAnime.ONGOING
+                contains("(End)") || contains("(Movie)") -> SAnime.COMPLETED
+                else -> SAnime.UNKNOWN
+            }
+        }
+
+        description = buildString {
+            document.select("div#Sinopsis p").eachText().forEach {
+                append("$it\n")
+            }
+
+            val nonNeeded = listOf("Judul:", "Kategori", "Studio")
+            infosDiv.select("tr")
+                .eachText()
+                .filterNot(nonNeeded::contains)
+                .forEach { append("\n$it") }
+        }
     }
+
+    private fun Element.getInfo(info: String) =
+        selectFirst("tr:has(td.tablex:contains($info))")?.text()?.substringAfter(": ")
 
     // ============================== Episodes ==============================
     override fun episodeListSelector(): String {
