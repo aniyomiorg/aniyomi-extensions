@@ -6,7 +6,7 @@ ext {
     extName = 'Hentaila'
     pkgNameSuffix = 'es.hentaila'
     extClass = '.Hentaila'
-    extVersionCode = 13
+    extVersionCode = 14
     libVersion = '13'
     containsNsfw = true
 }
