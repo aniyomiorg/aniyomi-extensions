@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.ar.mycima
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.widget.Toast
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.AppInfo
@@ -27,10 +28,6 @@ import java.lang.Exception
 class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "MY Cima"
-
-    private val defaultBaseUrl = "https://wecima.co"
-
-    private val baseUrlPref = "overrideBaseUrl_v${AppInfo.getVersionName()}"
 
     override val baseUrl by lazy { getPrefBaseUrl() }
 
@@ -155,21 +152,10 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", null)
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
     }
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
@@ -229,7 +215,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.description = document.select("div.AsideContext > div.StoryMovieContent, div.PostItemContent").text()
         anime.author = document.select("li:contains(شركات الإنتاج) > p > a").joinToString(", ") { it.text() }
         // add alternative name to anime description
-        document.select("li:contains( بالعربي) > p, li:contains(معروف) > p").text()?.let {
+        document.select("li:contains( بالعربي) > p, li:contains(معروف) > p").text().let {
             if (it.isEmpty().not()) {
                 anime.description += when {
                     anime.description!!.isEmpty() -> "Alternative Name: $it"
@@ -306,16 +292,17 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val baseUrlPref = androidx.preference.EditTextPreference(screen.context).apply {
-            key = BASE_URL_PREF_TITLE
-            title = BASE_URL_PREF_TITLE
-            summary = BASE_URL_PREF_SUMMARY
-            this.setDefaultValue(defaultBaseUrl)
-            dialogTitle = BASE_URL_PREF_TITLE
-            dialogMessage = "Default: $defaultBaseUrl"
+            key = PREF_BASE_URL_KEY
+            title = PREF_BASE_URL_TITLE
+            summary = getPrefBaseUrl()
+            this.setDefaultValue(PREF_BASE_URL_DEFAULT)
+            dialogTitle = PREF_BASE_URL_DIALOG_TITLE
+            dialogMessage = PREF_BASE_URL_DIALOG_MESSAGE
 
             setOnPreferenceChangeListener { _, newValue ->
                 try {
-                    val res = preferences.edit().putString(baseUrlPref, newValue as String).commit()
+                    val res = preferences.edit().putString(PREF_BASE_URL_KEY, newValue as String).commit()
+                    Toast.makeText(screen.context, "Restart Aniyomi to apply changes", Toast.LENGTH_LONG).show()
                     res
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -324,13 +311,12 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p", "240p")
-            entryValues = arrayOf("1080", "720", "480", "360", "240")
-            setDefaultValue("1080")
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES.map { it.replace("p","") }.toTypedArray()
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
-
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
                 val index = findIndexOfValue(selected)
@@ -342,10 +328,18 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         screen.addPreference(videoQualityPref)
     }
 
-    private fun getPrefBaseUrl(): String = preferences.getString(baseUrlPref, defaultBaseUrl)!!
+    private fun getPrefBaseUrl(): String = preferences.getString(PREF_BASE_URL_KEY, PREF_BASE_URL_DEFAULT)!!
 
     companion object {
-        private const val BASE_URL_PREF_TITLE = "Override BaseUrl"
-        private const val BASE_URL_PREF_SUMMARY = "Override default domain with a different one"
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
+        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p", "240p")
+
+        private const val PREF_BASE_URL_DEFAULT = "https://cdn3.wecima.watch"
+        private const val PREF_BASE_URL_KEY = "default_domain"
+        private const val PREF_BASE_URL_TITLE = "Enter default domain"
+        private const val PREF_BASE_URL_DIALOG_TITLE = "Default domain"
+        private const val PREF_BASE_URL_DIALOG_MESSAGE = "You can change the site domain from here"
     }
 }
