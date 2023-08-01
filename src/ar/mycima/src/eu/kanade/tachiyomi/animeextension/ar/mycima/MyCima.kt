@@ -139,6 +139,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }.getOrElse { emptyList() }
         }.flatten()
     }
+
     private fun extractVideos(url: String): List<Video>{
         return when {
             GOVAD_REGEX.containsMatchIn(url) -> {
@@ -153,6 +154,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> null
         } ?: emptyList()
     }
+
     override fun videoListSelector() = "body"
 
     private fun videosFromElement(element: Element): List<Video> {
@@ -233,7 +235,14 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.title = document.select("div.Title--Content--Single-begin > h1").text()
+        anime.title = when {
+            document.selectFirst("li:contains(المسلسل) p") != null -> {
+                document.select("li:contains(المسلسل) p").text()
+            }
+            else -> {
+                document.select("div.Title--Content--Single-begin > h1").text().substringBefore(" (")
+            }
+        }
         anime.genre = document.select("li:contains(التصنيف) > p > a, li:contains(النوع) > p > a").joinToString(", ") { it.text() }
         anime.description = document.select("div.AsideContext > div.StoryMovieContent, div.PostItemContent").text()
         anime.author = document.select("li:contains(شركات الإنتاج) > p > a").joinToString(", ") { it.text() }
