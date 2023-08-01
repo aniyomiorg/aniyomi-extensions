@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-
+    alias(libs.plugins.kotlin.serialization)
 }
 
 ext {
@@ -9,6 +9,11 @@ ext {
     pkgNameSuffix = 'id.nimegami'
     extClass = '.NimeGami'
     extVersionCode = 1
+}
+
+dependencies {
+    implementation("dev.datlag.jsunpacker:jsunpacker:1.0.1")
+    implementation(project(":lib-synchrony"))
 }
 
 apply from: "$rootDir/common.gradle"
