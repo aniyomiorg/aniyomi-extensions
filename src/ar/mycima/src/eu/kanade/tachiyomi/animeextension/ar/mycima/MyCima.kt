@@ -126,23 +126,23 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         return document.select("ul.WatchServersList li btn").parallelMap {
             val frameURL = it.attr("data-url")
-            if(it.parent()?.hasClass("MyCimaServer") == true)
-            {
-                val referer = response.request.url.encodedPath
-                val newHeader = headers.newBuilder().add("referer", baseUrl + referer).build()
-                val iframeResponse = client.newCall(GET(frameURL, newHeader)).execute().asJsoup()
-                videosFromElement(iframeResponse.selectFirst(videoListSelector())!!)
-            } else {
-                runCatching { extractVideos(frameURL) }.getOrElse { emptyList() }
-            }
+            runCatching {
+                if(it.parent()?.hasClass("MyCimaServer") == true)
+                {
+                    val referer = response.request.url.encodedPath
+                    val newHeader = headers.newBuilder().add("referer", baseUrl + referer).build()
+                    val iframeResponse = client.newCall(GET(frameURL, newHeader)).execute().asJsoup()
+                    videosFromElement(iframeResponse.selectFirst(videoListSelector())!!)
+                } else {
+                     extractVideos(frameURL)
+                }
+            }.getOrElse { emptyList() }
         }.flatten()
     }
     private fun extractVideos(url: String): List<Video>{
         return when {
             GOVAD_REGEX.containsMatchIn(url) -> {
-                val finalUrl = GOVAD_REGEX.find(url)!!.groupValues[0]
-                val hostUrl = GOVAD_REGEX.find(url)!!.groupValues[1]
-                GoVadExtractor(client).videosFromUrl(finalUrl, hostUrl)
+                GoVadExtractor(client).videosFromUrl(url, GOVAD_REGEX.find(url)!!.groupValues[1])
             }
             url.contains("uqload") -> {
                 UQLoadExtractor(client).videosFromUrl(url)
