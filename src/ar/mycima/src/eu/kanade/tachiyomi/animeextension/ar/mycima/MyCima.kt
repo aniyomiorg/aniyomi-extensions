@@ -124,7 +124,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        return document.select("ul.WatchServersList li").parallelMap {
+        return document.select("ul.WatchServersList li btn").parallelMap {
             val frameURL = it.attr("data-url")
             val referer = if("cdn" in frameURL) response.request.url.encodedPath else null
             runCatching { extractVideos(frameURL, referer) }.getOrElse { emptyList() }
@@ -133,18 +133,15 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun extractVideos(url: String, referer: String? = null): List<Video>{
         return when {
             !referer.isNullOrEmpty() -> {
-                Video(url,url,url).let(::listOf)
-                //val newHeader = headers.newBuilder().add("referer", baseUrl + referer).build()
-                //val iframeResponse = client.newCall(GET(url, newHeader)).execute().asJsoup()
-                //videosFromElement(iframeResponse.selectFirst(videoListSelector())!!)
+                val newHeader = headers.newBuilder().add("referer", baseUrl + referer).build()
+                val iframeResponse = client.newCall(GET(url, newHeader)).execute().asJsoup()
+                videosFromElement(iframeResponse.selectFirst(videoListSelector())!!)
             }
             GOVAD_REGEX.containsMatchIn(url) -> {
                 val finalUrl = GOVAD_REGEX.find(url)!!.groupValues[0]
-                Video("https://www.$finalUrl","https://www.$finalUrl","https://www.$finalUrl").let(::listOf)
-                //GoVadExtractor(client).videosFromUrl("https://www.$finalUrl", GOVAD_REGEX.find(url)!!.groupValues[1])
+                GoVadExtractor(client).videosFromUrl("https://www.$finalUrl", GOVAD_REGEX.find(url)!!.groupValues[1])
             }
             url.contains("uqload") -> {
-                Video(url,url,url).let(::listOf)
                 UQLoadExtractor(client).videosFromUrl(url)
             }
             else -> null
