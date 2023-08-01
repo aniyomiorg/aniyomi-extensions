@@ -142,10 +142,13 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun extractVideos(url: String): List<Video>{
         return when {
             GOVAD_REGEX.containsMatchIn(url) -> {
-                GoVadExtractor(client).videosFromUrl(url, GOVAD_REGEX.find(url)!!.groupValues[1])
+                val finalUrl = GOVAD_REGEX.find(url)!!.groupValues[0]
+                val urlHost = GOVAD_REGEX.find(url)!!.groupValues[1]
+                GoVadExtractor(client).videosFromUrl("https://www.$finalUrl.html", urlHost)
             }
-            url.contains("uqload") -> {
-                UQLoadExtractor(client).videosFromUrl(url)
+            UQLOAD_REGEX.containsMatchIn(url) -> {
+                val finalUrl = UQLOAD_REGEX.find(url)!!.groupValues[0]
+                UQLoadExtractor(client).videosFromUrl("https://www.$finalUrl.html")
             }
             else -> null
         } ?: emptyList()
@@ -372,7 +375,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_BASE_URL_DIALOG_TITLE = "Default domain"
         private const val PREF_BASE_URL_DIALOG_MESSAGE = "You can change the site domain from here"
 
-        private val GOVAD_REGEX = Regex("(v[aie]d[bp][aoe]?m|myvii?d|govad|segavid|v[aei]{1,2}dshar[er]?)\\.(?:com|net|org|xyz)(?::\\d+)?/(?:embed[/-])?([A-Za-z0-9]+).html")
-
+        private val GOVAD_REGEX = Regex("(v[aie]d[bp][aoe]?m|myvii?d|govad|segavid|v[aei]{1,2}dshar[er]?)\\.(?:com|net|org|xyz)(?::\\d+)?/(?:embed[/-])?([A-Za-z0-9]+)")
+        private val UQLOAD_REGEX = Regex("(uqload\\.[ic]om?)/(?:embed-)?([0-9a-zA-Z]+)")
     }
 }
