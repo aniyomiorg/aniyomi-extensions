@@ -244,7 +244,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         anime.genre = document.select("li:contains(التصنيف) > p > a, li:contains(النوع) > p > a").joinToString(", ") { it.text() }
-        anime.description = document.select("div.AsideContext > div.StoryMovieContent, div.PostItemContent").text()
+        anime.description = document.select("div.AsideContext > div.StoryMovieContent").text()
         anime.author = document.select("li:contains(شركات الإنتاج) > p > a").joinToString(", ") { it.text() }
         // add alternative name to anime description
         document.select("li:contains( بالعربي) > p, li:contains(معروف) > p").text().let {
