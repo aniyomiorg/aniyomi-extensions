@@ -5,7 +5,8 @@ import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.animeextension.ar.mycima.extractors.GoVadExtractor
+import eu.kanade.tachiyomi.animeextension.ar.mycima.extractors.UQLoadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -15,7 +16,10 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers.Companion.toHeaders
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -120,15 +124,30 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val iframe = document.selectFirst("iframe")!!.attr("data-lazy-src")
-        val referer = response.request.url.encodedPath
-        val newHeaderList = mutableMapOf(Pair("referer", baseUrl + referer))
-        headers.forEach { newHeaderList[it.first] = it.second }
-        val iframeResponse = client.newCall(GET(iframe, newHeaderList.toHeaders()))
-            .execute().asJsoup()
-        return videosFromElement(iframeResponse.selectFirst(videoListSelector())!!)
+        return document.select("ul.WatchServersList li").parallelMap {
+            val frameURL = it.attr("data-url")
+            runCatching {
+                if(it.hasClass("MyCimaServer")) {
+                    val referer = response.request.url.encodedPath
+                    val newHeader = headers.newBuilder().add("referer", baseUrl + referer).build()
+                    val iframeResponse = client.newCall(GET(frameURL, newHeader)).execute().asJsoup()
+                    videosFromElement(iframeResponse.selectFirst(videoListSelector())!!)
+                } else { extractVideos(frameURL) }
+            }.getOrElse { emptyList() }
+        }.flatten()
     }
-
+    private fun extractVideos(url: String): List<Video>{
+        return when {
+            GOVAD_REGEX.containsMatchIn(url) -> {
+                val finalUrl = GOVAD_REGEX.find(url)!!.groupValues[0]
+                GoVadExtractor(client).videosFromUrl("https://www.$finalUrl", GOVAD_REGEX.find(url)!!.groupValues[1])
+            }
+            url.contains("uqload") -> {
+                UQLoadExtractor(client).videosFromUrl(url)
+            }
+            else -> null
+        } ?: emptyList()
+    }
     override fun videoListSelector() = "body"
 
     private fun videosFromElement(element: Element): List<Video> {
@@ -136,7 +155,6 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val script = element.select("script")
             .firstOrNull { it.data().contains("player.qualityselector({") }
         if (script != null) {
-            val scriptV = element.select("script:containsData(source)")
             val data = element.data().substringAfter("sources: [").substringBefore("],")
             val sources = data.split("format: '").drop(1)
             for (source in sources) {
@@ -335,6 +353,11 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun getPrefBaseUrl(): String = preferences.getString(PREF_BASE_URL_KEY, PREF_BASE_URL_DEFAULT)!!
 
+    // ============================= Utilities ===================================
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
     companion object {
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"
@@ -346,5 +369,8 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_BASE_URL_TITLE = "Enter default domain"
         private const val PREF_BASE_URL_DIALOG_TITLE = "Default domain"
         private const val PREF_BASE_URL_DIALOG_MESSAGE = "You can change the site domain from here"
+
+        private val GOVAD_REGEX = Regex("(v[aie]d[bp][aoe]?m|myvii?d|govad|segavid|v[aei]{1,2}dshar[er]?)\\.(?:com|net|org|xyz)(?::\\d+)?/(?:embed[/-])?([A-Za-z0-9]+).html")
+
     }
 }
