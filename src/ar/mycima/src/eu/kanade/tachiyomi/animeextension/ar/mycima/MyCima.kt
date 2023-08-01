@@ -212,7 +212,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     is CategoryList -> {
                         if (filter.state > 0) {
                             val catQ = getCategoryList()[filter.state].query
-                            val catUrl = "$baseUrl/category/$catQ/page/$page"
+                            val catUrl = "$baseUrl/$catQ/page/$page/"
                             return GET(catUrl, headers)
                         }
                     }
