@@ -30,11 +30,13 @@ class AniWorldInterceptor(private val client: OkHttpClient, private val preferen
         }
 
         val newCookie = getNewCookie(originalRequest.url)
-            ?: throw Exception("Bitte im Browser oder in den Erweiterungs-Einstellungen einloggen.")
+        // ?: throw Exception("Bitte im Browser oder in den Erweiterungs-Einstellungen einloggen.")
         val newCookieHeader = buildString {
             (oldCookie + newCookie).forEachIndexed { index, cookie ->
                 if (index > 0) append("; ")
-                append(cookie.name).append('=').append(cookie.value)
+                if (cookie != null) {
+                    append(cookie.name).append('=').append(cookie.value)
+                }
             }
         }
 
