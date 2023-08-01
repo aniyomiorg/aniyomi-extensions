@@ -18,6 +18,7 @@ import eu.kanade.tachiyomi.lib.vkextractor.VkExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -122,29 +123,12 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime = throw Exception("not used")
 
     // ============================== Episodes ==============================
-    @OptIn(ExperimentalStdlibApi::class)
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
-        val animeUrl = "$baseUrl${anime.url.substringBeforeLast("/")}".toHttpUrl()
-
-        val voices = preferences.getString(PREF_VOICES_KEY, PREF_VOICES_DEFAULT)!!.split(",")
-        val episodes = voices.mapNotNull {
-            playersToEpisodes(fetchPlayers("$animeUrl/$it"), it.uppercase())
-        }.ifEmpty {
-            VOICES_VALUES.filterNot(voices::contains).mapNotNull {
-                playersToEpisodes(fetchPlayers("$animeUrl/$it"), it.uppercase())
-            }
-        }
-        if (preferences.getString(PREF_MERGE_KIND_KEY, PREF_MERGE_KIND_DEFAULT) == "zip") {
-            val zipped = mutableListOf<SEpisode>()
-            for (i in 0..<episodes.fold(0) { acc, list -> maxOf(acc, list.size) }) {
-                for (list in episodes) {
-                    val episode = list.getOrNull(i)
-                    if (episode != null) zipped.add(episode)
-                }
-            }
-            return Observable.just(zipped.reversed())
-        }
-        return Observable.just(episodes.flatten().reversed())
+        val animeUrl = "$baseUrl${anime.url.substringBeforeLast("/")}"
+        val movie = anime.url.split("#").getOrElse(1) { "" }.toIntOrNull()
+        val players = VOICES_VALUES.map { fetchPlayers("$animeUrl/$it") }
+        val episodes = playersToEpisodes(players)
+        return Observable.just(if (movie == null) episodes.reversed() else listOf(episodes[movie]))
     }
 
     override fun episodeListSelector(): String = throw Exception("not used")
@@ -153,19 +137,22 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
-        val playerUrls = json.decodeFromString<List<String>>(episode.url)
-        val videos = playerUrls.flatMap { playerUrl ->
-            with(playerUrl) {
-                when {
-                    contains("anime-sama.fr") -> listOf(Video(playerUrl, "AS Player", playerUrl))
-                    contains("sibnet.ru") -> SibnetExtractor(client).videosFromUrl(playerUrl)
-                    contains("myvi.") -> MytvExtractor(client).videosFromUrl(playerUrl)
-                    contains("vk.") -> VkExtractor(client, headers).videosFromUrl(playerUrl)
-                    contains("sendvid.com") -> SendvidExtractor(client, headers).videosFromUrl(playerUrl)
-                    else -> emptyList()
+        val playerUrls = json.decodeFromString<List<List<String>>>(episode.url)
+        val videos = playerUrls.flatMapIndexed { i, it ->
+            val prefix = "(${VOICES_VALUES[i].uppercase()}) "
+            it.flatMap { playerUrl ->
+                with(playerUrl) {
+                    when {
+                        contains("anime-sama.fr") -> listOf(Video(playerUrl, "${prefix}AS Player", playerUrl))
+                        contains("sibnet.ru") -> SibnetExtractor(client).videosFromUrl(playerUrl, prefix)
+                        contains("myvi.") -> MytvExtractor(client).videosFromUrl(playerUrl, prefix)
+                        contains("vk.") -> VkExtractor(client, headers).videosFromUrl(playerUrl, prefix)
+                        contains("sendvid.com") -> SendvidExtractor(client, headers).videosFromUrl(playerUrl, prefix)
+                        else -> emptyList()
+                    }
                 }
             }
-        }
+        }.sort()
         return Observable.just(videos)
     }
 
@@ -177,12 +164,25 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Utils =============================
     private fun removeDiacritics(string: String) = Normalizer.normalize(string, Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
-
     private fun sanitizeEpisodesJs(doc: String) = doc
+        .replace(Regex("[\"\t]"), "") // Fix trash format
         .replace("'", "\"") // Fix quotes
         .replace(Regex("/\\*.*?\\*/", setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL)), "") // Remove block comments
         .replace(Regex("(^|,|\\[)\\s*//.*?$", RegexOption.MULTILINE), "$1") // Remove line comments
         .replace(Regex(",\\s*]"), "]") // Remove trailing comma
+
+    override fun List<Video>.sort(): List<Video> {
+        val voices = preferences.getString(PREF_VOICES_KEY, PREF_VOICES_DEFAULT)!!
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+
+        return this.sortedWith(
+            compareBy(
+                { it.quality.contains(voices) },
+                { it.quality.contains(quality) },
+                { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
+            ),
+        ).reversed()
+    }
 
     private fun fetchAnimeSeasons(animeUrl: String): List<SAnime> {
         val animeDoc = client.newCall(GET(animeUrl)).execute().use { it.asJsoup() }
@@ -193,15 +193,15 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val (seasonName, seasonStem) = seasonMatch.destructured
             if (seasonStem.contains("film", true)) {
                 val moviesUrl = "$animeUrl/$seasonStem"
-                val moviesPlayers = fetchPlayers(moviesUrl) ?: return@flatMapIndexed emptyList()
+                val movies = fetchPlayers(moviesUrl).ifEmpty { return@flatMapIndexed emptyList() }
                 val movieNameRegex = Regex("^\\s*newSPF\\(\"(.*)\"\\);", RegexOption.MULTILINE)
                 val moviesDoc = client.newCall(GET(moviesUrl)).execute().use { it.body.string() }
                 val matches = movieNameRegex.findAll(moviesDoc).toList()
-                List(moviesPlayers[0].size) { i ->
+                List(movies.size) { i ->
                     val title = when {
-                        animeIndex == 0 && moviesPlayers[0].size == 1 -> animeName
+                        animeIndex == 0 && movies.size == 1 -> animeName
                         matches.size > i -> "$animeName ${matches[i].destructured.component1()}"
-                        moviesPlayers[0].size == 1 -> "$animeName Film"
+                        movies.size == 1 -> "$animeName Film"
                         else -> "$animeName Film ${i + 1}"
                     }
                     Triple(title, "$moviesUrl#$i", SAnime.COMPLETED)
@@ -224,21 +224,22 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }.toList()
     }
 
-    private fun playersToEpisodes(players: List<List<String>>?, voices: String = ""): List<SEpisode>? =
-        List(players?.getOrNull(0)?.size ?: 0) { i ->
+    private fun playersToEpisodes(list: List<List<List<String>>>): List<SEpisode> =
+        List(list.fold(0) { acc, it -> maxOf(acc, it.size) }) { episodeNumber ->
+            val players = list.map { it.getOrElse(episodeNumber) { emptyList() } }
             SEpisode.create().apply {
-                name = "Episode ${i + 1}"
-                url = "[${players!!.distinct().joinToString { "\"${it[i]}\"" }}]"
-                episode_number = i.toFloat()
-                scanlator = voices
+                name = "Episode ${episodeNumber + 1}"
+                url = json.encodeToString(players)
+                episode_number = (episodeNumber + 1).toFloat()
+                scanlator = players.mapIndexedNotNull { i, it -> if (it.isNotEmpty()) VOICES_VALUES[i] else null }.joinToString().uppercase()
             }
-        }.ifEmpty { null }
+        }
 
-    private fun fetchPlayers(url: String): List<List<String>>? {
+    private fun fetchPlayers(url: String): List<List<String>> {
         val docUrl = "$url/episodes.js"
         val players = mutableListOf<List<String>>()
         val doc = client.newCall(GET(docUrl)).execute().use {
-            if (it.code != 200) return null
+            if (it.code != 200) return listOf()
             it.body.string()
         }
         val sanitizedDoc = sanitizeEpisodesJs(doc)
@@ -248,7 +249,7 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         val asPlayers = getPlayers("epsAS", sanitizedDoc)
         if (asPlayers != null) players.add(asPlayers)
-        return players.ifEmpty { null }
+        return List(players[0].size) { i -> players.mapNotNull { it.getOrNull(i) }.distinct() }
     }
 
     private fun getPlayers(playerName: String, doc: String): List<String>? {
@@ -259,11 +260,11 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
-            key = PREF_VOICES_KEY
-            title = "Préférence des voix"
-            entries = VOICES
-            entryValues = VOICES_VALUES
-            setDefaultValue(PREF_VOICES_DEFAULT)
+            key = PREF_QUALITY_KEY
+            title = "Preferred quality"
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -275,11 +276,11 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }.also(screen::addPreference)
 
         ListPreference(screen.context).apply {
-            key = PREF_MERGE_KIND_KEY
-            title = "Organisation des différentes voix"
-            entries = MERGE_KINDS
-            entryValues = MERGE_KINDS_VALUES
-            setDefaultValue(PREF_MERGE_KIND_DEFAULT)
+            key = PREF_VOICES_KEY
+            title = "Préférence des voix"
+            entries = VOICES
+            entryValues = VOICES_VALUES
+            setDefaultValue(PREF_VOICES_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -297,29 +298,17 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private val VOICES = arrayOf(
             "Préférer VOSTFR",
             "Préférer VF",
-            "Afficher VF et VOSTFR",
         )
 
         private val VOICES_VALUES = arrayOf(
             "vostfr",
             "vf",
-            "vostfr,vf",
-        )
-
-        private val MERGE_KINDS = arrayOf(
-            "Concaténer (ep1VO, ep2VO,..., ep1VF, ep2VF)",
-            "Zipper (ep1VO, ep1VF, ep2VO, ep2VF,...)",
-        )
-
-        private val MERGE_KINDS_VALUES = arrayOf(
-            "concat",
-            "zip",
         )
 
         private const val PREF_VOICES_KEY = "voices_preference"
         private const val PREF_VOICES_DEFAULT = "vostfr"
 
-        private const val PREF_MERGE_KIND_KEY = "merge_kind"
-        private const val PREF_MERGE_KIND_DEFAULT = "concat"
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
     }
 }
