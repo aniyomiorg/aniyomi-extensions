@@ -126,18 +126,17 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         return document.select("ul.WatchServersList li").parallelMap {
             val frameURL = it.attr("data-url")
-            runCatching {
-                if(it.hasClass("MyCimaServer")) {
-                    val referer = response.request.url.encodedPath
-                    val newHeader = headers.newBuilder().add("referer", baseUrl + referer).build()
-                    val iframeResponse = client.newCall(GET(frameURL, newHeader)).execute().asJsoup()
-                    videosFromElement(iframeResponse.selectFirst(videoListSelector())!!)
-                } else { extractVideos(frameURL) }
-            }.getOrElse { emptyList() }
+            val referer = if("cdn" in frameURL) response.request.url.encodedPath else null
+            runCatching { extractVideos(frameURL, referer) }.getOrElse { emptyList() }
         }.flatten()
     }
-    private fun extractVideos(url: String): List<Video>{
+    private fun extractVideos(url: String, referer: String? = null): List<Video>{
         return when {
+            !referer.isNullOrEmpty() -> {
+                val newHeader = headers.newBuilder().add("referer", baseUrl + referer).build()
+                val iframeResponse = client.newCall(GET(url, newHeader)).execute().asJsoup()
+                videosFromElement(iframeResponse.selectFirst(videoListSelector())!!)
+            }
             GOVAD_REGEX.containsMatchIn(url) -> {
                 val finalUrl = GOVAD_REGEX.find(url)!!.groupValues[0]
                 GoVadExtractor(client).videosFromUrl("https://www.$finalUrl", GOVAD_REGEX.find(url)!!.groupValues[1])
