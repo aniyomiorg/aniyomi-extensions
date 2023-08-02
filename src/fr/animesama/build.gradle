@@ -1,0 +1,23 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
+}
+
+ext {
+    extName = 'Anime-Sama'
+    pkgNameSuffix = 'fr.animesama'
+    extClass = '.AnimeSama'
+    extVersionCode = 1
+    libVersion = 13
+    containsNsfw = true
+}
+
+dependencies {
+    implementation(project(':lib-mytv-extractor'))
+    implementation(project(':lib-sibnet-extractor'))
+    implementation(project(':lib-vk-extractor'))
+    implementation(project(':lib-sendvid-extractor'))
+}
+
+apply from: "$rootDir/common.gradle"
