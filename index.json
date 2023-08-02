@@ -520,10 +520,10 @@
   {
     "name": "Aniyomi: MY CIMA",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.mycima",
-    "apk": "aniyomi-ar.mycima-v13.19.apk",
+    "apk": "aniyomi-ar.mycima-v13.20.apk",
     "lang": "ar",
-    "code": 19,
-    "version": "13.19",
+    "code": 20,
+    "version": "13.20",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -532,7 +532,7 @@
         "name": "MY Cima",
         "lang": "ar",
         "id": "6019880483003007296",
-        "baseUrl": "https://wecima.co",
+        "baseUrl": "https://cdn3.wecima.watch",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -2856,6 +2856,27 @@
         "baseUrl": "https://neonime.fun",
         "versionId": 1,
         "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: NimeGami",
+    "pkg": "eu.kanade.tachiyomi.animeextension.id.nimegami",
+    "apk": "aniyomi-id.nimegami-v13.1.apk",
+    "lang": "id",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "NimeGami",
+        "lang": "id",
+        "id": "3947801646056600641",
+        "baseUrl": "https://nimegami.id",
+        "versionId": 1,
+        "hasCloudflare": 0
       }
     ]
   },
