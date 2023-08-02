@@ -10,7 +10,7 @@ import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
-import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.lib.mytvextractor.MytvExtractor
 import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
@@ -21,19 +21,16 @@ import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
+import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.lang.Exception
 import java.text.Normalizer
 
-class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+class AnimeSama : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "Anime-Sama"
 
@@ -52,75 +49,53 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Popular ===============================
-    override fun fetchPopularAnime(page: Int): Observable<AnimesPage> {
-        val animes = client.newCall(popularAnimeRequest(page)).execute().use { it.asJsoup() }
-        val seasons = animes.select(popularAnimeSelector()).flatMap {
+    override fun popularAnimeParse(response: Response): AnimesPage {
+        val animes = response.asJsoup()
+        val seasons = animes.select("h2:contains(les classiques) + .scrollBarStyled > div").flatMap {
             val animeUrl = it.getElementsByTag("a").attr("href")
             fetchAnimeSeasons(animeUrl)
         }
-        return Observable.just(AnimesPage(seasons, false))
+        return AnimesPage(seasons, false)
     }
 
     override fun popularAnimeRequest(page: Int): Request = GET(baseUrl)
 
-    override fun popularAnimeSelector(): String = "h2:contains(les classiques) + .scrollBarStyled > div"
-
-    override fun popularAnimeFromElement(element: Element): SAnime = throw Exception("not used")
-
-    override fun popularAnimeNextPageSelector(): String? = null
-
     // =============================== Latest ===============================
-    override fun fetchLatestUpdates(page: Int): Observable<AnimesPage> {
-        val animes = client.newCall(latestUpdatesRequest(page)).execute().use { it.asJsoup() }
-        val seasons = animes.select(latestUpdatesSelector()).flatMap {
+    override fun latestUpdatesParse(response: Response): AnimesPage {
+        val animes = response.asJsoup()
+        val seasons = animes.select("h2:contains(derniers ajouts) + .scrollBarStyled > div").flatMap {
             val animeUrl = it.getElementsByTag("a").attr("href")
             fetchAnimeSeasons(animeUrl)
         }
-        return Observable.just(AnimesPage(seasons, false))
+        return AnimesPage(seasons, false)
     }
     override fun latestUpdatesRequest(page: Int): Request = GET(baseUrl)
 
-    override fun latestUpdatesSelector(): String = "h2:contains(derniers ajouts) + .scrollBarStyled > div"
-
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("not used")
-
-    override fun latestUpdatesNextPageSelector(): String? = null
-
     // =============================== Search ===============================
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
-            val id = query.removePrefix(PREFIX_SEARCH)
-            val seasons = fetchAnimeSeasons("$baseUrl/catalogue/$id")
-            Observable.just(AnimesPage(seasons, false))
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        return if (response.request.method == "GET") {
+            AnimesPage(fetchAnimeSeasons(response), false)
         } else {
-            val doc = client.newCall(searchAnimeRequest(page, query, filters)).execute().asJsoup()
-            val elements = doc.select(".cardListAnime").chunked(5)
+            val page = response.request.url.fragment?.toInt() ?: 1
+            val elements = response.asJsoup().select(".cardListAnime").chunked(5)
             val animes = elements[page - 1].flatMap {
                 fetchAnimeSeasons(it.getElementsByTag("a").attr("href"))
             }
-            Observable.just(AnimesPage(animes, page < elements.size))
+            AnimesPage(animes, page < elements.size)
         }
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request =
-        POST("$baseUrl/catalogue/searchbar.php", headers, FormBody.Builder().add("query", query).build())
-
-    override fun searchAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun searchAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+        if (query.startsWith(PREFIX_SEARCH)) { // Activity Intent Handler
+            GET("$baseUrl/catalogue/${query.removePrefix(PREFIX_SEARCH)}/")
+        } else {
+            POST("$baseUrl/catalogue/searchbar.php#$page", headers, FormBody.Builder().add("query", query).build())
+        }
 
     // =========================== Anime Details ============================
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> = Observable.just(anime)
 
-    override fun animeDetailsParse(document: Document): SAnime = throw Exception("not used")
+    override fun animeDetailsParse(response: Response): SAnime = throw Exception("not used")
 
     // ============================== Episodes ==============================
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
@@ -131,9 +106,7 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return Observable.just(if (movie == null) episodes.reversed() else listOf(episodes[movie]))
     }
 
-    override fun episodeListSelector(): String = throw Exception("not used")
-
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("not used")
+    override fun episodeListParse(response: Response): List<SEpisode> = throw Exception("not used")
 
     // ============================ Video Links =============================
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
@@ -155,12 +128,6 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }.sort()
         return Observable.just(videos)
     }
-
-    override fun videoListSelector(): String = throw Exception("not used")
-
-    override fun videoFromElement(element: Element): Video = throw Exception("not used")
-
-    override fun videoUrlParse(document: Document): String = throw Exception("not used")
 
     // ============================ Utils =============================
     private fun removeDiacritics(string: String) = Normalizer.normalize(string, Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
@@ -185,7 +152,13 @@ class AnimeSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun fetchAnimeSeasons(animeUrl: String): List<SAnime> {
-        val animeDoc = client.newCall(GET(animeUrl)).execute().use { it.asJsoup() }
+        val res = client.newCall(GET(animeUrl)).execute()
+        return fetchAnimeSeasons(res)
+    }
+
+    private fun fetchAnimeSeasons(response: Response): List<SAnime> {
+        val animeDoc = response.asJsoup()
+        val animeUrl = response.request.url
         val animeName = animeDoc.getElementById("titreOeuvre")?.text() ?: ""
 
         val seasonRegex = Regex("^\\s*panneauAnime\\(\"(.*)\", \"(.*)\"\\)", RegexOption.MULTILINE)
