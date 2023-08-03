@@ -141,9 +141,31 @@ class AnimesGames : ParsedAnimeHttpSource() {
     }
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        throw UnsupportedOperationException("Not used.")
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        val doc = getRealDoc(document)
+        setUrlWithoutDomain(doc.location())
+        val content = doc.selectFirst("section.conteudoPost")!!
+        title = content.selectFirst("section > h1")!!.text()
+            .removePrefix("Assistir ")
+            .removeSuffix("Temporada Online")
+        thumbnail_url = content.selectFirst("img")!!.attr("data-lazy-src")
+        description = content.select("section.sinopseEp p").eachText().joinToString("\n")
+
+        val infos = content.selectFirst("div.info > ol")!!
+
+        author = infos.getInfo("Autor") ?: infos.getInfo("Diretor")
+        artist = infos.getInfo("Estúdio")
+        status = when (infos.getInfo("Status")) {
+            "Completo" -> SAnime.COMPLETED
+            "Lançamento" -> SAnime.ONGOING
+            else -> SAnime.UNKNOWN
+        }
     }
+
+    private fun Element.getInfo(info: String) =
+        selectFirst("li:has(span:contains($info))")?.let {
+            it.selectFirst("span[data]")?.text() ?: it.ownText()
+        }
 
     // ============================== Episodes ==============================
     override fun episodeListSelector(): String {
@@ -174,6 +196,15 @@ class AnimesGames : ParsedAnimeHttpSource() {
     // ============================= Utilities ==============================
     private inline fun <reified T> Response.parseAs(): T {
         return use { it.body.string() }.let(json::decodeFromString)
+    }
+
+    private fun getRealDoc(document: Document): Document {
+        if (!document.location().contains("/video/")) return document
+
+        return document.selectFirst("div.linksEP > a:has(li.episodio)")?.let {
+            client.newCall(GET(it.attr("href"), headers)).execute()
+                .use { req -> req.asJsoup() }
+        } ?: document
     }
 
     companion object {
