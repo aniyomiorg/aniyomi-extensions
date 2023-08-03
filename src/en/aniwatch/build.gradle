@@ -1,5 +1,8 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
+}
 
 ext {
     extName = 'AniWatch.to'
@@ -12,6 +15,7 @@ ext {
 dependencies {
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-streamsb-extractor'))
+    implementation(project(':lib-cryptoaes'))
 }
 
 apply from: "$rootDir/common.gradle"

@@ -1,6 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.zoro.extractors
 
-import eu.kanade.tachiyomi.animeextension.en.zoro.utils.Decryptor
+import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.CacheControl
 import okhttp3.OkHttpClient
@@ -40,7 +40,7 @@ class AniWatchExtractor(private val client: OkHttpClient) {
         if ("\"encrypted\":false" in srcRes) return srcRes
         if (!srcRes.contains("{\"sources\":")) return null
         val encrypted = srcRes.substringAfter("sources\":\"").substringBefore("\"")
-        val decrypted = Decryptor.decrypt(encrypted, key) ?: return null
+        val decrypted = CryptoAES.decrypt(encrypted, key).ifEmpty { return null }
         val end = srcRes.replace("\"$encrypted\"", decrypted)
         return end
     }
