@@ -21,6 +21,8 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class AnimesGames : ParsedAnimeHttpSource() {
 
@@ -168,12 +170,22 @@ class AnimesGames : ParsedAnimeHttpSource() {
         }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector(): String {
-        throw UnsupportedOperationException("Not used.")
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        return getRealDoc(response.use { it.asJsoup() })
+            .select(episodeListSelector())
+            .map(::episodeFromElement)
+            .reversed()
     }
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        throw UnsupportedOperationException("Not used.")
+    override fun episodeListSelector() = "div.listaEp > section.episodioItem > a"
+
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        element.selectFirst("div.tituloEP")!!.text().also {
+            name = it
+            episode_number = it.substringAfterLast(" ").toFloatOrNull() ?: 1F
+        }
+        date_upload = element.selectFirst("span.data")?.text()?.toDate() ?: 0L
     }
 
     // ============================ Video Links =============================
@@ -207,7 +219,16 @@ class AnimesGames : ParsedAnimeHttpSource() {
         } ?: document
     }
 
+    private fun String.toDate(): Long {
+        return runCatching { DATE_FORMATTER.parse(trim())?.time }
+            .getOrNull() ?: 0L
+    }
+
     companion object {
         const val PREFIX_SEARCH = "id:"
+
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("dd 'de' MMMM 'de' yyyy", Locale("pt", "BR"))
+        }
     }
 }
