@@ -5,7 +5,7 @@ plugins {
 }
 
 ext {
-    extName = 'AnimesGames'
+    extName = 'Animes Games'
     pkgNameSuffix = 'pt.animesgames'
     extClass = '.AnimesGames'
     extVersionCode = 1

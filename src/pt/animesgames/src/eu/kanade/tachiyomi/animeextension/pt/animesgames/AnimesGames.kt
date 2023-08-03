@@ -27,7 +27,7 @@ import java.util.Locale
 
 class AnimesGames : ParsedAnimeHttpSource() {
 
-    override val name = "AnimesGames"
+    override val name = "Animes Games"
 
     override val baseUrl = "https://animesgames.net"
 
