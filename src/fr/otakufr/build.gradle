@@ -1,0 +1,24 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
+
+ext {
+    extName = 'OtakuFR'
+    pkgNameSuffix = 'fr.otakufr'
+    extClass = '.OtakuFR'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-sibnet-extractor'))
+    implementation(project(':lib-voe-extractor'))
+    implementation(project(':lib-sendvid-extractor'))
+    implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib-okru-extractor'))
+    implementation(project(":lib-playlist-utils"))
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
+}
+
+apply from: "$rootDir/common.gradle"
