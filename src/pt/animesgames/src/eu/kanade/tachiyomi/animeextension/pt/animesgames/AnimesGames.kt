@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesgames
 
+import eu.kanade.tachiyomi.animeextension.pt.animesgames.extractors.BloggerExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -33,6 +34,10 @@ class AnimesGames : ParsedAnimeHttpSource() {
     override val lang = "pt-BR"
 
     override val supportsLatest = true
+
+    override fun headersBuilder() = super.headersBuilder()
+        .add("Referer", baseUrl)
+        .add("Origin", baseUrl)
 
     private val json: Json by injectLazy()
 
@@ -189,8 +194,51 @@ class AnimesGames : ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
+    private val bloggerExtractor by lazy { BloggerExtractor(client) }
     override fun videoListParse(response: Response): List<Video> {
-        throw UnsupportedOperationException("Not used.")
+        val doc = response.use { it.asJsoup() }
+        val url = doc.selectFirst("div.Link > a")
+            ?.attr("href")
+            ?: return emptyList()
+
+        val playerDoc = client.newCall(GET(url, headers)).execute()
+            .use { it.asJsoup() }
+
+        val iframe = playerDoc.selectFirst("iframe")
+        return when {
+            iframe != null -> {
+                bloggerExtractor.videosFromUrl(iframe.attr("src"), headers)
+            }
+
+            else -> parseDefaultVideo(playerDoc)
+        }
+    }
+
+    private fun parseDefaultVideo(doc: Document): List<Video> {
+        val scriptData = doc.selectFirst("script:containsData(jw = {)")
+            ?.data()
+            ?: return emptyList()
+
+        val playlistUrl = scriptData.substringAfter("file\":\"")
+            .substringBefore('"')
+            .replace("\\", "")
+
+        return when {
+            playlistUrl.endsWith("m3u8") -> {
+                val separator = "#EXT-X-STREAM-INF:"
+                client.newCall(GET(playlistUrl, headers)).execute()
+                    .use { it.body.string() }
+                    .substringAfter(separator)
+                    .split(separator)
+                    .map {
+                        val quality = it.substringAfter("RESOLUTION=").substringAfter("x").substringBefore(",") + "p"
+                        val videoUrl = it.substringAfter("\n").substringBefore("\n")
+                        Video(videoUrl, quality, videoUrl)
+                    }
+            }
+
+            else -> listOf(Video(playlistUrl, "Default", playlistUrl, headers))
+        }
     }
 
     override fun videoListSelector(): String {
