@@ -412,7 +412,7 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     companion object {
         private const val PREF_DOMAIN_KEY = "preferred_domain"
-        private const val PREF_DOMAIN_DEFAULT = "https://9anime.to"
+        private const val PREF_DOMAIN_DEFAULT = "https://aniwave.to"
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_DEFAULT = "1080"
@@ -447,8 +447,8 @@ class NineAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ListPreference(screen.context).apply {
             key = PREF_DOMAIN_KEY
             title = "Preferred domain (requires app restart)"
-            entries = arrayOf("9anime.to", "9anime.gs", "9anime.pl", "9anime.id", "9anime.ph")
-            entryValues = arrayOf("https://9anime.to", "https://9anime.gs", "https://9anime.pl", "https://9anime.id", "https://9anime.ph")
+            entries = arrayOf("aniwave.to", "9anime.to", "9anime.gs", "9anime.pl", "9anime.id", "9anime.ph")
+            entryValues = arrayOf("https://aniwave.to", "https://9anime.to", "https://9anime.gs", "https://9anime.pl", "https://9anime.id", "https://9anime.ph")
             setDefaultValue(PREF_DOMAIN_DEFAULT)
             summary = "%s"
 
