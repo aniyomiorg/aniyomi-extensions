@@ -2713,6 +2713,27 @@
     ]
   },
   {
+    "name": "Aniyomi: OtakuFR",
+    "pkg": "eu.kanade.tachiyomi.animeextension.fr.otakufr",
+    "apk": "aniyomi-fr.otakufr-v13.1.apk",
+    "lang": "fr",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "OtakuFR",
+        "lang": "fr",
+        "id": "1844040902149745273",
+        "baseUrl": "https://otakufr.co",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Vostfree",
     "pkg": "eu.kanade.tachiyomi.animeextension.fr.vostfree",
     "apk": "aniyomi-fr.vostfree-v13.15.apk",
@@ -3316,6 +3337,27 @@
         "lang": "pt-BR",
         "id": "6518280198965195589",
         "baseUrl": "https://animesfox.net",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: Animes Games",
+    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesgames",
+    "apk": "aniyomi-pt.animesgames-v13.1.apk",
+    "lang": "pt-BR",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Animes Games",
+        "lang": "pt-BR",
+        "id": "6519826467833124450",
+        "baseUrl": "https://animesgames.net",
         "versionId": 1,
         "hasCloudflare": 0
       }
