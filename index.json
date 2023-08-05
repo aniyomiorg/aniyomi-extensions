@@ -1339,10 +1339,10 @@
   {
     "name": "Aniyomi: Gogoanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.gogoanime",
-    "apk": "aniyomi-en.gogoanime-v13.68.apk",
+    "apk": "aniyomi-en.gogoanime-v13.69.apk",
     "lang": "en",
-    "code": 68,
-    "version": "13.68",
+    "code": 69,
+    "version": "13.69",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1351,7 +1351,7 @@
         "name": "Gogoanime",
         "lang": "en",
         "id": "7055547649318749672",
-        "baseUrl": "https://gogoanime.hu",
+        "baseUrl": "https://gogoanime3.net",
         "versionId": 1,
         "hasCloudflare": 1
       }
