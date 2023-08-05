@@ -58,9 +58,9 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(baseUrl + element.selectFirst("a")!!.attr("href"))
+        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
         anime.title = element.select("a .Title").text()
-        anime.thumbnail_url = urlServerSolver(element.select("a .Image figure.Objf img").attr("data-src"))
+        anime.thumbnail_url = element.select("a .Image figure.Objf img").attr("abs:data-src")
         return anime
     }
 
@@ -119,7 +119,7 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     ""
                 }
             } catch (e: Exception) { "" }
-            val url = urlServerSolver(it.attr("data-video"))
+            val url = it.attr("abs:data-video")
             try {
                 loadExtractor(url, langPrefix).map { video -> videoList.add(video) }
             } catch (_: Exception) { }
@@ -154,7 +154,7 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val status = json["status"]!!.jsonPrimitive!!.content
                 val file = json["file"]!!.jsonPrimitive!!.content
                 if (status == "200") { videoList.add(Video(file, "$prefix Tomatomatela", file, headers = null)) }
-            } catch (e: Exception) { }
+            } catch (_: Exception) { }
         }
         if (embedUrl.contains("yourupload")) {
             val videos = YourUploadExtractor(client).videoFromUrl(url, headers = headers)
@@ -252,7 +252,7 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.selectFirst(".TPost header .Title")!!.text()
-        anime.thumbnail_url = urlServerSolver(document.selectFirst(".backdrop article div.Image figure img")!!.attr("data-src"))
+        anime.thumbnail_url = document.selectFirst(".backdrop article div.Image figure img")!!.attr("abs:data-src")
         anime.description = document.selectFirst(".backdrop article.TPost div.Description")!!.text().trim()
         anime.genre = document.select("ul.InfoList li:nth-child(1) > a").joinToString { it.text() }
         anime.status = SAnime.UNKNOWN
