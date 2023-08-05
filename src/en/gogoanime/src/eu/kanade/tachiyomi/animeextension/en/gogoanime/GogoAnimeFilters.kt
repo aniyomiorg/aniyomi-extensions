@@ -38,13 +38,13 @@ object GogoAnimeFilters {
             .joinToString("&") { "$name[]=$it" }
     }
 
-    class GenreSearchFilter : CheckBoxFilterList("Select genre", GogoAnimeFiltersData.GENRE_SEARCH_LIST)
-    class CountrySearchFilter : CheckBoxFilterList("Select country", GogoAnimeFiltersData.COUNTRY_SEARCH_LIST)
-    class SeasonSearchFilter : CheckBoxFilterList("Select season", GogoAnimeFiltersData.SEASON_SEARCH_LIST)
-    class YearSearchFilter : CheckBoxFilterList("Select year", GogoAnimeFiltersData.YEAR_SEARCH_LIST)
-    class LanguageSearchFilter : CheckBoxFilterList("Select language", GogoAnimeFiltersData.LANGUAGE_SEARCH_LIST)
-    class TypeSearchFilter : CheckBoxFilterList("Select type", GogoAnimeFiltersData.TYPE_SEARCH_LIST)
-    class StatusSearchFilter : CheckBoxFilterList("Select status", GogoAnimeFiltersData.STATUS_SEARCH_LIST)
+    class GenreSearchFilter : CheckBoxFilterList("Genre", GogoAnimeFiltersData.GENRE_SEARCH_LIST)
+    class CountrySearchFilter : CheckBoxFilterList("Country", GogoAnimeFiltersData.COUNTRY_SEARCH_LIST)
+    class SeasonSearchFilter : CheckBoxFilterList("Season", GogoAnimeFiltersData.SEASON_SEARCH_LIST)
+    class YearSearchFilter : CheckBoxFilterList("Year", GogoAnimeFiltersData.YEAR_SEARCH_LIST)
+    class LanguageSearchFilter : CheckBoxFilterList("Language", GogoAnimeFiltersData.LANGUAGE_SEARCH_LIST)
+    class TypeSearchFilter : CheckBoxFilterList("Type", GogoAnimeFiltersData.TYPE_SEARCH_LIST)
+    class StatusSearchFilter : CheckBoxFilterList("Status", GogoAnimeFiltersData.STATUS_SEARCH_LIST)
     class SortSearchFilter : QueryPartFilter("Sort by", GogoAnimeFiltersData.SORT_SEARCH_LIST)
 
     class GenreFilter : QueryPartFilter("Genre", GogoAnimeFiltersData.GENRE_LIST)
