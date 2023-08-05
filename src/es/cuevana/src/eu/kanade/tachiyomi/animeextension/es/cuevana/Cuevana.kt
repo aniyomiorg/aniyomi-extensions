@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.es.cuevana.extractors.StreamWishExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -14,6 +15,7 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -22,10 +24,8 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -38,7 +38,7 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Cuevana"
 
-    override val baseUrl = "https://n2.cuevana3.me"
+    override val baseUrl = "https://www12.cuevana3.ch"
 
     override val lang = "es"
 
@@ -52,15 +52,15 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun popularAnimeSelector(): String = "section li.xxx.TPostMv div.TPost"
+    override fun popularAnimeSelector(): String = ".MovieList .TPostMv .TPost"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/peliculas/page/$page")
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/peliculas?page=$page")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        anime.setUrlWithoutDomain(baseUrl + element.selectFirst("a")!!.attr("href"))
         anime.title = element.select("a .Title").text()
-        anime.thumbnail_url = element.select("a .Image figure.Objf img").attr("data-src")
+        anime.thumbnail_url = urlServerSolver(element.select("a .Image figure.Objf img").attr("data-src"))
         return anime
     }
 
@@ -70,13 +70,13 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodes = mutableListOf<SEpisode>()
         val document = response.asJsoup()
         if (response.request.url.toString().contains("/serie/")) {
-            document.select("[id*=season-]").mapIndexed { idxSeason, season ->
+            document.select("[id*=season-]").reversed().mapIndexed { idxSeason, season ->
                 val noSeason = try {
                     season.attr("id").substringAfter("season-").toInt()
                 } catch (e: Exception) {
                     idxSeason
                 }
-                season.select(".TPostMv article.TPost").mapIndexed { idxCap, cap ->
+                season.select(".TPostMv article.TPost").reversed().mapIndexed { idxCap, cap ->
                     val epNum = try { cap.select("a div.Image span.Year").text().substringAfter("x").toFloat() } catch (e: Exception) { idxCap.toFloat() }
                     val episode = SEpisode.create()
                     val date = cap.select("a > p").text()
@@ -90,8 +90,7 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         } else {
             val episode = SEpisode.create().apply {
-                val epnum = 1
-                episode_number = epnum.toFloat()
+                episode_number = 1f
                 name = "PELÍCULA"
             }
             episode.setUrlWithoutDomain(response.request.url.toString())
@@ -107,13 +106,12 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-        document.select("div.TPlayer.embed_div iframe").map {
+        document.select("ul.anime_muti_link li").map {
             val langPrefix = try {
-                val optLanguage = it.parent()!!.attr("id")
-                val languageTag = document.selectFirst("li[data-tplayernv=$optLanguage]")!!.closest(".open_submenu")!!.selectFirst("div:first-child")!!.text()
+                val languageTag = it.selectFirst(".cdtr span")!!.text()
                 if (languageTag.lowercase().contains("latino")) {
                     "[LAT]"
-                } else if (languageTag.lowercase().contains("españa")) {
+                } else if (languageTag.lowercase().contains("castellano")) {
                     "[CAST]"
                 } else if (languageTag.lowercase().contains("subtitulado")) {
                     "[SUB]"
@@ -121,53 +119,12 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     ""
                 }
             } catch (e: Exception) { "" }
-            val regIsUrl = "https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)".toRegex()
-            val iframe = urlServerSolver(it.attr("data-src"))
-            if (iframe.contains("apialfa.tomatomatela.club")) {
-                try {
-                    val tomkey = iframe.substringAfter("?h=")
-                    val clientGoTo = OkHttpClient().newBuilder().build()
-                    val mediaType = "application/x-www-form-urlencoded".toMediaType()
-                    val bodyGoTo = "url=$tomkey".toRequestBody(mediaType)
-                    val requestGoTo = Request.Builder()
-                        .url("https://apialfa.tomatomatela.club/ir/rd.php")
-                        .method("POST", bodyGoTo)
-                        .addHeader("Host", "apialfa.tomatomatela.club")
-                        .addHeader(
-                            "User-Agent",
-                            "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0",
-                        )
-                        .addHeader(
-                            "Accept",
-                            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-                        )
-                        .addHeader("Accept-Language", "en-US,en;q=0.5")
-                        .addHeader("Content-Type", "application/x-www-form-urlencoded")
-                        .addHeader("Origin", "null")
-                        .addHeader("DNT", "1")
-                        .addHeader("Connection", "keep-alive")
-                        .addHeader("Upgrade-Insecure-Requests", "1")
-                        .addHeader("Sec-Fetch-Dest", "iframe")
-                        .addHeader("Sec-Fetch-Mode", "navigate")
-                        .addHeader("Sec-Fetch-Site", "same-origin")
-                        .build()
-                    val responseGoto = clientGoTo.newCall(requestGoTo).execute()
-                    val locations = responseGoto!!.networkResponse.toString()
-                    fetchUrls(locations).map {
-                        if (!it.contains("ir/rd.php")) {
-                            loadExtractor(it, langPrefix).map { video -> videoList.add(video) }
-                        }
-                    }
-                } catch (e: Exception) { }
-            }
-            if (regIsUrl.containsMatchIn(iframe) &&
-                !iframe.contains("apialfa.tomatomatela.club")
-            ) {
-                try {
-                    loadExtractor(iframe, langPrefix).map { video -> videoList.add(video) }
-                } catch (e: Exception) { }
-            }
+            val url = urlServerSolver(it.attr("data-video"))
+            try {
+                loadExtractor(url, langPrefix).map { video -> videoList.add(video) }
+            } catch (_: Exception) { }
         }
+
         return videoList
     }
 
@@ -227,7 +184,13 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             )
         }
         if (embedUrl.contains("voe")) {
-            VoeExtractor(client).videoFromUrl(url)?.let { videoList.add(it) }
+            VoeExtractor(client).videoFromUrl(url, "$prefix Voe")?.let { videoList.add(it) }
+        }
+        if (embedUrl.contains("streamtape")) {
+            StreamTapeExtractor(client).videoFromUrl(url, "$prefix StreamTape")?.let { videoList.add(it) }
+        }
+        if (embedUrl.contains("wishembed") || embedUrl.contains("streamwish") || embedUrl.contains("wish")) {
+            StreamWishExtractor(client, headers).videosFromUrl(url, "$prefix StreamWish:")?.let { videoList.addAll(it) }
         }
         return videoList
     }
@@ -272,8 +235,8 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
 
         return when {
-            query.isNotBlank() -> GET("$baseUrl/page/$page?s=$query", headers)
-            genreFilter.state != 0 -> GET("$baseUrl/category/${genreFilter.toUriPart()}/page/$page")
+            query.isNotBlank() -> GET("$baseUrl/search.html?keyword=$query&page=$page", headers)
+            genreFilter.state != 0 -> GET("$baseUrl/category/${genreFilter.toUriPart()}?page=$page")
             else -> popularAnimeRequest(page)
         }
     }
@@ -288,10 +251,10 @@ class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.title = document.selectFirst("#top-single div.backdrop article.TPost header .Title")!!.text()
-        anime.thumbnail_url = document.selectFirst("#top-single div.backdrop article div.Image figure img")!!.attr("data-src")
-        anime.description = document.selectFirst("#top-single div.backdrop article.TPost div.Description")!!.text().trim()
-        anime.genre = document.select("#MvTb-Info ul.InfoList li:nth-child(2) > a").joinToString { it.text() }
+        anime.title = document.selectFirst(".TPost header .Title")!!.text()
+        anime.thumbnail_url = urlServerSolver(document.selectFirst(".backdrop article div.Image figure img")!!.attr("data-src"))
+        anime.description = document.selectFirst(".backdrop article.TPost div.Description")!!.text().trim()
+        anime.genre = document.select("ul.InfoList li:nth-child(1) > a").joinToString { it.text() }
         anime.status = SAnime.UNKNOWN
         return anime
     }
