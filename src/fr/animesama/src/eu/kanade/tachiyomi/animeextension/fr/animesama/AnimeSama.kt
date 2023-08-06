@@ -50,15 +50,18 @@ class AnimeSama : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // ============================== Popular ===============================
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val animes = response.asJsoup()
-        val seasons = animes.select("h2:contains(les classiques) + .scrollBarStyled > div").flatMap {
-            val animeUrl = it.getElementsByTag("a").attr("href")
+        val doc = response.body.string()
+        val page = response.request.url.fragment?.toInt() ?: 0
+        val regex = Regex("^\\s*carteClassique\\(\\s*.*?\\s*,\\s*\"(.*?)\".*\\)", RegexOption.MULTILINE)
+        val chunks = regex.findAll(doc).chunked(5).toList()
+        val seasons = chunks.getOrNull(page - 1)?.flatMap {
+            val animeUrl = "$baseUrl/catalogue/${it.groupValues[1]}"
             fetchAnimeSeasons(animeUrl)
-        }
-        return AnimesPage(seasons, false)
+        }?.toList() ?: emptyList()
+        return AnimesPage(seasons, page < chunks.size)
     }
 
-    override fun popularAnimeRequest(page: Int): Request = GET(baseUrl)
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/#$page")
 
     // =============================== Latest ===============================
     override fun latestUpdatesParse(response: Response): AnimesPage {
