@@ -2158,10 +2158,10 @@
   {
     "name": "Aniyomi: Cuevana",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.cuevana",
-    "apk": "aniyomi-es.cuevana-v13.17.apk",
+    "apk": "aniyomi-es.cuevana-v13.18.apk",
     "lang": "es",
-    "code": 17,
-    "version": "13.17",
+    "code": 18,
+    "version": "13.18",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2170,7 +2170,7 @@
         "name": "Cuevana",
         "lang": "es",
         "id": "8503225602749320167",
-        "baseUrl": "https://n2.cuevana3.me",
+        "baseUrl": "https://www12.cuevana3.ch",
         "versionId": 1,
         "hasCloudflare": 1
       }
