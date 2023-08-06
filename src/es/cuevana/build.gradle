@@ -5,7 +5,7 @@ ext {
     extName = 'Cuevana'
     pkgNameSuffix = 'es.cuevana'
     extClass = '.Cuevana'
-    extVersionCode = 17
+    extVersionCode = 18
     libVersion = '13'
 }
 
@@ -15,6 +15,8 @@ dependencies {
     implementation project(path: ':lib-streamsb-extractor')
     implementation project(path: ':lib-okru-extractor')
     implementation project(path: ':lib-voe-extractor')
+    implementation project(path: ':lib-streamtape-extractor')
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
 
 apply from: "$rootDir/common.gradle"
