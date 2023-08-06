@@ -147,9 +147,8 @@ class AnimeSama : ConfigurableAnimeSource, AnimeHttpSource() {
 
         return this.sortedWith(
             compareBy(
-                { it.quality.contains(voices) },
+                { it.quality.contains(voices, true) },
                 { it.quality.contains(quality) },
-                { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
             ),
         ).reversed()
     }
