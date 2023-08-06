@@ -1,18 +1,20 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
 
 ext {
     extName = 'Gogoanime'
     pkgNameSuffix = 'en.gogoanime'
     extClass = '.GogoAnime'
-    extVersionCode = 68
+    extVersionCode = 69
     libVersion = '13'
 }
 
 dependencies {
     implementation(project(':lib-mp4upload-extractor'))
-    implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib-playlist-utils'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
 
