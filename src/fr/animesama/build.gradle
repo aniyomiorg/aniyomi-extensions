@@ -10,7 +10,7 @@ ext {
     extClass = '.AnimeSama'
     extVersionCode = 3
     libVersion = 13
-    containsNsfw = true
+    containsNsfw = false
 }
 
 dependencies {
