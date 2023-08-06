@@ -111,15 +111,19 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =========================== Anime Details ============================
 
     override fun animeDetailsParse(document: Document): SAnime {
+        val infoDocument = document.selectFirst("div.anime-info a[href]")?.let {
+            client.newCall(GET(it.attr("abs:href"), headers)).execute().asJsoup()
+        } ?: document
+
         return SAnime.create().apply {
-            title = document.select("div.anime_info_body_bg h1").text()
-            genre = document.select("p.type:eq(5) a").joinToString("") { it.text() }
-            description = document.selectFirst("p.type:eq(4)")!!.ownText()
-            status = parseStatus(document.select("p.type:eq(7) a").text())
+            title = infoDocument.select("div.anime_info_body_bg h1").text()
+            genre = infoDocument.select("p.type:eq(5) a").joinToString("") { it.text() }
+            description = infoDocument.selectFirst("p.type:eq(4)")!!.ownText()
+            status = parseStatus(infoDocument.select("p.type:eq(7) a").text())
 
             // add alternative name to anime description
             val altName = "Other name(s): "
-            document.selectFirst("p.type:eq(8)")?.ownText()?.let {
+            infoDocument.selectFirst("p.type:eq(8)")?.ownText()?.let {
                 if (it.isBlank().not()) {
                     description = when {
                         description.isNullOrBlank() -> altName + it
@@ -183,8 +187,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun getHosterVideos(className: String, serverUrl: String): List<Video> {
         return when (className) {
-            "anime" -> gogoExtractor.videosFromUrl(serverUrl)
-            "vidcdn" -> gogoExtractor.videosFromUrl(serverUrl)
+            "anime", "vidcdn" -> gogoExtractor.videosFromUrl(serverUrl)
             "streamwish" -> streamwishExtractor.videosFromUrl(serverUrl)
             "doodstream" -> doodExtractor.videosFromUrl(serverUrl)
             "mp4upload" -> mp4uploadExtractor.videosFromUrl(serverUrl, headers)
