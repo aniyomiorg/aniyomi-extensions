@@ -1990,10 +1990,10 @@
   {
     "name": "Aniyomi: AniWatch.to",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.zoro",
-    "apk": "aniyomi-en.zoro-v13.32.apk",
+    "apk": "aniyomi-en.zoro-v13.33.apk",
     "lang": "en",
-    "code": 32,
-    "version": "13.32",
+    "code": 33,
+    "version": "13.33",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
