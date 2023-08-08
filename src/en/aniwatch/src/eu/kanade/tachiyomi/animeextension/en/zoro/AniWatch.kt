@@ -77,6 +77,89 @@ class AniWatch : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeNextPageSelector(): String = "li.page-item a[title=Next]"
 
+    // =============================== Latest ===============================
+    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
+
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
+
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/top-airing")
+
+    override fun latestUpdatesSelector() = popularAnimeSelector()
+
+    // =============================== Search ===============================
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
+
+    override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
+
+    override fun searchAnimeSelector() = popularAnimeSelector()
+
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        return if (query.startsWith(PREFIX_SEARCH)) {
+            val slug = query.removePrefix(PREFIX_SEARCH)
+            client.newCall(GET("$baseUrl/$slug"))
+                .asObservableSuccess()
+                .map(::searchAnimeBySlugParse)
+        } else {
+            super.fetchSearchAnime(page, query, filters)
+        }
+    }
+
+    private fun searchAnimeBySlugParse(response: Response): AnimesPage {
+        val details = animeDetailsParse(response)
+        return AnimesPage(listOf(details), false)
+    }
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val params = AniWatchFilters.getSearchParameters(filters)
+        val endpoint = if (query.isEmpty()) "filter" else "search"
+        val url = "$baseUrl/$endpoint".toHttpUrl().newBuilder()
+            .addQueryParameter("page", page.toString())
+            .addIfNotBlank("keyword", query)
+            .addIfNotBlank("type", params.type)
+            .addIfNotBlank("status", params.status)
+            .addIfNotBlank("rated", params.rated)
+            .addIfNotBlank("score", params.score)
+            .addIfNotBlank("season", params.season)
+            .addIfNotBlank("language", params.language)
+            .addIfNotBlank("sort", params.sort)
+            .addIfNotBlank("sy", params.start_year)
+            .addIfNotBlank("sm", params.start_month)
+            .addIfNotBlank("sd", params.start_day)
+            .addIfNotBlank("ey", params.end_year)
+            .addIfNotBlank("em", params.end_month)
+            .addIfNotBlank("ed", params.end_day)
+            .addIfNotBlank("genres", params.genres)
+            .build()
+
+        return GET(url.toString())
+    }
+
+    override fun getFilterList() = AniWatchFilters.FILTER_LIST
+
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        val info = document.selectFirst("div.anisc-info")!!
+        val detail = document.selectFirst("div.anisc-detail")!!
+        thumbnail_url = document.selectFirst("div.anisc-poster img")!!.attr("src")
+        title = detail.selectFirst("h2")!!.attr("data-jname")
+        author = info.getInfo("Studios:")
+        status = parseStatus(info.getInfo("Status:"))
+        genre = info.getInfo("Genres:", isList = true)
+
+        description = buildString {
+            info.getInfo("Overview:")?.also { append(it + "\n") }
+
+            detail.select("div.film-stats div.tick-dub").eachText().also {
+                append("\nLanguage: " + it.joinToString())
+            }
+
+            info.getInfo("Aired:", full = true)?.also(::append)
+            info.getInfo("Premiered:", full = true)?.also(::append)
+            info.getInfo("Synonyms:", full = true)?.also(::append)
+            info.getInfo("Japanese:", full = true)?.also(::append)
+        }
+    }
+
     // ============================== Episodes ==============================
     override fun episodeListSelector() = "ul#episode_page li a"
 
@@ -182,89 +265,6 @@ class AniWatch : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             compareBy { it.lang.contains(language) },
         ).reversed()
     }
-
-    // =============================== Search ===============================
-    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
-
-    override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
-
-    override fun searchAnimeSelector() = popularAnimeSelector()
-
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        return if (query.startsWith(PREFIX_SEARCH)) {
-            val slug = query.removePrefix(PREFIX_SEARCH)
-            client.newCall(GET("$baseUrl/$slug"))
-                .asObservableSuccess()
-                .map(::searchAnimeBySlugParse)
-        } else {
-            super.fetchSearchAnime(page, query, filters)
-        }
-    }
-
-    private fun searchAnimeBySlugParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response)
-        return AnimesPage(listOf(details), false)
-    }
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val params = AniWatchFilters.getSearchParameters(filters)
-        val endpoint = if (query.isEmpty()) "filter" else "search"
-        val url = "$baseUrl/$endpoint".toHttpUrl().newBuilder()
-            .addQueryParameter("page", page.toString())
-            .addIfNotBlank("keyword", query)
-            .addIfNotBlank("type", params.type)
-            .addIfNotBlank("status", params.status)
-            .addIfNotBlank("rated", params.rated)
-            .addIfNotBlank("score", params.score)
-            .addIfNotBlank("season", params.season)
-            .addIfNotBlank("language", params.language)
-            .addIfNotBlank("sort", params.sort)
-            .addIfNotBlank("sy", params.start_year)
-            .addIfNotBlank("sm", params.start_month)
-            .addIfNotBlank("sd", params.start_day)
-            .addIfNotBlank("ey", params.end_year)
-            .addIfNotBlank("em", params.end_month)
-            .addIfNotBlank("ed", params.end_day)
-            .addIfNotBlank("genres", params.genres)
-            .build()
-
-        return GET(url.toString())
-    }
-
-    override fun getFilterList() = AniWatchFilters.FILTER_LIST
-
-    // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
-        val info = document.selectFirst("div.anisc-info")!!
-        val detail = document.selectFirst("div.anisc-detail")!!
-        thumbnail_url = document.selectFirst("div.anisc-poster img")!!.attr("src")
-        title = detail.selectFirst("h2")!!.attr("data-jname")
-        author = info.getInfo("Studios:")
-        status = parseStatus(info.getInfo("Status:"))
-        genre = info.getInfo("Genres:", isList = true)
-
-        description = buildString {
-            info.getInfo("Overview:")?.also { append(it + "\n") }
-
-            detail.select("div.film-stats div.tick-dub").eachText().also {
-                append("\nLanguage: " + it.joinToString())
-            }
-
-            info.getInfo("Aired:", full = true)?.also(::append)
-            info.getInfo("Premiered:", full = true)?.also(::append)
-            info.getInfo("Synonyms:", full = true)?.also(::append)
-            info.getInfo("Japanese:", full = true)?.also(::append)
-        }
-    }
-
-    // =============================== Latest ===============================
-    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
-
-    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
-
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/top-airing")
-
-    override fun latestUpdatesSelector() = popularAnimeSelector()
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
