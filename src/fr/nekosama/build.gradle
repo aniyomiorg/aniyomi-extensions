@@ -6,13 +6,14 @@ ext {
     extName = 'NekoSama'
     pkgNameSuffix = 'fr.nekosama'
     extClass = '.NekoSama'
-    extVersionCode = 4
+    extVersionCode = 5
     libVersion = '13'
-    containsNsfw = false
+    containsNsfw = true
 }
 
 dependencies {
     implementation(project(':lib-streamtape-extractor'))
+    implementation(project(':lib-fusevideo-extractor'))
 }
 
 
