@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
+import eu.kanade.tachiyomi.animeextension.en.zoro.dto.VideoDto
 import eu.kanade.tachiyomi.animeextension.en.zoro.extractors.AniWatchExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -14,7 +15,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
+import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -25,10 +26,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -132,13 +129,9 @@ class AniWatch : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 runCatching {
                     when {
                         "Vidstreaming" in name || "Vidcloud" in name -> {
-                            aniwatchExtractor.getSourcesJson(sourceUrl)?.let {
+                            aniwatchExtractor.getVideoDto(sourceUrl).let {
                                 getVideosFromServer(it, subDub, name)
                             }
-                        }
-                        "StreamSB" in name -> {
-                            StreamSBExtractor(client)
-                                .videosFromUrl(sourceUrl, headers, suffix = "- $subDub")
                         }
                         "Streamtape" in name ->
                             StreamTapeExtractor(client)
@@ -146,34 +139,24 @@ class AniWatch : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                 ?.let(::listOf)
                         else -> null
                     }
-                }.getOrNull() ?: emptyList()
+                }.onFailure { it.printStackTrace() }.getOrNull() ?: emptyList()
             }.flatten()
     }
 
-    private fun getVideosFromServer(source: String, subDub: String, name: String): List<Video>? {
-        if (!source.contains("{\"sources\":[{\"file\":\"")) return null
-        val json = json.decodeFromString<JsonObject>(source)
-        val masterUrl = json["sources"]!!.jsonArray[0].jsonObject["file"]!!.jsonPrimitive.content
-        val subs = buildList {
-            json["tracks"]?.jsonArray
-                ?.filter { it.jsonObject["kind"]!!.jsonPrimitive.content == "captions" }
-                ?.forEach { track ->
-                    val trackUrl = track.jsonObject["file"]!!.jsonPrimitive.content
-                    val lang = track.jsonObject["label"]!!.jsonPrimitive.content
-                    add(Track(trackUrl, lang))
-                }
-        }.let(::subLangOrder)
-        val prefix = "#EXT-X-STREAM-INF:"
-        val playlist = client.newCall(GET(masterUrl)).execute()
-            .use { it.body.string() }
-        return playlist.substringAfter(prefix).split(prefix).map {
-            val quality = name + " - " + it.substringAfter("RESOLUTION=")
-                .substringAfter("x")
-                .substringBefore(",") + "p - $subDub"
-            val videoUrl = masterUrl.substringBeforeLast("/") + "/" +
-                it.substringAfter("\n").substringBefore("\n")
-            Video(videoUrl, quality, videoUrl, subtitleTracks = subs)
-        }
+    private val playlistUtils by lazy { PlaylistUtils(client, headers) }
+
+    private fun getVideosFromServer(video: VideoDto, subDub: String, name: String): List<Video> {
+        val masterUrl = video.sources.first().file
+        val subs2 = video.tracks
+            ?.filter { it.kind == "captions" }
+            ?.mapNotNull { Track(it.file, it.label) }
+            ?: emptyList<Track>()
+        val subs = subLangOrder(subs2)
+        return playlistUtils.extractFromHls(
+            masterUrl,
+            videoNameGen = { "$name - $it - $subDub" },
+            subtitleList = subs,
+        )
     }
 
     override fun videoListSelector() = throw Exception("not used")
