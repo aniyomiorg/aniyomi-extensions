@@ -48,7 +48,12 @@ object AnimeIndoFilters {
             Pair(key, value)
         }.toTypedArray()
 
-    private val ORDER_LIST by lazy { getPairListByIndex(0) }
+    private val ORDER_LIST by lazy {
+        getPairListByIndex(0)
+            .filterNot { it.first.contains("Most favorite", true) }
+            .toTypedArray()
+    }
+
     private val STATUS_LIST by lazy { getPairListByIndex(1) }
     private val TYPE_LIST by lazy { getPairListByIndex(2) }
     private val GENRES_LIST by lazy { getPairListByIndex(3) }
