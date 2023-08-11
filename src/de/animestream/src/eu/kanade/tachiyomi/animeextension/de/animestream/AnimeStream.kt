@@ -2,9 +2,7 @@ package eu.kanade.tachiyomi.animeextension.de.animestream
 
 import android.app.Application
 import android.content.SharedPreferences
-import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.de.animestream.extractors.MetaExtractor
-import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -21,13 +19,15 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import kotlin.Exception
 
-class AnimeStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+class AnimeStream : ParsedAnimeHttpSource() {
 
     override val name = "Anime-Stream"
 
     override val baseUrl = "https://anime-stream.to"
 
     override val lang = "de"
+
+    override val id: Long = 314593699490737069
 
     override val supportsLatest = false
 
@@ -164,8 +164,4 @@ class AnimeStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesRequest(page: Int): Request = throw Exception("not used")
 
     override fun latestUpdatesSelector(): String = throw Exception("not used")
-
-    // Preferences
-
-    override fun setupPreferenceScreen(screen: PreferenceScreen) = throw Exception("not used")
 }
