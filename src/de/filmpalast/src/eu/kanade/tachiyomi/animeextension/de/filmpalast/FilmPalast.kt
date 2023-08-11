@@ -6,7 +6,6 @@ import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.de.filmpalast.extractors.EvoloadExtractor
-import eu.kanade.tachiyomi.animeextension.de.filmpalast.extractors.FilemoonExtractor
 import eu.kanade.tachiyomi.animeextension.de.filmpalast.extractors.StreamHideVidExtractor
 import eu.kanade.tachiyomi.animeextension.de.filmpalast.extractors.UpstreamExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -15,6 +14,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -136,7 +136,7 @@ class FilmPalast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
 
                 url.contains("filemoon.sx") && hosterSelection.contains("moon") ->
-                    FilemoonExtractor(client).videoFromUrl(url)
+                    FilemoonExtractor(client).videosFromUrl(url)
                 url.contains("hide.com") && hosterSelection.contains("hide") ->
                     StreamHideVidExtractor(client).videosFromUrl(url, "StreamHide")
                 url.contains("streamvid.net") && hosterSelection.contains("vid") ->

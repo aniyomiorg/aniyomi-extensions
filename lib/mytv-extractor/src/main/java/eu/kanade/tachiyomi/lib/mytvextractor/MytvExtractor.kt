@@ -7,7 +7,7 @@ import okhttp3.OkHttpClient
 
 class MytvExtractor(private val client: OkHttpClient) {
 
-    fun videosFromUrl(url: String): List<Video> {
+    fun videosFromUrl(url: String, prefix: String = ""): List<Video> {
         val document = client.newCall(GET(url)).execute().asJsoup()
         val videoList = mutableListOf<Video>()
         document.select("script").forEach { script ->
@@ -16,9 +16,9 @@ class MytvExtractor(private val client: OkHttpClient) {
                 val videoUrl = videosString.substringAfter("\"v=").substringBefore("\\u0026tp=video").replace("%26", "&").replace("%3a", ":").replace("%2f", "/").replace("%3f", "?").replace("%3d", "=")
                 if (!videoUrl.contains("https:")) {
                     val videoUrl = "https:$videoUrl"
-                    videoList.add(Video(videoUrl, "Stream", videoUrl))
+                    videoList.add(Video(videoUrl, "${prefix}Stream", videoUrl))
                 } else {
-                    videoList.add(Video(videoUrl, "Mytv", videoUrl))
+                    videoList.add(Video(videoUrl, "${prefix}Mytv", videoUrl))
                 }
             }
         }

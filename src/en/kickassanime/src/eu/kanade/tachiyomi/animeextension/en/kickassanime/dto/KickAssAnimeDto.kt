@@ -56,13 +56,19 @@ data class EpisodeResponseDto(
     @Serializable
     data class EpisodeDto(
         val slug: String,
-        val title: String,
+        val title: String? = "",
         val episode_string: String,
     )
 }
 
 @Serializable
-data class ServersDto(val servers: List<String>)
+data class ServersDto(val servers: List<Server>) {
+    @Serializable
+    data class Server(
+        val name: String,
+        val src: String,
+    )
+}
 
 @Serializable
 data class VideoDto(

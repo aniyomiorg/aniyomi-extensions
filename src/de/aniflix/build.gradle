@@ -6,11 +6,12 @@ ext {
     extName = 'Aniflix'
     pkgNameSuffix = 'de.aniflix'
     extClass = '.Aniflix'
-    extVersionCode = 22
+    extVersionCode = 23
     libVersion = '13'
 }
 
 dependencies {
+    implementation(project(':lib-streamlare-extractor'))
     implementation(project(':lib-voe-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-dood-extractor'))

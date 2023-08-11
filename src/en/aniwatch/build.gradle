@@ -1,17 +1,21 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
+}
 
 ext {
     extName = 'AniWatch.to'
     pkgNameSuffix = 'en.zoro'
     extClass = '.AniWatch'
-    extVersionCode = 32
+    extVersionCode = 33
     libVersion = '13'
 }
 
 dependencies {
     implementation(project(':lib-streamtape-extractor'))
-    implementation(project(':lib-streamsb-extractor'))
+    implementation(project(':lib-cryptoaes'))
+    implementation(project(':lib-playlist-utils'))
 }
 
 apply from: "$rootDir/common.gradle"

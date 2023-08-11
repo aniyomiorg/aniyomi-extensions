@@ -5,6 +5,7 @@ plugins {
 }
 
 dependencies {
+    implementation(project(':lib-filemoon-extractor'))
     implementation(project(':lib-mp4upload-extractor'))
     implementation(project(":lib-cryptoaes"))
     implementation(project(":lib-synchrony"))
@@ -20,7 +21,7 @@ ext {
     extName = 'Türk Anime TV'
     pkgNameSuffix = 'tr.turkanime'
     extClass = '.TurkAnime'
-    extVersionCode = 5
+    extVersionCode = 6
     libVersion = '13'
 }
 

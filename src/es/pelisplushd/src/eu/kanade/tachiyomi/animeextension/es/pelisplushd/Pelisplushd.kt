@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamlareExtractor
+import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamWishExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -14,6 +14,8 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
+import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
@@ -92,31 +94,30 @@ open class Pelisplushd(override val name: String, override val baseUrl: String) 
         val apiUrl = data.substringAfter("video[1] = '", "").substringBefore("';", "")
         val alternativeServers = document.select("ul.TbVideoNv.nav.nav-tabs li:not(:first-child)")
         if (apiUrl.isNotEmpty()) {
-            val domainRegex = Regex("^(?:https?:\\/\\/)?(?:[^@\\/\\n]+@)?(?:www\\.)?([^:\\/?\\n]+)")
-            val domainUrl = domainRegex.findAll(apiUrl).firstOrNull()?.value
-
+            // val domainRegex = Regex("^(?:https?:\\/\\/)?(?:[^@\\/\\n]+@)?(?:www\\.)?([^:\\/?\\n]+)")
+            // val domainUrl = domainRegex.findAll(apiUrl).firstOrNull()?.value
             val apiResponse = client.newCall(GET(apiUrl)).execute().asJsoup()
-            val encryptedList = apiResponse!!.select("#PlayerDisplay div[class*=\"OptionsLangDisp\"] div[class*=\"ODDIV\"] div[class*=\"OD\"] li[data-r]")
-            val decryptedList = apiResponse!!.select("#PlayerDisplay div[class*=\"OptionsLangDisp\"] div[class*=\"ODDIV\"] div[class*=\"OD\"] li:not([data-r])")
+            val encryptedList = apiResponse!!.select("#PlayerDisplay div[class*=\"OptionsLangDisp\"] div[class*=\"ODDIV\"] div[class*=\"OD\"] li")
+            val regIsUrl = "https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)".toRegex()
+
             encryptedList.forEach {
-                val url = String(Base64.decode(it.attr("data-r"), Base64.DEFAULT))
                 val server = it.select("span").text()
-                serverVideoResolver(url, server)?.forEach { video -> videoList.add(video) }
-            }
-            decryptedList.forEach {
-                val server = it.select("span").text()
-                val url = it.attr("onclick")
+                var url = it.attr("onclick")
                     .substringAfter("go_to_player('")
                     .substringBefore("?cover_url=")
                     .substringBefore("')")
                     .substringBefore("',")
                     .substringBefore("?poster")
                     .substringBefore("#poster=")
-                val regIsUrl = "https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)".toRegex()
-                if (regIsUrl.containsMatchIn(url)) {
+
+                if (!regIsUrl.containsMatchIn(url)) {
+                    url = String(Base64.decode(url, Base64.DEFAULT))
+                }
+
+                if (!url.contains("?data=")) {
                     serverVideoResolver(url, server)?.forEach { video -> videoList.add(video) }
                 } else {
-                    val apiPageSoup = client.newCall(GET("$domainUrl/player/?id=$url")).execute().asJsoup()
+                    val apiPageSoup = client.newCall(GET(url)).execute().asJsoup()
                     val realUrl = apiPageSoup.selectFirst("iframe")?.attr("src")
                     if (realUrl != null) {
                         serverVideoResolver(realUrl, server)?.forEach { video -> videoList.add(video) }
@@ -189,12 +190,19 @@ open class Pelisplushd(override val name: String, override val baseUrl: String) 
             } else if (server.lowercase() == "voex") {
                 VoeExtractor(client).videoFromUrl(url, "Voex")?.let { videoList.add(it) }
             } else if (server.lowercase() == "streamlare") {
-                StreamlareExtractor(client).videosFromUrl(url)?.let { videoList.add(it) }
+                videoList.addAll(StreamlareExtractor(client).videosFromUrl(url))
             } else if (server.lowercase() == "doodstream") {
                 val url2 = url.replace("https://doodstream.com/e/", "https://dood.to/e/")
                 DoodExtractor(client).videoFromUrl(url2, "DoodStream", false)?.let { videoList.add(it) }
             } else if (server.lowercase() == "upload") {
                 return YourUploadExtractor(client).videoFromUrl(url, headers = headers)
+            } else if (server.lowercase().contains("streamwish")) {
+                val docHeaders = headers.newBuilder()
+                    .add("Referer", "$baseUrl/")
+                    .build()
+                StreamWishExtractor(client, docHeaders).videosFromUrl(url, "StreamWish ")
+            } else if (server.contains("filemoon") || server.contains("moonplayer")) {
+                FilemoonExtractor(client).videosFromUrl(url, headers = headers).also(videoList::addAll)
             }
         } catch (_: Exception) {}
         return videoList

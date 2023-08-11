@@ -97,20 +97,22 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         return document.select("span.server a").mapNotNull {
-            val url = it.attr("data-src").replace("http://", "https://")
-            when {
-                "new.vid4up" in url -> {
-                    val urlResponse = client.newCall(GET(url, headers))
-                        .execute().asJsoup()
-                    urlResponse.select(videoListSelector()).map(::videoFromElement)
-                }
-                "ok.ru" in url -> OkruExtractor(client).videosFromUrl(url)
-                "mp4upload" in url -> Mp4uploadExtractor(client).videosFromUrl(url, headers)
-                else -> null
-            }
+            runCatching { extractVideos(it) }.getOrElse { emptyList() }
         }.flatten()
     }
-
+    private fun extractVideos(element: Element): List<Video> {
+        val url = element.attr("data-src").replace("http://", "https://")
+        return when {
+            "new.vid4up" in url -> {
+                val urlResponse = client.newCall(GET(url, headers))
+                    .execute().asJsoup()
+                urlResponse.select(videoListSelector()).map(::videoFromElement)
+            }
+            "ok.ru" in url -> OkruExtractor(client).videosFromUrl(url)
+            "mp4upload" in url -> Mp4uploadExtractor(client).videosFromUrl(url, headers)
+            else -> null
+        } ?: emptyList()
+    }
     override fun videoListSelector() = "source"
 
     override fun videoFromElement(element: Element): Video {
@@ -168,7 +170,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // =============================== Latest ===============================
-    override fun latestUpdatesNextPageSelector(): String? = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
 
     override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
 

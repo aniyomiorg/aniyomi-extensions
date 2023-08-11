@@ -46,7 +46,7 @@ class GogoCdnExtractor(private val client: OkHttpClient, private val json: Json)
             val id = httpUrl.queryParameter("id") ?: throw Exception("error getting id")
             val encryptedId = cryptoHandler(id, iv, secretKey)
             val token = httpUrl.queryParameter("token")
-            val qualityPrefix = if (token != null) "Gogostream: " else "Vidstreaming: "
+            val qualityPrefix = if (token != null) "Gogostream - " else "Vidstreaming - "
 
             val jsonResponse = client.newCall(
                 GET(

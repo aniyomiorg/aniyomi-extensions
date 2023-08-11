@@ -6,11 +6,12 @@ ext {
     extName = 'ANIMEWORLD.tv'
     pkgNameSuffix = 'it.animeworld'
     extClass = '.ANIMEWORLD'
-    extVersionCode = 26
+    extVersionCode = 28
     libVersion = '13'
 }
 
 dependencies {
+    implementation(project(':lib-filemoon-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))

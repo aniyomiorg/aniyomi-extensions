@@ -9,7 +9,7 @@ import okhttp3.OkHttpClient
 
 class SibnetExtractor(private val client: OkHttpClient) {
 
-    fun videosFromUrl(url: String): List<Video> {
+    fun videosFromUrl(url: String, prefix: String = ""): List<Video> {
         val videoList = mutableListOf<Video>()
 
         val document = client.newCall(
@@ -31,7 +31,7 @@ class SibnetExtractor(private val client: OkHttpClient) {
         )
 
         videoList.add(
-            Video(videoUrl, "Sibnet", videoUrl, headers = videoHeaders),
+            Video(videoUrl, "${prefix}Sibnet", videoUrl, headers = videoHeaders),
         )
 
         return videoList

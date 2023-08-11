@@ -9,7 +9,6 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.id.kuronime.extractors.AnimekuExtractor
 import eu.kanade.tachiyomi.animeextension.id.kuronime.extractors.HxFileExtractor
 import eu.kanade.tachiyomi.animeextension.id.kuronime.extractors.LinkBoxExtractor
-import eu.kanade.tachiyomi.animeextension.id.kuronime.extractors.StreamlareExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -17,6 +16,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
+import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -151,7 +151,7 @@ class Kuronime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     videoList.addAll(YourUploadExtractor(client).videoFromUrl(decoded, headers, opt.text(), "Original - "))
                 }
                 hosterSelection.contains("streamlare") && decoded.contains("streamlare.com") -> {
-                    videoList.addAll(StreamlareExtractor(client).videosFromUrl(decoded, opt.text()))
+                    videoList.addAll(StreamlareExtractor(client).videosFromUrl(decoded, suffix = "- " + opt.text()))
                 }
                 hosterSelection.contains("hxfile") && decoded.contains("hxfile.co") -> {
                     videoList.addAll(HxFileExtractor(client).getVideoFromUrl(decoded, opt.text()))

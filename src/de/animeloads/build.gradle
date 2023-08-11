@@ -6,7 +6,7 @@ ext {
     extName = 'Anime-Loads'
     pkgNameSuffix = 'de.animeloads'
     extClass = '.AnimeLoads'
-    extVersionCode = 9
+    extVersionCode = 10
     libVersion = '13'
     containsNsfw = true
 }

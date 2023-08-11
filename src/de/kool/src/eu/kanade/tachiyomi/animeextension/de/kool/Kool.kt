@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.de.kool.extractors.FilemoonExtractor
 import eu.kanade.tachiyomi.animeextension.de.movie4k.extractors.VidozaExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -16,10 +15,10 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.POST
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -418,10 +417,7 @@ class Kool : ConfigurableAnimeSource, AnimeHttpSource() {
                 }
                 item.jsonObject["url"]!!.jsonPrimitive.content.contains("https://filemoon.sx") && hosterSelection?.contains("fmoon") == true -> {
                     val videoUrl = item.jsonObject["url"]!!.jsonPrimitive.content
-                    val videos = FilemoonExtractor(client).videoFromUrl(videoUrl)
-                    if (videos != null) {
-                        videoList.addAll(videos)
-                    }
+                    videoList.addAll(FilemoonExtractor(client).videosFromUrl(videoUrl))
                 }
                 response.request.url.toString().contains("kool-cluster/mediahubmx-resolve.json") -> {
                     val videoUrl = item.jsonObject["url"]!!.jsonPrimitive.content
@@ -621,36 +617,47 @@ class Kool : ConfigurableAnimeSource, AnimeHttpSource() {
     // private var animeListS = mutableListOf<SAnime>()
 
     private fun parseSearchAnimeJson(movieJson: String?, url: String): AnimesPage {
+        // Define the batch size for processing JSON items
+        val bATCHSIZE = 50
+
         val animeList = mutableListOf<SAnime>()
         val movieJsonData = movieJson ?: return AnimesPage(emptyList(), false)
         val movieJObject = json.decodeFromString<JsonObject>(movieJsonData)
         val movieArray = movieJObject["items"]?.jsonArray ?: return AnimesPage(emptyList(), false)
         val searchMovieCursor = movieJObject.jsonObject["nextCursor"]?.jsonPrimitive?.content.orEmpty()
-        animeList.addAll(
-            movieArray.mapNotNull { item ->
-                val anime = SAnime.create()
-                anime.title = item.jsonObject["name"]?.jsonPrimitive?.content.orEmpty()
-                val idsObject = item.jsonObject["ids"]?.jsonObject
-                val animeId = idsObject?.get("urlId")?.jsonPrimitive?.content ?: idsObject?.get("tmdb_id")?.jsonPrimitive?.content
-                val type = item.jsonObject["type"]?.jsonPrimitive?.content.orEmpty()
-                when {
-                    type == "iptv" -> {
-                        anime.setUrlWithoutDomain(item.jsonObject["url"]?.jsonPrimitive?.content.orEmpty())
-                    }
-                    else -> {
-                        anime.url = item.jsonObject["url"]?.jsonPrimitive?.content ?: "$baseUrl/data/watch/?_id=$animeId&type=$type"
-                    }
+
+        var hasNextPage = !searchMovieCursor.contains("null")
+
+        for (item in movieArray) {
+            val anime = SAnime.create()
+            anime.title = item.jsonObject["name"]?.jsonPrimitive?.content.orEmpty()
+            val idsObject = item.jsonObject["ids"]?.jsonObject
+            val animeId = idsObject?.get("urlId")?.jsonPrimitive?.content ?: idsObject?.get("tmdb_id")?.jsonPrimitive?.content
+            val type = item.jsonObject["type"]?.jsonPrimitive?.content.orEmpty()
+            when {
+                type == "iptv" -> {
+                    anime.setUrlWithoutDomain(item.jsonObject["url"]?.jsonPrimitive?.content.orEmpty())
                 }
-                if (!url.contains("kool-cluster")) {
-                    anime.thumbnail_url = item.jsonObject["images"]?.jsonObject?.let { images ->
-                        images["poster"]?.jsonPrimitive?.content ?: images["backdrop"]?.jsonPrimitive?.content
-                    }
+                else -> {
+                    anime.url = item.jsonObject["url"]?.jsonPrimitive?.content ?: "$baseUrl/data/watch/?_id=$animeId&type=$type"
                 }
-                anime
-            },
-        )
-        val animeListS = animeList.filterIndexed { index, _ -> index in 1..9 }
-        val hasNextPage = !searchMovieCursor.contains("null")
+            }
+            if (!url.contains("kool-cluster")) {
+                anime.thumbnail_url = item.jsonObject["images"]?.jsonObject?.let { images ->
+                    images["poster"]?.jsonPrimitive?.content ?: images["backdrop"]?.jsonPrimitive?.content
+                }
+            }
+            animeList.add(anime)
+
+            // If the list size reaches a certain limit, return a batch of results to prevent crashes
+            if (animeList.size >= bATCHSIZE) {
+                val animeListS = animeList.filterIndexed { index, _ -> index in 1..50 }
+                return AnimesPage(animeListS.takeIf { it.isNotEmpty() } ?: animeList, hasNextPage)
+            }
+        }
+
+        // If the entire JSON response has been processed, return the remaining results
+        val animeListS = animeList.filterIndexed { index, _ -> index in 1..50 }
         return AnimesPage(animeListS.takeIf { it.isNotEmpty() } ?: animeList, hasNextPage)
     }
 

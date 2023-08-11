@@ -1,5 +1,7 @@
 dependencies {
+    implementation(project(':lib-filemoon-extractor'))
     implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib-streamlare-extractor'))
     implementation(project(':lib-streamsb-extractor'))
     implementation("dev.datlag.jsunpacker:jsunpacker:1.0.1")
 }

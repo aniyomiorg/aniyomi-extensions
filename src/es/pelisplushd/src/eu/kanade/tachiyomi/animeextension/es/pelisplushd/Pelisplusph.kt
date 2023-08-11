@@ -2,21 +2,23 @@ package eu.kanade.tachiyomi.animeextension.es.pelisplushd
 
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.FilemoonExtractor
-import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamlareExtractor
+import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamHideExtractor
+import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamWishExtractor
+import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.UqloadExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -184,12 +186,23 @@ class Pelisplusph(override val name: String, override val baseUrl: String) : Pel
             VoeExtractor(client).videoFromUrl(url, "$prefix VoeCDN")?.let { videoList.add(it) }
         }
         if (embedUrl.contains("filemoon") || embedUrl.contains("moonplayer")) {
-            FilemoonExtractor(client).videoFromUrl(url, prefix)?.let {
-                videoList.addAll(it)
-            }
+            FilemoonExtractor(client).videosFromUrl(url, prefix)
+                .also(videoList::addAll)
         }
         if (embedUrl.contains("streamlare")) {
-            StreamlareExtractor(client).videosFromUrl(url)?.let { videoList.add(it) }
+            videoList.addAll(StreamlareExtractor(client).videosFromUrl(url))
+        }
+        if (embedUrl.contains("streamwish")) {
+            val docHeaders = headers.newBuilder()
+                .add("Referer", "$baseUrl/")
+                .build()
+            StreamWishExtractor(client, docHeaders).videosFromUrl(url, "StreamWish ")
+        }
+        if (embedUrl.contains("ahvsh") || embedUrl.contains("streamhide")) {
+            StreamHideExtractor(client).videosFromUrl(url, "StreamHide")
+        }
+        if (embedUrl.contains("uqload")) {
+            UqloadExtractor(client).videosFromUrl(url, headers)
         }
         return videoList
     }

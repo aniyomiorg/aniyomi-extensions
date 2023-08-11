@@ -1,0 +1,23 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
+
+ext {
+    extName = 'Jav Guru'
+    pkgNameSuffix = 'all.javguru'
+    extClass = '.JavGuru'
+    extVersionCode = 3
+    containsNsfw = true
+}
+
+dependencies {
+    implementation(project(':lib-streamsb-extractor'))
+    implementation(project(':lib-streamtape-extractor'))
+    implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib-mixdrop-extractor'))
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
+    implementation(project(':lib-playlist-utils'))
+}
+
+apply from: "$rootDir/common.gradle"

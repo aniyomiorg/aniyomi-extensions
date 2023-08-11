@@ -8,7 +8,6 @@ import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.AlucardExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.EmbedgramExtractor
-import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.FilemoonExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.GoogleDriveExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MVidooExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MailRuExtractor
@@ -29,6 +28,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
@@ -268,7 +268,7 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     videoList.addAll(EmbedgramExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: "))
                 }
                 "FILEMOON" -> {
-                    videoList.addAll(FilemoonExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: "))
+                    videoList.addAll(FilemoonExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: ", headers = headers))
                 }
                 "GDRIVE" -> {
                     Regex("""[\w-]{28,}""").find(hosterLink)?.groupValues?.get(0)?.let {

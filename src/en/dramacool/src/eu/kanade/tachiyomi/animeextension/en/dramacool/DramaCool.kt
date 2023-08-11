@@ -7,6 +7,7 @@ import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.animeextension.en.dramacool.extractors.StreamWishExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -167,6 +168,11 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     if (video != null) {
                         videoList.add(video)
                     }
+                }
+
+                url.contains("dwish") -> {
+                    val video = StreamWishExtractor(client, headers).videosFromUrl(url)
+                    videoList.addAll(video)
                 }
 
                 url.contains("streamtape") -> {

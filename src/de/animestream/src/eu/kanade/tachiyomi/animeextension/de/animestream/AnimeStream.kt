@@ -2,8 +2,6 @@ package eu.kanade.tachiyomi.animeextension.de.animestream
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.de.animestream.extractors.MetaExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -83,13 +81,11 @@ class AnimeStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Video Extractor
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         return videosFromElement(document)
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
         val url = document.select("div a.lnk-lnk").attr("href")

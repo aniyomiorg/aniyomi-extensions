@@ -5,17 +5,20 @@ ext {
     extName = 'Pelisplushd'
     pkgNameSuffix = 'es.pelisplushd'
     extClass = '.PelisplushdFactory'
-    extVersionCode = 37
+    extVersionCode = 39
     libVersion = '13'
 }
 
 dependencies {
+    implementation(project(':lib-filemoon-extractor'))
+    implementation(project(':lib-streamlare-extractor'))
     implementation(project(':lib-yourupload-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation(project(':lib-voe-extractor'))
     implementation(project(':lib-okru-extractor'))
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
 
 apply from: "$rootDir/common.gradle"

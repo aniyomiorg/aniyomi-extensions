@@ -5,13 +5,14 @@ ext {
     extName = 'Egy Dead'
     pkgNameSuffix = 'ar.egydead'
     extClass = '.EgyDead'
-    extVersionCode = 2
+    extVersionCode = 4
     libVersion = '13'
 }
 
 dependencies {
     implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib-mixdrop-extractor'))
     implementation('dev.datlag.jsunpacker:jsunpacker:1.0.1')
 }
 

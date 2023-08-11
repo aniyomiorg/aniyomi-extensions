@@ -2,9 +2,11 @@ package eu.kanade.tachiyomi.animeextension.it.animeworld
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.widget.Toast
+import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.it.animeworld.extractors.FilemoonExtractor
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.animeextension.it.animeworld.extractors.StreamHideExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -14,6 +16,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -39,7 +42,7 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "ANIMEWORLD.tv"
 
-    override val baseUrl = "https://www.animeworld.tv"
+    override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
 
     override val lang = "it"
 
@@ -166,15 +169,15 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             listOf(Video(url, "AnimeWorld Server", url))
                         }
                         url.contains("https://doo") -> {
-                            val video = DoodExtractor(client).videoFromUrl(url, redirect = true)
-                            video?.let { listOf(it) }
+                            DoodExtractor(client).videoFromUrl(url, redirect = true)
+                                ?.let(::listOf)
                         }
                         url.contains("streamtape") -> {
-                            val video = StreamTapeExtractor(client).videoFromUrl(url.replace("/v/", "/e/"))
-                            video?.let { listOf(it) }
+                            StreamTapeExtractor(client).videoFromUrl(url.replace("/v/", "/e/"))
+                                ?.let(::listOf)
                         }
                         url.contains("filemoon") -> {
-                            FilemoonExtractor(client, headers).videosFromUrl(url, prefix = "${server.first} - ")
+                            FilemoonExtractor(client).videosFromUrl(url, prefix = "${server.first} - ", headers = headers)
                         }
                         server.first.contains("streamhide", true) -> {
                             StreamHideExtractor(client).videosFromUrl(url, headers)
@@ -521,7 +524,7 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // Preferences
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
+        ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
             entries = arrayOf("1080p", "720p", "480p", "360p")
@@ -535,8 +538,9 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        val serverPref = ListPreference(screen.context).apply {
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
             key = "preferred_server"
             title = "Preferred server"
             entries = arrayOf("Animeworld server", "FileMoon", "StreamHide", "StreamSB", "Doodstream", "StreamTape")
@@ -550,9 +554,22 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
-        screen.addPreference(serverPref)
+        }.also(screen::addPreference)
+
+        EditTextPreference(screen.context).apply {
+            key = PREF_DOMAIN_KEY
+            title = PREF_DOMAIN_TITLE
+            summary = PREF_DOMAIN_SUMMARY
+            dialogTitle = PREF_DOMAIN_TITLE
+            dialogMessage = "Default: $PREF_DOMAIN_DEFAULT"
+            setDefaultValue(PREF_DOMAIN_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val newValueString = newValue as String
+                Toast.makeText(screen.context, "Restart Aniyomi to apply new setting.", Toast.LENGTH_LONG).show()
+                preferences.edit().putString(key, newValueString.trim()).commit()
+            }
+        }.also(screen::addPreference)
     }
 
     // Utilities
@@ -567,4 +584,11 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         runBlocking {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
+
+    companion object {
+        private val PREF_DOMAIN_KEY = "preferred_domain_name_v${AppInfo.getVersionName()}"
+        private const val PREF_DOMAIN_TITLE = "Override BaseUrl"
+        private const val PREF_DOMAIN_DEFAULT = "https://www.animeworld.so"
+        private const val PREF_DOMAIN_SUMMARY = "For temporary uses. Updating the extension will erase this setting."
+    }
 }
