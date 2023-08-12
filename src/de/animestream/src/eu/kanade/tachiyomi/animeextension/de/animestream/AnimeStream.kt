@@ -91,9 +91,7 @@ class AnimeStream : ParsedAnimeHttpSource() {
         }
         return videoList.reversed()
     }
-
-    override fun List<Video>.sort(): List<Video> = throw Exception("not used")
-
+    
     override fun videoListSelector() = throw Exception("not used")
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
