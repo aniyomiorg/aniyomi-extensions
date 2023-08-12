@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.de.animestream
 
 import android.app.Application
-import android.content.SharedPreferences
 import eu.kanade.tachiyomi.animeextension.de.animestream.extractors.MetaExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -32,10 +31,6 @@ class AnimeStream : ParsedAnimeHttpSource() {
     override val supportsLatest = false
 
     override val client: OkHttpClient = network.client
-
-    private val preferences: SharedPreferences by lazy {
-        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
 
     override fun popularAnimeSelector(): String = "div.movies-list div.ml-item"
 
@@ -98,7 +93,7 @@ class AnimeStream : ParsedAnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val hoster = preferences.getString("preferred_hoster", null)
+        val hoster = .getString("preferred_hoster", null)
         if (hoster != null) {
             val newList = mutableListOf<Video>()
             var preferred = 0
