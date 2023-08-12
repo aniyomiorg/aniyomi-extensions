@@ -92,23 +92,7 @@ class AnimeStream : ParsedAnimeHttpSource() {
         return videoList.reversed()
     }
 
-    override fun List<Video>.sort(): List<Video> {
-        val hoster = .getString("preferred_hoster", null)
-        if (hoster != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(hoster)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
-    }
+    override fun List<Video>.sort(): List<Video> = throw Exception("not used")
 
     override fun videoListSelector() = throw Exception("not used")
 
