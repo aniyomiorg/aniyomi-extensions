@@ -15,7 +15,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
@@ -101,7 +100,6 @@ class AnimeIndo : AnimeStream(
     }
 
     // ============================ Video Links =============================
-    private val streamSbExtractor by lazy { StreamSBExtractor(client) }
     private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
     private val gdrivePlayerExtractor by lazy { GdrivePlayerExtractor(client) }
     private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
@@ -111,7 +109,6 @@ class AnimeIndo : AnimeStream(
     override fun getVideoList(url: String, name: String): List<Video> {
         return with(name) {
             when {
-                contains("streamsb") -> streamSbExtractor.videosFromUrl(url, headers)
                 contains("streamtape") -> streamTapeExtractor.videoFromUrl(url)?.let(::listOf).orEmpty()
                 contains("mp4") -> mp4uploadExtractor.videosFromUrl(url, headers)
                 contains("yourupload") -> yourUploadExtractor.videoFromUrl(url, headers)

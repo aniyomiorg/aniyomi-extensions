@@ -5,7 +5,6 @@ import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.POST
@@ -23,7 +22,7 @@ class Kinoking : DooPlay(
         private const val PREF_HOSTER_KEY = "preferred_hoster"
         private const val PREF_HOSTER_TITLE = "Standard-Hoster"
         private const val PREF_HOSTER_DEFAULT = "https://dood"
-        private val PREF_HOSTER_ENTRIES = arrayOf("Doodstream", "StreamSB", "Voe")
+        private val PREF_HOSTER_ENTRIES = arrayOf("Doodstream", "Voe")
         private val PREF_HOSTER_VALUES = arrayOf("https://dood", "https://watchsb.com", "https://voe.sx")
 
         private const val PREF_HOSTER_SELECTION_KEY = "hoster_selection"
@@ -86,15 +85,6 @@ class Kinoking : DooPlay(
 
     private fun getPlayerVideos(link: String, element: Element, hosterSelection: Set<String>): List<Video>? {
         return when {
-            link.contains("https://watchsb") || link.contains("https://viewsb") && hosterSelection.contains("watchsb") -> {
-                if (element.select("span.flag img").attr("data-src").contains("/en.")) {
-                    val lang = "Englisch"
-                    StreamSBExtractor(client).videosFromUrl(link, headers, suffix = lang)
-                } else {
-                    val lang = "Deutsch"
-                    StreamSBExtractor(client).videosFromUrl(link, headers, lang)
-                }
-            }
             link.contains("https://dood.") || link.contains("https://doodstream.") && hosterSelection.contains("dood") -> {
                 val quality = "Doodstream"
                 val redirect = !link.contains("https://doodstream")

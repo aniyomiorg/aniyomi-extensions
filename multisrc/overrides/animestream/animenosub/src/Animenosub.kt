@@ -8,7 +8,6 @@ import eu.kanade.tachiyomi.animeextension.en.animenosub.extractors.VtubeExtracto
 import eu.kanade.tachiyomi.animeextension.en.animenosub.extractors.WolfstreamExtractor
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
 import org.jsoup.nodes.Element
 
@@ -27,21 +26,8 @@ class Animenosub : AnimeStream(
     // ============================ Video Links =============================
 
     override fun getVideoList(url: String, name: String): List<Video> {
-        val streamSbDomains = listOf(
-            "sbhight", "sbrity", "sbembed.com", "sbembed1.com", "sbplay.org",
-            "sbvideo.net", "streamsb.net", "sbplay.one", "cloudemb.com",
-            "playersb.com", "tubesb.com", "sbplay1.com", "embedsb.com",
-            "watchsb.com", "sbplay2.com", "japopav.tv", "viewsb.com",
-            "sbfast", "sbfull.com", "javplaya.com", "ssbstream.net",
-            "p1ayerjavseen.com", "sbthe.com", "vidmovie.xyz", "sbspeed.com",
-            "streamsss.net", "sblanh.com", "tvmshow.com", "sbanh.com",
-            "streamovies.xyz", "lvturbo.com", "sbrapid.com",
-        )
         val prefix = "$name - "
         return when {
-            streamSbDomains.any { it in url } -> {
-                StreamSBExtractor(client).videosFromUrl(url, headers, prefix = prefix)
-            }
             url.contains("streamwish") -> {
                 StreamWishExtractor(client, headers).videosFromUrl(url, prefix)
             }
@@ -124,9 +110,8 @@ class Animenosub : AnimeStream(
 
         private const val PREF_SERVER_KEY = "preferred_server"
         private const val PREF_SERVER_TITLE = "Preferred Video Server"
-        private const val PREF_SERVER_DEFAULT = "StreamSB"
+        private const val PREF_SERVER_DEFAULT = "StreamWish"
         private val PREF_SERVER_VALUES = arrayOf(
-            "StreamSB",
             "StreamWish",
             "VidMoly",
             "Vtube",

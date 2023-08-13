@@ -16,7 +16,6 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -178,19 +177,6 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         fetchUrls(locationsDdh).map { url ->
                             val language = if (item["languaje"]!!.jsonPrimitive!!.content == "1") "[Lat] " else "[Sub] "
                             val embedUrl = url.lowercase()
-                            if (embedUrl.contains("sbembed.com") || embedUrl.contains("sbembed1.com") || embedUrl.contains("sbplay.org") ||
-                                embedUrl.contains("sbvideo.net") || embedUrl.contains("streamsb.net") || embedUrl.contains("sbplay.one") ||
-                                embedUrl.contains("cloudemb.com") || embedUrl.contains("playersb.com") || embedUrl.contains("tubesb.com") ||
-                                embedUrl.contains("sbplay1.com") || embedUrl.contains("embedsb.com") || embedUrl.contains("watchsb.com") ||
-                                embedUrl.contains("sbplay2.com") || embedUrl.contains("japopav.tv") || embedUrl.contains("viewsb.com") ||
-                                embedUrl.contains("sbfast") || embedUrl.contains("sbfull.com") || embedUrl.contains("javplaya.com") ||
-                                embedUrl.contains("ssbstream.net") || embedUrl.contains("p1ayerjavseen.com") || embedUrl.contains("sbthe.com") ||
-                                embedUrl.contains("vidmovie.xyz") || embedUrl.contains("sbspeed.com") || embedUrl.contains("streamsss.net") ||
-                                embedUrl.contains("sblanh.com") || embedUrl.contains("lvturbo.com")
-                            ) {
-                                val videos = StreamSBExtractor(client).videosFromUrl(url, headers, language)
-                                videoList.addAll(videos)
-                            }
                             if (embedUrl.contains("filemoon")) {
                                 FilemoonExtractor(client).videosFromUrl(url, language)
                                     .also(videoList::addAll)
@@ -418,8 +404,6 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val options = arrayOf(
             "[Sub] Okru:1080p", "[Sub] Okru:720p", "[Sub] Okru:480p", "[Sub] Okru:360p", "[Sub] Okru:240p", // Okru [Sub]
             "[Lat] Okru:1080p", "[Lat] Okru:720p", "[Lat] Okru:480p", "[Lat] Okru:360p", "[Lat] Okru:240p", // Okru [Lat]
-            "[Sub] StreamSB:1080p", "[Sub] StreamSB:720p", "[Sub] StreamSB:480p", "[Sub] StreamSB:360p", "[Sub] StreamSB:240p", // StreamSB [Sub]
-            "[Lat] StreamSB:1080p", "[Lat] StreamSB:720p", "[Lat] StreamSB:480p", "[Lat] StreamSB:360p", "[Lat] StreamSB:240p", // StreamSB [Lat]
             "[Sub] StreamTape", "[Lat] StreamTape", // video servers without resolution
             "[Sub] DoodStream", "[Lat] DoodStream", // video servers without resolution
             "[Sub] SolidFiles", "[Lat] SolidFiles", // video servers without resolution

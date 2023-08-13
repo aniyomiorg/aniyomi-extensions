@@ -5,13 +5,12 @@ ext {
     extName = 'DramaCool'
     pkgNameSuffix = 'en.dramacool'
     extClass = '.DramaCool'
-    extVersionCode = 39
+    extVersionCode = 40
     libVersion = '13'
 }
 
 dependencies {
     implementation(project(':lib-streamtape-extractor'))
-    implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation(project(':lib-playlist-utils'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"

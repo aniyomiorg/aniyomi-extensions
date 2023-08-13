@@ -5,13 +5,12 @@ ext {
     extName = 'AsianLoad'
     pkgNameSuffix = 'en.asianload'
     extClass = '.AsianLoad'
-    extVersionCode = 31
+    extVersionCode = 32
     libVersion = '13'
 }
 
 dependencies {
     implementation(project(':lib-streamtape-extractor'))
-    implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
 }
 

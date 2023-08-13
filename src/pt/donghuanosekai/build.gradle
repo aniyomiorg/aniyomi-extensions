@@ -8,11 +8,7 @@ ext {
     extName = 'Donghua no Sekai'
     pkgNameSuffix = 'pt.donghuanosekai'
     extClass = '.DonghuaNoSekai'
-    extVersionCode = 1
-}
-
-dependencies {
-    implementation(project(":lib-streamsb-extractor"))
+    extVersionCode = 2
 }
 
 apply from: "$rootDir/common.gradle"

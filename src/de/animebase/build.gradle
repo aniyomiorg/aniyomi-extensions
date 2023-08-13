@@ -6,12 +6,8 @@ ext {
     extName = 'Anime-Base'
     pkgNameSuffix = 'de.animebase'
     extClass = '.AnimeBase'
-    extVersionCode = 11
+    extVersionCode = 12
     libVersion = '13'
-}
-
-dependencies {
-    implementation(project(':lib-streamsb-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

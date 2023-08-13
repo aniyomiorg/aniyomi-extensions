@@ -5,14 +5,13 @@ ext {
     extName = 'Cuevana'
     pkgNameSuffix = 'es.cuevana'
     extClass = '.Cuevana'
-    extVersionCode = 18
+    extVersionCode = 19
     libVersion = '13'
 }
 
 dependencies {
     implementation(project(':lib-yourupload-extractor'))
     implementation(project(':lib-dood-extractor'))
-    implementation project(path: ':lib-streamsb-extractor')
     implementation project(path: ':lib-okru-extractor')
     implementation project(path: ':lib-voe-extractor')
     implementation project(path: ':lib-streamtape-extractor')

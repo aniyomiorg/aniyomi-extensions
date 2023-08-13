@@ -12,7 +12,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.chillxextractor.ChillxExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
@@ -235,9 +234,6 @@ class AnimeSAGA : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             iframeUrl.toHttpUrl().host.equals(videoHost) -> {
                 ChillxExtractor(client, headers).videoFromUrl(iframeUrl, "$baseUrl/")
             }
-            STREAMSB_DOMAINS.any { it in iframeUrl } -> {
-                StreamSBExtractor(client).videosFromUrl(iframeUrl, headers, prefix = "StreamSB - ")
-            }
             else -> emptyList()
         }
     }
@@ -307,17 +303,6 @@ class AnimeSAGA : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         private const val PREF_SERVER_KEY = "preferred_server"
         private const val PREF_SERVER_DEFAULT = "chillx"
-
-        private val STREAMSB_DOMAINS = listOf(
-            "sbhight", "sbrity", "sbembed.com", "sbembed1.com", "sbplay.org",
-            "sbvideo.net", "streamsb.net", "sbplay.one", "cloudemb.com",
-            "playersb.com", "tubesb.com", "sbplay1.com", "embedsb.com",
-            "watchsb.com", "sbplay2.com", "japopav.tv", "viewsb.com",
-            "sbfast", "sbfull.com", "javplaya.com", "ssbstream.net",
-            "p1ayerjavseen.com", "sbthe.com", "vidmovie.xyz", "sbspeed.com",
-            "streamsss.net", "sblanh.com", "tvmshow.com", "sbanh.com",
-            "streamovies.xyz", "sblona.com", "baryonmode.online",
-        )
     }
 
     // ============================== Settings ==============================
@@ -342,8 +327,8 @@ class AnimeSAGA : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ListPreference(screen.context).apply {
             key = PREF_SERVER_KEY
             title = "Preferred server"
-            entries = arrayOf("Chillx", "StreamSB")
-            entryValues = arrayOf("chillx", "streamsb")
+            entries = arrayOf("Chillx")
+            entryValues = arrayOf("chillx")
             setDefaultValue(PREF_SERVER_DEFAULT)
             summary = "%s"
 

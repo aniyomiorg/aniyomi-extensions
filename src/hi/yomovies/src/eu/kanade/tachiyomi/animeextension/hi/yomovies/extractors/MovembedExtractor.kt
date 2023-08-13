@@ -4,7 +4,6 @@ import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
@@ -30,14 +29,6 @@ class MovembedExtractor(private val client: OkHttpClient, private val headers: H
 
     private fun extractVideosFromIframe(iframeUrl: String): List<Video> {
         return when {
-            STREAM_SB_DOMAINS.any { iframeUrl.contains(it) } -> {
-                val url = iframeUrl.toHttpUrl()
-                val subtitleList = url.queryParameter("caption_1")?.let { t ->
-                    listOf(Track(t, url.queryParameter("sub_1") ?: "English"))
-                } ?: emptyList()
-
-                StreamSBExtractor(client).videosFromUrl(iframeUrl, headers, prefix = "(movembed) StreamSB - ", externalSubs = subtitleList)
-            }
             MIXDROP_DOMAINS.any { iframeUrl.contains(it) } -> {
                 val url = iframeUrl.toHttpUrl()
                 val subtitleList = url.queryParameter("sub1")?.let { t ->
@@ -65,16 +56,6 @@ class MovembedExtractor(private val client: OkHttpClient, private val headers: H
         }
 
     companion object {
-        private val STREAM_SB_DOMAINS = listOf(
-            "sbhight", "sbrity", "sbembed.com", "sbembed1.com", "sbplay.org",
-            "sbvideo.net", "streamsb.net", "sbplay.one", "cloudemb.com",
-            "playersb.com", "tubesb.com", "sbplay1.com", "embedsb.com",
-            "watchsb.com", "sbplay2.com", "japopav.tv", "viewsb.com",
-            "sbfast", "sbfull.com", "javplaya.com", "ssbstream.net",
-            "p1ayerjavseen.com", "sbthe.com", "vidmovie.xyz", "sbspeed.com",
-            "streamsss.net", "sblanh.com", "tvmshow.com", "sbanh.com",
-            "streamovies.xyz", "sblona.com", "sbnet.one",
-        )
 
         private val MIXDROP_DOMAINS = listOf(
             "mixdrop",

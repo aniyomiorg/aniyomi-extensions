@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -161,7 +160,6 @@ class Okanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
     private val okruExtractor by lazy { OkruExtractor(client) }
     private val voeExtractor by lazy { VoeExtractor(client) }
-    private val streamSbExtractor by lazy { StreamSBExtractor(client) }
     private val vidBomExtractor by lazy { VidBomExtractor(client) }
 
     private fun extractVideosFromUrl(url: String, quality: String, selection: Set<String>): List<Video> {
@@ -180,9 +178,6 @@ class Okanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 "voe.sx" in url && selection.contains("Voe") -> {
                     voeExtractor.videoFromUrl(url, "VoeSX ($quality)")
                         ?.let(::listOf)
-                }
-                STREAM_SB_DOMAINS.any(url::contains) && selection.contains("StreamSB") -> {
-                    streamSbExtractor.videosFromUrl(url, headers)
                 }
                 VID_BOM_DOMAINS.any(url::contains) && selection.contains("VidBom") -> {
                     vidBomExtractor.videosFromUrl(url)
@@ -251,17 +246,6 @@ class Okanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     companion object {
         const val PREFIX_SEARCH = "id:"
 
-        private val STREAM_SB_DOMAINS = listOf(
-            "sbhight", "sbrity", "sbembed.com", "sbembed1.com", "sbplay.org",
-            "sbvideo.net", "streamsb.net", "sbplay.one", "cloudemb.com",
-            "playersb.com", "tubesb.com", "sbplay1.com", "embedsb.com",
-            "watchsb.com", "sbplay2.com", "japopav.tv", "viewsb.com",
-            "sbfast", "sbfull.com", "javplaya.com", "ssbstream.net",
-            "p1ayerjavseen.com", "sbthe.com", "vidmovie.xyz", "sbspeed.com",
-            "streamsss.net", "sblanh.com", "tvmshow.com", "sbanh.com",
-            "streamovies.xyz", "sblona.com", "likessb.com",
-        )
-
         private val VID_BOM_DOMAINS = listOf("vidbam", "vadbam", "vidbom", "vidbm")
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
@@ -271,7 +255,7 @@ class Okanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         private const val PREF_HOSTER_SELECTION_KEY = "pref_hoster_selection"
         private const val PREF_HOSTER_SELECTION_TITLE = "Enable/Disable hosts"
-        private val PREF_HOSTER_SELECTION_ENTRIES = arrayOf("Dood", "StreamSB", "Voe", "Mp4upload", "VidBom", "Okru")
+        private val PREF_HOSTER_SELECTION_ENTRIES = arrayOf("Dood", "Voe", "Mp4upload", "VidBom", "Okru")
         private val PREF_HOSTER_SELECTION_DEFAULT by lazy { PREF_HOSTER_SELECTION_ENTRIES.toSet() }
     }
 }

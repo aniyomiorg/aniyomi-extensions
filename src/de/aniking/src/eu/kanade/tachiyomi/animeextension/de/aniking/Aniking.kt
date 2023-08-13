@@ -13,7 +13,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -137,10 +136,6 @@ class Aniking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         ?.let(::listOf)
                 }
 
-                ("https://viewsb.com" in url || "https://watchsb.com" in url) && "streamsb" in hosterSelection -> {
-                    StreamSBExtractor(client).videosFromUrl(url, headers)
-                }
-
                 else -> null
             }
         }.getOrNull() ?: emptyList()
@@ -231,13 +226,13 @@ class Aniking : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_HOSTER_KEY = "preferred_hoster"
         private const val PREF_HOSTER_TITLE = "Standard-Hoster"
         private const val PREF_HOSTER_DEFAULT = "https://streamtape.com"
-        private val PREF_HOSTER_ENTRIES = arrayOf("Streamtape", "Doodstream", "StreamZ", "StreamSB")
-        private val PREF_HOSTER_VALUES = arrayOf("https://streamz.ws", "https://dood", "https://voe.sx", "https://viewsb.com")
+        private val PREF_HOSTER_ENTRIES = arrayOf("Streamtape", "Doodstream", "StreamZ")
+        private val PREF_HOSTER_VALUES = arrayOf("https://streamz.ws", "https://dood", "https://voe.sx")
 
         private const val PREF_SELECTION_KEY = "hoster_selection"
         private const val PREF_SELECTION_TITLE = "Hoster auswählen"
         private val PREF_SELECTION_ENTRIES = PREF_HOSTER_ENTRIES
-        private val PREF_SELECTION_VALUES = arrayOf("stape", "dood", "streamz", "streamsb")
+        private val PREF_SELECTION_VALUES = arrayOf("stape", "dood", "streamz")
         private val PREF_SELECTION_DEFAULT = PREF_SELECTION_VALUES.toSet()
     }
 }

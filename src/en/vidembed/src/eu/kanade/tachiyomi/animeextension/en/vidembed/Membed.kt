@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
@@ -120,9 +119,6 @@ class Membed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     }
                     serverName.contains("DoodStream") -> {
                         DoodExtractor(client).videosFromUrl(url)
-                    }
-                    serverName.contains("StreamSB") -> {
-                        StreamSBExtractor(client).videosFromUrl(url, headers)
                     }
                     serverName.contains("Mixdrop") -> {
                         MixDropExtractor(client).videoFromUrl(url)

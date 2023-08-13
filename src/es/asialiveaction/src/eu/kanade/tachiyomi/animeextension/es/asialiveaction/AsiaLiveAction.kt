@@ -12,7 +12,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
@@ -99,12 +98,7 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         document.select("script").forEach { script ->
             if (script.data().contains("var videosJap = [") || script.data().contains("var videosCor = [")) {
                 val content = script.data()
-                val sbDomains = arrayOf("sbfull", "sbplay", "cloudemb", "sbplay", "embedsb", "pelistop", "streamsb", "sbplay", "sbspeed")
-                if (sbDomains.any { s -> content.contains(s) }) {
-                    val url = content.substringAfter(",['SB','").substringBefore("',0,0]")
-                    val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
-                    videoList.addAll(videos)
-                }
+
                 if (content.contains("okru")) {
                     val url = content.substringAfter(",['OK','").substringBefore("',0,0]")
                     val videos = OkruExtractor(client).videosFromUrl(url)
@@ -208,8 +202,11 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
-            "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", // Okru
-            "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", // StreamSB
+            "Okru:1080p",
+            "Okru:720p",
+            "Okru:480p",
+            "Okru:360p",
+            "Okru:240p", // Okru
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"

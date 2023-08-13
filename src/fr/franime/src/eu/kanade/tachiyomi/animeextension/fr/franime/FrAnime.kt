@@ -10,7 +10,6 @@ import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.lib.mytvextractor.MytvExtractor
 import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -100,7 +99,6 @@ class FrAnime : AnimeHttpSource() {
                 "myvi" -> MytvExtractor(client).videosFromUrl(playerUrl)
                 "sendvid" -> SendvidExtractor(client, headers).videosFromUrl(playerUrl)
                 "sibnet" -> SibnetExtractor(client).videosFromUrl(playerUrl)
-                "sbfull" -> StreamSBExtractor(client).videosFromUrl(playerUrl, headers)
                 else -> emptyList()
             }
         }

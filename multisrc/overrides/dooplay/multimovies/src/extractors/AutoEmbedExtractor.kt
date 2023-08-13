@@ -685,7 +685,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -758,9 +757,6 @@ class AutoEmbedExtractor(private val client: OkHttpClient) {
                 val videoUrl = server.url
 
                 when {
-                    videoUrl.contains("streamsb") -> {
-                        StreamSBExtractor(client).videosFromUrl(videoUrl, headers = headers, prefix = prefix)
-                    }
                     videoUrl.contains("streamlare") -> {
                         StreamlareExtractor(client).videosFromUrl(videoUrl, prefix = prefix)
                     }

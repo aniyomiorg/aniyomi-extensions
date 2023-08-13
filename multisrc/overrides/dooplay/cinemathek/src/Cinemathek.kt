@@ -8,7 +8,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -73,9 +72,7 @@ class Cinemathek : DooPlay(
             url.contains("https://streamlare.com") && hosterSelection.contains("slare") -> {
                 StreamlareExtractor(client).videosFromUrl(url)
             }
-            url.contains("https://streamsb") && hosterSelection.contains("streamsb") -> {
-                StreamSBExtractor(client).videosFromUrl(url, headers = headers)
-            }
+
             url.contains("https://filemoon") && hosterSelection.contains("fmoon") -> {
                 FilemoonExtractor(client).videosFromUrl(url)
             }
@@ -158,13 +155,13 @@ class Cinemathek : DooPlay(
         private const val PREF_HOSTER_KEY = "preferred_hoster"
         private const val PREF_HOSTER_TITLE = "Standard-Hoster"
         private const val PREF_HOSTER_DEFAULT = "https://viewsb.com"
-        private val PREF_HOSTER_ENTRIES = arrayOf("Streamlare", "StreamSB", "Filemoon", "DoodStream", "StreamHide")
+        private val PREF_HOSTER_ENTRIES = arrayOf("Streamlare", "Filemoon", "DoodStream", "StreamHide")
         private val PREF_HOSTER_VALUES = arrayOf("https://streamlare", "https://viewsb.com", "https://filemoon", "https://dooood", "https://streamhide")
 
         private const val PREF_HOSTER_SELECTION_KEY = "hoster_selection"
         private const val PREF_HOSTER_SELECTION_TITLE = "Hoster auswählen"
         private val PREF_HOSTER_SELECTION_ENTRIES = PREF_HOSTER_ENTRIES
-        private val PREF_HOSTER_SELECTION_VALUES = arrayOf("slare", "streamsb", "fmoon", "dood", "shide")
+        private val PREF_HOSTER_SELECTION_VALUES = arrayOf("slare", "fmoon", "dood", "shide")
         private val PREF_HOSTER_SELECTION_DEFAULT = PREF_HOSTER_SELECTION_VALUES.toSet()
 
         private const val PREF_QUALITY_KEY = "preferred_quality"

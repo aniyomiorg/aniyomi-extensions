@@ -19,7 +19,6 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -171,9 +170,6 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     .build()
                 val finalUrl = STREAMWISH_REGEX.find(url)!!.groupValues[0]
                 StreamWishExtractor(client).videosFromUrl("https://www.$finalUrl", headers)
-            }
-            STREAMSB_REGEX.containsMatchIn(url) -> {
-                StreamSBExtractor(client).videosFromUrl(url, headers)
             }
             else -> null
         } ?: emptyList()
@@ -392,7 +388,6 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     )
     companion object {
         private val VIDBOM_REGEX = Regex("(?:v[aie]d[bp][aoe]?m|myvii?d|segavid|v[aei]{1,2}dshar[er]?)\\.(?:com|net|org|xyz)(?::\\d+)?/(?:embed[/-])?([A-Za-z0-9]+)")
-        private val STREAMSB_REGEX = Regex("(?:view|watch|embed(?:tv)?|tube|player|cloudemb|japopav|javplaya|p1ayerjavseen|gomovizplay|stream(?:ovies)?|vidmovie|javside|aintahalu|finaltayibin|yahlusubh|taeyabathuna|)?s{0,2}b?(?:embed\\d?|play\\d?|video|fast|full|streams{0,3}|the|speed|l?anh|tvmshow|longvu|arslanrocky|chill|rity|hight|brisk|face|lvturbo|net|one|asian|ani|rapid|sonic|lona)?\\.(?:com|net|org|one|tv|xyz|fun|pro|sbs)")
         private val DOOD_REGEX = Regex("(do*d(?:stream)?\\.(?:com?|watch|to|s[ho]|cx|la|w[sf]|pm|re|yt|stream))/[de]/([0-9a-zA-Z]+)")
         private val STREAMWISH_REGEX = Regex("((?:streamwish|anime7u|animezd|ajmidyad|khadhnayad|yadmalik|hayaatieadhab)\\.(?:com|to|sbs))/(?:e/|v/|f/)?([0-9a-zA-Z]+)")
     }

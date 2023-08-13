@@ -5,13 +5,12 @@ ext {
     extName = 'AnimeOwl'
     pkgNameSuffix = 'en.animeowl'
     extClass = '.AnimeOwl'
-    extVersionCode = 12
+    extVersionCode = 13
     libVersion = '13'
 }
 
 dependencies {
     implementation(project(':lib-dood-extractor'))
-    implementation(project(':lib-streamsb-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

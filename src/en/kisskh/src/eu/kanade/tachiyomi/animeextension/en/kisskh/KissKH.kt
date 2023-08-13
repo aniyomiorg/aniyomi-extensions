@@ -1,11 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.en.kisskh
 
-import android.app.Application
-import android.content.SharedPreferences
-import androidx.preference.ListPreference
-import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.en.kisskh.extractors.StreamSBExtractor
-import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -27,10 +21,9 @@ import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
-class KissKH : ConfigurableAnimeSource, AnimeHttpSource() {
+class KissKH : AnimeHttpSource() {
 
     override val name = "KissKH"
 
@@ -41,10 +34,6 @@ class KissKH : ConfigurableAnimeSource, AnimeHttpSource() {
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.client
-
-    private val preferences: SharedPreferences by lazy {
-        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
-    }
 
     private val json = Json {
         isLenient = true
@@ -138,29 +127,8 @@ class KissKH : ConfigurableAnimeSource, AnimeHttpSource() {
         }
         val videoUrl = jObject["Video"]!!.jsonPrimitive.content
         videoList.add(Video(videoUrl, "FirstParty", videoUrl, subtitleTracks = subList, headers = Headers.headersOf("referer", "https://kisskh.me/", "origin", "https://kisskh.me")))
-        val thridpartyurl = jObject["ThirdParty"]!!.jsonPrimitive.content
 
-        val video = StreamSBExtractor(client).videosFromUrl(thridpartyurl, headers, common = true)
-        videoList.addAll(video)
         return videoList.reversed()
-    }
-
-    override fun List<Video>.sort(): List<Video> {
-        val hoster = preferences.getString("preferred_hoster", null)
-        if (hoster != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(hoster)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
     }
 
     // Search
@@ -239,26 +207,5 @@ class KissKH : ConfigurableAnimeSource, AnimeHttpSource() {
             animeList.add(anime)
         }
         return AnimesPage(animeList, hasNextPage)
-    }
-
-    // Preferences
-
-    override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val hosterPref = ListPreference(screen.context).apply {
-            key = "preferred_hoster"
-            title = "Standard-Hoster"
-            entries = arrayOf("StreamSB", "FirstParty")
-            entryValues = arrayOf("https://streamsss.net", "FirstParty")
-            setDefaultValue("FirstParty")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
-        screen.addPreference(hosterPref)
     }
 }

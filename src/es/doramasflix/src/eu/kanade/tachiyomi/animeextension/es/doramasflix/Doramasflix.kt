@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -347,28 +346,12 @@ class Doramasflix : ConfigurableAnimeSource, AnimeHttpSource() {
                 VoeExtractor(client).videoFromUrl(link, "Voex")?.let { videos.add(it) }
             } catch (_: Exception) {}
         }
-        if (link.contains("sbembed.com") || link.contains("sbembed1.com") || link.contains("sbplay.org") ||
-            link.contains("sbvideo.net") || link.contains("streamsb.net") || link.contains("sbplay.one") ||
-            link.contains("cloudemb.com") || link.contains("playersb.com") || link.contains("tubesb.com") ||
-            link.contains("sbplay1.com") || link.contains("embedsb.com") || link.contains("watchsb.com") ||
-            link.contains("sbplay2.com") || link.contains("japopav.tv") || link.contains("viewsb.com") ||
-            link.contains("sbfast") || link.contains("sbfull.com") || link.contains("javplaya.com") ||
-            link.contains("ssbstream.net") || link.contains("p1ayerjavseen.com") || link.contains("sbthe.com") ||
-            link.contains("vidmovie.xyz") || link.contains("sbspeed.com") || link.contains("streamsss.net") ||
-            link.contains("sblanh.com") || link.contains("tvmshow.com") || link.contains("sbanh.com") ||
-            link.contains("streamovies.xyz")
-        ) {
-            try {
-                StreamSBExtractor(client).videosFromUrl(link, headers).let { videos.addAll(it) }
-            } catch (_: Exception) {}
-        }
         return videos
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
             "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
-            "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
             "Streamlare:1080p", "Streamlare:720p", "Streamlare:480p", "Streamlare:360p", "Streamlare:240p", // Streamlare
             "StreamTape", "Voex", "DoodStream", "YourUpload", "MixDrop",
         )

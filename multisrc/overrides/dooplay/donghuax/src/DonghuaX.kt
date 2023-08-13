@@ -8,7 +8,6 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -244,18 +243,6 @@ class DonghuaX : DooPlay(
                     DailymotionExtractor(client).videosFromUrl("https://www.dailymotion.com/embed/video/$it", "Dailymotion - ")
                 } ?: emptyList()
             }
-            url.contains("sbembed.com") || url.contains("sbembed1.com") || url.contains("sbplay.org") ||
-                url.contains("sbvideo.net") || url.contains("streamsb.net") || url.contains("sbplay.one") ||
-                url.contains("cloudemb.com") || url.contains("playersb.com") || url.contains("tubesb.com") ||
-                url.contains("sbplay1.com") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
-                url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
-                url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
-                url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com") ||
-                url.contains("vidmovie.xyz") || url.contains("sbspeed.com") || url.contains("streamsss.net") ||
-                url.contains("sblanh.com") || url.contains("sbbrisk.com") || url.contains("lvturbo.com") ||
-                url.contains("sbrapid.com") -> {
-                StreamSBExtractor(client).videosFromUrl(url, headers)
-            }
             url.contains("csst.online") -> {
                 val urlRegex = Regex("""\[(.*?)\](https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*))""")
                 val dataScript = client.newCall(GET(url)).execute()
@@ -366,7 +353,7 @@ class DonghuaX : DooPlay(
         private const val PREF_SERVER_KEY = "preferred_server"
         private const val PREF_SERVER_TITLE = "Preferred server"
         private const val PREF_SERVER_DEFAULT = "AllVideo"
-        private val PREF_SERVER_ENTRIES = arrayOf("AllVideo", "Dailymotion", "StreamSB", "Internal Player", "Internal Video", "Blogger")
+        private val PREF_SERVER_ENTRIES = arrayOf("AllVideo", "Dailymotion", "Internal Player", "Internal Video", "Blogger")
         private val PREF_SERVER_VALUES = PREF_SERVER_ENTRIES
     }
 }

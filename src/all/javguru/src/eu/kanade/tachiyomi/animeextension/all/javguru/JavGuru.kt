@@ -11,7 +11,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservable
@@ -268,7 +267,6 @@ class JavGuru : AnimeHttpSource() {
         return redirectUrl
     }
 
-    private val streamSbExtractor by lazy { StreamSBExtractor(client) }
     private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
     private val doodExtractor by lazy { DoodExtractor(client) }
     private val mixDropExtractor by lazy { MixDropExtractor(client) }
@@ -297,10 +295,6 @@ class JavGuru : AnimeHttpSource() {
 
                 hosterUrl.contains("emturbovid") -> {
                     emTurboExtractor.getVideos(hosterUrl)
-                }
-
-                STREAM_SB_DOMAINS.any { it in hosterUrl } -> {
-                    streamSbExtractor.videosFromUrl(hosterUrl, headers)
                 }
 
                 else -> {
@@ -349,16 +343,6 @@ class JavGuru : AnimeHttpSource() {
         private val IFRAME_OLID_REGEX = Regex("""var OLID = '([^']+)'""")
         private val IFRAME_OLID_URL = Regex("""src="([^"]+)"""")
 
-        private val STREAM_SB_DOMAINS = listOf(
-            "sbhight", "sbrity", "sbembed.com", "sbembed1.com", "sbplay.org",
-            "sbvideo.net", "streamsb.net", "sbplay.one", "cloudemb.com",
-            "playersb.com", "tubesb.com", "sbplay1.com", "embedsb.com",
-            "watchsb.com", "sbplay2.com", "japopav.tv", "viewsb.com",
-            "sbfast", "sbfull.com", "javplaya.com", "ssbstream.net",
-            "p1ayerjavseen.com", "sbthe.com", "vidmovie.xyz", "sbspeed.com",
-            "streamsss.net", "sblanh.com", "tvmshow.com", "sbanh.com",
-            "streamovies.xyz", "sblona.com", "likessb.com",
-        )
         private val MIXDROP_DOMAINS = listOf(
             "mixdrop",
             "mixdroop",

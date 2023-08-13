@@ -7,7 +7,6 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
 import java.text.SimpleDateFormat
@@ -47,15 +46,6 @@ class AnimeTitans : AnimeStream(
     override val videoSortPrefDefault = prefQualityDefault
 
     override fun getVideoList(url: String, name: String): List<Video> {
-        val streamSbDomains = listOf(
-            "sbembed.com", "sbembed1.com", "sbplay.org", "sbvideo.net",
-            "streamsb.net", "sbplay.one", "cloudemb.com", "playersb.com",
-            "tubesb.com", "sbplay1.com", "embedsb.com", "watchsb.com",
-            "sbplay2.com", "japopav.tv", "viewsb.com", "sbfast", "sbfull.com",
-            "javplaya.com", "ssbstream.net", "p1ayerjavseen.com", "sbthe.com",
-            "vidmovie.xyz", "sbspeed.com", "streamsss.net", "sblanh.com",
-        )
-
         val vidbomDomains = listOf(
             "vidbom.com", "vidbem.com", "vidbm.com", "vedpom.com",
             "vedbom.com", "vedbom.org", "vadbom.com", "vidbam.org",
@@ -67,8 +57,6 @@ class AnimeTitans : AnimeStream(
         return when {
             baseUrl in url ->
                 AnimeTitansExtractor(client).videosFromUrl(url, headers, baseUrl)
-            streamSbDomains.any(url::contains) ->
-                StreamSBExtractor(client).videosFromUrl(url, headers)
             vidbomDomains.any(url::contains) ->
                 VidBomExtractor(client).videosFromUrl(url)
             "vidyard" in url ->

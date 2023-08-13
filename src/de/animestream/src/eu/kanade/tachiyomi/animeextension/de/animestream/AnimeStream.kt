@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.de.animestream
 
-import android.app.Application
 import eu.kanade.tachiyomi.animeextension.de.animestream.extractors.MetaExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -14,7 +13,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import kotlin.Exception
 
@@ -91,7 +89,7 @@ class AnimeStream : ParsedAnimeHttpSource() {
         }
         return videoList.reversed()
     }
-    
+
     override fun videoListSelector() = throw Exception("not used")
 
     override fun videoFromElement(element: Element) = throw Exception("not used")

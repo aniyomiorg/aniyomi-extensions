@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.donghuanosekai.extractors
 
 import eu.kanade.tachiyomi.animesource.model.Video
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -45,9 +44,6 @@ class DonghuaNoSekaiExtractor(
 
     private fun getVideosFromIframeUrl(iframeUrl: String, playerName: String): List<Video> {
         return when {
-            iframeUrl.contains("sbdnsk") || iframeUrl.contains("/e/") -> {
-                StreamSBExtractor(client).videosFromUrl(iframeUrl, headers, playerName)
-            }
             iframeUrl.contains("playerB.php") -> {
                 client.newCall(GET(iframeUrl, headers)).execute().use {
                     it.body.string()
