@@ -17,7 +17,6 @@ dependencies {
     implementation(project(':lib-mytv-extractor'))
     implementation(project(':lib-sendvid-extractor'))
     implementation(project(':lib-sibnet-extractor'))
-    implementation(project(':lib-streamsb-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

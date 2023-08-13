@@ -11,7 +11,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -121,17 +120,6 @@ class GenoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val location = element.ownerDocument()!!.location()
             val videoHeaders = Headers.headersOf("Referer", location)
             when {
-                url.contains("sbembed.com") || url.contains("sbembed1.com") || url.contains("sbplay.org") ||
-                    url.contains("sbvideo.net") || url.contains("streamsb.net") || url.contains("sbplay.one") ||
-                    url.contains("cloudemb.com") || url.contains("playersb.com") || url.contains("tubesb.com") ||
-                    url.contains("sbplay1.com") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
-                    url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
-                    url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
-                    url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com")
-                -> {
-                    val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
-                    videoList.addAll(videos)
-                }
                 url.contains("dood") -> {
                     val video = DoodExtractor(client).videoFromUrl(url)
                     if (video != null) {

@@ -11,7 +11,6 @@ ext {
 
 dependencies {
     implementation(project(':lib-voe-extractor'))
-    implementation(project(':lib-streamsb-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

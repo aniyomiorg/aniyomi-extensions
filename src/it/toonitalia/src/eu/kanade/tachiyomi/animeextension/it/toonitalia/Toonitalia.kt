@@ -13,7 +13,6 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -335,20 +334,6 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun extractVideos(url: String, name: String): List<Video> {
         return when {
-            url.contains("sbembed.com") || url.contains("sbembed1.com") || url.contains("sbplay.org") ||
-                url.contains("sbvideo.net") || url.contains("streamsb.net") || url.contains("sbplay.one") ||
-                url.contains("cloudemb.com") || url.contains("playersb.com") || url.contains("tubesb.com") ||
-                url.contains("sbplay1.com") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
-                url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
-                url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
-                url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com") ||
-                url.contains("sbchill.com") || url.contains("sblongvu.com") || url.contains("sbanh.com") ||
-                url.contains("sblanh.com") || url.contains("sbhight.com") || url.contains("sbbrisk.com") ||
-                url.contains("sbspeed.com")
-            -> {
-                val videos = StreamSBExtractor(client).videosFromUrl(url, headers, suffix = name, common = false)
-                videos
-            }
             url.contains("https://voe.sx") || url.contains("https://20demidistance9elongations.com") ||
                 url.contains("https://telyn610zoanthropy.com")
             -> {
@@ -395,7 +380,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString("preferred_quality", "1080")!!
-        val server = preferences.getString("preferred_server", "StreamSB")!!
+        val server = preferences.getString("preferred_server", "VOE")!!
 
         return this.sortedWith(
             compareBy(
@@ -425,8 +410,8 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val serverPref = ListPreference(screen.context).apply {
             key = "preferred_server"
             title = "Preferred server"
-            entries = arrayOf("StreamSB", "StreamZ", "VOE", "StreamSB Sub-Ita", "StreamZ Sub-Ita", "VOE Sub-Ita")
-            entryValues = arrayOf("StreamSB", "StreamZ", "VOE", "StreamSB Sub-Ita", "StreamZ Sub-Ita", "VOE Sub-Ita")
+            entries = arrayOf("StreamZ", "VOE", "StreamZ Sub-Ita", "VOE Sub-Ita")
+            entryValues = arrayOf("StreamZ", "VOE", "StreamZ Sub-Ita", "VOE Sub-Ita")
             setDefaultValue("StreamZ")
             summary = "%s"
 

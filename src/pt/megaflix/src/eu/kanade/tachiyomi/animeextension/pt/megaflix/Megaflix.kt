@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -138,8 +137,6 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 MixDropExtractor(client).videoFromUrl(url, language)
             "streamtape.com" in url ->
                 StreamTapeExtractor(client).videoFromUrl(url, "StreamTape - $language")?.let(::listOf)
-            "watchsb.com" in url ->
-                StreamSBExtractor(client).videosFromUrl(url, headers, suffix = language)
             "mflix.vip" in url ->
                 MegaflixExtractor(client).videosFromUrl(url, language)
             else -> null

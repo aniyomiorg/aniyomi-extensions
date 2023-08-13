@@ -15,7 +15,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
@@ -106,9 +105,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             url.contains("dropbox") -> {
                 listOf(Video(url, "Dropbox mirror", url))
             }
-            url.contains("sbanh") -> {
-                StreamSBExtractor(client).videosFromUrl(url, headers)
-            }
+
             url.contains("dailymotion") -> {
                 DailymotionExtractor(client).videosFromUrl(url, headers)
             }

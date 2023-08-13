@@ -5,7 +5,7 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
 
-class GoVadExtractor(private val client:OkHttpClient) {
+class GoVadExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String, host: String): List<Video> {
         val doc = client.newCall(GET(url)).execute().asJsoup()
         val script = doc.selectFirst("script:containsData(sources)")!!

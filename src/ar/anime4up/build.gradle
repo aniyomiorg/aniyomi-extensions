@@ -11,7 +11,6 @@ ext {
 
 dependencies {
     implementation(project(':lib-gdriveplayer-extractor'))
-    implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation(project(':lib-voe-extractor'))
     implementation(project(':lib-vidbom-extractor'))

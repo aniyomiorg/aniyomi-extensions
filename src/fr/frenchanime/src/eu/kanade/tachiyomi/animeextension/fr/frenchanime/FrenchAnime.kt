@@ -20,7 +20,6 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
@@ -255,18 +254,7 @@ class FrenchAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             UqloadExtractor(client).videosFromUrl(source, headers),
                         )
                     }
-                    source.contains("sbembed.com") || source.contains("sbembed1.com") || source.contains("sbplay.org") ||
-                        source.contains("sbvideo.net") || source.contains("streamsb.net") || source.contains("sbplay.one") ||
-                        source.contains("cloudemb.com") || source.contains("playersb.com") || source.contains("tubesb.com") ||
-                        source.contains("sbplay1.com") || source.contains("embedsb.com") || source.contains("watchsb.com") ||
-                        source.contains("sbplay2.com") || source.contains("japopav.tv") || source.contains("viewsb.com") ||
-                        source.contains("sbfast") || source.contains("sbfull.com") || source.contains("javplaya.com") ||
-                        source.contains("ssbstream.net") || source.contains("p1ayerjavseen.com") || source.contains("sbthe.com") ||
-                        source.contains("lvturbo") || source.contains("sbface.com") || source.contains("sblongvu.com") -> {
-                        videoList.addAll(
-                            StreamSBExtractor(client).videosFromUrl(source, headers),
-                        )
-                    }
+
                     source.contains("https://guccihide") || source.contains("https://streamhide") -> {
                         videoList.addAll(
                             StreamHideExtractor(client).videosFromUrl(source, headers),
@@ -354,8 +342,8 @@ class FrenchAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoServerPref = ListPreference(screen.context).apply {
             key = "preferred_server"
             title = "Preferred server"
-            entries = arrayOf("Upstream", "Vido", "StreamVid", "StreamHide", "StreamSB", "Uqload", "Vudeo", "Doodstream", "Sibnet", "Okru")
-            entryValues = arrayOf("Upstream", "Vido", "StreamVid", "StreamHide", "StreamSB", "Uqload", "Vudeo", "dood", "sibnet", "okru")
+            entries = arrayOf("Upstream", "Vido", "StreamVid", "StreamHide", "Uqload", "Vudeo", "Doodstream", "Sibnet", "Okru")
+            entryValues = arrayOf("Upstream", "Vido", "StreamVid", "StreamHide", "Uqload", "Vudeo", "dood", "sibnet", "okru")
             setDefaultValue("Upstream")
             summary = "%s"
 

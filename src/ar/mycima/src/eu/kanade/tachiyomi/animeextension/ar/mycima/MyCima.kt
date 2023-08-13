@@ -127,20 +127,19 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return document.select("ul.WatchServersList li btn").parallelMap {
             val frameURL = it.attr("data-url")
             runCatching {
-                if(it.parent()?.hasClass("MyCimaServer") == true)
-                {
+                if (it.parent()?.hasClass("MyCimaServer") == true) {
                     val referer = response.request.url.encodedPath
                     val newHeader = headers.newBuilder().add("referer", baseUrl + referer).build()
                     val iframeResponse = client.newCall(GET(frameURL, newHeader)).execute().asJsoup()
                     videosFromElement(iframeResponse.selectFirst(videoListSelector())!!)
                 } else {
-                     extractVideos(frameURL)
+                    extractVideos(frameURL)
                 }
             }.getOrElse { emptyList() }
         }.flatten()
     }
 
-    private fun extractVideos(url: String): List<Video>{
+    private fun extractVideos(url: String): List<Video> {
         return when {
             GOVAD_REGEX.containsMatchIn(url) -> {
                 val finalUrl = GOVAD_REGEX.find(url)!!.groupValues[0]
@@ -207,7 +206,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 when (filter) {
                     is SearchCategoryList -> {
                         val catQ = getSearchCategoryList()[filter.state].query
-                        val catUrl = "$baseUrl/search/$query/" + if(catQ == "page/" && page == 1) "" else "$catQ$page"
+                        val catUrl = "$baseUrl/search/$query/" + if (catQ == "page/" && page == 1) "" else "$catQ$page"
                         return GET(catUrl, headers)
                     }
                     else -> {}
@@ -351,7 +350,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
             entries = PREF_QUALITY_ENTRIES
-            entryValues = PREF_QUALITY_ENTRIES.map { it.replace("p","") }.toTypedArray()
+            entryValues = PREF_QUALITY_ENTRIES.map { it.replace("p", "") }.toTypedArray()
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
             setOnPreferenceChangeListener { _, newValue ->

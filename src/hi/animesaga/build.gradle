@@ -10,7 +10,6 @@ ext {
 }
 
 dependencies {
-    implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-chillx-extractor'))
 }
 

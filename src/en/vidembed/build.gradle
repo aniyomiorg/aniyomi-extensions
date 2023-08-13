@@ -12,7 +12,6 @@ ext {
 
 dependencies {
     implementation(project(':lib-mixdrop-extractor'))
-    implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
 }
 

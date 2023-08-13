@@ -32,7 +32,6 @@ import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.synchrony.Deobfuscator
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -296,9 +295,7 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 "SIBNET" -> {
                     videoList.addAll(SibnetExtractor(client).getVideosFromUrl(hosterLink, prefix = "$subber: "))
                 }
-                "STREAMSB" -> {
-                    videoList.addAll(StreamSBExtractor(client).videosFromUrl(hosterLink, refererHeader, prefix = "$subber: "))
-                }
+
                 "STREAMVID" -> {
                     videoList.addAll(StreamVidExtractor(client).videosFromUrl(hosterLink, headers, prefix = "$subber: "))
                 }
@@ -431,7 +428,6 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "ODNOKLASSNIKI",
             "SENDVID",
             "SIBNET",
-            "STREAMSB",
             "STREAMVID",
             "UQLOAD",
             "VK",
@@ -448,7 +444,7 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_QUALITY_DEFAULT = "1080"
 
         private const val PREF_HOSTER_KEY = "hoster_selection"
-        private val PREF_HOSTER_DEFAULT = setOf("GDRIVE", "STREAMSB", "VOE")
+        private val PREF_HOSTER_DEFAULT = setOf("GDRIVE", "VOE")
     }
 
     // =============================== Preferences ===============================

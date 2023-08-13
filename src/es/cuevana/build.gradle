@@ -12,7 +12,6 @@ ext {
 dependencies {
     implementation(project(':lib-yourupload-extractor'))
     implementation(project(':lib-dood-extractor'))
-    implementation project(path: ':lib-streamsb-extractor')
     implementation project(path: ':lib-okru-extractor')
     implementation project(path: ':lib-voe-extractor')
     implementation project(path: ':lib-streamtape-extractor')

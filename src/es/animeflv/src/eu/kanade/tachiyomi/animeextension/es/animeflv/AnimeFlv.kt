@@ -13,7 +13,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -117,7 +116,6 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     var url = json!!["code"]!!.jsonPrimitive!!.content
                     val extractedVideos = runCatching {
                         when (quality) {
-                            "SB" -> StreamSBExtractor(client).videosFromUrl(url, headers)
                             "Stape" -> {
                                 val stapeUrl = json!!["url"]!!.jsonPrimitive!!.content
                                 StreamTapeExtractor(client).videoFromUrl(stapeUrl)
@@ -321,12 +319,10 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title = "Preferred quality"
             entries = arrayOf(
                 "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
-                "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
                 "YourUpload", "DoodStream", "StreamTape",
             ) // video servers without resolution
             entryValues = arrayOf(
                 "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
-                "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
                 "YourUpload", "DoodStream", "StreamTape",
             ) // video servers without resolution
             setDefaultValue("Okru:720p")

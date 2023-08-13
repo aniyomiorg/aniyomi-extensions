@@ -9,9 +9,4 @@ ext {
     libVersion = '13'
 }
 
-dependencies {
-    implementation(project(':lib-streamsb-extractor'))
-}
-
-
 apply from: "$rootDir/common.gradle"

@@ -15,7 +15,6 @@ dependencies {
     implementation project(path: ':lib-yourupload-extractor')
     implementation project(path: ':lib-voe-extractor')
     implementation project(path: ':lib-dood-extractor')
-    implementation project(path: ':lib-streamsb-extractor')
 }
 
 

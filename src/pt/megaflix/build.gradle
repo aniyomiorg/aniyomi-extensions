@@ -13,7 +13,6 @@ ext {
 
 dependencies {
     implementation(project(':lib-mixdrop-extractor'))
-    implementation(project(":lib-streamsb-extractor"))
     implementation(project(":lib-streamtape-extractor"))
     // for mixdrop and megaflix
     implementation("dev.datlag.jsunpacker:jsunpacker:1.0.1")

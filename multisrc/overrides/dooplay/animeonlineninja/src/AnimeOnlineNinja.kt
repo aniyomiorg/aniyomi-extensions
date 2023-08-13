@@ -8,7 +8,6 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
@@ -117,8 +116,6 @@ class AnimeOnlineNinja : DooPlay(
             "dood" in url ->
                 DoodExtractor(client).videoFromUrl(url, "$lang DoodStream", false)
                     ?.let(::listOf)
-            "sb" in url ->
-                StreamSBExtractor(client).videosFromUrl(url, headers, lang)
             "streamtape" in url ->
                 StreamTapeExtractor(client).videoFromUrl(url, "$lang StreamTape")
                     ?.let(::listOf)
