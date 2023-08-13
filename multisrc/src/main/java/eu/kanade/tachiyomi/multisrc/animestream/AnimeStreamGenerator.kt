@@ -16,6 +16,7 @@ class AnimeStreamGenerator : ThemeSourceGenerator {
         SingleLang("Animenosub", "https://animenosub.com", "en", isNsfw = true, overrideVersionCode = 1),
         SingleLang("AnimeTitans", "https://animetitans.com", "ar", isNsfw = false, overrideVersionCode = 12),
         SingleLang("AnimeXin", "https://animexin.vip", "all", isNsfw = false, overrideVersionCode = 5),
+        SingleLang("desu-online", "https://desu-online.pl", "pl", className = "DesuOnline", isNsfw = false),
         SingleLang("Hstream", "https://hstream.moe", "en", isNsfw = true, overrideVersionCode = 3),
         SingleLang("LMAnime", "https://lmanime.com", "all", isNsfw = false, overrideVersionCode = 2),
         SingleLang("MiniOppai", "https://minioppai.org", "id", isNsfw = true, overrideVersionCode = 2),
