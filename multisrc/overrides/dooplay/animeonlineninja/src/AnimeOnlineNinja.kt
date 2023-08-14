@@ -7,6 +7,7 @@ import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.UploadE
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
@@ -113,6 +114,8 @@ class AnimeOnlineNinja : DooPlay(
         return when {
             "saidochesto.top" in url || "MULTISERVER" in lang.uppercase() ->
                 extractFromMulti(url)
+            "filemoon" in url ->
+                FilemoonExtractor(client).videosFromUrl(url, "$lang Filemoon - ", headers)
             "dood" in url ->
                 DoodExtractor(client).videoFromUrl(url, "$lang DoodStream", false)
                     ?.let(::listOf)
