@@ -110,22 +110,28 @@ class AnimeOnlineNinja : DooPlay(
         }
     }
 
+    private val filemoonExtractor by lazy { FilemoonExtractor(client) }
+    private val doodExtractor by lazy { DoodExtractor(client) }
+    private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val mixDropExtractor by lazy { MixDropExtractor(client) }
+    private val uqloadExtractor by lazy { UploadExtractor(client) }
+
     private fun extractVideos(url: String, lang: String): List<Video> {
         return when {
             "saidochesto.top" in url || "MULTISERVER" in lang.uppercase() ->
                 extractFromMulti(url)
             "filemoon" in url ->
-                FilemoonExtractor(client).videosFromUrl(url, "$lang Filemoon - ", headers)
+                filemoonExtractor.videosFromUrl(url, "$lang Filemoon - ", headers)
             "dood" in url ->
-                DoodExtractor(client).videoFromUrl(url, "$lang DoodStream", false)
+                doodExtractor.videoFromUrl(url, "$lang DoodStream", false)
                     ?.let(::listOf)
             "streamtape" in url ->
-                StreamTapeExtractor(client).videoFromUrl(url, "$lang StreamTape")
+                streamTapeExtractor.videoFromUrl(url, "$lang StreamTape")
                     ?.let(::listOf)
             "mixdrop" in url ->
-                MixDropExtractor(client).videoFromUrl(url, lang)
+                mixDropExtractor.videoFromUrl(url, lang)
             "uqload" in url ->
-                UploadExtractor(client).videoFromUrl(url, headers, lang)
+                uqloadExtractor.videoFromUrl(url, headers, lang)
                     ?.let(::listOf)
             "wolfstream" in url -> {
                 client.newCall(GET(url, headers)).execute()
