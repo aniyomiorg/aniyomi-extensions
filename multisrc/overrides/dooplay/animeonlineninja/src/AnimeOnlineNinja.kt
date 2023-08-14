@@ -7,6 +7,7 @@ import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.UploadE
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
@@ -21,7 +22,7 @@ import uy.kohesive.injekt.api.get
 class AnimeOnlineNinja : DooPlay(
     "es",
     "AnimeOnline.Ninja",
-    "https://www1.animeonline.ninja",
+    "https://ww3.animeonline.ninja",
 ) {
     override val client by lazy {
         if (preferences.getBoolean(PREF_VRF_INTERCEPT_KEY, PREF_VRF_INTERCEPT_DEFAULT)) {
@@ -109,20 +110,28 @@ class AnimeOnlineNinja : DooPlay(
         }
     }
 
+    private val filemoonExtractor by lazy { FilemoonExtractor(client) }
+    private val doodExtractor by lazy { DoodExtractor(client) }
+    private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val mixDropExtractor by lazy { MixDropExtractor(client) }
+    private val uqloadExtractor by lazy { UploadExtractor(client) }
+
     private fun extractVideos(url: String, lang: String): List<Video> {
         return when {
             "saidochesto.top" in url || "MULTISERVER" in lang.uppercase() ->
                 extractFromMulti(url)
+            "filemoon" in url ->
+                filemoonExtractor.videosFromUrl(url, "$lang Filemoon - ", headers)
             "dood" in url ->
-                DoodExtractor(client).videoFromUrl(url, "$lang DoodStream", false)
+                doodExtractor.videoFromUrl(url, "$lang DoodStream", false)
                     ?.let(::listOf)
             "streamtape" in url ->
-                StreamTapeExtractor(client).videoFromUrl(url, "$lang StreamTape")
+                streamTapeExtractor.videoFromUrl(url, "$lang StreamTape")
                     ?.let(::listOf)
             "mixdrop" in url ->
-                MixDropExtractor(client).videoFromUrl(url, lang)
+                mixDropExtractor.videoFromUrl(url, lang)
             "uqload" in url ->
-                UploadExtractor(client).videoFromUrl(url, headers, lang)
+                uqloadExtractor.videoFromUrl(url, headers, lang)
                     ?.let(::listOf)
             "wolfstream" in url -> {
                 client.newCall(GET(url, headers)).execute()
