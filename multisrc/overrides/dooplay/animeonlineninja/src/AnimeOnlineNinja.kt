@@ -21,7 +21,7 @@ import uy.kohesive.injekt.api.get
 class AnimeOnlineNinja : DooPlay(
     "es",
     "AnimeOnline.Ninja",
-    "https://www1.animeonline.ninja",
+    "https://ww3.animeonline.ninja",
 ) {
     override val client by lazy {
         if (preferences.getBoolean(PREF_VRF_INTERCEPT_KEY, PREF_VRF_INTERCEPT_DEFAULT)) {
