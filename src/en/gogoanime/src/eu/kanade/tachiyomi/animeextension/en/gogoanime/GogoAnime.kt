@@ -72,14 +72,13 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =============================== Latest ===============================
 
     override fun latestUpdatesRequest(page: Int): Request =
-        GET("https://ajax.gogo-load.com/ajax/page-recent-release-ongoing.html?page=$page&type=1", headers)
+        GET("$baseUrl/?page=$page", headers)
 
-    override fun latestUpdatesSelector(): String = "div.added_series_body.popular li a:has(div)"
+    override fun latestUpdatesSelector(): String = "div.img a"
 
     override fun latestUpdatesFromElement(element: Element): SAnime = SAnime.create().apply {
-        setUrlWithoutDomain(element.attr("abs:href"))
-        thumbnail_url = element.select("div.thumbnail-popular").attr("style")
-            .substringAfter("background: url('").substringBefore("');")
+        setUrlWithoutDomain(element.attr("href"))
+        thumbnail_url = element.selectFirst("img")!!.attr("src")
         title = element.attr("title")
     }
 
@@ -253,7 +252,7 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         private val PREF_DOMAIN_KEY = "preferred_domain_name_v${AppInfo.getVersionName()}"
         private const val PREF_DOMAIN_TITLE = "Override BaseUrl"
-        private const val PREF_DOMAIN_DEFAULT = "https://gogoanime3.net"
+        private const val PREF_DOMAIN_DEFAULT = "https://gogoanimehd.to"
         private const val PREF_DOMAIN_SUMMARY = "For temporary uses. Updating the extension will erase this setting."
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
