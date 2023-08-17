@@ -1339,10 +1339,10 @@
   {
     "name": "Aniyomi: Gogoanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.gogoanime",
-    "apk": "aniyomi-en.gogoanime-v13.70.apk",
+    "apk": "aniyomi-en.gogoanime-v13.71.apk",
     "lang": "en",
-    "code": 70,
-    "version": "13.70",
+    "code": 71,
+    "version": "13.71",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1351,7 +1351,7 @@
         "name": "Gogoanime",
         "lang": "en",
         "id": "7055547649318749672",
-        "baseUrl": "https://gogoanime3.net",
+        "baseUrl": "https://gogoanimehd.to",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -1717,10 +1717,10 @@
   {
     "name": "Aniyomi: Oppai Stream",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.oppaistream",
-    "apk": "aniyomi-en.oppaistream-v13.1.apk",
+    "apk": "aniyomi-en.oppaistream-v13.2.apk",
     "lang": "en",
-    "code": 1,
-    "version": "13.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
