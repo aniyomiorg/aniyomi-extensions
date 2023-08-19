@@ -17,7 +17,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -117,7 +116,7 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val epId = document.selectFirst("div#player[data-episode-id]")?.attr("data-episode-id")
 
         val altServers = mutableListOf<Pair<String, String>>()
-        val altList = listOf("StreamHide", "FileMoon", "StreamSB")
+        val altList = listOf("StreamHide", "FileMoon")
         document.select("div.servers > div.widget-title span.server-tab").forEach {
             val name = it.text()
             if (altList.any { t -> t.contains(name, true) }) {
@@ -154,17 +153,6 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 runCatching {
                     val url = server.second
                     when {
-                        url.contains("animeworld.biz") || url.contains("sbembed.com") || url.contains("sbembed1.com") || url.contains("sbplay.org") ||
-                            url.contains("sbvideo.net") || url.contains("streamsb.net") || url.contains("sbplay.one") ||
-                            url.contains("cloudemb.com") || url.contains("playersb.com") || url.contains("tubesb.com") ||
-                            url.contains("sbplay1.com") || url.contains("embedsb.com") || url.contains("watchsb.com") ||
-                            url.contains("sbplay2.com") || url.contains("japopav.tv") || url.contains("viewsb.com") ||
-                            url.contains("sbfast") || url.contains("sbfull.com") || url.contains("javplaya.com") ||
-                            url.contains("ssbstream.net") || url.contains("p1ayerjavseen.com") || url.contains("sbthe.com") ||
-                            url.contains("animeworld.biz")
-                        -> {
-                            StreamSBExtractor(client).videosFromUrl(url.replace("/d/", "/e/"), headers)
-                        }
                         url.contains("streamingaw") -> {
                             listOf(Video(url, "AnimeWorld Server", url))
                         }
@@ -543,8 +531,8 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ListPreference(screen.context).apply {
             key = "preferred_server"
             title = "Preferred server"
-            entries = arrayOf("Animeworld server", "FileMoon", "StreamHide", "StreamSB", "Doodstream", "StreamTape")
-            entryValues = arrayOf("Animeworld server", "FileMoon", "StreamHide", "StreamSB", "Doodstream", "StreamTape")
+            entries = arrayOf("Animeworld server", "FileMoon", "StreamHide", "Doodstream", "StreamTape")
+            entryValues = arrayOf("Animeworld server", "FileMoon", "StreamHide", "Doodstream", "StreamTape")
             setDefaultValue("Animeworld server")
             summary = "%s"
 

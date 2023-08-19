@@ -16,7 +16,6 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
@@ -161,9 +160,7 @@ open class Pelisplushd(override val name: String, override val baseUrl: String) 
     private fun serverVideoResolver(url: String, server: String): List<Video>? {
         val videoList = mutableListOf<Video>()
         try {
-            if (server.lowercase() == "sbfast") {
-                return StreamSBExtractor(client).videosFromUrl(url, headers)
-            } else if (server.lowercase() == "stp") {
+            if (server.lowercase() == "stp") {
                 StreamTapeExtractor(client).videoFromUrl(url, "StreamTape")?.let { videoList.add(it) }
             } else if (server.lowercase() == "uwu") {
                 if (!url.contains("disable")) {
@@ -319,7 +316,6 @@ open class Pelisplushd(override val name: String, override val baseUrl: String) 
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
-            "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
             "Streamlare:1080p", "Streamlare:720p", "Streamlare:480p", "Streamlare:360p", "Streamlare:240p", // Streamlare
             "StreamTape", "Amazon", "Voex", "DoodStream", "YourUpload",
         )

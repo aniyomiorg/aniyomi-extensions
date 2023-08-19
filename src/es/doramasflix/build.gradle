@@ -5,7 +5,7 @@ ext {
     extName = 'Doramasflix'
     pkgNameSuffix = 'es.doramasflix'
     extClass = '.Doramasflix'
-    extVersionCode = 6
+    extVersionCode = 7
     libVersion = '13'
 }
 
@@ -13,7 +13,6 @@ dependencies {
     implementation(project(':lib-mixdrop-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-okru-extractor'))
-    implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation(project(':lib-voe-extractor'))
 }

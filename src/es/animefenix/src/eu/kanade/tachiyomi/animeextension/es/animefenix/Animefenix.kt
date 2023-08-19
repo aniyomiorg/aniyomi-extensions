@@ -13,7 +13,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -119,11 +118,6 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     if (video != null) {
                         videoList.add(video)
                     }
-                }
-                realUrl.contains("sbthe") -> {
-                    videoList.addAll(
-                        StreamSBExtractor(client).videosFromUrl(realUrl, headers),
-                    )
                 }
                 realUrl.contains("mp4upload") -> {
                     val videos = Mp4uploadExtractor(client).videosFromUrl(realUrl, headers)
@@ -333,12 +327,10 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title = "Preferred quality"
             entries = arrayOf(
                 "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
-                "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
                 "Amazon", "AmazonES", "StreamTape", "Fireload", "Mp4upload",
             )
             entryValues = arrayOf(
                 "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
-                "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
                 "Amazon", "AmazonES", "StreamTape", "Fireload", "Mp4upload",
             )
             setDefaultValue("Amazon")

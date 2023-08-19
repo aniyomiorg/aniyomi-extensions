@@ -5,7 +5,7 @@ ext {
     extName = 'Latanime'
     pkgNameSuffix = 'es.latanime'
     extClass = '.Latanime'
-    extVersionCode = 11
+    extVersionCode = 12
     libVersion = '13'
 }
 
@@ -14,7 +14,6 @@ dependencies {
     implementation(project(':lib-yourupload-extractor'))
     implementation(project(':lib-okru-extractor'))
     implementation(project(':lib-dood-extractor'))
-    implementation(project(':lib-streamsb-extractor'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
 

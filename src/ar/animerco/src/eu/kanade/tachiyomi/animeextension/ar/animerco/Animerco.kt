@@ -15,7 +15,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -162,24 +161,6 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val embedUrl = embedUrlT.replace("\\/", "/")
 
             when {
-                embedUrl.contains("sbembed.com") || embedUrl.contains("sbembed1.com") || embedUrl.contains("sbplay.org") ||
-                    embedUrl.contains("sbvideo.net") || embedUrl.contains("streamsb.net") || embedUrl.contains("sbplay.one") ||
-                    embedUrl.contains("cloudemb.com") || embedUrl.contains("playersb.com") || embedUrl.contains("tubesb.com") ||
-                    embedUrl.contains("sbplay1.com") || embedUrl.contains("embedsb.com") || embedUrl.contains("watchsb.com") ||
-                    embedUrl.contains("sbplay2.com") || embedUrl.contains("japopav.tv") || embedUrl.contains("viewsb.com") ||
-                    embedUrl.contains("sbfast") || embedUrl.contains("sbfull.com") || embedUrl.contains("javplaya.com") ||
-                    embedUrl.contains("ssbstream.net") || embedUrl.contains("p1ayerjavseen.com") || embedUrl.contains("sbthe.com") ||
-                    embedUrl.contains("vidmovie.xyz") || embedUrl.contains("sbspeed.com") || embedUrl.contains("streamsss.net") ||
-                    embedUrl.contains("sblanh.com") || embedUrl.contains("tvmshow.com") || embedUrl.contains("sbanh.com") ||
-                    embedUrl.contains("streamovies.xyz")
-                -> {
-                    val videos = StreamSBExtractor(client).videosFromUrl(embedUrl, headers)
-                    videoList.addAll(videos)
-                }
-                /*embedUrl.contains("ok.ru") -> {
-                    val videos = OkruExtractor(client).videosFromUrl(embedUrl)
-                    videoList.addAll(videos)
-                }*/
                 embedUrl.contains("dood") -> {
                     val video = DoodExtractor(client).videoFromUrl(embedUrl)
                     if (video != null) {

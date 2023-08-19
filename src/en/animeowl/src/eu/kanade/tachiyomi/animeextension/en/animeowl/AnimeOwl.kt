@@ -13,7 +13,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
@@ -290,21 +289,6 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             }
 
-        // StreamSB mirror:
-        document.select("div#list-server-more > ul > li.linkserver:contains(StreamSB)")
-            .firstOrNull()?.attr("data-video")
-            ?.let { link ->
-                StreamSBExtractor(client).videosFromUrl(link, headers).map {
-                    videoList.add(
-                        Video(
-                            it.url,
-                            it.quality + " $lang",
-                            it.videoUrl,
-                            headers = it.headers,
-                        ),
-                    )
-                }
-            }
         return videoList
     }
 

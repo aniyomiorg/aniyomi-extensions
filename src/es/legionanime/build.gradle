@@ -5,7 +5,7 @@ ext {
     extName = 'LegionAnime'
     pkgNameSuffix = 'es.legionanime'
     extClass = '.LegionAnime'
-    extVersionCode = 22
+    extVersionCode = 23
     libVersion = '13'
 }
 
@@ -14,7 +14,6 @@ dependencies {
     implementation(project(':lib-yourupload-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-okru-extractor'))
-    implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation(project(':lib-gdriveplayer-extractor'))
 }

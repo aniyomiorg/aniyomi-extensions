@@ -5,14 +5,13 @@ ext {
     extName = 'FanPelis'
     pkgNameSuffix = 'es.fanpelis'
     extClass = '.FanPelis'
-    extVersionCode = 7
+    extVersionCode = 8
     libVersion = '13'
 }
 
 dependencies {
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-okru-extractor'))
-    implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
 }
 

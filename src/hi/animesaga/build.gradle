@@ -5,12 +5,11 @@ ext {
     extName = 'AnimeSAGA'
     pkgNameSuffix = 'hi.animesaga'
     extClass = '.AnimeSAGA'
-    extVersionCode = 2
+    extVersionCode = 3
     libVersion = '13'
 }
 
 dependencies {
-    implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-chillx-extractor'))
 }
 

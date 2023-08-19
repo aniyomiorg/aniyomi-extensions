@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.lib.burstcloudextractor.BurstCloudExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -207,10 +206,6 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
 
             if (nameServer.lowercase() == "mp4upload") {
                 videoList.addAll(Mp4uploadExtractor(client).videosFromUrl(urlServer, headers = headers))
-            }
-
-            if (nameServer.lowercase() == "stream") {
-                videoList.addAll(StreamSBExtractor(client).videosFromUrl(urlServer, headers = headers))
             }
 
             if (nameServer.lowercase() == "burst") {

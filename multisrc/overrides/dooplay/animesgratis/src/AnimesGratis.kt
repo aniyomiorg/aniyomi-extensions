@@ -4,7 +4,6 @@ import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.AnimesGrati
 import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.BloggerExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.RuplayExtractor
 import eu.kanade.tachiyomi.animesource.model.Video
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -48,8 +47,6 @@ class AnimesGratis : DooPlay(
         val name = player.selectFirst("span.title")!!.text().lowercase()
         val url = getPlayerUrl(player)
         return when {
-            "streamsb" in name ->
-                StreamSBExtractor(client).videosFromUrl(url, headers)
             "ruplay" in name ->
                 RuplayExtractor(client).videosFromUrl(url)
             "/player2/" in url ->

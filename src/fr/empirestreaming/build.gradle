@@ -8,13 +8,12 @@ ext {
     extName = 'EmpireStreaming'
     pkgNameSuffix = 'fr.empirestreaming'
     extClass = '.EmpireStreaming'
-    extVersionCode = 12
+    extVersionCode = 13
     libVersion = '13'
 }
 
 dependencies {
     implementation(project(':lib-voe-extractor'))
-    implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
 }
 
