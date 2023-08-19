@@ -20,7 +20,6 @@ import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -34,11 +33,11 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 
-class Cuevana : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+class CuevanaCh(override val name: String, override val baseUrl: String) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    override val name = "Cuevana"
+    // override val name = "Cuevana"
 
-    override val baseUrl = "https://www12.cuevana3.ch"
+    // override val baseUrl = "https://www12.cuevana3.ch"
 
     override val lang = "es"
 

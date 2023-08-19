@@ -4,8 +4,8 @@ apply plugin: 'kotlin-android'
 ext {
     extName = 'Cuevana'
     pkgNameSuffix = 'es.cuevana'
-    extClass = '.Cuevana'
-    extVersionCode = 18
+    extClass = '.CuevanaFactory'
+    extVersionCode = 19
     libVersion = '13'
 }
 
