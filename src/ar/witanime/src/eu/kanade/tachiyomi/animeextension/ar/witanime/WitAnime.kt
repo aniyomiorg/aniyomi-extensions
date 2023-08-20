@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.ar.witanime
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.DailymotionExtractor
@@ -24,7 +23,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
-import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -46,7 +44,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -55,7 +53,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeNextPageSelector() = "ul.pagination a.next"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/قائمة-الانمي/page/$page")
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/قائمة-الانمي/page/$page")
 
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
@@ -65,11 +63,55 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    // ============================== Episodes ==============================
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = getRealDoc(response.asJsoup())
-        return doc.select(episodeListSelector()).map(::episodeFromElement).reversed()
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/episode/page/$page/")
+
+    override fun latestUpdatesSelector() = popularAnimeSelector()
+    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
+
+    // =============================== Search ===============================
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = GET("$baseUrl/?search_param=animes&s=$query")
+
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
+    override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
+    override fun searchAnimeSelector() = popularAnimeSelector()
+
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        val doc = getRealDoc(document)
+
+        thumbnail_url = doc.selectFirst("img.thumbnail")!!.attr("src")
+        title = doc.selectFirst("h1.anime-details-title")!!.text()
+        // Genres + useful info
+        genre = doc.select("ul.anime-genres > li > a, div.anime-info > a").eachText().joinToString()
+
+        description = buildString {
+            // Additional info
+            doc.select("div.anime-info").eachText().forEach {
+                append("$it\n")
+            }
+            // Description
+            doc.selectFirst("p.anime-story")?.text()?.also {
+                append("\n$it")
+            }
+        }
+
+        doc.selectFirst("div.anime-info:contains(حالة الأنمي)")?.text()?.also {
+            status = when {
+                it.contains("يعرض الان", true) -> SAnime.ONGOING
+                it.contains("مكتمل", true) -> SAnime.COMPLETED
+                else -> SAnime.UNKNOWN
+            }
+        }
     }
+
+    // ============================== Episodes ==============================
+    override fun episodeListParse(response: Response) =
+        getRealDoc(response.asJsoup())
+            .select(episodeListSelector())
+            .map(::episodeFromElement)
+            .reversed()
 
     override fun episodeListSelector() = "div.ehover6 > div.episodes-card-title > h3 a"
 
@@ -151,53 +193,9 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ).reversed()
     }
 
-    // =============================== Search ===============================
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = GET("$baseUrl/?search_param=animes&s=$query")
-
-    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
-    override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
-    override fun searchAnimeSelector() = popularAnimeSelector()
-
-    // ================================== details ==================================
-
-    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
-        val doc = getRealDoc(document)
-
-        thumbnail_url = doc.selectFirst("img.thumbnail")!!.attr("src")
-        title = doc.selectFirst("h1.anime-details-title")!!.text()
-        // Genres + useful info
-        genre = doc.select("ul.anime-genres > li > a, div.anime-info > a").eachText().joinToString()
-
-        description = buildString {
-            // Additional info
-            doc.select("div.anime-info").eachText().forEach {
-                append("$it\n")
-            }
-            // Description
-            doc.selectFirst("p.anime-story")?.text()?.also {
-                append("\n$it")
-            }
-        }
-
-        doc.selectFirst("div.anime-info:contains(حالة الأنمي)")?.text()?.also {
-            status = when {
-                it.contains("يعرض الان", true) -> SAnime.ONGOING
-                it.contains("مكتمل", true) -> SAnime.COMPLETED
-                else -> SAnime.UNKNOWN
-            }
-        }
-    }
-
-    // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/episode/page/$page/")
-
-    override fun latestUpdatesSelector() = popularAnimeSelector()
-    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
-    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
-
-    // =============================== Preferences ===============================
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
+        ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
             entries = PREF_QUALITY_ENTRIES
@@ -211,8 +209,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
     }
 
     // ============================= Utilities ==============================
