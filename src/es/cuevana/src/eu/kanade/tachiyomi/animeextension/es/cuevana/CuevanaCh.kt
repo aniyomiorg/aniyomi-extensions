@@ -34,10 +34,6 @@ import java.text.SimpleDateFormat
 
 class CuevanaCh(override val name: String, override val baseUrl: String) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    // override val name = "Cuevana"
-
-    // override val baseUrl = "https://www12.cuevana3.ch"
-
     override val lang = "es"
 
     override val supportsLatest = false
