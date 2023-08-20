@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.en.wcofun
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -14,23 +13,21 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
-import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
-import java.net.URI
 
 class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -94,76 +91,45 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episode
     }
 
-    override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        return videosFromElement(document)
+    @Serializable
+    data class VideoResponseDto(
+        val server: String,
+        @SerialName("enc")
+        val sd: String,
+        val hd: String,
+        val fhd: String,
+    ) {
+        val videos by lazy {
+            listOfNotNull(
+                sd.takeIf(String::isNotBlank)?.let { Pair("SD", it) },
+                hd.takeIf(String::isNotBlank)?.let { Pair("HD", it) },
+                fhd.takeIf(String::isNotBlank)?.let { Pair("FHD", it) },
+            ).map { Pair(it.first, "$server/getvid?evid=" + it.second) }
+        }
     }
 
-    private fun videosFromElement(document: Document): List<Video> {
-        val scriptData = document.selectFirst("script:containsData( = \"\"; var )")!!.data()
+    override fun videoListParse(response: Response): List<Video> {
+        val document = response.asJsoup()
 
-        val numberRegex = """(?<=\.replace\(/\\D/g,''\)\) - )\d+""".toRegex()
-        val subtractionNumber = numberRegex.find(scriptData)!!.value.toInt()
+        val iframeLink = document.selectFirst("div.pcat-jwplayer iframe")!!.attr("src")
 
-        val htmlRegex = """(?<=\["|, ").+?(?=")""".toRegex()
-        val html = htmlRegex.findAll(scriptData).map {
-            val decoded = String(Base64.decode(it.value, Base64.DEFAULT))
-            val number = decoded.replace("""\D""".toRegex(), "").toInt()
-            (number - subtractionNumber).toChar()
-        }.joinToString("")
+        val iframeDomain = "https://" + iframeLink.toHttpUrl().host
 
-        val iframeLink = Jsoup.parse(html).select("div.pcat-jwplayer iframe")
-            .attr("src")
-
-        val iframeDomain = "https://" + URI(iframeLink).host
-
-        val playerHtml = client.newCall(
-            GET(
-                url = iframeLink,
-                headers = Headers.headersOf("Referer", document.location()),
-            ),
-        ).execute().body.string()
+        val playerHtml = client.newCall(GET(iframeLink, headers)).execute()
+            .use { it.body.string() }
 
         val getVideoLink = playerHtml.substringAfter("\$.getJSON(\"").substringBefore("\"")
 
-        val head = Headers.Builder()
-        head.add("x-requested-with", "XMLHttpRequest")
-        head.add("Referer", (iframeDomain + getVideoLink))
+        val requestUrl = iframeDomain + getVideoLink
+        val requestHeaders = headersBuilder()
+            .add("x-requested-with", "XMLHttpRequest")
+            .set("Referer", requestUrl)
+            .build()
 
-        val videoJson = json.decodeFromString<JsonObject>(
-            client.newCall(
-                GET(
-                    url = (iframeDomain + getVideoLink),
-                    headers = head.build(),
-                ),
-            ).execute().body.string(),
-        )
+        val videoData = client.newCall(GET(requestUrl, requestHeaders)).execute()
+            .parseAs<VideoResponseDto>()
 
-        val server = videoJson["server"]!!.jsonPrimitive.content
-        val hd = videoJson["hd"]?.jsonPrimitive?.content
-        val sd = videoJson["enc"]?.jsonPrimitive?.content
-        val fhd = videoJson["fhd"]?.jsonPrimitive?.content
-        val videoList = mutableListOf<Video>()
-        hd?.let {
-            if (it.isNotEmpty()) {
-                val videoUrl = "$server/getvid?evid=$it"
-                videoList.add(Video(videoUrl, "HD", videoUrl))
-            }
-        }
-        sd?.let {
-            if (it.isNotEmpty()) {
-                val videoUrl = "$server/getvid?evid=$it"
-                videoList.add(Video(videoUrl, "SD", videoUrl))
-            }
-        }
-
-        fhd?.let {
-            if (it.isNotEmpty()) {
-                val videoUrl = "$server/getvid?evid=$it"
-                videoList.add(Video(videoUrl, "FHD", videoUrl))
-            }
-        }
-        return videoList
+        return videoData.videos.map { Video(it.second, it.first, it.second) }
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -245,5 +211,10 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         screen.addPreference(videoQualityPref)
+    }
+
+    // ============================= Utilities ==============================
+    private inline fun <reified T> Response.parseAs(): T {
+        return use { it.body.string() }.let(json::decodeFromString)
     }
 }
