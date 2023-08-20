@@ -52,11 +52,7 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "#sidebar_right2 ul.items li"
 
-    override fun popularAnimeRequest(page: Int): Request {
-        val interceptor = client.newBuilder().addInterceptor(RedirectInterceptor(baseUrl)).build()
-        val headers = interceptor.newCall(GET(baseUrl)).execute().request.headers
-        return GET(baseUrl, headers = headers)
-    }
+    override fun popularAnimeRequest(page: Int) = GET(baseUrl, headers = headers)
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
