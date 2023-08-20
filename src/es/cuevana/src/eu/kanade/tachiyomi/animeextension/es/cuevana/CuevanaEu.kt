@@ -5,6 +5,9 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.cuevana.extractors.StreamWishExtractor
+import eu.kanade.tachiyomi.animeextension.es.cuevana.models.AnimeEpisodesList
+import eu.kanade.tachiyomi.animeextension.es.cuevana.models.PopularAnimeList
+import eu.kanade.tachiyomi.animeextension.es.cuevana.models.Videos
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -14,17 +17,19 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -33,7 +38,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 
 class CuevanaEu(override val name: String, override val baseUrl: String) : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -42,7 +46,9 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
 
     override val supportsLatest = false
 
-    private val json: Json by injectLazy()
+    private val json = Json {
+        ignoreUnknownKeys = true
+    }
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -60,28 +66,21 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
         val document = response.asJsoup()
         val animeList = mutableListOf<SAnime>()
         val hasNextPage = document.select("nav.navigation > div.nav-links > a.next.page-numbers").any()
-        document.select("script").forEach { script ->
-            if (script.data().contains("{\"props\":{\"pageProps\":")) {
-                val jObject = json.decodeFromString<JsonObject>(script.data())
-                val props = jObject["props"]!!.jsonObject
-                val pageProps = props["pageProps"]!!.jsonObject
-                val movies = pageProps["movies"]!!.jsonArray
-                movies.forEach { item ->
-                    val animeItem = item!!.jsonObject
-                    val anime = SAnime.create()
+        val script = document.selectFirst("script:containsData({\"props\":{\"pageProps\":{)")!!.data()
 
-                    val preSlug = try { animeItem["url"]!!.jsonObject["slug"]!!.jsonPrimitive.content } catch (_: Exception) { "" }
-                    val type = if (preSlug.startsWith("series")) "serie" else "pelicula"
+        val responseJson = json.decodeFromString<PopularAnimeList>(script)
+        responseJson.props?.pageProps?.movies?.map { animeItem ->
+            val anime = SAnime.create()
+            val preSlug = animeItem.url?.slug ?: ""
+            val type = if (preSlug.startsWith("series")) "serie" else "pelicula"
 
-                    anime.description = try { animeItem["overview"]!!.jsonPrimitive!!.content } catch (_: Exception) { "" }
-                    anime.title = try { animeItem["titles"]!!.jsonObject["name"]!!.jsonPrimitive.content } catch (_: Exception) { "" }
-                    anime.thumbnail_url = try { animeItem["images"]!!.jsonObject["poster"]!!.jsonPrimitive.content.replace("/original/", "/w200/") } catch (_: Exception) { "" }
-                    val link = try { animeItem["slug"]!!.jsonObject["name"]!!.jsonPrimitive.content } catch (_: Exception) { "" }
-                    anime.setUrlWithoutDomain("/$type/$link")
-                    animeList.add(anime)
-                }
-            }
+            anime.title = animeItem.titles?.name ?: ""
+            anime.thumbnail_url = animeItem.images?.poster?.replace("/original/", "/w200/") ?: ""
+            anime.description = animeItem.overview
+            anime.setUrlWithoutDomain("/$type/${animeItem.slug?.name}")
+            animeList.add(anime)
         }
+
         return AnimesPage(animeList, hasNextPage)
     }
 
@@ -91,21 +90,20 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
         val episodes = mutableListOf<SEpisode>()
         val document = response.asJsoup()
         if (response.request.url.toString().contains("/serie/")) {
-            document.select("[id*=season-]").reversed().mapIndexed { idxSeason, season ->
-                val noSeason = try {
-                    season.attr("id").substringAfter("season-").toInt()
-                } catch (e: Exception) {
-                    idxSeason
-                }
-                season.select(".TPostMv article.TPost").reversed().mapIndexed { idxCap, cap ->
-                    val epNum = try { cap.select("a div.Image span.Year").text().substringAfter("x").toFloat() } catch (e: Exception) { idxCap.toFloat() }
+            val script = document.selectFirst("script:containsData({\"props\":{\"pageProps\":{)")!!.data()
+            val responseJson = json.decodeFromString<AnimeEpisodesList>(script)
+            responseJson.props?.pageProps?.thisSerie?.seasons?.map {
+                it.episodes.map { ep ->
                     val episode = SEpisode.create()
-                    val date = cap.select("a > p").text()
-                    val epDate = try { SimpleDateFormat("yyyy-MM-dd").parse(date) } catch (e: Exception) { null }
-                    episode.episode_number = epNum
-                    episode.name = "T$noSeason - Episodio $epNum"
+                    val epDate = try {
+                        ep.releaseDate?.substringBefore("T")?.let { date -> SimpleDateFormat("yyyy-MM-dd").parse(date) }
+                    } catch (e: Exception) {
+                        null
+                    }
                     if (epDate != null) episode.date_upload = epDate.time
-                    episode.setUrlWithoutDomain(cap.select("a").attr("href"))
+                    episode.name = "T${ep.slug?.season} - Episodio ${ep.slug?.episode}"
+                    episode.episode_number = ep.number?.toFloat()!!
+                    episode.setUrlWithoutDomain("/episodio/${ep.slug?.name}-temporada-${ep.slug?.season}-episodio-${ep.slug?.episode}")
                     episodes.add(episode)
                 }
             }
@@ -127,25 +125,53 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-        document.select("ul.anime_muti_link li").map {
-            val langPrefix = try {
-                val languageTag = it.selectFirst(".cdtr span")!!.text()
-                if (languageTag.lowercase().contains("latino")) {
-                    "[LAT]"
-                } else if (languageTag.lowercase().contains("castellano")) {
-                    "[CAST]"
-                } else if (languageTag.lowercase().contains("subtitulado")) {
-                    "[SUB]"
-                } else {
-                    ""
-                }
-            } catch (e: Exception) { "" }
-            val url = it.attr("abs:data-video")
-            try {
-                loadExtractor(url, langPrefix).map { video -> videoList.add(video) }
-            } catch (_: Exception) { }
+        val script = document.selectFirst("script:containsData({\"props\":{\"pageProps\":{)")!!.data()
+        val responseJson = json.decodeFromString<AnimeEpisodesList>(script)
+        if (response.request.url.toString().contains("/episodio/")) {
+            serverIterator(responseJson.props?.pageProps?.episode?.videos).let {
+                videoList.addAll(it)
+            }
+        } else {
+            serverIterator(responseJson.props?.pageProps?.thisMovie?.videos).let {
+                videoList.addAll(it)
+            }
+        }
+        return videoList
+    }
+
+    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
 
+    private fun serverIterator(videos: Videos?): MutableList<Video> {
+        val videoList = mutableListOf<Video>()
+        videos?.latino?.parallelMap {
+            try {
+                val body = client.newCall(GET(it.result!!)).execute().asJsoup()
+                val url = body.selectFirst("script:containsData(var message)")?.data()?.substringAfter("var url = '")?.substringBefore("'") ?: ""
+                loadExtractor(url, "[LAT]").let { videoList.addAll(it) }
+            } catch (_: Exception) { }
+        }
+        videos?.spanish?.map {
+            try {
+                val body = client.newCall(GET(it.result!!)).execute().asJsoup()
+                val url = body.selectFirst("script:containsData(var message)")?.data()?.substringAfter("var url = '")?.substringBefore("'") ?: ""
+                loadExtractor(url, "[CAST]").let { videoList.addAll(it) }
+            } catch (_: Exception) { }
+        }
+        videos?.english?.map {
+            try {
+                val body = client.newCall(GET(it.result!!)).execute().asJsoup()
+                val url = body.selectFirst("script:containsData(var message)")?.data()?.substringAfter("var url = '")?.substringBefore("'") ?: ""
+                loadExtractor(url, "[ENG]").let { videoList.addAll(it) }
+            } catch (_: Exception) { }
+        }
+        videos?.japanese?.map {
+            val body = client.newCall(GET(it.result!!)).execute().asJsoup()
+            val url = body.selectFirst("script:containsData(var message)")?.data()?.substringAfter("var url = '")?.substringBefore("'") ?: ""
+            loadExtractor(url, "[JAP]").let { videoList.addAll(it) }
+        }
         return videoList
     }
 
@@ -185,43 +211,22 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
             DoodExtractor(client).videoFromUrl(url, "$prefix DoodStream", false)
                 ?.let { videoList.add(it) }
         }
-        if (embedUrl.contains("sbembed.com") || embedUrl.contains("sbembed1.com") || embedUrl.contains("sbplay.org") ||
-            embedUrl.contains("sbvideo.net") || embedUrl.contains("streamsb.net") || embedUrl.contains("sbplay.one") ||
-            embedUrl.contains("cloudemb.com") || embedUrl.contains("playersb.com") || embedUrl.contains("tubesb.com") ||
-            embedUrl.contains("sbplay1.com") || embedUrl.contains("embedsb.com") || embedUrl.contains("watchsb.com") ||
-            embedUrl.contains("sbplay2.com") || embedUrl.contains("japopav.tv") || embedUrl.contains("viewsb.com") ||
-            embedUrl.contains("sbfast") || embedUrl.contains("sbfull.com") || embedUrl.contains("javplaya.com") ||
-            embedUrl.contains("ssbstream.net") || embedUrl.contains("p1ayerjavseen.com") || embedUrl.contains("sbthe.com") ||
-            embedUrl.contains("vidmovie.xyz") || embedUrl.contains("sbspeed.com") || embedUrl.contains("streamsss.net") ||
-            embedUrl.contains("sblanh.com") || embedUrl.contains("sbbrisk.com")
-        ) {
-            runCatching {
-                StreamSBExtractor(client).videosFromUrl(url, headers, prefix = prefix)
-            }.getOrNull()?.let { videoList.addAll(it) }
-        }
-        if (embedUrl.contains("okru")) {
-            videoList.addAll(
-                OkruExtractor(client).videosFromUrl(url, prefix, true),
-            )
+        if (embedUrl.contains("okru") || embedUrl.contains("ok.ru")) {
+            OkruExtractor(client).videosFromUrl(url, prefix, true).also(videoList::addAll)
         }
         if (embedUrl.contains("voe")) {
-            VoeExtractor(client).videoFromUrl(url, "$prefix Voe")?.let { videoList.add(it) }
+            VoeExtractor(client).videoFromUrl(url, "$prefix Voex")?.let { videoList.add(it) }
         }
         if (embedUrl.contains("streamtape")) {
             StreamTapeExtractor(client).videoFromUrl(url, "$prefix StreamTape")?.let { videoList.add(it) }
         }
         if (embedUrl.contains("wishembed") || embedUrl.contains("streamwish") || embedUrl.contains("wish")) {
-            StreamWishExtractor(client, headers).videosFromUrl(url, "$prefix StreamWish:")?.let { videoList.addAll(it) }
+            StreamWishExtractor(client, headers).videosFromUrl(url, "$prefix StreamWish:").also(videoList::addAll)
+        }
+        if (embedUrl.contains("filemoon") || embedUrl.contains("moonplayer")) {
+            FilemoonExtractor(client).videosFromUrl(url, "$prefix Filemoon:").also(videoList::addAll)
         }
         return videoList
-    }
-
-    private fun urlServerSolver(url: String): String = if (url.startsWith("https")) url else if (url.startsWith("//")) "https:$url" else "$baseUrl/$url"
-
-    private fun fetchUrls(text: String?): List<String> {
-        if (text.isNullOrEmpty()) return listOf()
-        val linkRegex = Regex("""(https?://(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*))""")
-        return linkRegex.findAll(text).map { it.value.trim().removeSurrounding("\"") }.toList()
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -256,15 +261,15 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
         val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
 
         return when {
-            query.isNotBlank() -> GET("$baseUrl/search.html?keyword=$query&page=$page", headers)
-            genreFilter.state != 0 -> GET("$baseUrl/category/${genreFilter.toUriPart()}?page=$page")
+            query.isNotBlank() -> GET("$baseUrl/search?q=$query", headers)
+            genreFilter.state != 0 -> GET("$baseUrl/${genreFilter.toUriPart()}/page/$page")
             else -> popularAnimeRequest(page)
         }
     }
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        return popularAnimeFromElement(element)
-    }
+    override fun searchAnimeParse(response: Response) = popularAnimeParse(response)
+
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
     override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
@@ -275,21 +280,26 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
     override fun animeDetailsParse(response: Response): SAnime {
         val document = response.asJsoup()
         val newAnime = SAnime.create()
-        document.select("script").forEach { script ->
-            if (script.data().contains("{\"props\":{\"pageProps\":")) {
-                val jObject = json.decodeFromString<JsonObject>(script.data())
-                val props = jObject["props"]!!.jsonObject
-                val pageProps = props["pageProps"]!!.jsonObject
-                val data = pageProps["thisMovie"]!!.jsonObject
-
-                newAnime.status = SAnime.UNKNOWN
-                newAnime.title = try { data["titles"]!!.jsonObject["name"]!!.jsonPrimitive.content } catch (_: Exception) { "" }
-                newAnime.description = try { data["overview"]!!.jsonPrimitive!!.content } catch (_: Exception) { "" }
-                newAnime.thumbnail_url = try { data["images"]!!.jsonObject["poster"]!!.jsonPrimitive.content.replace("/original/", "/w500/") } catch (_: Exception) { "" }
-                newAnime.genre = try { data["genres"]!!.jsonArray.joinToString { it.jsonObject["name"]!!.jsonPrimitive!!.content } } catch (_: Exception) { "" }
-                newAnime.setUrlWithoutDomain(response.request.url.toString())
-            }
+        val script = document.selectFirst("script:containsData({\"props\":{\"pageProps\":{)")!!.data()
+        val responseJson = json.decodeFromString<AnimeEpisodesList>(script)
+        if (response.request.url.toString().contains("/serie/")) {
+            val data = responseJson.props?.pageProps?.thisSerie
+            newAnime.status = SAnime.UNKNOWN
+            newAnime.title = data?.titles?.name ?: ""
+            newAnime.description = data?.overview ?: ""
+            newAnime.thumbnail_url = data?.images?.poster?.replace("/original/", "/w500/")
+            newAnime.genre = data?.genres?.joinToString { it.name ?: "" }
+            newAnime.setUrlWithoutDomain(response.request.url.toString())
+        } else {
+            val data = responseJson.props?.pageProps?.thisMovie
+            newAnime.status = SAnime.UNKNOWN
+            newAnime.title = data?.titles?.name ?: ""
+            newAnime.description = data?.overview ?: ""
+            newAnime.thumbnail_url = data?.images?.poster?.replace("/original/", "/w500/")
+            newAnime.genre = data?.genres?.joinToString { it.name ?: "" }
+            newAnime.setUrlWithoutDomain(response.request.url.toString())
         }
+
         return newAnime
     }
 
@@ -310,23 +320,21 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
         "Tipos",
         arrayOf(
             Pair("<selecionar>", ""),
-            Pair("Acción", "accion"),
-            Pair("Animación", "animacion"),
-            Pair("Aventura", "aventura"),
-            Pair("Bélico Guerra", "belico-guerra"),
-            Pair("Biográfia", "biografia"),
-            Pair("Ciencia Ficción", "ciencia-ficcion"),
-            Pair("Comedia", "comedia"),
-            Pair("Crimen", "crimen"),
-            Pair("Documentales", "documentales"),
-            Pair("Drama", "drama"),
-            Pair("Familiar", "familiar"),
-            Pair("Fantasía", "fantasia"),
-            Pair("Misterio", "misterio"),
-            Pair("Musical", "musical"),
-            Pair("Romance", "romance"),
-            Pair("Terror", "terror"),
-            Pair("Thriller", "thriller"),
+            Pair("Series", "series/estrenos"),
+            Pair("Acción", "genero/accion"),
+            Pair("Aventura", "genero/aventura"),
+            Pair("Animación", "genero/animacion"),
+            Pair("Ciencia Ficción", "genero/ciencia-ficcion"),
+            Pair("Comedia", "genero/comedia"),
+            Pair("Crimen", "genero/crimen"),
+            Pair("Documentales", "genero/documental"),
+            Pair("Drama", "genero/drama"),
+            Pair("Familia", "genero/familia"),
+            Pair("Fantasía", "genero/fantasia"),
+            Pair("Misterio", "genero/misterio"),
+            Pair("Romance", "genero/romance"),
+            Pair("Suspenso", "genero/suspense"),
+            Pair("Terror", "genero/terror"),
         ),
     )
 
@@ -337,9 +345,9 @@ class CuevanaEu(override val name: String, override val baseUrl: String) : Confi
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
-            "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
-            "Streamlare:1080p", "Streamlare:720p", "Streamlare:480p", "Streamlare:360p", "Streamlare:240p", // Streamlare
-            "StreamTape", "Amazon", "Voex", "DoodStream", "YourUpload",
+            "Streamlare:1080p", "Streamlare:720p", "Streamlare:480p", "Streamlare:360p", "Streamlare:240p", // Streamlare}
+            "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", // Okru
+            "StreamTape", "Amazon", "Voex", "DoodStream", "YourUpload", "Filemoon", "StreamWish", "Tomatomatela", "YourUpload",
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
