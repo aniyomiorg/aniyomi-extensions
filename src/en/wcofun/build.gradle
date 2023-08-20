@@ -1,11 +1,14 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
+}
 
 ext {
     extName = 'Wcofun'
     pkgNameSuffix = 'en.wcofun'
     extClass = '.Wcofun'
-    extVersionCode = 9
+    extVersionCode = 10
     libVersion = '13'
 }
 
