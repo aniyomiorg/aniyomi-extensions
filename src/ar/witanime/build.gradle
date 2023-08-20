@@ -14,6 +14,8 @@ ext {
 dependencies {
     implementation(project(':lib-dood-extractor'))
     implementation(project(':lib-okru-extractor'))
+    implementation(project(':lib-mp4upload-extractor'))
+    implementation(project(':lib-vidbom-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

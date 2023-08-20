@@ -14,7 +14,9 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
@@ -88,18 +90,26 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }.flatten()
     }
 
+    private val soraPlayExtractor by lazy { SoraPlayExtractor(client) }
+    private val doodExtractor by lazy { DoodExtractor(client) }
+    private val sharedExtractor by lazy { SharedExtractor(client) }
+    private val dailymotionExtractor by lazy { DailymotionExtractor(client) }
+    private val okruExtractor by lazy { OkruExtractor(client) }
+    private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
+    private val vidBomExtractor by lazy { VidBomExtractor(client) }
+
     private fun extractVideos(url: String): List<Video> {
         return when {
             url.contains("yonaplay") -> extractFromMulti(url)
             url.contains("soraplay") -> {
-                SoraPlayExtractor(client).videosFromUrl(url, headers)
+                soraPlayExtractor.videosFromUrl(url, headers)
             }
             url.contains("dood") -> {
-                DoodExtractor(client).videoFromUrl(url, "Dood mirror")
+                doodExtractor.videoFromUrl(url, "Dood mirror")
                     ?.let(::listOf)
             }
             url.contains("4shared") -> {
-                SharedExtractor(client).videosFromUrl(url)
+                sharedExtractor.videosFromUrl(url)
                     ?.let(::listOf)
             }
             url.contains("dropbox") -> {
@@ -107,10 +117,16 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
 
             url.contains("dailymotion") -> {
-                DailymotionExtractor(client).videosFromUrl(url, headers)
+                dailymotionExtractor.videosFromUrl(url, headers)
             }
             url.contains("ok.ru") -> {
-                OkruExtractor(client).videosFromUrl(url)
+                okruExtractor.videosFromUrl(url)
+            }
+            url.contains("mp4upload.com") -> {
+                mp4uploadExtractor.videosFromUrl(url, headers)
+            }
+            VIDBOM_REGEX.containsMatchIn(url) -> {
+                vidBomExtractor.videosFromUrl(url)
             }
             else -> null
         } ?: emptyList()
@@ -212,6 +228,9 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     companion object {
+        // From TukTukCinema(AR)
+        private val VIDBOM_REGEX by lazy { Regex("//(?:v[aie]d[bp][aoe]?m)") }
+
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"
         private const val PREF_QUALITY_DEFAULT = "1080"
