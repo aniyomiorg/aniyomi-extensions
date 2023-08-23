@@ -5,6 +5,10 @@ import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.BloggerExtr
 import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.RuplayExtractor
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
+import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -68,12 +72,23 @@ class AnimesOnline : DooPlay(
     private val ruplayExtractor by lazy { RuplayExtractor(client) }
     private val animesOnlineExtractor by lazy { AnimesOnlinePlayerExtractor(client) }
     private val bloggerExtractor by lazy { BloggerExtractor(client) }
+    private val filemoonExtractor by lazy { FilemoonExtractor(client) }
+    private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val streamWishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val mixDropExtractor by lazy { MixDropExtractor(client) }
 
     private fun getPlayerVideos(player: Element): List<Video> {
         val name = player.selectFirst("span.title")!!.text().lowercase()
         val url = getPlayerUrl(player) ?: return emptyList()
         return when {
             "ruplay" in name -> ruplayExtractor.videosFromUrl(url)
+            "streamwish" in name -> streamWishExtractor.videosFromUrl(url)
+            "filemoon" in name -> filemoonExtractor.videosFromUrl(url)
+            "mixdrop" in name -> mixDropExtractor.videoFromUrl(url)
+            "streamtape" in name ->
+                streamTapeExtractor.videoFromUrl(url)
+                    ?.let(::listOf)
+                    ?: emptyList()
             "/player1/" in url || "/player2/" in url ->
                 animesOnlineExtractor.videosFromUrl(url)
             "/player/" in url -> bloggerExtractor.videosFromUrl(url, headers)
