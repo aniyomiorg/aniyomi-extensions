@@ -16,14 +16,16 @@ import okhttp3.FormBody
 import okhttp3.Response
 import org.jsoup.nodes.Element
 
-class AnimesGratis : DooPlay(
+class AnimesOnline : DooPlay(
     "pt-BR",
-    "Animes Grátis",
-    "https://animesgratis.org",
+    "AnimesOnline",
+    "https://animesonline.nz",
 ) {
     override val client by lazy {
         super.client.newBuilder().addInterceptor(VrfInterceptor()).build()
     }
+
+    override val id: Long = 2969482460524685571L
 
     // ============================== Popular ===============================
     override fun popularAnimeSelector() = "div.imdbRating > article > a"
