@@ -28,9 +28,6 @@ class AnimesOnline : DooPlay(
     "AnimesOnline",
     "https://animesonline.nz",
 ) {
-    override val client by lazy {
-        super.client.newBuilder().addInterceptor(VrfInterceptor()).build()
-    }
 
     override val id: Long = 2969482460524685571L
 
