@@ -120,8 +120,22 @@ class AnimesOnline : DooPlay(
     }
 
     // ============================== Filters ===============================
-    override fun genresListRequest() = GET("$baseUrl/generos/")
-    override fun genresListSelector() = "ul.generos li > a"
+    override fun genresListRequest() = GET("$baseUrl/animes/")
+    override fun genresListSelector() = "div.filter > div.select:first-child option:not([disabled])"
+
+    override fun genresListParse(document: Document): Array<Pair<String, String>> {
+        val items = document.select(genresListSelector()).map {
+            val name = it.text()
+            val value = it.attr("value").substringAfter("$baseUrl/")
+            Pair(name, value)
+        }.toTypedArray()
+
+        return if (items.isEmpty()) {
+            items
+        } else {
+            arrayOf(Pair(selectFilterText, "")) + items
+        }
+    }
 
     // ============================= Utilities ==============================
     private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
