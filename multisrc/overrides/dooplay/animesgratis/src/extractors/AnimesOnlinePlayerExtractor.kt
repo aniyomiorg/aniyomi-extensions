@@ -4,7 +4,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.OkHttpClient
 
-class AnimesGratisPlayerExtractor(private val client: OkHttpClient) {
+class AnimesOnlinePlayerExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String): List<Video> {
         return client.newCall(GET(url)).execute()
             .use { it.body.string() }
@@ -18,7 +18,7 @@ class AnimesGratisPlayerExtractor(private val client: OkHttpClient) {
                     .substringAfter(":\"")
                     .substringBefore('"')
                     .replace("\\", "")
-                Video(videoUrl, "Player 2 - $label", videoUrl)
+                Video(videoUrl, "Player - $label", videoUrl)
             }
     }
 }

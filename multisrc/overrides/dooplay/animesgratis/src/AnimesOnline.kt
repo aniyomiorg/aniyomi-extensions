@@ -1,6 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesgratis
 
-import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.AnimesGratisPlayerExtractor
+import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.AnimesOnlinePlayerExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.BloggerExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.RuplayExtractor
 import eu.kanade.tachiyomi.animesource.model.SEpisode
@@ -14,6 +14,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import okhttp3.FormBody
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -64,21 +65,23 @@ class AnimesOnline : DooPlay(
     override val prefQualityValues = arrayOf("360p", "480p", "720p", "1080p")
     override val prefQualityEntries = prefQualityValues
 
+    private val ruplayExtractor by lazy { RuplayExtractor(client) }
+    private val animesOnlineExtractor by lazy { AnimesOnlinePlayerExtractor(client) }
+    private val bloggerExtractor by lazy { BloggerExtractor(client) }
+
     private fun getPlayerVideos(player: Element): List<Video> {
         val name = player.selectFirst("span.title")!!.text().lowercase()
-        val url = getPlayerUrl(player)
+        val url = getPlayerUrl(player) ?: return emptyList()
         return when {
-            "ruplay" in name ->
-                RuplayExtractor(client).videosFromUrl(url)
-            "/player2/" in url ->
-                AnimesGratisPlayerExtractor(client).videosFromUrl(url)
-            "/player/" in url ->
-                BloggerExtractor(client).videosFromUrl(url, headers)
-            else -> emptyList<Video>()
+            "ruplay" in name -> ruplayExtractor.videosFromUrl(url)
+            "/player1/" in url || "/player2/" in url ->
+                animesOnlineExtractor.videosFromUrl(url)
+            "/player/" in url -> bloggerExtractor.videosFromUrl(url, headers)
+            else -> emptyList()
         }
     }
 
-    private fun getPlayerUrl(player: Element): String {
+    private fun getPlayerUrl(player: Element): String? {
         val body = FormBody.Builder()
             .add("action", "doo_player_ajax")
             .add("post", player.attr("data-post"))
@@ -93,6 +96,14 @@ class AnimesOnline : DooPlay(
                     .substringAfter("\"embed_url\":\"")
                     .substringBefore("\",")
                     .replace("\\", "")
+                    .takeIf(String::isNotBlank)
+                    ?.let {
+                        when {
+                            it.contains("$baseUrl/aviso/") ->
+                                it.toHttpUrl().queryParameter("url")
+                            else -> it
+                        }
+                    }
             }
     }
 
