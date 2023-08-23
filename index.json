@@ -3372,21 +3372,21 @@
     ]
   },
   {
-    "name": "Aniyomi: Animes Grátis",
+    "name": "Aniyomi: AnimesOnline",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesgratis",
-    "apk": "aniyomi-pt.animesgratis-v13.3.apk",
+    "apk": "aniyomi-pt.animesgratis-v13.4.apk",
     "lang": "pt-BR",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
     "sources": [
       {
-        "name": "Animes Grátis",
+        "name": "AnimesOnline",
         "lang": "pt-BR",
         "id": "2969482460524685571",
-        "baseUrl": "https://animesgratis.org",
+        "baseUrl": "https://animesonline.nz",
         "versionId": 1,
         "hasCloudflare": 0
       }
