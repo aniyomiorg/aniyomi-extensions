@@ -14,6 +14,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import okhttp3.FormBody
 import okhttp3.Response
+import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
 class AnimesOnline : DooPlay(
@@ -86,4 +87,13 @@ class AnimesOnline : DooPlay(
         runBlocking {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
+
+    override fun getRealAnimeDoc(document: Document): Document {
+        if (!document.location().contains("/episodio/")) return document
+
+        return document.selectFirst("div.pag_episodes div.item > a:has(i.fa-th)")?.let {
+            client.newCall(GET(it.attr("href"), headers)).execute()
+                .use { req -> req.asJsoup() }
+        } ?: document
+    }
 }
