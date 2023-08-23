@@ -40,6 +40,10 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
+    override fun headersBuilder() = super.headersBuilder()
+        .add("Referer", "$baseUrl/")
+        .add("Origin", baseUrl)
+
     private val json: Json by injectLazy()
 
     private val preferences by lazy {
@@ -113,15 +117,15 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     data class VideoResponseDto(
         val server: String,
         @SerialName("enc")
-        val sd: String,
-        val hd: String,
-        val fhd: String,
+        val sd: String?,
+        val hd: String?,
+        val fhd: String?,
     ) {
         val videos by lazy {
             listOfNotNull(
-                sd.takeIf(String::isNotBlank)?.let { Pair("SD", it) },
-                hd.takeIf(String::isNotBlank)?.let { Pair("HD", it) },
-                fhd.takeIf(String::isNotBlank)?.let { Pair("FHD", it) },
+                sd?.takeIf(String::isNotBlank)?.let { Pair("SD", it) },
+                hd?.takeIf(String::isNotBlank)?.let { Pair("HD", it) },
+                fhd?.takeIf(String::isNotBlank)?.let { Pair("FHD", it) },
             ).map {
                 val videoUrl = "$server/getvid?evid=" + it.second
                 Video(videoUrl, it.first, videoUrl)
@@ -143,6 +147,7 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val requestHeaders = headersBuilder()
             .add("x-requested-with", "XMLHttpRequest")
             .set("Referer", requestUrl)
+            .set("Origin", iframeDomain)
             .build()
 
         val videoData = client.newCall(GET(requestUrl, requestHeaders)).execute()
