@@ -28,7 +28,7 @@ class AnimesOnline : DooPlay(
     override val id: Long = 2969482460524685571L
 
     // ============================== Popular ===============================
-    override fun popularAnimeSelector() = "div.imdbRating > article > a"
+    override fun popularAnimeSelector() = "div.sidebar.right article > a"
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/animes/")
 
     // =============================== Search ===============================
