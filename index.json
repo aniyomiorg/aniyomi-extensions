@@ -2807,10 +2807,10 @@
   {
     "name": "Aniyomi: AnimeIndo",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.animeindo",
-    "apk": "aniyomi-id.animeindo-v13.4.apk",
+    "apk": "aniyomi-id.animeindo-v13.5.apk",
     "lang": "id",
-    "code": 4,
-    "version": "13.4",
+    "code": 5,
+    "version": "13.5",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
