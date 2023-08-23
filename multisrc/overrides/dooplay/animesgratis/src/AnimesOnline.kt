@@ -32,7 +32,7 @@ class AnimesOnline : DooPlay(
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/animes/")
 
     // =============================== Search ===============================
-    override fun searchAnimeSelector() = latestUpdatesSelector()
+    override fun searchAnimeSelector() = "div.result-item article div.thumbnail > a"
     override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
     // ============================ Video Links =============================
