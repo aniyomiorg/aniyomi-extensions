@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.animeextension.pt.animesgratis
 import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.AnimesGratisPlayerExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.BloggerExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.RuplayExtractor
+import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
@@ -35,6 +36,23 @@ class AnimesOnline : DooPlay(
     // =============================== Search ===============================
     override fun searchAnimeSelector() = "div.result-item article div.thumbnail > a"
     override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
+
+    // ============================== Episodes ==============================
+    override fun episodeListParse(response: Response) =
+        getRealAnimeDoc(response.asJsoup())
+            .select(episodeListSelector())
+            .map(::episodeFromElement)
+            .reversed()
+
+    override fun episodeListSelector() = "ul.episodios > li > div.episodiotitle > a"
+
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        element.text().also {
+            name = it
+            episode_number = it.substringAfter(" ").toFloatOrNull() ?: 0F
+        }
+    }
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
