@@ -31,7 +31,6 @@ data class ItemsResponse(
         @Serializable
         data class Studio(
             val Name: String? = null,
-            val Id: String? = null,
         )
     }
 }
