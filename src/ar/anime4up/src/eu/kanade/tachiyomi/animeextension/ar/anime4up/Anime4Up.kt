@@ -7,7 +7,6 @@ import androidx.annotation.RequiresApi
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.anime4up.extractors.SharedExtractor
-import eu.kanade.tachiyomi.animeextension.ar.anime4up.extractors.StreamWishExtractor
 import eu.kanade.tachiyomi.animeextension.ar.anime4up.extractors.VidYardExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -19,6 +18,7 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -169,7 +169,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     .set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0")
                     .build()
                 val finalUrl = STREAMWISH_REGEX.find(url)!!.groupValues[0]
-                StreamWishExtractor(client).videosFromUrl("https://www.$finalUrl", headers)
+                StreamWishExtractor(client, headers).videosFromUrl("https://www.$finalUrl") { "Mirror: $it" }
             }
             else -> null
         } ?: emptyList()

@@ -10,6 +10,7 @@ ext {
 }
 
 dependencies {
+    implementation(project(':lib-streamwish-extractor'))
     implementation(project(':lib-filemoon-extractor'))
     implementation(project(':lib-streamlare-extractor'))
     implementation(project(':lib-yourupload-extractor'))
