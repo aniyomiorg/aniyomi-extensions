@@ -258,7 +258,10 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
         val anime = SAnime.create()
 
         if (info.Genres != null) anime.genre = info.Genres.joinToString(", ")
-        if (info.SeriesStudio != null) anime.author = info.SeriesStudio
+
+        if (info.Studios != null && info.Studios.isNotEmpty()) {
+            anime.author = info.Studios.mapNotNull { it.Name }.joinToString(", ")
+        } else if (info.SeriesStudio != null) anime.author = info.SeriesStudio
 
         anime.description = if (info.Overview != null) {
             Jsoup.parse(
@@ -269,6 +272,10 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
             ).text().replace("br2n", "\n")
         } else {
             ""
+        }
+
+        if (info.Type == "Movie") {
+            anime.status = 2
         }
 
         anime.title = if (info.SeriesName == null) {
