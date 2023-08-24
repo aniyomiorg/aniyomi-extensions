@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.ar.animeblkom
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -15,7 +14,6 @@ import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import okhttp3.Response
@@ -29,7 +27,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "أنمي بالكوم"
 
-    override val baseUrl = "https://animeblkom.net"
+    override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
 
     override val lang = "ar"
 
@@ -37,10 +35,10 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client = network.cloudflareClient
 
-    override fun headersBuilder() = Headers.Builder()
-        .add("referer", baseUrl).add("user-agent", NEW_USER_AGENT)
+    override fun headersBuilder() = super.headersBuilder()
+        .add("referer", baseUrl)
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -202,7 +200,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
+        ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
             entries = PREF_QUALITY_ENTRIES
@@ -216,8 +214,23 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_DOMAIN_KEY
+            title = PREF_DOMAIN_TITLE
+            entries = PREF_DOMAIN_ENTRIES
+            entryValues = PREF_DOMAIN_VALUES
+            setDefaultValue(PREF_DOMAIN_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
     }
 
     // ============================= Utilities ==============================
@@ -229,10 +242,17 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     companion object {
-        private const val NEW_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.67"
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"
         private const val PREF_QUALITY_DEFAULT = "720p"
         private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p", "240p")
+
+        private const val PREF_DOMAIN_KEY = "pref_domain_key"
+        private const val PREF_DOMAIN_TITLE = "Preferred domain"
+        private const val PREF_DOMAIN_DEFAULT = "https://animeblkom.net"
+        private val PREF_DOMAIN_ENTRIES = arrayOf("animeblkom.net", "blkom.com")
+        private val PREF_DOMAIN_VALUES by lazy {
+            PREF_DOMAIN_ENTRIES.map { "https://$it" }.toTypedArray()
+        }
     }
 }
