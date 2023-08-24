@@ -14,7 +14,6 @@ import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -58,6 +57,58 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeNextPageSelector() = "ul.pagination li.page-item a[rel=next]"
 
+    // =============================== Latest ===============================
+    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
+
+    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
+
+    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+
+    override fun latestUpdatesSelector(): String = throw Exception("Not used")
+
+    // =============================== Search ===============================
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
+
+    override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
+
+    override fun searchAnimeSelector() = popularAnimeSelector()
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val url = if (query.isNotBlank()) {
+            "$baseUrl/search?query=$query&page=$page"
+        } else {
+            filters
+                .filterIsInstance<TypeList>()
+                .firstOrNull()
+                ?.takeIf { it.state > 0 }
+                ?.let { filter ->
+                    val genreN = getTypeList()[filter.state].query
+                    "$baseUrl/$genreN?page=$page"
+                }
+                ?: throw Exception("اختر فلتر")
+        }
+        return GET(url, headers)
+    }
+
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(document: Document): SAnime {
+        return SAnime.create().apply {
+            thumbnail_url = document.selectFirst("div.poster img")!!.attr("data-original")
+            title = document.selectFirst("div.name span h1")!!.text()
+            genre = document.select("p.genres a").joinToString { it.text() }
+            description = document.selectFirst("div.story p, div.story")?.text()
+            author = document.selectFirst("div:contains(الاستديو) span > a")?.text()
+            status = document.selectFirst("div.info-table div:contains(حالة الأنمي) span.info")?.text()?.let {
+                when {
+                    it.contains("مستمر") -> SAnime.ONGOING
+                    it.contains("مكتمل") -> SAnime.COMPLETED
+                    else -> null
+                }
+            } ?: SAnime.UNKNOWN
+            artist = document.selectFirst("div:contains(المخرج) > span.info")?.text()
+        }
+    }
+
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
@@ -98,6 +149,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             runCatching { extractVideos(it) }.getOrElse { emptyList() }
         }.flatten()
     }
+
     private fun extractVideos(element: Element): List<Video> {
         val url = element.attr("data-src").replace("http://", "https://")
         return when {
@@ -108,9 +160,10 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             "ok.ru" in url -> OkruExtractor(client).videosFromUrl(url)
             "mp4upload" in url -> Mp4uploadExtractor(client).videosFromUrl(url, headers)
-            else -> null
-        } ?: emptyList()
+            else -> emptyList()
+        }
     }
+
     override fun videoListSelector() = "source"
 
     override fun videoFromElement(element: Element): Video {
@@ -119,62 +172,6 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
-
-    // =============================== Search ===============================
-    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
-
-    override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
-
-    override fun searchAnimeSelector() = popularAnimeSelector()
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val url = if (query.isNotBlank()) {
-            "$baseUrl/search?query=$query&page=$page"
-        } else {
-            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
-                when (filter) {
-                    is TypeList -> {
-                        if (filter.state > 0) {
-                            val genreN = getTypeList()[filter.state].query
-                            val genreUrl = "$baseUrl/$genreN?page=$page".toHttpUrlOrNull()!!.newBuilder()
-                            return GET(genreUrl.toString(), headers)
-                        }
-                    }
-                    else -> {}
-                }
-            }
-            throw Exception("اختر فلتر")
-        }
-        return GET(url, headers)
-    }
-
-    // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        return SAnime.create().apply {
-            thumbnail_url = document.selectFirst("div.poster img")!!.attr("data-original")
-            title = document.selectFirst("div.name span h1")!!.text()
-            genre = document.select("p.genres a").joinToString { it.text() }
-            description = document.selectFirst("div.story p, div.story")?.text()
-            author = document.selectFirst("div:contains(الاستديو) span > a")?.text()
-            status = document.selectFirst("div.info-table div:contains(حالة الأنمي) span.info")?.text()?.let {
-                when {
-                    it.contains("مستمر") -> SAnime.ONGOING
-                    it.contains("مكتمل") -> SAnime.COMPLETED
-                    else -> null
-                }
-            } ?: SAnime.UNKNOWN
-            artist = document.selectFirst("div:contains(المخرج) > span.info")?.text()
-        }
-    }
-
-    // =============================== Latest ===============================
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
-
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
-
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
-
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
 
     // ============================== Filters ===============================
     override fun getFilterList() = AnimeFilterList(
