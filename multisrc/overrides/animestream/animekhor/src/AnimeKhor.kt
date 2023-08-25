@@ -1,9 +1,9 @@
 package eu.kanade.tachiyomi.animeextension.en.animekhor
 
 import eu.kanade.tachiyomi.animeextension.en.animekhor.extractors.StreamHideExtractor
-import eu.kanade.tachiyomi.animeextension.en.animekhor.extractors.StreamWishExtractor
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
 
 class AnimeKhor : AnimeStream(
@@ -26,7 +26,7 @@ class AnimeKhor : AnimeStream(
                 val docHeaders = headers.newBuilder()
                     .add("Referer", "$baseUrl/")
                     .build()
-                StreamWishExtractor(client, docHeaders).videosFromUrl(url, prefix = prefix)
+                StreamWishExtractor(client, docHeaders).videosFromUrl(url, prefix)
             }
             // TODO: Videos won't play
 //            url.contains("animeabc.xyz") -> {

@@ -11,6 +11,7 @@ ext {
 }
 
 dependencies {
+    implementation(project(':lib-streamwish-extractor'))
     implementation(project(':lib-yourupload-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation project(path: ':lib-okru-extractor')
