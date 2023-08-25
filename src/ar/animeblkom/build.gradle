@@ -1,11 +1,13 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
 
 ext {
     extName = 'أنمي بالكوم'
     pkgNameSuffix = 'ar.animeblkom'
     extClass = '.AnimeBlkom'
-    extVersionCode = 11
+    extVersionCode = 12
     libVersion = '13'
 }
 

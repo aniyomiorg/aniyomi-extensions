@@ -12,6 +12,7 @@ ext {
 }
 
 dependencies {
+    implementation(project(':lib-streamwish-extractor'))
     implementation(project(':lib-sibnet-extractor'))
     implementation(project(':lib-voe-extractor'))
     implementation(project(':lib-sendvid-extractor'))
