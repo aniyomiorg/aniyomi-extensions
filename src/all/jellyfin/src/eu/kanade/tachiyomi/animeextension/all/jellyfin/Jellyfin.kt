@@ -275,7 +275,7 @@ class Jellyfin : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         if (info.Type == "Movie") {
-            anime.status = 2
+            anime.status = SAnime.COMPLETED
         }
 
         anime.title = if (info.SeriesName == null) {
