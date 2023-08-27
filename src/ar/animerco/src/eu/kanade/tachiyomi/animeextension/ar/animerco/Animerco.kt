@@ -14,8 +14,12 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
+import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
@@ -169,10 +173,19 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val sharedExtractor by lazy { SharedExtractor(client) }
     private val uqloadExtractor by lazy { UQLoadExtractor(client) }
     private val vidBomExtractor by lazy { VidBomExtractor(client) }
+    private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
+    private val okruExtractor by lazy { OkruExtractor(client) }
+    private val streamWishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val yourUploadExtractor by lazy { YourUploadExtractor(client) }
 
     private fun getPlayerVideos(player: Element): List<Video> {
         val url = getPlayerUrl(player) ?: return emptyList()
+        val name = player.selectFirst("span.title")!!.text().lowercase()
         return when {
+            "ok.ru" in url -> okruExtractor.videosFromUrl(url)
+            "mp4upload" in url -> mp4uploadExtractor.videosFromUrl(url, headers)
+            "wish" in name -> streamWishExtractor.videosFromUrl(url)
+            "yourupload" in url -> yourUploadExtractor.videoFromUrl(url, headers)
             "dood" in url -> doodExtractor.videoFromUrl(url)?.let(::listOf)
             "drive.google" in url -> {
                 val newUrl = "https://gdriveplayer.to/embed2.php?link=$url"
