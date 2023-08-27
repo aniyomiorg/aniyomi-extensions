@@ -9,6 +9,7 @@ ext {
     pkgNameSuffix = 'pt.flixei'
     extClass = '.Flixei'
     extVersionCode = 1
+    libVersion = '13'
 }
 
 dependencies {

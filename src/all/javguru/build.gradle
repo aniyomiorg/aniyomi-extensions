@@ -8,6 +8,7 @@ ext {
     pkgNameSuffix = 'all.javguru'
     extClass = '.JavGuru'
     extVersionCode = 4
+    libVersion = '13'
     containsNsfw = true
 }
 

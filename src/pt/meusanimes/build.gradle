@@ -8,6 +8,7 @@ ext {
     pkgNameSuffix = 'pt.meusanimes'
     extClass = '.MeusAnimes'
     extVersionCode = 2
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"
