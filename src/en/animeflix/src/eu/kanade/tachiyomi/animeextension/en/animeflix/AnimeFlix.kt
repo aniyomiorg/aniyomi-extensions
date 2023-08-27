@@ -157,80 +157,64 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         selectFirst("li:contains($info)")?.ownText()?.trim()
 
     // ============================== Episodes ==============================
+    val seasonRegex by lazy { Regex("""season (\d+)""", RegexOption.IGNORE_CASE) }
+    val qualityRegex by lazy { """(\d+)p""".toRegex() }
+
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
-        val document = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup()
-        val episodeList = mutableListOf<SEpisode>()
-        val serversList = mutableListOf<List<EpUrl>>()
-        val seasonRegex = Regex("""season (\d+)""", RegexOption.IGNORE_CASE)
-        val qualityRegex = """(\d+)p""".toRegex()
-        val driveList = mutableListOf<Pair<String, String>>()
+        val document = client.newCall(GET(baseUrl + anime.url)).execute()
+            .use { it.asJsoup() }
 
         val seasonList = document.select("div.inline > h3:contains(Season),div.thecontent > h3:contains(Season)")
 
-        if (seasonList.distinctBy { seasonRegex.find(it.text())!!.groupValues[1] }.size > 1) {
+        val episodeList = if (seasonList.distinctBy { seasonRegex.find(it.text())!!.groupValues[1] }.size > 1) {
             val seasonsLinks = document.select("div.thecontent p:has(span:contains(Gdrive))").groupBy {
                 seasonRegex.find(it.previousElementSibling()!!.text())!!.groupValues[1]
-            }.values.toList()
-            seasonsLinks.forEach { season ->
+            }
 
-                val serverListSeason = mutableListOf<List<EpUrl>>()
-
-                season.forEach {
-                    val quality = qualityRegex.find(it.previousElementSibling()!!.text())?.groupValues?.get(1) ?: "Unknown quality"
-                    val seasonNumber = seasonRegex.find(it.previousElementSibling()!!.text())!!.groupValues[1]
+            seasonsLinks.flatMap { (seasonNumber, season) ->
+                val serverListSeason = season.map {
+                    val previousText = it.previousElementSibling()!!.text()
+                    val quality = qualityRegex.find(previousText)?.groupValues?.get(1) ?: "Unknown quality"
 
                     val url = it.selectFirst("a")!!.attr("href")
-                    val episodesDocument = client.newCall(GET(url)).execute().asJsoup()
-                    serverListSeason.add(
-                        episodesDocument.select("div.entry-content > h3 > a").map {
-                            EpUrl(quality, it.attr("href"), "Season $seasonNumber ${it.text()}")
-                        },
-                    )
+                    val episodesDocument = client.newCall(GET(url)).execute()
+                        .use { it.asJsoup() }
+                    episodesDocument.select("div.entry-content > h3 > a").map {
+                        EpUrl(quality, it.attr("href"), "Season $seasonNumber ${it.text()}")
+                    }
                 }
 
-                transpose(serverListSeason).forEachIndexed { index, serverList ->
-                    episodeList.add(
-                        SEpisode.create().apply {
-                            name = serverList.first().name
-                            episode_number = (index + 1).toFloat()
-                            setUrlWithoutDomain(
-                                json.encodeToString(serverList),
-                            )
-                        },
-                    )
-                }
+                transposeEpisodes(serverListSeason)
             }
         } else {
-            document.select("div.thecontent p:has(span:contains(Gdrive))").forEach {
+            val driveList = document.select("div.thecontent p:has(span:contains(Gdrive))").map {
                 val quality = qualityRegex.find(it.previousElementSibling()!!.text())?.groupValues?.get(1) ?: "Unknown quality"
-                driveList.add(Pair(it.selectFirst("a")!!.attr("href"), quality))
+                Pair(it.selectFirst("a")!!.attr("href"), quality)
             }
 
             // Load episodes
-            driveList.forEach { drive ->
-                val episodesDocument = client.newCall(GET(drive.first)).execute().asJsoup()
-                serversList.add(
-                    episodesDocument.select("div.entry-content > h3 > a").map {
-                        EpUrl(drive.second, it.attr("href"), it.text())
-                    },
-                )
+            val serversList = driveList.map { drive ->
+                val episodesDocument = client.newCall(GET(drive.first)).execute()
+                    .use { it.asJsoup() }
+                episodesDocument.select("div.entry-content > h3 > a").map {
+                    EpUrl(drive.second, it.attr("href"), it.text())
+                }
             }
 
-            transpose(serversList).forEachIndexed { index, serverList ->
-                episodeList.add(
-                    SEpisode.create().apply {
-                        name = serverList.first().name
-                        episode_number = (index + 1).toFloat()
-                        setUrlWithoutDomain(
-                            json.encodeToString(serverList),
-                        )
-                    },
-                )
-            }
+            transposeEpisodes(serversList)
         }
 
         return Observable.just(episodeList.reversed())
     }
+
+    private fun transposeEpisodes(serversList: List<List<EpUrl>>) =
+        transpose(serversList).mapIndexed { index, serverList ->
+            SEpisode.create().apply {
+                name = serverList.first().name
+                episode_number = (index + 1).toFloat()
+                setUrlWithoutDomain(json.encodeToString(serverList))
+            }
+        }
 
     override fun episodeListSelector(): String = throw Exception("Not Used")
 
@@ -238,39 +222,35 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
-        val videoList = mutableListOf<Video>()
-        val failedMediaUrl = mutableListOf<Pair<String, String>>()
         val urls = json.decodeFromString<List<EpUrl>>(episode.url)
 
         val leechUrls = urls.map {
-            val firstLeech = client.newCall(GET(it.url)).execute().asJsoup().selectFirst(
-                "script:containsData(downlaod_button)",
-            )!!.data().substringAfter("<a href=\"").substringBefore("\">")
-            val link = "https://" + firstLeech.toHttpUrl().host + client.newCall(GET(firstLeech)).execute().body.string()
-                .substringAfter("replace(\"").substringBefore("\"")
+            val firstLeech = client.newCall(GET(it.url)).execute()
+                .use { it.asJsoup() }
+                .selectFirst("script:containsData(downlaod_button)")!!
+                .data()
+                .substringAfter("<a href=\"")
+                .substringBefore("\">")
+
+            val path = client.newCall(GET(firstLeech)).execute()
+                .use { it.body.string() }
+                .substringAfter("replace(\"")
+                .substringBefore("\"")
+
+            val link = "https://" + firstLeech.toHttpUrl().host + path
             EpUrl(it.quality, link, it.name)
         }
 
-        videoList.addAll(
-            leechUrls.parallelMap { url ->
-                runCatching {
-                    if (url.url.toHttpUrl().encodedPath == "/404") return@runCatching null
-                    val (videos, mediaUrl) = extractVideo(url)
-                    if (videos.isEmpty()) failedMediaUrl.add(Pair(mediaUrl, url.quality))
-                    return@runCatching videos
-                }.getOrNull()
-            }
-                .filterNotNull()
-                .flatten(),
-        )
-
-        videoList.addAll(
-            failedMediaUrl.mapNotNull { (url, quality) ->
-                runCatching {
-                    extractGDriveLink(url, quality)
-                }.getOrNull()
-            }.flatten(),
-        )
+        val videoList = leechUrls.parallelMap { url ->
+            runCatching {
+                if (url.url.toHttpUrl().encodedPath == "/404") return@runCatching null
+                val (videos, mediaUrl) = extractVideo(url)
+                when {
+                    videos.isEmpty() -> extractGDriveLink(mediaUrl, url.quality)
+                    else -> videos
+                }
+            }.getOrNull()
+        }.filterNotNull().flatten()
 
         require(videoList.isNotEmpty()) { "Failed to fetch videos" }
 
@@ -286,23 +266,17 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================= Utilities ==============================
     // https://github.com/aniyomiorg/aniyomi-extensions/blob/master/src/en/uhdmovies/src/eu/kanade/tachiyomi/animeextension/en/uhdmovies/UHDMovies.kt
     private fun extractVideo(epUrl: EpUrl): Pair<List<Video>, String> {
-        val videoList = mutableListOf<Video>()
-
-        val qualityRegex = """(\d+)p""".toRegex()
         val matchResult = qualityRegex.find(epUrl.name)
         val quality = matchResult?.groupValues?.get(1) ?: epUrl.quality
 
-        for (type in 1..3) {
-            videoList.addAll(
-                extractWorkerLinks(epUrl.url, quality, type),
-            )
-        }
-        return Pair(videoList, epUrl.url)
+        return (1..3).toList().flatMap { type ->
+            extractWorkerLinks(epUrl.url, quality, type)
+        }.let { Pair(it, epUrl.url) }
     }
 
     private fun extractWorkerLinks(mediaUrl: String, quality: String, type: Int): List<Video> {
         val reqLink = mediaUrl.replace("/file/", "/wfile/") + "?type=$type"
-        val resp = client.newCall(GET(reqLink)).execute().asJsoup()
+        val resp = client.newCall(GET(reqLink)).execute().use { it.asJsoup() }
         val sizeMatch = SIZE_REGEX.find(resp.select("div.card-header").text().trim())
         val size = sizeMatch?.groups?.get(1)?.value?.let { " - $it" } ?: ""
         return resp.select("div.card-body div.mb-4 > a").mapIndexed { index, linkElement ->
@@ -323,12 +297,12 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun extractGDriveLink(mediaUrl: String, quality: String): List<Video> {
         val tokenClient = client.newBuilder().addInterceptor(TokenInterceptor()).build()
-        val response = tokenClient.newCall(GET(mediaUrl)).execute().asJsoup()
+        val response = tokenClient.newCall(GET(mediaUrl)).execute().use { it.asJsoup() }
         val gdBtn = response.selectFirst("div.card-body a.btn")!!
         val gdLink = gdBtn.attr("href")
         val sizeMatch = SIZE_REGEX.find(gdBtn.text())
         val size = sizeMatch?.groups?.get(1)?.value?.let { " - $it" } ?: ""
-        val gdResponse = client.newCall(GET(gdLink)).execute().asJsoup()
+        val gdResponse = client.newCall(GET(gdLink)).execute().use { it.asJsoup() }
         val link = gdResponse.select("form#download-form")
         return if (link.isNullOrEmpty()) {
             emptyList()
@@ -341,7 +315,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 
-        return this.sortedWith(
+        return sortedWith(
             compareBy { it.quality.contains(quality) },
         ).reversed()
     }
@@ -368,7 +342,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     )
 
     // From Dopebox
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
         runBlocking {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
@@ -376,17 +350,20 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     companion object {
         private val SIZE_REGEX = "\\[((?:.(?!\\[))+)][ ]*\$".toRegex(RegexOption.IGNORE_CASE)
 
-        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_KEY = "pref_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
         private const val PREF_QUALITY_DEFAULT = "1080"
+        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p")
+        private val PREF_QUALITY_VALUES = arrayOf("1080", "720", "480", "360")
     }
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
-            title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_VALUES
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
