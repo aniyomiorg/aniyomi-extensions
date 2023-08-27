@@ -113,67 +113,41 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector() = throw Exception("not used")
+    override fun episodeListSelector() = "ul.chapters-list li a:has(h3)"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.asJsoup()
-        val episodeList = mutableListOf<SEpisode>()
-        // val seriesLink1 = document.select("ol[itemscope] li:last-child a").attr("href")
-        val seriesLink = document.select("link[rel=canonical]").attr("href")
-        val type = document.select("link[rel=canonical]").attr("href")
-        if (type.contains("animes")) {
-            val seasonsHtml = client.newCall(
-                GET(
-                    seriesLink,
-                    // headers = Headers.headersOf("Referer", document.location())
-                ),
-            ).execute().asJsoup()
-            val seasonsElements = seasonsHtml.select("ul.chapters-list li a.title")
-            seasonsElements.reversed().forEach {
-                val seasonEpList = parseEpisodesFromSeries(it)
-                episodeList.addAll(seasonEpList)
-            }
-        } else {
-            val movieUrl = seriesLink
-            val episode = SEpisode.create()
-            episode.name = document.select("span.alt-title").text()
-            episode.episode_number = 1F
-            episode.setUrlWithoutDomain(movieUrl)
-            episodeList.add(episode)
+        val document = response.use { it.asJsoup() }
+        if (document.location().contains("/movies/")) {
+            return listOf(
+                SEpisode.create().apply {
+                    setUrlWithoutDomain(document.location())
+                    episode_number = 1F
+                    name = "Movie"
+                },
+            )
         }
-        return episodeList
+
+        return document.select(episodeListSelector()).flatMap { el ->
+            val doc = client.newCall(GET(el.attr("abs:href"), headers)).execute()
+                .use { it.asJsoup() }
+            val seasonName = doc.selectFirst("div.media-title h1")!!.text()
+            val seasonNum = seasonName.substringAfterLast(" ").toIntOrNull() ?: 1
+            doc.select(episodeListSelector()).map {
+                episodeFromElement(it, seasonName, seasonNum)
+            }.reversed()
+        }.reversed()
     }
 
-    private fun parseEpisodesFromSeries(element: Element): List<SEpisode> {
-        val seasonName = element.text()
-        val episodesUrl = element.attr("abs:href")
-        val episodesHtml = client.newCall(
-            GET(
-                episodesUrl,
-            ),
-        ).execute().asJsoup()
-        val episodeElements = episodesHtml.select("ul.chapters-list li")
-        return episodeElements.map { episodeFromElement(it) }
+    private fun episodeFromElement(element: Element, seasonName: String, seasonNum: Int) = SEpisode.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        val epText = element.selectFirst("h3")!!.ownText()
+        name = "$seasonName: " + epText
+        val epNum = epText.filter(Char::isDigit)
+        // good luck trying to track this xD
+        episode_number = "$seasonNum.${epNum.padStart(3, '0')}".toFloatOrNull() ?: 1F
     }
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        val episode = SEpisode.create()
-        val epNum = getNumberFromEpsString(element.select("a.title h3").text())
-        episode.episode_number = when {
-            (epNum.isNotEmpty()) -> epNum.toFloat()
-            else -> 1F
-        }
-        // element.select("td > span.Num").text().toFloat()
-        // val SeasonNum = element.ownerDocument()!!.select("div.Title span").text()
-        val seasonName = element.ownerDocument()!!.select("div.media-title h1").text()
-        episode.name = "$seasonName : " + element.select("a.title h3").text()
-        episode.setUrlWithoutDomain(element.select("a.title").attr("abs:href"))
-        return episode
-    }
-
-    private fun getNumberFromEpsString(epsStr: String): String {
-        return epsStr.filter { it.isDigit() }
-    }
+    override fun episodeFromElement(element: Element) = throw Exception("not used")
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
