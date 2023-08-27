@@ -136,14 +136,25 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        val animeInfo = document.select("div.thecontent h3:contains(Anime Info) ~ ul li").joinToString("\n") { it.text() }
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        title = document.selectFirst("div.single_post > header > h1")!!.text()
 
-        return SAnime.create().apply {
-            title = document.selectFirst("div.single_post > header > h1")!!.text()
-            description = document.select("div.thecontent h3:contains(Summary) ~ p:not(:has(*)):not(:empty)").joinToString("\n\n") { it.ownText() } + "\n\n$animeInfo"
+        val infosDiv = document.selectFirst("div.thecontent h3:contains(Anime Info) ~ ul")!!
+        status = when (infosDiv.getInfo("Status").toString()) {
+            "Completed" -> SAnime.COMPLETED
+            "Currently Airing" -> SAnime.ONGOING
+            else -> SAnime.UNKNOWN
         }
+        artist = infosDiv.getInfo("Studios")
+        author = infosDiv.getInfo("Producers")
+        genre = infosDiv.getInfo("Genres")
+        val animeInfo = infosDiv.select("li").joinToString("\n") { it.text() }
+        description = document.select("div.thecontent h3:contains(Summary) ~ p:not(:has(*)):not(:empty)")
+            .joinToString("\n\n") { it.ownText() } + "\n\n$animeInfo"
     }
+
+    private fun Element.getInfo(info: String) =
+        selectFirst("li:contains($info)")?.ownText()?.trim()
 
     // ============================== Episodes ==============================
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
