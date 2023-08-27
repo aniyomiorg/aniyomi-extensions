@@ -1,13 +1,14 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
 
 ext {
     extName = 'Lista de Animes'
     pkgNameSuffix = 'pt.listadeanimes'
     extClass = '.ListaDeAnimes'
     extVersionCode = 2
-    libversion = '13'
-    containsNsfw = false
+    libVersion = '13'
 }
 
 apply from: "$rootDir/common.gradle"

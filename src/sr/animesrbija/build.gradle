@@ -9,6 +9,7 @@ ext {
     pkgNameSuffix = 'sr.animesrbija'
     extClass = '.AnimeSrbija'
     extVersionCode = 5
+    libVersion = '13'
 }
 
 dependencies {

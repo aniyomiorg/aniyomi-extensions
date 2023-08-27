@@ -9,6 +9,7 @@ ext {
     pkgNameSuffix = 'id.nimegami'
     extClass = '.NimeGami'
     extVersionCode = 1
+    libVersion = '13'
 }
 
 dependencies {
