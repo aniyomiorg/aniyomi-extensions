@@ -29,8 +29,6 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -42,29 +40,24 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = false
 
-    private val dateFormat: SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-
     override val client: OkHttpClient = network.cloudflareClient
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    // Popular Anime
+    // ============================== Popular ===============================
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/animes/page/$page/")
 
-    override fun popularAnimeSelector(): String = "div.media-block"
+    override fun popularAnimeSelector() = "div.media-block > div > a.image"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/animes/page/$page/") // page/$page
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a").attr("href"))
-        anime.thumbnail_url = element.select("a").attr("data-src")
-        anime.title = element.select("div.info a h3").text()
-        return anime
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        thumbnail_url = element.attr("data-src")
+        title = element.attr("title")
     }
 
-    override fun popularAnimeNextPageSelector(): String = "a.ti-arrow-left-c"
+    override fun popularAnimeNextPageSelector() = "ul.pagination li a:has(i.fa-left-long)"
 
     // Episodes
 
