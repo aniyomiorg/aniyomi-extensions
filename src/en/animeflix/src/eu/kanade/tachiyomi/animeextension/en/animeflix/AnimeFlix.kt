@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.animeflix
 
 import android.app.Application
-import android.content.SharedPreferences
 import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
@@ -45,26 +44,24 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val json: Json by injectLazy()
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
     // ============================== Popular ===============================
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/page/$page/")
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/page/$page/")
+    override fun popularAnimeSelector() = "div#content_box > div.post-cards > article"
 
-    override fun popularAnimeSelector(): String = "div#page > div#content_box > article"
-
-    override fun popularAnimeFromElement(element: Element): SAnime = SAnime.create().apply {
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
         thumbnail_url = element.selectFirst("img")!!.attr("src")
         title = element.selectFirst("header")!!.text()
     }
 
-    override fun popularAnimeNextPageSelector(): String = "div.nav-links > span.current ~ a"
+    override fun popularAnimeNextPageSelector() = "div.nav-links > a.next"
 
     // =============================== Latest ===============================
-
     override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/latest-release/page/$page/")
 
     override fun latestUpdatesSelector(): String = popularAnimeSelector()
@@ -74,7 +71,6 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
 
     // =============================== Search ===============================
-
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val cleanQuery = query.replace(" ", "+").lowercase()
 
@@ -97,7 +93,6 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
 
     // ============================== Filters ===============================
-
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("Text search ignores filters"),
         GenreFilter(),
@@ -141,7 +136,6 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // =========================== Anime Details ============================
-
     override fun animeDetailsParse(document: Document): SAnime {
         val animeInfo = document.select("div.thecontent h3:contains(Anime Info) ~ ul li").joinToString("\n") { it.text() }
 
@@ -152,7 +146,6 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
         val document = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup()
         val episodeList = mutableListOf<SEpisode>()
@@ -233,7 +226,6 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not Used")
 
     // ============================ Video Links =============================
-
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val videoList = mutableListOf<Video>()
         val failedMediaUrl = mutableListOf<Pair<String, String>>()
@@ -281,7 +273,6 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
 
     // ============================= Utilities ==============================
-
     // https://github.com/aniyomiorg/aniyomi-extensions/blob/master/src/en/uhdmovies/src/eu/kanade/tachiyomi/animeextension/en/uhdmovies/UHDMovies.kt
     private fun extractVideo(epUrl: EpUrl): Pair<List<Video>, String> {
         val videoList = mutableListOf<Video>()
@@ -379,7 +370,6 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Settings ==============================
-
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
