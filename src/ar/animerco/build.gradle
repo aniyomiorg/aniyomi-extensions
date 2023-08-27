@@ -13,7 +13,7 @@ dependencies {
     implementation(project(':lib-gdriveplayer-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-dood-extractor'))
-    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
+    implementation(project(':lib-vidbom-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

@@ -6,14 +6,12 @@ import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
 
 class UQLoadExtractor(private val client: OkHttpClient) {
-    fun videoFromUrl(url: String, quality: String): Video? {
-        val document = client.newCall(GET(url)).execute().asJsoup()
-        val check = document.selectFirst("script:containsData(sources)")!!.data()
-        val videoUrl = check.substringAfter("sources: [\"").substringBefore("\"")
-        return if (check.contains("sources")) {
-            Video(url, quality, videoUrl)
-        } else {
-            Video(url, "no 1video", "https")
-        }
+    fun videoFromUrl(url: String, quality: String = "uqload"): Video? {
+        val document = client.newCall(GET(url)).execute().use { it.asJsoup() }
+        val check = document.selectFirst("script:containsData(sources)")?.data()
+            ?: return null
+        val videoUrl = check.substringAfter("sources: [\"", "").substringBefore("\"", "")
+        if (videoUrl.isBlank()) return null
+        return Video(videoUrl, quality, videoUrl)
     }
 }

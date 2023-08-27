@@ -6,7 +6,6 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.SharedExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.UQLoadExtractor
-import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.VidBomExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -16,11 +15,15 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.FormBody
-import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -151,87 +154,55 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        return videosFromElement(document)
+        val document = response.use { it.asJsoup() }
+        val players = document.select(videoListSelector())
+        return players.parallelMap {
+            runCatching { getPlayerVideos(it) }.getOrElse { emptyList() }
+        }.flatten()
     }
 
     override fun videoListSelector() = "li.dooplay_player_option" // ul#playeroptionsul
 
-    private fun videosFromElement(document: Document): List<Video> {
-        val videoList = mutableListOf<Video>()
-        val elements = document.select(videoListSelector())
-        for (element in elements) {
-            val location = element.ownerDocument()!!.location()
-            val videoHeaders = Headers.headersOf("Referer", location)
-            val qualityy = element.text()
-            val post = element.attr("data-post")
-            val num = element.attr("data-nume")
-            val type = element.attr("data-type")
-            val pageData = FormBody.Builder()
-                .add("action", "doo_player_ajax")
-                .add("nume", num)
-                .add("post", post)
-                .add("type", type)
-                .build()
-            val ajaxUrl = "$baseUrl/wp-admin/admin-ajax.php"
-            val callAjax = client.newCall(POST(ajaxUrl, videoHeaders, pageData)).execute().asJsoup()
-            val embedUrlT = callAjax.text().substringAfter("embed_url\":\"").substringBefore("\"")
-            val embedUrl = embedUrlT.replace("\\/", "/")
+    private val doodExtractor by lazy { DoodExtractor(client) }
+    private val gdrivePlayerExtractor by lazy { GdrivePlayerExtractor(client) }
+    private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val sharedExtractor by lazy { SharedExtractor(client) }
+    private val uqloadExtractor by lazy { UQLoadExtractor(client) }
+    private val vidBomExtractor by lazy { VidBomExtractor(client) }
 
-            when {
-                embedUrl.contains("dood") -> {
-                    val video = DoodExtractor(client).videoFromUrl(embedUrl)
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
-                embedUrl.contains("drive.google")
-                -> {
-                    val embedUrlG = "https://gdriveplayer.to/embed2.php?link=" + embedUrl
-                    val videos = GdrivePlayerExtractor(client).videosFromUrl(embedUrlG, "GdrivePlayer", headers = headers)
-                    videoList.addAll(videos)
-                }
-                embedUrl.contains("streamtape") -> {
-                    val video = StreamTapeExtractor(client).videoFromUrl(embedUrl)
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
-                embedUrl.contains("4shared") -> {
-                    val qualityy = "4shared"
-                    val video = SharedExtractor(client).videoFromUrl(embedUrl, qualityy)
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
-                embedUrl.contains("uqload") -> {
-                    val qualityy = "uqload"
-                    val video = UQLoadExtractor(client).videoFromUrl(embedUrl, qualityy)
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
-                embedUrl.contains("vidbom.com") ||
-                    embedUrl.contains("vidbem.com") || embedUrl.contains("vidbm.com") || embedUrl.contains("vedpom.com") ||
-                    embedUrl.contains("vedbom.com") || embedUrl.contains("vedbom.org") || embedUrl.contains("vadbom.com") ||
-                    embedUrl.contains("vidbam.org") || embedUrl.contains("myviid.com") || embedUrl.contains("myviid.net") ||
-                    embedUrl.contains("myvid.com") || embedUrl.contains("vidshare.com") || embedUrl.contains("vedsharr.com") ||
-                    embedUrl.contains("vedshar.com") || embedUrl.contains("vedshare.com") || embedUrl.contains("vadshar.com") || embedUrl.contains("vidshar.org")
-                -> { // , vidbm, vidbom
-                    val videos = VidBomExtractor(client).videosFromUrl(embedUrl)
-                    videoList.addAll(videos)
-                }
-                embedUrl.contains("vidbm") -> { // , vidbm, vidbom
-                    val videos = VidBomExtractor(client).videosFromUrl(embedUrl)
-                    videoList.addAll(videos)
-                }
-                embedUrl.contains("vidbom") -> { // , vidbm, vidbom
-                    val videos = VidBomExtractor(client).videosFromUrl(embedUrl)
-                    videoList.addAll(videos)
-                }
+    private fun getPlayerVideos(player: Element): List<Video> {
+        val url = getPlayerUrl(player) ?: return emptyList()
+        return when {
+            "dood" in url -> doodExtractor.videoFromUrl(url)?.let(::listOf)
+            "drive.google" in url -> {
+                val newUrl = "https://gdriveplayer.to/embed2.php?link=$url"
+                gdrivePlayerExtractor.videosFromUrl(newUrl, "GdrivePlayer", headers)
             }
-        }
-        return videoList
+            "streamtape" in url -> streamTapeExtractor.videoFromUrl(url)?.let(::listOf)
+            "4shared" in url -> sharedExtractor.videoFromUrl(url)?.let(::listOf)
+            "uqload" in url -> uqloadExtractor.videoFromUrl(url)?.let(::listOf)
+            VIDBOM_DOMAINS.any(url::contains) -> vidBomExtractor.videosFromUrl(url)
+            else -> null
+        } ?: emptyList()
+    }
+
+    private fun getPlayerUrl(player: Element): String? {
+        val body = FormBody.Builder()
+            .add("action", "doo_player_ajax")
+            .add("post", player.attr("data-post"))
+            .add("nume", player.attr("data-nume"))
+            .add("type", player.attr("data-type"))
+            .build()
+
+        return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", headers, body))
+            .execute()
+            .use { response ->
+                response.body.string()
+                    .substringAfter("\"embed_url\":\"")
+                    .substringBefore("\",")
+                    .replace("\\", "")
+                    .takeIf(String::isNotBlank)
+            }
     }
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
@@ -265,11 +236,25 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }.also(screen::addPreference)
     }
 
+    // ============================= Utilities ==============================
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
+
     companion object {
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"
         private const val PREF_QUALITY_DEFAULT = "1080"
         private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p", "Doodstream", "StreamTape")
         private val PREF_QUALITY_VALUES = arrayOf("1080", "720", "480", "360", "Doodstream", "StreamTape")
+
+        private val VIDBOM_DOMAINS = listOf(
+            "vidbom.com", "vidbem.com", "vidbm.com", "vedpom.com",
+            "vedbom.com", "vedbom.org", "vadbom.com",
+            "vidbam.org", "myviid.com", "myviid.net",
+            "myvid.com", "vidshare.com", "vedsharr.com",
+            "vedshar.com", "vedshare.com", "vadshar.com", "vidshar.org",
+        )
     }
 }
