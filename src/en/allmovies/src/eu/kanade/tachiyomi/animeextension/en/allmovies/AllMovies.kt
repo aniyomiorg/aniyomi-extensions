@@ -44,7 +44,7 @@ class AllMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "article.TPost > a"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/shows/page/$page")
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/series/page/$page")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
