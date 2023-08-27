@@ -55,7 +55,10 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
-        thumbnail_url = element.selectFirst("img")!!.attr("src")
+        // prevent base64 images
+        thumbnail_url = element.selectFirst("img")!!.run {
+            attr("data-pagespeed-high-res-src").ifEmpty { attr("src") }
+        }
         title = element.selectFirst("header")!!.text()
     }
 
@@ -138,6 +141,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document) = SAnime.create().apply {
         title = document.selectFirst("div.single_post > header > h1")!!.text()
+        thumbnail_url = document.selectFirst("img.imdbwp__img")?.attr("src")
 
         val infosDiv = document.selectFirst("div.thecontent h3:contains(Anime Info) ~ ul")!!
         status = when (infosDiv.getInfo("Status").toString()) {
