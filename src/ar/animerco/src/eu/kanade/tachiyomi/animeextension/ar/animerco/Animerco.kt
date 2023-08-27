@@ -59,8 +59,60 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeNextPageSelector() = "ul.pagination li a:has(i.fa-left-long)"
 
-    // Episodes
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+    override fun latestUpdatesSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
 
+    // =============================== Search ===============================
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = GET("$baseUrl/page/$page/?s=$query")
+
+    override fun searchAnimeSelector() = popularAnimeSelector()
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
+    override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
+
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        document.selectFirst("a.poster")?.run {
+            thumbnail_url = attr("data-src")
+            title = attr("title").ifEmpty {
+                document.selectFirst("div.media-title h1")!!.text()
+            }
+        }
+
+        val infosDiv = document.selectFirst("ul.media-info")!!
+        author = infosDiv.select("li:contains(الشبكات) a").eachText()
+            .joinToString()
+            .takeIf(String::isNotBlank)
+        artist = infosDiv.select("li:contains(الأستوديو) a").eachText()
+            .joinToString()
+            .takeIf(String::isNotBlank)
+        genre = document.select("nav.Nvgnrs a, ul.media-info li:contains(النوع) a")
+            .eachText()
+            .joinToString()
+
+        description = buildString {
+            document.selectFirst("div.media-story p")?.also {
+                append(it.text())
+            }
+            document.selectFirst("div.media-title > h3.alt-title")?.also {
+                append("\n\nAlternative title: " + it.text())
+            }
+        }
+
+        status = document.select("ul.chapters-list a.se-title > span.badge")
+            .eachText()
+            .let { items ->
+                when {
+                    items.all { it.contains("مكتمل") } -> SAnime.COMPLETED
+                    items.any { it.contains("يعرض الأن") } -> SAnime.ONGOING
+                    else -> SAnime.UNKNOWN
+                }
+            }
+    }
+
+    // ============================== Episodes ==============================
     override fun episodeListSelector() = throw Exception("not used")
 
     override fun episodeListParse(response: Response): List<SEpisode> {
@@ -123,8 +175,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return epsStr.filter { it.isDigit() }
     }
 
-    // Video urls
-
+    // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         return videosFromElement(document)
@@ -214,101 +265,21 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", null)
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
     }
 
-    // Search
-
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a.image").attr("href"))
-        anime.thumbnail_url = element.select("a.image").attr("data-src")
-        anime.title = element.select("a.image").attr("alt")
-        return anime
-    }
-
-    override fun searchAnimeNextPageSelector(): String = "a.ti-arrow-left-c"
-
-    override fun searchAnimeSelector(): String = "div.media-block"
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/page/$page/?s=$query")
-
-    // Details
-
-    override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
-        anime.thumbnail_url = document.select(".poster").attr("data-src")
-        anime.title = document.select("div.media-title h1").text()
-        anime.genre = document.select("nav.Nvgnrs a, ul.media-info li:contains(النوع) a").joinToString(", ") { it.text() }
-        anime.description = document.select("div.media-story p").text()
-        anime.author = document.select("ul.media-info li:contains(الشبكات) a").joinToString(", ") { it.text() }
-        anime.artist = document.select("ul.media-info li:contains(الأستوديو) a").joinToString(", ") { it.text() }
-        // anime.status = parseStatus(document.select("div.row-line:contains(Status)").text().replace("Status: ", ""))
-        return anime
-    }
-
-    private fun parseStatus(statusString: String): Int {
-        return when (statusString) {
-            "Airing" -> SAnime.ONGOING
-            "Completed" -> SAnime.COMPLETED
-            else -> SAnime.UNKNOWN
-        }
-    }
-
-    // Latest
-
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
-
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
-
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
-
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
-
-    /*// Filter
-
-    override fun getFilterList() = AnimeFilterList(
-        TypeList(typesName),
-    )
-
-    private class TypeList(types: Array<String>) : AnimeFilter.Select<String>("Drame Type", types)
-    private data class Type(val name: String, val query: String)
-    private val typesName = getTypeList().map {
-        it.name
-    }.toTypedArray()
-
-    private fun getTypeList() = listOf(
-        Type("Select", ""),
-        Type("Recently Added Sub", ""),
-        Type("Recently Added Raw", "recently-added-raw"),
-        Type("Drama Movie", "movies"),
-        Type("KShow", "kshow"),
-        Type("Ongoing Series", "ongoing-series")
-    )*/
-
-    // Preferences
-
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p", "Doodstream", "StreamTape")
-            entryValues = arrayOf("1080", "720", "480", "360", "Doodstream", "StreamTape")
-            setDefaultValue("1080")
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -317,7 +288,14 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
+    }
+
+    companion object {
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
+        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p", "Doodstream", "StreamTape")
+        private val PREF_QUALITY_VALUES = arrayOf("1080", "720", "480", "360", "Doodstream", "StreamTape")
     }
 }
