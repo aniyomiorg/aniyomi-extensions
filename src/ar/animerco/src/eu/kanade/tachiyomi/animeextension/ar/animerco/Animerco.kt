@@ -36,7 +36,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Animerco"
 
-    override val baseUrl = "https://animerco.com"
+    override val baseUrl = "https://animerco.org"
 
     override val lang = "ar"
 
@@ -155,7 +155,7 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .add("post", post)
                 .add("type", type)
                 .build()
-            val ajaxUrl = "https://animerco.com/wp-admin/admin-ajax.php"
+            val ajaxUrl = "$baseUrl/wp-admin/admin-ajax.php"
             val callAjax = client.newCall(POST(ajaxUrl, videoHeaders, pageData)).execute().asJsoup()
             val embedUrlT = callAjax.text().substringAfter("embed_url\":\"").substringBefore("\"")
             val embedUrl = embedUrlT.replace("\\/", "/")
