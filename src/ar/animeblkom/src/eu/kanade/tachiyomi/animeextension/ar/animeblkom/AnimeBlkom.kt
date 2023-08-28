@@ -42,29 +42,27 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Popular ===============================
-    override fun popularAnimeSelector() = "div.contents div.poster > a"
-
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/animes-list/?sort_by=rate&page=$page", headers)
 
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        return SAnime.create().apply {
-            val img = element.selectFirst("img")!!
-            thumbnail_url = img.attr("data-original")
-            title = img.attr("alt").removeSuffix(" poster")
-            setUrlWithoutDomain(element.attr("href"))
-        }
+    override fun popularAnimeSelector() = "div.contents div.poster > a"
+
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        val img = element.selectFirst("img")!!
+        thumbnail_url = img.attr("abs:data-original")
+        title = img.attr("alt").removeSuffix(" poster")
+        setUrlWithoutDomain(element.attr("href"))
     }
 
     override fun popularAnimeNextPageSelector() = "ul.pagination li.page-item a[rel=next]"
 
     // =============================== Latest ===============================
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
-
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
-
     override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
 
     override fun latestUpdatesSelector(): String = throw Exception("Not used")
+
+    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
+
+    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
 
     // =============================== Search ===============================
     override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
@@ -91,22 +89,20 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        return SAnime.create().apply {
-            thumbnail_url = document.selectFirst("div.poster img")!!.attr("data-original")
-            title = document.selectFirst("div.name span h1")!!.text()
-            genre = document.select("p.genres a").joinToString { it.text() }
-            description = document.selectFirst("div.story p, div.story")?.text()
-            author = document.selectFirst("div:contains(الاستديو) span > a")?.text()
-            status = document.selectFirst("div.info-table div:contains(حالة الأنمي) span.info")?.text()?.let {
-                when {
-                    it.contains("مستمر") -> SAnime.ONGOING
-                    it.contains("مكتمل") -> SAnime.COMPLETED
-                    else -> null
-                }
-            } ?: SAnime.UNKNOWN
-            artist = document.selectFirst("div:contains(المخرج) > span.info")?.text()
-        }
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        thumbnail_url = document.selectFirst("div.poster img")!!.attr("abs:data-original")
+        title = document.selectFirst("div.name span h1")!!.text()
+        genre = document.select("p.genres a").joinToString { it.text() }
+        description = document.selectFirst("div.story p, div.story")?.text()
+        author = document.selectFirst("div:contains(الاستديو) span > a")?.text()
+        status = document.selectFirst("div.info-table div:contains(حالة الأنمي) span.info")?.text()?.let {
+            when {
+                it.contains("مستمر") -> SAnime.ONGOING
+                it.contains("مكتمل") -> SAnime.COMPLETED
+                else -> null
+            }
+        } ?: SAnime.UNKNOWN
+        artist = document.selectFirst("div:contains(المخرج) > span.info")?.text()
     }
 
     // ============================== Episodes ==============================
@@ -144,10 +140,10 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        return document.select("span.server a").mapNotNull {
+        val document = response.use { it.asJsoup() }
+        return document.select("span.server a").flatMap {
             runCatching { extractVideos(it) }.getOrElse { emptyList() }
-        }.flatten()
+        }
     }
 
     private fun extractVideos(element: Element): List<Video> {
