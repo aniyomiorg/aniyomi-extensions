@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.asianload
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -24,24 +23,20 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AsianLoad"
 
-    override val baseUrl = "https://asianembed.io"
+    override val baseUrl = "https://asianhdplay.pro"
 
     override val lang = "en"
 
     override val supportsLatest = false
 
-    private val dateFormat: SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
