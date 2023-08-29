@@ -16,5 +16,6 @@ android {
 dependencies {
     compileOnly(libs.bundles.common)
     implementation(project(":lib-cryptoaes"))
+    implementation(project(":lib-playlist-utils"))
 }
 // BUMPS: 0

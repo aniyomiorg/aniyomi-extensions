@@ -682,100 +682,58 @@ package eu.kanade.tachiyomi.lib.chillxextractor
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES.decryptWithSalt
+import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import uy.kohesive.injekt.injectLazy
 
 class ChillxExtractor(private val client: OkHttpClient, private val headers: Headers) {
     private val json: Json by injectLazy()
 
+    private val playlistUtils by lazy { PlaylistUtils(client, headers) }
+
+    companion object {
+        private const val KEY = "m4H6D9%0${'$'}N&F6rQ&"
+
+        private val REGEX_MASTER_JS by lazy { Regex("""MasterJS\s*=\s*'([^']+)""") }
+        private val REGEX_SOURCES by lazy { Regex("""sources:\s*\[\{"file":"([^"]+)""") }
+        private val REGEX_FILE by lazy { Regex("""file: ?"([^"]+)"""") }
+        private val REGEX_SUBS by lazy { Regex("""\[(.*?)\](.*?)"?\,""") } // wtf?
+    }
+
     fun videoFromUrl(url: String, referer: String, prefix: String = "Chillx - "): List<Video> {
-        val videoList = mutableListOf<Video>()
-        val mainUrl = "https://${url.toHttpUrl().host}"
+        val body = client.newCall(GET(url, Headers.headersOf("Referer", "$referer/")))
+            .execute()
+            .use { it.body.string() }
 
-        val document = client.newCall(
-            GET(url, headers = Headers.headersOf("Referer", "$referer/")),
-        ).execute().asJsoup().html()
-
-        val master = Regex("""MasterJS\s*=\s*'([^']+)""").find(document)?.groupValues?.get(1) ?: return emptyList()
+        val master = REGEX_MASTER_JS.find(body)?.groupValues?.get(1) ?: return emptyList()
         val aesJson = json.decodeFromString<CryptoInfo>(master)
-        val decrypt = decryptWithSalt(aesJson.ciphertext, aesJson.salt, KEY)
+        val decryptedScript = decryptWithSalt(aesJson.ciphertext, aesJson.salt, KEY)
             .replace("\\n", "\n")
             .replace("\\", "")
 
-        val masterUrl = Regex("""sources:\s*\[\{"file":"([^"]+)""").find(decrypt)?.groupValues?.get(1)
-            ?: Regex("""file: ?"([^"]+)"""").find(decrypt)?.groupValues?.get(1)
+        val masterUrl = REGEX_SOURCES.find(decryptedScript)?.groupValues?.get(1)
+            ?: REGEX_FILE.find(decryptedScript)?.groupValues?.get(1)
             ?: return emptyList()
 
-        val masterHeaders = Headers.headersOf(
-            "Accept", "*/*",
-            "Connection", "keep-alive",
-            "Sec-Fetch-Dest", "empty",
-            "Sec-Fetch-Mode", "cors",
-            "Sec-Fetch-Site", "cross-site",
-            "Origin", mainUrl,
-            "Referer", "$mainUrl/",
+        val subtitleList = decryptedScript.takeIf { it.contains("subtitle:") }
+            ?.substringAfter("subtitle: ")
+            ?.substringBefore("\n")
+            ?.let(REGEX_SUBS::findAll)
+            ?.map { Track(it.groupValues[2], it.groupValues[1]) }
+            ?.toList()
+            ?: emptyList()
+
+        return playlistUtils.extractFromHls(
+            playlistUrl = masterUrl,
+            referer = url,
+            videoNameGen = { "$prefix$it" },
+            subtitleList = subtitleList,
         )
-
-        val response = client.newCall(GET(masterUrl, headers = masterHeaders)).execute()
-
-        val masterPlaylist = response.body.string()
-        val masterBase = "https://${masterUrl.toHttpUrl().host}${masterUrl.toHttpUrl().encodedPath}"
-            .substringBeforeLast("/") + "/"
-
-        val audioRegex = Regex("""#EXT-X-MEDIA:TYPE=AUDIO.*?NAME="(.*?)".*?URI="(.*?)"""")
-        val audioList: List<Track> = audioRegex.findAll(masterPlaylist)
-            .map {
-                var audioUrl = it.groupValues[2]
-                if (audioUrl.startsWith("https").not()) {
-                    audioUrl = masterBase + audioUrl
-                }
-
-                Track(
-                    audioUrl, // Url
-                    it.groupValues[1], // Name
-                )
-            }.toList()
-
-        val subtitleList = mutableListOf<Track>()
-        if (decrypt.contains("subtitle: ")) {
-            val subtitleStr = decrypt.substringAfter("subtitle: ").substringBefore("\n")
-            val subtitleRegex = Regex("""\[(.*?)\](.*?)"?\,""")
-            subtitleRegex.findAll(subtitleStr).forEach {
-                subtitleList.add(
-                    Track(
-                        it.groupValues[2],
-                        it.groupValues[1],
-                    ),
-                )
-            }
-        }
-
-        masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
-            .split("#EXT-X-STREAM-INF:").map {
-                val quality = it.substringAfter("RESOLUTION=").split(",")[0].split("\n")[0].substringAfter("x") + "p"
-
-                var videoUrl = it.substringAfter("\n").substringBefore("\n")
-                if (videoUrl.startsWith("https").not()) {
-                    videoUrl = masterBase + videoUrl
-                }
-                val videoHeaders = headers.newBuilder()
-                    .addAll(masterHeaders)
-                    .build()
-
-                if (audioList.isEmpty()) {
-                    videoList.add(Video(videoUrl, prefix + quality, videoUrl, headers = videoHeaders, subtitleTracks = subtitleList))
-                } else {
-                    videoList.add(Video(videoUrl, prefix + quality, videoUrl, headers = videoHeaders, audioTracks = audioList, subtitleTracks = subtitleList))
-                }
-            }
-        return videoList
     }
 
     @Serializable
@@ -785,15 +743,4 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
         @SerialName("s")
         val salt: String,
     )
-
-    private fun String.hexToByteArray(): ByteArray {
-        check(length % 2 == 0) { "Must have an even length" }
-        return chunked(2)
-            .map { it.toInt(16).toByte() }
-            .toByteArray()
-    }
-
-    companion object {
-        private const val KEY = "m4H6D9%0${'$'}N&F6rQ&"
-    }
 }
