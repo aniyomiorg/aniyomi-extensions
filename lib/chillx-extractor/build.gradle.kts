@@ -15,5 +15,6 @@ android {
 
 dependencies {
     compileOnly(libs.bundles.common)
+    implementation(project(":lib-cryptoaes"))
 }
 // BUMPS: 0
