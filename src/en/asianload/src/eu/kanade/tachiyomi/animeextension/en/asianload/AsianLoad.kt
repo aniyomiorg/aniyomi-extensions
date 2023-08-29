@@ -11,7 +11,9 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -109,6 +111,16 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     if (video != null) {
                         videoList.add(video)
                     }
+                }
+                url.contains("dwish") -> {
+                    StreamWishExtractor(client, headers)
+                        .videosFromUrl(url)
+                        .also(videoList::addAll)
+                }
+                url.contains("mixdrop") -> {
+                    MixDropExtractor(client)
+                        .videoFromUrl(url)
+                        .also(videoList::addAll)
                 }
             }
         }
