@@ -702,7 +702,9 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
         private val REGEX_MASTER_JS by lazy { Regex("""MasterJS\s*=\s*'([^']+)""") }
         private val REGEX_SOURCES by lazy { Regex("""sources:\s*\[\{"file":"([^"]+)""") }
         private val REGEX_FILE by lazy { Regex("""file: ?"([^"]+)"""") }
-        private val REGEX_SUBS by lazy { Regex("""\[(.*?)\](.*?)"?\,""") } // wtf?
+
+        // matches "[language]https://...,"
+        private val REGEX_SUBS by lazy { Regex("""\[(.*?)\](.*?)"?\,""") }
     }
 
     fun videoFromUrl(url: String, referer: String, prefix: String = "Chillx - "): List<Video> {
@@ -720,13 +722,24 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
             ?: REGEX_FILE.find(decryptedScript)?.groupValues?.get(1)
             ?: return emptyList()
 
-        val subtitleList = decryptedScript.takeIf { it.contains("subtitle:") }
-            ?.substringAfter("subtitle: ")
-            ?.substringBefore("\n")
-            ?.let(REGEX_SUBS::findAll)
-            ?.map { Track(it.groupValues[2], it.groupValues[1]) }
-            ?.toList()
-            ?: emptyList()
+        val subtitleList = buildList<Track> {
+            decryptedScript.takeIf { it.contains("subtitle:") }
+                ?.substringAfter("subtitle: ")
+                ?.substringBefore("\n")
+                ?.let(REGEX_SUBS::findAll)
+                ?.forEach { add(Track(it.groupValues[2], it.groupValues[1])) }
+
+            decryptedScript.takeIf { it.contains("tracks:") }
+                ?.substringAfter("tracks: ")
+                ?.substringBefore("\n")
+                ?.also {
+                    runCatching {
+                        json.decodeFromString<List<TrackDto>>(it)
+                            .filter { it.kind == "captions" }
+                            .forEach { add(Track(it.file, it.label)) }
+                    }
+                }
+        }
 
         return playlistUtils.extractFromHls(
             playlistUrl = masterUrl,
@@ -742,5 +755,12 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
         val ciphertext: String,
         @SerialName("s")
         val salt: String,
+    )
+
+    @Serializable
+    data class TrackDto(
+        val kind: String,
+        val label: String = "",
+        val file: String,
     )
 }
