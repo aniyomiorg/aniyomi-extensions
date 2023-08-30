@@ -88,8 +88,42 @@ class TRAnimeIzle : ParsedAnimeHttpSource() {
     override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        throw UnsupportedOperationException("Not used.")
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        setUrlWithoutDomain(document.location())
+        title = document.selectFirst("div.playlist-title h1")!!.text()
+        thumbnail_url = document.selectFirst("div.poster .social-icon img")!!.attr("src")
+
+        val infosDiv = document.selectFirst("div.col-md-6 > div.row")!!
+        genre = infosDiv.select("div > a.genre").eachText().joinToString()
+        author = infosDiv.select("dd:contains(Fansublar) + dt a").eachText().joinToString()
+
+        description = buildString {
+            document.selectFirst("div.p-10 > p")?.text()?.also(::append)
+
+            var dtCount = 0 // AAAAAAAA I HATE MUTABLE VALUES
+            infosDiv.select("dd, dt").forEach {
+                // Ignore non-wanted info
+                it.selectFirst("dd:contains(Puanlama), dd:contains(Anime Türü), dt:has(i.fa-star), dt:has(a.genre)")
+                    ?.let { return@forEach }
+
+                val text = it.text()
+                // yes
+                when (it.tagName()) {
+                    "dd" -> {
+                        append("\n$text: ")
+                        dtCount = 0
+                    }
+                    "dt" -> {
+                        if (dtCount == 0) {
+                            append(text)
+                        } else {
+                            append(", $text")
+                        }
+                        dtCount++
+                    }
+                }
+            }
+        }
     }
 
     // ============================== Episodes ==============================
