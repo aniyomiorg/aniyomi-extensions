@@ -129,7 +129,9 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    override fun searchAnimeNextPageSelector(): String = "ul.lcp_paginator > li.lcp_currentpage ~ li"
+    override fun searchAnimeNextPageSelector() =
+        "nav.navigation div.nav-previous, " + // Normal search
+            "ul.lcp_paginator > li > a.lcp_nextlink" // Index search
 
     // =========================== Anime Details ============================
 
