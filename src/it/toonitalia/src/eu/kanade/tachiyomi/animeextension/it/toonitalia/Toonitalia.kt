@@ -134,47 +134,24 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "ul.lcp_paginator > li > a.lcp_nextlink" // Index search
 
     // =========================== Anime Details ============================
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        title = document.selectFirst("h1.entry-title")!!.text()
+        thumbnail_url = document.selectFirst("header.entry-header img")!!.attr("abs:src")
 
-    override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
-        anime.thumbnail_url = document.select("div.entry-content > h2 > img").attr("src")
-        anime.title = document.select("header.entry-header > h1.entry-title").text()
-
-        var descInfo = ""
-        document.selectFirst("div.entry-content > h2 + p + p")!!.childNodes().filter {
-                s ->
-            s.nodeName() != "br"
-        }.forEach {
-            if (it.nodeName() == "span") {
-                if (it.nextSibling() != null) {
-                    descInfo += "\n"
-                }
-                descInfo += "${it.childNode(0)} "
-            } else if (it.nodeName() == "#text") {
-                val infoStr = it.toString().trim()
-                if (infoStr.isNotBlank()) descInfo += infoStr
+        // Cursed sources should have cursed code!
+        description = document.selectFirst("article > div.entry-content")!!
+            .also { it.select("center").remove() } // Remove unnecessary data
+            .wholeText()
+            .replace(",", ", ").replace("  ", " ") // Fix text
+            .lines()
+            .map(String::trim)
+            .filterNot { it.startsWith("Titolo:") }
+            .also { lines ->
+                genre = lines.firstOrNull { it.startsWith("Genere:") }
+                    ?.substringAfter("Genere: ")
             }
-        }
-
-        var descElement = document.selectFirst("div.entry-content > h3:contains(Trama:) + p")
-        if (descElement == null) {
-            descElement = document.selectFirst("div.entry-content > p:has(span:contains(Trama:))")
-        }
-
-        val description = if (descElement == null) {
-            "Nessuna descrizione disponibile\n\n$descInfo"
-        } else {
-            descElement.childNodes().filter {
-                    s ->
-                s.nodeName() == "#text"
-            }.joinToString(separator = "\n\n") { it.toString() }.trim() + "\n\n" + descInfo
-        }
-
-        anime.description = description
-
-        anime.genre = document.select("footer.entry-footer > span.cat-links > a").joinToString(separator = ", ") { it.text() }
-
-        return anime
+            .joinToString("\n")
+            .substringAfter("Trama: ")
     }
 
     // ============================== Episodes ==============================
