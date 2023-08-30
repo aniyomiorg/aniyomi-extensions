@@ -23,7 +23,7 @@ class TRAnimeIzle : ParsedAnimeHttpSource() {
 
     override val lang = "tr"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/listeler/populer/sayfa-$page")
@@ -39,21 +39,17 @@ class TRAnimeIzle : ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector() = "ul.pagination > li:has(.ti-angle-right)"
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/listeler/yenibolum/sayfa-$page")
 
-    override fun latestUpdatesSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesSelector() = popularAnimeSelector()
 
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesFromElement(element: Element) =
+        popularAnimeFromElement(element).apply {
+            // Convert episode url to anime url
+            url = "/anime$url".substringBefore("-bolum").substringBeforeLast("-") + "-izle"
+        }
 
-    override fun latestUpdatesNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
 
     // =============================== Search ===============================
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
