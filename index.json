@@ -3122,10 +3122,10 @@
   {
     "name": "Aniyomi: Toonitalia",
     "pkg": "eu.kanade.tachiyomi.animeextension.it.toonitalia",
-    "apk": "aniyomi-it.toonitalia-v13.9.apk",
+    "apk": "aniyomi-it.toonitalia-v13.10.apk",
     "lang": "it",
-    "code": 9,
-    "version": "13.9",
+    "code": 10,
+    "version": "13.10",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3134,7 +3134,7 @@
         "name": "Toonitalia",
         "lang": "it",
         "id": "8903679906651673401",
-        "baseUrl": "https://toonitalia.co",
+        "baseUrl": "https://toonitalia.green",
         "versionId": 1,
         "hasCloudflare": 1
       }
