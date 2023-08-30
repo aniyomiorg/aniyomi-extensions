@@ -1,0 +1,14 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
+
+ext {
+    extName = 'TR Anime Izle'
+    pkgNameSuffix = 'tr.tranimeizle'
+    extClass = '.TRAnimeIzle'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+apply from: "$rootDir/common.gradle"
