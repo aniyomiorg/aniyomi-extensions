@@ -89,7 +89,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val url = "$baseUrl".toHttpUrl().newBuilder().apply {
                 filters.filterIsInstance<IndexFilter>()
                     .firstOrNull()
-                    ?.let { addPathSegment(it.toUriPart()) }
+                    ?.also { addPathSegment(it.toUriPart()) }
             }
             val newUrl = url.toString() + "/?lcp_page0=$page#lcp_instance_0"
             GET(newUrl, headers)
@@ -103,7 +103,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
     private fun searchIndexAnimeFromElement(element: Element) = SAnime.create().apply {
-        element.selectFirst("h2 > a")!!.run {
+        element.selectFirst("a")!!.run {
             title = text()
             setUrlWithoutDomain(attr("href"))
         }
@@ -224,10 +224,8 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun getIndexList() = arrayOf(
         Pair("<selezionare>", ""),
-        Pair("Anime", "anime"),
-        Pair("Anime Sub-ita", "anime-sub-ita"),
-        Pair("Serie Tv", "serie-tv"),
-        Pair("Film Animazione", "film-animazione"),
+        Pair("Lista Anime e Cartoni", "lista-anime-e-cartoni"),
+        Pair("Lista Film Anime", "lista-film-anime"),
     )
 
     open class UriPartFilter(displayName: String, private val vals: Array<Pair<String, String>>) :
