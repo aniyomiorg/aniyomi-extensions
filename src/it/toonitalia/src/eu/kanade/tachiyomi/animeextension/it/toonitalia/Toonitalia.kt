@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.it.toonitalia
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.it.toonitalia.extractors.MaxStreamExtractor
@@ -18,8 +17,7 @@ import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.OkHttpClient
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -38,32 +36,28 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = false
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client = network.cloudflareClient
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
     // ============================== Popular ===============================
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/page/$page", headers)
 
-    override fun popularAnimeRequest(page: Int): Request {
-        return GET("$baseUrl/page/$page", headers = headers)
+    override fun popularAnimeSelector() = "#primary > main#main > article"
+
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        element.selectFirst("h2 > a")!!.run {
+            title = text()
+            setUrlWithoutDomain(attr("href"))
+        }
+        thumbnail_url = element.selectFirst("img")!!.attr("src")
     }
 
-    override fun popularAnimeSelector(): String = "div#primary > main#main > article"
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.title = element.select("h2 > a").text()
-        anime.thumbnail_url = element.selectFirst("img")!!.attr("src")
-        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").substringAfter(baseUrl))
-        return anime
-    }
-
-    override fun popularAnimeNextPageSelector(): String = "div.nav-links > span.current ~ a"
+    override fun popularAnimeNextPageSelector() = "nav.pagination a.next"
 
     // =============================== Latest ===============================
-
     override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
 
     override fun latestUpdatesSelector(): String = throw Exception("Not used")
@@ -73,62 +67,46 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
 
     // =============================== Search ===============================
-
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val document = response.asJsoup()
+        val document = response.use { it.asJsoup() }
 
-        val animes = if (response.request.url.toString().substringAfter(baseUrl).startsWith("/?s=")) {
-            document.select(searchAnimeSelector()).map { element ->
-                searchAnimeFromElement(element)
-            }
+        val isNormalSearch = document.location().contains("/?s=")
+        val animes = if (isNormalSearch) {
+            document.select(searchAnimeSelector()).map(::searchAnimeFromElement)
         } else {
-            document.select(searchIndexAnimeSelector()).map { element ->
-                searchIndexAnimeFromElement(element)
-            }
+            document.select(searchIndexAnimeSelector()).map(::searchIndexAnimeFromElement)
         }
 
-        val hasNextPage = searchAnimeNextPageSelector()?.let { selector ->
-            document.select(selector).first()
-        } != null
+        val hasNextPage = document.selectFirst(searchAnimeNextPageSelector()) != null
 
         return AnimesPage(animes, hasNextPage)
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         return if (query.isNotBlank()) {
-            GET("$baseUrl/?s=$query", headers = headers)
+            GET("$baseUrl/page/$page/?s=$query", headers = headers)
         } else {
-            val url = "$baseUrl".toHttpUrlOrNull()!!.newBuilder()
-            filters.forEach { filter ->
-                when (filter) {
-                    is IndexFilter -> url.addPathSegment(filter.toUriPart())
-                    else -> {}
-                }
+            val url = "$baseUrl".toHttpUrl().newBuilder().apply {
+                filters.filterIsInstance<IndexFilter>()
+                    .firstOrNull()
+                    ?.let { addPathSegment(it.toUriPart()) }
             }
-            var newUrl = url.toString()
-            if (page > 1) {
-                newUrl += "/?lcp_page0=$page#lcp_instance_0"
-            }
-            GET(newUrl, headers = headers)
+            val newUrl = url.toString() + "/?lcp_page0=$page#lcp_instance_0"
+            GET(newUrl, headers)
         }
     }
 
-    override fun searchAnimeSelector(): String = "section#primary > main#main > article"
+    override fun searchAnimeSelector() = popularAnimeSelector()
 
-    private fun searchIndexAnimeSelector(): String = "div.entry-content > ul.lcp_catlist > li"
+    private fun searchIndexAnimeSelector() = "div.entry-content > ul.lcp_catlist > li"
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.title = element.selectFirst("h2")!!.text()
-        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").substringAfter(baseUrl))
-        return anime
-    }
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
-    private fun searchIndexAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.title = element.select("a").text()
-        anime.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href").substringAfter(baseUrl))
-        return anime
+    private fun searchIndexAnimeFromElement(element: Element) = SAnime.create().apply {
+        element.selectFirst("h2 > a")!!.run {
+            title = text()
+            setUrlWithoutDomain(attr("href"))
+        }
     }
 
     override fun searchAnimeNextPageSelector() =
@@ -213,19 +191,6 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun videoFromElement(element: Element): Video = throw Exception("Not used")
-
-    override fun videoListSelector(): String = throw Exception("Not used")
-
-    override fun videoUrlParse(document: Document): String = throw Exception("Not used")
-
-    // ============================= Utilities ==============================
-    private fun bypassUprot(url: String): String? =
-        client.newCall(GET(url, headers)).execute()
-            .use { it.asJsoup() }
-            .selectFirst("a:has(button.button.is-info)")
-            ?.attr("href")
-
     private val voeExtractor by lazy { VoeExtractor(client) }
     private val streamZExtractor by lazy { StreamZExtractor(client) }
     private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
@@ -242,6 +207,13 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> null
         } ?: emptyList()
 
+    override fun videoFromElement(element: Element): Video = throw Exception("Not used")
+
+    override fun videoListSelector(): String = throw Exception("Not used")
+
+    override fun videoUrlParse(document: Document): String = throw Exception("Not used")
+
+    // ============================== Filters ===============================
     override fun getFilterList() = AnimeFilterList(
         AnimeFilter.Header("NOTA: ignorato se si utilizza la ricerca di testo!"),
         AnimeFilter.Separator(),
@@ -264,10 +236,10 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "1080")!!
-        val server = preferences.getString("preferred_server", "VOE")!!
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
 
-        return this.sortedWith(
+        return sortedWith(
             compareBy(
                 { it.quality.contains(server) },
                 { it.quality.contains(quality) },
@@ -276,12 +248,12 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p", "240p", "80p")
-            entryValues = arrayOf("1080", "720", "480", "360", "240", "80")
-            setDefaultValue("1080")
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -290,14 +262,14 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
+        }.also(screen::addPreference)
 
-        val serverPref = ListPreference(screen.context).apply {
-            key = "preferred_server"
-            title = "Preferred server"
-            entries = arrayOf("StreamZ", "VOE", "StreamZ Sub-Ita", "VOE Sub-Ita")
-            entryValues = arrayOf("StreamZ", "VOE", "StreamZ Sub-Ita", "VOE Sub-Ita")
-            setDefaultValue("StreamZ")
+        ListPreference(screen.context).apply {
+            key = PREF_SERVER_KEY
+            title = PREF_SERVER_TITLE
+            entries = PREF_SERVER_ENTRIES
+            entryValues = PREF_SERVER_VALUES
+            setDefaultValue(PREF_SERVER_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -306,9 +278,27 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
+        }.also(screen::addPreference)
+    }
 
-        screen.addPreference(videoQualityPref)
-        screen.addPreference(serverPref)
+    // ============================= Utilities ==============================
+    private fun bypassUprot(url: String): String? =
+        client.newCall(GET(url, headers)).execute()
+            .use { it.asJsoup() }
+            .selectFirst("a:has(button.button.is-info)")
+            ?.attr("href")
+
+    companion object {
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
+        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p", "240p", "80p")
+        private val PREF_QUALITY_VALUES = arrayOf("1080", "720", "480", "360", "240", "80")
+
+        private const val PREF_SERVER_KEY = "preferred_server"
+        private const val PREF_SERVER_TITLE = "Preferred server"
+        private const val PREF_SERVER_DEFAULT = "StreamZ"
+        private val PREF_SERVER_ENTRIES = arrayOf("StreamZ", "VOE", "StreamZ Sub-Ita", "VOE Sub-Ita", "MaxStream", "StreamTape")
+        private val PREF_SERVER_VALUES = PREF_SERVER_ENTRIES
     }
 }
