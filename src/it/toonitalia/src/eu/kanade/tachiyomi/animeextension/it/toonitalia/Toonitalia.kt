@@ -188,63 +188,27 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element) = throw Exception("Not used")
 
-    override fun episodeListSelector() = "article > div.entry-content > center table tr:has(a)"
+    override fun episodeListSelector() = "article > div.entry-content table tr:has(a)"
 
     // ============================ Video Links =============================
-
-    override fun videoListRequest(episode: SEpisode): Request {
-        return GET(episode.url, headers = headers)
-    }
-
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        val videoList = mutableListOf<Video>()
-
+        val document = response.use { it.asJsoup() }
         val episodeNumber = response.request.url.fragment!!.toInt()
 
-        // Select single seasons episodes
-        val singleEpisode = document.select("div.entry-content > h3:contains(Episodi) + p")
-        if (singleEpisode.isNotEmpty() && singleEpisode.text().isNotEmpty()) {
-            var counter = 1
-            for (child in singleEpisode.first()!!.childNodes()) {
-                if (child.nodeName() == "a" && counter == episodeNumber) {
-                    videoList.addAll(extractVideos(child.attr("href"), child.childNode(0).toString()))
-                }
+        val episode = document.select(episodeListSelector())
+            .getOrNull(episodeNumber)
+            ?: return emptyList()
 
-                if (child.nodeName() == "br" || child.nextSibling() == null) {
-                    counter++
+        return episode.select("a").flatMap {
+            runCatching {
+                val url = it.attr("href")
+                val hosterUrl = when {
+                    url.contains("uprot.net") -> bypassUprot(url)
+                    else -> url
                 }
-            }
+                hosterUrl?.let(::extractVideos)
+            }.getOrNull() ?: emptyList()
         }
-
-        // Select multiple seasons
-        val seasons = document.select("div.entry-content > h3:contains(Stagione) + p")
-        if (seasons.isNotEmpty()) {
-            var counter = 1
-            seasons.forEach {
-                for (child in it.childNodes()) {
-                    if (child.nodeName() == "a" && counter == episodeNumber) {
-                        videoList.addAll(extractVideos(child.attr("href"), child.childNode(0).toString()))
-                    }
-
-                    if (child.nodeName() == "br" || child.nextSibling() == null) {
-                        counter++
-                    }
-                }
-            }
-        }
-
-        // Select movie
-        val movie = document.select("div.entry-content > p:contains(Link Streaming)")
-        if (movie.isNotEmpty()) {
-            for (child in movie.first()!!.childNodes()) {
-                if (child.nodeName() == "a") {
-                    videoList.addAll(extractVideos(child.attr("href"), child.childNode(0).toString()))
-                }
-            }
-        }
-
-        return videoList.sort()
     }
 
     override fun videoFromElement(element: Element): Video = throw Exception("Not used")
@@ -254,31 +218,23 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document): String = throw Exception("Not used")
 
     // ============================= Utilities ==============================
+    private fun bypassUprot(url: String): String? =
+        client.newCall(GET(url, headers)).execute()
+            .use { it.asJsoup() }
+            .selectFirst("a:has(button.button.is-info)")
+            ?.attr("href")
 
-    private fun extractVideos(url: String, name: String): List<Video> {
-        return when {
-            url.contains("https://voe.sx") || url.contains("https://20demidistance9elongations.com") ||
-                url.contains("https://telyn610zoanthropy.com")
-            -> {
-                val video = VoeExtractor(client).videoFromUrl(url, name)
-                if (video == null) {
-                    emptyList()
-                } else {
-                    listOf(video)
-                }
-            }
-            url.contains("https://streamz") || url.contains("streamz.cc") -> {
-                val video = StreamZExtractor(client).videoFromUrl(url, name)
-                if (video == null) {
-                    emptyList()
-                } else {
-                    listOf(video)
-                }
-            }
+    private val voeExtractor by lazy { VoeExtractor(client) }
+    private val streamZExtractor by lazy { StreamZExtractor(client) }
 
-            else -> { emptyList() }
-        }
-    }
+    private fun extractVideos(url: String): List<Video> =
+        when {
+            "https://voe.sx" in url -> voeExtractor.videoFromUrl(url)?.let(::listOf)
+            "https://streamz" in url || "streamz.cc" in url -> {
+                streamZExtractor.videoFromUrl(url, "StreamZ")?.let(::listOf)
+            }
+            else -> null
+        } ?: emptyList()
 
     override fun getFilterList() = AnimeFilterList(
         AnimeFilter.Header("NOTA: ignorato se si utilizza la ricerca di testo!"),
