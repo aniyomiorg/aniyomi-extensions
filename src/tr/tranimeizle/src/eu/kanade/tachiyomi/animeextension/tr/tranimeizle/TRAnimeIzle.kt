@@ -6,10 +6,26 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
+import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
+import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
+import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
+import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
+import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -148,7 +164,57 @@ class TRAnimeIzle : ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        throw UnsupportedOperationException("Not used.")
+        val doc = response.use { it.asJsoup() }
+        val episodeId = doc.selectFirst("input#EpisodeId")!!.attr("value")
+        return doc.select("div.fansubSelector").flatMap { fansub ->
+            val fansubId = fansub.attr("data-fid")
+            val body = """{"EpisodeId":$episodeId,"FansubId":$fansubId}"""
+                .toRequestBody("application/json".toMediaType())
+
+            client.newCall(POST("$baseUrl/api/fansubSources", headers, body)).execute()
+                .use { it.asJsoup() }
+                .select("li.sourceBtn")
+                .parallelMap {
+                    runCatching {
+                        getVideosFromId(it.attr("data-id"))
+                    }.getOrElse { emptyList() }
+                }.flatten()
+        }
+    }
+
+    private val filemoonExtractor by lazy { FilemoonExtractor(client) }
+    private val mixDropExtractor by lazy { MixDropExtractor(client) }
+    private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
+    private val okruExtractor by lazy { OkruExtractor(client) }
+    private val sendvidExtractor by lazy { SendvidExtractor(client, headers) }
+    private val sibnetExtractor by lazy { SibnetExtractor(client) }
+    private val streamlareExtractor by lazy { StreamlareExtractor(client) }
+    private val voeExtractor by lazy { VoeExtractor(client) }
+    private val yourUploadExtractor by lazy { YourUploadExtractor(client) }
+
+    private fun getVideosFromId(id: String): List<Video> {
+        val url = client.newCall(POST("$baseUrl/api/sourcePlayer/$id")).execute()
+            .use { it.body.string() }
+            .substringAfter("src=")
+            .substringAfter('"')
+            .substringAfter("/embed2/?id=")
+            .substringBefore('"')
+            .replace("\\", "")
+            .trim()
+
+        // That's going to take an entire year to load, and I really don't care.
+        return when {
+            "filemoon.sx" in url -> filemoonExtractor.videosFromUrl(url, headers = headers)
+            "mixdrop" in url -> mixDropExtractor.videoFromUrl(url)
+            "mp4upload" in url -> mp4uploadExtractor.videosFromUrl(url, headers)
+            "ok.ru" in url -> okruExtractor.videosFromUrl(url)
+            "sendvid.com" in url -> sendvidExtractor.videosFromUrl(url)
+            "video.sibnet" in url -> sibnetExtractor.videosFromUrl(url)
+            "streamlare.com" in url -> streamlareExtractor.videosFromUrl(url)
+            "voe.sx" in url -> voeExtractor.videoFromUrl(url)?.let(::listOf) ?: emptyList()
+            "yourupload.com" in url -> yourUploadExtractor.videoFromUrl(url, headers)
+            else -> emptyList()
+        }
     }
 
     override fun videoListSelector(): String {
@@ -168,6 +234,11 @@ class TRAnimeIzle : ParsedAnimeHttpSource() {
         return runCatching { DATE_FORMATTER.parse(trim())?.time }
             .getOrNull() ?: 0L
     }
+
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 
     companion object {
         const val PREFIX_SEARCH = "id:"
