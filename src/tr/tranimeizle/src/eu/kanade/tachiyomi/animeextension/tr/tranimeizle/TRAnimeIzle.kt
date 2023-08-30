@@ -14,6 +14,8 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class TRAnimeIzle : ParsedAnimeHttpSource() {
 
@@ -127,12 +129,21 @@ class TRAnimeIzle : ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun episodeListParse(response: Response) = super.episodeListParse(response).reversed()
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        throw UnsupportedOperationException("Not used.")
+    override fun episodeListSelector() = "div.animeDetail-items > ol a:has(div.episode-li)"
+
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        val epNum = element.selectFirst(".etitle > span")!!.text()
+            .substringBefore(". Bölüm", "")
+            .substringAfterLast(" ", "")
+            .toIntOrNull() ?: 1 // Int because of the episode name, a Float would render with more zeros.
+
+        name = "Episode $epNum"
+        episode_number = epNum.toFloat()
+
+        date_upload = element.selectFirst(".etitle > small.author")?.text()?.toDate() ?: 0L
     }
 
     // ============================ Video Links =============================
@@ -152,7 +163,17 @@ class TRAnimeIzle : ParsedAnimeHttpSource() {
         throw UnsupportedOperationException("Not used.")
     }
 
+    // ============================= Utilities ==============================
+    private fun String.toDate(): Long {
+        return runCatching { DATE_FORMATTER.parse(trim())?.time }
+            .getOrNull() ?: 0L
+    }
+
     companion object {
         const val PREFIX_SEARCH = "id:"
+
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("dd MMM yyyy", Locale("tr"))
+        }
     }
 }
