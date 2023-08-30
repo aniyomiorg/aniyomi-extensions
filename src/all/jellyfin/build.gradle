@@ -5,8 +5,8 @@ apply plugin: 'kotlinx-serialization'
 ext {
     extName = 'Jellyfin'
     pkgNameSuffix = 'all.jellyfin'
-    extClass = '.Jellyfin'
-    extVersionCode = 8
+    extClass = '.JellyfinFactory'
+    extVersionCode = 9
     libVersion = '13'
 }
 
