@@ -1,11 +1,19 @@
 package eu.kanade.tachiyomi.multisrc.dopeflix.dto
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 @Serializable
 data class VideoDto(
     val sources: List<VideoLink>,
-    val tracks: List<TrackDto>?,
+    val tracks: List<TrackDto>? = null,
+)
+
+@Serializable
+data class SourceResponseDto(
+    val sources: JsonElement,
+    val encrypted: Boolean = true,
+    val tracks: List<TrackDto>? = null,
 )
 
 @Serializable

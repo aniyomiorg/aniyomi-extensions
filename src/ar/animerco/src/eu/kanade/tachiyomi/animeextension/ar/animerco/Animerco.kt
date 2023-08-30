@@ -6,7 +6,6 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.SharedExtractor
 import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.UQLoadExtractor
-import eu.kanade.tachiyomi.animeextension.ar.animerco.extractors.VidBomExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -15,13 +14,20 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
+import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
+import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.FormBody
-import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -30,20 +36,16 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Animerco"
 
-    override val baseUrl = "https://animerco.com"
+    override val baseUrl = "https://animerco.org"
 
     override val lang = "ar"
 
     override val supportsLatest = false
-
-    private val dateFormat: SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -51,188 +53,169 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    // Popular Anime
+    // ============================== Popular ===============================
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/animes/page/$page/")
 
-    override fun popularAnimeSelector(): String = "div.media-block"
+    override fun popularAnimeSelector() = "div.media-block > div > a.image"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/animes/page/$page/") // page/$page
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a").attr("href"))
-        anime.thumbnail_url = element.select("a").attr("data-src")
-        anime.title = element.select("div.info a h3").text()
-        return anime
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        thumbnail_url = element.attr("data-src")
+        title = element.attr("title")
     }
 
-    override fun popularAnimeNextPageSelector(): String = "a.ti-arrow-left-c"
+    override fun popularAnimeNextPageSelector() = "ul.pagination li a:has(i.fa-left-long)"
 
-    // Episodes
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+    override fun latestUpdatesSelector(): String = throw Exception("Not used")
+    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
 
-    override fun episodeListSelector() = throw Exception("not used")
+    // =============================== Search ===============================
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = GET("$baseUrl/page/$page/?s=$query")
+
+    override fun searchAnimeSelector() = popularAnimeSelector()
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
+    override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
+
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        document.selectFirst("a.poster")?.run {
+            thumbnail_url = attr("data-src")
+            title = attr("title").ifEmpty {
+                document.selectFirst("div.media-title h1")!!.text()
+            }
+        }
+
+        val infosDiv = document.selectFirst("ul.media-info")!!
+        author = infosDiv.select("li:contains(الشبكات) a").eachText()
+            .joinToString()
+            .takeIf(String::isNotBlank)
+        artist = infosDiv.select("li:contains(الأستوديو) a").eachText()
+            .joinToString()
+            .takeIf(String::isNotBlank)
+        genre = document.select("nav.Nvgnrs a, ul.media-info li:contains(النوع) a")
+            .eachText()
+            .joinToString()
+
+        description = buildString {
+            document.selectFirst("div.media-story p")?.also {
+                append(it.text())
+            }
+            document.selectFirst("div.media-title > h3.alt-title")?.also {
+                append("\n\nAlternative title: " + it.text())
+            }
+        }
+
+        status = document.select("ul.chapters-list a.se-title > span.badge")
+            .eachText()
+            .let { items ->
+                when {
+                    items.all { it.contains("مكتمل") } -> SAnime.COMPLETED
+                    items.any { it.contains("يعرض الأن") } -> SAnime.ONGOING
+                    else -> SAnime.UNKNOWN
+                }
+            }
+    }
+
+    // ============================== Episodes ==============================
+    override fun episodeListSelector() = "ul.chapters-list li a:has(h3)"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.asJsoup()
-        val episodeList = mutableListOf<SEpisode>()
-        // val seriesLink1 = document.select("ol[itemscope] li:last-child a").attr("href")
-        val seriesLink = document.select("link[rel=canonical]").attr("href")
-        val type = document.select("link[rel=canonical]").attr("href")
-        if (type.contains("animes")) {
-            val seasonsHtml = client.newCall(
-                GET(
-                    seriesLink,
-                    // headers = Headers.headersOf("Referer", document.location())
-                ),
-            ).execute().asJsoup()
-            val seasonsElements = seasonsHtml.select("ul.chapters-list li a.title")
-            seasonsElements.reversed().forEach {
-                val seasonEpList = parseEpisodesFromSeries(it)
-                episodeList.addAll(seasonEpList)
-            }
-        } else {
-            val movieUrl = seriesLink
-            val episode = SEpisode.create()
-            episode.name = document.select("span.alt-title").text()
-            episode.episode_number = 1F
-            episode.setUrlWithoutDomain(movieUrl)
-            episodeList.add(episode)
+        val document = response.use { it.asJsoup() }
+        if (document.location().contains("/movies/")) {
+            return listOf(
+                SEpisode.create().apply {
+                    setUrlWithoutDomain(document.location())
+                    episode_number = 1F
+                    name = "Movie"
+                },
+            )
         }
-        return episodeList
+
+        return document.select(episodeListSelector()).flatMap { el ->
+            val doc = client.newCall(GET(el.attr("abs:href"), headers)).execute()
+                .use { it.asJsoup() }
+            val seasonName = doc.selectFirst("div.media-title h1")!!.text()
+            val seasonNum = seasonName.substringAfterLast(" ").toIntOrNull() ?: 1
+            doc.select(episodeListSelector()).map {
+                episodeFromElement(it, seasonName, seasonNum)
+            }.reversed()
+        }.reversed()
     }
 
-    private fun parseEpisodesFromSeries(element: Element): List<SEpisode> {
-        val seasonName = element.text()
-        val episodesUrl = element.attr("abs:href")
-        val episodesHtml = client.newCall(
-            GET(
-                episodesUrl,
-            ),
-        ).execute().asJsoup()
-        val episodeElements = episodesHtml.select("ul.chapters-list li")
-        return episodeElements.map { episodeFromElement(it) }
+    private fun episodeFromElement(element: Element, seasonName: String, seasonNum: Int) = SEpisode.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        val epText = element.selectFirst("h3")!!.ownText()
+        name = "$seasonName: " + epText
+        val epNum = epText.filter(Char::isDigit)
+        // good luck trying to track this xD
+        episode_number = "$seasonNum.${epNum.padStart(3, '0')}".toFloatOrNull() ?: 1F
     }
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        val episode = SEpisode.create()
-        val epNum = getNumberFromEpsString(element.select("a.title h3").text())
-        episode.episode_number = when {
-            (epNum.isNotEmpty()) -> epNum.toFloat()
-            else -> 1F
-        }
-        // element.select("td > span.Num").text().toFloat()
-        // val SeasonNum = element.ownerDocument()!!.select("div.Title span").text()
-        val seasonName = element.ownerDocument()!!.select("div.media-title h1").text()
-        episode.name = "$seasonName : " + element.select("a.title h3").text()
-        episode.setUrlWithoutDomain(element.select("a.title").attr("abs:href"))
-        return episode
-    }
+    override fun episodeFromElement(element: Element) = throw Exception("not used")
 
-    private fun getNumberFromEpsString(epsStr: String): String {
-        return epsStr.filter { it.isDigit() }
-    }
-
-    // Video urls
-
+    // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        return videosFromElement(document)
+        val document = response.use { it.asJsoup() }
+        val players = document.select(videoListSelector())
+        return players.parallelMap {
+            runCatching { getPlayerVideos(it) }.getOrElse { emptyList() }
+        }.flatten()
     }
 
     override fun videoListSelector() = "li.dooplay_player_option" // ul#playeroptionsul
 
-    private fun videosFromElement(document: Document): List<Video> {
-        val videoList = mutableListOf<Video>()
-        val elements = document.select(videoListSelector())
-        for (element in elements) {
-            val location = element.ownerDocument()!!.location()
-            val videoHeaders = Headers.headersOf("Referer", location)
-            val qualityy = element.text()
-            val post = element.attr("data-post")
-            val num = element.attr("data-nume")
-            val type = element.attr("data-type")
-            val pageData = FormBody.Builder()
-                .add("action", "doo_player_ajax")
-                .add("nume", num)
-                .add("post", post)
-                .add("type", type)
-                .build()
-            val ajaxUrl = "https://animerco.com/wp-admin/admin-ajax.php"
-            val callAjax = client.newCall(POST(ajaxUrl, videoHeaders, pageData)).execute().asJsoup()
-            val embedUrlT = callAjax.text().substringAfter("embed_url\":\"").substringBefore("\"")
-            val embedUrl = embedUrlT.replace("\\/", "/")
+    private val doodExtractor by lazy { DoodExtractor(client) }
+    private val gdrivePlayerExtractor by lazy { GdrivePlayerExtractor(client) }
+    private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val sharedExtractor by lazy { SharedExtractor(client) }
+    private val uqloadExtractor by lazy { UQLoadExtractor(client) }
+    private val vidBomExtractor by lazy { VidBomExtractor(client) }
+    private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
+    private val okruExtractor by lazy { OkruExtractor(client) }
+    private val streamWishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val yourUploadExtractor by lazy { YourUploadExtractor(client) }
 
-            when {
-                embedUrl.contains("sbembed.com") || embedUrl.contains("sbembed1.com") || embedUrl.contains("sbplay.org") ||
-                    embedUrl.contains("sbvideo.net") || embedUrl.contains("streamsb.net") || embedUrl.contains("sbplay.one") ||
-                    embedUrl.contains("cloudemb.com") || embedUrl.contains("playersb.com") || embedUrl.contains("tubesb.com") ||
-                    embedUrl.contains("sbplay1.com") || embedUrl.contains("embedsb.com") || embedUrl.contains("watchsb.com") ||
-                    embedUrl.contains("sbplay2.com") || embedUrl.contains("japopav.tv") || embedUrl.contains("viewsb.com") ||
-                    embedUrl.contains("sbfast") || embedUrl.contains("sbfull.com") || embedUrl.contains("javplaya.com") ||
-                    embedUrl.contains("ssbstream.net") || embedUrl.contains("p1ayerjavseen.com") || embedUrl.contains("sbthe.com") ||
-                    embedUrl.contains("vidmovie.xyz") || embedUrl.contains("sbspeed.com") || embedUrl.contains("streamsss.net") ||
-                    embedUrl.contains("sblanh.com") || embedUrl.contains("tvmshow.com") || embedUrl.contains("sbanh.com") ||
-                    embedUrl.contains("streamovies.xyz")
-                -> {
-                    val videos = StreamSBExtractor(client).videosFromUrl(embedUrl, headers)
-                    videoList.addAll(videos)
-                }
-                /*embedUrl.contains("ok.ru") -> {
-                    val videos = OkruExtractor(client).videosFromUrl(embedUrl)
-                    videoList.addAll(videos)
-                }*/
-                embedUrl.contains("dood") -> {
-                    val video = DoodExtractor(client).videoFromUrl(embedUrl)
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
-                embedUrl.contains("drive.google")
-                -> {
-                    val embedUrlG = "https://gdriveplayer.to/embed2.php?link=" + embedUrl
-                    val videos = GdrivePlayerExtractor(client).videosFromUrl(embedUrlG, "GdrivePlayer", headers = headers)
-                    videoList.addAll(videos)
-                }
-                embedUrl.contains("streamtape") -> {
-                    val video = StreamTapeExtractor(client).videoFromUrl(embedUrl)
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
-                embedUrl.contains("4shared") -> {
-                    val qualityy = "4shared"
-                    val video = SharedExtractor(client).videoFromUrl(embedUrl, qualityy)
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
-                embedUrl.contains("uqload") -> {
-                    val qualityy = "uqload"
-                    val video = UQLoadExtractor(client).videoFromUrl(embedUrl, qualityy)
-                    if (video != null) {
-                        videoList.add(video)
-                    }
-                }
-                embedUrl.contains("vidbom.com") ||
-                    embedUrl.contains("vidbem.com") || embedUrl.contains("vidbm.com") || embedUrl.contains("vedpom.com") ||
-                    embedUrl.contains("vedbom.com") || embedUrl.contains("vedbom.org") || embedUrl.contains("vadbom.com") ||
-                    embedUrl.contains("vidbam.org") || embedUrl.contains("myviid.com") || embedUrl.contains("myviid.net") ||
-                    embedUrl.contains("myvid.com") || embedUrl.contains("vidshare.com") || embedUrl.contains("vedsharr.com") ||
-                    embedUrl.contains("vedshar.com") || embedUrl.contains("vedshare.com") || embedUrl.contains("vadshar.com") || embedUrl.contains("vidshar.org")
-                -> { // , vidbm, vidbom
-                    val videos = VidBomExtractor(client).videosFromUrl(embedUrl)
-                    videoList.addAll(videos)
-                }
-                embedUrl.contains("vidbm") -> { // , vidbm, vidbom
-                    val videos = VidBomExtractor(client).videosFromUrl(embedUrl)
-                    videoList.addAll(videos)
-                }
-                embedUrl.contains("vidbom") -> { // , vidbm, vidbom
-                    val videos = VidBomExtractor(client).videosFromUrl(embedUrl)
-                    videoList.addAll(videos)
-                }
+    private fun getPlayerVideos(player: Element): List<Video> {
+        val url = getPlayerUrl(player) ?: return emptyList()
+        val name = player.selectFirst("span.title")!!.text().lowercase()
+        return when {
+            "ok.ru" in url -> okruExtractor.videosFromUrl(url)
+            "mp4upload" in url -> mp4uploadExtractor.videosFromUrl(url, headers)
+            "wish" in name -> streamWishExtractor.videosFromUrl(url)
+            "yourupload" in url -> yourUploadExtractor.videoFromUrl(url, headers)
+            "dood" in url -> doodExtractor.videoFromUrl(url)?.let(::listOf)
+            "drive.google" in url -> {
+                val newUrl = "https://gdriveplayer.to/embed2.php?link=$url"
+                gdrivePlayerExtractor.videosFromUrl(newUrl, "GdrivePlayer", headers)
             }
-        }
-        return videoList
+            "streamtape" in url -> streamTapeExtractor.videoFromUrl(url)?.let(::listOf)
+            "4shared" in url -> sharedExtractor.videoFromUrl(url)?.let(::listOf)
+            "uqload" in url -> uqloadExtractor.videoFromUrl(url)?.let(::listOf)
+            VIDBOM_DOMAINS.any(url::contains) -> vidBomExtractor.videosFromUrl(url)
+            else -> null
+        } ?: emptyList()
+    }
+
+    private fun getPlayerUrl(player: Element): String? {
+        val body = FormBody.Builder()
+            .add("action", "doo_player_ajax")
+            .add("post", player.attr("data-post"))
+            .add("nume", player.attr("data-nume"))
+            .add("type", player.attr("data-type"))
+            .build()
+
+        return client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", headers, body))
+            .execute()
+            .use { response ->
+                response.body.string()
+                    .substringAfter("\"embed_url\":\"")
+                    .substringBefore("\",")
+                    .replace("\\", "")
+                    .takeIf(String::isNotBlank)
+            }
     }
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
@@ -240,101 +223,21 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", null)
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
     }
 
-    // Search
-
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a.image").attr("href"))
-        anime.thumbnail_url = element.select("a.image").attr("data-src")
-        anime.title = element.select("a.image").attr("alt")
-        return anime
-    }
-
-    override fun searchAnimeNextPageSelector(): String = "a.ti-arrow-left-c"
-
-    override fun searchAnimeSelector(): String = "div.media-block"
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET("$baseUrl/page/$page/?s=$query")
-
-    // Details
-
-    override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
-        anime.thumbnail_url = document.select(".poster").attr("data-src")
-        anime.title = document.select("div.media-title h1").text()
-        anime.genre = document.select("nav.Nvgnrs a, ul.media-info li:contains(النوع) a").joinToString(", ") { it.text() }
-        anime.description = document.select("div.media-story p").text()
-        anime.author = document.select("ul.media-info li:contains(الشبكات) a").joinToString(", ") { it.text() }
-        anime.artist = document.select("ul.media-info li:contains(الأستوديو) a").joinToString(", ") { it.text() }
-        // anime.status = parseStatus(document.select("div.row-line:contains(Status)").text().replace("Status: ", ""))
-        return anime
-    }
-
-    private fun parseStatus(statusString: String): Int {
-        return when (statusString) {
-            "Airing" -> SAnime.ONGOING
-            "Completed" -> SAnime.COMPLETED
-            else -> SAnime.UNKNOWN
-        }
-    }
-
-    // Latest
-
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
-
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
-
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
-
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
-
-    /*// Filter
-
-    override fun getFilterList() = AnimeFilterList(
-        TypeList(typesName),
-    )
-
-    private class TypeList(types: Array<String>) : AnimeFilter.Select<String>("Drame Type", types)
-    private data class Type(val name: String, val query: String)
-    private val typesName = getTypeList().map {
-        it.name
-    }.toTypedArray()
-
-    private fun getTypeList() = listOf(
-        Type("Select", ""),
-        Type("Recently Added Sub", ""),
-        Type("Recently Added Raw", "recently-added-raw"),
-        Type("Drama Movie", "movies"),
-        Type("KShow", "kshow"),
-        Type("Ongoing Series", "ongoing-series")
-    )*/
-
-    // Preferences
-
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p", "Doodstream", "StreamTape")
-            entryValues = arrayOf("1080", "720", "480", "360", "Doodstream", "StreamTape")
-            setDefaultValue("1080")
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -343,7 +246,28 @@ class Animerco : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
+        }.also(screen::addPreference)
+    }
+
+    // ============================= Utilities ==============================
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
-        screen.addPreference(videoQualityPref)
+
+    companion object {
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
+        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p", "Doodstream", "StreamTape")
+        private val PREF_QUALITY_VALUES = arrayOf("1080", "720", "480", "360", "Doodstream", "StreamTape")
+
+        private val VIDBOM_DOMAINS = listOf(
+            "vidbom.com", "vidbem.com", "vidbm.com", "vedpom.com",
+            "vedbom.com", "vedbom.org", "vadbom.com",
+            "vidbam.org", "myviid.com", "myviid.net",
+            "myvid.com", "vidshare.com", "vedsharr.com",
+            "vedshar.com", "vedshare.com", "vadshar.com", "vidshar.org",
+        )
     }
 }

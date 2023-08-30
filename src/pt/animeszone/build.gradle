@@ -6,13 +6,12 @@ ext {
     extName = 'AnimesZone'
     pkgNameSuffix = 'pt.animeszone'
     extClass = '.AnimesZone'
-    extVersionCode = 4
+    extVersionCode = 5
     libVersion = '13'
     containsNsfw = true
 }
 
 dependencies {
-    implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
 }
 

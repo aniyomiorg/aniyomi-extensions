@@ -6,13 +6,12 @@ ext {
     extName = 'Membed'
     pkgNameSuffix = 'en.vidembed'
     extClass = '.Membed'
-    extVersionCode = 30
+    extVersionCode = 31
     libVersion = '13'
 }
 
 dependencies {
     implementation(project(':lib-mixdrop-extractor'))
-    implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-dood-extractor'))
 }
 

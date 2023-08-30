@@ -121,8 +121,10 @@ abstract class DooPlay(
 
     protected open fun getSeasonEpisodes(season: Element): List<SEpisode> {
         val seasonName = season.selectFirst("span.se-t")!!.text()
-        return season.select(episodeListSelector()).map { element ->
-            episodeFromElement(element, seasonName)
+        return season.select(episodeListSelector()).mapNotNull { element ->
+            runCatching {
+                episodeFromElement(element, seasonName)
+            }.onFailure { it.printStackTrace() }.getOrNull()
         }
     }
 

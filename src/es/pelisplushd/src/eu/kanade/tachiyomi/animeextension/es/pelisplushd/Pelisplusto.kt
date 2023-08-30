@@ -1,7 +1,11 @@
 package eu.kanade.tachiyomi.animeextension.es.pelisplushd
 
+import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamHideExtractor
+import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.UqloadExtractor
+import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.VudeoExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -11,7 +15,7 @@ import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -105,16 +109,35 @@ class Pelisplusto(override val name: String, override val baseUrl: String) : Pel
         }
     }
 
+    private fun fetchUrls(text: String?): List<String> {
+        if (text.isNullOrEmpty()) return listOf()
+        val linkRegex = "(http|ftp|https):\\/\\/([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:\\/~+#-]*[\\w@?^=%&\\/~+#-])".toRegex()
+        return linkRegex.findAll(text).map { it.value.trim().removeSurrounding("\"") }.toList()
+    }
+
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
-        document.select(".bg-tabs li").map { it ->
-            val link = it.attr("data-server")
-                .replace("https://sblanh.com", "https://watchsb.com")
-                .replace(Regex("([a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+)=https:\\/\\/ww3.pelisplus.to.*"), "")
+        document.select(".bg-tabs ul li").map { it ->
+            val url = String(Base64.decode(it.attr("data-server"), Base64.DEFAULT))
+            if (url.contains("/player/")) {
+                try {
+                    val script = client.newCall(GET(url)).execute().asJsoup().selectFirst("script:containsData(window.onload)")!!.data()
+                    fetchUrls(script).map {
+                        val link = it.replace("https://sblanh.com", "https://lvturbo.com")
+                            .replace(Regex("([a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+)=https:\\/\\/ww3.pelisplus.to.*"), "")
+                        loadExtractor(link).let { videos ->
+                            videoList.addAll(videos)
+                        }
+                    }
+                } catch (_: Exception) {}
+            } else {
+                val link = url.replace("https://sblanh.com", "https://lvturbo.com")
+                    .replace(Regex("([a-zA-Z0-9]{0,8}[a-zA-Z0-9_-]+)=https:\\/\\/ww3.pelisplus.to.*"), "")
 
-            loadExtractor(link).let { videos ->
-                videoList.addAll(videos)
+                loadExtractor(link).let { videos ->
+                    videoList.addAll(videos)
+                }
             }
         }
         return videoList
@@ -146,7 +169,7 @@ class Pelisplusto(override val name: String, override val baseUrl: String) : Pel
                 val status = json["status"]!!.jsonPrimitive!!.content
                 val file = json["file"]!!.jsonPrimitive!!.content
                 if (status == "200") { videoList.add(Video(file, "$prefix Tomatomatela", file, headers = null)) }
-            } catch (e: Exception) { }
+            } catch (_: Exception) { }
         }
         if (embedUrl.contains("yourupload")) {
             val videos = YourUploadExtractor(client).videoFromUrl(url, headers = headers)
@@ -156,20 +179,7 @@ class Pelisplusto(override val name: String, override val baseUrl: String) : Pel
             DoodExtractor(client).videoFromUrl(url, "$prefix DoodStream", false)
                 ?.let { videoList.add(it) }
         }
-        if (embedUrl.contains("sbembed.com") || embedUrl.contains("sbembed1.com") || embedUrl.contains("sbplay.org") ||
-            embedUrl.contains("sbvideo.net") || embedUrl.contains("streamsb.net") || embedUrl.contains("sbplay.one") ||
-            embedUrl.contains("cloudemb.com") || embedUrl.contains("playersb.com") || embedUrl.contains("tubesb.com") ||
-            embedUrl.contains("sbplay1.com") || embedUrl.contains("embedsb.com") || embedUrl.contains("watchsb.com") ||
-            embedUrl.contains("sbplay2.com") || embedUrl.contains("japopav.tv") || embedUrl.contains("viewsb.com") ||
-            embedUrl.contains("sbfast") || embedUrl.contains("sbfull.com") || embedUrl.contains("javplaya.com") ||
-            embedUrl.contains("ssbstream.net") || embedUrl.contains("p1ayerjavseen.com") || embedUrl.contains("sbthe.com") ||
-            embedUrl.contains("vidmovie.xyz") || embedUrl.contains("sbspeed.com") || embedUrl.contains("streamsss.net") ||
-            embedUrl.contains("sblanh.com") || embedUrl.contains("sbbrisk.com") || embedUrl.contains("lvturbo.com")
-        ) {
-            runCatching {
-                StreamSBExtractor(client).videosFromUrl(url, headers, prefix = prefix)
-            }.getOrNull()?.let { videoList.addAll(it) }
-        }
+
         if (embedUrl.contains("okru") || embedUrl.contains("ok.ru")) {
             videoList.addAll(
                 OkruExtractor(client).videosFromUrl(url, prefix, true),
@@ -184,6 +194,21 @@ class Pelisplusto(override val name: String, override val baseUrl: String) : Pel
         }
         if (embedUrl.contains("streamlare")) {
             videoList.addAll(StreamlareExtractor(client).videosFromUrl(url))
+        }
+        if (embedUrl.contains("uqload")) {
+            UqloadExtractor(client).videosFromUrl(url, headers)
+        }
+        if (embedUrl.contains("streamwish")) {
+            val docHeaders = headers.newBuilder()
+                .add("Referer", "$baseUrl/")
+                .build()
+            StreamWishExtractor(client, docHeaders).videosFromUrl(url, "StreamWish")
+        }
+        if (embedUrl.contains("ahvsh") || embedUrl.contains("streamhide")) {
+            StreamHideExtractor(client).videosFromUrl(url, "StreamHide")
+        }
+        if (embedUrl.contains("vudeo")) {
+            VudeoExtractor(client).videosFromUrl(url)
         }
         return videoList
     }
@@ -235,12 +260,7 @@ class Pelisplusto(override val name: String, override val baseUrl: String) : Pel
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
-            "StreamSB:1080p",
-            "StreamSB:720p",
-            "StreamSB:480p",
-            "StreamSB:360p",
-            "StreamSB:240p",
-            "StreamSB:144p", // StreamSB
+            "Voex",
             "DoodStream",
         )
         val videoQualityPref = ListPreference(screen.context).apply {

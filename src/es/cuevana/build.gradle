@@ -1,20 +1,24 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlinx-serialization'
 
 ext {
     extName = 'Cuevana'
     pkgNameSuffix = 'es.cuevana'
-    extClass = '.Cuevana'
-    extVersionCode = 17
+    extClass = '.CuevanaFactory'
+    extVersionCode = 20
     libVersion = '13'
 }
 
 dependencies {
+    implementation(project(':lib-streamwish-extractor'))
     implementation(project(':lib-yourupload-extractor'))
     implementation(project(':lib-dood-extractor'))
-    implementation project(path: ':lib-streamsb-extractor')
     implementation project(path: ':lib-okru-extractor')
     implementation project(path: ':lib-voe-extractor')
+    implementation project(path: ':lib-streamtape-extractor')
+    implementation project(path: ':lib-filemoon-extractor')
+    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
 
 apply from: "$rootDir/common.gradle"

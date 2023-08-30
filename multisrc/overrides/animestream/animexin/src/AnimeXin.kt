@@ -9,7 +9,6 @@ import eu.kanade.tachiyomi.animeextension.all.animexin.extractors.YouTubeExtract
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
 
 class AnimeXin : AnimeStream(
@@ -21,24 +20,12 @@ class AnimeXin : AnimeStream(
 
     // ============================ Video Links =============================
     override fun getVideoList(url: String, name: String): List<Video> {
-        val streamSbDomains = listOf(
-            "sbhight", "sbrity", "sbembed.com", "sbembed1.com", "sbplay.org",
-            "sbvideo.net", "streamsb.net", "sbplay.one", "cloudemb.com",
-            "playersb.com", "tubesb.com", "sbplay1.com", "embedsb.com",
-            "watchsb.com", "sbplay2.com", "japopav.tv", "viewsb.com",
-            "sbfast", "sbfull.com", "javplaya.com", "ssbstream.net",
-            "p1ayerjavseen.com", "sbthe.com", "vidmovie.xyz", "sbspeed.com",
-            "streamsss.net", "sblanh.com", "tvmshow.com", "sbanh.com",
-            "streamovies.xyz",
-        )
         val prefix = "$name - "
         return when {
             url.contains("ok.ru") -> {
                 OkruExtractor(client).videosFromUrl(url, prefix = prefix)
             }
-            streamSbDomains.any { it in url } -> {
-                StreamSBExtractor(client).videosFromUrl(url, headers, prefix = prefix)
-            }
+
             url.contains("dailymotion") -> {
                 DailymotionExtractor(client).videosFromUrl(url, prefix = prefix)
             }

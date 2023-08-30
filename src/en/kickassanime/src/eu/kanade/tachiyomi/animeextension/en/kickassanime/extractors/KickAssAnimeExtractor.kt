@@ -102,10 +102,26 @@ class KickAssAnimeExtractor(
             Track(subUrl, language)
         }
 
+        fun getVideoHeaders(baseHeaders: Headers, referer: String, videoUrl: String): Headers {
+            return baseHeaders.newBuilder().apply {
+                add("Accept", "*/*")
+                add("Accept-Language", "en-US,en;q=0.5")
+                add("Origin", "https://$host")
+                add("Sec-Fetch-Dest", "empty")
+                add("Sec-Fetch-Mode", "cors")
+                add("Sec-Fetch-Site", "cross-site")
+            }.build()
+        }
+
         return when {
             videoObject.hls.isBlank() ->
                 PlaylistUtils(client, headers).extractFromDash(videoObject.playlistUrl, videoNameGen = { res -> "$name - $res" }, subtitleList = subtitles)
-            else -> PlaylistUtils(client, headers).extractFromHls(videoObject.playlistUrl, videoNameGen = { "$name - $it" }, subtitleList = subtitles)
+            else -> PlaylistUtils(client, headers).extractFromHls(
+                videoObject.playlistUrl,
+                videoNameGen = { "$name - $it" },
+                videoHeadersGen = ::getVideoHeaders,
+                subtitleList = subtitles,
+            )
         }
     }
 

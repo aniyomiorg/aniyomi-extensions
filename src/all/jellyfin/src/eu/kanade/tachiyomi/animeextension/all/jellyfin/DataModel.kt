@@ -17,6 +17,7 @@ data class ItemsResponse(
         val IndexNumber: Float? = null,
         val Genres: List<String>? = null,
         val Status: String? = null,
+        val Studios: List<Studio>? = null,
         val SeriesStudio: String? = null,
         val Overview: String? = null,
         val SeriesName: String? = null,
@@ -25,6 +26,11 @@ data class ItemsResponse(
         @Serializable
         data class ImageObject(
             val Primary: String? = null,
+        )
+
+        @Serializable
+        data class Studio(
+            val Name: String? = null,
         )
     }
 }

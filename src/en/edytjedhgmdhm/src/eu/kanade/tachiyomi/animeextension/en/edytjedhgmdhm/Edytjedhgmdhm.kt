@@ -8,7 +8,6 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -17,7 +16,6 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
-import java.net.URLEncoder
 
 class Edytjedhgmdhm : ParsedAnimeHttpSource() {
 
@@ -33,36 +31,55 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    // ============================== Popular ===============================
+    // ============================ Initializers ============================
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/tvs/#$page")
-
-    override fun popularAnimeParse(response: Response): AnimesPage {
-        val document = response.asJsoup()
-        val page = response.request.url.encodedFragment!!.toInt()
-        val path = response.request.url.encodedPath
-        val items = document.select(popularAnimeSelector())
-
-        val animeList = items.chunked(CHUNKED_SIZE)[page - 1].mapNotNull {
-            val a = it.selectFirst("a")!!
-            val name = a.text()
-            if (a.attr("href") == "..") return@mapNotNull null
-
-            SAnime.create().apply {
-                setUrlWithoutDomain(joinPaths(path, a.attr("href")))
-                title = name.removeSuffix("/")
-                thumbnail_url = ""
-            }
-        }
-
-        return AnimesPage(animeList, (page + 1) * CHUNKED_SIZE <= items.size)
+    private val miscList by lazy {
+        client.newCall(GET("$baseUrl/misc/")).execute()
+            .asJsoup()
+            .select("a")
     }
 
-    override fun popularAnimeSelector(): String = "table > tbody > tr:has(a)"
+    private val moviesList by lazy {
+        client.newCall(GET("$baseUrl/movies/")).execute()
+            .asJsoup()
+            .select("a")
+    }
+
+    private val tvsList by lazy {
+        client.newCall(GET("$baseUrl/tvs/")).execute()
+            .asJsoup()
+            .select("a")
+    }
+
+    // ============================== Popular ===============================
+
+    override fun fetchPopularAnime(page: Int): Observable<AnimesPage> {
+        val results = tvsList.chunked(CHUNKED_SIZE).toList()
+
+        val hasNextPage = results.size > page
+        val animeList = if (results.isEmpty()) {
+            emptyList()
+        } else {
+            results.get(page - 1).map {
+                SAnime.create().apply {
+                    title = it.text()
+                    setUrlWithoutDomain(it.attr("abs:href"))
+                    thumbnail_url = ""
+                }
+            }
+        }
+        return Observable.just(AnimesPage(animeList, hasNextPage))
+    }
+
+    override fun popularAnimeRequest(page: Int): Request = throw Exception("Not used")
+
+    override fun popularAnimeParse(response: Response): AnimesPage = throw Exception("Not used")
+
+    override fun popularAnimeSelector(): String = throw Exception("Not used")
 
     override fun popularAnimeFromElement(element: Element): SAnime = throw Exception("Not used")
 
-    override fun popularAnimeNextPageSelector(): String? = null
+    override fun popularAnimeNextPageSelector(): String = throw Exception("Not used")
 
     // =============================== Latest ===============================
 
@@ -81,50 +98,40 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
         query: String,
         filters: AnimeFilterList,
     ): Observable<AnimesPage> {
-        return Observable.defer {
-            try {
-                client.newCall(searchAnimeRequest(page, query, filters)).asObservableSuccess()
-            } catch (e: NoClassDefFoundError) {
-                // RxJava doesn't handle Errors, which tends to happen during global searches
-                // if an old extension using non-existent classes is still around
-                throw RuntimeException(e)
-            }
-        }
-            .map { response ->
-                searchAnimeParse(response, query)
-            }
-    }
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
         val subPageFilter = filterList.find { it is SubPageFilter } as SubPageFilter
         val subPage = subPageFilter.toUriPart()
 
-        return GET("$baseUrl$subPage#$page")
-    }
-
-    private fun searchAnimeParse(response: Response, query: String): AnimesPage {
-        val document = response.asJsoup()
-        val page = response.request.url.encodedFragment!!.toInt()
-        val path = response.request.url.encodedPath
-        val items = document.select(popularAnimeSelector()).filter { t ->
-            t.selectFirst("a")!!.text().contains(query, true)
+        val resultList = when (subPage) {
+            "/tvs/" -> tvsList
+            "/movies/" -> moviesList
+            "/misc/" -> miscList
+            else -> emptyList()
         }
 
-        val animeList = items.chunked(CHUNKED_SIZE)[page - 1].mapNotNull {
-            val a = it.selectFirst("a")!!
-            val name = a.text()
-            if (a.attr("href") == "..") return@mapNotNull null
+        val results = if (query.isNotEmpty() && resultList.isNotEmpty()) {
+            resultList.filter { it.text().contains(query, true) }
+                .chunked(CHUNKED_SIZE).toList()
+        } else {
+            resultList.chunked(CHUNKED_SIZE).toList()
+        }
 
-            SAnime.create().apply {
-                setUrlWithoutDomain(joinPaths(path, a.attr("href")))
-                title = name.removeSuffix("/")
-                thumbnail_url = ""
+        val hasNextPage = results.size > page
+        val animeList = if (results.isEmpty()) {
+            emptyList()
+        } else {
+            results.get(page - 1).map {
+                SAnime.create().apply {
+                    title = it.text()
+                    setUrlWithoutDomain(it.attr("abs:href"))
+                    thumbnail_url = ""
+                }
             }
         }
-
-        return AnimesPage(animeList, (page + 1) * CHUNKED_SIZE <= items.size)
+        return Observable.just(AnimesPage(animeList, hasNextPage))
     }
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("Not used")
 
     override fun searchAnimeSelector(): String = throw Exception("Not used")
 
@@ -168,16 +175,15 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
         fun traverseDirectory(url: String) {
             val doc = client.newCall(GET(url)).execute().asJsoup()
 
-            doc.select(popularAnimeSelector()).forEach { link ->
-                val href = link.selectFirst("a")!!.attr("href")
+            doc.select("a").forEach { link ->
+                val href = link.selectFirst("a")!!.attr("abs:href")
 
-                if (href.isNotBlank() && href != "..") {
-                    val fullUrl = joinUrl(url, href)
-                    if (fullUrl.endsWith("/")) {
-                        traverseDirectory(fullUrl)
+                if (href.isNotBlank()) {
+                    if (href.endsWith("/")) {
+                        traverseDirectory(href)
                     }
-                    if (videoFormats.any { t -> fullUrl.endsWith(t) }) {
-                        val paths = fullUrl.toHttpUrl().pathSegments
+                    if (videoFormats.any { t -> href.endsWith(t) }) {
+                        val paths = href.toHttpUrl().pathSegments
 
                         val extraInfo = if (paths.size > 3) {
                             "/" + paths.subList(2, paths.size - 1).joinToString("/") { it.trimInfo() }
@@ -189,7 +195,7 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
                         episodeList.add(
                             SEpisode.create().apply {
                                 name = videoFormats.fold(paths.last()) { acc, suffix -> acc.removeSuffix(suffix).trimInfo() }
-                                this.url = fullUrl
+                                setUrlWithoutDomain(href)
                                 scanlator = "${if (size == null) "" else "$size • "}$extraInfo"
                                 date_upload = -1L
                                 episode_number = counter.toFloat()
@@ -201,7 +207,7 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
             }
         }
 
-        traverseDirectory(joinUrl(baseUrl, anime.url))
+        traverseDirectory(baseUrl + anime.url)
 
         return Observable.just(episodeList.reversed())
     }
@@ -215,7 +221,7 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
 
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> =
-        Observable.just(listOf(Video(episode.url, "Video", episode.url)))
+        Observable.just(listOf(Video(baseUrl + episode.url, "Video", baseUrl + episode.url)))
 
     override fun videoFromElement(element: Element): Video = throw Exception("Not Used")
 
@@ -224,19 +230,6 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document): String = throw Exception("Not Used")
 
     // ============================= Utilities ==============================
-
-    private fun joinPaths(path1: String, path2: String): String {
-        return URLEncoder.encode(path1.removeSuffix("/"), "UTF-8") +
-            "/" +
-            URLEncoder.encode(path2.removeSuffix("/"), "UTF-8") +
-            "/"
-    }
-
-    private fun joinUrl(url: String, path2: String): String {
-        return url.removeSuffix("/") +
-            "/" +
-            path2.removePrefix("/")
-    }
 
     private fun formatBytes(bytes: Long?): String? {
         val units = arrayOf("B", "KB", "MB", "GB", "TB", "PB", "EB")
@@ -263,6 +256,6 @@ class Edytjedhgmdhm : ParsedAnimeHttpSource() {
     }
 
     companion object {
-        private const val CHUNKED_SIZE = 100
+        private const val CHUNKED_SIZE = 30
     }
 }

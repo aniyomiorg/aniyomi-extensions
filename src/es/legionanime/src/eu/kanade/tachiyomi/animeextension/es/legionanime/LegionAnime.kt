@@ -279,11 +279,6 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     emptyList()
                 }
             }
-            /*
-            url.contains("sb") -> {
-                StreamSBExtractor(client).videosFromUrl(url, headers)
-            }
-             */
             url.contains("jkanime") -> {
                 listOf(JkanimeExtractor(client).getDesuFromUrl(url))
             }
@@ -405,7 +400,6 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
             "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", // Okru
-            "StreamSB:360p", "StreamSB:480p", "StreamSB:720p", "StreamSB:1080p", // StreamSB
             "Xtreme S", "Nozomi", "Desu", "F1S-TAPE", "F1NIX", // video servers without resolution
         )
         val videoQualityPref = ListPreference(screen.context).apply {

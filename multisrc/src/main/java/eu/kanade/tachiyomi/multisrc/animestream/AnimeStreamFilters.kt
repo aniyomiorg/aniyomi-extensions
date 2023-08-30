@@ -20,15 +20,15 @@ object AnimeStreamFilters {
 
     private class CheckBoxVal(name: String, state: Boolean = false) : AnimeFilter.CheckBox(name, state)
 
-    private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
+    inline fun <reified R> AnimeFilterList.asQueryPart(): String {
         return (getFirst<R>() as QueryPartFilter).toQueryPart()
     }
 
-    private inline fun <reified R> AnimeFilterList.getFirst(): R {
+    inline fun <reified R> AnimeFilterList.getFirst(): R {
         return first { it is R } as R
     }
 
-    private inline fun <reified R> AnimeFilterList.parseCheckbox(
+    inline fun <reified R> AnimeFilterList.parseCheckbox(
         options: Array<Pair<String, String>>,
         name: String,
     ): String {
@@ -39,16 +39,16 @@ object AnimeStreamFilters {
             .joinToString("&") { "$name[]=$it" }
     }
 
-    class GenresFilter(name: String) : CheckBoxFilterList(name, GENRES_LIST)
-    class SeasonFilter(name: String) : CheckBoxFilterList(name, SEASON_LIST)
-    class StudioFilter(name: String) : CheckBoxFilterList(name, STUDIO_LIST)
+    internal class GenresFilter(name: String) : CheckBoxFilterList(name, GENRES_LIST)
+    internal class SeasonFilter(name: String) : CheckBoxFilterList(name, SEASON_LIST)
+    internal class StudioFilter(name: String) : CheckBoxFilterList(name, STUDIO_LIST)
 
-    class StatusFilter(name: String) : QueryPartFilter(name, STATUS_LIST)
-    class TypeFilter(name: String) : QueryPartFilter(name, TYPE_LIST)
-    class SubFilter(name: String) : QueryPartFilter(name, SUB_LIST)
-    class OrderFilter(name: String) : QueryPartFilter(name, ORDER_LIST)
+    internal class StatusFilter(name: String) : QueryPartFilter(name, STATUS_LIST)
+    internal class TypeFilter(name: String) : QueryPartFilter(name, TYPE_LIST)
+    internal class SubFilter(name: String) : QueryPartFilter(name, SUB_LIST)
+    internal class OrderFilter(name: String) : QueryPartFilter(name, ORDER_LIST)
 
-    data class FilterSearchParams(
+    internal data class FilterSearchParams(
         val genres: String = "",
         val seasons: String = "",
         val studios: String = "",
@@ -72,9 +72,9 @@ object AnimeStreamFilters {
         )
     }
 
-    internal lateinit var filterElements: Elements
+    lateinit var filterElements: Elements
 
-    internal fun filterInitialized() = ::filterElements.isInitialized
+    fun filterInitialized() = ::filterElements.isInitialized
 
     private fun getPairListByIndex(index: Int) = filterElements.get(index)
         .select("li")

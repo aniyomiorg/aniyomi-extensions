@@ -13,7 +13,6 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -83,22 +82,7 @@ class Multimovies : DooPlay(
     private fun getPlayerVideos(player: Element): List<Video> {
         if (player.attr("data-nume") == "trailer") return emptyList()
         val url = getPlayerUrl(player)
-        val streamSbServers = listOf(
-            "sbembed.com", "sbembed1.com", "sbplay.org",
-            "sbvideo.net", "streamsb.net", "sbplay.one",
-            "cloudemb.com", "playersb.com", "tubesb.com",
-            "sbplay1.com", "embedsb.com", "watchsb.com",
-            "sbplay2.com", "japopav.tv", "viewsb.com",
-            "sbfast", "sbfull.com", "javplaya.com",
-            "ssbstream.net", "p1ayerjavseen.com", "sbthe.com",
-            "sbchill.com", "sblongvu.com", "sbanh.com",
-            "sblanh.com", "sbhight.com", "sbbrisk.com",
-            "sbspeed.com", "multimovies.website",
-        )
         return when {
-            streamSbServers.any { it in url } ->
-                StreamSBExtractor(client).videosFromUrl(url, headers = headers, prefix = "[multimovies]")
-
             url.contains(baseUrl.toHttpUrl().host, true) ->
                 MultimoviesCloudExtractor(client).videosFromUrl(url)
             url.contains("autoembed.to") || url.contains("2embed.to") -> {

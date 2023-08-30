@@ -10,7 +10,6 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.json.Json
@@ -229,20 +228,6 @@ open class AnimeWorldIndia(
             videoList.addAll(videos)
         }
 
-        // StreamSB
-
-        filterLanguages.filter {
-            it.jsonObject["server"].toString()
-                .drop(1).dropLast(1)
-                .compareTo("Streamsb") == 0
-        }.forEach {
-            val url = "https://cloudemb.com/e/${it.jsonObject["url"].toString()
-                .drop(1).dropLast(1)
-                .substringAfter("id=")}.html"
-            val videos = StreamSBExtractor(client).videosFromUrl(url, headers)
-            videoList.addAll(videos)
-        }
-
         return videoList
     }
 
@@ -279,8 +264,8 @@ open class AnimeWorldIndia(
         ListPreference(screen.context).apply {
             key = "preferred_server"
             title = "Preferred server"
-            entries = arrayOf("MyStream", "StreamSB")
-            entryValues = arrayOf("MyStream", "StreamSB")
+            entries = arrayOf("MyStream")
+            entryValues = arrayOf("MyStream")
             setDefaultValue("MyStream")
             summary = "%s"
 

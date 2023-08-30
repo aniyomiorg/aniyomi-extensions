@@ -1,8 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.wcofun
 
 import android.app.Application
-import android.content.SharedPreferences
-import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -14,23 +12,21 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
-import okhttp3.Headers
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.lang.Exception
-import java.net.URI
 
 class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -44,169 +40,36 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
+    override fun headersBuilder() = super.headersBuilder()
+        .add("Referer", "$baseUrl/")
+        .add("Origin", baseUrl)
+
     private val json: Json by injectLazy()
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun popularAnimeSelector(): String = "#sidebar_right2 ul.items li"
+    // ============================== Popular ===============================
+    override fun popularAnimeRequest(page: Int) = GET(baseUrl, headers = headers)
 
-    override fun popularAnimeRequest(page: Int): Request {
-        val interceptor = client.newBuilder().addInterceptor(RedirectInterceptor(baseUrl)).build()
-        val headers = interceptor.newCall(GET(baseUrl)).execute().request.headers
-        return GET(baseUrl, headers = headers)
+    override fun popularAnimeSelector() = "#sidebar_right2 ul.items li"
+
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.selectFirst("div.img a")!!.attr("href"))
+        title = element.selectFirst("div.recent-release-episodes a")!!.text()
+        thumbnail_url = element.selectFirst("div.img a img")!!.attr("abs:src")
     }
 
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.thumbnail_url = "https:" + element.select("div.img a img").attr("src")
-        anime.setUrlWithoutDomain(element.select("div.img a").attr("href"))
-        anime.title = element.select("div.recent-release-episodes a").text()
-        return anime
-    }
+    override fun popularAnimeNextPageSelector() = null
 
-    override fun popularAnimeNextPageSelector(): String? = null
+    // =============================== Latest ===============================
+    override fun latestUpdatesNextPageSelector() = throw Exception("Not used")
+    override fun latestUpdatesFromElement(element: Element) = throw Exception("Not used")
+    override fun latestUpdatesRequest(page: Int) = throw Exception("Not used")
+    override fun latestUpdatesSelector() = throw Exception("Not used")
 
-    override fun episodeListSelector() = "div.cat-eps a"
-
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.asJsoup()
-        return document.select(episodeListSelector()).map { episodeFromElement(it) }
-    }
-
-    override fun episodeFromElement(element: Element): SEpisode {
-        val episode = SEpisode.create()
-        episode.setUrlWithoutDomain(element.attr("href"))
-        val epName = element.ownText()
-        val season = epName.substringAfter("Season ")
-        val ep = epName.substringAfter("Episode ")
-        val seasonNo = try {
-            season.substringBefore(" ").toFloat()
-        } catch (e: NumberFormatException) {
-            0.toFloat()
-        }
-        val epNo = try {
-            ep.substringBefore(" ").toFloat()
-        } catch (e: NumberFormatException) {
-            0.toFloat()
-        }
-        var episodeName = if (ep == epName) epName else "Episode $ep"
-        episodeName = if (season == epName) episodeName else "Season $season"
-        episode.episode_number = epNo + (seasonNo * 100)
-        episode.name = episodeName
-        return episode
-    }
-
-    override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        return videosFromElement(document)
-    }
-
-    private fun videosFromElement(document: Document): List<Video> {
-        val scriptData = document.selectFirst("script:containsData( = \"\"; var )")!!.data()
-
-        val numberRegex = """(?<=\.replace\(/\\D/g,''\)\) - )\d+""".toRegex()
-        val subtractionNumber = numberRegex.find(scriptData)!!.value.toInt()
-
-        val htmlRegex = """(?<=\["|, ").+?(?=")""".toRegex()
-        val html = htmlRegex.findAll(scriptData).map {
-            val decoded = String(Base64.decode(it.value, Base64.DEFAULT))
-            val number = decoded.replace("""\D""".toRegex(), "").toInt()
-            (number - subtractionNumber).toChar()
-        }.joinToString("")
-
-        val iframeLink = Jsoup.parse(html).select("div.pcat-jwplayer iframe")
-            .attr("src")
-
-        val iframeDomain = "https://" + URI(iframeLink).host
-
-        val playerHtml = client.newCall(
-            GET(
-                url = iframeLink,
-                headers = Headers.headersOf("Referer", document.location()),
-            ),
-        ).execute().body.string()
-
-        val getVideoLink = playerHtml.substringAfter("\$.getJSON(\"").substringBefore("\"")
-
-        val head = Headers.Builder()
-        head.add("x-requested-with", "XMLHttpRequest")
-        head.add("Referer", (iframeDomain + getVideoLink))
-
-        val videoJson = json.decodeFromString<JsonObject>(
-            client.newCall(
-                GET(
-                    url = (iframeDomain + getVideoLink),
-                    headers = head.build(),
-                ),
-            ).execute().body.string(),
-        )
-
-        val server = videoJson["server"]!!.jsonPrimitive.content
-        val hd = videoJson["hd"]?.jsonPrimitive?.content
-        val sd = videoJson["enc"]?.jsonPrimitive?.content
-        val fhd = videoJson["fhd"]?.jsonPrimitive?.content
-        val videoList = mutableListOf<Video>()
-        hd?.let {
-            if (it.isNotEmpty()) {
-                val videoUrl = "$server/getvid?evid=$it"
-                videoList.add(Video(videoUrl, "HD", videoUrl))
-            }
-        }
-        sd?.let {
-            if (it.isNotEmpty()) {
-                val videoUrl = "$server/getvid?evid=$it"
-                videoList.add(Video(videoUrl, "SD", videoUrl))
-            }
-        }
-
-        fhd?.let {
-            if (it.isNotEmpty()) {
-                val videoUrl = "$server/getvid?evid=$it"
-                videoList.add(Video(videoUrl, "FHD", videoUrl))
-            }
-        }
-        return videoList
-    }
-
-    override fun videoListSelector() = throw Exception("not used")
-
-    override fun videoFromElement(element: Element): Video = throw Exception("not used")
-
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
-
-    override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "HD")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
-    }
-
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.attr("href"))
-        anime.thumbnail_url = element.select("img").attr("src")
-        anime.title = element.select("img").attr("alt")
-
-        return anime
-    }
-
-    override fun searchAnimeNextPageSelector(): String? = null
-
-    override fun searchAnimeSelector(): String = "div#sidebar_right2 li div.img a"
-
+    // =============================== Search ===============================
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val formBody = FormBody.Builder()
             .add("catara", query)
@@ -215,30 +78,104 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return POST("$baseUrl/search", headers, body = formBody)
     }
 
-    override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
-        anime.title = document.selectFirst("div.video-title a")!!.text()
-        anime.description = document.select("div#sidebar_cat p")?.first()?.text()
-        anime.thumbnail_url = "https:${document.selectFirst("div#sidebar_cat img")!!.attr("src")}"
-        anime.genre = document.select("div#sidebar_cat > a").joinToString { it.text() }
-        return anime
+    override fun searchAnimeSelector() = "div#sidebar_right2 li div.img a"
+
+    override fun searchAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        element.selectFirst("img")!!.run {
+            thumbnail_url = attr("src")
+            title = attr("alt")
+        }
     }
 
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
+    override fun searchAnimeNextPageSelector() = null
 
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        title = document.selectFirst("div.video-title a")!!.text()
+        description = document.selectFirst("div#sidebar_cat p")?.text()
+        thumbnail_url = document.selectFirst("div#sidebar_cat img")!!.attr("abs:src")
+        genre = document.select("div#sidebar_cat > a").joinToString { it.text() }
+    }
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+    // ============================== Episodes ==============================
+    override fun episodeListSelector() = "div.cat-eps a"
 
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        val epName = element.ownText()
+        val season = epName.substringAfter("Season ")
+        val ep = epName.substringAfter("Episode ")
+        val seasonNum = season.substringBefore(" ").toIntOrNull() ?: 1
+        val epNum = ep.substringBefore(" ").toIntOrNull() ?: 1
+        episode_number = ((seasonNum * 100) + epNum).toFloat()
+        name = "Season $seasonNum - Episode $epNum"
+    }
 
+    // ============================ Video Links =============================
+    @Serializable
+    data class VideoResponseDto(
+        val server: String,
+        @SerialName("enc")
+        val sd: String?,
+        val hd: String?,
+        val fhd: String?,
+    ) {
+        val videos by lazy {
+            listOfNotNull(
+                sd?.takeIf(String::isNotBlank)?.let { Pair("SD", it) },
+                hd?.takeIf(String::isNotBlank)?.let { Pair("HD", it) },
+                fhd?.takeIf(String::isNotBlank)?.let { Pair("FHD", it) },
+            ).map {
+                val videoUrl = "$server/getvid?evid=" + it.second
+                Video(videoUrl, it.first, videoUrl)
+            }
+        }
+    }
+
+    override fun videoListParse(response: Response): List<Video> {
+        val document = response.asJsoup()
+        val iframeLink = document.selectFirst("div.pcat-jwplayer iframe")!!.attr("src")
+        val iframeDomain = "https://" + iframeLink.toHttpUrl().host
+
+        val playerHtml = client.newCall(GET(iframeLink, headers)).execute()
+            .use { it.body.string() }
+
+        val getVideoLink = playerHtml.substringAfter("\$.getJSON(\"").substringBefore("\"")
+
+        val requestUrl = iframeDomain + getVideoLink
+        val requestHeaders = headersBuilder()
+            .add("x-requested-with", "XMLHttpRequest")
+            .set("Referer", requestUrl)
+            .set("Origin", iframeDomain)
+            .build()
+
+        val videoData = client.newCall(GET(requestUrl, requestHeaders)).execute()
+            .parseAs<VideoResponseDto>()
+
+        return videoData.videos
+    }
+
+    override fun videoListSelector() = throw Exception("not used")
+    override fun videoFromElement(element: Element) = throw Exception("not used")
+    override fun videoUrlParse(document: Document) = throw Exception("not used")
+
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+
+        return sortedWith(
+            compareBy { it.quality == quality },
+        ).reversed()
+    }
+
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("HD", "SD")
-            entryValues = arrayOf("HD", "SD")
-            setDefaultValue("HD")
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -247,7 +184,19 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
+    }
+
+    // ============================= Utilities ==============================
+    private inline fun <reified T> Response.parseAs(): T {
+        return use { it.body.string() }.let(json::decodeFromString)
+    }
+
+    companion object {
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "HD"
+        private val PREF_QUALITY_ENTRIES = arrayOf("FHD", "HD", "SD")
+        private val PREF_QUALITY_VALUES = PREF_QUALITY_ENTRIES
     }
 }

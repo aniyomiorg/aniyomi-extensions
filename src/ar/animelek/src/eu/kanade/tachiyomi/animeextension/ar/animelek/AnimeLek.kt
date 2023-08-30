@@ -13,7 +13,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -85,15 +84,6 @@ class AnimeLek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector() = "ul#episode-servers li.watch a"
 
     private fun videosFromElement(document: Document): List<Video> {
-        val streamSBServers = listOf(
-            "sbembed", "sbplay", "sbvideo.net",
-            "streamsb.net", "cloudemb.com", "playersb.com",
-            "tubesb.com", "embedsb.com", "watchsb.com",
-            "japopav.tv", "viewsb.com", "sbfast",
-            "sbfull.com", "javplaya.com", "ssbstream.net",
-            "p1ayerjavseen.com", "sbthe.com",
-        )
-
         val vidbomServers = listOf("vidbam", "vadbam", "vidbom", "vidbm")
 
         return document.select(videoListSelector()).mapNotNull { element ->
@@ -101,9 +91,6 @@ class AnimeLek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val qualityy = element.text()
 
             when {
-                streamSBServers.any(url::contains) -> {
-                    StreamSBExtractor(client).videosFromUrl(url, headers)
-                }
                 vidbomServers.any(url::contains) -> {
                     VidBomExtractor(client).videosFromUrl(url)
                 }

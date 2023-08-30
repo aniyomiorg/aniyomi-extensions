@@ -15,7 +15,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
@@ -236,20 +235,6 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (embedUrl.contains("doodstream") || embedUrl.contains("dood.")) {
             DoodExtractor(client).videoFromUrl(url, "$prefix DoodStream", false)?.let { videoList.add(it) }
         }
-        if (embedUrl.contains("sbembed.com") || embedUrl.contains("sbembed1.com") || embedUrl.contains("sbplay.org") ||
-            embedUrl.contains("sbvideo.net") || embedUrl.contains("streamsb.net") || embedUrl.contains("sbplay.one") ||
-            embedUrl.contains("cloudemb.com") || embedUrl.contains("playersb.com") || embedUrl.contains("tubesb.com") ||
-            embedUrl.contains("sbplay1.com") || embedUrl.contains("embedsb.com") || embedUrl.contains("watchsb.com") ||
-            embedUrl.contains("sbplay2.com") || embedUrl.contains("japopav.tv") || embedUrl.contains("viewsb.com") ||
-            embedUrl.contains("sbfast") || embedUrl.contains("sbfull.com") || embedUrl.contains("javplaya.com") ||
-            embedUrl.contains("ssbstream.net") || embedUrl.contains("p1ayerjavseen.com") || embedUrl.contains("sbthe.com") ||
-            embedUrl.contains("vidmovie.xyz") || embedUrl.contains("sbspeed.com") || embedUrl.contains("streamsss.net") ||
-            embedUrl.contains("sblanh.com") || embedUrl.contains("sbbrisk.com")
-        ) {
-            runCatching {
-                StreamSBExtractor(client).videosFromUrl(url, headers, prefix = prefix)
-            }.getOrNull()?.let { videoList.addAll(it) }
-        }
         if (embedUrl.contains("okru")) {
             videoList.addAll(
                 OkruExtractor(client).videosFromUrl(url, prefix, true),
@@ -269,7 +254,7 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val videoSorted = this.sortedWith(
                 compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toTypedArray()
-            val userPreferredQuality = preferences.getString("preferred_quality", "StreamSB:1080p")
+            val userPreferredQuality = preferences.getString("preferred_quality", "Okru:1080p")
             val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
             if (preferredIdx != -1) {
                 videoSorted.drop(preferredIdx + 1)
@@ -357,14 +342,13 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val qualities = arrayOf(
             "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
             "Uqload", "Upload", "SolidFiles", "StreamTape", "DoodStream", "Voex", // video servers without resolution
-            "StreamSB:1080p", "StreamSB:720p", "StreamSB:480p", "StreamSB:360p", "StreamSB:240p", "StreamSB:144p", // StreamSB
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
             entries = qualities
             entryValues = qualities
-            setDefaultValue("StreamSB:1080p")
+            setDefaultValue("Okru:1080p")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->

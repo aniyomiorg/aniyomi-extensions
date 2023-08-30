@@ -8,6 +8,7 @@ ext {
     pkgNameSuffix = 'pt.animesorion'
     extClass = '.AnimesOrion'
     extVersionCode = 1
+    libVersion = '13'
     containsNsfw = true
 }
 

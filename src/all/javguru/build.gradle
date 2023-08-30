@@ -7,12 +7,12 @@ ext {
     extName = 'Jav Guru'
     pkgNameSuffix = 'all.javguru'
     extClass = '.JavGuru'
-    extVersionCode = 3
+    extVersionCode = 4
+    libVersion = '13'
     containsNsfw = true
 }
 
 dependencies {
-    implementation(project(':lib-streamsb-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-dood-extractor'))
     implementation(project(':lib-mixdrop-extractor'))

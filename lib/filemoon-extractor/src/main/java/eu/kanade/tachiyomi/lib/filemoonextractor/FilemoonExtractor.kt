@@ -18,11 +18,12 @@ class FilemoonExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String, prefix: String = "Filemoon - ", headers: Headers? = null): List<Video> {
         return runCatching {
             val doc = client.newCall(GET(url)).execute().asJsoup()
-            val jsEval = doc.selectFirst("script:containsData(eval)")!!.data()
+            val jsEval = doc.selectFirst("script:containsData(eval):containsData(m3u8)")!!.data()
             val unpacked = JsUnpacker.unpackAndCombine(jsEval).orEmpty()
             val masterUrl = unpacked.takeIf(String::isNotBlank)
-                ?.substringAfter("{file:\"")
-                ?.substringBefore("\"}")
+                ?.substringAfter("{file:\"", "")
+                ?.substringBefore("\"}", "")
+                ?.takeIf(String::isNotBlank)
                 ?: return emptyList()
 
             val masterPlaylist = client.newCall(GET(masterUrl)).execute().body.string()

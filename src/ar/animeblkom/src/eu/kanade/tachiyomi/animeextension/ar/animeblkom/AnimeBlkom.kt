@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.ar.animeblkom
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -15,8 +14,6 @@ import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -29,7 +26,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "أنمي بالكوم"
 
-    override val baseUrl = "https://animeblkom.net"
+    override val baseUrl by lazy { preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
 
     override val lang = "ar"
 
@@ -37,28 +34,76 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client = network.cloudflareClient
 
-    override fun headersBuilder() = Headers.Builder()
-        .add("referer", baseUrl).add("user-agent", NEW_USER_AGENT)
+    override fun headersBuilder() = super.headersBuilder()
+        .add("referer", baseUrl)
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
     // ============================== Popular ===============================
-    override fun popularAnimeSelector() = "div.contents div.poster > a"
-
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/animes-list/?sort_by=rate&page=$page", headers)
 
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        return SAnime.create().apply {
-            val img = element.selectFirst("img")!!
-            thumbnail_url = img.attr("data-original")
-            title = img.attr("alt").removeSuffix(" poster")
-            setUrlWithoutDomain(element.attr("href"))
-        }
+    override fun popularAnimeSelector() = "div.contents div.poster > a"
+
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        val img = element.selectFirst("img")!!
+        thumbnail_url = img.attr("abs:data-original")
+        title = img.attr("alt").removeSuffix(" poster")
+        setUrlWithoutDomain(element.attr("href"))
     }
 
     override fun popularAnimeNextPageSelector() = "ul.pagination li.page-item a[rel=next]"
+
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+
+    override fun latestUpdatesSelector(): String = throw Exception("Not used")
+
+    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
+
+    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
+
+    // =============================== Search ===============================
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
+
+    override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
+
+    override fun searchAnimeSelector() = popularAnimeSelector()
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val url = if (query.isNotBlank()) {
+            "$baseUrl/search?query=$query&page=$page"
+        } else {
+            filters
+                .filterIsInstance<TypeList>()
+                .firstOrNull()
+                ?.takeIf { it.state > 0 }
+                ?.let { filter ->
+                    val genreN = getTypeList()[filter.state].query
+                    "$baseUrl/$genreN?page=$page"
+                }
+                ?: throw Exception("اختر فلتر")
+        }
+        return GET(url, headers)
+    }
+
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        thumbnail_url = document.selectFirst("div.poster img")!!.attr("abs:data-original")
+        title = document.selectFirst("div.name span h1")!!.text()
+        genre = document.select("p.genres a").joinToString { it.text() }
+        description = document.selectFirst("div.story p, div.story")?.text()
+        author = document.selectFirst("div:contains(الاستديو) span > a")?.text()
+        status = document.selectFirst("div.info-table div:contains(حالة الأنمي) span.info")?.text()?.let {
+            when {
+                it.contains("مستمر") -> SAnime.ONGOING
+                it.contains("مكتمل") -> SAnime.COMPLETED
+                else -> null
+            }
+        } ?: SAnime.UNKNOWN
+        artist = document.selectFirst("div:contains(المخرج) > span.info")?.text()
+    }
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
@@ -95,11 +140,12 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        return document.select("span.server a").mapNotNull {
+        val document = response.use { it.asJsoup() }
+        return document.select("span.server a").flatMap {
             runCatching { extractVideos(it) }.getOrElse { emptyList() }
-        }.flatten()
+        }
     }
+
     private fun extractVideos(element: Element): List<Video> {
         val url = element.attr("data-src").replace("http://", "https://")
         return when {
@@ -110,9 +156,10 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             "ok.ru" in url -> OkruExtractor(client).videosFromUrl(url)
             "mp4upload" in url -> Mp4uploadExtractor(client).videosFromUrl(url, headers)
-            else -> null
-        } ?: emptyList()
+            else -> emptyList()
+        }
     }
+
     override fun videoListSelector() = "source"
 
     override fun videoFromElement(element: Element): Video {
@@ -121,62 +168,6 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
-
-    // =============================== Search ===============================
-    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
-
-    override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
-
-    override fun searchAnimeSelector() = popularAnimeSelector()
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val url = if (query.isNotBlank()) {
-            "$baseUrl/search?query=$query&page=$page"
-        } else {
-            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
-                when (filter) {
-                    is TypeList -> {
-                        if (filter.state > 0) {
-                            val genreN = getTypeList()[filter.state].query
-                            val genreUrl = "$baseUrl/$genreN?page=$page".toHttpUrlOrNull()!!.newBuilder()
-                            return GET(genreUrl.toString(), headers)
-                        }
-                    }
-                    else -> {}
-                }
-            }
-            throw Exception("اختر فلتر")
-        }
-        return GET(url, headers)
-    }
-
-    // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        return SAnime.create().apply {
-            thumbnail_url = document.selectFirst("div.poster img")!!.attr("data-original")
-            title = document.selectFirst("div.name span h1")!!.text()
-            genre = document.select("p.genres a").joinToString { it.text() }
-            description = document.selectFirst("div.story p, div.story")?.text()
-            author = document.selectFirst("div:contains(الاستديو) span > a")?.text()
-            status = document.selectFirst("div.info-table div:contains(حالة الأنمي) span.info")?.text()?.let {
-                when {
-                    it.contains("مستمر") -> SAnime.ONGOING
-                    it.contains("مكتمل") -> SAnime.COMPLETED
-                    else -> null
-                }
-            } ?: SAnime.UNKNOWN
-            artist = document.selectFirst("div:contains(المخرج) > span.info")?.text()
-        }
-    }
-
-    // =============================== Latest ===============================
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
-
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
-
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
-
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
 
     // ============================== Filters ===============================
     override fun getFilterList() = AnimeFilterList(
@@ -202,7 +193,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
+        ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
             entries = PREF_QUALITY_ENTRIES
@@ -216,8 +207,23 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_DOMAIN_KEY
+            title = PREF_DOMAIN_TITLE
+            entries = PREF_DOMAIN_ENTRIES
+            entryValues = PREF_DOMAIN_VALUES
+            setDefaultValue(PREF_DOMAIN_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
     }
 
     // ============================= Utilities ==============================
@@ -229,10 +235,17 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     companion object {
-        private const val NEW_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36 Edg/114.0.1823.67"
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"
         private const val PREF_QUALITY_DEFAULT = "720p"
         private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p", "240p")
+
+        private const val PREF_DOMAIN_KEY = "pref_domain_key"
+        private const val PREF_DOMAIN_TITLE = "Preferred domain"
+        private const val PREF_DOMAIN_DEFAULT = "https://animeblkom.net"
+        private val PREF_DOMAIN_ENTRIES = arrayOf("animeblkom.net", "blkom.com")
+        private val PREF_DOMAIN_VALUES by lazy {
+            PREF_DOMAIN_ENTRIES.map { "https://$it" }.toTypedArray()
+        }
     }
 }

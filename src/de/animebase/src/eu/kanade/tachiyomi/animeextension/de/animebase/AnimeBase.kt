@@ -10,7 +10,6 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
-import eu.kanade.tachiyomi.lib.streamsbextractor.StreamSBExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
@@ -118,110 +117,8 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // Video Extractor
 
-    override fun videoListParse(response: Response): List<Video> {
-        return videosFromElement(response)
-    }
-
-    private fun videosFromElement(response: Response): List<Video> {
-        val videoList = mutableListOf<Video>()
-        val epurl = response.request.url.toString()
-        val epid = epurl.substringAfter("episode/").substringBefore("/")
-        val epnum = epurl.substringAfter("$epid/").substringBefore("/")
-        if (epurl.substringAfter("$epnum/").substringBefore("/").contains("0")) {
-            val host = epurl.substringAfter("$epnum/0/").substringBefore("/")
-            try {
-                if (!epurl.substringAfter("$host/").contains("2")) {
-                    try {
-                        val subdoc = client.newCall(GET("$baseUrl/episode/$epid/$epnum/0/$host/0")).execute().asJsoup()
-                        val sublink = subdoc.toString()
-                            .substringAfter("url=").substringBefore("\"")
-                        val domain = sublink.substringAfter("https://").substringBefore("/")
-                        val id = sublink.substringAfter("https://$domain/").substringBefore(".html")
-                        val url = "https://$domain/e/$id.html"
-                        val videos = StreamSBExtractor(client).videosFromUrl(url, headers, suffix = "SUB")
-                        videoList.addAll(videos)
-                    } catch (e: Exception) {
-                    }
-                    try {
-                        val dubdoc = client.newCall(GET("$baseUrl/episode/$epid/$epnum/1/$host/0")).execute().asJsoup()
-                        val dublink = dubdoc.toString()
-                            .substringAfter("url=").substringBefore("\"")
-                        val dubdomain = dublink.substringAfter("https://").substringBefore("/")
-                        val dubid = dublink.substringAfter("https://$dubdomain/").substringBefore(".html")
-                        val duburl = "https://$dubdomain/e/$dubid.html"
-                        val dubvideos = StreamSBExtractor(client).videosFromUrl(duburl, headers, suffix = "DUB")
-                        videoList.addAll(dubvideos)
-                    } catch (e: Exception) {
-                    }
-                } else {
-                    try {
-                        val subdoc = client.newCall(GET("$baseUrl/episode/$epid/$epnum/0/$host/2")).execute().asJsoup()
-                        val sublink = subdoc.toString()
-                            .substringAfter("url=").substringBefore("\"")
-                        val domain = sublink.substringAfter("https://").substringBefore("/")
-                        val id = sublink.substringAfter("https://$domain/").substringBefore(".html")
-                        val url = "https://$domain/e/$id.html"
-                        val videos = StreamSBExtractor(client).videosFromUrl(url, headers, suffix = "SUB")
-                        videoList.addAll(videos)
-                        val dubdoc = client.newCall(GET("$baseUrl/episode/$epid/${epnum.toInt() - 1}/1/$host/2")).execute().asJsoup()
-                        val dublink = dubdoc.toString()
-                            .substringAfter("url=").substringBefore("\"")
-                        val dubdomain = dublink.substringAfter("https://").substringBefore("/")
-                        val dubid = dublink.substringAfter("https://$dubdomain/").substringBefore(".html")
-                        val duburl = "https://$dubdomain/e/$dubid.html"
-                        val dubvideos = StreamSBExtractor(client).videosFromUrl(duburl, headers, suffix = "DUB")
-                        videoList.addAll(dubvideos)
-                    } catch (e: Exception) {
-                    }
-                }
-                if (epurl.substringAfter("$host/").contains("1")) {
-                    try {
-                        val subdoc = client.newCall(GET("$baseUrl/episode/$epid/$epnum/0/$host/1")).execute().asJsoup()
-                        val sublink = subdoc.toString()
-                            .substringAfter("url=").substringBefore("\"")
-                        val domain = sublink.substringAfter("https://").substringBefore("/")
-                        val id = sublink.substringAfter("https://$domain/").substringBefore(".html")
-                        val url = "https://$domain/e/$id.html"
-                        val videos = StreamSBExtractor(client).videosFromUrl(url, headers, suffix = "SUB")
-                        videoList.addAll(videos)
-                        val dubdoc = client.newCall(GET("$baseUrl/episode/$epid/${epnum.toInt() - 1}/1/$host/1")).execute().asJsoup()
-                        val dublink = dubdoc.toString()
-                            .substringAfter("url=").substringBefore("\"")
-                        val dubdomain = dublink.substringAfter("https://").substringBefore("/")
-                        val dubid = dublink.substringAfter("https://$dubdomain/").substringBefore(".html")
-                        val duburl = "https://$dubdomain/e/$dubid.html"
-                        val dubvideos = StreamSBExtractor(client).videosFromUrl(duburl, headers, suffix = "DUB")
-                        videoList.addAll(dubvideos)
-                    } catch (e: Exception) {
-                    }
-                }
-            } catch (e: Exception) {
-                throw Exception("To many Requests")
-            }
-        } else {
-            val host = epurl.substringAfter("$epnum/1/").substringBefore("/")
-            if (epurl.substringAfter("$host/").contains("2")) {
-                val dubdoc = client.newCall(GET("$baseUrl/episode/$epid/${epnum.toInt() - 1}/1/$host/2")).execute().asJsoup()
-                val dublink = dubdoc.toString()
-                    .substringAfter("url=").substringBefore("\"")
-                val dubdomain = dublink.substringAfter("https://").substringBefore("/")
-                val dubid = dublink.substringAfter("https://$dubdomain/").substringBefore(".html")
-                val duburl = "https://$dubdomain/e/$dubid.html"
-                val dubvideos = StreamSBExtractor(client).videosFromUrl(duburl, headers, suffix = "DUB")
-                videoList.addAll(dubvideos)
-            } else {
-                val dubdoc = client.newCall(GET("$baseUrl/episode/$epid/${epnum.toInt() - 1}/1/$host/1")).execute().asJsoup()
-                val dublink = dubdoc.toString()
-                    .substringAfter("url=").substringBefore("\"")
-                val dubdomain = dublink.substringAfter("https://").substringBefore("/")
-                val dubid = dublink.substringAfter("https://$dubdomain/").substringBefore(".html")
-                val duburl = "https://$dubdomain/e/$dubid.html"
-                val dubvideos = StreamSBExtractor(client).videosFromUrl(duburl, headers, suffix = "DUB")
-                videoList.addAll(dubvideos)
-            }
-        }
-        return videoList.reversed()
-    }
+    override fun videoListParse(response: Response) =
+        throw Exception("This source only uses StreamSB as video hoster, and StreamSB is down.")
 
     override fun List<Video>.sort(): List<Video> {
         val hoster = preferences.getString("preferred_sub", null)

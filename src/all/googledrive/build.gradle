@@ -10,4 +10,8 @@ ext {
     libVersion = '13'
 }
 
+dependencies {
+    implementation(project(':lib-googledrive-extractor'))
+}
+
 apply from: "$rootDir/common.gradle"

@@ -16,6 +16,12 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.FormBody
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -131,16 +137,92 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         }
     }
 
+    // Function to fetch thumbnail URL using AniList GraphQL API
+    // Only use in animeDetailsParse.
+    private fun fetchThumbnailUrlByTitle(title: String): Pair<String?, MutableList<String>>? {
+        val client = OkHttpClient()
+
+        val query = """
+            query {
+                Media(search: "$title", type: ANIME, isAdult: true) {
+                    coverImage {
+                        extraLarge
+                        large
+                    }
+                    studios {
+                        nodes {
+                            name
+                        }
+                    }
+                }
+            }
+        """.trimIndent()
+
+        val requestBody = FormBody.Builder()
+            .add("query", query)
+            .build()
+
+        val request = Request.Builder()
+            .url("https://graphql.anilist.co")
+            .post(requestBody)
+            .build()
+
+        val response = client.newCall(request).execute()
+        val responseString = response.body?.string()
+
+        return parseThumbnailUrlFromResponse(responseString)
+    }
+
+    private fun parseThumbnailUrlFromResponse(responseString: String?): Pair<String?, MutableList<String>>? {
+        val responseJson = Json.parseToJsonElement(responseString ?: "") as? JsonObject ?: return null
+        val data = responseJson["data"] as? JsonObject ?: return null
+        val media = data["Media"] as? JsonObject ?: return null
+        val coverImage = media["coverImage"] as? JsonObject ?: return null
+
+        val coverURL = when (preferences.getString(PREF_COVER_QUALITY, "large")) {
+            "extraLarge" -> coverImage["extraLarge"]?.jsonPrimitive?.content
+            "large" -> coverImage["large"]?.jsonPrimitive?.content
+            else -> null
+        }
+
+        val studiosList = mutableListOf<String>()
+        val studios = media["studios"]?.jsonObject?.get("nodes")?.jsonArray
+        studios?.forEach { studio ->
+            val name = studio.jsonObject["name"]?.jsonPrimitive?.content
+            if (!name.isNullOrEmpty()) {
+                studiosList.add(name)
+            }
+        }
+
+        return Pair(coverURL, studiosList)
+    }
+
     override fun getFilterList() = FILTERS
 
     // details
     override fun animeDetailsParse(document: Document): SAnime {
         return SAnime.create().apply {
+            // Fetch from from Anilist when "Anilist Cover" is selected in settings
+            val selectedCoverSource = preferences.getString(PREF_COVER_SOURCE, "Anilist-Cover")
+            val newTitle = document.select("div.effect-title").text().replace(Regex("[^a-zA-Z0-9\\s!.:\"]"), " ")
+            val thumbnailUrl = if (selectedCoverSource == "Anilist-Cover") {
+                fetchThumbnailUrlByTitle(newTitle)
+            } else {
+                null // Use default cover
+            }
+
             title = document.select("div.effect-title").text()
             description = document.select("div.description").text()
             genre = document.select("div.tags a").joinToString { it.text() }
             author = document.select("div.content a.red").joinToString { it.text() }
-            thumbnail_url = document.select("#player").attr("data-poster")
+
+            // thumbnail_url = document.select("#player").attr("data-poster")
+
+            // Match local studios with anilist studios to increase the accuracy of the poster
+            val matchingStudios = document.select("div.content a.red").map { it.text() }
+            val matchedStudio = thumbnailUrl?.second?.find { it in matchingStudios }
+
+            thumbnail_url = if (matchedStudio != null) thumbnailUrl.first else document.select("#player").attr("data-poster")
         }
     }
 
@@ -198,6 +280,30 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         }.let {
             screen.addPreference(it)
         }
+
+        // Add cover source preference
+        ListPreference(screen.context).apply {
+            key = PREF_COVER_SOURCE
+            title = PREF_COVER_SOURCE_TITLE
+            entries = arrayOf("Default Cover", "Anilist Cover")
+            entryValues = arrayOf("Default-Cover", "Anilist-Cover")
+            summary = "This feature is experimental. It uses a covers for Anilist. If you see the default cover after switching to AniList cover, try clearing the cache in Settings > Advanced > Clear Anime Database > Oppai Steam. It only fetch Anilist covers in anime details page."
+            setDefaultValue("Anilist-Cover")
+        }.let {
+            screen.addPreference(it)
+        }
+
+        // Add cover source preference
+        ListPreference(screen.context).apply {
+            key = PREF_COVER_QUALITY
+            title = PREF_COVER_QUALITY_TITLE
+            entries = arrayOf("Extra Large", "Large")
+            entryValues = arrayOf("extraLarge", "large")
+            summary = "%s"
+            setDefaultValue("large")
+        }.let {
+            screen.addPreference(it)
+        }
     }
 
     companion object {
@@ -206,5 +312,11 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
         private const val PREF_QUALITY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"
+
+        private const val PREF_COVER_SOURCE = "preferred_cover_source"
+        private const val PREF_COVER_SOURCE_TITLE = "Preferred cover source - Beta"
+
+        private const val PREF_COVER_QUALITY = "preferred_cover_quality"
+        private const val PREF_COVER_QUALITY_TITLE = "Preferred cover quality - Beta"
     }
 }

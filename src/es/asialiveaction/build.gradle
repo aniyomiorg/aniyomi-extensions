@@ -5,13 +5,12 @@ ext {
     extName = 'AsiaLiveAction'
     pkgNameSuffix = 'es.asialiveaction'
     extClass = '.AsiaLiveAction'
-    extVersionCode = 19
+    extVersionCode = 20
     libVersion = '13'
 }
 
 dependencies {
     implementation(project(':lib-okru-extractor'))
-    implementation(project(':lib-streamsb-extractor'))
 }
 
 

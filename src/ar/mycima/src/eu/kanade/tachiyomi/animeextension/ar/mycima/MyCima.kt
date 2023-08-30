@@ -2,9 +2,11 @@ package eu.kanade.tachiyomi.animeextension.ar.mycima
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.widget.Toast
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.animeextension.ar.mycima.extractors.GoVadExtractor
+import eu.kanade.tachiyomi.animeextension.ar.mycima.extractors.UQLoadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -14,7 +16,10 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Headers.Companion.toHeaders
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -27,10 +32,6 @@ import java.lang.Exception
 class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "MY Cima"
-
-    private val defaultBaseUrl = "https://wecima.co"
-
-    private val baseUrlPref = "overrideBaseUrl_v${AppInfo.getVersionName()}"
 
     override val baseUrl by lazy { getPrefBaseUrl() }
 
@@ -123,13 +124,34 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
-        val iframe = document.selectFirst("iframe")!!.attr("data-lazy-src")
-        val referer = response.request.url.encodedPath
-        val newHeaderList = mutableMapOf(Pair("referer", baseUrl + referer))
-        headers.forEach { newHeaderList[it.first] = it.second }
-        val iframeResponse = client.newCall(GET(iframe, newHeaderList.toHeaders()))
-            .execute().asJsoup()
-        return videosFromElement(iframeResponse.selectFirst(videoListSelector())!!)
+        return document.select("ul.WatchServersList li btn").parallelMap {
+            val frameURL = it.attr("data-url")
+            runCatching {
+                if (it.parent()?.hasClass("MyCimaServer") == true) {
+                    val referer = response.request.url.encodedPath
+                    val newHeader = headers.newBuilder().add("referer", baseUrl + referer).build()
+                    val iframeResponse = client.newCall(GET(frameURL, newHeader)).execute().asJsoup()
+                    videosFromElement(iframeResponse.selectFirst(videoListSelector())!!)
+                } else {
+                    extractVideos(frameURL)
+                }
+            }.getOrElse { emptyList() }
+        }.flatten()
+    }
+
+    private fun extractVideos(url: String): List<Video> {
+        return when {
+            GOVAD_REGEX.containsMatchIn(url) -> {
+                val finalUrl = GOVAD_REGEX.find(url)!!.groupValues[0]
+                val urlHost = GOVAD_REGEX.find(url)!!.groupValues[1]
+                GoVadExtractor(client).videosFromUrl("https://www.$finalUrl.html", urlHost)
+            }
+            UQLOAD_REGEX.containsMatchIn(url) -> {
+                val finalUrl = UQLOAD_REGEX.find(url)!!.groupValues[0]
+                UQLoadExtractor(client).videosFromUrl("https://www.$finalUrl.html")
+            }
+            else -> null
+        } ?: emptyList()
     }
 
     override fun videoListSelector() = "body"
@@ -139,7 +161,6 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val script = element.select("script")
             .firstOrNull { it.data().contains("player.qualityselector({") }
         if (script != null) {
-            val scriptV = element.select("script:containsData(source)")
             val data = element.data().substringAfter("sources: [").substringBefore("],")
             val sources = data.split("format: '").drop(1)
             for (source in sources) {
@@ -155,21 +176,10 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", null)
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(quality)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
     }
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
@@ -196,7 +206,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 when (filter) {
                     is SearchCategoryList -> {
                         val catQ = getSearchCategoryList()[filter.state].query
-                        val catUrl = "$baseUrl/search/$query/$catQ$page"
+                        val catUrl = "$baseUrl/search/$query/" + if (catQ == "page/" && page == 1) "" else "$catQ$page"
                         return GET(catUrl, headers)
                     }
                     else -> {}
@@ -208,7 +218,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     is CategoryList -> {
                         if (filter.state > 0) {
                             val catQ = getCategoryList()[filter.state].query
-                            val catUrl = "$baseUrl/category/$catQ/page/$page"
+                            val catUrl = "$baseUrl/$catQ/page/$page/"
                             return GET(catUrl, headers)
                         }
                     }
@@ -224,12 +234,19 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.title = document.select("div.Title--Content--Single-begin > h1").text()
+        anime.title = when {
+            document.selectFirst("li:contains(المسلسل) p") != null -> {
+                document.select("li:contains(المسلسل) p").text()
+            }
+            else -> {
+                document.select("div.Title--Content--Single-begin > h1").text().substringBefore(" (")
+            }
+        }
         anime.genre = document.select("li:contains(التصنيف) > p > a, li:contains(النوع) > p > a").joinToString(", ") { it.text() }
-        anime.description = document.select("div.AsideContext > div.StoryMovieContent, div.PostItemContent").text()
+        anime.description = document.select("div.AsideContext > div.StoryMovieContent").text()
         anime.author = document.select("li:contains(شركات الإنتاج) > p > a").joinToString(", ") { it.text() }
         // add alternative name to anime description
-        document.select("li:contains( بالعربي) > p, li:contains(معروف) > p").text()?.let {
+        document.select("li:contains( بالعربي) > p, li:contains(معروف) > p").text().let {
             if (it.isEmpty().not()) {
                 anime.description += when {
                     anime.description!!.isEmpty() -> "Alternative Name: $it"
@@ -277,45 +294,51 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }.toTypedArray()
 
     private fun getSearchCategoryList() = listOf(
-        CatUnit("فيلم", "/page/"),
+        CatUnit("فيلم", "page/"),
         CatUnit("مسلسل", "list/series/?page_number="),
         CatUnit("انمى", "list/anime/?page_number="),
         CatUnit("برنامج", "list/tv/?page_number="),
     )
     private fun getCategoryList() = listOf(
         CatUnit("اختر", ""),
-        CatUnit("جميع الافلام", "افلام"),
-        CatUnit("افلام اجنبى", "افلام/10-movies-english-افلام-اجنبي/"),
-        CatUnit("افلام عربى", "افلام/6-arabic-movies-افلام-عربي/"),
-        CatUnit("افلام هندى", "افلام/افلام-هندي-indian-movies/"),
-        CatUnit("افلام تركى", "افلام/افلام-تركى-turkish-films/"),
-        CatUnit("افلام وثائقية", "افلام/افلام-وثائقية-documentary-films/"),
-        CatUnit("افلام انمي", "افلام-كرتون/"),
-        CatUnit("سلاسل افلام", "افلام/10-movies-english-افلام-اجنبي/سلاسل-الافلام-الكاملة-full-pack/"),
-        CatUnit("مسلسلات", "مسلسلات"),
-        CatUnit("مسلسلات اجنبى", "مسلسلات/5-series-english-مسلسلات-اجنبي/"),
-        CatUnit("مسلسلات عربى", "مسلسلات/13-مسلسلات-عربيه-arabic-series/"),
-        CatUnit("مسلسلات هندى", "مسلسلات/9-series-indian-مسلسلات-هندية/"),
-        CatUnit("مسلسلات اسيوى", "مسلسلات/مسلسلات-اسيوية/"),
-        CatUnit("مسلسلات تركى", "مسلسلات/8-مسلسلات-تركية-turkish-series/"),
-        CatUnit("مسلسلات وثائقية", "مسلسلات/مسلسلات-وثائقية-documentary-series/"),
-        CatUnit("مسلسلات انمي", "مسلسلات-كرتون/"),
+        CatUnit("جميع الافلام", "category/أفلام/"),
+        CatUnit("افلام اجنبى", "category/أفلام/10-movies-english-افلام-اجنبي"),
+        CatUnit("افلام عربى", "category/أفلام/افلام-عربي-arabic-movies"),
+        CatUnit("افلام هندى", "category/أفلام/افلام-هندي-indian-movies"),
+        CatUnit("افلام تركى", "category/أفلام/افلام-تركى-turkish-films"),
+        CatUnit("افلام وثائقية", "category/أفلام/افلام-وثائقية-documentary-films"),
+        CatUnit("افلام انمي", "category/افلام-كرتون"),
+        CatUnit("سلاسل افلام", "category/أفلام/10-movies-english-افلام-اجنبي/سلاسل-الافلام-الكاملة-full-pack"),
+        CatUnit("مسلسلات", "category/مسلسلات"),
+        CatUnit("مسلسلات اجنبى", "category/مسلسلات/5-series-english-مسلسلات-اجنبي"),
+        CatUnit("مسلسلات عربى", "category/مسلسلات/5-series-english-مسلسلات-اجنبي"),
+        CatUnit("مسلسلات هندى", "category/مسلسلات/9-series-indian-مسلسلات-هندية"),
+        CatUnit("مسلسلات اسيوى", "category/مسلسلات/مسلسلات-اسيوية"),
+        CatUnit("مسلسلات تركى", "category/مسلسلات/8-مسلسلات-تركية-turkish-series"),
+        CatUnit("مسلسلات وثائقية", "category/مسلسلات/مسلسلات-وثائقية-documentary-series"),
+        CatUnit("مسلسلات انمي", "category/مسلسلات-كرتون"),
+        CatUnit("NETFLIX", "production/netflix"),
+        CatUnit("WARNER BROS", "production/warner-bros"),
+        CatUnit("LIONSGATE", "production/lionsgate"),
+        CatUnit("DISNEY", "production/walt-disney-pictures"),
+        CatUnit("COLUMBIA", "production/columbia-pictures"),
     )
 
     // preferred quality settings
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val baseUrlPref = androidx.preference.EditTextPreference(screen.context).apply {
-            key = BASE_URL_PREF_TITLE
-            title = BASE_URL_PREF_TITLE
-            summary = BASE_URL_PREF_SUMMARY
-            this.setDefaultValue(defaultBaseUrl)
-            dialogTitle = BASE_URL_PREF_TITLE
-            dialogMessage = "Default: $defaultBaseUrl"
+            key = PREF_BASE_URL_KEY
+            title = PREF_BASE_URL_TITLE
+            summary = getPrefBaseUrl()
+            this.setDefaultValue(PREF_BASE_URL_DEFAULT)
+            dialogTitle = PREF_BASE_URL_DIALOG_TITLE
+            dialogMessage = PREF_BASE_URL_DIALOG_MESSAGE
 
             setOnPreferenceChangeListener { _, newValue ->
                 try {
-                    val res = preferences.edit().putString(baseUrlPref, newValue as String).commit()
+                    val res = preferences.edit().putString(PREF_BASE_URL_KEY, newValue as String).commit()
+                    Toast.makeText(screen.context, "Restart Aniyomi to apply changes", Toast.LENGTH_LONG).show()
                     res
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -324,13 +347,12 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p", "240p")
-            entryValues = arrayOf("1080", "720", "480", "360", "240")
-            setDefaultValue("1080")
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_ENTRIES.map { it.replace("p", "") }.toTypedArray()
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
-
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
                 val index = findIndexOfValue(selected)
@@ -342,10 +364,26 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         screen.addPreference(videoQualityPref)
     }
 
-    private fun getPrefBaseUrl(): String = preferences.getString(baseUrlPref, defaultBaseUrl)!!
+    private fun getPrefBaseUrl(): String = preferences.getString(PREF_BASE_URL_KEY, PREF_BASE_URL_DEFAULT)!!
 
+    // ============================= Utilities ===================================
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
     companion object {
-        private const val BASE_URL_PREF_TITLE = "Override BaseUrl"
-        private const val BASE_URL_PREF_SUMMARY = "Override default domain with a different one"
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
+        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p", "240p")
+
+        private const val PREF_BASE_URL_DEFAULT = "https://cdn3.wecima.watch"
+        private const val PREF_BASE_URL_KEY = "default_domain"
+        private const val PREF_BASE_URL_TITLE = "Enter default domain"
+        private const val PREF_BASE_URL_DIALOG_TITLE = "Default domain"
+        private const val PREF_BASE_URL_DIALOG_MESSAGE = "You can change the site domain from here"
+
+        private val GOVAD_REGEX = Regex("(v[aie]d[bp][aoe]?m|myvii?d|govad|segavid|v[aei]{1,2}dshar[er]?)\\.(?:com|net|org|xyz)(?::\\d+)?/(?:embed[/-])?([A-Za-z0-9]+)")
+        private val UQLOAD_REGEX = Regex("(uqload\\.[ic]om?)/(?:embed-)?([0-9a-zA-Z]+)")
     }
 }
