@@ -30,7 +30,7 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Toonitalia"
 
-    override val baseUrl = "https://toonitalia.co"
+    override val baseUrl = "https://toonitalia.green"
 
     override val lang = "it"
 
