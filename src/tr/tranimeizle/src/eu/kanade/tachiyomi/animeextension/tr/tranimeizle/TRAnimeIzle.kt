@@ -26,21 +26,17 @@ class TRAnimeIzle : ParsedAnimeHttpSource() {
     override val supportsLatest = false
 
     // ============================== Popular ===============================
-    override fun popularAnimeRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/listeler/populer/sayfa-$page")
+
+    override fun popularAnimeSelector() = "div.post-body div.flx-block"
+
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.attr("data-href"))
+        thumbnail_url = element.selectFirst("img")!!.attr("src")
+        title = element.selectFirst("div.bar > h4")!!.text()
     }
 
-    override fun popularAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun popularAnimeNextPageSelector() = "ul.pagination > li:has(.ti-angle-right)"
 
     // =============================== Latest ===============================
     override fun latestUpdatesRequest(page: Int): Request {
