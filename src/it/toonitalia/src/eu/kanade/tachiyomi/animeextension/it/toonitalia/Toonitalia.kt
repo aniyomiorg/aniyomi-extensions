@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.it.toonitalia.extractors.MaxStreamExtractor
 import eu.kanade.tachiyomi.animeextension.it.toonitalia.extractors.StreamZExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
@@ -13,6 +14,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -226,10 +228,14 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val voeExtractor by lazy { VoeExtractor(client) }
     private val streamZExtractor by lazy { StreamZExtractor(client) }
+    private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val maxStreamExtractor by lazy { MaxStreamExtractor(client, headers) }
 
     private fun extractVideos(url: String): List<Video> =
         when {
             "https://voe.sx" in url -> voeExtractor.videoFromUrl(url)?.let(::listOf)
+            "https://streamtape" in url -> streamTapeExtractor.videoFromUrl(url)?.let(::listOf)
+            "https://maxstream" in url -> maxStreamExtractor.videosFromUrl(url)
             "https://streamz" in url || "streamz.cc" in url -> {
                 streamZExtractor.videoFromUrl(url, "StreamZ")?.let(::listOf)
             }

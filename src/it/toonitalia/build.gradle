@@ -11,6 +11,9 @@ ext {
 
 dependencies {
     implementation(project(':lib-voe-extractor'))
+    implementation(project(':lib-streamtape-extractor'))
+    implementation(project(':lib-playlist-utils'))
+    implementation("dev.datlag.jsunpacker:jsunpacker:1.0.1")
 }
 
 apply from: "$rootDir/common.gradle"
