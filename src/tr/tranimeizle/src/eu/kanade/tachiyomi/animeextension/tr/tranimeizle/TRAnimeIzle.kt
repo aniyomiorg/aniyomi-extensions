@@ -36,7 +36,7 @@ class TRAnimeIzle : ParsedAnimeHttpSource() {
         title = element.selectFirst("div.bar > h4")!!.text()
     }
 
-    override fun popularAnimeNextPageSelector() = "ul.pagination > li:has(.ti-angle-right)"
+    override fun popularAnimeNextPageSelector() = "ul.pagination > li:has(.ti-angle-right):not(.disabled)"
 
     // =============================== Latest ===============================
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/listeler/yenibolum/sayfa-$page")
@@ -68,21 +68,14 @@ class TRAnimeIzle : ParsedAnimeHttpSource() {
         return AnimesPage(listOf(details), false)
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request =
+        GET("$baseUrl/arama/$query?page=$page")
 
-    override fun searchAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeSelector() = popularAnimeSelector()
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun searchAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
