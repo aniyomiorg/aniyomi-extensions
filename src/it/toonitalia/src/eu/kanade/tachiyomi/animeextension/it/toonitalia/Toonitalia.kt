@@ -155,96 +155,40 @@ class Toonitalia : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
+    private val episodeNumRegex by lazy { Regex("\\s(\\d+x\\d+)\\s?") }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.asJsoup()
-        val episodeList = mutableListOf<SEpisode>()
+        val doc = response.use { it.asJsoup() }
+        val url = doc.location()
 
-        // Select single seasons episodes
-        val singleEpisode = document.select("div.entry-content > h3:contains(Episodi) + p")
-        if (singleEpisode.isNotEmpty() && singleEpisode.text().isNotEmpty()) {
-            var episode = SEpisode.create()
-
-            var isValid = false
-            var counter = 1
-            for (child in singleEpisode.first()!!.childNodes()) {
-                if (child.nodeName() == "br" || (child.nextSibling() == null && child.nodeName() == "a")) {
-                    episode.url = response.request.url.toString() + "#$counter"
-
-                    if (isValid) {
-                        episodeList.add(episode)
-                        isValid = false
-                    }
-                    episode = SEpisode.create()
-                    counter++
-                } else if (child.nodeName() == "a") {
-                    isValid = true
-                } else {
-                    val name = child.toString().trim().substringBeforeLast("–")
-                    if (name.isNotEmpty()) {
-                        episode.name = "Episode ${name.trim()}"
-                        episode.episode_number = counter.toFloat()
-                    }
-                }
-            }
+        if ("/film-anime/" in url) {
+            return listOf(
+                SEpisode.create().apply {
+                    setUrlWithoutDomain("$url#0")
+                    episode_number = 1F
+                    name = doc.selectFirst("h1.entry-title")!!.text()
+                },
+            )
         }
 
-        // Select multiple seasons
-        val seasons = document.select("div.entry-content > h3:contains(Stagione) + p")
-        if (seasons.isNotEmpty()) {
-            var counter = 1
-            seasons.forEach {
-                var episode = SEpisode.create()
-
-                var isValid = false
-                for (child in it.childNodes()) {
-                    if (child.nodeName() == "br" || (child.nextSibling() == null && child.nodeName() == "a")) {
-                        episode.url = response.request.url.toString() + "#$counter"
-                        if (isValid) {
-                            episodeList.add(episode)
-                            isValid = false
-                        }
-                        episode = SEpisode.create()
-                        counter++
-                    } else if (child.nodeName() == "a") {
-                        isValid = true
-                    } else {
-                        val name = child.toString().trim().substringBeforeLast("–")
-                        if (name.isNotEmpty()) {
-                            episode.name = "Episode ${name.trim()}"
-                            episode.episode_number = counter.toFloat()
-                        }
-                    }
-                }
+        val epNames = doc.select(episodeListSelector() + ">td:not(:has(a))").eachText()
+        return epNames.mapIndexed { index, item ->
+            SEpisode.create().apply {
+                setUrlWithoutDomain("$url#$index")
+                val (season, episode) = episodeNumRegex.find(item)
+                    ?.groupValues
+                    ?.last()
+                    ?.split("x")
+                    ?: listOf("01", "01")
+                name = "Stagione $season - Episodi $episode"
+                episode_number = "$season.${episode.padStart(3, '0')}".toFloatOrNull() ?: 1F
             }
-        }
-
-        // Select movie
-        val movie = document.select("div.entry-content > p:contains(Link Streaming)")
-        if (movie.isNotEmpty()) {
-            val episode = SEpisode.create()
-            for (child in movie.first()!!.childNodes()) {
-                if (child.nodeName() == "br" || (child.nextSibling() == null && child.nodeName() == "a")) {
-                    // episode.url = links.joinToString(separator = "///")
-                    episode.url = response.request.url.toString() + "#1"
-                } else if (child.nodeName() == "a") {
-                } else {
-                    val name = child.toString().trim().substringBeforeLast("–")
-                    if (name.isNotEmpty()) {
-                        episode.name = "Movie"
-                        episode.episode_number = 1F
-                    }
-                }
-            }
-            episodeList.add(episode)
-        }
-
-        return episodeList.reversed()
+        }.reversed()
     }
 
-    override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not used")
+    override fun episodeFromElement(element: Element) = throw Exception("Not used")
 
-    override fun episodeListSelector(): String = throw Exception("Not used")
+    override fun episodeListSelector() = "article > div.entry-content > center table tr:has(a)"
 
     // ============================ Video Links =============================
 
