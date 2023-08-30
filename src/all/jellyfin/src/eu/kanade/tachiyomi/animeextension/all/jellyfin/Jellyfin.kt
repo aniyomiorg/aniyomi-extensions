@@ -39,7 +39,7 @@ import kotlin.math.floor
 
 class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpSource() {
 
-    override val name = "Jellyfin${suffix.let { if (it.isNotBlank()) " ($it)" else "" }}"
+    override val name = "Jellyfin$suffix"
 
     override val lang = "all"
 
