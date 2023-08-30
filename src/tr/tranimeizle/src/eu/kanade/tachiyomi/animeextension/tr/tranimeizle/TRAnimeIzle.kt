@@ -25,6 +25,16 @@ class TRAnimeIzle : ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
 
+    override val client by lazy {
+        network.cloudflareClient.newBuilder()
+            .addInterceptor(ShittyCaptchaInterceptor(baseUrl, headers))
+            .build()
+    }
+
+    override fun headersBuilder() = super.headersBuilder()
+        .add("Referer", "$baseUrl/")
+        .add("Origin", baseUrl)
+
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/listeler/populer/sayfa-$page")
 
