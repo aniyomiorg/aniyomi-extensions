@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.tr.anizm
 
+import eu.kanade.tachiyomi.animeextension.tr.anizm.AnizmFilters.applyFilterParams
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -9,8 +10,6 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import okhttp3.Request
@@ -64,13 +63,7 @@ class Anizm : ParsedAnimeHttpSource() {
             .asSequence()
     }
 
-    @Serializable
-    data class SearchItemDto(
-        @SerialName("info_title") val title: String,
-        @SerialName("info_othernames") val othernames: String?,
-        @SerialName("info_slug") val slug: String,
-        @SerialName("info_poster") val thumbnail: String,
-    )
+    override fun getFilterList(): AnimeFilterList = AnizmFilters.FILTER_LIST
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
@@ -79,7 +72,10 @@ class Anizm : ParsedAnimeHttpSource() {
                 .asObservableSuccess()
                 .map(::searchAnimeByIdParse)
         } else {
-            val filtered = animeList.filter { it.title.contains(query, true) || it.othernames.orEmpty().contains(query, true) }
+            val params = AnizmFilters.getSearchParameters(filters).apply {
+                animeName = query
+            }
+            val filtered = animeList.applyFilterParams(params)
             val results = filtered.chunked(30).toList()
             val hasNextPage = results.size > page
             val currentPage = if (results.size == 0) {
