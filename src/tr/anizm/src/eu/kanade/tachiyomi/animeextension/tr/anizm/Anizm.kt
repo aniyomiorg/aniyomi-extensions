@@ -9,11 +9,16 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.injectLazy
 
 class Anizm : ParsedAnimeHttpSource() {
 
@@ -24,6 +29,8 @@ class Anizm : ParsedAnimeHttpSource() {
     override val lang = "tr"
 
     override val supportsLatest = true
+
+    private val json: Json by injectLazy()
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET(baseUrl, headers)
@@ -51,6 +58,20 @@ class Anizm : ParsedAnimeHttpSource() {
     override fun latestUpdatesNextPageSelector() = "div.nextBeforeButtons > div.ui > a.right:not(.disabled)"
 
     // =============================== Search ===============================
+    private val animeList by lazy {
+        client.newCall(GET("$baseUrl/getAnimeListForSearch", headers)).execute()
+            .parseAs<List<SearchItemDto>>()
+            .asSequence()
+    }
+
+    @Serializable
+    data class SearchItemDto(
+        @SerialName("info_title") val title: String,
+        @SerialName("info_othernames") val othernames: String?,
+        @SerialName("info_slug") val slug: String,
+        @SerialName("info_poster") val thumbnail: String,
+    )
+
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val id = query.removePrefix(PREFIX_SEARCH)
@@ -58,7 +79,21 @@ class Anizm : ParsedAnimeHttpSource() {
                 .asObservableSuccess()
                 .map(::searchAnimeByIdParse)
         } else {
-            super.fetchSearchAnime(page, query, filters)
+            val filtered = animeList.filter { it.title.contains(query, true) || it.othernames.orEmpty().contains(query, true) }
+            val results = filtered.chunked(30).toList()
+            val hasNextPage = results.size > page
+            val currentPage = if (results.size == 0) {
+                emptyList<SAnime>()
+            } else {
+                results.get(page - 1).map {
+                    SAnime.create().apply {
+                        title = it.title
+                        url = "/" + it.slug
+                        thumbnail_url = baseUrl + "/storage/pcovers/" + it.thumbnail
+                    }
+                }
+            }
+            Observable.just(AnimesPage(currentPage, hasNextPage))
         }
     }
 
@@ -112,6 +147,11 @@ class Anizm : ParsedAnimeHttpSource() {
 
     override fun videoUrlParse(document: Document): String {
         throw UnsupportedOperationException("Not used.")
+    }
+
+    // ============================= Utilities ==============================
+    private inline fun <reified T> Response.parseAs(): T = use {
+        json.decodeFromStream(it.body.byteStream())
     }
 
     companion object {
