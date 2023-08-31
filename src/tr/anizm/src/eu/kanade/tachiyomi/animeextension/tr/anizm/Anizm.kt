@@ -23,7 +23,7 @@ class Anizm : ParsedAnimeHttpSource() {
 
     override val lang = "tr"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET(baseUrl, headers)
@@ -42,21 +42,13 @@ class Anizm : ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector() = null
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/anime-izle?sayfa=$page", headers)
 
-    override fun latestUpdatesSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesSelector() = "div#episodesMiddle div.posterBlock > a"
 
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun latestUpdatesNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesNextPageSelector() = "div.nextBeforeButtons > div.ui > a.right:not(.disabled)"
 
     // =============================== Search ===============================
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
