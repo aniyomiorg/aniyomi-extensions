@@ -1,19 +1,34 @@
 package eu.kanade.tachiyomi.animeextension.tr.anizm
 
 import eu.kanade.tachiyomi.animeextension.tr.anizm.AnizmFilters.applyFilterParams
+import eu.kanade.tachiyomi.animeextension.tr.anizm.extractors.UQLoadExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
+import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
+import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
+import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
+import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
+import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
@@ -28,6 +43,10 @@ class Anizm : ParsedAnimeHttpSource() {
     override val lang = "tr"
 
     override val supportsLatest = true
+
+    override fun headersBuilder() = super.headersBuilder()
+        .add("Origin", baseUrl)
+        .add("Referer", "$baseUrl/")
 
     private val json: Json by injectLazy()
 
@@ -148,8 +167,63 @@ class Anizm : ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
+    @Serializable
+    data class ResponseDto(val data: String)
+
     override fun videoListParse(response: Response): List<Video> {
-        throw UnsupportedOperationException("Not used.")
+        val doc = response.use { it.asJsoup() }
+        val fansubUrls = doc.select("div#fansec > a").map { it.attr("translator") }
+        val playerUrls = fansubUrls.flatMap {
+            runCatching {
+                client.newCall(GET(it, headers)).execute()
+                    .parseAs<ResponseDto>()
+                    .data
+                    .let(Jsoup::parse)
+                    .select("a.videoPlayerButtons")
+                    .map { it.attr("video").replace("/video/", "/player/") }
+            }.getOrElse { emptyList() }
+        }
+        return playerUrls.parallelMap {
+            runCatching {
+                getVideosFromUrl(it)
+            }.getOrElse { emptyList() }
+        }.flatten()
+    }
+
+    private val noRedirectClient by lazy {
+        client.newBuilder().followRedirects(false).build()
+    }
+
+    private val doodExtractor by lazy { DoodExtractor(client) }
+    private val gdrivePlayerExtractor by lazy { GdrivePlayerExtractor(client) }
+    private val uqloadExtractor by lazy { UQLoadExtractor(client) }
+    private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
+    private val yourUploadExtractor by lazy { YourUploadExtractor(client) }
+    private val voeExtractor by lazy { VoeExtractor(client) }
+    private val filemoonExtractor by lazy { FilemoonExtractor(client) }
+    private val sendvidExtractor by lazy { SendvidExtractor(client, headers) }
+    private val sibnetExtractor by lazy { SibnetExtractor(client) }
+
+    private fun getVideosFromUrl(firstUrl: String): List<Video> {
+        val url = noRedirectClient.newCall(GET(firstUrl, headers)).execute()
+            .use { it.headers["location"] }
+            ?: return emptyList()
+
+        return when {
+            "filemoon.sx" in url -> filemoonExtractor.videosFromUrl(url, headers = headers)
+            "sendvid.com" in url -> sendvidExtractor.videosFromUrl(url)
+            "video.sibnet" in url -> sibnetExtractor.videosFromUrl(url)
+            "mp4upload" in url -> mp4uploadExtractor.videosFromUrl(url, headers)
+            "yourupload" in url -> yourUploadExtractor.videoFromUrl(url, headers)
+            "dood" in url -> doodExtractor.videoFromUrl(url)?.let(::listOf)
+            "drive.google" in url -> {
+                val newUrl = "https://gdriveplayer.to/embed2.php?link=$url"
+                gdrivePlayerExtractor.videosFromUrl(newUrl, "GdrivePlayer", headers)
+            }
+            "uqload" in url -> uqloadExtractor.videoFromUrl(url)?.let(::listOf)
+            "voe.sx" in url -> voeExtractor.videoFromUrl(url)?.let(::listOf)
+            else -> null
+        } ?: emptyList()
     }
 
     override fun videoListSelector(): String {
@@ -168,6 +242,11 @@ class Anizm : ParsedAnimeHttpSource() {
     private inline fun <reified T> Response.parseAs(): T = use {
         json.decodeFromStream(it.body.byteStream())
     }
+
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 
     companion object {
         const val PREFIX_SEARCH = "id:"
