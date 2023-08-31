@@ -115,8 +115,25 @@ class Anizm : ParsedAnimeHttpSource() {
     }
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        throw UnsupportedOperationException("Not used.")
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        setUrlWithoutDomain(document.location())
+        title = document.selectFirst("h2.anizm_pageTitle")!!.text()
+        thumbnail_url = document.selectFirst("div.infoPosterImg > img")!!.attr("abs:src")
+        val infosDiv = document.selectFirst("div.anizm_boxContent")!!
+        genre = infosDiv.select("span.dataValue > span.tag > span.label").eachText().joinToString()
+        artist = infosDiv.selectFirst("span.dataTitle:contains(Stüdyo) + span")?.text()
+
+        description = buildString {
+            infosDiv.selectFirst("div.infoDesc")?.text()?.also(::append)
+
+            infosDiv.select("li.dataRow:not(:has(span.ui.tag)):not(:has(div.star)) > span")
+                .forEach {
+                    when {
+                        it.hasClass("dataTitle") -> append("\n${it.text()}: ")
+                        else -> append(it.text())
+                    }
+                }
+        }
     }
 
     // ============================== Episodes ==============================
