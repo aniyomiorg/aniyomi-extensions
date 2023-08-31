@@ -1,0 +1,15 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+
+}
+
+ext {
+    extName = 'Anizm'
+    pkgNameSuffix = 'tr.anizm'
+    extClass = '.Anizm'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+apply from: "$rootDir/common.gradle"
