@@ -3963,6 +3963,48 @@
     ]
   },
   {
+    "name": "Aniyomi: Anizm",
+    "pkg": "eu.kanade.tachiyomi.animeextension.tr.anizm",
+    "apk": "aniyomi-tr.anizm-v13.1.apk",
+    "lang": "tr",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Anizm",
+        "lang": "tr",
+        "id": "3103642053214293691",
+        "baseUrl": "https://anizm.net",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: TR Anime Izle",
+    "pkg": "eu.kanade.tachiyomi.animeextension.tr.tranimeizle",
+    "apk": "aniyomi-tr.tranimeizle-v13.1.apk",
+    "lang": "tr",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "TR Anime Izle",
+        "lang": "tr",
+        "id": "2607995207802293539",
+        "baseUrl": "https://www.tranimeizle.co",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Türk Anime TV",
     "pkg": "eu.kanade.tachiyomi.animeextension.tr.turkanime",
     "apk": "aniyomi-tr.turkanime-v13.8.apk",
