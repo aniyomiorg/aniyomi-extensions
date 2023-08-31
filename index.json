@@ -2844,10 +2844,10 @@
   {
     "name": "Aniyomi: Kuramanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.kuramanime",
-    "apk": "aniyomi-id.kuramanime-v13.7.apk",
+    "apk": "aniyomi-id.kuramanime-v13.8.apk",
     "lang": "id",
-    "code": 7,
-    "version": "13.7",
+    "code": 8,
+    "version": "13.8",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2856,7 +2856,7 @@
         "name": "Kuramanime",
         "lang": "id",
         "id": "4677878836897500878",
-        "baseUrl": "https://kuramanime.xyz",
+        "baseUrl": "https://kuramanime.pro",
         "versionId": 1,
         "hasCloudflare": 1
       }
