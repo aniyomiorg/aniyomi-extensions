@@ -137,12 +137,14 @@ class Anizm : ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun episodeListParse(response: Response) = super.episodeListParse(response).reversed()
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        throw UnsupportedOperationException("Not used.")
+    override fun episodeListSelector() = "div.episodeListTabContent div > a"
+
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        episode_number = element.text().filter(Char::isDigit).toFloatOrNull() ?: 1F
+        name = element.text()
     }
 
     // ============================ Video Links =============================
