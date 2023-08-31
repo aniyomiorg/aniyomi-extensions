@@ -166,7 +166,7 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             .substringAfterLast(" ", "")
             .toIntOrNull() ?: 1 // Int because of the episode name, a Float would render with more zeros.
 
-        name = "Episode $epNum"
+        name = "Bölüm $epNum"
         episode_number = epNum.toFloat()
 
         date_upload = element.selectFirst(".etitle > small.author")?.text()?.toDate() ?: 0L
