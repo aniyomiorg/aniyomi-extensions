@@ -1,7 +1,11 @@
 package eu.kanade.tachiyomi.animeextension.tr.anizm
 
+import android.app.Application
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.tr.anizm.AnizmFilters.applyFilterParams
 import eu.kanade.tachiyomi.animeextension.tr.anizm.extractors.UQLoadExtractor
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -32,9 +36,11 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 
-class Anizm : ParsedAnimeHttpSource() {
+class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
     override val name = "Anizm"
 
@@ -49,6 +55,10 @@ class Anizm : ParsedAnimeHttpSource() {
         .add("Referer", "$baseUrl/")
 
     private val json: Json by injectLazy()
+
+    private val preferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET(baseUrl, headers)
@@ -238,6 +248,25 @@ class Anizm : ParsedAnimeHttpSource() {
         throw UnsupportedOperationException("Not used.")
     }
 
+    // ============================== Settings ==============================
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+    }
+
     // ============================= Utilities ==============================
     private inline fun <reified T> Response.parseAs(): T = use {
         json.decodeFromStream(it.body.byteStream())
@@ -248,7 +277,21 @@ class Anizm : ParsedAnimeHttpSource() {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
 
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
+    }
+
     companion object {
         const val PREFIX_SEARCH = "id:"
+
+        private const val PREF_QUALITY_KEY = "pref_quality_key"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "720p"
+        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p")
+        private val PREF_QUALITY_VALUES = PREF_QUALITY_ENTRIES
     }
 }
