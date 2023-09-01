@@ -19,6 +19,7 @@ class AnimeStreamGenerator : ThemeSourceGenerator {
         SingleLang("desu-online", "https://desu-online.pl", "pl", className = "DesuOnline", isNsfw = false),
         SingleLang("Hstream", "https://hstream.moe", "en", isNsfw = true, overrideVersionCode = 3),
         SingleLang("LMAnime", "https://lmanime.com", "all", isNsfw = false, overrideVersionCode = 2),
+        SingleLang("LuciferDonghua", "https://luciferdonghua.in", "en", isNsfw = false),
         SingleLang("MiniOppai", "https://minioppai.org", "id", isNsfw = true, overrideVersionCode = 2),
         SingleLang("RineCloud", "https://rine.cloud", "pt-BR", isNsfw = false),
     )
