@@ -71,7 +71,7 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("data-href"))
         thumbnail_url = element.selectFirst("img")!!.attr("src")
-        title = element.selectFirst("div.bar > h4")!!.text()
+        title = element.selectFirst("div.bar > h4")!!.text().clearName()
     }
 
     override fun popularAnimeNextPageSelector() = "ul.pagination > li:has(.ti-angle-right):not(.disabled)"
@@ -118,7 +118,7 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document) = SAnime.create().apply {
         setUrlWithoutDomain(document.location())
-        title = document.selectFirst("div.playlist-title h1")!!.text()
+        title = document.selectFirst("div.playlist-title h1")!!.text().clearName()
         thumbnail_url = document.selectFirst("div.poster .social-icon img")!!.attr("src")
 
         val infosDiv = document.selectFirst("div.col-md-6 > div.row")!!
@@ -259,6 +259,8 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     // ============================= Utilities ==============================
+    private fun String.clearName() = removeSuffix(" İzle").removeSuffix(" Bölüm")
+
     private fun String.toDate(): Long {
         return runCatching { DATE_FORMATTER.parse(trim())?.time }
             .getOrNull() ?: 0L
