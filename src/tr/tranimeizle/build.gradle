@@ -7,7 +7,7 @@ ext {
     extName = 'TR Anime Izle'
     pkgNameSuffix = 'tr.tranimeizle'
     extClass = '.TRAnimeIzle'
-    extVersionCode = 1
+    extVersionCode = 2
     libVersion = '13'
 }
 
