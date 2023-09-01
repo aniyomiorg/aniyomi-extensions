@@ -1248,6 +1248,27 @@
     ]
   },
   {
+    "name": "Aniyomi: DonghuaStream",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.donghuastream",
+    "apk": "aniyomi-en.donghuastream-v13.2.apk",
+    "lang": "en",
+    "code": 2,
+    "version": "13.2",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "DonghuaStream",
+        "lang": "en",
+        "id": "5750955808412743706",
+        "baseUrl": "https://donghuastream.co.in",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: DopeBox",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.dopebox",
     "apk": "aniyomi-en.dopebox-v13.20.apk",
