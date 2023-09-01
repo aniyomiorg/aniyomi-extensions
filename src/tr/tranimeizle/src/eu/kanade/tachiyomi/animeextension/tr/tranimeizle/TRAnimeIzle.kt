@@ -222,7 +222,11 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             "video.sibnet" in url -> sibnetExtractor.videosFromUrl(url)
             "streamlare.com" in url -> streamlareExtractor.videosFromUrl(url)
             "voe.sx" in url -> voeExtractor.videoFromUrl(url)?.let(::listOf) ?: emptyList()
-            "yourupload.com" in url -> yourUploadExtractor.videoFromUrl(url, headers)
+            "yourupload.com" in url -> {
+                yourUploadExtractor.videoFromUrl(url, headers)
+                    // ignore error links
+                    .filterNot { it.url.contains("/novideo.mp4") }
+            }
             else -> emptyList()
         }
     }
