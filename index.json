@@ -1626,6 +1626,27 @@
     ]
   },
   {
+    "name": "Aniyomi: LuciferDonghua",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.luciferdonghua",
+    "apk": "aniyomi-en.luciferdonghua-v13.2.apk",
+    "lang": "en",
+    "code": 2,
+    "version": "13.2",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "LuciferDonghua",
+        "lang": "en",
+        "id": "1480485712825107891",
+        "baseUrl": "https://luciferdonghua.in",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: marin.moe",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.marinmoe",
     "apk": "aniyomi-en.marinmoe-v13.9.apk",
