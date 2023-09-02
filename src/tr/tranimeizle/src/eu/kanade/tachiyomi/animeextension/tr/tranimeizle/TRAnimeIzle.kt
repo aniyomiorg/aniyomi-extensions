@@ -189,6 +189,7 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             .filter { it.text() in chosenFansubs || it.text() !in allFansubs }
             .flatMap { fansub ->
                 val fansubId = fansub.attr("data-fid")
+                val fansubName = fansub.text()
 
                 val body = """{"EpisodeId":$episodeId,"FansubId":$fansubId}"""
                     .toRequestBody("application/json".toMediaType())
@@ -201,7 +202,18 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
                         runCatching {
                             getVideosFromId(it.attr("data-id"))
                         }.getOrElse { emptyList() }
-                    }.flatten()
+                    }
+                    .flatten()
+                    .map {
+                        Video(
+                            it.url,
+                            "[$fansubName] ${it.quality}",
+                            it.videoUrl,
+                            it.headers,
+                            it.subtitleTracks,
+                            it.audioTracks,
+                        )
+                    }
             }
     }
 
