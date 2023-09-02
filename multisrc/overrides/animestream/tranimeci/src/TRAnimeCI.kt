@@ -7,12 +7,14 @@ import eu.kanade.tachiyomi.animeextension.tr.tranimeci.TRAnimeCIFilters.StudioFi
 import eu.kanade.tachiyomi.animeextension.tr.tranimeci.TRAnimeCIFilters.TypeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStreamFilters
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
+import org.jsoup.nodes.Element
 
 class TRAnimeCI : AnimeStream(
     "tr",
@@ -38,6 +40,12 @@ class TRAnimeCI : AnimeStream(
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/index?page=$page")
 
     override fun latestUpdatesSelector() = "div.releases:contains(Son Güncellenenler) ~ div.listupd a.tip"
+
+    override fun latestUpdatesFromElement(element: Element) =
+        searchAnimeFromElement(element).apply {
+            // Convert episode url to anime url
+            url = "/series$url".replace("/video", "").substringBefore("-bolum").substringBeforeLast("-")
+        }
 
     override fun latestUpdatesNextPageSelector() = "div.hpage > a:last-child[href]"
 
@@ -73,6 +81,18 @@ class TRAnimeCI : AnimeStream(
             )
         } else {
             AnimeFilterList(AnimeFilter.Header(filtersMissingWarning))
+        }
+    }
+
+    // =========================== Anime Details ============================
+    override val animeDetailsSelector = "div.infox"
+    override val animeStatusText = "Durum"
+
+    override fun parseStatus(statusString: String?): Int {
+        return when (statusString?.trim()?.lowercase()) {
+            "tamamlandı" -> SAnime.COMPLETED
+            "devam ediyor" -> SAnime.ONGOING
+            else -> SAnime.UNKNOWN
         }
     }
 
