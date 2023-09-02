@@ -1,7 +1,10 @@
 package eu.kanade.tachiyomi.animeextension.tr.tranimeizle
 
 import android.app.Application
+import android.widget.Toast
+import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
+import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -13,6 +16,7 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
+import eu.kanade.tachiyomi.lib.mytvextractor.MytvExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
@@ -176,25 +180,48 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     override fun videoListParse(response: Response): List<Video> {
         val doc = response.use { it.asJsoup() }
         val episodeId = doc.selectFirst("input#EpisodeId")!!.attr("value")
-        return doc.select("div.fansubSelector").flatMap { fansub ->
-            val fansubId = fansub.attr("data-fid")
-            val body = """{"EpisodeId":$episodeId,"FansubId":$fansubId}"""
-                .toRequestBody("application/json".toMediaType())
 
-            client.newCall(POST("$baseUrl/api/fansubSources", headers, body)).execute()
-                .use { it.asJsoup() }
-                .select("li.sourceBtn")
-                .parallelMap {
-                    runCatching {
-                        getVideosFromId(it.attr("data-id"))
-                    }.getOrElse { emptyList() }
-                }.flatten()
-        }
+        val allFansubs = PREF_FANSUB_SELECTION_ENTRIES
+        val chosenFansubs = preferences.getStringSet(PREF_FANSUB_SELECTION_KEY, allFansubs.toSet())!!
+
+        return doc.select("div.fansubSelector").toList()
+            // Filter-out non-chosen fansubs that were included in the fansub selection preference.
+            // This way we prevent excluding unknown/non-added fansubs.
+            .filter { it.text() in chosenFansubs || it.text() !in allFansubs }
+            .flatMap { fansub ->
+                val fansubId = fansub.attr("data-fid")
+                val fansubName = fansub.text()
+
+                val body = """{"EpisodeId":$episodeId,"FansubId":$fansubId}"""
+                    .toRequestBody("application/json".toMediaType())
+
+                client.newCall(POST("$baseUrl/api/fansubSources", headers, body))
+                    .execute()
+                    .use { it.asJsoup() }
+                    .select("li.sourceBtn")
+                    .parallelMap {
+                        runCatching {
+                            getVideosFromId(it.attr("data-id"))
+                        }.getOrElse { emptyList() }
+                    }
+                    .flatten()
+                    .map {
+                        Video(
+                            it.url,
+                            "[$fansubName] ${it.quality}",
+                            it.videoUrl,
+                            it.headers,
+                            it.subtitleTracks,
+                            it.audioTracks,
+                        )
+                    }
+            }
     }
 
     private val filemoonExtractor by lazy { FilemoonExtractor(client) }
     private val mixDropExtractor by lazy { MixDropExtractor(client) }
     private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
+    private val mytvExtractor by lazy { MytvExtractor(client) }
     private val okruExtractor by lazy { OkruExtractor(client) }
     private val sendvidExtractor by lazy { SendvidExtractor(client, headers) }
     private val sibnetExtractor by lazy { SibnetExtractor(client) }
@@ -211,12 +238,19 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             .substringBefore('"')
             .replace("\\", "")
             .trim()
+            .let {
+                when {
+                    it.startsWith("https") -> it
+                    else -> "https:$it"
+                }
+            }
 
         // That's going to take an entire year to load, and I really don't care.
         return when {
             "filemoon.sx" in url -> filemoonExtractor.videosFromUrl(url, headers = headers)
             "mixdrop" in url -> mixDropExtractor.videoFromUrl(url)
             "mp4upload" in url -> mp4uploadExtractor.videosFromUrl(url, headers)
+            "myvi." in url -> mytvExtractor.videosFromUrl(url)
             "ok.ru" in url -> okruExtractor.videosFromUrl(url)
             "sendvid.com" in url -> sendvidExtractor.videosFromUrl(url)
             "video.sibnet" in url -> sibnetExtractor.videosFromUrl(url)
@@ -260,6 +294,38 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
                 preferences.edit().putString(key, entry).commit()
             }
         }.also(screen::addPreference)
+
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_FANSUB_SELECTION_KEY
+            title = PREF_FANSUB_SELECTION_TITLE
+            PREF_FANSUB_SELECTION_ENTRIES.let {
+                entries = it
+                entryValues = it
+                setDefaultValue(it.toSet())
+            }
+
+            setOnPreferenceChangeListener { _, newValue ->
+                @Suppress("UNCHECKED_CAST")
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }.also(screen::addPreference)
+
+        EditTextPreference(screen.context).apply {
+            key = PREF_ADDITIONAL_FANSUBS_KEY
+            title = PREF_ADDITIONAL_FANSUBS_TITLE
+            dialogTitle = PREF_ADDITIONAL_FANSUBS_DIALOG_TITLE
+            dialogMessage = PREF_ADDITIONAL_FANSUBS_DIALOG_MESSAGE
+            setDefaultValue(PREF_ADDITIONAL_FANSUBS_DEFAULT)
+            summary = PREF_ADDITIONAL_FANSUBS_SUMMARY
+
+            setOnPreferenceChangeListener { _, newValue ->
+                runCatching {
+                    val value = newValue as String
+                    Toast.makeText(screen.context, PREF_ADDITIONAL_FANSUBS_TOAST, Toast.LENGTH_LONG).show()
+                    preferences.edit().putString(key, value).commit()
+                }.getOrDefault(false)
+            }
+        }.also(screen::addPreference)
     }
 
     // ============================= Utilities ==============================
@@ -283,6 +349,50 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         ).reversed()
     }
 
+    private val defaultSubs by lazy {
+        setOf(
+            "Adonis Fansub",
+            "Aitr",
+            "Akatsuki Fansub",
+            "AniKeyf",
+            "ANS Fansub",
+            "AnimeMangaTR",
+            "AnimeOu Fansub",
+            "AniSekai Fansub",
+            "AniTürk",
+            "AoiSubs",
+            "ARE-YOU-SURE (AYS)",
+            "AnimeWho",
+            "Chevirman",
+            "Fatality",
+            "HikiGayaFansub",
+            "HolySubs",
+            "Lawsonia Sub",
+            "LowSubs",
+            "Momo & Berhann",
+            "NoaSubs",
+            "OrigamiSubs",
+            "Puzzle Fansub",
+            "ShimazuSubs",
+            "SoutenSubs",
+            "TAÇE",
+            "TRanimeizle",
+            "TR Altyazılı",
+            "Uragiri Fansub",
+            "Varsayılan",
+        )
+    }
+
+    private val PREF_FANSUB_SELECTION_ENTRIES: Array<String> get() {
+        val additional = preferences.getString(PREF_ADDITIONAL_FANSUBS_KEY, "")!!
+            .split(",")
+            .map(String::trim)
+            .filter(String::isNotBlank)
+            .toSet()
+
+        return (defaultSubs + additional.sorted()).toTypedArray()
+    }
+
     companion object {
         const val PREFIX_SEARCH = "id:"
 
@@ -295,5 +405,16 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         private const val PREF_QUALITY_DEFAULT = "720p"
         private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p")
         private val PREF_QUALITY_VALUES = PREF_QUALITY_ENTRIES
+
+        private const val PREF_FANSUB_SELECTION_KEY = "pref_fansub_selection"
+        private const val PREF_FANSUB_SELECTION_TITLE = "Enable/Disable Fansubs"
+
+        private const val PREF_ADDITIONAL_FANSUBS_KEY = "pref_additional_fansubs_key"
+        private const val PREF_ADDITIONAL_FANSUBS_TITLE = "Add custom fansubs to the selection preference"
+        private const val PREF_ADDITIONAL_FANSUBS_DEFAULT = ""
+        private const val PREF_ADDITIONAL_FANSUBS_DIALOG_TITLE = "Enter a list of additional fansubs, separated by a comma."
+        private const val PREF_ADDITIONAL_FANSUBS_DIALOG_MESSAGE = "Example: AntichristHaters Fansub, 2cm erect subs"
+        private const val PREF_ADDITIONAL_FANSUBS_SUMMARY = "You can add more fansubs to the previous preference from here."
+        private const val PREF_ADDITIONAL_FANSUBS_TOAST = "Reopen the extension's preferences for it to take effect."
     }
 }
