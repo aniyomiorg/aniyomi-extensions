@@ -21,6 +21,13 @@ class TRAnimeCI : AnimeStream(
 
     override fun popularAnimeNextPageSelector() = null
 
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/index?page=$page")
+
+    override fun latestUpdatesSelector() = "div.releases:contains(Son Güncellenenler) ~ div.listupd a.tip"
+
+    override fun latestUpdatesNextPageSelector() = "div.hpage > a:last-child[href]"
+
     // ============================== Filters ===============================
     override val fetchFilters = false
 }
