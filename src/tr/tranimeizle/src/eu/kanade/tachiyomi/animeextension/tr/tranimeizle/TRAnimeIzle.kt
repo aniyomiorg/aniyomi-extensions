@@ -16,6 +16,7 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
+import eu.kanade.tachiyomi.lib.mytvextractor.MytvExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
@@ -220,6 +221,7 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     private val filemoonExtractor by lazy { FilemoonExtractor(client) }
     private val mixDropExtractor by lazy { MixDropExtractor(client) }
     private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
+    private val mytvExtractor by lazy { MytvExtractor(client) }
     private val okruExtractor by lazy { OkruExtractor(client) }
     private val sendvidExtractor by lazy { SendvidExtractor(client, headers) }
     private val sibnetExtractor by lazy { SibnetExtractor(client) }
@@ -236,12 +238,19 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             .substringBefore('"')
             .replace("\\", "")
             .trim()
+            .let {
+                when {
+                    it.startsWith("https") -> it
+                    else -> "https:$it"
+                }
+            }
 
         // That's going to take an entire year to load, and I really don't care.
         return when {
             "filemoon.sx" in url -> filemoonExtractor.videosFromUrl(url, headers = headers)
             "mixdrop" in url -> mixDropExtractor.videoFromUrl(url)
             "mp4upload" in url -> mp4uploadExtractor.videosFromUrl(url, headers)
+            "myvi." in url -> mytvExtractor.videosFromUrl(url)
             "ok.ru" in url -> okruExtractor.videosFromUrl(url)
             "sendvid.com" in url -> sendvidExtractor.videosFromUrl(url)
             "video.sibnet" in url -> sibnetExtractor.videosFromUrl(url)
