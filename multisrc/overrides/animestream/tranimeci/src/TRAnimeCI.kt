@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.tr.tranimeci
 
+import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
 import eu.kanade.tachiyomi.network.GET
 
@@ -27,6 +28,14 @@ class TRAnimeCI : AnimeStream(
     override fun latestUpdatesSelector() = "div.releases:contains(Son Güncellenenler) ~ div.listupd a.tip"
 
     override fun latestUpdatesNextPageSelector() = "div.hpage > a:last-child[href]"
+
+    // =============================== Search ===============================
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) =
+        GET("$baseUrl/search?name=$query")
+
+    override fun searchAnimeSelector() = "div.advancedsearch a.tip"
+
+    override fun searchAnimeNextPageSelector() = null
 
     // ============================== Filters ===============================
     override val fetchFilters = false
