@@ -89,7 +89,7 @@ abstract class AnimeStream(
 
     override fun popularAnimeSelector() = searchAnimeSelector()
 
-    override fun popularAnimeNextPageSelector() = searchAnimeNextPageSelector()
+    override fun popularAnimeNextPageSelector(): String? = searchAnimeNextPageSelector()
 
     override fun popularAnimeFromElement(element: Element) = searchAnimeFromElement(element)
 
@@ -224,13 +224,13 @@ abstract class AnimeStream(
     // =============================== Search ===============================
     override fun searchAnimeFromElement(element: Element): SAnime {
         return SAnime.create().apply {
-            setUrlWithoutDomain(element.attr("href"))
+            setUrlWithoutDomain(element.attr("abs:href"))
             title = element.selectFirst("div.tt, div.ttl")!!.ownText()
             thumbnail_url = element.selectFirst("img")!!.getImageUrl()
         }
     }
 
-    override fun searchAnimeNextPageSelector() = "div.pagination a.next, div.hpage > a.r"
+    override fun searchAnimeNextPageSelector(): String? = "div.pagination a.next, div.hpage > a.r"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val params = AnimeStreamFilters.getSearchParameters(filters)
@@ -275,7 +275,7 @@ abstract class AnimeStream(
 
     override fun latestUpdatesSelector() = searchAnimeSelector()
 
-    override fun latestUpdatesNextPageSelector() = searchAnimeNextPageSelector()
+    override fun latestUpdatesNextPageSelector(): String? = searchAnimeNextPageSelector()
 
     override fun latestUpdatesFromElement(element: Element) = searchAnimeFromElement(element)
 
