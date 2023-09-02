@@ -8,13 +8,17 @@ import eu.kanade.tachiyomi.animeextension.tr.tranimeci.TRAnimeCIFilters.TypeFilt
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
+import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStreamFilters
 import eu.kanade.tachiyomi.network.GET
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
+import okhttp3.Response
 import org.jsoup.nodes.Element
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class TRAnimeCI : AnimeStream(
     "tr",
@@ -28,6 +32,10 @@ class TRAnimeCI : AnimeStream(
     }
 
     override val animeListUrl = "$baseUrl/search"
+
+    override val dateFormatter by lazy {
+        SimpleDateFormat("dd MMMM yyyy", Locale("tr"))
+    }
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET(baseUrl)
@@ -94,6 +102,22 @@ class TRAnimeCI : AnimeStream(
             "devam ediyor" -> SAnime.ONGOING
             else -> SAnime.UNKNOWN
         }
+    }
+
+    // ============================== Episodes ==============================
+    override fun episodeListParse(response: Response) = super.episodeListParse(response).reversed()
+
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        setUrlWithoutDomain(element.attr("abs:href"))
+        val epNum = element.selectFirst(".epl-title")!!.text()
+            .substringBefore(".")
+            .substringBefore(" ")
+            .toIntOrNull() ?: 1 // Int because of the episode name, a Float would render with more zeros.
+
+        name = "Bölüm $epNum"
+        episode_number = epNum.toFloat()
+
+        date_upload = element.selectFirst(".epl-date")?.text().toDate()
     }
 
     // ============================= Utilities ==============================
