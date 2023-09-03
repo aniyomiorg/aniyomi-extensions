@@ -8,4 +8,10 @@ class AsyaAnimeleri : AnimeStream(
     "https://asyaanimeleri.com",
 ) {
     override val animeListUrl = "$baseUrl/series"
+
+    override val client by lazy {
+        network.client.newBuilder()
+            .addInterceptor(ShittyProtectionInterceptor(network.client))
+            .build()
+    }
 }
