@@ -49,7 +49,7 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return SAnime.create().apply {
             title = element.selectFirst("h2.entry-title")!!.text()
             setUrlWithoutDomain(element.selectFirst("a.lnk-blk")!!.attr("href"))
-            thumbnail_url = "https:" + element.selectFirst("img")!!.attr("src")
+            thumbnail_url = element.selectFirst("img")!!.attr("abs:src")
         }
     }
 
@@ -125,6 +125,7 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     ?.attr("href")
                     ?.substringAfter("token=")
                     ?.let { Base64.decode(it, Base64.DEFAULT).let(::String) }
+                    ?.substringAfter("||")
                     ?: return@parallelMap null
 
                 runCatching { getVideoList(url, language) }.getOrNull()
