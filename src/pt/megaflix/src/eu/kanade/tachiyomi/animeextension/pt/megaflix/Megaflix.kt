@@ -47,31 +47,86 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Popular ===============================
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        return SAnime.create().apply {
-            title = element.selectFirst("h2.entry-title")!!.text()
-            setUrlWithoutDomain(element.selectFirst("a.lnk-blk")!!.attr("href"))
-            thumbnail_url = element.selectFirst("img")!!.attr("abs:src")
-        }
+    override fun popularAnimeRequest(page: Int) = GET(baseUrl)
+
+    override fun popularAnimeSelector() = "section#widget_list_movies_series-5 li > article"
+
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        title = element.selectFirst("h2.entry-title")!!.text()
+        setUrlWithoutDomain(element.selectFirst("a.lnk-blk")!!.attr("href"))
+        thumbnail_url = element.selectFirst("img")!!.attr("abs:src")
     }
 
     override fun popularAnimeNextPageSelector() = null
 
-    override fun popularAnimeRequest(page: Int) = GET(baseUrl)
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int): Request {
+        val pageType = preferences.getString(PREF_LATEST_PAGE_KEY, PREF_LATEST_PAGE_DEFAULT)!!
+        return GET("$baseUrl/$pageType/page/$page")
+    }
 
-    override fun popularAnimeSelector() = "section#widget_list_movies_series-5 li > article"
+    override fun latestUpdatesSelector() = "li > article"
+
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
+
+    override fun latestUpdatesNextPageSelector() = "div.nav-links > a:containsOwn(PRÓXIMO)"
+
+    // =============================== Search ===============================
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
+            val path = query.removePrefix(PREFIX_SEARCH)
+            client.newCall(GET("$baseUrl/$path"))
+                .asObservableSuccess()
+                .map(::searchAnimeByPathParse)
+        } else {
+            super.fetchSearchAnime(page, query, filters)
+        }
+    }
+
+    private fun searchAnimeByPathParse(response: Response): AnimesPage {
+        val details = animeDetailsParse(response.asJsoup())
+        return AnimesPage(listOf(details), false)
+    }
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        return if (query.isNotBlank()) {
+            GET("$baseUrl/page/$page/?s=$query")
+        } else {
+            val genre = MegaflixFilters.getGenre(filters)
+            GET("$baseUrl/categoria/$genre/page/$page")
+        }
+    }
+
+    override fun searchAnimeSelector() = latestUpdatesSelector()
+
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
+
+    override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
+
+    override fun getFilterList() = MegaflixFilters.FILTER_LIST
+
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        setUrlWithoutDomain(document.location())
+        val infos = document.selectFirst("div.bd > article.post.single")!!
+        title = infos.selectFirst("h1.entry-title")!!.text()
+        thumbnail_url = "https:" + infos.selectFirst("img")!!.attr("src")
+        genre = infos.select("span.genres > a").eachText().joinToString()
+        description = infos.selectFirst("div.description")?.text()
+    }
 
     // ============================== Episodes ==============================
     override fun episodeListSelector() = "li > article.episodes"
     private fun seasonListSelector() = "section.episodes div.choose-season > a"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val seasons = response.asJsoup().select(seasonListSelector())
+        val doc = response.use { it.asJsoup() }
+        val seasons = doc.select(seasonListSelector())
         return when {
             seasons.isEmpty() -> listOf(
                 SEpisode.create().apply {
                     name = "Filme"
-                    setUrlWithoutDomain(response.request.url.toString())
+                    setUrlWithoutDomain(doc.location())
                     episode_number = 1F
                 },
             )
@@ -81,38 +136,25 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun episodesFromSeason(seasonElement: Element): List<SEpisode> {
         return seasonElement.attr("href").let { url ->
-            client.newCall(GET(url)).execute()
-                .asJsoup()
+            client.newCall(GET(url, headers)).execute()
+                .use { it.asJsoup() }
                 .select(episodeListSelector())
                 .map(::episodeFromElement)
         }
     }
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        return SEpisode.create().apply {
-            name = element.selectFirst("h2.entry-title")!!.text()
-            setUrlWithoutDomain(element.selectFirst("a.lnk-blk")!!.attr("href"))
-            episode_number = element.selectFirst("span.num-epi")
-                ?.text()
-                ?.split("x")
-                ?.let {
-                    val season = it.first().toFloatOrNull() ?: 0F
-                    val episode = it.last().toFloatOrNull() ?: 0F
-                    (season * 100F) + episode
-                }
-                ?: 0F
-        }
-    }
-
-    // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        return SAnime.create().apply {
-            val infos = document.selectFirst("div.bd > article.post.single")!!
-            title = infos.selectFirst("h1.entry-title")!!.text()
-            thumbnail_url = "https:" + infos.selectFirst("img")!!.attr("src")
-            genre = infos.select("span.genres > a").eachText().joinToString()
-            description = infos.selectFirst("div.description")?.text()
-        }
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        name = element.selectFirst("h2.entry-title")!!.text()
+        setUrlWithoutDomain(element.selectFirst("a.lnk-blk")!!.attr("href"))
+        episode_number = element.selectFirst("span.num-epi")
+            ?.text()
+            ?.split("x")
+            ?.let {
+                val season = it.first().toFloatOrNull() ?: 0F
+                val episode = it.last().toFloatOrNull() ?: 0F
+                (season * 100F) + episode
+            }
+            ?: 0F
     }
 
     // ============================ Video Links =============================
@@ -157,108 +199,59 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         TODO("Not yet implemented")
     }
 
-    // =============================== Search ===============================
-    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
-
-    override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
-
-    override fun getFilterList() = MegaflixFilters.FILTER_LIST
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        return if (query.isNotBlank()) {
-            GET("$baseUrl/page/$page/?s=$query")
-        } else {
-            val genre = MegaflixFilters.getGenre(filters)
-            GET("$baseUrl/categoria/$genre/page/$page")
-        }
-    }
-
-    override fun searchAnimeSelector() = latestUpdatesSelector()
-
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
-            val path = query.removePrefix(PREFIX_SEARCH)
-            client.newCall(GET("$baseUrl/$path"))
-                .asObservableSuccess()
-                .map(::searchAnimeByPathParse)
-        } else {
-            super.fetchSearchAnime(page, query, filters)
-        }
-    }
-
-    private fun searchAnimeByPathParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response.asJsoup())
-        details.setUrlWithoutDomain(response.request.url.toString())
-        return AnimesPage(listOf(details), false)
-    }
-
-    // =============================== Latest ===============================
-    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
-
-    override fun latestUpdatesNextPageSelector() = "div.nav-links > a:containsOwn(PRÓXIMO)"
-
-    override fun latestUpdatesRequest(page: Int): Request {
-        val pageType = preferences.getString(PREF_LATEST_PAGE_KEY, PREF_LATEST_PAGE_DEFAULT)!!
-        return GET("$baseUrl/$pageType/page/$page")
-    }
-
-    override fun latestUpdatesSelector() = "li > article"
-
     // ============================== Settings ==============================
-
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val preferredQuality = ListPreference(screen.context).apply {
+        ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
             entries = PREF_QUALITY_ENTRIES
             entryValues = PREF_QUALITY_ENTRIES
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
+
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
                 val index = findIndexOfValue(selected)
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
+        }.also(screen::addPreference)
 
-        val preferredLanguage = ListPreference(screen.context).apply {
+        ListPreference(screen.context).apply {
             key = PREF_LANGUAGE_KEY
             title = PREF_LANGUAGE_TITLE
             entries = PREF_LANGUAGE_VALUES
             entryValues = PREF_LANGUAGE_VALUES
             setDefaultValue(PREF_LANGUAGE_DEFAULT)
             summary = "%s"
+
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
                 val index = findIndexOfValue(selected)
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
+        }.also(screen::addPreference)
 
-        val preferredLatestPage = ListPreference(screen.context).apply {
+        ListPreference(screen.context).apply {
             key = PREF_LATEST_PAGE_KEY
             title = PREF_LATEST_PAGE_TITLE
             entries = PREF_LATEST_PAGE_ENTRIES
             entryValues = PREF_LATEST_PAGE_VALUES
             setDefaultValue(PREF_LATEST_PAGE_DEFAULT)
             summary = "%s"
+
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
                 val index = findIndexOfValue(selected)
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-
-        screen.addPreference(preferredQuality)
-        screen.addPreference(preferredLanguage)
-        screen.addPreference(preferredLatestPage)
+        }.also(screen::addPreference)
     }
 
     // ============================= Utilities ==============================
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
         runBlocking {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
