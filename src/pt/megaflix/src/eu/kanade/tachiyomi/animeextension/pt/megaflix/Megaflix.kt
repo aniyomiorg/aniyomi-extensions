@@ -40,6 +40,8 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
 
+    override fun headersBuilder() = super.headersBuilder().add("Referer", "$baseUrl/")
+
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
@@ -126,20 +128,21 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     ?.substringAfter("token=")
                     ?.let { Base64.decode(it, Base64.DEFAULT).let(::String) }
                     ?.substringAfter("||")
-                    ?: return@parallelMap null
+                    ?: return@parallelMap emptyList()
 
-                runCatching { getVideoList(url, language) }.getOrNull()
-            }.filterNotNull().flatten()
+                runCatching { getVideoList(url, language) }.getOrNull() ?: emptyList()
+            }.flatten()
     }
+
+    private val mixdropExtractor by lazy { MixDropExtractor(client) }
+    private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val megaflixExtractor by lazy { MegaflixExtractor(client, headers) }
 
     private fun getVideoList(url: String, language: String): List<Video>? {
         return when {
-            "mixdrop.co" in url ->
-                MixDropExtractor(client).videoFromUrl(url, language)
-            "streamtape.com" in url ->
-                StreamTapeExtractor(client).videoFromUrl(url, "StreamTape - $language")?.let(::listOf)
-            "mflix.vip" in url ->
-                MegaflixExtractor(client).videosFromUrl(url, language)
+            "mixdrop.co" in url -> mixdropExtractor.videoFromUrl(url, language)
+            "streamtape.com" in url -> streamtapeExtractor.videoFromUrl(url, "StreamTape - $language")?.let(::listOf)
+            "mflix.vip" in url -> megaflixExtractor.videosFromUrl(url, language)
             else -> null
         }
     }
