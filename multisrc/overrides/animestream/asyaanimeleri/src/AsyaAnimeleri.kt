@@ -10,6 +10,13 @@ import eu.kanade.tachiyomi.animeextension.tr.asyaanimeleri.AsyaAnimeleriFilters.
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
+import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
+import eu.kanade.tachiyomi.lib.mytvextractor.MytvExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
+import eu.kanade.tachiyomi.lib.vkextractor.VkExtractor
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStreamFilters
 import eu.kanade.tachiyomi.network.GET
@@ -91,6 +98,34 @@ class AsyaAnimeleri : AnimeStream(
 
     // ============================== Episodes ==============================
     override val episodePrefix = "Bölüm"
+
+    // ============================ Video Links =============================
+    override val prefQualityValues = arrayOf("1080p", "720p", "480p", "360p", "240p", "144p")
+    override val prefQualityEntries = prefQualityValues
+
+    private val vkExtractor by lazy { VkExtractor(client, headers) }
+    private val okruExtractor by lazy { OkruExtractor(client) }
+    private val sibnetExtractor by lazy { SibnetExtractor(client) }
+    private val gdrivePlayerExtractor by lazy { GdrivePlayerExtractor(client) }
+    private val doodExtractor by lazy { DoodExtractor(client) }
+    private val mytvExtractor by lazy { MytvExtractor(client) }
+    //private val dailyExtractor by lazy { DailymotionExtractor(client, headers) }
+
+    override fun getVideoList(url: String, name: String): List<Video> {
+        return when (name.lowercase().trim()) {
+            "vk" -> vkExtractor.videosFromUrl(url)
+            "ok.ru" -> okruExtractor.videosFromUrl(url)
+            "sibnet" -> sibnetExtractor.videosFromUrl(url)
+            // "daily" -> dailyExtractor.videosFromUrl(url)
+            "myvi", "mytv" -> mytvExtractor.videosFromUrl(url)
+            "dood", "doodstream" -> doodExtractor.videoFromUrl(url)?.let(::listOf) ?: emptyList()
+            "gdrive" -> {
+                val newUrl = "https://gdriveplayer.to/embed2.php?link=$url"
+                gdrivePlayerExtractor.videosFromUrl(newUrl, "Gdrive", headers)
+            }
+            else -> emptyList()
+        }
+    }
 
     // ============================= Utilities ==============================
     private fun HttpUrl.Builder.addIfNotBlank(query: String, value: String) = apply {
