@@ -16,6 +16,7 @@ import eu.kanade.tachiyomi.network.GET
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
+import org.jsoup.nodes.Element
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -92,6 +93,18 @@ class AsyaAnimeleri : AnimeStream(
     private fun HttpUrl.Builder.addIfNotBlank(query: String, value: String) = apply {
         if (value.isNotBlank()) {
             addQueryParameter(query, value)
+        }
+    }
+
+    // Overriding to prevent removing the ?resize part.
+    // Without it, some images simply don't load (????)
+    // Turkish source moment. That's why i prefer greeks.
+    override fun Element.getImageUrl(): String? {
+        return when {
+            hasAttr("data-src") -> attr("abs:data-src")
+            hasAttr("data-lazy-src") -> attr("abs:data-lazy-src")
+            hasAttr("srcset") -> attr("abs:srcset").substringBefore(" ")
+            else -> attr("abs:src")
         }
     }
 }
