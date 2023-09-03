@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.fr.nekosama
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -32,7 +31,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Neko-Sama"
 
-    override val baseUrl = "https://neko-sama.fr"
+    override val baseUrl by lazy { "https://" + preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!! }
 
     override val lang = "fr"
 
@@ -42,7 +41,7 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val json: Json by injectLazy()
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -285,6 +284,22 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
+
+        ListPreference(screen.context).apply {
+            key = PREF_DOMAIN_KEY
+            title = PREF_DOMAIN_TITLE
+            entries = PREF_DOMAIN_ENTRIES
+            entryValues = PREF_DOMAIN_ENTRIES
+            setDefaultValue(PREF_DOMAIN_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
         screen.addPreference(videoQualityPref)
     }
 
@@ -317,4 +332,11 @@ class NekoSama : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         var nbEps: String? = null,
 
     )
+
+    companion object {
+        private const val PREF_DOMAIN_KEY = "pref_domain_key"
+        private const val PREF_DOMAIN_TITLE = "Preferred domain"
+        private const val PREF_DOMAIN_DEFAULT = "animecat.net"
+        private val PREF_DOMAIN_ENTRIES = arrayOf("animecat.net", "neko-sama.fr")
+    }
 }
