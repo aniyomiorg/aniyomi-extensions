@@ -89,6 +89,9 @@ class AsyaAnimeleri : AnimeStream(
         }
     }
 
+    // ============================== Episodes ==============================
+    override val episodePrefix = "Bölüm"
+
     // ============================= Utilities ==============================
     private fun HttpUrl.Builder.addIfNotBlank(query: String, value: String) = apply {
         if (value.isNotBlank()) {
