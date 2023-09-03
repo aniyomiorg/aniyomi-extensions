@@ -11,28 +11,57 @@ import okhttp3.OkHttpClient
 
 class PainelfxExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String, headers: Headers): List<Video> {
-        val doc = client.newCall(GET(url)).execute().asJsoup()
+        val docHeaders = headers.newBuilder().set("Referer", "https://gastronomiabrasileira.net/").build()
+        val doc = client.newCall(GET(url, docHeaders)).execute().use { it.asJsoup() }
         val lang = when (url.substringAfterLast("/")) {
             "leg" -> "Legendado"
             else -> "Dublado"
         }
-        return doc.select("div.panel-body > button").flatMap { elem ->
-            val form = FormBody.Builder()
-                .add("idS", elem.attr("idS"))
-                .build()
-            val host = url.toHttpUrl().host
-            val newHeaders = headers.newBuilder().set("Referer", "https://$host/").build()
-            val req = client.newCall(POST("https://$host/CallEpi", body = form)).execute()
-            val decoded = req.body.string().decodeHex().let(::String).replace("\\", "")
-            if (decoded.contains("video\"")) {
-                decoded.substringAfter("video").split("{").drop(1).map {
-                    val videoUrl = it.substringAfter("file\":\"").substringBefore('"')
-                    val quality = it.substringAfter("label\":\"").substringBefore('"')
-                    Video(videoUrl, "$lang - $quality", videoUrl, newHeaders)
+
+        val host = url.toHttpUrl().host
+        val videoHeaders = headers.newBuilder().set("Referer", "https://$host/").build()
+
+        val buttons = doc.select("div.panel-body > button")
+
+        val encodedHexList = when {
+            buttons.isNotEmpty() -> {
+                buttons.map { elem ->
+                    val form = FormBody.Builder()
+                        .add("idS", elem.attr("idS"))
+                        .build()
+                    client.newCall(POST("https://$host/CallEpi", body = form)).execute()
+                        .use { it.body.string() }
                 }
-            } else {
-                emptyList()
             }
+            else -> {
+                val script = doc.selectFirst("script:containsData(idS:)")?.data() ?: return emptyList()
+                val idList = script.split("idS:").drop(1).map { it.substringAfter('"').substringBefore('"') }
+
+                idList.map { idS ->
+                    val form = FormBody.Builder()
+                        .add("id", idS)
+                        .build()
+                    client.newCall(POST("https://$host/CallPlayer", body = form)).execute()
+                        .use { it.body.string() }
+                }
+            }
+        }
+
+        return encodedHexList.flatMap {
+            videosFromHex(it, lang, videoHeaders)
+        }
+    }
+
+    private fun videosFromHex(hex: String, lang: String, videoHeaders: Headers): List<Video> {
+        val decoded = hex.decodeHex().let(::String).replace("\\", "")
+        return if (decoded.contains("video\"")) {
+            decoded.substringAfter("video").split("{").drop(1).map {
+                val videoUrl = it.substringAfter("file\":\"").substringBefore('"')
+                val quality = it.substringAfter("label\":\"").substringBefore('"')
+                Video(videoUrl, "$lang - $quality", videoUrl, videoHeaders)
+            }
+        } else {
+            emptyList()
         }
     }
 
