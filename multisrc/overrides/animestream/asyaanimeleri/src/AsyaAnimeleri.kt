@@ -16,6 +16,8 @@ import eu.kanade.tachiyomi.network.GET
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class AsyaAnimeleri : AnimeStream(
     "tr",
@@ -23,6 +25,10 @@ class AsyaAnimeleri : AnimeStream(
     "https://asyaanimeleri.com",
 ) {
     override val animeListUrl = "$baseUrl/series"
+
+    override val dateFormatter by lazy {
+        SimpleDateFormat("MMMM dd, yyyy", Locale("tr"))
+    }
 
     override val client by lazy {
         network.client.newBuilder()
