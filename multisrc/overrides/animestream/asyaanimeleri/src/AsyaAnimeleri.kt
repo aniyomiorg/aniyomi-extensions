@@ -109,7 +109,7 @@ class AsyaAnimeleri : AnimeStream(
     private val gdrivePlayerExtractor by lazy { GdrivePlayerExtractor(client) }
     private val doodExtractor by lazy { DoodExtractor(client) }
     private val mytvExtractor by lazy { MytvExtractor(client) }
-    //private val dailyExtractor by lazy { DailymotionExtractor(client, headers) }
+    // private val dailyExtractor by lazy { DailymotionExtractor(client, headers) }
 
     override fun getVideoList(url: String, name: String): List<Video> {
         return when (name.lowercase().trim()) {
