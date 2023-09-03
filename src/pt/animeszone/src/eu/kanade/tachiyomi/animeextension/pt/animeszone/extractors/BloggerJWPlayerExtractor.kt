@@ -8,13 +8,13 @@ object BloggerJWPlayerExtractor {
 
         return sources.split("{").drop(1).mapNotNull {
             val label = it.substringAfter("label")
-                .substringAfter(":")
-                .substringAfter("\"")
+                .substringAfter(':')
+                .substringAfter('"')
                 .substringBefore('"')
 
             val videoUrl = it.substringAfter("file")
-                .substringAfter(":")
-                .substringAfter("\"")
+                .substringAfter(':')
+                .substringAfter('"')
                 .substringBefore('"')
                 .replace("\\", "")
             if (videoUrl.isEmpty()) {

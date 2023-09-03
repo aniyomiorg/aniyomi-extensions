@@ -281,16 +281,28 @@ class AnimesZone : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
             when {
                 url.startsWith("https://dood") -> DoodExtractor(client).videosFromUrl(url, vid.text().trim())
-
+                "https://gojopoolt" in url -> {
+                    client.newCall(GET(url, headers)).execute()
+                        .use { it.asJsoup() }
+                        .selectFirst("script:containsData(sources:)")
+                        ?.data()
+                        ?.let(BloggerJWPlayerExtractor::videosFromScript)
+                        ?: emptyList()
+                }
                 url.startsWith(baseUrl) -> {
                     val videoDocument = client.newCall(GET(url, headers)).execute()
                         .use { it.asJsoup() }
 
-                    val decrypted = getDecrypted(videoDocument) ?: return@flatMap emptyList()
+                    val script = videoDocument.selectFirst("script:containsData(decodeURIComponent)")?.data()
+                        ?.let(::getDecrypted)
+                        ?: videoDocument.selectFirst("script:containsData(sources:)")?.data()
+                        ?: return@flatMap emptyList()
 
                     when {
-                        "/bloggerjwplayer" in url || "jwplayer-2" in url -> BloggerJWPlayerExtractor.videosFromScript(decrypted)
-                        "/m3u8" in url -> PlaylistExtractor.videosFromScript(decrypted)
+                        "/bloggerjwplayer" in url || "jwplayer-2" in url || "/ctaplayer" in url -> {
+                            BloggerJWPlayerExtractor.videosFromScript(script)
+                        }
+                        "/m3u8" in url -> PlaylistExtractor.videosFromScript(script)
                         else -> emptyList()
                     }
                 }
@@ -348,9 +360,7 @@ class AnimesZone : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private fun getDecrypted(document: Document): String? {
-        val script = document.selectFirst("script:containsData(decodeURIComponent)")?.data() ?: return null
-
+    private fun getDecrypted(script: String): String {
         val patchedScript = script.trim().split("\n").first()
             .replace("eval(function", "function a")
             .replace("decodeURIComponent(escape(r))}(", "r};a(")
