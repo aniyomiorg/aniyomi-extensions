@@ -10,12 +10,9 @@ import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.AlucardExtract
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.EmbedgramExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MVidooExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MailRuExtractor
-import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MytvExtractor
-import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.SibnetExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.StreamVidExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.UqloadExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.VTubeExtractor
-import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.VkExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.VudeoExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.WolfstreamExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -30,9 +27,12 @@ import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.googledriveextractor.GoogleDriveExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
+import eu.kanade.tachiyomi.lib.mytvextractor.MytvExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
+import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
 import eu.kanade.tachiyomi.lib.synchrony.Deobfuscator
+import eu.kanade.tachiyomi.lib.vkextractor.VkExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -174,7 +174,7 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val animeId = (baseUrl + anime.url).toHttpUrl().queryParameter("animeId")
             ?: client.newCall(GET(baseUrl + anime.url)).execute().asJsoup()
                 .selectFirst("a[data-unique-id]")!!.attr("data-unique-id")
-        return GET("https://www.turkanime.co/ajax/bolumler?animeId=$animeId", xmlHeader)
+        return GET("$baseUrl/ajax/bolumler?animeId=$animeId", xmlHeader)
     }
 
     override fun episodeListSelector() = "ul.menum li"
@@ -186,7 +186,7 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val numIdx = substring.indexOfLast { !it.isDigit() } + 1
         val numbers = substring.slice(numIdx..substring.lastIndex)
         return SEpisode.create().apply {
-            setUrlWithoutDomain("https:" + a.attr("href"))
+            setUrlWithoutDomain(a.attr("abs:href"))
             name = title
             episode_number = numbers.toFloatOrNull() ?: 1F
         }
@@ -293,7 +293,7 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     videoList.addAll(SendvidExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: "))
                 }
                 "SIBNET" -> {
-                    videoList.addAll(SibnetExtractor(client).getVideosFromUrl(hosterLink, prefix = "$subber: "))
+                    videoList.addAll(SibnetExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
                 }
 
                 "STREAMVID" -> {
@@ -304,7 +304,7 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
                 "VK" -> {
                     val vkUrl = "https://vk.com" + hosterLink.substringAfter("vk.com")
-                    videoList.addAll(VkExtractor(client).getVideosFromUrl(vkUrl, prefix = "$subber: "))
+                    videoList.addAll(VkExtractor(client, headers).videosFromUrl(vkUrl, prefix = "$subber: "))
                 }
                 "VOE" -> {
                     VoeExtractor(client).videoFromUrl(hosterLink, "$subber: VOE")?.let { video -> videoList.add(video) }
