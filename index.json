@@ -1922,10 +1922,10 @@
   {
     "name": "Aniyomi: Tokuzilla",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.tokuzilla",
-    "apk": "aniyomi-en.tokuzilla-v13.8.apk",
+    "apk": "aniyomi-en.tokuzilla-v13.9.apk",
     "lang": "en",
-    "code": 8,
-    "version": "13.8",
+    "code": 9,
+    "version": "13.9",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2823,10 +2823,10 @@
   {
     "name": "Aniyomi: AnimeSAGA",
     "pkg": "eu.kanade.tachiyomi.animeextension.hi.animesaga",
-    "apk": "aniyomi-hi.animesaga-v13.4.apk",
+    "apk": "aniyomi-hi.animesaga-v13.6.apk",
     "lang": "hi",
-    "code": 4,
-    "version": "13.4",
+    "code": 6,
+    "version": "13.6",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2837,7 +2837,7 @@
         "id": "3168615925539503340",
         "baseUrl": "https://www.animesaga.in",
         "versionId": 1,
-        "hasCloudflare": 1
+        "hasCloudflare": 0
       }
     ]
   },
