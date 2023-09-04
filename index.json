@@ -2760,10 +2760,10 @@
   {
     "name": "Aniyomi: NekoSama",
     "pkg": "eu.kanade.tachiyomi.animeextension.fr.nekosama",
-    "apk": "aniyomi-fr.nekosama-v13.6.apk",
+    "apk": "aniyomi-fr.nekosama-v13.7.apk",
     "lang": "fr",
-    "code": 6,
-    "version": "13.6",
+    "code": 7,
+    "version": "13.7",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2772,7 +2772,7 @@
         "name": "Neko-Sama",
         "lang": "fr",
         "id": "5658174401067457058",
-        "baseUrl": "https://neko-sama.fr",
+        "baseUrl": "https://animecat.net",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -3705,10 +3705,10 @@
   {
     "name": "Aniyomi: Flixei",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.flixei",
-    "apk": "aniyomi-pt.flixei-v13.1.apk",
+    "apk": "aniyomi-pt.flixei-v13.2.apk",
     "lang": "pt-BR",
-    "code": 1,
-    "version": "13.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3719,7 +3719,7 @@
         "id": "1017446964244457164",
         "baseUrl": "https://flixei.com",
         "versionId": 1,
-        "hasCloudflare": 0
+        "hasCloudflare": 1
       }
     ]
   },
