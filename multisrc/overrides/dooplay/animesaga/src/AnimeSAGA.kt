@@ -6,4 +6,7 @@ class AnimeSAGA : DooPlay(
     "hi",
     "AnimeSAGA",
     "https://www.animesaga.in",
-)
+) {
+    // ============================== Popular ===============================
+    override fun popularAnimeSelector() = "div.top-imdb-list > div.top-imdb-item"
+}
