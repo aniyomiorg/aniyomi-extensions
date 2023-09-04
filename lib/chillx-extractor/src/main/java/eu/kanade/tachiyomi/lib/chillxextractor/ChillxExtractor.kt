@@ -10,6 +10,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.OkHttpClient
+import org.jsoup.Jsoup
 import uy.kohesive.injekt.injectLazy
 
 class ChillxExtractor(private val client: OkHttpClient, private val headers: Headers) {
@@ -23,6 +24,7 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
         private val REGEX_MASTER_JS by lazy { Regex("""MasterJS\s*=\s*'([^']+)""") }
         private val REGEX_SOURCES by lazy { Regex("""sources:\s*\[\{"file":"([^"]+)""") }
         private val REGEX_FILE by lazy { Regex("""file: ?"([^"]+)"""") }
+        private val REGEX_SOURCE by lazy { Regex("""source = ?"([^"]+)"""")}
 
         // matches "[language]https://...,"
         private val REGEX_SUBS by lazy { Regex("""\[(.*?)\](.*?)"?\,""") }
@@ -41,9 +43,17 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
 
         val masterUrl = REGEX_SOURCES.find(decryptedScript)?.groupValues?.get(1)
             ?: REGEX_FILE.find(decryptedScript)?.groupValues?.get(1)
+            ?: REGEX_SOURCE.find(decryptedScript)?.groupValues?.get(1)
             ?: return emptyList()
 
         val subtitleList = buildList<Track> {
+            body.takeIf { it.contains("<track kind=\"captions\"") }
+                ?.let(Jsoup::parse)
+                ?.select("track[kind=captions]")
+                ?.forEach {
+                    add(Track(it.attr("src"), it.attr("label")))
+                }
+
             decryptedScript.takeIf { it.contains("subtitle:") }
                 ?.substringAfter("subtitle: ")
                 ?.substringBefore("\n")
