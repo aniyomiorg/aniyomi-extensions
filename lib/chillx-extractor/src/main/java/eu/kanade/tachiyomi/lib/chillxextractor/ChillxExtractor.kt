@@ -10,6 +10,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.OkHttpClient
+import org.jsoup.Jsoup
 import uy.kohesive.injekt.injectLazy
 
 class ChillxExtractor(private val client: OkHttpClient, private val headers: Headers) {
@@ -46,6 +47,13 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
             ?: return emptyList()
 
         val subtitleList = buildList<Track> {
+            body.takeIf { it.contains("<track kind=\"captions\"") }
+                ?.let(Jsoup::parse)
+                ?.select("track[kind=captions]")
+                ?.forEach {
+                    add(Track(it.attr("src"), it.attr("label")))
+                }
+
             decryptedScript.takeIf { it.contains("subtitle:") }
                 ?.substringAfter("subtitle: ")
                 ?.substringBefore("\n")
