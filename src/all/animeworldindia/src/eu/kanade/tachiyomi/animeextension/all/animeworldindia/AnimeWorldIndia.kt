@@ -224,7 +224,7 @@ open class AnimeWorldIndia(
                 .compareTo("Mystream") == 0
         }.forEach {
             val url = it.jsonObject["url"].toString().drop(1).dropLast(1)
-            val videos = MyStreamExtractor().videosFromUrl(url, headers)
+            val videos = MyStreamExtractor(client, headers).videosFromUrl(url)
             videoList.addAll(videos)
         }
 
