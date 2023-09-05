@@ -343,7 +343,9 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         return sortedWith(
             compareBy(
-                { it.quality.contains(quality) },
+                { it.quality.contains(quality) }, // preferred quality first
+                { it.quality.substringBefore(":") }, // then group by fansub
+                // then group by quality
                 { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
             ),
         ).reversed()
