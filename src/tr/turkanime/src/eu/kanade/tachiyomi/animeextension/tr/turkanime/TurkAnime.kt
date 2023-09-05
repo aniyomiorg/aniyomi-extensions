@@ -1,8 +1,9 @@
 package eu.kanade.tachiyomi.animeextension.tr.turkanime
 
 import android.app.Application
-import android.content.SharedPreferences
 import android.util.Base64
+import android.widget.Toast
+import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
@@ -10,12 +11,9 @@ import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.AlucardExtract
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.EmbedgramExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MVidooExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MailRuExtractor
-import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MytvExtractor
-import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.SibnetExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.StreamVidExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.UqloadExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.VTubeExtractor
-import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.VkExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.VudeoExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.WolfstreamExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -30,9 +28,12 @@ import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.googledriveextractor.GoogleDriveExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
+import eu.kanade.tachiyomi.lib.mytvextractor.MytvExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
+import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
 import eu.kanade.tachiyomi.lib.synchrony.Deobfuscator
+import eu.kanade.tachiyomi.lib.vkextractor.VkExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -54,6 +55,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 
 class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -67,16 +69,13 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client = network.cloudflareClient
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-    }
+    private val json: Json by injectLazy()
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
     // ============================== Popular ===============================
-
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/ajax/rankagore?sayfa=$page", xmlHeader)
 
     override fun popularAnimeSelector() = "div.panel-visible"
@@ -84,11 +83,11 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector() = "button.btn-default[data-loading-text*=Sonraki]"
 
     override fun popularAnimeFromElement(element: Element): SAnime {
-        val animeTitle = element.select("div.panel-title > a").first()!!
+        val animeTitle = element.selectFirst("div.panel-title > a")!!
         val name = animeTitle.attr("title")
             .substringBefore(" izle")
-        val img = element.select("img.media-object")
-        val animeId = element.select("a.reactions").first()!!.attr("data-unique-id")
+        val img = element.selectFirst("img.media-object")
+        val animeId = element.selectFirst("a.reactions")!!.attr("data-unique-id")
         val animeUrl = animeTitle.attr("abs:href").toHttpUrl()
             .newBuilder()
             .addQueryParameter("animeId", animeId)
@@ -96,12 +95,11 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return SAnime.create().apply {
             setUrlWithoutDomain(animeUrl)
             title = name
-            thumbnail_url = "https:" + img.attr("data-src")
+            thumbnail_url = img?.attr("abs:data-src")
         }
     }
 
     // =============================== Latest ===============================
-
     override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/ajax/yenieklenenseriler?sayfa=$page", xmlHeader)
 
     override fun latestUpdatesSelector() = popularAnimeSelector()
@@ -111,11 +109,10 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
 
     // =============================== Search ===============================
-
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) =
         POST(
             "$baseUrl/arama?sayfa=$page",
-            Headers.headersOf("content-type", "application/x-www-form-urlencoded"),
+            headers,
             FormBody.Builder().add("arama", query).build(),
         )
 
@@ -152,11 +149,10 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
 
     // =========================== Anime Details ============================
-
     override fun animeDetailsParse(document: Document): SAnime {
-        val img = document.select("div.imaj > img.media-object").ifEmpty { null }
-        val studio = document.select("div#animedetay > table tr:contains(Stüdyo) > td:last-child a").ifEmpty { null }
-        val desc = document.select("div#animedetay p.ozet").ifEmpty { null }
+        val img = document.selectFirst("div.imaj > img.media-object")
+        val studio = document.selectFirst("div#animedetay > table tr:contains(Stüdyo) > td:last-child a")
+        val desc = document.selectFirst("div#animedetay p.ozet")
         val genres = document.select("div#animedetay > table tr:contains(Anime Türü) > td:last-child a")
             .ifEmpty { null }
         return SAnime.create().apply {
@@ -169,24 +165,23 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-
     override fun episodeListRequest(anime: SAnime): Request {
         val animeId = (baseUrl + anime.url).toHttpUrl().queryParameter("animeId")
             ?: client.newCall(GET(baseUrl + anime.url)).execute().asJsoup()
                 .selectFirst("a[data-unique-id]")!!.attr("data-unique-id")
-        return GET("https://www.turkanime.co/ajax/bolumler?animeId=$animeId", xmlHeader)
+        return GET("$baseUrl/ajax/bolumler?animeId=$animeId", xmlHeader)
     }
 
     override fun episodeListSelector() = "ul.menum li"
 
     override fun episodeFromElement(element: Element): SEpisode {
-        val a = element.select("a:has(span.bolumAdi)")
+        val a = element.selectFirst("a:has(span.bolumAdi)")!!
         val title = a.attr("title")
         val substring = title.substringBefore(". Bölüm")
         val numIdx = substring.indexOfLast { !it.isDigit() } + 1
         val numbers = substring.slice(numIdx..substring.lastIndex)
         return SEpisode.create().apply {
-            setUrlWithoutDomain("https:" + a.attr("href"))
+            setUrlWithoutDomain(a.attr("abs:href"))
             name = title
             episode_number = numbers.toFloatOrNull() ?: 1F
         }
@@ -196,20 +191,26 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         super.episodeListParse(response).reversed()
 
     // ============================ Video Links =============================
-
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
+
         val fansubbers = document.select("div#videodetay div.pull-right button")
         val videoList = if (fansubbers.size == 1) {
             getVideosFromHosters(document, fansubbers.first()!!.text().trim())
         } else {
-            val videos = mutableListOf<Video>()
-            fansubbers.parallelMap {
+            val allFansubs = PREF_FANSUB_SELECTION_ENTRIES
+            val chosenFansubs = preferences.getStringSet(PREF_FANSUB_SELECTION_KEY, allFansubs.toSet())!!
+
+            val filteredSubs = fansubbers.toList().filter {
+                val subName = it.text().substringBeforeLast("BD").trim()
+                chosenFansubs.any(subName::contains) || allFansubs.none(subName::contains)
+            }
+
+            filteredSubs.parallelMap {
                 val url = it.attr("onclick").trimOnClick()
                 val subDoc = client.newCall(GET(url, xmlHeader)).execute().asJsoup()
-                videos.addAll(getVideosFromHosters(subDoc, it.text().trim()))
-            }
-            videos
+                getVideosFromHosters(subDoc, it.text().trim())
+            }.flatten()
         }
 
         require(videoList.isNotEmpty()) { "Failed to extract videos" }
@@ -223,26 +224,31 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val hosterSelection = preferences.getStringSet(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
 
-        val videoList = mutableListOf<Video>()
-        val selectedHosterName = selectedHoster.text().trim()
-        if (selectedHosterName in SUPPORTED_HOSTERS && selectedHosterName in hosterSelection) {
-            val src = document.select("iframe").attr("src")
-            videoList.addAll(getVideosFromSource(src, selectedHosterName, subber))
+        val videoList = buildList {
+            val selectedHosterName = selectedHoster.text().trim()
+            if (selectedHosterName in SUPPORTED_HOSTERS && selectedHosterName in hosterSelection) {
+                document.selectFirst("iframe")?.attr("src")?.also { src ->
+                    addAll(getVideosFromSource(src, selectedHosterName, subber))
+                }
+            }
+
+            hosters.parallelMap {
+                val hosterName = it.text().trim()
+                if (hosterName !in SUPPORTED_HOSTERS) return@parallelMap
+                if (hosterName !in hosterSelection) return@parallelMap
+                val url = it.attr("onclick").trimOnClick()
+                val videoDoc = client.newCall(GET(url, xmlHeader)).execute().asJsoup()
+                val src = videoDoc.selectFirst("iframe")?.attr("src")
+                    ?.replace("^//".toRegex(), "https://")
+                    ?: return@parallelMap
+                addAll(getVideosFromSource(src, hosterName, subber))
+            }
         }
-        hosters.parallelMap {
-            val hosterName = it.text().trim()
-            if (hosterName !in SUPPORTED_HOSTERS) return@parallelMap
-            if (hosterName !in hosterSelection) return@parallelMap
-            val url = it.attr("onclick").trimOnClick()
-            val videoDoc = client.newCall(GET(url, xmlHeader)).execute().asJsoup()
-            val src = videoDoc.select("iframe").attr("src").replace("^//".toRegex(), "https://")
-            videoList.addAll(getVideosFromSource(src, hosterName, subber))
-        }
+
         return videoList
     }
 
     private fun getVideosFromSource(src: String, hosterName: String, subber: String): List<Video> {
-        val videoList = mutableListOf<Video>()
         val cipherParamsEncoded = src
             .substringAfter("/embed/#/url/")
             .substringBefore("?status")
@@ -255,72 +261,72 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val hosterLink = "https:" + decryptParams(cipherParams)
 
-        runCatching {
+        val videoList = runCatching {
             when (hosterName) {
                 "ALUCARD(BETA)" -> {
-                    videoList.addAll(AlucardExtractor(client, json, baseUrl).extractVideos(hosterLink, subber))
+                    AlucardExtractor(client, json, baseUrl).extractVideos(hosterLink, subber)
                 }
                 "DOODSTREAM" -> {
-                    videoList.addAll(DoodExtractor(client).videosFromUrl(hosterLink, "$subber: DOODSTREAM", redirect = false))
+                    DoodExtractor(client).videosFromUrl(hosterLink, "$subber: DOODSTREAM", redirect = false)
                 }
                 "EMBEDGRAM" -> {
-                    videoList.addAll(EmbedgramExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: "))
+                    EmbedgramExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: ")
                 }
                 "FILEMOON" -> {
-                    videoList.addAll(FilemoonExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: ", headers = headers))
+                    FilemoonExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: ", headers = headers)
                 }
                 "GDRIVE" -> {
                     Regex("""[\w-]{28,}""").find(hosterLink)?.groupValues?.get(0)?.let {
-                        videoList.addAll(GoogleDriveExtractor(client, headers).videosFromUrl("https://drive.google.com/uc?id=$it", "$subber: Gdrive"))
+                        GoogleDriveExtractor(client, headers).videosFromUrl("https://drive.google.com/uc?id=$it", "$subber: Gdrive")
                     }
                 }
                 "MAIL" -> {
-                    videoList.addAll(MailRuExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: "))
+                    MailRuExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: ")
                 }
                 "MP4UPLOAD" -> {
-                    videoList.addAll(Mp4uploadExtractor(client).videosFromUrl(hosterLink, headers, prefix = "$subber: "))
+                    Mp4uploadExtractor(client).videosFromUrl(hosterLink, headers, prefix = "$subber: ")
                 }
                 "MYVI" -> {
-                    videoList.addAll(MytvExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
+                    MytvExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: ")
                 }
                 "MVIDOO" -> {
-                    videoList.addAll(MVidooExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
+                    MVidooExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: ")
                 }
                 "ODNOKLASSNIKI" -> {
-                    videoList.addAll(OkruExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
+                    OkruExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: ")
                 }
                 "SENDVID" -> {
-                    videoList.addAll(SendvidExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: "))
+                    SendvidExtractor(client, headers).videosFromUrl(hosterLink, prefix = "$subber: ")
                 }
                 "SIBNET" -> {
-                    videoList.addAll(SibnetExtractor(client).getVideosFromUrl(hosterLink, prefix = "$subber: "))
+                    SibnetExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: ")
                 }
 
                 "STREAMVID" -> {
-                    videoList.addAll(StreamVidExtractor(client).videosFromUrl(hosterLink, headers, prefix = "$subber: "))
+                    StreamVidExtractor(client).videosFromUrl(hosterLink, headers, prefix = "$subber: ")
                 }
                 "UQLOAD" -> {
-                    videoList.addAll(UqloadExtractor(client).videosFromUrl(hosterLink, headers, "$subber: Uqload"))
+                    UqloadExtractor(client).videosFromUrl(hosterLink, headers, "$subber: Uqload")
                 }
                 "VK" -> {
                     val vkUrl = "https://vk.com" + hosterLink.substringAfter("vk.com")
-                    videoList.addAll(VkExtractor(client).getVideosFromUrl(vkUrl, prefix = "$subber: "))
+                    VkExtractor(client, headers).videosFromUrl(vkUrl, prefix = "$subber: ")
                 }
                 "VOE" -> {
-                    VoeExtractor(client).videoFromUrl(hosterLink, "$subber: VOE")?.let { video -> videoList.add(video) }
+                    VoeExtractor(client).videoFromUrl(hosterLink, "$subber: VOE")?.let(::listOf)
                 }
                 "VTUBE" -> {
-                    videoList.addAll(VTubeExtractor(client, headers).videosFromUrl(hosterLink, baseUrl, prefix = "$subber: "))
+                    VTubeExtractor(client, headers).videosFromUrl(hosterLink, baseUrl, prefix = "$subber: ")
                 }
                 "VUDEA" -> {
-                    videoList.addAll(VudeoExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
+                    VudeoExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: ")
                 }
                 "WOLFSTREAM" -> {
-                    videoList.addAll(WolfstreamExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: "))
+                    WolfstreamExtractor(client).videosFromUrl(hosterLink, prefix = "$subber: ")
                 }
-                else -> {}
+                else -> null
             }
-        }
+        }.getOrNull() ?: emptyList()
 
         return videoList
     }
@@ -332,13 +338,14 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document): String = throw Exception("not used")
 
     // ============================= Utilities ==============================
-
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 
-        return this.sortedWith(
+        return sortedWith(
             compareBy(
-                { it.quality.contains(quality) },
+                { it.quality.contains(quality) }, // preferred quality first
+                { it.quality.substringBefore(":") }, // then group by fansub
+                // then group by quality
                 { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
             ),
         ).reversed()
@@ -346,11 +353,7 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     @Serializable
     private data class CipherParams(
-        @Serializable
         val ct: String,
-        @Serializable
-        val iv: String,
-        @Serializable
         val s: String,
     )
 
@@ -437,25 +440,91 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "WOLFSTREAM",
         )
 
+        private val DEFAULT_SUBS by lazy {
+            setOf(
+                "Adonis",
+                "Aitr",
+                "Akatsuki",
+                "AkiraSubs",
+                "AniKeyf",
+                "ANS",
+                "AnimeMangaTR",
+                "AnimeOU",
+                "AniSekai",
+                "AniTürk",
+                "AoiSubs",
+                "ARE-YOU-SURE",
+                "AnimeWho",
+                "Benihime",
+                "Chevirman",
+                "Fatality",
+                "Hikigaya",
+                "HolySubs",
+                "Kirigana Fairies",
+                "Lawsonia Sub",
+                "LowSubs",
+                "Magnus357",
+                "Momo & Berhann",
+                "NoaSubs",
+                "OrigamiSubs",
+                "Pijamalı Koi",
+                "Puzzlesubs",
+                "RaionSubs",
+                "ShimazuSubs",
+                "SoutenSubs",
+                "TAÇE",
+                "TRanimeizle",
+                "TR Altyazılı",
+                "Uragiri",
+                "Varsayılan",
+                "YukiSubs",
+            )
+        }
+
         private const val PREF_KEY_KEY = "key"
         private const val DEFAULT_KEY = "710^8A@3@>T2}#zN5xK?kR7KNKb@-A!LzYL5~M1qU0UfdWsZoBm4UUat%}ueUv6E--*hDPPbH7K2bp9^3o41hw,khL:}Kx8080@M"
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
         private const val PREF_QUALITY_DEFAULT = "1080"
+        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p")
+        private val PREF_QUALITY_VALUES = arrayOf("1080", "720", "480", "360")
 
         private const val PREF_HOSTER_KEY = "hoster_selection"
+        private const val PREF_HOSTER_TITLE = "Enable/Disable Hosts"
         private val PREF_HOSTER_DEFAULT = setOf("GDRIVE", "VOE")
+
+        // Copypasted from tr/tranimeizle.
+        private const val PREF_FANSUB_SELECTION_KEY = "pref_fansub_selection"
+        private const val PREF_FANSUB_SELECTION_TITLE = "Enable/Disable Fansubs"
+
+        private const val PREF_ADDITIONAL_FANSUBS_KEY = "pref_additional_fansubs_key"
+        private const val PREF_ADDITIONAL_FANSUBS_TITLE = "Add custom fansubs to the selection preference"
+        private const val PREF_ADDITIONAL_FANSUBS_DEFAULT = ""
+        private const val PREF_ADDITIONAL_FANSUBS_DIALOG_TITLE = "Enter a list of additional fansubs, separated by a comma."
+        private const val PREF_ADDITIONAL_FANSUBS_DIALOG_MESSAGE = "Example: AntichristHaters Fansub, 2cm erect subs"
+        private const val PREF_ADDITIONAL_FANSUBS_SUMMARY = "You can add more fansubs to the previous preference from here."
+        private const val PREF_ADDITIONAL_FANSUBS_TOAST = "Reopen the extension's preferences for it to take effect."
     }
 
-    // =============================== Preferences ===============================
+    private val PREF_FANSUB_SELECTION_ENTRIES: Array<String> get() {
+        val additional = preferences.getString(PREF_ADDITIONAL_FANSUBS_KEY, "")!!
+            .split(",")
+            .map(String::trim)
+            .filter(String::isNotBlank)
+            .toSet()
 
+        return (DEFAULT_SUBS + additional).sorted().toTypedArray()
+    }
+
+    // =============================== Preferences ==============================
     @Suppress("UNCHECKED_CAST")
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
-            title = "Preferred quality"
-            entries = arrayOf("1080p", "720p", "480p", "360p")
-            entryValues = arrayOf("1080", "720", "480", "360")
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_VALUES
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
@@ -469,13 +538,45 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         MultiSelectListPreference(screen.context).apply {
             key = PREF_HOSTER_KEY
-            title = "Enable/Disable Hosts"
+            title = PREF_HOSTER_TITLE
             entries = SUPPORTED_HOSTERS.toTypedArray()
             entryValues = SUPPORTED_HOSTERS.toTypedArray()
             setDefaultValue(PREF_HOSTER_DEFAULT)
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }.also(screen::addPreference)
+
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_FANSUB_SELECTION_KEY
+            title = PREF_FANSUB_SELECTION_TITLE
+            PREF_FANSUB_SELECTION_ENTRIES.let {
+                entries = it
+                entryValues = it
+                setDefaultValue(it.toSet())
+            }
+
+            setOnPreferenceChangeListener { _, newValue ->
+                @Suppress("UNCHECKED_CAST")
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }.also(screen::addPreference)
+
+        EditTextPreference(screen.context).apply {
+            key = PREF_ADDITIONAL_FANSUBS_KEY
+            title = PREF_ADDITIONAL_FANSUBS_TITLE
+            dialogTitle = PREF_ADDITIONAL_FANSUBS_DIALOG_TITLE
+            dialogMessage = PREF_ADDITIONAL_FANSUBS_DIALOG_MESSAGE
+            setDefaultValue(PREF_ADDITIONAL_FANSUBS_DEFAULT)
+            summary = PREF_ADDITIONAL_FANSUBS_SUMMARY
+
+            setOnPreferenceChangeListener { _, newValue ->
+                runCatching {
+                    val value = newValue as String
+                    Toast.makeText(screen.context, PREF_ADDITIONAL_FANSUBS_TOAST, Toast.LENGTH_LONG).show()
+                    preferences.edit().putString(key, value).commit()
+                }.getOrDefault(false)
             }
         }.also(screen::addPreference)
     }
