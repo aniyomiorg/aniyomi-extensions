@@ -2,6 +2,8 @@ package eu.kanade.tachiyomi.animeextension.tr.turkanime
 
 import android.app.Application
 import android.util.Base64
+import android.widget.Toast
+import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
@@ -191,11 +193,20 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
+
         val fansubbers = document.select("div#videodetay div.pull-right button")
         val videoList = if (fansubbers.size == 1) {
             getVideosFromHosters(document, fansubbers.first()!!.text().trim())
         } else {
-            fansubbers.parallelMap {
+            val allFansubs = PREF_FANSUB_SELECTION_ENTRIES
+            val chosenFansubs = preferences.getStringSet(PREF_FANSUB_SELECTION_KEY, allFansubs.toSet())!!
+
+            val filteredSubs = fansubbers.toList().filter {
+                val subName = it.text().substringBeforeLast("BD").trim()
+                chosenFansubs.any(subName::contains) || allFansubs.none(subName::contains)
+            }
+
+            filteredSubs.parallelMap {
                 val url = it.attr("onclick").trimOnClick()
                 val subDoc = client.newCall(GET(url, xmlHeader)).execute().asJsoup()
                 getVideosFromHosters(subDoc, it.text().trim())
@@ -427,6 +438,47 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "WOLFSTREAM",
         )
 
+        private val DEFAULT_SUBS by lazy {
+            setOf(
+                "Adonis",
+                "Aitr",
+                "Akatsuki",
+                "AkiraSubs",
+                "AniKeyf",
+                "ANS",
+                "AnimeMangaTR",
+                "AnimeOU",
+                "AniSekai",
+                "AniTürk",
+                "AoiSubs",
+                "ARE-YOU-SURE",
+                "AnimeWho",
+                "Benihime",
+                "Chevirman",
+                "Fatality",
+                "Hikigaya",
+                "HolySubs",
+                "Kirigana Fairies",
+                "Lawsonia Sub",
+                "LowSubs",
+                "Magnus357",
+                "Momo & Berhann",
+                "NoaSubs",
+                "OrigamiSubs",
+                "Pijamalı Koi",
+                "Puzzlesubs",
+                "RaionSubs",
+                "ShimazuSubs",
+                "SoutenSubs",
+                "TAÇE",
+                "TRanimeizle",
+                "TR Altyazılı",
+                "Uragiri",
+                "Varsayılan",
+                "YukiSubs",
+            )
+        }
+
         private const val PREF_KEY_KEY = "key"
         private const val DEFAULT_KEY = "710^8A@3@>T2}#zN5xK?kR7KNKb@-A!LzYL5~M1qU0UfdWsZoBm4UUat%}ueUv6E--*hDPPbH7K2bp9^3o41hw,khL:}Kx8080@M"
 
@@ -439,6 +491,28 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val PREF_HOSTER_KEY = "hoster_selection"
         private const val PREF_HOSTER_TITLE = "Enable/Disable Hosts"
         private val PREF_HOSTER_DEFAULT = setOf("GDRIVE", "VOE")
+
+        // Copypasted from tr/tranimeizle.
+        private const val PREF_FANSUB_SELECTION_KEY = "pref_fansub_selection"
+        private const val PREF_FANSUB_SELECTION_TITLE = "Enable/Disable Fansubs"
+
+        private const val PREF_ADDITIONAL_FANSUBS_KEY = "pref_additional_fansubs_key"
+        private const val PREF_ADDITIONAL_FANSUBS_TITLE = "Add custom fansubs to the selection preference"
+        private const val PREF_ADDITIONAL_FANSUBS_DEFAULT = ""
+        private const val PREF_ADDITIONAL_FANSUBS_DIALOG_TITLE = "Enter a list of additional fansubs, separated by a comma."
+        private const val PREF_ADDITIONAL_FANSUBS_DIALOG_MESSAGE = "Example: AntichristHaters Fansub, 2cm erect subs"
+        private const val PREF_ADDITIONAL_FANSUBS_SUMMARY = "You can add more fansubs to the previous preference from here."
+        private const val PREF_ADDITIONAL_FANSUBS_TOAST = "Reopen the extension's preferences for it to take effect."
+    }
+
+    private val PREF_FANSUB_SELECTION_ENTRIES: Array<String> get() {
+        val additional = preferences.getString(PREF_ADDITIONAL_FANSUBS_KEY, "")!!
+            .split(",")
+            .map(String::trim)
+            .filter(String::isNotBlank)
+            .toSet()
+
+        return (DEFAULT_SUBS + additional).sorted().toTypedArray()
     }
 
     // =============================== Preferences ==============================
@@ -469,6 +543,38 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }.also(screen::addPreference)
+
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_FANSUB_SELECTION_KEY
+            title = PREF_FANSUB_SELECTION_TITLE
+            PREF_FANSUB_SELECTION_ENTRIES.let {
+                entries = it
+                entryValues = it
+                setDefaultValue(it.toSet())
+            }
+
+            setOnPreferenceChangeListener { _, newValue ->
+                @Suppress("UNCHECKED_CAST")
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }.also(screen::addPreference)
+
+        EditTextPreference(screen.context).apply {
+            key = PREF_ADDITIONAL_FANSUBS_KEY
+            title = PREF_ADDITIONAL_FANSUBS_TITLE
+            dialogTitle = PREF_ADDITIONAL_FANSUBS_DIALOG_TITLE
+            dialogMessage = PREF_ADDITIONAL_FANSUBS_DIALOG_MESSAGE
+            setDefaultValue(PREF_ADDITIONAL_FANSUBS_DEFAULT)
+            summary = PREF_ADDITIONAL_FANSUBS_SUMMARY
+
+            setOnPreferenceChangeListener { _, newValue ->
+                runCatching {
+                    val value = newValue as String
+                    Toast.makeText(screen.context, PREF_ADDITIONAL_FANSUBS_TOAST, Toast.LENGTH_LONG).show()
+                    preferences.edit().putString(key, value).commit()
+                }.getOrDefault(false)
             }
         }.also(screen::addPreference)
     }
