@@ -704,10 +704,10 @@
   {
     "name": "Aniyomi: Anime-Base",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.animebase",
-    "apk": "aniyomi-de.animebase-v13.12.apk",
+    "apk": "aniyomi-de.animebase-v13.13.apk",
     "lang": "de",
-    "code": 12,
-    "version": "13.12",
+    "code": 13,
+    "version": "13.13",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -718,7 +718,7 @@
         "id": "891780646468545269",
         "baseUrl": "https://anime-base.net",
         "versionId": 1,
-        "hasCloudflare": 0
+        "hasCloudflare": 1
       }
     ]
   },
