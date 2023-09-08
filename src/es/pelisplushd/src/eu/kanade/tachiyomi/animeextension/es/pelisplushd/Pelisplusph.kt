@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.animeextension.es.pelisplushd
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamHideExtractor
-import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.UqloadExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -14,6 +13,7 @@ import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
+import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -187,7 +187,7 @@ class Pelisplusph(override val name: String, override val baseUrl: String) : Pel
             StreamHideExtractor(client).videosFromUrl(url, "StreamHide")
         }
         if (embedUrl.contains("uqload")) {
-            UqloadExtractor(client).videosFromUrl(url, headers)
+            UqloadExtractor(client).videosFromUrl(url)
         }
         return videoList
     }

@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.tr.anizm.AnizmFilters.applyFilterParams
-import eu.kanade.tachiyomi.animeextension.tr.anizm.extractors.UQLoadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -18,6 +17,7 @@ import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
+import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -206,7 +206,7 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
     private val doodExtractor by lazy { DoodExtractor(client) }
     private val gdrivePlayerExtractor by lazy { GdrivePlayerExtractor(client) }
-    private val uqloadExtractor by lazy { UQLoadExtractor(client) }
+    private val uqloadExtractor by lazy { UqloadExtractor(client) }
     private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
     private val yourUploadExtractor by lazy { YourUploadExtractor(client) }
     private val voeExtractor by lazy { VoeExtractor(client) }
@@ -230,7 +230,7 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
                 val newUrl = "https://gdriveplayer.to/embed2.php?link=$url"
                 gdrivePlayerExtractor.videosFromUrl(newUrl, "GdrivePlayer", headers)
             }
-            "uqload" in url -> uqloadExtractor.videoFromUrl(url)?.let(::listOf)
+            "uqload" in url -> uqloadExtractor.videosFromUrl(url)
             "voe.sx" in url -> voeExtractor.videoFromUrl(url)?.let(::listOf)
             else -> null
         } ?: emptyList()

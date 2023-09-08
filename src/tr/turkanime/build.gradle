@@ -5,6 +5,7 @@ plugins {
 }
 
 dependencies {
+    implementation(project(':lib-uqload-extractor'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
     implementation(project(":lib-cryptoaes"))
     implementation(project(":lib-dood-extractor"))

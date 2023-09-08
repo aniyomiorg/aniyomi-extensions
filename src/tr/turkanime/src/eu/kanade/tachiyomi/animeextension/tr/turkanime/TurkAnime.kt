@@ -12,7 +12,6 @@ import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.EmbedgramExtra
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MVidooExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.MailRuExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.StreamVidExtractor
-import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.UqloadExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.VTubeExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.VudeoExtractor
 import eu.kanade.tachiyomi.animeextension.tr.turkanime.extractors.WolfstreamExtractor
@@ -33,6 +32,7 @@ import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
 import eu.kanade.tachiyomi.lib.synchrony.Deobfuscator
+import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.lib.vkextractor.VkExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -306,7 +306,7 @@ class TurkAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     StreamVidExtractor(client).videosFromUrl(hosterLink, headers, prefix = "$subber: ")
                 }
                 "UQLOAD" -> {
-                    UqloadExtractor(client).videosFromUrl(hosterLink, headers, "$subber: Uqload")
+                    UqloadExtractor(client).videosFromUrl(hosterLink, "$subber:")
                 }
                 "VK" -> {
                     val vkUrl = "https://vk.com" + hosterLink.substringAfter("vk.com")

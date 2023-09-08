@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.doramasyt.extractors.SolidFilesExtractor
-import eu.kanade.tachiyomi.animeextension.es.doramasyt.extractors.UqloadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -16,6 +15,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
@@ -106,13 +106,8 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val videos = SolidFilesExtractor(client).videosFromUrl(url)
                 videoList.addAll(videos)
             }
-            if (server.contains("uqload")) {
-                val headers = headers.newBuilder().add("referer", "https://uqload.com/").build()
-                UqloadExtractor(client).videoFromUrl(url, headers, "Uqload").map { videoList.add(it) }
-            }
-            if (server.contains("upload")) {
-                val headers = headers.newBuilder().add("referer", "https://upload.com/").build()
-                UqloadExtractor(client).videoFromUrl(url, headers, "Upload").map { videoList.add(it) }
+            if (server.contains("uqload") || server.contains("upload")) {
+                videoList.addAll(UqloadExtractor(client).videosFromUrl(url))
             }
         }
         return videoList
@@ -274,7 +269,7 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
             "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
-            "Uqload", "Upload", "SolidFiles", "StreamTape", // video servers without resolution
+            "Uqload", "SolidFiles", "StreamTape", // video servers without resolution
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
