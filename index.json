@@ -788,10 +788,10 @@
   {
     "name": "Aniyomi: AniWorld (experimental)",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.aniworld",
-    "apk": "aniyomi-de.aniworld-v13.16.apk",
+    "apk": "aniyomi-de.aniworld-v13.17.apk",
     "lang": "de",
-    "code": 16,
-    "version": "13.16",
+    "code": 17,
+    "version": "13.17",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
