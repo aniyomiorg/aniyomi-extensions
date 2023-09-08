@@ -2,12 +2,12 @@ package eu.kanade.tachiyomi.animeextension.pt.donghuax
 
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.pt.donghuax.extractors.DailymotionExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.lib.dailymotionextractor.DailymotionExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -240,7 +240,7 @@ class DonghuaX : DooPlay(
                     GET(url),
                 ).execute().asJsoup().selectFirst("vm-dailymotion[video-id]")?.attr("video-id")
                 id?.let {
-                    DailymotionExtractor(client).videosFromUrl("https://www.dailymotion.com/embed/video/$it", "Dailymotion - ")
+                    DailymotionExtractor(client, headers).videosFromUrl("https://www.dailymotion.com/embed/video/$it")
                 } ?: emptyList()
             }
             url.contains("csst.online") -> {
