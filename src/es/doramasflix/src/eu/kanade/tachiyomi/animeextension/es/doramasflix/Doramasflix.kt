@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.doramasflix.extractor.UqloadExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -15,6 +14,7 @@ import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -316,44 +316,28 @@ class Doramasflix : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun resolveVideoServer(link: String): List<Video> {
-        val videos = mutableListOf<Video>()
-        if (link.contains("streamtape")) {
-            try {
-                StreamTapeExtractor(client).videoFromUrl(link)?.let { videos.add(it) }
-            } catch (_: Exception) {}
-        }
-        if (link.contains("mixdrop")) {
-            try {
-                MixDropExtractor(client).videoFromUrl(link).let { videos.addAll(it) }
-            } catch (_: Exception) {}
-        }
-        if (link.contains("uqload")) {
-            try {
-                val headers = headers.newBuilder()
-                    .add("authority", "uqload.co")
-                    .add("referer", "https://uqload.co/")
-                    .build()
-                UqloadExtractor(client).videoFromUrl(link, headers, "YourUpload").let { videos.addAll(it) }
-            } catch (_: Exception) {}
-        }
-        if (link.contains("ok.ru")) {
-            try {
-                OkruExtractor(client).videosFromUrl(link, "", true).let { videos.addAll(it) }
-            } catch (_: Exception) {}
-        }
-        if (link.contains("voe")) {
-            try {
-                VoeExtractor(client).videoFromUrl(link, "Voex")?.let { videos.add(it) }
-            } catch (_: Exception) {}
-        }
-        return videos
+        return runCatching {
+            when {
+                "streamtape" in link ->
+                    StreamTapeExtractor(client).videoFromUrl(link)?.let(::listOf)
+                "mixdrop" in link ->
+                    MixDropExtractor(client).videoFromUrl(link)
+                "uqload.co" in link ->
+                    UqloadExtractor(client).videosFromUrl(link)
+                "ok.ru" in link ->
+                    OkruExtractor(client).videosFromUrl(link)
+                "voe" in link ->
+                    VoeExtractor(client).videoFromUrl(link, "Voex")?.let(::listOf)
+                else -> null
+            }
+        }.getOrNull() ?: emptyList()
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
             "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
             "Streamlare:1080p", "Streamlare:720p", "Streamlare:480p", "Streamlare:360p", "Streamlare:240p", // Streamlare
-            "StreamTape", "Voex", "DoodStream", "YourUpload", "MixDrop",
+            "StreamTape", "Voex", "Uqload", "MixDrop",
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"

@@ -4,7 +4,6 @@ import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.StreamHideExtractor
-import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.UqloadExtractor
 import eu.kanade.tachiyomi.animeextension.es.pelisplushd.extractors.VudeoExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -16,6 +15,7 @@ import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
+import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -196,7 +196,7 @@ class Pelisplusto(override val name: String, override val baseUrl: String) : Pel
             videoList.addAll(StreamlareExtractor(client).videosFromUrl(url))
         }
         if (embedUrl.contains("uqload")) {
-            UqloadExtractor(client).videosFromUrl(url, headers)
+            UqloadExtractor(client).videosFromUrl(url)
         }
         if (embedUrl.contains("streamwish")) {
             val docHeaders = headers.newBuilder()

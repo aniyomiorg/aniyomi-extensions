@@ -137,7 +137,7 @@ open class Pelisplushd(override val name: String, override val baseUrl: String) 
                         "sbfast" -> { serverUrl = "https://sbfull.com/e/$urlId" }
                         "plusto" -> { serverUrl = "https://owodeuwu.xyz/v/$urlId" }
                         "doodstream" -> { serverUrl = "https://dood.to/e/$urlId" }
-                        "upload" -> { serverUrl = "https://uqload.com/embed-$urlId.html" }
+                        "upload", "uqload" -> { serverUrl = "https://uqload.com/embed-$urlId.html" }
                     }
                 }
                 serverVideoResolver(serverUrl, serverName)?.forEach { video -> videoList.add(video) }

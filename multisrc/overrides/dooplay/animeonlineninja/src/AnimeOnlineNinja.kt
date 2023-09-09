@@ -3,13 +3,13 @@ package eu.kanade.tachiyomi.animeextension.es.animeonlineninja
 import androidx.preference.CheckBoxPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.es.animeonlineninja.extractors.UploadExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -26,8 +26,9 @@ class AnimeOnlineNinja : DooPlay(
 ) {
     override val client by lazy {
         if (preferences.getBoolean(PREF_VRF_INTERCEPT_KEY, PREF_VRF_INTERCEPT_DEFAULT)) {
-            network.cloudflareClient
-                .newBuilder().addInterceptor(VrfInterceptor()).build()
+            network.cloudflareClient.newBuilder()
+                .addInterceptor(VrfInterceptor())
+                .build()
         } else {
             network.cloudflareClient
         }
@@ -114,7 +115,7 @@ class AnimeOnlineNinja : DooPlay(
     private val doodExtractor by lazy { DoodExtractor(client) }
     private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
     private val mixDropExtractor by lazy { MixDropExtractor(client) }
-    private val uqloadExtractor by lazy { UploadExtractor(client) }
+    private val uqloadExtractor by lazy { UqloadExtractor(client) }
 
     private fun extractVideos(url: String, lang: String): List<Video> {
         return when {
@@ -131,8 +132,7 @@ class AnimeOnlineNinja : DooPlay(
             "mixdrop" in url ->
                 mixDropExtractor.videoFromUrl(url, lang)
             "uqload" in url ->
-                uqloadExtractor.videoFromUrl(url, headers, lang)
-                    ?.let(::listOf)
+                uqloadExtractor.videosFromUrl(url)
             "wolfstream" in url -> {
                 client.newCall(GET(url, headers)).execute()
                     .use { it.asJsoup() }

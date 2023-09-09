@@ -13,6 +13,7 @@ ext {
 }
 
 dependencies {
+    implementation(project(':lib-uqload-extractor'))
     implementation(project(":lib-sendvid-extractor"))
     implementation(project(":lib-sibnet-extractor"))
     implementation(project(":lib-dood-extractor"))

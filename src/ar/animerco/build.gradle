@@ -12,6 +12,7 @@ ext {
 }
 
 dependencies {
+    implementation(project(':lib-uqload-extractor'))
     implementation(project(':lib-gdriveplayer-extractor'))
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-dood-extractor'))
