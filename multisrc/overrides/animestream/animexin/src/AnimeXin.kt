@@ -2,11 +2,11 @@ package eu.kanade.tachiyomi.animeextension.all.animexin
 
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.all.animexin.extractors.DailymotionExtractor
 import eu.kanade.tachiyomi.animeextension.all.animexin.extractors.DoodExtractor
 import eu.kanade.tachiyomi.animeextension.all.animexin.extractors.VidstreamingExtractor
 import eu.kanade.tachiyomi.animeextension.all.animexin.extractors.YouTubeExtractor
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.lib.dailymotionextractor.DailymotionExtractor
 import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
@@ -27,7 +27,7 @@ class AnimeXin : AnimeStream(
             }
 
             url.contains("dailymotion") -> {
-                DailymotionExtractor(client).videosFromUrl(url, prefix = prefix)
+                DailymotionExtractor(client, headers).videosFromUrl(url, prefix)
             }
             url.contains("https://dood") -> {
                 DoodExtractor(client).videosFromUrl(url, quality = name)

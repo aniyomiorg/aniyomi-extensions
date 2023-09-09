@@ -3,8 +3,8 @@ package eu.kanade.tachiyomi.animeextension.all.lmanime
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.all.lmanime.extractors.DailymotionExtractor
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.lib.dailymotionextractor.DailymotionExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
 import eu.kanade.tachiyomi.util.asJsoup
@@ -39,7 +39,7 @@ class LMAnime : AnimeStream(
             "ok.ru" in url ->
                 OkruExtractor(client).videosFromUrl(url, prefix)
             "dailymotion.com" in url ->
-                DailymotionExtractor(client).videosFromUrl(url, "Dailymotion ($name)")
+                DailymotionExtractor(client, headers).videosFromUrl(url, "Dailymotion ($name)")
             else -> emptyList()
         }
     }

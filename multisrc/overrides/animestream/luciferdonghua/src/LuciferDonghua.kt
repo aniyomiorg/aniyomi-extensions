@@ -1,8 +1,8 @@
 package eu.kanade.tachiyomi.animeextension.en.luciferdonghua
 
 import android.util.Base64
-import eu.kanade.tachiyomi.animeextension.en.luciferdonghua.extractors.DailymotionExtractor
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.lib.dailymotionextractor.DailymotionExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
 import org.jsoup.Jsoup
@@ -35,7 +35,7 @@ class LuciferDonghua : AnimeStream(
                 OkruExtractor(client).videosFromUrl(url, prefix = prefix)
             }
             url.contains("dailymotion") -> {
-                DailymotionExtractor(client, headers).videosFromUrl(url, prefix = prefix)
+                DailymotionExtractor(client, headers).videosFromUrl(url, prefix)
             }
             else -> emptyList()
         }

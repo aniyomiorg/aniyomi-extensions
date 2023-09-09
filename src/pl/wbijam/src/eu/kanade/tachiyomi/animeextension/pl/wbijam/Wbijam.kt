@@ -6,7 +6,6 @@ import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
 import eu.kanade.tachiyomi.animeextension.pl.wbijam.extractors.CdaPlExtractor
-import eu.kanade.tachiyomi.animeextension.pl.wbijam.extractors.DailymotionExtractor
 import eu.kanade.tachiyomi.animeextension.pl.wbijam.extractors.VkExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -15,6 +14,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.dailymotionextractor.DailymotionExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -295,7 +295,7 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             VkExtractor(client).getVideosFromUrl(serverUrl, headers)
                         }
                         serverUrl.contains("dailymotion") -> {
-                            DailymotionExtractor(client).videosFromUrl(serverUrl, headers)
+                            DailymotionExtractor(client, headers).videosFromUrl(serverUrl)
                         }
                         else -> null
                     }

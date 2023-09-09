@@ -1,3 +1,4 @@
 dependencies {
+    implementation(project(":lib-dailymotion-extractor"))
     implementation(project(":lib-okru-extractor"))
 }
