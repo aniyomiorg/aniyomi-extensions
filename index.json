@@ -807,6 +807,27 @@
     ]
   },
   {
+    "name": "Aniyomi: CineClix",
+    "pkg": "eu.kanade.tachiyomi.animeextension.de.cineclix",
+    "apk": "aniyomi-de.cineclix-v13.1.apk",
+    "lang": "de",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "CineClix",
+        "lang": "de",
+        "id": "6770891719469124348",
+        "baseUrl": "https://cineclix.de",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Cinemathek",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.cinemathek",
     "apk": "aniyomi-de.cinemathek-v13.16.apk",
