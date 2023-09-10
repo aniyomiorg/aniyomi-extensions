@@ -76,10 +76,26 @@ class GogoAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesSelector(): String = "div.img a"
 
-    override fun latestUpdatesFromElement(element: Element): SAnime = SAnime.create().apply {
-        setUrlWithoutDomain(element.attr("href"))
-        thumbnail_url = element.selectFirst("img")!!.attr("src")
-        title = element.attr("title")
+    override fun latestUpdatesFromElement(element: Element): SAnime {
+        val imgUrl = element.selectFirst("img")!!.attr("src")
+
+        val newUrl = imgUrl.replaceFirst("https://", "").substringAfter("/").replaceFirst("cover", "/category").substringBeforeLast('.')
+
+        val finalUrl = newUrl.let { url ->
+            url.lastIndexOf('-').let { lastIndex ->
+                val suffix = url.substring(lastIndex + 1)
+                if (lastIndex == -1 || !suffix.all { it.isDigit() } || suffix.length < 3) {
+                    newUrl
+                } else {
+                    url.substring(0, lastIndex)
+                }
+            }
+        }
+        return SAnime.create().apply {
+            setUrlWithoutDomain(finalUrl)
+            thumbnail_url = element.selectFirst("img")!!.attr("src")
+            title = element.attr("title")
+        }
     }
 
     override fun latestUpdatesNextPageSelector(): String = popularAnimeNextPageSelector()
