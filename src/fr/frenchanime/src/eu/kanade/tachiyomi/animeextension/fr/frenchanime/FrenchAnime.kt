@@ -8,7 +8,6 @@ import eu.kanade.tachiyomi.animeextension.fr.frenchanime.extractors.StreamHideEx
 import eu.kanade.tachiyomi.animeextension.fr.frenchanime.extractors.StreamVidExtractor
 import eu.kanade.tachiyomi.animeextension.fr.frenchanime.extractors.UpstreamExtractor
 import eu.kanade.tachiyomi.animeextension.fr.frenchanime.extractors.VidoExtractor
-import eu.kanade.tachiyomi.animeextension.fr.frenchanime.extractors.VudeoExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -20,6 +19,7 @@ import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
 import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
+import eu.kanade.tachiyomi.lib.vudeoextractor.VudeoExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
