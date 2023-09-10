@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.id.neonime.extractors.BloggerExtractor
 import eu.kanade.tachiyomi.animeextension.id.neonime.extractors.LinkBoxExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -14,6 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.bloggerextractor.BloggerExtractor
 import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
@@ -228,7 +228,7 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     videoList.addAll(OkruExtractor(client).videosFromUrl(link))
                 }
                 hosterSelection.contains("yourupload") && link.contains("blogger.com") -> {
-                    videoList.addAll(BloggerExtractor(client).videosFromUrl(link, it.text()))
+                    videoList.addAll(BloggerExtractor(client).videosFromUrl(link, headers, it.text()))
                 }
                 hosterSelection.contains("linkbox") && link.contains("yourupload.com") -> {
                     videoList.addAll(YourUploadExtractor(client).videoFromUrl(link, headers, it.text(), "Original - "))

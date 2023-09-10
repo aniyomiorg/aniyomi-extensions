@@ -1,7 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.pt.animeplayer
 
-import eu.kanade.tachiyomi.animeextension.pt.animeplayer.extractors.BloggerExtractor
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.lib.bloggerextractor.BloggerExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
