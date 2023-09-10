@@ -10,6 +10,7 @@ ext {
 }
 
 dependencies {
+    implementation(project(':lib-vudeo-extractor'))
     implementation(project(':lib-uqload-extractor'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
     implementation(project(':lib-okru-extractor'))

@@ -103,7 +103,9 @@ class AnimeWorldIndia(
                     ?: return SAnime.UNKNOWN
                 if (epParts.first().trim().compareTo(epParts[1].trim()) == 0) {
                     SAnime.COMPLETED
-                } else SAnime.ONGOING
+                } else {
+                    SAnime.ONGOING
+                }
             }
         }
     }

@@ -187,7 +187,9 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                             it.titlecase(
                                 Locale.ROOT,
                             )
-                        } else it.toString()
+                        } else {
+                            it.toString()
+                        }
                     }}\n",
                 )
                 append("Year: ${anime.year}")
