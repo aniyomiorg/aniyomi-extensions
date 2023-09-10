@@ -13,4 +13,8 @@ ext {
     containsNsfw = true
 }
 
+dependencies {
+    implementation(project(':lib-blogger-extractor'))
+}
+
 apply from: "$rootDir/common.gradle"

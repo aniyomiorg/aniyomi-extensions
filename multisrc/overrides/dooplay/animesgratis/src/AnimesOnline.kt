@@ -1,10 +1,10 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesgratis
 
 import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.AnimesOnlinePlayerExtractor
-import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.BloggerExtractor
 import eu.kanade.tachiyomi.animeextension.pt.animesgratis.extractors.RuplayExtractor
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
+import eu.kanade.tachiyomi.lib.bloggerextractor.BloggerExtractor
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor

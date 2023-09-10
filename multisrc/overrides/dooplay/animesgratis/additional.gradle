@@ -1,4 +1,5 @@
 dependencies {
+    implementation(project(":lib-blogger-extractor"))
     implementation(project(":lib-filemoon-extractor"))
     implementation(project(":lib-streamwish-extractor"))
     implementation(project(":lib-mixdrop-extractor"))
