@@ -151,7 +151,17 @@ class KickAssAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     // tested with extensions-lib:9d3dcb0
     // override fun getAnimeUrl(anime: SAnime) = "$baseUrl${anime.url}"
 
-    override fun animeDetailsRequest(anime: SAnime) = GET("$apiUrl${anime.url}")
+    override fun animeDetailsRequest(anime: SAnime): Request = GET(baseUrl + anime.url)
+
+    override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
+        return client.newCall(animeDetailsRequestInternal(anime))
+            .asObservableSuccess()
+            .map { response ->
+                animeDetailsParse(response).apply { initialized = true }
+            }
+    }
+
+    private fun animeDetailsRequestInternal(anime: SAnime) = GET(apiUrl + anime.url)
 
     override fun animeDetailsParse(response: Response): SAnime {
         val languages = client.newCall(
