@@ -41,7 +41,6 @@ import uy.kohesive.injekt.injectLazy
 
 class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
-    var episodecount = 1
     override val name = "AniWorld (experimental)"
 
     override val baseUrl = "https://aniworld.to"
@@ -172,7 +171,6 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListSelector() = throw UnsupportedOperationException("Not used.")
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        episodecount = 1
         val document = response.asJsoup()
         val episodeList = mutableListOf<SEpisode>()
         val seasonsElements = document.select("#stream > ul:nth-child(1) > li > a")
@@ -216,10 +214,8 @@ class AniWorld : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .substringAfter("staffel-").substringBefore("/episode")
             val num = element.attr("data-episode-season-id")
             episode.name = "Staffel $season Folge $num" + " : " + element.select("td.seasonEpisodeTitle a span").text()
-            episode.episode_number = episodecount.toFloat()
-//                element.select("td meta").attr("content").toFloat()
+            episode.episode_number = element.select("td meta").attr("content").toFloat()
             episode.url = element.selectFirst("td.seasonEpisodeTitle a")!!.attr("href")
-            episodecount++
         }
         return episode
     }
