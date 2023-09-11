@@ -364,7 +364,12 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 
         return sortedWith(
-            compareBy { it.quality.contains(quality) },
+            compareBy(
+                { it.quality.contains(quality) }, // preferred quality first
+                { it.quality.substringBefore("]") }, // then group by fansub
+                // then group by quality
+                { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
+            ),
         ).reversed()
     }
 
