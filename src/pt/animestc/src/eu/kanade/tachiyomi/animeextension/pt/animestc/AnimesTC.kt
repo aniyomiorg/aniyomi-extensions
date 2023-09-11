@@ -130,8 +130,14 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         title = anime.title
         status = anime.status
         thumbnail_url = anime.cover.url
+        artist = anime.producer
         genre = anime.genres
-        description = anime.synopsis
+        description = buildString {
+            append(anime.synopsis + "\n")
+
+            anime.classification?.also { append("\nClassificação: $it anos") }
+            anime.year?.also { append("\nAno de lançamento: $it ") }
+        }
     }
 
     // =============================== Search ===============================
