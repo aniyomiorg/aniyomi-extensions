@@ -13,6 +13,9 @@ class ChineseAnime : AnimeStream(
     "https://chineseanime.top",
 ) {
 
+    // =============================== Search ===============================
+    override fun searchAnimeNextPageSelector() = "div.mrgn > a.r"
+
     // =========================== Anime Details ============================
     override val animeDescriptionSelector = ".entry-content"
 
