@@ -405,15 +405,18 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
                 "DeiraSubs",
                 "Güncellenecek",
                 "hitokirireaper",
+                "Holy",
                 "Lawsonia",
                 "LoliSubs",
                 "LowSubs",
+                "Magnum357",
                 "NaoSubs",
                 "Origami",
                 "PijamalıKoi",
                 "Tempest",
                 "UragiriSubs",
                 "whosgoodbadass",
+                "Yuki",
                 "YuushaSubs",
             )
         }
