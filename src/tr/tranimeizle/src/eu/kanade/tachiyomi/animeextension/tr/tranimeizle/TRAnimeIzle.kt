@@ -183,6 +183,7 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
         val allFansubs = PREF_FANSUB_SELECTION_ENTRIES
         val chosenFansubs = preferences.getStringSet(PREF_FANSUB_SELECTION_KEY, allFansubs.toSet())!!
+        val chosenHosts = preferences.getStringSet(PREF_HOSTS_SELECTION_KEY, PREF_HOSTS_SELECTION_DEFAULT)!!
 
         return doc.select("div.fansubSelector").toList()
             // Filter-out non-chosen fansubs that were included in the fansub selection preference.
@@ -199,6 +200,8 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
                     .execute()
                     .use { it.asJsoup() }
                     .select("li.sourceBtn")
+                    .toList()
+                    .filter { it.selectFirst("p")?.ownText().orEmpty() in chosenHosts }
                     .parallelMap {
                         runCatching {
                             getVideosFromId(it.attr("data-id"))
@@ -326,6 +329,19 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
                 }.getOrDefault(false)
             }
         }.also(screen::addPreference)
+
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_HOSTS_SELECTION_KEY
+            title = PREF_HOSTS_SELECTION_TITLE
+            entries = PREF_HOSTS_SELECTION_ENTRIES
+            entryValues = PREF_HOSTS_SELECTION_ENTRIES
+            setDefaultValue(PREF_HOSTS_SELECTION_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                @Suppress("UNCHECKED_CAST")
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }.also(screen::addPreference)
     }
 
     // ============================= Utilities ==============================
@@ -416,5 +432,23 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         private const val PREF_ADDITIONAL_FANSUBS_DIALOG_MESSAGE = "Example: AntichristHaters Fansub, 2cm erect subs"
         private const val PREF_ADDITIONAL_FANSUBS_SUMMARY = "You can add more fansubs to the previous preference from here."
         private const val PREF_ADDITIONAL_FANSUBS_TOAST = "Reopen the extension's preferences for it to take effect."
+
+        private const val PREF_HOSTS_SELECTION_KEY = "pref_hosts_selection"
+        private const val PREF_HOSTS_SELECTION_TITLE = "Enable/disable video hosts"
+        private val PREF_HOSTS_SELECTION_ENTRIES = arrayOf(
+            "Filemoon",
+            "MixDrop",
+            "Mp4upload",
+            "Myvi",
+            "Ok.RU",
+            "SendVid",
+            "Sibnet",
+            "Streamlare",
+            "Voe",
+            "Yourupload",
+        )
+
+        // XDDDDDDDDD
+        private val PREF_HOSTS_SELECTION_DEFAULT by lazy { PREF_HOSTS_SELECTION_ENTRIES.toSet() }
     }
 }
