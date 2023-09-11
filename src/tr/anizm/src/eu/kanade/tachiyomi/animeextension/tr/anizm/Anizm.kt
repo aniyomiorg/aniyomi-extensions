@@ -189,24 +189,35 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
         val fansubUrls = doc.select("div#fansec > a")
             .filterSubs()
-            .map { it.attr("translator") }
+            .map { it.text().fixedFansubName() to it.attr("translator") }
             .ifEmpty {
                 throw Exception("No fansubs available! Have you filtered them out?")
             }
 
-        val playerUrls = fansubUrls.flatMap {
+        val playerUrls = fansubUrls.flatMap { pair ->
+            val (fansub, url) = pair
             runCatching {
-                client.newCall(GET(it, headers)).execute()
+                client.newCall(GET(url, headers)).execute()
                     .parseAs<ResponseDto>()
                     .data
                     .let(Jsoup::parse)
                     .select("a.videoPlayerButtons")
-                    .map { it.attr("video").replace("/video/", "/player/") }
+                    .map { fansub to it.attr("video").replace("/video/", "/player/") }
             }.getOrElse { emptyList() }
         }
-        return playerUrls.parallelMap {
+        return playerUrls.parallelMap { pair ->
+            val (fansub, url) = pair
             runCatching {
-                getVideosFromUrl(it)
+                getVideosFromUrl(url).map {
+                    Video(
+                        it.url,
+                        "[$fansub] ${it.quality}",
+                        it.videoUrl,
+                        it.headers,
+                        it.subtitleTracks,
+                        it.audioTracks,
+                    )
+                }
             }.getOrElse { emptyList() }
         }.flatten().ifEmpty {
             throw Exception("No videos available, eat a yogurt and cry a bit.")
@@ -330,14 +341,15 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         ).reversed()
     }
 
+    private fun String.fixedFansubName(): String =
+        substringBefore("- BD").substringBefore("Fansub").trim()
+
     private fun Elements.filterSubs(): List<Element> {
         val allFansubs = PREF_FANSUB_SELECTION_ENTRIES
         val chosenFansubs = preferences.getStringSet(PREF_FANSUB_SELECTION_KEY, allFansubs.toSet())!!
 
         return toList().filter {
-            val text = it.text().substringBefore("- BD")
-                .substringBefore("Fansub")
-                .trim()
+            val text = it.text().fixedFansubName()
             text in chosenFansubs || text !in allFansubs
         }
     }
@@ -345,7 +357,7 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     private val PREF_FANSUB_SELECTION_ENTRIES: Array<String> get() {
         val additional = preferences.getString(PREF_ADDITIONAL_FANSUBS_KEY, "")!!
             .split(",")
-            .map { it.substringBefore("Fansub").trim() }
+            .map { it.fixedFansubName() }
             .filter(String::isNotBlank)
             .toSet()
 
