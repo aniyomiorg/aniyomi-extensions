@@ -129,6 +129,7 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         setUrlWithoutDomain("/series/${anime.id}")
         title = anime.title
         status = anime.status
+        thumbnail_url = anime.cover.url
         genre = anime.genres
         description = anime.synopsis
     }
