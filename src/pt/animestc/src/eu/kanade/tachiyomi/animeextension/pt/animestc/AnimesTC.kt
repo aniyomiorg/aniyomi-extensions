@@ -57,11 +57,13 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     private val json: Json by injectLazy()
 
     // ============================== Popular ===============================
-    // This source doesnt have a popular animes page,
-    // so we use latest animes page instead.
-    override fun fetchPopularAnime(page: Int) = fetchLatestUpdates(page)
-    override fun popularAnimeParse(response: Response): AnimesPage = TODO()
-    override fun popularAnimeRequest(page: Int): Request = TODO()
+    override fun popularAnimeParse(response: Response): AnimesPage {
+        val data = response.parseAs<List<AnimeDto>>()
+        val animes = data.map(::searchAnimeFromObject)
+        return AnimesPage(animes, false)
+    }
+
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/series?order=id&direction=asc&page=1&top=true", headers)
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
