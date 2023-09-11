@@ -146,7 +146,7 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
-        val hasNextPage = document.select("a.btn.rnd.npd.fa-arrow-right").isNullOrEmpty().not()
+        val hasNextPage = document.select("a.btn.rnd.npd.fa-arrow-right").isEmpty().not()
 
         return AnimesPage(animes, hasNextPage)
     }
@@ -227,7 +227,7 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         return try {
             val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { extractNumberFromString(it.quality) },
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
             ).toMutableList()
             val userPreferredQuality = preferences.getString("preferred_quality", "YourUpload")
             val newList = mutableListOf<Video>()
@@ -246,10 +246,8 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
-    private fun extractNumberFromString(epsStr: String): Int {
-        val regex = """\d+p""".toRegex()
-        val matchResult = regex.find(epsStr)
-        return matchResult?.value?.dropLast(1)?.toIntOrNull() ?: 0
+    private fun getNumberFromString(epsStr: String): Int {
+        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }.toInt()
     }
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
