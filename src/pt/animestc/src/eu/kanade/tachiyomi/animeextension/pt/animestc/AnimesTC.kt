@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.animestc
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.animestc.ATCFilters.applyFilterParams
@@ -21,6 +20,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -48,9 +48,9 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     override val supportsLatest = true
 
     override fun headersBuilder() = super.headersBuilder()
-        .add("Referer", "https://www.animestc.net/")
+        .add("Referer", "$HOST_URL/")
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -92,7 +92,6 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
-
     override fun videoListParse(response: Response): List<Video> {
         val videoDto = response.parseAs<ResponseDto<VideoDto>>().items.first()
         val links = videoDto.links
@@ -191,22 +190,23 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // =============================== Latest ===============================
     override fun latestUpdatesParse(response: Response): AnimesPage {
-        val parsed = response.parseAs<ResponseDto<EpisodeDto>>()
-        val hasNextPage = parsed.page < parsed.lastPage
-        val animes = parsed.items.map {
+        val doc = response.use { it.asJsoup() }
+        val animes = doc.select("div > article.episode").map {
             SAnime.create().apply {
-                title = it.title
-                setUrlWithoutDomain("/series/${it.animeId}")
-                thumbnail_url = it.cover!!.url
+                val ahref = it.selectFirst("h3 > a.episode-info-title-orange")!!
+                title = ahref.text()
+                val slug = ahref.attr("href").substringAfterLast("/")
+                setUrlWithoutDomain("/series?slug=$slug")
+                thumbnail_url = it.selectFirst("img.episode-image")?.attr("abs:data-src")
             }
         }
+            .filter { it.thumbnail_url?.contains("/_nuxt/img/") == false }
+            .distinctBy { it.url }
 
-        return AnimesPage(animes, hasNextPage)
+        return AnimesPage(animes, false)
     }
 
-    override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/episodes?order=created_at&direction=desc&page=$page&ignoreIndex=false")
-    }
+    override fun latestUpdatesRequest(page: Int) = GET(HOST_URL, headers)
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -288,6 +288,8 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         const val PREFIX_SEARCH = "slug:"
+
+        private const val HOST_URL = "https://www.animestc.net"
 
         private const val PREF_QUALITY_KEY = "pref_quality"
         private const val PREF_QUALITY_TITLE = "Qualidade preferida"
