@@ -256,7 +256,7 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             "mixdrop" in url -> mixDropExtractor.videoFromUrl(url)
             "mp4upload" in url -> mp4uploadExtractor.videosFromUrl(url, headers)
             "myvi." in url -> mytvExtractor.videosFromUrl(url)
-            "ok.ru" in url -> okruExtractor.videosFromUrl(url)
+            "ok.ru" in url || "odnoklassniki.ru" in url -> okruExtractor.videosFromUrl(url)
             "sendvid.com" in url -> sendvidExtractor.videosFromUrl(url)
             "video.sibnet" in url -> sibnetExtractor.videosFromUrl(url)
             "streamlare.com" in url -> streamlareExtractor.videosFromUrl(url)
