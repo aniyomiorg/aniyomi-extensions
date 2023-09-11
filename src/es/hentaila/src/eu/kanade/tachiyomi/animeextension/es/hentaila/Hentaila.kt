@@ -14,6 +14,8 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.lib.burstcloudextractor.BurstCloudExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
+import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -34,7 +36,7 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "Hentaila"
 
-    override val baseUrl = "https://www3.hentaila.com"
+    override val baseUrl = "https://www4.hentaila.com"
 
     override val lang = "es"
 
@@ -195,21 +197,27 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
             val urlServer = server[1].replace("\\/", "/")
             val nameServer = server[0]
 
-            if (nameServer.lowercase() == "arc") {
-                val videoUrl = urlServer.substringAfter("#")
-                videoList.add(Video(videoUrl, "Arc", videoUrl))
-            }
-
-            if (nameServer.lowercase() == "yupi") {
-                videoList.addAll(YourUploadExtractor(client).videoFromUrl(urlServer, headers = headers))
-            }
-
-            if (nameServer.lowercase() == "mp4upload") {
-                videoList.addAll(Mp4uploadExtractor(client).videosFromUrl(urlServer, headers = headers))
-            }
-
-            if (nameServer.lowercase() == "burst") {
-                videoList.addAll(BurstCloudExtractor(client).videoFromUrl(urlServer, headers = headers))
+            when (nameServer.lowercase()) {
+                "streamwish" -> {
+                    videoList.addAll(StreamWishExtractor(client, headers).videosFromUrl(urlServer, "StreamWish "))
+                }
+                "voe" -> {
+                    val video = VoeExtractor(client).videoFromUrl(urlServer)
+                    if (video != null) videoList.add(video)
+                }
+                "arc" -> {
+                    val videoUrl = urlServer.substringAfter("#")
+                    videoList.add(Video(videoUrl, "Arc", videoUrl))
+                }
+                "yupi" -> {
+                    videoList.addAll(YourUploadExtractor(client).videoFromUrl(urlServer, headers = headers))
+                }
+                "mp4upload" -> {
+                    videoList.addAll(Mp4uploadExtractor(client).videosFromUrl(urlServer, headers = headers))
+                }
+                "burst" -> {
+                    videoList.addAll(BurstCloudExtractor(client).videoFromUrl(urlServer, headers = headers))
+                }
             }
         }
 
@@ -219,23 +227,29 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         return try {
             val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
+                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { extractNumberFromString(it.quality) },
             ).toMutableList()
             val userPreferredQuality = preferences.getString("preferred_quality", "YourUpload")
-            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
-            if (preferredIdx != -1) {
-                val temp = videoSorted[preferredIdx]
-                videoSorted.removeAt(preferredIdx)
-                videoSorted.add(0, temp)
+            val newList = mutableListOf<Video>()
+            var preferred = 0
+            for (video in videoSorted) {
+                if (video.quality.startsWith(userPreferredQuality!!)) {
+                    newList.add(preferred, video)
+                    preferred++
+                } else {
+                    newList.add(video)
+                }
             }
-            videoSorted.toList()
+            newList.toList()
         } catch (e: Exception) {
             this
         }
     }
 
-    private fun getNumberFromString(epsStr: String): String {
-        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
+    private fun extractNumberFromString(epsStr: String): Int {
+        val regex = """\d+p""".toRegex()
+        val matchResult = regex.find(epsStr)
+        return matchResult?.value?.dropLast(1)?.toIntOrNull() ?: 0
     }
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
@@ -312,6 +326,9 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
         val qualities = arrayOf(
             "YourUpload",
             "BurstCloud",
+            "Voe",
+            "StreamWish",
+            "Mp4Upload",
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
