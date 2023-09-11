@@ -22,6 +22,7 @@ import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
 import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
+import eu.kanade.tachiyomi.lib.vudeoextractor.VudeoExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -230,6 +231,7 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     private val sibnetExtractor by lazy { SibnetExtractor(client) }
     private val streamlareExtractor by lazy { StreamlareExtractor(client) }
     private val voeExtractor by lazy { VoeExtractor(client) }
+    private val vudeoExtractor by lazy { VudeoExtractor(client) }
     private val yourUploadExtractor by lazy { YourUploadExtractor(client) }
 
     private fun getVideosFromId(id: String): List<Video> {
@@ -259,6 +261,7 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             "video.sibnet" in url -> sibnetExtractor.videosFromUrl(url)
             "streamlare.com" in url -> streamlareExtractor.videosFromUrl(url)
             "voe.sx" in url -> voeExtractor.videoFromUrl(url)?.let(::listOf) ?: emptyList()
+            "//vudeo." in url -> vudeoExtractor.videosFromUrl(url)
             "yourupload.com" in url -> {
                 yourUploadExtractor.videoFromUrl(url, headers)
                     // ignore error links
@@ -445,6 +448,7 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             "Sibnet",
             "Streamlare",
             "Voe",
+            "Vudeo",
             "Yourupload",
         )
 
