@@ -374,7 +374,10 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     private fun String.fixedFansubName(): String =
-        substringBefore("- BD").substringBefore("Fansub").trim()
+        substringBefore("- BD")
+            .substringBefore("Fansub")
+            .substringBefore("Bağımsız")
+            .trim()
 
     private fun Elements.filterSubs(): List<Element> {
         val allFansubs = PREF_FANSUB_SELECTION_ENTRIES
