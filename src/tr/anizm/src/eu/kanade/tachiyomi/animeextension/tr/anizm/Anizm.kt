@@ -194,6 +194,8 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
                 throw Exception("No fansubs available! Have you filtered them out?")
             }
 
+        val chosenHosts = preferences.getStringSet(PREF_HOSTS_SELECTION_KEY, PREF_HOSTS_SELECTION_DEFAULT)!!
+
         val playerUrls = fansubUrls.flatMap { pair ->
             val (fansub, url) = pair
             runCatching {
@@ -202,9 +204,12 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
                     .data
                     .let(Jsoup::parse)
                     .select("a.videoPlayerButtons")
+                    .toList()
+                    .filter { it.text().trim() in chosenHosts }
                     .map { fansub to it.attr("video").replace("/video/", "/player/") }
             }.getOrElse { emptyList() }
         }
+
         return playerUrls.parallelMap { pair ->
             val (fansub, url) = pair
             runCatching {
@@ -229,14 +234,14 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     private val doodExtractor by lazy { DoodExtractor(client) }
-    private val gdrivePlayerExtractor by lazy { GdrivePlayerExtractor(client) }
-    private val uqloadExtractor by lazy { UqloadExtractor(client) }
-    private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
-    private val yourUploadExtractor by lazy { YourUploadExtractor(client) }
-    private val voeExtractor by lazy { VoeExtractor(client) }
     private val filemoonExtractor by lazy { FilemoonExtractor(client) }
+    private val gdrivePlayerExtractor by lazy { GdrivePlayerExtractor(client) }
+    private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
     private val sendvidExtractor by lazy { SendvidExtractor(client, headers) }
     private val sibnetExtractor by lazy { SibnetExtractor(client) }
+    private val uqloadExtractor by lazy { UqloadExtractor(client) }
+    private val voeExtractor by lazy { VoeExtractor(client) }
+    private val yourUploadExtractor by lazy { YourUploadExtractor(client) }
 
     private fun getVideosFromUrl(firstUrl: String): List<Video> {
         val url = noRedirectClient.newCall(GET(firstUrl, headers)).execute()
@@ -319,6 +324,19 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
                     Toast.makeText(screen.context, PREF_ADDITIONAL_FANSUBS_TOAST, Toast.LENGTH_LONG).show()
                     preferences.edit().putString(key, value).commit()
                 }.getOrDefault(false)
+            }
+        }.also(screen::addPreference)
+
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_HOSTS_SELECTION_KEY
+            title = PREF_HOSTS_SELECTION_TITLE
+            entries = PREF_HOSTS_SELECTION_ENTRIES
+            entryValues = PREF_HOSTS_SELECTION_ENTRIES
+            setDefaultValue(PREF_HOSTS_SELECTION_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                @Suppress("UNCHECKED_CAST")
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
             }
         }.also(screen::addPreference)
     }
@@ -407,5 +425,20 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         private const val PREF_ADDITIONAL_FANSUBS_DIALOG_MESSAGE = "Example: AntichristHaters Fansub, 2cm erect subs"
         private const val PREF_ADDITIONAL_FANSUBS_SUMMARY = "You can add more fansubs to the previous preference from here."
         private const val PREF_ADDITIONAL_FANSUBS_TOAST = "Reopen the extension's preferences for it to take effect."
+
+        private const val PREF_HOSTS_SELECTION_KEY = "pref_hosts_selection"
+        private const val PREF_HOSTS_SELECTION_TITLE = "Disable/enable video hosts"
+        private val PREF_HOSTS_SELECTION_ENTRIES = arrayOf(
+            "FileMoon",
+            "GDrive",
+            "DoodStream",
+            "Sibnet",
+            "UQload",
+            "Voe",
+            "SendVid",
+            "MP4Upload",
+            "YourUpload",
+        )
+        private val PREF_HOSTS_SELECTION_DEFAULT by lazy { PREF_HOSTS_SELECTION_ENTRIES.toSet() }
     }
 }
