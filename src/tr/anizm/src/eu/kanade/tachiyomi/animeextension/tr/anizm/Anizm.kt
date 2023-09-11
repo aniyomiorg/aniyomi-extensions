@@ -18,8 +18,11 @@ import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
+import eu.kanade.tachiyomi.lib.mytvextractor.MytvExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
@@ -237,8 +240,11 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     private val filemoonExtractor by lazy { FilemoonExtractor(client) }
     private val gdrivePlayerExtractor by lazy { GdrivePlayerExtractor(client) }
     private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
+    private val mytvExtractor by lazy { MytvExtractor(client) }
+    private val okruExtractor by lazy { OkruExtractor(client) }
     private val sendvidExtractor by lazy { SendvidExtractor(client, headers) }
     private val sibnetExtractor by lazy { SibnetExtractor(client) }
+    private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
     private val uqloadExtractor by lazy { UqloadExtractor(client) }
     private val voeExtractor by lazy { VoeExtractor(client) }
     private val yourUploadExtractor by lazy { YourUploadExtractor(client) }
@@ -253,7 +259,10 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             "sendvid.com" in url -> sendvidExtractor.videosFromUrl(url)
             "video.sibnet" in url -> sibnetExtractor.videosFromUrl(url)
             "mp4upload" in url -> mp4uploadExtractor.videosFromUrl(url, headers)
+            "myvi." in url -> mytvExtractor.videosFromUrl(url)
+            "ok.ru" in url || "odnoklassniki.ru" in url -> okruExtractor.videosFromUrl(url)
             "yourupload" in url -> yourUploadExtractor.videoFromUrl(url, headers)
+            "streamtape" in url -> streamtapeExtractor.videoFromUrl(url)?.let(::listOf)
             "dood" in url -> doodExtractor.videoFromUrl(url)?.let(::listOf)
             "drive.google" in url -> {
                 val newUrl = "https://gdriveplayer.to/embed2.php?link=$url"
@@ -432,14 +441,18 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         private const val PREF_HOSTS_SELECTION_KEY = "pref_hosts_selection"
         private const val PREF_HOSTS_SELECTION_TITLE = "Disable/enable video hosts"
         private val PREF_HOSTS_SELECTION_ENTRIES = arrayOf(
+            "DoodStream",
             "FileMoon",
             "GDrive",
-            "DoodStream",
+            "MP4Upload",
+            "MyviRU",
+            "Myvi.TV",
+            "Odnoklassniki",
+            "SendVid",
             "Sibnet",
+            "StreamTape",
             "UQload",
             "Voe",
-            "SendVid",
-            "MP4Upload",
             "YourUpload",
         )
         private val PREF_HOSTS_SELECTION_DEFAULT by lazy { PREF_HOSTS_SELECTION_ENTRIES.toSet() }
