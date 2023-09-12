@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.tr.animeler
 
+import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.SearchResponseDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -7,10 +8,13 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
@@ -28,12 +32,20 @@ class Animeler : AnimeHttpSource() {
     private val json: Json by injectLazy()
 
     // ============================== Popular ===============================
-    override fun popularAnimeRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun popularAnimeRequest(page: Int) = searchOrderBy("total_kiranime_views", page)
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        throw UnsupportedOperationException("Not used.")
+        val results = response.parseAs<SearchResponseDto>()
+        val animes = results.data.map {
+            SAnime.create().apply {
+                setUrlWithoutDomain(it.url)
+                thumbnail_url = it.image
+                title = it.title
+            }
+        }
+        val page = response.request.url.queryParameter("page")?.toIntOrNull() ?: 1
+        val hasNextPage = page < results.pages
+        return AnimesPage(animes, hasNextPage)
     }
 
     // =============================== Latest ===============================
@@ -92,6 +104,23 @@ class Animeler : AnimeHttpSource() {
     // ============================= Utilities ==============================
     private inline fun <reified T> Response.parseAs(): T {
         return body.string().let(json::decodeFromString)
+    }
+
+    private fun searchOrderBy(order: String, page: Int): Request {
+        val body = """
+            {
+              "keyword": "",
+              "query": "",
+              "single": {
+                "paged": $page,
+                "orderby": "meta_value_num",
+                "meta_key": "$order",
+                "order": "desc"
+              },
+              "tax": []
+            }
+        """.trimIndent().toRequestBody("application/json".toMediaType())
+        return POST("$baseUrl/wp-json/kiranime/v1/anime/advancedsearch?_locale=user&page=$page", headers, body)
     }
 
     companion object {
