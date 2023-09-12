@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.animestc
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.animestc.ATCFilters.applyFilterParams
@@ -21,6 +20,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -48,96 +48,49 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
     override val supportsLatest = true
 
     override fun headersBuilder() = super.headersBuilder()
-        .add("Referer", "https://www.animestc.net/")
+        .add("Referer", "$HOST_URL/")
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
     private val json: Json by injectLazy()
 
     // ============================== Popular ===============================
-    // This source doesnt have a popular animes page,
-    // so we use latest animes page instead.
-    override fun fetchPopularAnime(page: Int) = fetchLatestUpdates(page)
-    override fun popularAnimeParse(response: Response): AnimesPage = TODO()
-    override fun popularAnimeRequest(page: Int): Request = TODO()
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/series?order=id&direction=asc&page=1&top=true", headers)
 
-    // ============================== Episodes ==============================
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        val id = response.getAnimeDto().id
-        return getEpisodeList(id)
+    override fun popularAnimeParse(response: Response): AnimesPage {
+        val data = response.parseAs<List<AnimeDto>>()
+        val animes = data.map(::searchAnimeFromObject)
+        return AnimesPage(animes, false)
     }
 
-    private fun episodeListRequest(animeId: Int, page: Int) =
-        GET("$baseUrl/episodes?order=id&direction=desc&page=$page&seriesId=$animeId&specialOrder=true")
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int) = GET(HOST_URL, headers)
 
-    private fun getEpisodeList(animeId: Int, page: Int = 1): List<SEpisode> {
-        val response = client.newCall(episodeListRequest(animeId, page)).execute()
-        val parsed = response.parseAs<ResponseDto<EpisodeDto>>()
-        val episodes = parsed.items.map(::episodeFromObject)
-
-        if (parsed.page < parsed.lastPage) {
-            return episodes + getEpisodeList(animeId, page + 1)
-        } else {
-            return episodes
+    override fun latestUpdatesParse(response: Response): AnimesPage {
+        val doc = response.use { it.asJsoup() }
+        val animes = doc.select("div > article.episode").map {
+            SAnime.create().apply {
+                val ahref = it.selectFirst("h3 > a.episode-info-title-orange")!!
+                title = ahref.text()
+                val slug = ahref.attr("href").substringAfterLast("/")
+                setUrlWithoutDomain("/series?slug=$slug")
+                thumbnail_url = it.selectFirst("img.episode-image")?.attr("abs:data-src")
+            }
         }
-    }
+            .filter { it.thumbnail_url?.contains("/_nuxt/img/") == false }
+            .distinctBy { it.url }
 
-    private fun episodeFromObject(episode: EpisodeDto) = SEpisode.create().apply {
-        name = episode.title
-        setUrlWithoutDomain("/episodes?slug=${episode.slug}")
-        episode_number = episode.number.toFloat()
-        date_upload = episode.created_at.toDate()
-    }
-
-    // ============================ Video Links =============================
-
-    override fun videoListParse(response: Response): List<Video> {
-        val videoDto = response.parseAs<ResponseDto<VideoDto>>().items.first()
-        val links = videoDto.links
-        val allLinks = listOf(links.low, links.medium, links.high).flatten()
-        val supportedPlayers = listOf("anonfiles", "send")
-        val online = links.online?.filterNot { "mega" in it }?.map {
-            Video(it, "Player ATC", it, headers)
-        } ?: emptyList<Video>()
-        return online + allLinks.filter { it.name in supportedPlayers }.parallelMap {
-            val playerUrl = LinkBypasser(client, json).bypass(it, videoDto.id)
-            if (playerUrl == null) return@parallelMap null
-            val quality = when (it.quality) {
-                "low" -> "SD"
-                "medium" -> "HD"
-                "high" -> "FULLHD"
-                else -> "SD"
-            }
-            when (it.name) {
-                "anonfiles" ->
-                    AnonFilesExtractor(client)
-                        .videoFromUrl(playerUrl, quality)
-                "send" ->
-                    SendcmExtractor(client)
-                        .videoFromUrl(playerUrl, quality)
-                else -> null
-            }
-        }.filterNotNull()
-    }
-
-    // =========================== Anime Details ============================
-    override fun animeDetailsParse(response: Response) = SAnime.create().apply {
-        val anime = response.getAnimeDto()
-        setUrlWithoutDomain("/series/${anime.id}")
-        title = anime.title
-        status = anime.status
-        genre = anime.genres
-        description = anime.synopsis
+        return AnimesPage(animes, false)
     }
 
     // =============================== Search ===============================
-    override fun searchAnimeParse(response: Response): AnimesPage {
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         TODO("Not yet implemented")
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+    override fun searchAnimeParse(response: Response): AnimesPage {
         TODO("Not yet implemented")
     }
 
@@ -189,63 +142,117 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         return AnimesPage(listOf(details), false)
     }
 
-    // =============================== Latest ===============================
-    override fun latestUpdatesParse(response: Response): AnimesPage {
-        val parsed = response.parseAs<ResponseDto<EpisodeDto>>()
-        val hasNextPage = parsed.page < parsed.lastPage
-        val animes = parsed.items.map {
-            SAnime.create().apply {
-                title = it.title
-                setUrlWithoutDomain("/series/${it.animeId}")
-                thumbnail_url = it.cover!!.url
-            }
-        }
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(response: Response) = SAnime.create().apply {
+        val anime = response.getAnimeDto()
+        setUrlWithoutDomain("/series/${anime.id}")
+        title = anime.title
+        status = anime.status
+        thumbnail_url = anime.cover.url
+        artist = anime.producer
+        genre = anime.genres
+        description = buildString {
+            append(anime.synopsis + "\n")
 
-        return AnimesPage(animes, hasNextPage)
+            anime.classification?.also { append("\nClassificação: $it anos") }
+            anime.year?.also { append("\nAno de lançamento: $it ") }
+        }
     }
 
-    override fun latestUpdatesRequest(page: Int): Request {
-        return GET("$baseUrl/episodes?order=created_at&direction=desc&page=$page&ignoreIndex=false")
+    // ============================== Episodes ==============================
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val id = response.getAnimeDto().id
+        return getEpisodeList(id)
+    }
+
+    private fun episodeListRequest(animeId: Int, page: Int) =
+        GET("$baseUrl/episodes?order=id&direction=desc&page=$page&seriesId=$animeId&specialOrder=true")
+
+    private fun getEpisodeList(animeId: Int, page: Int = 1): List<SEpisode> {
+        val response = client.newCall(episodeListRequest(animeId, page)).execute()
+        val parsed = response.parseAs<ResponseDto<EpisodeDto>>()
+        val episodes = parsed.items.map(::episodeFromObject)
+
+        if (parsed.page < parsed.lastPage) {
+            return episodes + getEpisodeList(animeId, page + 1)
+        } else {
+            return episodes
+        }
+    }
+
+    private fun episodeFromObject(episode: EpisodeDto) = SEpisode.create().apply {
+        name = episode.title
+        setUrlWithoutDomain("/episodes?slug=${episode.slug}")
+        episode_number = episode.number.toFloat()
+        date_upload = episode.created_at.toDate()
+    }
+
+    // ============================ Video Links =============================
+    private val anonFilesExtractor by lazy { AnonFilesExtractor(client) }
+    private val sendcmExtractor by lazy { SendcmExtractor(client) }
+
+    override fun videoListParse(response: Response): List<Video> {
+        val videoDto = response.parseAs<ResponseDto<VideoDto>>().items.first()
+        val links = videoDto.links
+        val allLinks = listOf(links.low, links.medium, links.high).flatten()
+        val supportedPlayers = listOf("anonfiles", "send")
+        val online = links.online?.filterNot { "mega" in it }?.map {
+            Video(it, "Player ATC", it, headers)
+        } ?: emptyList<Video>()
+        return online + allLinks.filter { it.name in supportedPlayers }.parallelMap {
+            val playerUrl = LinkBypasser(client, json).bypass(it, videoDto.id)
+            if (playerUrl == null) return@parallelMap null
+            val quality = when (it.quality) {
+                "low" -> "SD"
+                "medium" -> "HD"
+                "high" -> "FULLHD"
+                else -> "SD"
+            }
+            when (it.name) {
+                "anonfiles" -> anonFilesExtractor.videoFromUrl(playerUrl, quality)
+                "send" -> sendcmExtractor.videoFromUrl(playerUrl, quality)
+                else -> null
+            }
+        }.filterNotNull()
     }
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
+        ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
             entries = PREF_QUALITY_ENTRIES
             entryValues = PREF_QUALITY_ENTRIES
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
+
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
                 val index = findIndexOfValue(selected)
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
+        }.also(screen::addPreference)
 
-        val playerPref = ListPreference(screen.context).apply {
+        ListPreference(screen.context).apply {
             key = PREF_PLAYER_KEY
             title = PREF_PLAYER_TITLE
             entries = PREF_PLAYER_VALUES
             entryValues = PREF_PLAYER_VALUES
             setDefaultValue(PREF_PLAYER_DEFAULT)
             summary = "%s"
+
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
                 val index = findIndexOfValue(selected)
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-
-        screen.addPreference(videoQualityPref)
-        screen.addPreference(playerPref)
+        }.also(screen::addPreference)
     }
 
     // ============================= Utilities ==============================
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
         runBlocking {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
@@ -288,6 +295,8 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
         const val PREFIX_SEARCH = "slug:"
+
+        private const val HOST_URL = "https://www.animestc.net"
 
         private const val PREF_QUALITY_KEY = "pref_quality"
         private const val PREF_QUALITY_TITLE = "Qualidade preferida"

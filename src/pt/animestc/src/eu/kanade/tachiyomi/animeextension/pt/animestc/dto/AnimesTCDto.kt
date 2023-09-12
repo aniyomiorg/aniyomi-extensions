@@ -14,8 +14,10 @@ data class ResponseDto<T>(
 
 @Serializable
 data class AnimeDto(
+    val classification: String?,
     val cover: CoverDto,
     val id: Int,
+    val producer: String?,
     val releaseStatus: String,
     val synopsis: String,
     val tags: List<TagDto>,
