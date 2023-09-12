@@ -22,6 +22,7 @@ import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
 import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
+import eu.kanade.tachiyomi.lib.vudeoextractor.VudeoExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -183,6 +184,7 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
         val allFansubs = PREF_FANSUB_SELECTION_ENTRIES
         val chosenFansubs = preferences.getStringSet(PREF_FANSUB_SELECTION_KEY, allFansubs.toSet())!!
+        val chosenHosts = preferences.getStringSet(PREF_HOSTS_SELECTION_KEY, PREF_HOSTS_SELECTION_DEFAULT)!!
 
         return doc.select("div.fansubSelector").toList()
             // Filter-out non-chosen fansubs that were included in the fansub selection preference.
@@ -199,6 +201,8 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
                     .execute()
                     .use { it.asJsoup() }
                     .select("li.sourceBtn")
+                    .toList()
+                    .filter { it.selectFirst("p")?.ownText().orEmpty() in chosenHosts }
                     .parallelMap {
                         runCatching {
                             getVideosFromId(it.attr("data-id"))
@@ -227,6 +231,7 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     private val sibnetExtractor by lazy { SibnetExtractor(client) }
     private val streamlareExtractor by lazy { StreamlareExtractor(client) }
     private val voeExtractor by lazy { VoeExtractor(client) }
+    private val vudeoExtractor by lazy { VudeoExtractor(client) }
     private val yourUploadExtractor by lazy { YourUploadExtractor(client) }
 
     private fun getVideosFromId(id: String): List<Video> {
@@ -251,11 +256,12 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             "mixdrop" in url -> mixDropExtractor.videoFromUrl(url)
             "mp4upload" in url -> mp4uploadExtractor.videosFromUrl(url, headers)
             "myvi." in url -> mytvExtractor.videosFromUrl(url)
-            "ok.ru" in url -> okruExtractor.videosFromUrl(url)
+            "ok.ru" in url || "odnoklassniki.ru" in url -> okruExtractor.videosFromUrl(url)
             "sendvid.com" in url -> sendvidExtractor.videosFromUrl(url)
             "video.sibnet" in url -> sibnetExtractor.videosFromUrl(url)
             "streamlare.com" in url -> streamlareExtractor.videosFromUrl(url)
             "voe.sx" in url -> voeExtractor.videoFromUrl(url)?.let(::listOf) ?: emptyList()
+            "//vudeo." in url -> vudeoExtractor.videosFromUrl(url)
             "yourupload.com" in url -> {
                 yourUploadExtractor.videoFromUrl(url, headers)
                     // ignore error links
@@ -324,6 +330,19 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
                     Toast.makeText(screen.context, PREF_ADDITIONAL_FANSUBS_TOAST, Toast.LENGTH_LONG).show()
                     preferences.edit().putString(key, value).commit()
                 }.getOrDefault(false)
+            }
+        }.also(screen::addPreference)
+
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_HOSTS_SELECTION_KEY
+            title = PREF_HOSTS_SELECTION_TITLE
+            entries = PREF_HOSTS_SELECTION_ENTRIES
+            entryValues = PREF_HOSTS_SELECTION_ENTRIES
+            setDefaultValue(PREF_HOSTS_SELECTION_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                @Suppress("UNCHECKED_CAST")
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
             }
         }.also(screen::addPreference)
     }
@@ -416,5 +435,24 @@ class TRAnimeIzle : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         private const val PREF_ADDITIONAL_FANSUBS_DIALOG_MESSAGE = "Example: AntichristHaters Fansub, 2cm erect subs"
         private const val PREF_ADDITIONAL_FANSUBS_SUMMARY = "You can add more fansubs to the previous preference from here."
         private const val PREF_ADDITIONAL_FANSUBS_TOAST = "Reopen the extension's preferences for it to take effect."
+
+        private const val PREF_HOSTS_SELECTION_KEY = "pref_hosts_selection"
+        private const val PREF_HOSTS_SELECTION_TITLE = "Enable/disable video hosts"
+        private val PREF_HOSTS_SELECTION_ENTRIES = arrayOf(
+            "Filemoon",
+            "MixDrop",
+            "Mp4upload",
+            "Myvi",
+            "Ok.RU",
+            "SendVid",
+            "Sibnet",
+            "Streamlare",
+            "Voe",
+            "Vudeo",
+            "Yourupload",
+        )
+
+        // XDDDDDDDDD
+        private val PREF_HOSTS_SELECTION_DEFAULT by lazy { PREF_HOSTS_SELECTION_ENTRIES.toSet() }
     }
 }
