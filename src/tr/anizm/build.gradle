@@ -8,20 +8,23 @@ ext {
     extName = 'Anizm'
     pkgNameSuffix = 'tr.anizm'
     extClass = '.Anizm'
-    extVersionCode = 2
+    extVersionCode = 3
     libVersion = '13'
 }
 
 dependencies {
-    implementation(project(':lib-uqload-extractor'))
+    implementation(project(":lib-dood-extractor"))
+    implementation(project(":lib-filemoon-extractor"))
+    implementation(project(":lib-gdriveplayer-extractor"))
+    implementation(project(":lib-mp4upload-extractor"))
+    implementation(project(":lib-mytv-extractor"))
+    implementation(project(":lib-okru-extractor"))
     implementation(project(":lib-sendvid-extractor"))
     implementation(project(":lib-sibnet-extractor"))
-    implementation(project(":lib-dood-extractor"))
-    implementation(project(":lib-mp4upload-extractor"))
+    implementation(project(":lib-streamtape-extractor"))
+    implementation(project(':lib-uqload-extractor'))
     implementation(project(":lib-voe-extractor"))
-    implementation(project(":lib-filemoon-extractor"))
     implementation(project(":lib-yourupload-extractor"))
-    implementation(project(":lib-gdriveplayer-extractor"))
 }
 
 apply from: "$rootDir/common.gradle"

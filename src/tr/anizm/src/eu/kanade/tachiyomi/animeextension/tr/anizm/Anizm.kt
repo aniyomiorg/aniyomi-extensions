@@ -1,7 +1,10 @@
 package eu.kanade.tachiyomi.animeextension.tr.anizm
 
 import android.app.Application
+import android.widget.Toast
+import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
+import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.tr.anizm.AnizmFilters.applyFilterParams
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -15,8 +18,11 @@ import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
+import eu.kanade.tachiyomi.lib.mytvextractor.MytvExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
@@ -35,6 +41,7 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import org.jsoup.select.Elements
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -182,22 +189,47 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
     override fun videoListParse(response: Response): List<Video> {
         val doc = response.use { it.asJsoup() }
-        val fansubUrls = doc.select("div#fansec > a").map { it.attr("translator") }
-        val playerUrls = fansubUrls.flatMap {
+
+        val fansubUrls = doc.select("div#fansec > a")
+            .filterSubs()
+            .map { it.text().fixedFansubName() to it.attr("translator") }
+            .ifEmpty {
+                throw Exception("No fansubs available! Have you filtered them out?")
+            }
+
+        val chosenHosts = preferences.getStringSet(PREF_HOSTS_SELECTION_KEY, PREF_HOSTS_SELECTION_DEFAULT)!!
+
+        val playerUrls = fansubUrls.flatMap { pair ->
+            val (fansub, url) = pair
             runCatching {
-                client.newCall(GET(it, headers)).execute()
+                client.newCall(GET(url, headers)).execute()
                     .parseAs<ResponseDto>()
                     .data
                     .let(Jsoup::parse)
                     .select("a.videoPlayerButtons")
-                    .map { it.attr("video").replace("/video/", "/player/") }
+                    .toList()
+                    .filter { it.text().trim() in chosenHosts }
+                    .map { fansub to it.attr("video").replace("/video/", "/player/") }
             }.getOrElse { emptyList() }
         }
-        return playerUrls.parallelMap {
+
+        return playerUrls.parallelMap { pair ->
+            val (fansub, url) = pair
             runCatching {
-                getVideosFromUrl(it)
+                getVideosFromUrl(url).map {
+                    Video(
+                        it.url,
+                        "[$fansub] ${it.quality}",
+                        it.videoUrl,
+                        it.headers,
+                        it.subtitleTracks,
+                        it.audioTracks,
+                    )
+                }
             }.getOrElse { emptyList() }
-        }.flatten()
+        }.flatten().ifEmpty {
+            throw Exception("No videos available, eat a yogurt and cry a bit.")
+        }
     }
 
     private val noRedirectClient by lazy {
@@ -205,14 +237,17 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     private val doodExtractor by lazy { DoodExtractor(client) }
-    private val gdrivePlayerExtractor by lazy { GdrivePlayerExtractor(client) }
-    private val uqloadExtractor by lazy { UqloadExtractor(client) }
-    private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
-    private val yourUploadExtractor by lazy { YourUploadExtractor(client) }
-    private val voeExtractor by lazy { VoeExtractor(client) }
     private val filemoonExtractor by lazy { FilemoonExtractor(client) }
+    private val gdrivePlayerExtractor by lazy { GdrivePlayerExtractor(client) }
+    private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
+    private val mytvExtractor by lazy { MytvExtractor(client) }
+    private val okruExtractor by lazy { OkruExtractor(client) }
     private val sendvidExtractor by lazy { SendvidExtractor(client, headers) }
     private val sibnetExtractor by lazy { SibnetExtractor(client) }
+    private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val uqloadExtractor by lazy { UqloadExtractor(client) }
+    private val voeExtractor by lazy { VoeExtractor(client) }
+    private val yourUploadExtractor by lazy { YourUploadExtractor(client) }
 
     private fun getVideosFromUrl(firstUrl: String): List<Video> {
         val url = noRedirectClient.newCall(GET(firstUrl, headers)).execute()
@@ -224,7 +259,10 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             "sendvid.com" in url -> sendvidExtractor.videosFromUrl(url)
             "video.sibnet" in url -> sibnetExtractor.videosFromUrl(url)
             "mp4upload" in url -> mp4uploadExtractor.videosFromUrl(url, headers)
+            "myvi." in url -> mytvExtractor.videosFromUrl(url)
+            "ok.ru" in url || "odnoklassniki.ru" in url -> okruExtractor.videosFromUrl(url)
             "yourupload" in url -> yourUploadExtractor.videoFromUrl(url, headers)
+            "streamtape" in url -> streamtapeExtractor.videoFromUrl(url)?.let(::listOf)
             "dood" in url -> doodExtractor.videoFromUrl(url)?.let(::listOf)
             "drive.google" in url -> {
                 val newUrl = "https://gdriveplayer.to/embed2.php?link=$url"
@@ -265,6 +303,51 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
                 preferences.edit().putString(key, entry).commit()
             }
         }.also(screen::addPreference)
+
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_FANSUB_SELECTION_KEY
+            title = PREF_FANSUB_SELECTION_TITLE
+            PREF_FANSUB_SELECTION_ENTRIES.let {
+                entries = it
+                entryValues = it
+                setDefaultValue(it.toSet())
+            }
+
+            setOnPreferenceChangeListener { _, newValue ->
+                @Suppress("UNCHECKED_CAST")
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }.also(screen::addPreference)
+
+        EditTextPreference(screen.context).apply {
+            key = PREF_ADDITIONAL_FANSUBS_KEY
+            title = PREF_ADDITIONAL_FANSUBS_TITLE
+            dialogTitle = PREF_ADDITIONAL_FANSUBS_DIALOG_TITLE
+            dialogMessage = PREF_ADDITIONAL_FANSUBS_DIALOG_MESSAGE
+            setDefaultValue(PREF_ADDITIONAL_FANSUBS_DEFAULT)
+            summary = PREF_ADDITIONAL_FANSUBS_SUMMARY
+
+            setOnPreferenceChangeListener { _, newValue ->
+                runCatching {
+                    val value = newValue as String
+                    Toast.makeText(screen.context, PREF_ADDITIONAL_FANSUBS_TOAST, Toast.LENGTH_LONG).show()
+                    preferences.edit().putString(key, value).commit()
+                }.getOrDefault(false)
+            }
+        }.also(screen::addPreference)
+
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_HOSTS_SELECTION_KEY
+            title = PREF_HOSTS_SELECTION_TITLE
+            entries = PREF_HOSTS_SELECTION_ENTRIES
+            entryValues = PREF_HOSTS_SELECTION_ENTRIES
+            setDefaultValue(PREF_HOSTS_SELECTION_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                @Suppress("UNCHECKED_CAST")
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }.also(screen::addPreference)
     }
 
     // ============================= Utilities ==============================
@@ -281,8 +364,39 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 
         return sortedWith(
-            compareBy { it.quality.contains(quality) },
+            compareBy(
+                { it.quality.contains(quality) }, // preferred quality first
+                { it.quality.substringBefore("]") }, // then group by fansub
+                // then group by quality
+                { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
+            ),
         ).reversed()
+    }
+
+    private fun String.fixedFansubName(): String =
+        substringBefore("- BD")
+            .substringBefore("Fansub")
+            .substringBefore("Bağımsız")
+            .trim()
+
+    private fun Elements.filterSubs(): List<Element> {
+        val allFansubs = PREF_FANSUB_SELECTION_ENTRIES
+        val chosenFansubs = preferences.getStringSet(PREF_FANSUB_SELECTION_KEY, allFansubs.toSet())!!
+
+        return toList().filter {
+            val text = it.text().fixedFansubName()
+            text in chosenFansubs || text !in allFansubs
+        }
+    }
+
+    private val PREF_FANSUB_SELECTION_ENTRIES: Array<String> get() {
+        val additional = preferences.getString(PREF_ADDITIONAL_FANSUBS_KEY, "")!!
+            .split(",")
+            .map { it.fixedFansubName() }
+            .filter(String::isNotBlank)
+            .toSet()
+
+        return (DEFAULT_FANSUBS + additional).sorted().toTypedArray()
     }
 
     companion object {
@@ -293,5 +407,62 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         private const val PREF_QUALITY_DEFAULT = "720p"
         private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p")
         private val PREF_QUALITY_VALUES = PREF_QUALITY_ENTRIES
+
+        private const val PREF_FANSUB_SELECTION_KEY = "pref_fansub_selection"
+        private const val PREF_FANSUB_SELECTION_TITLE = "Enable/Disable Fansubs"
+        private val DEFAULT_FANSUBS by lazy {
+            setOf(
+                "Adonis",
+                "Akatsuki",
+                "AnimeSeverler",
+                "AniSekai",
+                "Aoi",
+                "ARE-YOU-SURE",
+                "ÇeviriBükücüler",
+                "DeiraSubs",
+                "Güncellenecek",
+                "hitokirireaper",
+                "Holy",
+                "Lawsonia",
+                "LoliSubs",
+                "LowSubs",
+                "Magnum357",
+                "NaoSubs",
+                "Origami",
+                "PijamalıKoi",
+                "Tempest",
+                "UragiriSubs",
+                "whosgoodbadass",
+                "Yuki",
+                "YuushaSubs",
+            )
+        }
+
+        private const val PREF_ADDITIONAL_FANSUBS_KEY = "pref_additional_fansubs_key"
+        private const val PREF_ADDITIONAL_FANSUBS_TITLE = "Add custom fansubs to the selection preference"
+        private const val PREF_ADDITIONAL_FANSUBS_DEFAULT = ""
+        private const val PREF_ADDITIONAL_FANSUBS_DIALOG_TITLE = "Enter a list of additional fansubs, separated by a comma."
+        private const val PREF_ADDITIONAL_FANSUBS_DIALOG_MESSAGE = "Example: AntichristHaters Fansub, 2cm erect subs"
+        private const val PREF_ADDITIONAL_FANSUBS_SUMMARY = "You can add more fansubs to the previous preference from here."
+        private const val PREF_ADDITIONAL_FANSUBS_TOAST = "Reopen the extension's preferences for it to take effect."
+
+        private const val PREF_HOSTS_SELECTION_KEY = "pref_hosts_selection"
+        private const val PREF_HOSTS_SELECTION_TITLE = "Disable/enable video hosts"
+        private val PREF_HOSTS_SELECTION_ENTRIES = arrayOf(
+            "DoodStream",
+            "FileMoon",
+            "GDrive",
+            "MP4Upload",
+            "MyviRU",
+            "Myvi.TV",
+            "Odnoklassniki",
+            "SendVid",
+            "Sibnet",
+            "StreamTape",
+            "UQload",
+            "Voe",
+            "YourUpload",
+        )
+        private val PREF_HOSTS_SELECTION_DEFAULT by lazy { PREF_HOSTS_SELECTION_ENTRIES.toSet() }
     }
 }
