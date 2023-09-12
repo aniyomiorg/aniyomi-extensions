@@ -12,4 +12,17 @@ ext {
     libVersion = '13'
 }
 
+dependencies {
+    implementation(project(":lib-dood-extractor"))
+    implementation(project(":lib-filemoon-extractor"))
+    implementation(project(":lib-gdriveplayer-extractor"))
+    implementation(project(":lib-sibnet-extractor"))
+    implementation(project(":lib-streamlare-extractor"))
+    implementation(project(":lib-okru-extractor"))
+    implementation(project(":lib-streamtape-extractor"))
+    implementation(project(":lib-uqload-extractor"))
+    implementation(project(":lib-voe-extractor"))
+    implementation(project(":lib-vudeo-extractor"))
+}
+
 apply from: "$rootDir/common.gradle"

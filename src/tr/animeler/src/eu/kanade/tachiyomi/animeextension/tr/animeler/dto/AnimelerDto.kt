@@ -99,3 +99,9 @@ data class EpisodeDto(
 
     val date = post.post_modified_gmt ?: ""
 }
+
+@Serializable
+data class SourcesDto(val sourceList: Map<String, String>)
+
+@Serializable
+data class VideoDto(val videoSrc: String)

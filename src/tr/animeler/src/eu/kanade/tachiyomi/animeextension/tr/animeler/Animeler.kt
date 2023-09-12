@@ -5,18 +5,37 @@ import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.FullAnimeDto
 import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.SearchRequestDto
 import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.SearchResponseDto
 import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.SingleDto
+import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.SourcesDto
+import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.VideoDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
+import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
+import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
+import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
+import eu.kanade.tachiyomi.lib.streamlareextractor.StreamlareExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
+import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
+import eu.kanade.tachiyomi.lib.vudeoextractor.VudeoExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import okhttp3.FormBody
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -108,6 +127,28 @@ class Animeler : AnimeHttpSource() {
 
     override fun searchAnimeParse(response: Response) = popularAnimeParse(response)
 
+    private fun searchOrderBy(order: String, page: Int): Request {
+        val body = """
+            {
+              "keyword": "",
+              "query": "",
+              "single": {
+                "paged": $page,
+                "orderby": "meta_value_num",
+                "meta_key": "$order",
+                "order": "desc"
+              },
+              "tax": []
+            }
+        """.trimIndent()
+        return searchRequest(body, page)
+    }
+
+    private fun searchRequest(data: String, page: Int): Request {
+        val body = data.toRequestBody("application/json".toMediaType())
+        return POST("$baseUrl/wp-json/kiranime/v1/anime/advancedsearch?_locale=user&page=$page", headers, body)
+    }
+
     // =========================== Anime Details ============================
     override fun animeDetailsParse(response: Response) = SAnime.create().apply {
         val body = response.use { it.body.string() }
@@ -160,12 +201,72 @@ class Animeler : AnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
-    override fun videoListRequest(episode: SEpisode): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
+    private val doodExtractor by lazy { DoodExtractor(client) }
+    private val filemoonExtractor by lazy { FilemoonExtractor(client) }
+    private val gdrivePlayerExtractor by lazy { GdrivePlayerExtractor(client) }
+    private val okruExtractor by lazy { OkruExtractor(client) }
+    private val sibnetExtractor by lazy { SibnetExtractor(client) }
+    private val streamlareExtractor by lazy { StreamlareExtractor(client) }
+    private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val uqloadExtractor by lazy { UqloadExtractor(client) }
+    private val voeExtractor by lazy { VoeExtractor(client) }
+    private val vudeoExtractor by lazy { VudeoExtractor(client) }
 
     override fun videoListParse(response: Response): List<Video> {
-        throw UnsupportedOperationException("Not used.")
+        val doc = response.use { it.asJsoup() }
+        val iframeUrl = doc.selectFirst("div.episode-player-box > iframe")
+            ?.attr("src")
+            ?: throw Exception("No video available.")
+
+        val playerBody = { it: String ->
+            FormBody.Builder()
+                .add("hash", iframeUrl.substringAfter("/video/"))
+                .add("r", "$baseUrl/")
+                .add("s", it)
+                .build()
+        }
+
+        val headers = headersBuilder()
+            .add("Origin", "https://" + iframeUrl.toHttpUrl().host) // just to be sure
+            .add("X-Requested-With", "XMLHttpRequest")
+            .build()
+
+        val actionUrl = "$iframeUrl?do=getVideo"
+
+        val players = client.newCall(POST(actionUrl, headers, playerBody(""))).execute()
+            .parseAs<SourcesDto>()
+
+        val filteredSources = players.sourceList.entries.filter { source ->
+            SUPPORTED_PLAYERS.any { it.contains(source.value, true) }
+        }
+
+        return filteredSources.parallelMap {
+            val body = playerBody(it.key)
+            runCatching {
+                val res = client.newCall(POST(actionUrl, headers, body)).execute()
+                    .parseAs<VideoDto>()
+                videosFromUrl(res.videoSrc)
+            }.getOrElse { emptyList() }
+        }.flatten().ifEmpty { throw Exception("No video available.") }
+    }
+
+    private fun videosFromUrl(url: String): List<Video> {
+        return when {
+            "dood" in url -> doodExtractor.videosFromUrl(url)
+            "drive.google" in url -> {
+                val newUrl = "https://gdriveplayer.to/embed2.php?link=$url"
+                gdrivePlayerExtractor.videosFromUrl(newUrl, "GdrivePlayer", headers)
+            }
+            "filemoon." in url -> filemoonExtractor.videosFromUrl(url)
+            "ok.ru" in url || "odnoklassniki.ru" in url -> okruExtractor.videosFromUrl(url)
+            "streamtape" in url -> streamtapeExtractor.videoFromUrl(url)?.let(::listOf)
+            "sibnet" in url -> sibnetExtractor.videosFromUrl(url)
+            "streamlare" in url -> streamlareExtractor.videosFromUrl(url)
+            "uqload" in url -> uqloadExtractor.videosFromUrl(url)
+            "voe." in url -> voeExtractor.videoFromUrl(url)?.let(::listOf)
+            "vudeo." in url -> vudeoExtractor.videosFromUrl(url)
+            else -> null
+        } ?: emptyList()
     }
 
     // ============================= Utilities ==============================
@@ -173,32 +274,15 @@ class Animeler : AnimeHttpSource() {
         return body.string().let(json::decodeFromString)
     }
 
-    private fun searchOrderBy(order: String, page: Int): Request {
-        val body = """
-            {
-              "keyword": "",
-              "query": "",
-              "single": {
-                "paged": $page,
-                "orderby": "meta_value_num",
-                "meta_key": "$order",
-                "order": "desc"
-              },
-              "tax": []
-            }
-        """.trimIndent()
-        return searchRequest(body, page)
-    }
-
-    private fun searchRequest(data: String, page: Int): Request {
-        val body = data.toRequestBody("application/json".toMediaType())
-        return POST("$baseUrl/wp-json/kiranime/v1/anime/advancedsearch?_locale=user&page=$page", headers, body)
-    }
-
     private fun String.toDate(): Long {
         return runCatching { DATE_FORMATTER.parse(trim())?.time }
             .getOrNull() ?: 0L
     }
+
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 
     companion object {
         private val DATE_FORMATTER by lazy {
@@ -206,5 +290,18 @@ class Animeler : AnimeHttpSource() {
         }
 
         const val PREFIX_SEARCH = "id:"
+
+        private val SUPPORTED_PLAYERS = setOf(
+            "doodstream.com",
+            "G.Drive",
+            "Moon",
+            "ok.ru",
+            "S.Tape",
+            "Sibnet",
+            "Streamlare",
+            "UQload",
+            "Voe",
+            "vudeo",
+        )
     }
 }
