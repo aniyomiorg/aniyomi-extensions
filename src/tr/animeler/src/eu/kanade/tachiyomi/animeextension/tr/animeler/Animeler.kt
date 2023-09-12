@@ -1,6 +1,8 @@
 package eu.kanade.tachiyomi.animeextension.tr.animeler
 
+import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.SearchRequestDto
 import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.SearchResponseDto
+import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.SingleDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -11,6 +13,7 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
@@ -70,13 +73,36 @@ class Animeler : AnimeHttpSource() {
         return AnimesPage(listOf(details), false)
     }
 
+    override fun getFilterList() = AnimelerFilters.FILTER_LIST
+
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        throw UnsupportedOperationException("Not used.")
+        val params = AnimelerFilters.getSearchParameters(filters)
+        val (meta, orderBy) = when (params.orderBy) {
+            "date", "title" -> Pair(null, params.orderBy)
+            else -> Pair(params.orderBy, "meta_value_num")
+        }
+
+        val single = SingleDto(
+            paged = page,
+            key = meta,
+            order = params.order,
+            orderBy = orderBy,
+            season = params.season.ifEmpty { null },
+            year = params.year.ifEmpty { null },
+        )
+
+        val taxonomies = with(params) {
+            listOf(genres, status, producers, studios, types).filter {
+                it.terms.isNotEmpty()
+            }
+        }
+
+        val requestDto = SearchRequestDto(single, query, query, taxonomies)
+        val requestData = json.encodeToString(requestDto)
+        return searchRequest(requestData, page)
     }
 
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeParse(response: Response) = popularAnimeParse(response)
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(response: Response): SAnime {
@@ -115,7 +141,12 @@ class Animeler : AnimeHttpSource() {
               },
               "tax": []
             }
-        """.trimIndent().toRequestBody("application/json".toMediaType())
+        """.trimIndent()
+        return searchRequest(body, page)
+    }
+
+    private fun searchRequest(data: String, page: Int): Request {
+        val body = data.toRequestBody("application/json".toMediaType())
         return POST("$baseUrl/wp-json/kiranime/v1/anime/advancedsearch?_locale=user&page=$page", headers, body)
     }
 
