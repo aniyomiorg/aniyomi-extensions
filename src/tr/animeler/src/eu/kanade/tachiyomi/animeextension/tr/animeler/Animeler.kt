@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.tr.animeler
 
+import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.FullAnimeDto
 import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.SearchRequestDto
 import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.SearchResponseDto
 import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.SingleDto
@@ -105,8 +106,36 @@ class Animeler : AnimeHttpSource() {
     override fun searchAnimeParse(response: Response) = popularAnimeParse(response)
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(response: Response): SAnime {
-        throw UnsupportedOperationException("Not used.")
+    override fun animeDetailsParse(response: Response) = SAnime.create().apply {
+        val body = response.use { it.body.string() }
+            .substringAfter("var anime = ")
+            .substringBefore("}<") + "}"
+        val animeDto = json.decodeFromString<FullAnimeDto>(body)
+
+        setUrlWithoutDomain(animeDto.url)
+        thumbnail_url = animeDto.image
+        title = animeDto.title
+        artist = animeDto.studios
+        author = animeDto.producers
+        genre = animeDto.genres
+        status = when {
+            animeDto.meta.aired.orEmpty().contains(" to ") -> SAnime.COMPLETED
+            else -> SAnime.UNKNOWN
+        }
+
+        description = buildString {
+            animeDto.post.post_content?.also { append(it + "\n") }
+
+            with(animeDto.meta) {
+                score?.takeIf(String::isNotBlank)?.also { append("\nScore: $it") }
+                native?.takeIf(String::isNotBlank)?.also { append("\nNative: $it") }
+                synonyms?.takeIf(String::isNotBlank)?.also { append("\nDiğer İsimleri: $it") }
+                rate?.takeIf(String::isNotBlank)?.also { append("\nRate: $it") }
+                premiered?.takeIf(String::isNotBlank)?.also { append("\nPremiered: $it") }
+                aired?.takeIf(String::isNotBlank)?.also { append("\nYayınlandı: $it") }
+                duration?.takeIf(String::isNotBlank)?.also { append("\nSüre: $it") }
+            }
+        }
     }
 
     // ============================== Episodes ==============================

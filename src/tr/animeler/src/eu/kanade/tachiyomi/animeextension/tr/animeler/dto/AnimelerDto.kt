@@ -10,13 +10,14 @@ data class SearchResponseDto(
 )
 
 @Serializable
+data class PostDto(val post_title: String, val post_content: String? = null)
+
+@Serializable
 data class SimpleAnimeDto(
     val url: String,
     val image: String,
     val post: PostDto,
 ) {
-    @Serializable
-    data class PostDto(val post_title: String)
     val title = post.post_title
 }
 
@@ -41,3 +42,42 @@ data class SingleDto(
     val season: String?,
     val year: String?,
 )
+
+@Serializable
+data class FullAnimeDto(
+    val url: String,
+    val image: String,
+    val post: PostDto,
+    val meta: MetaDto,
+    private val taxonomies: TaxonomiesDto,
+
+) {
+    val title = post.post_title
+
+    @Serializable
+    data class MetaDto(
+        val native: String? = null,
+        val synonyms: String? = null,
+        val score: String? = null,
+        val premiered: String? = null,
+        val aired: String? = null,
+        val duration: String? = null,
+        val rate: String? = null,
+    )
+
+    @Serializable
+    data class TaxonomiesDto(
+        val producer: List<ItemDto> = emptyList(),
+        val studio: List<ItemDto> = emptyList(),
+        val genre: List<ItemDto> = emptyList(),
+    )
+
+    val genres = taxonomies.genre.parseItems()
+    val studios = taxonomies.studio.parseItems()
+    val producers = taxonomies.producer.parseItems()
+}
+
+@Serializable
+data class ItemDto(val name: String)
+
+private fun List<ItemDto>.parseItems() = joinToString { it.name }.takeIf(String::isNotBlank)
