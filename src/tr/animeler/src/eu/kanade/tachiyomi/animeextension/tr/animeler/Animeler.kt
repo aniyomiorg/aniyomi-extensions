@@ -27,7 +27,7 @@ class Animeler : AnimeHttpSource() {
 
     override val lang = "tr"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     private val json: Json by injectLazy()
 
@@ -49,13 +49,9 @@ class Animeler : AnimeHttpSource() {
     }
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesRequest(page: Int) = searchOrderBy("kiranime_anime_updated", page)
 
-    override fun latestUpdatesParse(response: Response): AnimesPage {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesParse(response: Response) = popularAnimeParse(response)
 
     // =============================== Search ===============================
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
