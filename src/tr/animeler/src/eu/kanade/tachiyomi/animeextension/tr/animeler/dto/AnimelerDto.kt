@@ -10,7 +10,10 @@ data class SearchResponseDto(
 )
 
 @Serializable
-data class PostDto(val post_title: String, val post_content: String? = null)
+data class PostDto(
+    val post_title: String,
+    val post_content: String? = null,
+)
 
 @Serializable
 data class SimpleAnimeDto(
@@ -81,3 +84,18 @@ data class FullAnimeDto(
 data class ItemDto(val name: String)
 
 private fun List<ItemDto>.parseItems() = joinToString { it.name }.takeIf(String::isNotBlank)
+
+@Serializable
+data class EpisodeDto(
+    val url: String,
+    val post: EpisodePostDto,
+    val meta: EpisodeMetaDto,
+) {
+    @Serializable
+    data class EpisodeMetaDto(val number: String)
+
+    @Serializable
+    data class EpisodePostDto(val post_modified_gmt: String? = null)
+
+    val date = post.post_modified_gmt ?: ""
+}

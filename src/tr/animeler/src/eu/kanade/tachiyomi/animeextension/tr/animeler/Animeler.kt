@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.tr.animeler
 
+import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.EpisodeDto
 import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.FullAnimeDto
 import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.SearchRequestDto
 import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.SearchResponseDto
@@ -22,6 +23,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class Animeler : AnimeHttpSource() {
 
@@ -140,7 +143,20 @@ class Animeler : AnimeHttpSource() {
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
-        throw UnsupportedOperationException("Not used.")
+        val body = response.use { it.body.string() }
+            .substringAfter("var episodes = ")
+            .substringBefore("];") + "]"
+
+        val episodes = json.decodeFromString<List<EpisodeDto>>(body)
+
+        return episodes.reversed().map {
+            SEpisode.create().apply {
+                setUrlWithoutDomain(it.url)
+                name = "Bölüm " + it.meta.number
+                episode_number = it.meta.number.toFloat()
+                date_upload = it.date.toDate()
+            }
+        }
     }
 
     // ============================ Video Links =============================
@@ -179,7 +195,16 @@ class Animeler : AnimeHttpSource() {
         return POST("$baseUrl/wp-json/kiranime/v1/anime/advancedsearch?_locale=user&page=$page", headers, body)
     }
 
+    private fun String.toDate(): Long {
+        return runCatching { DATE_FORMATTER.parse(trim())?.time }
+            .getOrNull() ?: 0L
+    }
+
     companion object {
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+        }
+
         const val PREFIX_SEARCH = "id:"
     }
 }
