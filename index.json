@@ -119,6 +119,27 @@
     ]
   },
   {
+    "name": "Aniyomi: ChineseAnime",
+    "pkg": "eu.kanade.tachiyomi.animeextension.all.chineseanime",
+    "apk": "aniyomi-all.chineseanime-v13.2.apk",
+    "lang": "all",
+    "code": 2,
+    "version": "13.2",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "ChineseAnime",
+        "lang": "all",
+        "id": "8639880285552928628",
+        "baseUrl": "https://chineseanime.top",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Google Drive",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.googledrive",
     "apk": "aniyomi-all.googledrive-v13.7.apk",
@@ -2392,10 +2413,10 @@
   {
     "name": "Aniyomi: Hentaila",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.hentaila",
-    "apk": "aniyomi-es.hentaila-v13.15.apk",
+    "apk": "aniyomi-es.hentaila-v13.16.apk",
     "lang": "es",
-    "code": 15,
-    "version": "13.15",
+    "code": 16,
+    "version": "13.16",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2404,7 +2425,7 @@
         "name": "Hentaila",
         "lang": "es",
         "id": "6447194598203666818",
-        "baseUrl": "https://www3.hentaila.com",
+        "baseUrl": "https://www4.hentaila.com",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -3537,10 +3558,10 @@
   {
     "name": "Aniyomi: AnimesTC",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animestc",
-    "apk": "aniyomi-pt.animestc-v13.2.apk",
+    "apk": "aniyomi-pt.animestc-v13.3.apk",
     "lang": "pt-BR",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -4028,10 +4049,10 @@
   {
     "name": "Aniyomi: Anizm",
     "pkg": "eu.kanade.tachiyomi.animeextension.tr.anizm",
-    "apk": "aniyomi-tr.anizm-v13.2.apk",
+    "apk": "aniyomi-tr.anizm-v13.3.apk",
     "lang": "tr",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -4091,10 +4112,10 @@
   {
     "name": "Aniyomi: TR Anime Izle",
     "pkg": "eu.kanade.tachiyomi.animeextension.tr.tranimeizle",
-    "apk": "aniyomi-tr.tranimeizle-v13.5.apk",
+    "apk": "aniyomi-tr.tranimeizle-v13.6.apk",
     "lang": "tr",
-    "code": 5,
-    "version": "13.5",
+    "code": 6,
+    "version": "13.6",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
