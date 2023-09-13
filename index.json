@@ -4047,6 +4047,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Animeler",
+    "pkg": "eu.kanade.tachiyomi.animeextension.tr.animeler",
+    "apk": "aniyomi-tr.animeler-v13.1.apk",
+    "lang": "tr",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Animeler",
+        "lang": "tr",
+        "id": "6594370763071208431",
+        "baseUrl": "https://animeler.me",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Anizm",
     "pkg": "eu.kanade.tachiyomi.animeextension.tr.anizm",
     "apk": "aniyomi-tr.anizm-v13.3.apk",
