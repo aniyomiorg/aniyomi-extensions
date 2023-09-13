@@ -30,8 +30,8 @@ data class TaxonomyDto(val taxonomy: String = "", val terms: List<Int> = emptyLi
 @Serializable
 data class SearchRequestDto(
     val single: SingleDto,
-    val keyword: String = "",
-    val query: String = "",
+    val keyword: String,
+    val query: String,
     val tax: List<TaxonomyDto>,
 )
 
