@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.tr.animeler
 
 import android.app.Application
 import androidx.preference.ListPreference
+import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.EpisodeDto
 import eu.kanade.tachiyomi.animeextension.tr.animeler.dto.FullAnimeDto
@@ -246,8 +247,10 @@ class Animeler : AnimeHttpSource(), ConfigurableAnimeSource {
         val players = client.newCall(POST(actionUrl, headers, playerBody(""))).execute()
             .parseAs<SourcesDto>()
 
+        val chosenHosts = preferences.getStringSet(PREF_HOSTS_SELECTION_KEY, SUPPORTED_PLAYERS)!!
+
         val filteredSources = players.sourceList.entries.filter { source ->
-            SUPPORTED_PLAYERS.any { it.contains(source.value, true) }
+            chosenHosts.any { it.contains(source.value, true) }
         }
 
         return filteredSources.parallelMap {
@@ -294,6 +297,19 @@ class Animeler : AnimeHttpSource(), ConfigurableAnimeSource {
                 val index = findIndexOfValue(selected)
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_HOSTS_SELECTION_KEY
+            title = PREF_HOSTS_SELECTION_TITLE
+            entries = PREF_HOSTS_SELECTION_ENTRIES
+            entryValues = PREF_HOSTS_SELECTION_ENTRIES
+            setDefaultValue(PREF_HOSTS_SELECTION_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                @Suppress("UNCHECKED_CAST")
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
             }
         }.also(screen::addPreference)
     }
@@ -351,5 +367,10 @@ class Animeler : AnimeHttpSource(), ConfigurableAnimeSource {
         private const val PREF_QUALITY_DEFAULT = "720p"
         private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p")
         private val PREF_QUALITY_VALUES = PREF_QUALITY_ENTRIES
+
+        private const val PREF_HOSTS_SELECTION_KEY = "pref_hosts_selection"
+        private const val PREF_HOSTS_SELECTION_TITLE = "Disable/enable video hosts"
+        private val PREF_HOSTS_SELECTION_ENTRIES = SUPPORTED_PLAYERS.toTypedArray()
+        private val PREF_HOSTS_SELECTION_DEFAULT = SUPPORTED_PLAYERS
     }
 }
