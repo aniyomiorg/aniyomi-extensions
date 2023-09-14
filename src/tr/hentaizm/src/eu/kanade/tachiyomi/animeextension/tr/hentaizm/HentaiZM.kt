@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.tr.hentaizm
 
+import eu.kanade.tachiyomi.animeextension.tr.hentaizm.extractors.VideaExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -149,8 +150,16 @@ class HentaiZM : ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
+    private val videaExtractor by lazy { VideaExtractor(client) }
+
     override fun videoListParse(response: Response): List<Video> {
-        throw UnsupportedOperationException("Not used.")
+        val doc = response.use { it.asJsoup() }
+        val videaItem = doc.selectFirst("div.alternatif a:contains(Videa)")!!
+        val path = videaItem.attr("onclick").substringAfter("../../").substringBefore("'")
+        val req = client.newCall(GET("$baseUrl/$path", headers)).execute()
+            .use { it.asJsoup() }
+        val videaUrl = req.selectFirst("iframe")!!.attr("abs:src")
+        return videaExtractor.videosFromUrl(videaUrl)
     }
 
     override fun videoListSelector(): String {
