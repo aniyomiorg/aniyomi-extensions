@@ -1836,27 +1836,6 @@
     ]
   },
   {
-    "name": "Aniyomi: pactedanime",
-    "pkg": "eu.kanade.tachiyomi.animeextension.en.pactedanime",
-    "apk": "aniyomi-en.pactedanime-v13.5.apk",
-    "lang": "en",
-    "code": 5,
-    "version": "13.5",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "pactedanime",
-        "lang": "en",
-        "id": "7022823521622280270",
-        "baseUrl": "https://pactedanime.com",
-        "versionId": 1,
-        "hasCloudflare": 0
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: PutLocker",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.putlocker",
     "apk": "aniyomi-en.putlocker-v13.3.apk",
