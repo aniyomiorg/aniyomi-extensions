@@ -1,6 +1,10 @@
 package eu.kanade.tachiyomi.animeextension.tr.hentaizm
 
+import android.app.Application
+import androidx.preference.ListPreference
+import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.tr.hentaizm.extractors.VideaExtractor
+import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -20,8 +24,10 @@ import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
-class HentaiZM : ParsedAnimeHttpSource() {
+class HentaiZM : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
     override val name = "HentaiZM"
 
@@ -34,6 +40,10 @@ class HentaiZM : ParsedAnimeHttpSource() {
     override fun headersBuilder() = super.headersBuilder()
         .add("Origin", baseUrl)
         .add("Referer", "$baseUrl/")
+
+    private val preferences by lazy {
+        Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
 
     init {
         runBlocking {
@@ -162,6 +172,19 @@ class HentaiZM : ParsedAnimeHttpSource() {
         return videaExtractor.videosFromUrl(videaUrl)
     }
 
+    private val qualityRegex by lazy { Regex("""(\d+)p""") }
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+
+        return sortedWith(
+            compareBy(
+                { it.quality.contains(quality) },
+                { qualityRegex.find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
+            ),
+
+        ).reversed()
+    }
+
     override fun videoListSelector(): String {
         throw UnsupportedOperationException("Not used.")
     }
@@ -174,7 +197,32 @@ class HentaiZM : ParsedAnimeHttpSource() {
         throw UnsupportedOperationException("Not used.")
     }
 
+    // ============================== Settings ==============================
+    override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = PREF_QUALITY_TITLE
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+    }
+
     companion object {
         const val PREFIX_SEARCH = "id:"
+
+        private const val PREF_QUALITY_KEY = "pref_quality_key"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "720p"
+        private val PREF_QUALITY_ENTRIES = arrayOf("1080p", "720p", "480p", "360p", "240p")
+        private val PREF_QUALITY_VALUES = PREF_QUALITY_ENTRIES
     }
 }
