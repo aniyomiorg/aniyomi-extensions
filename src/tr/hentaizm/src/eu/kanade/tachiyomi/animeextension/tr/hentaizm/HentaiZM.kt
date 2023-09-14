@@ -28,7 +28,7 @@ class HentaiZM : ParsedAnimeHttpSource() {
 
     override val lang = "tr"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     override fun headersBuilder() = super.headersBuilder()
         .add("Origin", baseUrl)
@@ -78,21 +78,19 @@ class HentaiZM : ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector() = "span.current + a"
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/yeni-eklenenler?c=${page - 1}", headers)
 
-    override fun latestUpdatesSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesParse(response: Response) =
+        super.latestUpdatesParse(response).let { page ->
+            val animes = page.animes.distinctBy { it.url }
+            AnimesPage(animes, page.hasNextPage)
+        }
 
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesSelector() = popularAnimeSelector()
 
-    override fun latestUpdatesNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
+
+    override fun latestUpdatesNextPageSelector() = "a[rel=next]:contains(Sonraki Sayfa)"
 
     // =============================== Search ===============================
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
