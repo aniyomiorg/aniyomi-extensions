@@ -7,8 +7,13 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import okhttp3.FormBody
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -25,22 +30,52 @@ class HentaiZM : ParsedAnimeHttpSource() {
 
     override val supportsLatest = false
 
+    override fun headersBuilder() = super.headersBuilder()
+        .add("Origin", baseUrl)
+        .add("Referer", "$baseUrl/")
+
+    init {
+        runBlocking {
+            withContext(Dispatchers.IO) {
+                val body = FormBody.Builder()
+                    .add("user", "demo")
+                    .add("pass", "demo") // peak security
+                    .add("redirect_to", baseUrl)
+                    .build()
+
+                val headers = headersBuilder()
+                    .add("X-Requested-With", "XMLHttpRequest")
+                    .build()
+
+                client.newCall(POST("$baseUrl/giris", headers, body)).execute()
+                    .close()
+            }
+        }
+    }
+
     // ============================== Popular ===============================
-    override fun popularAnimeRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/en-cok-izlenenler/page/$page", headers)
+
+    override fun popularAnimeParse(response: Response) =
+        super.popularAnimeParse(response).let { page ->
+            val animes = page.animes.distinctBy { it.url }
+            AnimesPage(animes, page.hasNextPage)
+        }
+
+    override fun popularAnimeSelector() = "div.moviefilm"
+
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        title = element.selectFirst("div.movief > a")!!.text()
+            .substringBefore(". Bölüm")
+            .substringBeforeLast(" ")
+        element.selectFirst("img")!!.attr("abs:src").let {
+            thumbnail_url = it
+            val slug = it.substringAfterLast("/").substringBefore(".")
+            setUrlWithoutDomain("/hentai-detay/$slug")
+        }
     }
 
-    override fun popularAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun popularAnimeNextPageSelector() = "span.current + a"
 
     // =============================== Latest ===============================
     override fun latestUpdatesRequest(page: Int): Request {
