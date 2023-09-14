@@ -68,7 +68,7 @@ class HentaiZM : ParsedAnimeHttpSource() {
         title = element.selectFirst("div.movief > a")!!.text()
             .substringBefore(". Bölüm")
             .substringBeforeLast(" ")
-        element.selectFirst("img")!!.attr("abs:src").let {
+        element.selectFirst("img")!!.attr("abs:src").also {
             thumbnail_url = it
             val slug = it.substringAfterLast("/").substringBefore(".")
             setUrlWithoutDomain("/hentai-detay/$slug")
@@ -134,12 +134,18 @@ class HentaiZM : ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun episodeListSelector() = "div#Bolumler li > a"
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        throw UnsupportedOperationException("Not used.")
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        element.text().also {
+            val num = it.substringBeforeLast(". Bölüm", "")
+                .substringAfterLast(" ")
+                .ifBlank { "1" }
+
+            episode_number = num.toFloatOrNull() ?: 1F
+            name = "$num. Bölüm"
+        }
     }
 
     // ============================ Video Links =============================
