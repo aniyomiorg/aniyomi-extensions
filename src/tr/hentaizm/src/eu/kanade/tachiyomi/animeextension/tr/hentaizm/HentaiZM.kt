@@ -122,8 +122,15 @@ class HentaiZM : ParsedAnimeHttpSource() {
     override fun searchAnimeNextPageSelector() = null
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        throw UnsupportedOperationException("Not used.")
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        setUrlWithoutDomain(document.location())
+        val content = document.selectFirst("div.filmcontent")!!
+        title = content.selectFirst("h1")!!.text()
+        thumbnail_url = content.selectFirst("img")!!.attr("abs:src")
+        genre = content.select("tr:contains(Hentai Türü) > td > a").eachText().joinToString()
+        description = content.selectFirst("tr:contains(Özet) + tr > td")
+            ?.text()
+            ?.takeIf(String::isNotBlank)
     }
 
     // ============================== Episodes ==============================
