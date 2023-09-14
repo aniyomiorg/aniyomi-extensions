@@ -110,20 +110,16 @@ class HentaiZM : ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        throw UnsupportedOperationException("Not used.")
+        return GET("$baseUrl/page/$page/?s=$query", headers)
     }
 
-    override fun searchAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeParse(response: Response) = popularAnimeParse(response)
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeSelector() = throw UnsupportedOperationException("Not used.")
 
-    override fun searchAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeFromElement(element: Element) = throw UnsupportedOperationException("Not used.")
+
+    override fun searchAnimeNextPageSelector() = null
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
