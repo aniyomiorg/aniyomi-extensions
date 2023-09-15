@@ -3033,10 +3033,10 @@
   {
     "name": "Aniyomi: OtakuDesu",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.otakudesu",
-    "apk": "aniyomi-id.otakudesu-v13.19.apk",
+    "apk": "aniyomi-id.otakudesu-v13.20.apk",
     "lang": "id",
-    "code": 19,
-    "version": "13.19",
+    "code": 20,
+    "version": "13.20",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3045,7 +3045,7 @@
         "name": "OtakuDesu",
         "lang": "id",
         "id": "3428487071093013526",
-        "baseUrl": "https://otakudesu.lol",
+        "baseUrl": "https://otakudesu.wiki",
         "versionId": 1,
         "hasCloudflare": 1
       }
