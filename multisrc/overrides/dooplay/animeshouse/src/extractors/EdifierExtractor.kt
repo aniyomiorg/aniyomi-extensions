@@ -9,7 +9,6 @@ class EdifierExtractor(
     private val client: OkHttpClient,
     private val headers: Headers,
 ) {
-
     private val regexEdifier = Regex(""""file":"(.*?)","label":"(\S+?)"""")
     private val playerName = "EDIFIER"
 

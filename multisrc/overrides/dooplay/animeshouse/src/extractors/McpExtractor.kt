@@ -9,7 +9,6 @@ class McpExtractor(
     private val client: OkHttpClient,
     private val headers: Headers,
 ) {
-
     private val regexEpId = Regex("ss,\"(\\d+)\"")
     private val regexVideoUrl = Regex("h\":\"(\\S+?)\"")
     private val apiUrl = "https://clp-new.animeshouse.net/ah-clp-new"
