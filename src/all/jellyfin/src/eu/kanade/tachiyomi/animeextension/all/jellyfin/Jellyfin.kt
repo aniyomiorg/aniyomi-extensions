@@ -80,11 +80,15 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
             .hostnameVerifier { _, _ -> true }.build()
     }
 
-    override val client: OkHttpClient =
-        getUnsafeOkHttpClient()
-            .newBuilder()
+    override val client by lazy {
+        if (preferences.getBoolean("preferred_trust_all_certs", false)) {
+            getUnsafeOkHttpClient()
+        } else {
+            network.client
+        }.newBuilder()
             .dns(Dns.SYSTEM)
             .build()
+    }
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -639,6 +643,19 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
             }
         }
         screen.addPreference(metaTypePref)
+
+        val trustCertificatePref = SwitchPreferenceCompat(screen.context).apply {
+            key = "preferred_trust_all_certs"
+            title = "Trust all certificates"
+            summary = "Requires app restart to take effect."
+            setDefaultValue(false)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val new = newValue as Boolean
+                preferences.edit().putBoolean(key, new).commit()
+            }
+        }
+        screen.addPreference(trustCertificatePref)
     }
 
     private abstract class MediaLibPreference(context: Context) : ListPreference(context) {
