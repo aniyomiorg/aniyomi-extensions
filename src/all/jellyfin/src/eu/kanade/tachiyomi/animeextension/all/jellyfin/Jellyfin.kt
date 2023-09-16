@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.all.jellyfin
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
@@ -34,6 +35,10 @@ import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.security.cert.X509Certificate
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -47,11 +52,43 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
 
     private val json: Json by injectLazy()
 
-    override val client: OkHttpClient =
-        network.client
-            .newBuilder()
+    private fun getUnsafeOkHttpClient(): OkHttpClient {
+        // Create a trust manager that does not validate certificate chains
+        val trustAllCerts = arrayOf<TrustManager>(
+            @SuppressLint("CustomX509TrustManager")
+            object : X509TrustManager {
+                @SuppressLint("TrustAllX509TrustManager")
+                override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+                }
+
+                @SuppressLint("TrustAllX509TrustManager")
+                override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+                }
+
+                override fun getAcceptedIssuers() = arrayOf<X509Certificate>()
+            },
+        )
+
+        // Install the all-trusting trust manager
+        val sslContext = SSLContext.getInstance("SSL")
+        sslContext.init(null, trustAllCerts, java.security.SecureRandom())
+        // Create an ssl socket factory with our all-trusting manager
+        val sslSocketFactory = sslContext.socketFactory
+
+        return network.client.newBuilder()
+            .sslSocketFactory(sslSocketFactory, trustAllCerts[0] as X509TrustManager)
+            .hostnameVerifier { _, _ -> true }.build()
+    }
+
+    override val client by lazy {
+        if (preferences.getBoolean("preferred_trust_all_certs", false)) {
+            getUnsafeOkHttpClient()
+        } else {
+            network.client
+        }.newBuilder()
             .dns(Dns.SYSTEM)
             .build()
+    }
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -185,7 +222,7 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
             addQueryParameter("Recursive", "true")
             addQueryParameter("SortBy", "SortName")
             addQueryParameter("SortOrder", "Ascending")
-            addQueryParameter("includeItemTypes", "Movie,Season,BoxSet")
+            addQueryParameter("IncludeItemTypes", "Series,Movie,BoxSet")
             addQueryParameter("ImageTypeLimit", "1")
             addQueryParameter("EnableImageTypes", "Primary")
             addQueryParameter("ParentId", parentId)
@@ -196,11 +233,28 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
             GET(url.build().toString(), headers = headers),
         ).execute().parseAs<ItemsResponse>()
 
-        val animeList = items.Items.flatMap {
+        val movieList = items.Items.filter { it.Type == "Movie" }
+        val nonMovieList = items.Items.filter { it.Type != "Movie" }
+
+        val animeList = getAnimeFromMovie(movieList) + nonMovieList.flatMap {
             getAnimeFromId(it.Id)
         }
 
         return Observable.just(AnimesPage(animeList, 5 * page < items.TotalRecordCount))
+    }
+
+    private fun getAnimeFromMovie(movieList: List<ItemsResponse.Item>): List<SAnime> {
+        return movieList.map {
+            SAnime.create().apply {
+                title = it.Name
+                thumbnail_url = "$baseUrl/Items/${it.Id}/Images/Primary?api_key=$apiKey"
+                url = LinkData(
+                    "/Users/$userId/Items/${it.Id}?api_key=$apiKey",
+                    it.Id,
+                    it.Id,
+                ).toJsonString()
+            }
+        }
     }
 
     private fun getAnimeFromId(id: String): List<SAnime> {
@@ -589,6 +643,19 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
             }
         }
         screen.addPreference(metaTypePref)
+
+        val trustCertificatePref = SwitchPreferenceCompat(screen.context).apply {
+            key = "preferred_trust_all_certs"
+            title = "Trust all certificates"
+            summary = "Requires app restart to take effect."
+            setDefaultValue(false)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val new = newValue as Boolean
+                preferences.edit().putBoolean(key, new).commit()
+            }
+        }
+        screen.addPreference(trustCertificatePref)
     }
 
     private abstract class MediaLibPreference(context: Context) : ListPreference(context) {
