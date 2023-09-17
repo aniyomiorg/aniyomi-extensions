@@ -27,7 +27,7 @@ import kotlin.Exception
 
 class Subsplease : ConfigurableAnimeSource, AnimeHttpSource() {
 
-    override val name = "Subsplease"
+    override val name = "Subsplease (Torrent)"
 
     override val baseUrl = "https://subsplease.org"
 
