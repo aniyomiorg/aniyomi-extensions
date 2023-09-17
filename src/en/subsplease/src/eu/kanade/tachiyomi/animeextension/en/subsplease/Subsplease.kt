@@ -1,4 +1,4 @@
-package eu.kanade.tachiyomi.animeextension.all.subsplease
+package eu.kanade.tachiyomi.animeextension.en.subsplease
 
 import android.app.Application
 import android.content.SharedPreferences
@@ -33,7 +33,7 @@ class Subsplease : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val baseUrl = "https://subsplease.org"
 
-    override val lang = "all"
+    override val lang = "en"
 
     override val supportsLatest = false
 

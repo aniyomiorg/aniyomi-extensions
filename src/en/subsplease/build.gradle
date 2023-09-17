@@ -4,7 +4,7 @@ apply plugin: 'kotlinx-serialization'
 
 ext {
     extName = 'Subsplease (Torrent)'
-    pkgNameSuffix = 'all.subsplease'
+    pkgNameSuffix = 'en.subsplease'
     extClass = '.Subsplease'
     extVersionCode = 1
     libVersion = '13'
