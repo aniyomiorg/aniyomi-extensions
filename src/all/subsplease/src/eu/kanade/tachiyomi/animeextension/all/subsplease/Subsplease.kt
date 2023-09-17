@@ -23,6 +23,8 @@ import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.text.SimpleDateFormat
+import java.util.Locale
 import kotlin.Exception
 
 class Subsplease : ConfigurableAnimeSource, AnimeHttpSource() {
@@ -92,10 +94,27 @@ class Subsplease : ConfigurableAnimeSource, AnimeHttpSource() {
             val num = itJ["episode"]!!.jsonPrimitive.content
             episode.episode_number = num.toFloat()
             episode.name = "Episode $num"
+            episode.date_upload = itJ["release_date"]!!.jsonPrimitive.content.toDate()
             episode.setUrlWithoutDomain("$url&num=$num")
             episodeList.add(episode)
         }
         return episodeList
+    }
+
+    private fun String?.toDate(): Long {
+        return this?.let {
+            runCatching {
+                dateFormatter.parse(trim())?.time
+            }.getOrNull()
+        } ?: 0L
+    }
+
+    private val dateFormatter by lazy {
+        val locale = when (lang) {
+            "pt-BR" -> Locale("pt", "BR")
+            else -> Locale.ENGLISH
+        }
+        SimpleDateFormat("MMMM d, yyyy", locale)
     }
 
     // Video Extractor
