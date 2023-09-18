@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.ar.witanime
 
 import android.app.Application
+import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.SharedExtractor
@@ -116,7 +117,10 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListSelector() = "div.ehover6 > div.episodes-card-title > h3 a"
 
     override fun episodeFromElement(element: Element) = SEpisode.create().apply {
-        setUrlWithoutDomain(element.attr("href"))
+        val url = element.attr("onclick").substringAfter("'").substringBefore("'")
+            .let { String(Base64.decode(it, Base64.DEFAULT)) }
+
+        setUrlWithoutDomain(url)
         name = element.text()
         episode_number = name.substringAfterLast(" ").toFloatOrNull() ?: 0F
     }
