@@ -37,14 +37,16 @@ class FrAnime : AnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    override fun headersBuilder() = super.headersBuilder().add("Referer", "$baseUrl/")
+    override fun headersBuilder() = super.headersBuilder()
+        .add("Referer", "$baseUrl/")
+        .add("Origin", baseUrl)
 
     private val json: Json by injectLazy()
 
     private val database by lazy {
-        client.newCall(GET("$baseApiUrl/animes/")).execute()
+        client.newCall(GET("$baseApiUrl/animes/", headers)).execute()
             .use { it.body.string() }
-            .let { json.decodeFromString<Array<Anime>>(it) }
+            .let { json.decodeFromString<List<Anime>>(it) }
     }
 
     // === Anime Details
@@ -109,7 +111,7 @@ class FrAnime : AnimeHttpSource() {
     // === Latest
 
     override fun fetchLatestUpdates(page: Int): Observable<AnimesPage> {
-        val pages = database.reversed().toList().chunked(50)
+        val pages = database.reversed().chunked(50)
         val hasNextPage = pages.size > page
         val entries = pageToSAnimes(pages.getOrNull(page - 1))
         return Observable.just(AnimesPage(entries, hasNextPage))
