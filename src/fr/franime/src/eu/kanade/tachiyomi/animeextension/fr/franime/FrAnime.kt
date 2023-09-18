@@ -105,7 +105,7 @@ class FrAnime : AnimeHttpSource() {
                 SEpisode.create().apply {
                     setUrlWithoutDomain(anime.url + "&ep=${index + 1}")
                     name = episode.title
-                    episode_number = index.toFloat()
+                    episode_number = (index + 1).toFloat()
                 }
             }
         return Observable.just(episodes.sortedByDescending { it.episode_number })
