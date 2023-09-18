@@ -49,14 +49,55 @@ class FrAnime : AnimeHttpSource() {
             .let { json.decodeFromString<List<Anime>>(it) }
     }
 
-    // === Anime Details
+    // ============================== Popular ===============================
+    override fun fetchPopularAnime(page: Int): Observable<AnimesPage> {
+        val pages = database.sortedByDescending { it.note }.chunked(50)
+        val hasNextPage = pages.size > page
+        val entries = pageToSAnimes(pages.getOrNull(page - 1))
+        return Observable.just(AnimesPage(entries, hasNextPage))
+    }
 
+    override fun popularAnimeParse(response: Response) = throw Exception("not used")
+
+    override fun popularAnimeRequest(page: Int) = throw Exception("not used")
+
+    // =============================== Latest ===============================
+    override fun fetchLatestUpdates(page: Int): Observable<AnimesPage> {
+        val pages = database.reversed().chunked(50)
+        val hasNextPage = pages.size > page
+        val entries = pageToSAnimes(pages.getOrNull(page - 1))
+        return Observable.just(AnimesPage(entries, hasNextPage))
+    }
+
+    override fun latestUpdatesParse(response: Response): AnimesPage = throw Exception("not used")
+
+    override fun latestUpdatesRequest(page: Int): Request = throw Exception("not used")
+
+    // =============================== Search ===============================
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        val pages = database.filter {
+            it.title.contains(query, true) ||
+                it.originalTitle.contains(query, true) ||
+                it.titlesAlt.en?.contains(query, true) == true ||
+                it.titlesAlt.enJp?.contains(query, true) == true ||
+                it.titlesAlt.jaJp?.contains(query, true) == true ||
+                titleToUrl(it.originalTitle).contains(query)
+        }.chunked(50)
+        val hasNextPage = pages.size > page
+        val entries = pageToSAnimes(pages.getOrNull(page - 1))
+        return Observable.just(AnimesPage(entries, hasNextPage))
+    }
+
+    override fun searchAnimeParse(response: Response): AnimesPage = throw Exception("not used")
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
+
+    // =========================== Anime Details ============================
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> = Observable.just(anime)
 
     override fun animeDetailsParse(response: Response): SAnime = throw Exception("not used")
 
-    // === Episodes
-
+    // ============================== Episodes ==============================
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
         val url = (baseUrl + anime.url).toHttpUrl()
         val stem = url.encodedPathSegments.last()
@@ -79,8 +120,7 @@ class FrAnime : AnimeHttpSource() {
 
     override fun episodeListParse(response: Response): List<SEpisode> = throw Exception("not used")
 
-    // === Players
-
+    // ============================ Video Links =============================
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
         val url = (baseUrl + episode.url).toHttpUrl()
         val seasonNumber = url.queryParameter("s")?.toIntOrNull() ?: 1
@@ -108,54 +148,7 @@ class FrAnime : AnimeHttpSource() {
         return Observable.just(videos)
     }
 
-    // === Latest
-
-    override fun fetchLatestUpdates(page: Int): Observable<AnimesPage> {
-        val pages = database.reversed().chunked(50)
-        val hasNextPage = pages.size > page
-        val entries = pageToSAnimes(pages.getOrNull(page - 1))
-        return Observable.just(AnimesPage(entries, hasNextPage))
-    }
-
-    override fun latestUpdatesParse(response: Response): AnimesPage = throw Exception("not used")
-
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("not used")
-
-    // === Popular
-
-    override fun fetchPopularAnime(page: Int): Observable<AnimesPage> {
-        val pages = database.sortedByDescending { it.note }.chunked(50)
-        val hasNextPage = pages.size > page
-        val entries = pageToSAnimes(pages.getOrNull(page - 1))
-        return Observable.just(AnimesPage(entries, hasNextPage))
-    }
-
-    override fun popularAnimeParse(response: Response) = throw Exception("not used")
-
-    override fun popularAnimeRequest(page: Int) = throw Exception("not used")
-
-    // === Search
-
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        val pages = database.filter {
-            it.title.contains(query, true) ||
-                it.originalTitle.contains(query, true) ||
-                it.titlesAlt.en?.contains(query, true) == true ||
-                it.titlesAlt.enJp?.contains(query, true) == true ||
-                it.titlesAlt.jaJp?.contains(query, true) == true ||
-                titleToUrl(it.originalTitle).contains(query)
-        }.chunked(50)
-        val hasNextPage = pages.size > page
-        val entries = pageToSAnimes(pages.getOrNull(page - 1))
-        return Observable.just(AnimesPage(entries, hasNextPage))
-    }
-
-    override fun searchAnimeParse(response: Response): AnimesPage = throw Exception("not used")
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = throw Exception("not used")
-
-    // === Utils
-
+    // ============================= Utilities ==============================
     private fun titleToUrl(title: String): String = Regex("[^A-Za-z0-9 ]").replace(title, "").replace(" ", "-").lowercase()
 
     private fun pageToSAnimes(page: List<Anime>?): List<SAnime> {
