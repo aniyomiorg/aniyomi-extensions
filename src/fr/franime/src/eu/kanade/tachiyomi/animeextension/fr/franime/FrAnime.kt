@@ -50,24 +50,15 @@ class FrAnime : AnimeHttpSource() {
     }
 
     // ============================== Popular ===============================
-    override fun fetchPopularAnime(page: Int): Observable<AnimesPage> {
-        val pages = database.sortedByDescending { it.note }.chunked(50)
-        val hasNextPage = pages.size > page
-        val entries = pageToSAnimes(pages.getOrNull(page - 1))
-        return Observable.just(AnimesPage(entries, hasNextPage))
-    }
+    override fun fetchPopularAnime(page: Int) =
+        pagesToAnimesPage(database.sortedByDescending { it.note }, page)
 
     override fun popularAnimeParse(response: Response) = throw Exception("not used")
 
     override fun popularAnimeRequest(page: Int) = throw Exception("not used")
 
     // =============================== Latest ===============================
-    override fun fetchLatestUpdates(page: Int): Observable<AnimesPage> {
-        val pages = database.reversed().chunked(50)
-        val hasNextPage = pages.size > page
-        val entries = pageToSAnimes(pages.getOrNull(page - 1))
-        return Observable.just(AnimesPage(entries, hasNextPage))
-    }
+    override fun fetchLatestUpdates(page: Int) = pagesToAnimesPage(database.reversed(), page)
 
     override fun latestUpdatesParse(response: Response): AnimesPage = throw Exception("not used")
 
@@ -82,10 +73,8 @@ class FrAnime : AnimeHttpSource() {
                 it.titlesAlt.enJp?.contains(query, true) == true ||
                 it.titlesAlt.jaJp?.contains(query, true) == true ||
                 titleToUrl(it.originalTitle).contains(query)
-        }.chunked(50)
-        val hasNextPage = pages.size > page
-        val entries = pageToSAnimes(pages.getOrNull(page - 1))
-        return Observable.just(AnimesPage(entries, hasNextPage))
+        }
+        return pagesToAnimesPage(pages, page)
     }
 
     override fun searchAnimeParse(response: Response): AnimesPage = throw Exception("not used")
@@ -104,17 +93,21 @@ class FrAnime : AnimeHttpSource() {
         val language = url.queryParameter("lang") ?: "vo"
         val season = url.queryParameter("s")?.toIntOrNull() ?: 1
         val animeData = database.first { titleToUrl(it.originalTitle) == stem }
-        val episodes = mutableListOf<SEpisode>()
-        animeData.seasons[season - 1].episodes.forEachIndexed { index, episode ->
-            val players = (if (language == "vo") episode.languages.vo else episode.languages.vf).players
-            if (players.isNotEmpty()) {
-                episodes += SEpisode.create().apply {
+        val episodes = animeData.seasons[season - 1].episodes
+            .mapIndexedNotNull { index, episode ->
+                val players = when (language) {
+                    "vo" -> episode.languages.vo
+                    else -> episode.languages.vf
+                }.players
+
+                if (players.isEmpty()) return@mapIndexedNotNull null
+
+                SEpisode.create().apply {
                     setUrlWithoutDomain(anime.url + "&ep=${index + 1}")
                     name = episode.title
                     episode_number = index.toFloat()
                 }
             }
-        }
         return Observable.just(episodes.sortedByDescending { it.episode_number })
     }
 
@@ -149,15 +142,22 @@ class FrAnime : AnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private fun titleToUrl(title: String): String = Regex("[^A-Za-z0-9 ]").replace(title, "").replace(" ", "-").lowercase()
+    private fun pagesToAnimesPage(pages: List<Anime>, page: Int): Observable<AnimesPage> {
+        val chunks = pages.chunked(50)
+        val hasNextPage = chunks.size > page
+        val entries = pageToSAnimes(chunks.getOrNull(page - 1) ?: emptyList())
+        return Observable.just(AnimesPage(entries, hasNextPage))
+    }
 
-    private fun pageToSAnimes(page: List<Anime>?): List<SAnime> {
-        val entries = mutableListOf<SAnime>()
-        page?.forEach {
-            for ((index, season) in it.seasons.withIndex()) {
-                val seasonTitle = it.title + if (it.seasons.size > 1) " S${index + 1}" else ""
-                val hasVostfr = season.episodes.fold(false) { v, e -> v or e.languages.vo.players.isNotEmpty() }
-                val hasVf = season.episodes.fold(false) { v, e -> v or e.languages.vf.players.isNotEmpty() }
+    private val titleRegex by lazy { Regex("[^A-Za-z0-9 ]") }
+    private fun titleToUrl(title: String) = titleRegex.replace(title, "").replace(" ", "-").lowercase()
+
+    private fun pageToSAnimes(page: List<Anime>): List<SAnime> {
+        return page.flatMap { anime ->
+            anime.seasons.flatMapIndexed { index, season ->
+                val seasonTitle = anime.title + if (anime.seasons.size > 1) " S${index + 1}" else ""
+                val hasVostfr = season.episodes.any { ep -> ep.languages.vo.players.isNotEmpty() }
+                val hasVf = season.episodes.any { ep -> ep.languages.vf.players.isNotEmpty() }
 
                 // I want to die for writing this
                 val languages = listOfNotNull(
@@ -165,20 +165,19 @@ class FrAnime : AnimeHttpSource() {
                     if (hasVf) Triple("VF", "vf", hasVostfr) else null,
                 )
 
-                languages.forEach { lang ->
-                    entries += SAnime.create().apply {
+                languages.map { lang ->
+                    SAnime.create().apply {
                         title = seasonTitle + if (lang.third) " (${lang.first})" else ""
-                        thumbnail_url = it.poster
-                        genre = it.genres.joinToString()
-                        status = parseStatus(it.status, it.seasons.size, index + 1)
-                        description = it.description
-                        setUrlWithoutDomain("/anime/${titleToUrl(it.originalTitle)}?lang=${lang.second}&s=${index + 1}")
+                        thumbnail_url = anime.poster
+                        genre = anime.genres.joinToString()
+                        status = parseStatus(anime.status, anime.seasons.size, index + 1)
+                        description = anime.description
+                        setUrlWithoutDomain("/anime/${titleToUrl(anime.originalTitle)}?lang=${lang.second}&s=${index + 1}")
                         initialized = true
                     }
                 }
             }
         }
-        return entries
     }
 
     private fun parseStatus(statusString: String?, seasonCount: Int = 1, season: Int = 1): Int {
