@@ -31,7 +31,7 @@ class AsianLoad : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AsianLoad"
 
-    override val baseUrl = "https://asianhdplay.pro"
+    override val baseUrl = "https://asianhd1.com"
 
     override val lang = "en"
 
