@@ -1229,10 +1229,10 @@
   {
     "name": "Aniyomi: AsianLoad",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.asianload",
-    "apk": "aniyomi-en.asianload-v13.33.apk",
+    "apk": "aniyomi-en.asianload-v13.34.apk",
     "lang": "en",
-    "code": 33,
-    "version": "13.33",
+    "code": 34,
+    "version": "13.34",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1241,7 +1241,7 @@
         "name": "AsianLoad",
         "lang": "en",
         "id": "2063258341485460293",
-        "baseUrl": "https://asianhdplay.pro",
+        "baseUrl": "https://asianhd1.com",
         "versionId": 1,
         "hasCloudflare": 1
       }
