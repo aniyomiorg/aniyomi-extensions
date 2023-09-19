@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.ar.witanime
 
 import android.app.Application
+import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.witanime.extractors.SharedExtractor
@@ -34,7 +35,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "WIT ANIME"
 
-    override val baseUrl = "https://witanime.live"
+    override val baseUrl = "https://witanime.fun"
 
     override val lang = "ar"
 
@@ -116,7 +117,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListSelector() = "div.ehover6 > div.episodes-card-title > h3 a"
 
     override fun episodeFromElement(element: Element) = SEpisode.create().apply {
-        setUrlWithoutDomain(element.attr("href"))
+        setUrlWithoutDomain(element.getEncodedUrl())
         name = element.text()
         episode_number = name.substringAfterLast(" ").toFloatOrNull() ?: 0F
     }
@@ -127,7 +128,7 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return document.select("ul#episode-servers li a")
             .distinctBy { it.text().substringBefore(" -") } // remove duplicates by server name
             .parallelMap {
-                val url = it.attr("data-ep-url")
+                val url = it.getEncodedUrl()
                 runCatching { extractVideos(url) }.getOrElse { emptyList() }
             }.flatten()
     }
@@ -223,6 +224,11 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             client.newCall(GET(it.attr("href"), headers)).execute().asJsoup()
         } ?: document
     }
+
+    private fun Element.getEncodedUrl() = attr("onclick")
+        .substringAfter("'")
+        .substringBefore("'")
+        .let { String(Base64.decode(it, Base64.DEFAULT)) }
 
     companion object {
         // From TukTukCinema(AR)
