@@ -620,10 +620,10 @@
   {
     "name": "Aniyomi: WIT ANIME",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.witanime",
-    "apk": "aniyomi-ar.witanime-v13.43.apk",
+    "apk": "aniyomi-ar.witanime-v13.44.apk",
     "lang": "ar",
-    "code": 43,
-    "version": "13.43",
+    "code": 44,
+    "version": "13.44",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -632,7 +632,7 @@
         "name": "WIT ANIME",
         "lang": "ar",
         "id": "8940958730943730988",
-        "baseUrl": "https://witanime.live",
+        "baseUrl": "https://witanime.fun",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -2718,10 +2718,10 @@
   {
     "name": "Aniyomi: FrAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.fr.franime",
-    "apk": "aniyomi-fr.franime-v13.7.apk",
+    "apk": "aniyomi-fr.franime-v13.8.apk",
     "lang": "fr",
-    "code": 7,
-    "version": "13.7",
+    "code": 8,
+    "version": "13.8",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
