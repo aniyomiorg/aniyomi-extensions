@@ -39,8 +39,18 @@ class GoogleDriveExtractor(private val client: OkHttpClient, private val headers
             add("Cookie", getCookie(itemUrl))
         }
 
-        val document = client.newCall(GET(itemUrl, itemHeaders)).execute()
-            .use { it.asJsoup() }
+        val documentResp = noRedirectClient.newCall(
+            GET(itemUrl, itemHeaders)
+        ).execute()
+
+        if (documentResp.isRedirect) {
+            val newUrl = documentResp.use { it.headers["location"] }
+                ?: return listOf(Video(itemUrl, videoName, itemUrl, itemHeaders))
+
+            return videoFromRedirect(newUrl, itemUrl, videoName)
+        }
+
+        val document = documentResp.use { it.asJsoup() }
 
         val itemSize = document.selectFirst("span.uc-name-size")
             ?.let { " ${it.ownText().trim()} " }
@@ -59,6 +69,15 @@ class GoogleDriveExtractor(private val client: OkHttpClient, private val headers
         val redirected = response.use { it.headers["location"] }
             ?: return listOf(Video(url, videoName + itemSize, url))
 
+        return videoFromRedirect(redirected, url, videoName, itemSize)
+    }
+
+    private fun videoFromRedirect(
+        redirected: String,
+        fallbackUrl: String,
+        videoName: String,
+        itemSize: String = ""
+    ): List<Video> {
         val redirectedHeaders = headersBuilder {
             set("Host", redirected.toHttpUrl().host)
         }
@@ -69,7 +88,7 @@ class GoogleDriveExtractor(private val client: OkHttpClient, private val headers
 
         val authCookie = redirectedResponseHeaders.firstOrNull {
             it.first == "set-cookie" && it.second.startsWith("AUTH_")
-        }?.second?.substringBefore(";") ?: return listOf(Video(url, videoName + itemSize, url))
+        }?.second?.substringBefore(";") ?: return listOf(Video(fallbackUrl, videoName + itemSize, fallbackUrl))
 
         val newRedirected = redirectedResponseHeaders["location"]
             ?: return listOf(Video(redirected, videoName + itemSize, redirected))
