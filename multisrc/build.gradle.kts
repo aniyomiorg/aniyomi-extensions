@@ -38,8 +38,22 @@ tasks {
     register<JavaExec>("generateExtensions") {
         classpath = configurations.compileOnly.get() +
             configurations.androidApis.get() + // android.jar path
-            files("$buildDir/intermediates/aar_main_jar/debug/classes.jar") // jar made from this module
+            layout.buildDirectory.files("intermediates/aar_main_jar/debug/classes.jar") // jar made from this module
+
+        // Default generator class, generates extensions for all themes.
         mainClass.set("generator.GeneratorMainKt")
+
+        // Only generate extensions from a specified theme.
+        if (project.hasProperty("theme")) {
+            val theme = project.property("theme")
+            val themeDir = file("src/main/java/eu/kanade/tachiyomi/multisrc/$theme")
+            if (themeDir.isDirectory) {
+                val className = themeDir.list()!!
+                    .first { it.endsWith("Generator.kt") }
+                    .removeSuffix(".kt")
+                mainClass.set("eu.kanade.tachiyomi.multisrc.$theme.$className")
+            }
+        }
 
         workingDir = workingDir.parentFile // project root
 
