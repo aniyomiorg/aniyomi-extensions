@@ -303,6 +303,27 @@
     ]
   },
   {
+    "name": "Aniyomi: NetFlix Mirror",
+    "pkg": "eu.kanade.tachiyomi.animeextension.all.netflixmirror",
+    "apk": "aniyomi-all.netflixmirror-v13.1.apk",
+    "lang": "all",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "NetFlix Mirror",
+        "lang": "all",
+        "id": "6022529718636522228",
+        "baseUrl": "https://m.netflixmirror.com",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: أكوام",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.akwam",
     "apk": "aniyomi-ar.akwam-v13.8.apk",
@@ -1334,10 +1355,10 @@
   {
     "name": "Aniyomi: DopeBox",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.dopebox",
-    "apk": "aniyomi-en.dopebox-v13.20.apk",
+    "apk": "aniyomi-en.dopebox-v13.21.apk",
     "lang": "en",
-    "code": 20,
-    "version": "13.20",
+    "code": 21,
+    "version": "13.21",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1397,10 +1418,10 @@
   {
     "name": "Aniyomi: FMovies",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.fmovies",
-    "apk": "aniyomi-en.fmovies-v13.7.apk",
+    "apk": "aniyomi-en.fmovies-v13.8.apk",
     "lang": "en",
-    "code": 7,
-    "version": "13.7",
+    "code": 8,
+    "version": "13.8",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1920,12 +1941,33 @@
     ]
   },
   {
+    "name": "Aniyomi: Seez",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.seez",
+    "apk": "aniyomi-en.seez-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Seez",
+        "lang": "en",
+        "id": "6154521416469165967",
+        "baseUrl": "https://seez.su",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: SFlix",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.sflix",
-    "apk": "aniyomi-en.sflix-v13.19.apk",
+    "apk": "aniyomi-en.sflix-v13.20.apk",
     "lang": "en",
-    "code": 19,
-    "version": "13.19",
+    "code": 20,
+    "version": "13.20",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
