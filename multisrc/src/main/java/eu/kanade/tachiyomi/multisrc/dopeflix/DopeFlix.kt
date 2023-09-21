@@ -21,6 +21,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import okhttp3.Headers
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -94,13 +95,13 @@ abstract class DopeFlix(
             val fixedQuery = query.replace(" ", "-")
             "$baseUrl/search/$fixedQuery?page=$page"
         } else {
-            "$baseUrl/filter?".toHttpUrl().newBuilder()
+            "$baseUrl/filter".toHttpUrl().newBuilder()
                 .addQueryParameter("page", page.toString())
                 .addQueryParameter("type", params.type)
                 .addQueryParameter("quality", params.quality)
                 .addQueryParameter("release_year", params.releaseYear)
-                .addQueryParameter("genre", params.genres)
-                .addQueryParameter("country", params.countries)
+                .addIfNotBlank("genre", params.genres)
+                .addIfNotBlank("country", params.countries)
                 .build()
                 .toString()
         }
@@ -345,6 +346,13 @@ abstract class DopeFlix(
         runBlocking {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
+
+    private fun HttpUrl.Builder.addIfNotBlank(query: String, value: String): HttpUrl.Builder {
+        if (value.isNotBlank()) {
+            addQueryParameter(query, value)
+        }
+        return this
+    }
 
     companion object {
         private const val PREF_DOMAIN_KEY = "preferred_domain_new"
