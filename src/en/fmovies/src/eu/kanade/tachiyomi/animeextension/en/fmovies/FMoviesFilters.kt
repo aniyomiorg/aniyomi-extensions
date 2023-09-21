@@ -288,6 +288,7 @@ object FMoviesFilters {
         )
 
         val SORT = arrayOf(
+            Pair("Most relevance", "most_relevance"),
             Pair("Recently updated", "recently_updated"),
             Pair("Recently added", "recently_added"),
             Pair("Release date", "release_date"),

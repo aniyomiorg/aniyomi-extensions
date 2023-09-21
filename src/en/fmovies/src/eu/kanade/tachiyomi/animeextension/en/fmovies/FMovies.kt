@@ -216,50 +216,43 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             response.parseAs<AjaxResponse>().result,
         )
         val hosterSelection = preferences.getStringSet(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
-        val videoList = mutableListOf<Video>()
 
-        videoList.addAll(
-            document.select("ul.servers > li.server").parallelMap { server ->
-                runCatching {
-                    val name = server.text().trim()
-                    if (!hosterSelection.contains(name)) return@runCatching null
+        return document.select("ul.servers > li.server").parallelMap { server ->
+            runCatching {
+                val name = server.text().trim()
+                if (!hosterSelection.contains(name)) return@runCatching emptyList()
 
-                    // Get decrypted url
-                    val vrf = vrfHelper.getVrf(server.attr("data-link-id"))
+                // Get decrypted url
+                val vrf = vrfHelper.getVrf(server.attr("data-link-id"))
 
-                    val vrfHeaders = headers.newBuilder()
-                        .add("Accept", "application/json, text/javascript, */*; q=0.01")
-                        .add("Host", baseUrl.toHttpUrl().host)
-                        .add("Referer", data.url)
-                        .add("X-Requested-With", "XMLHttpRequest")
-                        .build()
-                    val encrypted = client.newCall(
-                        GET("$baseUrl/ajax/server/${server.attr("data-link-id")}?vrf=$vrf", headers = vrfHeaders),
-                    ).execute().parseAs<AjaxServerResponse>().result.url
+                val vrfHeaders = headers.newBuilder()
+                    .add("Accept", "application/json, text/javascript, */*; q=0.01")
+                    .add("Host", baseUrl.toHttpUrl().host)
+                    .add("Referer", data.url)
+                    .add("X-Requested-With", "XMLHttpRequest")
+                    .build()
+                val encrypted = client.newCall(
+                    GET("$baseUrl/ajax/server/${server.attr("data-link-id")}?vrf=$vrf", headers = vrfHeaders),
+                ).execute().parseAs<AjaxServerResponse>().result.url
 
-                    val decrypted = vrfHelper.decrypt(encrypted)
+                val decrypted = vrfHelper.decrypt(encrypted)
 
-                    when (name) {
-                        "Vidplay", "MyCloud" -> vidsrcExtractor.videosFromUrl(decrypted, name)
-                        "Filemoon" -> filemoonExtractor.videosFromUrl(decrypted, headers = headers)
-                        "Streamtape" -> {
-                            val subtitleList = decrypted.toHttpUrl().queryParameter("sub.info")?.let {
-                                client.newCall(GET(it, headers)).execute().parseAs<List<FMoviesSubs>>().map { t ->
-                                    Track(t.file, t.label)
-                                }
-                            } ?: emptyList()
+                when (name) {
+                    "Vidplay", "MyCloud" -> vidsrcExtractor.videosFromUrl(decrypted, name)
+                    "Filemoon" -> filemoonExtractor.videosFromUrl(decrypted, headers = headers)
+                    "Streamtape" -> {
+                        val subtitleList = decrypted.toHttpUrl().queryParameter("sub.info")?.let {
+                            client.newCall(GET(it, headers)).execute().parseAs<List<FMoviesSubs>>().map { t ->
+                                Track(t.file, t.label)
+                            }
+                        } ?: emptyList()
 
-                            streamtapeExtractor.videoFromUrl(decrypted, subtitleList = subtitleList)?.let(::listOf) ?: emptyList()
-                        }
-                        else -> null
+                        streamtapeExtractor.videoFromUrl(decrypted, subtitleList = subtitleList)?.let(::listOf) ?: emptyList()
                     }
-                }.getOrNull()
-            }.filterNotNull().flatten(),
-        )
-
-        require(videoList.isNotEmpty()) { "Failed to fetch videos" }
-
-        return videoList.sort()
+                    else -> emptyList()
+                }
+            }.getOrElse { emptyList() }
+        }.flatten().ifEmpty { throw Exception("Failed to fetch videos") }
     }
 
     override fun videoListSelector() = throw Exception("not used")
