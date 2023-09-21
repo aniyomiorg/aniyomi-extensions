@@ -3,10 +3,10 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlinx-serialization'
 
 ext {
-    extName = '9anime'
+    extName = 'Aniwave'
     pkgNameSuffix = 'en.nineanime'
-    extClass = '.NineAnime'
-    extVersionCode = 48
+    extClass = '.Aniwave'
+    extVersionCode = 49
     libVersion = '13'
 }
 
