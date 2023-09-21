@@ -46,7 +46,7 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AnimeOwl"
 
-    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://animeowl.net")!! }
+    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://anime-owl.net")!! }
 
     override val lang = "en"
 
