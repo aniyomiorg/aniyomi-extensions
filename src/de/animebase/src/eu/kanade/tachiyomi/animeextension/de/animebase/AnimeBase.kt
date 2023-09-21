@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.de.animebase
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -35,17 +34,13 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
     override fun popularAnimeSelector(): String = "div.table-responsive a"
 
-    override fun popularAnimeRequest(page: Int): Request {
-        val cookieInterceptor = client.newBuilder().addInterceptor(CookieInterceptor(baseUrl)).build()
-        val headers = cookieInterceptor.newCall(GET(baseUrl)).execute().request.headers
-        return GET("$baseUrl/favorites", headers = headers)
-    }
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/favorites", headers)
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -162,11 +157,9 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeSelector(): String = "div.col-lg-9.col-md-8 div.box-body a"
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val cookieInterceptor = client.newBuilder().addInterceptor(CookieInterceptor(baseUrl)).build()
-        val headers = cookieInterceptor.newCall(GET(baseUrl)).execute().request.headers
-        val token = client.newCall(GET("$baseUrl/searching", headers = headers)).execute().asJsoup()
+        val token = client.newCall(GET("$baseUrl/searching", headers)).execute().asJsoup()
             .select("div.box-body form input[name=\"_token\"]").attr("value")
-        return POST("$baseUrl/searching", headers = headers, body = "_token=$token&_token=$token&name_serie=$query&jahr=".toRequestBody("application/x-www-form-urlencoded".toMediaType()))
+        return POST("$baseUrl/searching", headers, body = "_token=$token&_token=$token&name_serie=$query&jahr=".toRequestBody("application/x-www-form-urlencoded".toMediaType()))
     }
 
     // Details
