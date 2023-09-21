@@ -3,7 +3,7 @@ package eu.kanade.tachiyomi.animeextension.en.nineanime
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 
-object NineAnimeFilters {
+object AniwaveFilters {
     open class QueryPartFilter(
         displayName: String,
         val vals: Array<Pair<String, String>>,
