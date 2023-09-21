@@ -12,10 +12,9 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -142,13 +141,9 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        if (!element.text().contains("PainterCrowe")) {
-            anime.setUrlWithoutDomain(element.attr("href"))
-            anime.thumbnail_url = element.select("div.thumbnail img").attr("src")
-            anime.title = element.select("div.caption h3").text()
-        } else {
-            throw Exception("Keine Ergebnisse gefunden")
-        }
+        anime.setUrlWithoutDomain(element.attr("href"))
+        anime.thumbnail_url = element.select("div.thumbnail img").attr("src")
+        anime.title = element.select("div.caption h3").text()
         return anime
     }
 
@@ -156,10 +151,20 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun searchAnimeSelector(): String = "div.col-lg-9.col-md-8 div.box-body a"
 
+    private val searchToken by lazy {
+        client.newCall(GET("$baseUrl/searching", headers)).execute()
+            .use { it.asJsoup() }
+            .selectFirst("form > input[name=_token]")!!
+            .attr("value")
+    }
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val token = client.newCall(GET("$baseUrl/searching", headers)).execute().asJsoup()
-            .select("div.box-body form input[name=\"_token\"]").attr("value")
-        return POST("$baseUrl/searching", headers, body = "_token=$token&_token=$token&name_serie=$query&jahr=".toRequestBody("application/x-www-form-urlencoded".toMediaType()))
+        val body = FormBody.Builder()
+            .add("_token", searchToken)
+            .add("_token", searchToken)
+            .add("name_serie", query)
+            .add("jahr", "")
+            .build()
+        return POST("$baseUrl/searching", headers, body)
     }
 
     // Details
