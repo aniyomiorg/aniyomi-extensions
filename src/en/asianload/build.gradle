@@ -7,7 +7,7 @@ ext {
     extName = 'AsianLoad'
     pkgNameSuffix = 'en.asianload'
     extClass = '.AsianLoad'
-    extVersionCode = 34
+    extVersionCode = 35
     libVersion = '13'
 }
 

@@ -12,8 +12,8 @@ class DooPlayGenerator : ThemeSourceGenerator {
 
     override val sources = listOf(
         SingleLang("AnimeOnline360", "https://animeonline360.me", "en", isNsfw = false),
-        SingleLang("AnimeOnline.Ninja", "https://ww3.animeonline.ninja", "es", className = "AnimeOnlineNinja", isNsfw = false, overrideVersionCode = 31),
-        SingleLang("AnimesOnline", "https://animesonline.nz", "pt-BR", isNsfw = false, overrideVersionCode = 3, pkgName = "animesgratis"),
+        SingleLang("AnimeOnline.Ninja", "https://ww3.animeonline.ninja", "es", className = "AnimeOnlineNinja", isNsfw = false, overrideVersionCode = 32),
+        SingleLang("AnimesOnline", "https://animesonline.nz", "pt-BR", isNsfw = false, overrideVersionCode = 4, pkgName = "animesgratis"),
         SingleLang("AnimePlayer", "https://animeplayer.com.br", "pt-BR", isNsfw = true, overrideVersionCode = 1),
         SingleLang("AnimePlayer", "https://animeplayer.com.br", "pt-BR", isNsfw = true),
         SingleLang("AnimeSync", "https://animesync.org", "pt-BR", isNsfw = true),
