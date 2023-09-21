@@ -39,7 +39,7 @@ class FMoviesHelper(private val client: OkHttpClient, private val headers: Heade
 
     fun getVidSrc(query: String, host: String): String {
         val url = API_URL.newBuilder().apply {
-            addPathSegment("rawVizcloud")
+            addPathSegment(if (host == "vidstream.pro") "rawVizcloud" else "rawMcloud")
             addQueryParameter("apikey", API_KEY)
         }.build().toString()
 
@@ -52,13 +52,9 @@ class FMoviesHelper(private val client: OkHttpClient, private val headers: Heade
             add("futoken", futoken)
         }.build()
 
-        val rawURL = client.newCall(
+        return client.newCall(
             POST(url, body = body),
         ).execute().parseAs<RawResponse>().rawURL
-
-        return rawURL.toHttpUrl().newBuilder().apply {
-            host(host)
-        }.build().toString()
     }
 
     companion object {
