@@ -1794,21 +1794,21 @@
     ]
   },
   {
-    "name": "Aniyomi: 9anime",
+    "name": "Aniyomi: Aniwave",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.nineanime",
-    "apk": "aniyomi-en.nineanime-v13.48.apk",
+    "apk": "aniyomi-en.nineanime-v13.49.apk",
     "lang": "en",
-    "code": 48,
-    "version": "13.48",
+    "code": 49,
+    "version": "13.49",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
     "sources": [
       {
-        "name": "9anime",
+        "name": "Aniwave",
         "lang": "en",
         "id": "98855593379717478",
-        "baseUrl": "https://9anime.to",
+        "baseUrl": "https://aniwave.to",
         "versionId": 1,
         "hasCloudflare": 1
       }
