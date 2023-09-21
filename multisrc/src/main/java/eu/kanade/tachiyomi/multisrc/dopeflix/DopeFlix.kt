@@ -12,6 +12,7 @@ import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.multisrc.dopeflix.dto.VideoDto
 import eu.kanade.tachiyomi.multisrc.dopeflix.extractors.DopeFlixExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -21,6 +22,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import okhttp3.Headers
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -94,13 +96,13 @@ abstract class DopeFlix(
             val fixedQuery = query.replace(" ", "-")
             "$baseUrl/search/$fixedQuery?page=$page"
         } else {
-            "$baseUrl/filter?".toHttpUrl().newBuilder()
+            "$baseUrl/filter".toHttpUrl().newBuilder()
                 .addQueryParameter("page", page.toString())
                 .addQueryParameter("type", params.type)
                 .addQueryParameter("quality", params.quality)
                 .addQueryParameter("release_year", params.releaseYear)
-                .addQueryParameter("genre", params.genres)
-                .addQueryParameter("country", params.countries)
+                .addIfNotBlank("genre", params.genres)
+                .addIfNotBlank("country", params.countries)
                 .build()
                 .toString()
         }
@@ -183,6 +185,7 @@ abstract class DopeFlix(
 
     // ============================ Video Links =============================
     private val extractor by lazy { DopeFlixExtractor(client) }
+    private val playlistUtils by lazy { PlaylistUtils(client, headers) }
 
     override fun videoListParse(response: Response): List<Video> {
         val doc = response.asJsoup()
@@ -213,23 +216,17 @@ abstract class DopeFlix(
 
     private fun getVideosFromServer(video: VideoDto, name: String): List<Video> {
         val masterUrl = video.sources.first().file
-        val subs2 = video.tracks
+        val subs = video.tracks
             ?.filter { it.kind == "captions" }
             ?.mapNotNull { Track(it.file, it.label) }
+            ?.let(::subLangOrder)
             ?: emptyList<Track>()
-        val subs = subLangOrder(subs2)
         if (masterUrl.contains("playlist.m3u8")) {
-            val prefix = "#EXT-X-STREAM-INF:"
-            val playlist = client.newCall(GET(masterUrl)).execute()
-                .use { it.body.string() }
-            return playlist.substringAfter(prefix).split(prefix).map {
-                val quality = "$name - " + it.substringAfter("RESOLUTION=")
-                    .substringAfter("x")
-                    .substringBefore("\n")
-                    .substringBefore(",") + "p"
-                val videoUrl = it.substringAfter("\n").substringBefore("\n")
-                Video(videoUrl, quality, videoUrl, subtitleTracks = subs)
-            }
+            return playlistUtils.extractFromHls(
+                masterUrl,
+                videoNameGen = { "$name - $it" },
+                subtitleList = subs,
+            )
         }
 
         return listOf(
@@ -239,8 +236,13 @@ abstract class DopeFlix(
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+
         return sortedWith(
-            compareBy { it.quality.contains(quality) },
+            compareBy(
+                { it.quality.contains(quality) }, // preferred quality first
+                // then group by quality
+                { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
+            ),
         ).reversed()
     }
 
@@ -345,6 +347,13 @@ abstract class DopeFlix(
         runBlocking {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
+
+    private fun HttpUrl.Builder.addIfNotBlank(query: String, value: String): HttpUrl.Builder {
+        if (value.isNotBlank()) {
+            addQueryParameter(query, value)
+        }
+        return this
+    }
 
     companion object {
         private const val PREF_DOMAIN_KEY = "preferred_domain_new"
