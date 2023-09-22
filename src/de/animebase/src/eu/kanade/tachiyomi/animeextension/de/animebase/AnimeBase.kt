@@ -9,9 +9,15 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
+import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -129,8 +135,53 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
-    override fun videoListParse(response: Response) =
-        throw Exception("This source only uses StreamSB as video hoster, and StreamSB is down.")
+    private val hosterSettings by lazy {
+        mapOf(
+            "Streamwish" to "https://streamwish.to/e/",
+            "Voe.SX" to "https://voe.sx/e/",
+        )
+    }
+
+    override fun videoListParse(response: Response): List<Video> {
+        val doc = response.use { it.asJsoup() }
+        val selector = response.request.url.queryParameter("selector")
+            ?: return emptyList()
+
+        return doc.select("$selector div.panel-body > button").toList()
+            .filter { it.text() in hosterSettings.keys }
+            .parallelMap {
+                runCatching {
+                    val language = when (it.attr("data-dubbed")) {
+                        "0" -> "SUB"
+                        else -> "DUB"
+                    }
+
+                    getVideosFromHoster(it.text(), it.attr("data-streamlink"))
+                        .map { video ->
+                            Video(
+                                video.url,
+                                "$language ${video.quality}",
+                                video.videoUrl,
+                                video.headers,
+                                video.subtitleTracks,
+                                video.audioTracks,
+                            )
+                        }
+                }.getOrElse { emptyList() }
+            }.flatten().ifEmpty { throw Exception("No videos xDDDDDD") }
+    }
+
+    private val streamWishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val voeExtractor by lazy { VoeExtractor(client) }
+
+    private fun getVideosFromHoster(hoster: String, urlpart: String): List<Video> {
+        val url = hosterSettings.get(hoster)!! + urlpart
+        return when (hoster) {
+            "Streamwish" -> streamWishExtractor.videosFromUrl(url)
+            "Voe.SX" -> voeExtractor.videoFromUrl(url)?.let(::listOf)
+            else -> null
+        } ?: emptyList()
+    }
 
     override fun List<Video>.sort(): List<Video> {
         val lang = preferences.getString(PREF_LANG_KEY, PREF_LANG_DEFAULT)!!
@@ -164,6 +215,12 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }.also(screen::addPreference)
     }
+
+    // ============================= Utilities ==============================
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 
     companion object {
         private const val PREF_LANG_KEY = "preferred_sub"
