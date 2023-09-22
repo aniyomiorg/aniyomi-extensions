@@ -1,20 +1,22 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
+}
 
 ext {
     extName = 'Aniwave'
     pkgNameSuffix = 'en.nineanime'
     extClass = '.Aniwave'
-    extVersionCode = 49
+    extVersionCode = 50
     libVersion = '13'
 }
 
 dependencies {
     implementation(project(':lib-filemoon-extractor'))
     implementation(project(':lib-mp4upload-extractor'))
-    implementation (project(':lib-streamtape-extractor'))
-    implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
+    implementation(project(':lib-streamtape-extractor'))
+    implementation(project(':lib-playlist-utils'))
 }
 
 apply from: "$rootDir/common.gradle"
