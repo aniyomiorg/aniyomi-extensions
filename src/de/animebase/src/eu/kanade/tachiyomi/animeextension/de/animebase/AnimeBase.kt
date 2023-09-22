@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.animeextension.de.animebase
 import android.app.Application
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.de.animebase.extractors.UnpackerExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -151,6 +152,8 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         mapOf(
             "Streamwish" to "https://streamwish.to/e/",
             "Voe.SX" to "https://voe.sx/e/",
+            "Lulustream" to "https://lulustream.com/e/",
+            "VTube" to "https://vtbe.to/embed-",
         )
     }
 
@@ -185,12 +188,14 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val streamWishExtractor by lazy { StreamWishExtractor(client, headers) }
     private val voeExtractor by lazy { VoeExtractor(client) }
+    private val unpackerExtractor by lazy { UnpackerExtractor(client, headers) }
 
     private fun getVideosFromHoster(hoster: String, urlpart: String): List<Video> {
         val url = hosterSettings.get(hoster)!! + urlpart
         return when (hoster) {
             "Streamwish" -> streamWishExtractor.videosFromUrl(url)
             "Voe.SX" -> voeExtractor.videoFromUrl(url)?.let(::listOf)
+            "VTube", "Lulustream" -> unpackerExtractor.videosFromUrl(url, hoster)
             else -> null
         } ?: emptyList()
     }
