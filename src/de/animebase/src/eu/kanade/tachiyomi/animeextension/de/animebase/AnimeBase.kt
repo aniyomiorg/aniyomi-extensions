@@ -37,21 +37,84 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun popularAnimeSelector(): String = "div.table-responsive a"
+    // ============================== Popular ===============================
+    override fun popularAnimeSelector() = "div.table-responsive a"
 
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/favorites", headers)
 
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.attr("href"))
-        anime.thumbnail_url = element.select("div.thumbnail img").attr("src")
-        anime.title = element.select("div.thumbnail div.caption h3").text()
-        return anime
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.attr("href").replace("/link/", "/anime/"))
+        thumbnail_url = element.selectFirst("div.thumbnail img")?.absUrl("src")
+        title = element.selectFirst("div.caption h3")!!.text()
     }
 
-    override fun popularAnimeNextPageSelector(): String? = null
+    override fun popularAnimeNextPageSelector() = null
 
-    // episodes
+    // =============================== Latest ===============================
+    override fun latestUpdatesNextPageSelector() = throw Exception("Not used")
+
+    override fun latestUpdatesFromElement(element: Element) = throw Exception("Not used")
+
+    override fun latestUpdatesRequest(page: Int) = throw Exception("Not used")
+
+    override fun latestUpdatesSelector() = throw Exception("Not used")
+
+    // =============================== Search ===============================
+    private val searchToken by lazy {
+        client.newCall(GET("$baseUrl/searching", headers)).execute()
+            .use { it.asJsoup() }
+            .selectFirst("form > input[name=_token]")!!
+            .attr("value")
+    }
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val body = FormBody.Builder()
+            .add("_token", searchToken)
+            .add("_token", searchToken)
+            .add("name_serie", query)
+            .add("jahr", "")
+            .build()
+        return POST("$baseUrl/searching", headers, body)
+    }
+
+    override fun searchAnimeSelector(): String = "div.col-lg-9.col-md-8 div.box-body a"
+
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
+
+    override fun searchAnimeNextPageSelector() = null
+
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        setUrlWithoutDomain(document.location())
+
+        val boxBody = document.selectFirst("div.box-body.box-profile > center")!!
+        title = boxBody.selectFirst("h3")!!.text()
+        thumbnail_url = boxBody.selectFirst("img")!!.absUrl("src")
+
+        val infosDiv = document.selectFirst("div.box-body > div.col-md-9")!!
+        status = parseStatus(infosDiv.getInfo("Status"))
+        genre = infosDiv.select("strong:contains(Genre) + p > a").eachText()
+            .joinToString()
+            .takeIf(String::isNotBlank)
+
+        description = buildString {
+            infosDiv.getInfo("Beschreibung")?.also(::append)
+
+            infosDiv.getInfo("Originalname")?.also { append("\nOriginal name: $it") }
+            infosDiv.getInfo("Erscheinungsjahr")?.also { append("\nErscheinungsjahr: $it") }
+        }
+    }
+
+    private fun parseStatus(status: String?) = when (status?.orEmpty()) {
+        "Laufend" -> SAnime.ONGOING
+        "Abgeschlossen" -> SAnime.COMPLETED
+        else -> SAnime.UNKNOWN
+    }
+
+    private fun Element.getInfo(selector: String) =
+        selectFirst("strong:contains($selector) + p")?.text()?.trim()
+
+    // ============================== Episodes ==============================
     override fun episodeListParse(response: Response) =
         super.episodeListParse(response).reversed()
 
@@ -64,27 +127,17 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val selectorClass = element.classNames().first { it.startsWith("episode-div") }
         setUrlWithoutDomain(element.baseUri() + "?selector=div.panel.$selectorClass")
     }
-    // Video Extractor
 
+    // ============================ Video Links =============================
     override fun videoListParse(response: Response) =
         throw Exception("This source only uses StreamSB as video hoster, and StreamSB is down.")
 
     override fun List<Video>.sort(): List<Video> {
-        val hoster = preferences.getString("preferred_sub", null)
-        if (hoster != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality.contains(hoster)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
+        val lang = preferences.getString(PREF_LANG_KEY, PREF_LANG_DEFAULT)!!
+
+        return sortedWith(
+            compareBy { it.quality.contains(lang) },
+        ).reversed()
     }
 
     override fun videoListSelector() = throw Exception("not used")
@@ -93,74 +146,14 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoUrlParse(document: Document) = throw Exception("not used")
 
-    // Search
-
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.attr("href"))
-        anime.thumbnail_url = element.select("div.thumbnail img").attr("src")
-        anime.title = element.select("div.caption h3").text()
-        return anime
-    }
-
-    override fun searchAnimeNextPageSelector(): String? = null
-
-    override fun searchAnimeSelector(): String = "div.col-lg-9.col-md-8 div.box-body a"
-
-    private val searchToken by lazy {
-        client.newCall(GET("$baseUrl/searching", headers)).execute()
-            .use { it.asJsoup() }
-            .selectFirst("form > input[name=_token]")!!
-            .attr("value")
-    }
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val body = FormBody.Builder()
-            .add("_token", searchToken)
-            .add("_token", searchToken)
-            .add("name_serie", query)
-            .add("jahr", "")
-            .build()
-        return POST("$baseUrl/searching", headers, body)
-    }
-
-    // Details
-
-    override fun animeDetailsParse(document: Document): SAnime {
-        val anime = SAnime.create()
-        anime.thumbnail_url = document.select("div.box-body.box-profile center img").attr("src")
-        anime.title = document.select("section.content-header small").text()
-        anime.genre = document.select("div.box-body p a span").joinToString(", ") { it.text() }
-        anime.description = document.select("div.box-body p.text-muted[style=\"text-align: justify;\"]").toString()
-            .substringAfter(";\">").substringBefore("<br")
-        anime.status = parseStatus(document.select("div.box-body span.label.label-info").text())
-        return anime
-    }
-
-    private fun parseStatus(status: String?) = when {
-        status == null -> SAnime.UNKNOWN
-        status.contains("Laufend", ignoreCase = true) -> SAnime.ONGOING
-        else -> SAnime.COMPLETED
-    }
-
-    // Latest
-
-    override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
-
-    override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
-
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
-
-    override fun latestUpdatesSelector(): String = throw Exception("Not used")
-
-    // Preferences
-
+    // =============================== Search ===============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val subPref = ListPreference(screen.context).apply {
-            key = "preferred_sub"
-            title = "Standardmäßig Sub oder Dub?"
-            entries = arrayOf("Sub", "Dub")
-            entryValues = arrayOf("SUB", "DUB")
-            setDefaultValue("SUB")
+        ListPreference(screen.context).apply {
+            key = PREF_LANG_KEY
+            title = PREF_LANG_TITLE
+            entries = PREF_LANG_ENTRIES
+            entryValues = PREF_LANG_VALUES
+            setDefaultValue(PREF_LANG_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -169,7 +162,14 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(subPref)
+        }.also(screen::addPreference)
+    }
+
+    companion object {
+        private const val PREF_LANG_KEY = "preferred_sub"
+        private const val PREF_LANG_TITLE = "Standardmäßig Sub oder Dub?"
+        private const val PREF_LANG_DEFAULT = "SUB"
+        private val PREF_LANG_ENTRIES = arrayOf("Sub", "Dub")
+        private val PREF_LANG_VALUES = arrayOf("SUB", "DUB")
     }
 }
