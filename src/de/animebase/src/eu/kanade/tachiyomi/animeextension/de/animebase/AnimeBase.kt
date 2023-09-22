@@ -122,13 +122,25 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response) =
-        super.episodeListParse(response).reversed()
+        super.episodeListParse(response).sortedWith(
+            compareBy(
+                { it.name.startsWith("Film ") },
+                { it.name.startsWith("Special ") },
+                { it.episode_number },
+            ),
+        ).reversed()
 
     override fun episodeListSelector() = "div.tab-content > div > div.panel"
 
     override fun episodeFromElement(element: Element) = SEpisode.create().apply {
         val epname = element.selectFirst("h3")?.text() ?: "Episode 1"
+        val language = when (element.selectFirst("button")?.attr("data-dubbed").orEmpty()) {
+            "0" -> "Subbed"
+            else -> "Dubbed"
+        }
+
         name = epname
+        scanlator = language
         episode_number = epname.substringBefore(":").substringAfter(" ").toFloatOrNull() ?: 0F
         val selectorClass = element.classNames().first { it.startsWith("episode-div") }
         setUrlWithoutDomain(element.baseUri() + "?selector=div.panel.$selectorClass")
