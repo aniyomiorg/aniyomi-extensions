@@ -24,7 +24,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
-import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -60,12 +59,13 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun headersBuilder() = super.headersBuilder()
-        .add("Referer", "$baseUrl/")
+    private val refererHeaders = headers.newBuilder().apply {
+        add("Referer", "$baseUrl/")
+    }.build()
 
     // ============================== Popular ===============================
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/filter?sort=trending&page=$page")
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/filter?sort=trending&page=$page", refererHeaders)
 
     override fun popularAnimeSelector(): String = "div.ani.items > div.item"
 
@@ -82,7 +82,7 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =============================== Latest ===============================
 
-    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/filter?sort=recently_updated&page=$page")
+    override fun latestUpdatesRequest(page: Int): Request = GET("$baseUrl/filter?sort=recently_updated&page=$page", refererHeaders)
 
     override fun latestUpdatesSelector(): String = popularAnimeSelector()
 
@@ -107,7 +107,7 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (filters.language.isNotBlank()) url += filters.language
         if (filters.rating.isNotBlank()) url += filters.rating
 
-        return GET("$url&sort=${filters.sort}&page=$page&$vrf", headers = headers)
+        return GET("$url&sort=${filters.sort}&page=$page&$vrf", refererHeaders)
     }
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
@@ -146,7 +146,14 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val id = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup()
             .selectFirst("div[data-id]")!!.attr("data-id")
         val vrf = utils.callEnimax(id, "vrf")
-        return GET("$baseUrl/ajax/episode/list/$id?$vrf#${anime.url}", headers)
+
+        val listHeaders = headers.newBuilder().apply {
+            add("Accept", "application/json, text/javascript, */*; q=0.01")
+            add("Referer", baseUrl + anime.url)
+            add("X-Requested-With", "XMLHttpRequest")
+        }.build()
+
+        return GET("$baseUrl/ajax/episode/list/$id?$vrf#${anime.url}", listHeaders)
     }
 
     override fun episodeListSelector() = "div.episodes ul > li > a"
@@ -197,7 +204,14 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val vrf = utils.callEnimax(ids, "vrf")
         val url = "/ajax/server/list/$ids?$vrf"
         val epurl = episode.url.substringAfter("epurl=")
-        return GET("$baseUrl$url#$epurl", headers)
+
+        val listHeaders = headers.newBuilder().apply {
+            add("Accept", "application/json, text/javascript, */*; q=0.01")
+            add("Referer", baseUrl + epurl)
+            add("X-Requested-With", "XMLHttpRequest")
+        }.build()
+
+        return GET("$baseUrl$url#$epurl", listHeaders)
     }
 
     data class VideoData(
@@ -244,9 +258,15 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun extractVideo(server: VideoData, epUrl: String): List<Video> {
         val vrf = utils.callEnimax(server.serverId, "rawVrf")
-        val referer = Headers.headersOf("referer", epUrl)
+
+        val listHeaders = headers.newBuilder().apply {
+            add("Accept", "application/json, text/javascript, */*; q=0.01")
+            add("Referer", baseUrl + epUrl)
+            add("X-Requested-With", "XMLHttpRequest")
+        }.build()
+
         val response = client.newCall(
-            GET("$baseUrl/ajax/server/${server.serverId}?$vrf", headers = referer),
+            GET("$baseUrl/ajax/server/${server.serverId}?$vrf", listHeaders),
         ).execute()
         if (response.code != 200) return emptyList()
 
