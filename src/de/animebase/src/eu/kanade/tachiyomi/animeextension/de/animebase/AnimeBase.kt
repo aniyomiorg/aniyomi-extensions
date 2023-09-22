@@ -52,62 +52,18 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector(): String? = null
 
     // episodes
+    override fun episodeListParse(response: Response) =
+        super.episodeListParse(response).reversed()
 
-    override fun episodeListSelector() = throw Exception("not used")
+    override fun episodeListSelector() = "div.tab-content > div > div.panel"
 
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.asJsoup()
-        val episodeList = mutableListOf<SEpisode>()
-        val episodeElement = document.select(
-            "div.tab-content #gersub div.panel, div.tab-content #filme div.panel button[${
-                if (document.select("div.tab-content #filme div.panel button[data-dubbed=\"0\"]").isNullOrEmpty()) {
-                    "data-dubbed=\"1\""
-                } else {
-                    "data-dubbed=\"0\""
-                }
-            }][data-hoster=\"1\"], div.tab-content #specials div.panel button[data-dubbed=\"0\"][data-hoster=\"1\"]",
-        )
-        episodeElement.forEach {
-            val episode = episodeFromElement(it)
-            episodeList.add(episode)
-        }
-        return episodeList.reversed()
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        val epname = element.selectFirst("h3")?.text() ?: "Episode 1"
+        name = epname
+        episode_number = epname.substringBefore(":").substringAfter(" ").toFloatOrNull() ?: 0F
+        val selectorClass = element.classNames().first { it.startsWith("episode-div") }
+        setUrlWithoutDomain(element.baseUri() + "?selector=div.panel.$selectorClass")
     }
-
-    override fun episodeFromElement(element: Element): SEpisode {
-        val episode = SEpisode.create()
-        val id = element.select("button[data-hoster=\"1\"]").attr("data-serieid")
-        val epnum = element.select("button[data-hoster=\"1\"]").attr("data-folge")
-        val host = element.select("button[data-hoster=\"1\"]").attr("data-hoster")
-        if (element.attr("data-dubbed").contains("1")) {
-            if (element.attr("data-special").contains("2")) {
-                episode.episode_number = 1F
-                episode.name = "Film $epnum"
-                episode.setUrlWithoutDomain("/episode/$id/$epnum/1/$host/2")
-            }
-        } else {
-            if (element.select("button[data-hoster=\"1\"]").attr("data-special").contains("2")) {
-                episode.episode_number = 1F
-                episode.name = "Film ${epnum.toInt() - 1}"
-                episode.setUrlWithoutDomain("/episode/$id/$epnum/0/$host/2")
-            } else {
-                val season = element.select("button[data-hoster=\"1\"]").attr("data-embedcontainer")
-                    .substringAfter("-").substringBefore("-")
-                episode.name = "Staffel $season Folge $epnum : " + element.select("h3.panel-title").text()
-                    .substringAfter(": ")
-                    .replace("<span title=\"", "").replace("<span class=\"label label-danger\">Filler!</span>", "").replace("&nbsp;", "")
-                episode.episode_number = element.select("button[data-hoster=\"1\"]").attr("data-folge").toFloat()
-                episode.setUrlWithoutDomain("/episode/$id/$epnum/0/$host/0")
-            }
-            if (element.select("button[data-hoster=\"1\"]").attr("data-special").contains("1")) {
-                episode.episode_number = 1F
-                episode.name = "Special ${epnum.toInt() - 1}"
-                episode.setUrlWithoutDomain("/episode/$id/$epnum/0/$host/1")
-            }
-        }
-        return episode
-    }
-
     // Video Extractor
 
     override fun videoListParse(response: Response) =
