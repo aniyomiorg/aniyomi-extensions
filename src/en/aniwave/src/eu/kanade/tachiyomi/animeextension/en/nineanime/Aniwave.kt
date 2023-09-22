@@ -2,47 +2,39 @@ package eu.kanade.tachiyomi.animeextension.en.nineanime
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.widget.Toast
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
+import eu.kanade.tachiyomi.animeextension.en.nineanime.extractors.VidsrcExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
-import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
-import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.POST
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import okhttp3.FormBody
 import okhttp3.Headers
-import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -50,8 +42,9 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val id: Long = 98855593379717478
 
-    override val baseUrl
-        get() = preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!!
+    override val baseUrl by lazy {
+        preferences.getString(PREF_DOMAIN_KEY, PREF_DOMAIN_DEFAULT)!!
+    }
 
     override val lang = "en"
 
@@ -60,6 +53,8 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override val client: OkHttpClient = network.cloudflareClient
 
     private val json: Json by injectLazy()
+
+    private val utils by lazy { AniwaveUtils(client, headers) }
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -75,17 +70,15 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeSelector(): String = "div.ani.items > div.item"
 
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
-        setUrlWithoutDomain(
-            element.select("a.name")
-                .attr("href")
-                .substringBefore("?"),
-        )
+        element.select("a.name").let { a ->
+            setUrlWithoutDomain(a.attr("href").substringBefore("?"))
+            title = a.text()
+        }
         thumbnail_url = element.select("div.poster img").attr("src")
-        title = element.select("a.name").text()
     }
 
     override fun popularAnimeNextPageSelector(): String =
-        "nav > ul.pagination > li > a[rel=next]" // TODO The last 2 pages will be ignored, need to override fetchPopular to fix
+        "nav > ul.pagination > li.active ~ li"
 
     // =============================== Latest ===============================
 
@@ -99,20 +92,10 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // =============================== Search ===============================
 
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        val params = AniwaveFilters.getSearchParameters(filters)
-        return client.newCall(searchAnimeRequest(page, query, params))
-            .asObservableSuccess()
-            .map { response ->
-                searchAnimeParse(response)
-            }
-    }
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val filters = AniwaveFilters.getSearchParameters(filters)
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request =
-        throw Exception("Not used")
-
-    private fun searchAnimeRequest(page: Int, query: String, filters: AniwaveFilters.FilterSearchParams): Request {
-        val vrf = if (query.isNotBlank()) callEnimax(query, "vrf") else ""
+        val vrf = if (query.isNotBlank()) utils.callEnimax(query, "vrf") else ""
         var url = "$baseUrl/filter?keyword=$query"
 
         if (filters.genre.isNotBlank()) url += filters.genre
@@ -124,10 +107,7 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (filters.language.isNotBlank()) url += filters.language
         if (filters.rating.isNotBlank()) url += filters.rating
 
-        return GET(
-            "$url&sort=${filters.sort}&page=$page&$vrf",
-            headers = Headers.headersOf("Referer", "$baseUrl/"),
-        )
+        return GET("$url&sort=${filters.sort}&page=$page&$vrf", headers = headers)
     }
 
     override fun searchAnimeSelector(): String = popularAnimeSelector()
@@ -165,19 +145,16 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeListRequest(anime: SAnime): Request {
         val id = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup()
             .selectFirst("div[data-id]")!!.attr("data-id")
-        val vrf = callEnimax(id, "vrf")
-        return GET(
-            "$baseUrl/ajax/episode/list/$id?$vrf",
-            headers = Headers.headersOf("url", anime.url),
-        )
+        val vrf = utils.callEnimax(id, "vrf")
+        return GET("$baseUrl/ajax/episode/list/$id?$vrf#${anime.url}", headers)
     }
 
     override fun episodeListSelector() = "div.episodes ul > li > a"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val animeUrl = response.request.header("url").toString()
-        val responseObject = json.decodeFromString<JsonObject>(response.body.string())
-        val document = Jsoup.parse(JSONUtil.unescape(responseObject["result"]!!.jsonPrimitive.content))
+        val animeUrl = response.request.url.fragment!!
+        val document = response.parseAs<ResultResponse>().toDocument()
+
         val episodeElements = document.select(episodeListSelector())
         return episodeElements.parallelMap { episodeFromElements(it, animeUrl) }.reversed()
     }
@@ -185,10 +162,14 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("not Used")
 
     private fun episodeFromElements(element: Element, url: String): SEpisode {
+        val title = element.parent()?.attr("title") ?: ""
+
         val epNum = element.attr("data-num")
         val ids = element.attr("data-ids")
-        val sub = element.attr("data-sub").toInt().toBoolean()
-        val dub = element.attr("data-dub").toInt().toBoolean()
+        val sub = if (element.attr("data-sub").toInt().toBoolean()) "Sub" else ""
+        val dub = if (element.attr("data-dub").toInt().toBoolean()) "Dub" else ""
+        val softSub = if (SOFTSUB_REGEX.find(title) != null) "SoftSub" else ""
+
         val extraInfo = if (element.hasClass("filler") && preferences.getBoolean(PREF_MARK_FILLERS_KEY, PREF_MARK_FILLERS_DEFAULT)) {
             " • Filler Episode"
         } else {
@@ -202,7 +183,10 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 if (name.isNotEmpty() && name != namePrefix) ": $name" else ""
             this.url = "$ids&epurl=$url/ep-$epNum"
             episode_number = epNum.toFloat()
-            scanlator = ((if (sub) "Sub" else "") + if (dub) ", Dub" else "") + extraInfo
+            date_upload = RELEASE_REGEX.find(title)?.let {
+                parseDate(it.groupValues[1])
+            } ?: 0L
+            scanlator = arrayOf(sub, softSub, dub).filter(String::isNotBlank).joinToString(", ") + extraInfo
         }
     }
 
@@ -210,25 +194,33 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListRequest(episode: SEpisode): Request {
         val ids = episode.url.substringBefore("&")
-        val vrf = callEnimax(ids, "vrf")
+        val vrf = utils.callEnimax(ids, "vrf")
         val url = "/ajax/server/list/$ids?$vrf"
         val epurl = episode.url.substringAfter("epurl=")
-        return GET(baseUrl + url, headers = Headers.headersOf("url", epurl))
+        return GET("$baseUrl$url#$epurl", headers)
     }
 
+    data class VideoData(
+        val type: String,
+        val serverId: String,
+        val serverName: String,
+    )
+
     override fun videoListParse(response: Response): List<Video> {
-        val epurl = response.request.header("url").toString()
-        val responseObject = json.decodeFromString<JsonObject>(response.body.string())
-        val document = Jsoup.parse(JSONUtil.unescape(responseObject["result"]!!.jsonPrimitive.content))
+        val epurl = response.request.url.fragment!!
+        val document = response.parseAs<ResultResponse>().toDocument()
         val hosterSelection = preferences.getStringSet(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
+        val typeSelection = preferences.getStringSet(PREF_TYPE_TOGGLE_KEY, PREF_TYPES_TOGGLE_DEFAULT)!!
 
         return document.select("div.servers > div").parallelMap { elem ->
             val type = elem.attr("data-type").replaceFirstChar { it.uppercase() }
             elem.select("li").mapNotNull { serverElement ->
                 val serverId = serverElement.attr("data-link-id")
                 val serverName = serverElement.text().lowercase()
-                if (hosterSelection.contains(serverName).not()) return@mapNotNull null
-                Triple(type, serverId, serverName)
+                if (hosterSelection.contains(serverName, true).not()) return@mapNotNull null
+                if (typeSelection.contains(type, true).not()) return@mapNotNull null
+
+                VideoData(type, serverId, serverName)
             }
         }
             .flatten()
@@ -245,132 +237,53 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================= Utilities ==============================
 
-    private fun extractVideo(server: Triple<String, String, String>, epUrl: String): List<Video> {
-        val vrf = callEnimax(server.second, "rawVrf")
+    private val vidsrcExtractor by lazy { VidsrcExtractor(client, headers) }
+    private val filemoonExtractor by lazy { FilemoonExtractor(client) }
+    private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
+
+    private fun extractVideo(server: VideoData, epUrl: String): List<Video> {
+        val vrf = utils.callEnimax(server.serverId, "rawVrf")
         val referer = Headers.headersOf("referer", epUrl)
         val response = client.newCall(
-            GET("$baseUrl/ajax/server/${server.second}?$vrf", headers = referer),
+            GET("$baseUrl/ajax/server/${server.serverId}?$vrf", headers = referer),
         ).execute()
         if (response.code != 200) return emptyList()
-        val videoList = mutableListOf<Video>()
-        runCatching {
-            val parsed = json.decodeFromString<ServerResponse>(response.body.string())
-            val embedLink = callEnimax(parsed.result.url, "decrypt")
-            when (server.third) {
-                "vidplay", "mycloud" -> {
-                    val vidId = embedLink.substringAfterLast("/").substringBefore("?")
-                    val (serverName, action) = when (server.third) {
-                        "vidplay" -> Pair("VidPlay", "rawVizcloud")
-                        "mycloud" -> Pair("MyCloud", "rawMcloud")
-                        else -> return emptyList()
-                    }
-                    val rawURL = callEnimax(vidId, action) + "?${embedLink.substringAfter("?")}"
-                    val rawReferer = Headers.headersOf(
-                        "referer",
-                        "$embedLink&autostart=true",
-                        "x-requested-with",
-                        "XMLHttpRequest",
-                    )
-                    val rawResponse = client.newCall(GET(rawURL, rawReferer)).execute().parseAs<MediaResponseBody>()
-                    val playlistUrl = rawResponse.result.sources.first().file
-                        .replace("#.mp4", "")
-                    val embedReferer = Headers.headersOf(
-                        "referer",
-                        "https://${embedLink.toHttpUrl().host}/",
-                    )
-                    client.newCall(GET(playlistUrl, embedReferer)).execute().use {
-                        parseVizPlaylist(
-                            it.body.string(),
-                            it.request.url,
-                            "$serverName - ${server.first}",
-                            embedReferer,
-                            rawResponse.result.tracks,
-                        )
-                    }.also(videoList::addAll)
-                }
-                "filemoon" -> FilemoonExtractor(client)
-                    .videosFromUrl(embedLink, "Filemoon - ${server.first}")
-                    .also(videoList::addAll)
 
-                "streamtape" -> StreamTapeExtractor(client)
-                    .videoFromUrl(embedLink, "StreamTape - ${server.first}")
-                    ?.let(videoList::add)
-                "mp4upload" -> Mp4uploadExtractor(client)
-                    .videosFromUrl(embedLink, headers, suffix = " - ${server.first}")
-                    .let(videoList::addAll)
-                else -> null
+        return runCatching {
+            val parsed = response.parseAs<ServerResponse>()
+            val embedLink = utils.callEnimax(parsed.result.url, "decrypt")
+            when (server.serverName) {
+                "vidplay", "mycloud" -> vidsrcExtractor.videosFromUrl(embedLink, server.serverName, server.type)
+                "filemoon" -> filemoonExtractor.videosFromUrl(embedLink, "Filemoon - ${server.type}")
+                "streamtape" -> streamtapeExtractor.videoFromUrl(embedLink, "StreamTape - ${server.type}")?.let(::listOf) ?: emptyList()
+                "mp4upload" -> mp4uploadExtractor.videosFromUrl(embedLink, headers, suffix = " - ${server.type}")
+                else -> emptyList()
             }
-        }
-        return videoList
-    }
-
-    private fun parseVizPlaylist(
-        masterPlaylist: String,
-        masterUrl: HttpUrl,
-        prefix: String,
-        embedReferer: Headers,
-        subTracks: List<MediaResponseBody.Result.SubTrack> = emptyList(),
-    ): List<Video> {
-        val playlistHeaders = embedReferer.newBuilder()
-            .add("host", masterUrl.host)
-            .add("connection", "keep-alive")
-            .build()
-
-        return masterPlaylist.substringAfter("#EXT-X-STREAM-INF:")
-            .split("#EXT-X-STREAM-INF:").map {
-                val quality = "$prefix " + it.substringAfter("RESOLUTION=")
-                    .substringAfter("x").substringBefore("\n") + "p"
-                val videoUrl = masterUrl.toString().substringBeforeLast("/") + "/" +
-                    it.substringAfter("\n").substringBefore("\n")
-                Video(videoUrl, quality, videoUrl, playlistHeaders, subtitleTracks = subTracks.toTracks())
-            }
-    }
-
-    private fun callEnimax(query: String, action: String): String {
-        return if (action in listOf("rawVizcloud", "rawMcloud")) {
-            val referer = if (action == "rawVizcloud") "https://vidstream.pro/" else "https://mcloud.to/"
-            val futoken = client.newCall(
-                GET(referer + "futoken", headers),
-            ).execute().use { it.body.string() }
-            val formBody = FormBody.Builder()
-                .add("query", query)
-                .add("futoken", futoken)
-                .build()
-            client.newCall(
-                POST(
-                    url = "https://9anime.eltik.net/$action?apikey=aniyomi",
-                    body = formBody,
-                ),
-            ).execute().parseAs<RawResponse>().rawURL
-        } else {
-            client.newCall(
-                GET("https://9anime.eltik.net/$action?query=$query&apikey=aniyomi"),
-            ).execute().use {
-                val body = it.body.string()
-                when (action) {
-                    "decrypt" -> {
-                        json.decodeFromString<VrfResponse>(body).url
-                    }
-                    else -> {
-                        json.decodeFromString<VrfResponse>(body).let { vrf ->
-                            "${vrf.vrfQuery}=${java.net.URLEncoder.encode(vrf.url, "utf-8")}"
-                        }
-                    }
-                }
-            }
-        }
+        }.getOrElse { emptyList() }
     }
 
     private fun Int.toBoolean() = this == 1
 
+    private fun Set<String>.contains(s: String, ignoreCase: Boolean): Boolean {
+        return any { it.equals(s, ignoreCase) }
+    }
+
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
         val lang = preferences.getString(PREF_LANG_KEY, PREF_LANG_DEFAULT)!!
+        val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
 
         return this.sortedWith(
             compareByDescending<Video> { it.quality.contains(quality) }
+                .thenByDescending { it.quality.contains(server, true) }
                 .thenByDescending { it.quality.contains(lang) },
         )
+    }
+
+    private fun parseDate(dateStr: String): Long {
+        return runCatching { DATE_FORMATTER.parse(dateStr)?.time }
+            .getOrNull() ?: 0L
     }
 
     private fun parseStatus(statusString: String): Int {
@@ -390,66 +303,14 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return json.decodeFromString(responseBody)
     }
 
-    private fun List<MediaResponseBody.Result.SubTrack>.toTracks(): List<Track> {
-        return filter {
-            it.kind == "captions"
-        }.mapNotNull {
-            runCatching {
-                Track(
-                    it.file,
-                    it.label,
-                )
-            }.getOrNull()
-        }
-    }
-
-    @Serializable
-    data class ServerResponse(
-        val result: Result,
-    ) {
-
-        @Serializable
-        data class Result(
-            val url: String,
-        )
-    }
-
-    @Serializable
-    data class VrfResponse(
-        val url: String,
-        val vrfQuery: String? = null,
-    )
-
-    @Serializable
-    data class RawResponse(
-        val rawURL: String,
-    )
-
-    @Serializable
-    data class MediaResponseBody(
-        val status: Int,
-        val result: Result,
-    ) {
-        @Serializable
-        data class Result(
-            val sources: ArrayList<Source>,
-            val tracks: ArrayList<SubTrack> = ArrayList(),
-        ) {
-            @Serializable
-            data class Source(
-                val file: String,
-            )
-
-            @Serializable
-            data class SubTrack(
-                val file: String,
-                val label: String = "",
-                val kind: String,
-            )
-        }
-    }
-
     companion object {
+        private val SOFTSUB_REGEX by lazy { Regex("""\bsoftsub\b""", RegexOption.IGNORE_CASE) }
+        private val RELEASE_REGEX by lazy { Regex("""Release: (\d+\/\d+\/\d+ \d+:\d+)""") }
+
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("yyyy/MM/dd HH:mm", Locale.ENGLISH)
+        }
+
         private const val PREF_DOMAIN_KEY = "preferred_domain"
         private const val PREF_DOMAIN_DEFAULT = "https://aniwave.to"
 
@@ -458,6 +319,9 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         private const val PREF_LANG_KEY = "preferred_language"
         private const val PREF_LANG_DEFAULT = "Sub"
+
+        private const val PREF_SERVER_KEY = "preferred_server"
+        private const val PREF_SERVER_DEFAULT = "vidplay"
 
         private const val PREF_MARK_FILLERS_KEY = "mark_fillers"
         private const val PREF_MARK_FILLERS_DEFAULT = true
@@ -478,6 +342,10 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "mp4upload",
         )
         private val PREF_HOSTER_DEFAULT = HOSTERS_NAMES.toSet()
+
+        private const val PREF_TYPE_TOGGLE_KEY = "type_selection"
+        private val TYPES = arrayOf("Sub", "Softsub", "Dub")
+        private val PREF_TYPES_TOGGLE_DEFAULT = TYPES.toSet()
     }
 
     // ============================== Settings ==============================
@@ -495,6 +363,7 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val selected = newValue as String
                 val index = findIndexOfValue(selected)
                 val entry = entryValues[index] as String
+                Toast.makeText(screen.context, "Restart Aniyomi to apply changes", Toast.LENGTH_LONG).show()
                 preferences.edit().putString(key, entry).commit()
             }
         }.also(screen::addPreference)
@@ -517,10 +386,26 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         ListPreference(screen.context).apply {
             key = PREF_LANG_KEY
-            title = "Preferred language"
-            entries = arrayOf("Sub", "Dub")
-            entryValues = arrayOf("Sub", "Dub")
+            title = "Preferred Type"
+            entries = TYPES
+            entryValues = TYPES
             setDefaultValue(PREF_LANG_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_SERVER_KEY
+            title = "Preferred Server"
+            entries = HOSTERS
+            entryValues = HOSTERS_NAMES
+            setDefaultValue(PREF_SERVER_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -546,6 +431,19 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             entries = HOSTERS
             entryValues = HOSTERS_NAMES
             setDefaultValue(PREF_HOSTER_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                @Suppress("UNCHECKED_CAST")
+                preferences.edit().putStringSet(key, newValue as Set<String>).commit()
+            }
+        }.also(screen::addPreference)
+
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_TYPE_TOGGLE_KEY
+            title = "Enable/Disable Types"
+            entries = TYPES
+            entryValues = TYPES
+            setDefaultValue(PREF_TYPES_TOGGLE_DEFAULT)
 
             setOnPreferenceChangeListener { _, newValue ->
                 @Suppress("UNCHECKED_CAST")
