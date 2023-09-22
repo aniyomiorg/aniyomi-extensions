@@ -1,13 +1,21 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
 
 ext {
     extName = 'Anime-Base'
     pkgNameSuffix = 'de.animebase'
     extClass = '.AnimeBase'
-    extVersionCode = 13
+    extVersionCode = 14
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(":lib-voe-extractor"))
+    implementation(project(":lib-streamwish-extractor"))
+    implementation(project(":lib-playlist-utils"))
+    implementation("dev.datlag.jsunpacker:jsunpacker:1.0.1")
 }
 
 apply from: "$rootDir/common.gradle"
