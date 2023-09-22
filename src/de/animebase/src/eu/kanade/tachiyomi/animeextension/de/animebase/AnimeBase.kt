@@ -36,7 +36,7 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "de"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
 
@@ -45,9 +45,9 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Popular ===============================
-    override fun popularAnimeSelector() = "div.table-responsive a"
-
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/favorites", headers)
+
+    override fun popularAnimeSelector() = "div.table-responsive > a"
 
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href").replace("/link/", "/anime/"))
@@ -58,13 +58,13 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector() = null
 
     // =============================== Latest ===============================
-    override fun latestUpdatesNextPageSelector() = throw Exception("Not used")
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/updates", headers)
 
-    override fun latestUpdatesFromElement(element: Element) = throw Exception("Not used")
+    override fun latestUpdatesSelector() = "div.box-header + div.box-body > a"
 
-    override fun latestUpdatesRequest(page: Int) = throw Exception("Not used")
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun latestUpdatesSelector() = throw Exception("Not used")
+    override fun latestUpdatesNextPageSelector() = null
 
     // =============================== Search ===============================
     private val searchToken by lazy {
