@@ -1,9 +1,10 @@
 package eu.kanade.tachiyomi.animeextension.en.oppaistream
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreferenceCompat
+import eu.kanade.tachiyomi.animeextension.en.oppaistream.dto.AnilistResponseDto
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter.TriState.Companion.STATE_EXCLUDE
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter.TriState.Companion.STATE_INCLUDE
@@ -17,21 +18,17 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.FormBody
-import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 
 class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
@@ -43,44 +40,43 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client = network.cloudflareClient
 
-    override fun headersBuilder(): Headers.Builder = super.headersBuilder()
-        .add("Referer", baseUrl)
+    override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    // popular
-    override fun popularAnimeRequest(page: Int): Request {
-        return searchAnimeRequest(page, "", AnimeFilterList(OrderByFilter("views")))
-    }
+    private val json: Json by injectLazy()
 
-    override fun popularAnimeSelector() = searchAnimeSelector()
-
-    override fun popularAnimeNextPageSelector() = searchAnimeNextPageSelector()
+    // ============================== Popular ===============================
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/$SEARCH_PATH?order=views&page=$page&limit=$SEARCH_LIMIT")
 
     override fun popularAnimeParse(response: Response) = searchAnimeParse(response)
 
+    override fun popularAnimeSelector() = searchAnimeSelector()
+
     override fun popularAnimeFromElement(element: Element) = searchAnimeFromElement(element)
 
-    // latest
-    override fun latestUpdatesRequest(page: Int): Request {
-        return searchAnimeRequest(page, "", AnimeFilterList(OrderByFilter("uploaded")))
-    }
+    override fun popularAnimeNextPageSelector() = null
 
-    override fun latestUpdatesSelector() = searchAnimeSelector()
-
-    override fun latestUpdatesNextPageSelector() = searchAnimeNextPageSelector()
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/$SEARCH_PATH?order=uploaded&page=$page&limit=$SEARCH_LIMIT")
 
     override fun latestUpdatesParse(response: Response) = searchAnimeParse(response)
 
+    override fun latestUpdatesSelector() = searchAnimeSelector()
+
     override fun latestUpdatesFromElement(element: Element) = searchAnimeFromElement(element)
 
-    // search
+    override fun latestUpdatesNextPageSelector() = null
+
+    // =============================== Search ===============================
+    override fun getFilterList() = FILTERS
+
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val url = "$baseUrl/actions/search.php".toHttpUrl().newBuilder().apply {
+        val url = "$baseUrl/$SEARCH_PATH".toHttpUrl().newBuilder().apply {
             addQueryParameter("text", query.trim())
             filters.forEach { filter ->
                 when (filter) {
@@ -96,8 +92,8 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
                                 STATE_EXCLUDE -> genresExclude.add(genreState.value)
                             }
                         }
-                        addQueryParameter("genres", genresInclude.joinToString(",") { it })
-                        addQueryParameter("blacklist", genresExclude.joinToString(",") { it })
+                        addQueryParameter("genres", genresInclude.joinToString(","))
+                        addQueryParameter("blacklist", genresExclude.joinToString(","))
                     }
                     is StudioListFilter -> {
                         addQueryParameter("studio", filter.state.filter { it.state }.joinToString(",") { it.value })
@@ -112,117 +108,53 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         return GET(url, headers)
     }
 
-    override fun searchAnimeSelector() = "div.episode-shown"
+    override fun searchAnimeSelector() = "div.episode-shown > div > a"
 
     override fun searchAnimeNextPageSelector() = null
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val document = response.asJsoup()
+        val document = response.use { it.asJsoup() }
         val elements = document.select(searchAnimeSelector())
 
-        val mangas = elements.map { element ->
-            searchAnimeFromElement(element)
-        }.distinctBy { it.title }
+        val anime = elements.map(::searchAnimeFromElement).distinctBy { it.title }
 
         val hasNextPage = elements.size >= SEARCH_LIMIT
 
-        return AnimesPage(mangas, hasNextPage)
+        return AnimesPage(anime, hasNextPage)
     }
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        return SAnime.create().apply {
-            thumbnail_url = element.select("img.cover-img-in").attr("abs:src")
-            title = element.select(".title-ep").text()
-                .replace(TITLE_CLEANUP_REGEX, "")
-            setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
-        }
+    override fun searchAnimeFromElement(element: Element) = SAnime.create().apply {
+        thumbnail_url = element.selectFirst("img.cover-img-in")?.attr("abs:src")
+        title = element.selectFirst(".title-ep")!!.text().replace(TITLE_CLEANUP_REGEX, "")
+        setUrlWithoutDomain(element.attr("href"))
     }
 
-    // Function to fetch thumbnail URL using AniList GraphQL API
-    // Only use in animeDetailsParse.
-    private fun fetchThumbnailUrlByTitle(title: String): Pair<String?, MutableList<String>>? {
-        val query = """
-            query {
-                Media(search: "$title", type: ANIME, isAdult: true) {
-                    coverImage {
-                        extraLarge
-                        large
-                    }
-                    studios {
-                        nodes {
-                            name
-                        }
-                    }
-                }
-            }
-        """.trimIndent()
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        // Fetch from from Anilist when "Anilist Cover" is selected in settings
+        val name = document.selectFirst("div.episode-info > h1")!!.text().substringBefore(" Ep ")
+        title = name
+        description = document.selectFirst("div.description")?.text()
+        genre = document.select("div.tags a").joinToString { it.text() }
+        val studios = document.select("div.episode-info a.red").eachText()
+        artist = studios.joinToString()
 
-        val requestBody = FormBody.Builder()
-            .add("query", query)
-            .build()
-
-        val request = POST("https://graphql.anilist.co", body = requestBody)
-
-        val response = client.newCall(request).execute()
-        val responseString = response.use { it.body.string() }
-
-        return parseThumbnailUrlFromResponse(responseString)
-    }
-
-    private fun parseThumbnailUrlFromResponse(responseString: String): Pair<String?, MutableList<String>>? {
-        val responseJson = Json.parseToJsonElement(responseString) as? JsonObject ?: return null
-        val data = responseJson["data"] as? JsonObject ?: return null
-        val media = data["Media"] as? JsonObject ?: return null
-        val coverImage = media["coverImage"] as? JsonObject ?: return null
-
-        val coverURL = when (preferences.getString(PREF_COVER_QUALITY, "large")) {
-            "extraLarge" -> coverImage["extraLarge"]?.jsonPrimitive?.content
-            "large" -> coverImage["large"]?.jsonPrimitive?.content
-            else -> null
-        }
-
-        val studiosList = mutableListOf<String>()
-        val studios = media["studios"]?.jsonObject?.get("nodes")?.jsonArray
-        studios?.forEach { studio ->
-            val name = studio.jsonObject["name"]?.jsonPrimitive?.content
-            if (!name.isNullOrEmpty()) {
-                studiosList.add(name)
-            }
-        }
-
-        return Pair(coverURL, studiosList)
-    }
-
-    override fun getFilterList() = FILTERS
-
-    // details
-    override fun animeDetailsParse(document: Document): SAnime {
-        return SAnime.create().apply {
-            // Fetch from from Anilist when "Anilist Cover" is selected in settings
-            val selectedCoverSource = preferences.getString(PREF_COVER_SOURCE, "Anilist-Cover")
-            val name = document.selectFirst("div.episode-info > h1")!!.text().substringBefore(" Ep ")
+        val useAnilistCover = preferences.getBoolean(PREF_ANILIST_COVER_KEY, PREF_ANILIST_COVER_DEFAULT)
+        val thumbnailUrl = if (useAnilistCover) {
             val newTitle = name.replace(Regex("[^a-zA-Z0-9\\s!.:\"]"), " ")
-            val thumbnailUrl = if (selectedCoverSource == "Anilist-Cover") {
-                fetchThumbnailUrlByTitle(newTitle)
-            } else {
-                null // Use default cover
-            }
-
-            title = name
-            description = document.selectFirst("div.description")?.text()
-            genre = document.select("div.tags a").joinToString { it.text() }
-            val studios = document.select("div.episode-info a.red").eachText()
-            artist = studios.joinToString()
-
-            // Match local studios with anilist studios to increase the accuracy of the poster
-            val matchedStudio = thumbnailUrl?.second?.find { it in studios }
-
-            thumbnail_url = matchedStudio?.let { thumbnailUrl.first }
-                ?: document.selectFirst("video#episode")?.attr("poster")
+            fetchThumbnailUrlByTitle(newTitle)
+        } else {
+            null // Use default cover (episode preview)
         }
+
+        // Match local studios with anilist studios to increase the accuracy of the poster
+        val matchedStudio = thumbnailUrl?.second?.find { it in studios }
+
+        thumbnail_url = matchedStudio?.let { thumbnailUrl.first }
+            ?: document.selectFirst("video#episode")?.attr("poster")
     }
 
-    // episodes
+    // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
         val doc = response.use { it.asJsoup() }
         return buildList {
@@ -252,6 +184,7 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         scanlator = element.selectFirst("h6 > a")?.text()
     }
 
+    // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
         val doc = response.use { it.asJsoup() }
         val script = doc.selectFirst("script:containsData(var availableres)")!!.data()
@@ -276,9 +209,9 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     override fun videoFromElement(element: Element) = throw Exception("Not used")
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(PREF_QUALITY, "720")!!
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 
-        return this.sortedWith(
+        return sortedWith(
             compareBy { it.quality.contains(quality) },
         ).reversed()
     }
@@ -287,54 +220,124 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         throw UnsupportedOperationException("Not used")
     }
 
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
-            key = PREF_QUALITY
+            key = PREF_QUALITY_KEY
             title = PREF_QUALITY_TITLE
-            entries = arrayOf("2160p", "1080p", "720p")
-            entryValues = arrayOf("2160", "1080", "720")
-            setDefaultValue("720")
+            entries = PREF_QUALITY_ENTRIES
+            entryValues = PREF_QUALITY_VALUES
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
-        }.let {
-            screen.addPreference(it)
-        }
 
-        // Add cover source preference
-        ListPreference(screen.context).apply {
-            key = PREF_COVER_SOURCE
-            title = PREF_COVER_SOURCE_TITLE
-            entries = arrayOf("Default Cover", "Anilist Cover")
-            entryValues = arrayOf("Default-Cover", "Anilist-Cover")
-            summary = "This feature is experimental. It uses a covers for Anilist. If you see the default cover after switching to AniList cover, try clearing the cache in Settings > Advanced > Clear Anime Database > Oppai Steam. It only fetch Anilist covers in anime details page."
-            setDefaultValue("Anilist-Cover")
-        }.let {
-            screen.addPreference(it)
-        }
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
 
-        // Add cover source preference
+        SwitchPreferenceCompat(screen.context).apply {
+            key = PREF_ANILIST_COVER_KEY
+            title = PREF_ANILIST_COVER_TITLE
+            summary = PREF_ANILIST_COVER_SUMMARY
+            setDefaultValue(PREF_ANILIST_COVER_DEFAULT)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val new = newValue as Boolean
+                preferences.edit().putBoolean(key, new).commit()
+            }
+        }.also(screen::addPreference)
+
         ListPreference(screen.context).apply {
-            key = PREF_COVER_QUALITY
+            key = PREF_COVER_QUALITY_KEY
             title = PREF_COVER_QUALITY_TITLE
-            entries = arrayOf("Extra Large", "Large")
-            entryValues = arrayOf("extraLarge", "large")
+            entries = PREF_COVER_QUALITY_ENTRIES
+            entryValues = PREF_COVER_QUALITY_VALUES
+            setDefaultValue(PREF_COVER_QUALITY_DEFAULT)
             summary = "%s"
-            setDefaultValue("large")
-        }.let {
-            screen.addPreference(it)
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+    }
+
+    // ============================= Utilities ==============================
+    private inline fun <reified T> Response.parseAs(): T {
+        return use { it.body.string() }.let(json::decodeFromString)
+    }
+
+    // Function to fetch thumbnail URL using AniList GraphQL API
+    // Only use in animeDetailsParse.
+    private fun fetchThumbnailUrlByTitle(title: String): Pair<String, List<String>>? {
+        val query = """
+            query {
+                Media(search: "$title", type: ANIME, isAdult: true) {
+                    coverImage {
+                        extraLarge
+                        large
+                    }
+                    studios {
+                        nodes {
+                            name
+                        }
+                    }
+                }
+            }
+        """.trimIndent()
+
+        val requestBody = FormBody.Builder()
+            .add("query", query)
+            .build()
+
+        val request = POST("https://graphql.anilist.co", body = requestBody)
+
+        val response = client.newCall(request).execute()
+
+        return parseThumbnailUrlFromObject(response.parseAs<AnilistResponseDto>())
+    }
+
+    private fun parseThumbnailUrlFromObject(obj: AnilistResponseDto): Pair<String, List<String>>? {
+        val media = obj.data.media ?: return null
+
+        val coverURL = when (preferences.getString(PREF_COVER_QUALITY_KEY, PREF_COVER_QUALITY_DEFAULT)) {
+            "extraLarge" -> media.coverImage.extraLarge
+            else -> media.coverImage.extraLarge
         }
+
+        val studiosList = media.studios.names
+
+        return Pair(coverURL, studiosList)
     }
 
     companion object {
+        private const val SEARCH_PATH = "actions/search.php"
         private const val SEARCH_LIMIT = 36
         private val TITLE_CLEANUP_REGEX = Regex("""\s+\d+$""")
 
-        private const val PREF_QUALITY = "preferred_quality"
+        private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "720p"
+        private val PREF_QUALITY_ENTRIES = arrayOf("2160p", "1080p", "720p")
+        private val PREF_QUALITY_VALUES = PREF_QUALITY_ENTRIES
 
-        private const val PREF_COVER_SOURCE = "preferred_cover_source"
-        private const val PREF_COVER_SOURCE_TITLE = "Preferred cover source - Beta"
+        private const val PREF_ANILIST_COVER_KEY = "preferred_anilist_cover"
+        private const val PREF_ANILIST_COVER_TITLE = "Use Anilist as cover source - Beta"
+        private const val PREF_ANILIST_COVER_DEFAULT = true
+        private const val PREF_ANILIST_COVER_SUMMARY = "This feature is experimental. " +
+            "It enables fetching covers from Anilist. If you see the default cover " +
+            "after switching to AniList cover, try clearing the cache in " +
+            "Settings > Advanced > Clear Anime Database > Oppai Steam. It only fetch Anilist covers in anime details page."
 
-        private const val PREF_COVER_QUALITY = "preferred_cover_quality"
-        private const val PREF_COVER_QUALITY_TITLE = "Preferred cover quality - Beta"
+        private const val PREF_COVER_QUALITY_KEY = "preferred_cover_quality"
+        private const val PREF_COVER_QUALITY_TITLE = "Preferred Anilist cover quality - Beta"
+        private const val PREF_COVER_QUALITY_DEFAULT = "large"
+        private val PREF_COVER_QUALITY_ENTRIES = arrayOf("Extra Large", "Large")
+        private val PREF_COVER_QUALITY_VALUES = arrayOf("extraLarge", "large")
     }
 }
