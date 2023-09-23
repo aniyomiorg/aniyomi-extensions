@@ -223,17 +223,33 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     // episodes
-    override fun episodeListSelector() = "div.ep-swap a"
-
     override fun episodeListParse(response: Response): List<SEpisode> {
-        return super.episodeListParse(response).reversed()
+        val doc = response.use { it.asJsoup() }
+        return buildList {
+            doc.select(episodeListSelector())
+                .map(::episodeFromElement)
+                .let(::addAll)
+
+            add(
+                SEpisode.create().apply {
+                    setUrlWithoutDomain(doc.location())
+                    val num = doc.selectFirst("div.episode-info > h1")!!.text().substringAfter(" Ep ")
+                    name = "Episode $num"
+                    episode_number = num.toFloatOrNull() ?: 1F
+                    scanlator = doc.selectFirst("div.episode-info a.red")?.text()
+                },
+            )
+        }.sortedByDescending { it.episode_number }
     }
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        return SEpisode.create().apply {
-            setUrlWithoutDomain(element.attr("href"))
-            name = "Episode " + element.text()
-        }
+    override fun episodeListSelector() = "div.more-same-eps > div > div > a"
+
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        val num = element.selectFirst("font.ep")?.text() ?: "1"
+        name = "Episode $num"
+        episode_number = num.toFloatOrNull() ?: 1F
+        scanlator = element.selectFirst("h6 > a")?.text()
     }
 
     override fun videoListSelector() = "#player source"
