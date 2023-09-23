@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.de.animebase.extractors.UnpackerExtractor
+import eu.kanade.tachiyomi.animeextension.de.animebase.extractors.VidGuardExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -154,6 +155,7 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "Voe.SX" to "https://voe.sx/e/",
             "Lulustream" to "https://lulustream.com/e/",
             "VTube" to "https://vtbe.to/embed-",
+            "VidGuard" to "https://vembed.net/e/",
         )
     }
 
@@ -182,13 +184,14 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                 video.audioTracks,
                             )
                         }
-                }.getOrElse { emptyList() }
+                }.onFailure { it.printStackTrace() }.getOrElse { emptyList() }
             }.flatten().ifEmpty { throw Exception("No videos xDDDDDD") }
     }
 
     private val streamWishExtractor by lazy { StreamWishExtractor(client, headers) }
     private val voeExtractor by lazy { VoeExtractor(client) }
     private val unpackerExtractor by lazy { UnpackerExtractor(client, headers) }
+    private val vidguardExtractor by lazy { VidGuardExtractor(client) }
 
     private fun getVideosFromHoster(hoster: String, urlpart: String): List<Video> {
         val url = hosterSettings.get(hoster)!! + urlpart
@@ -196,6 +199,7 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "Streamwish" -> streamWishExtractor.videosFromUrl(url)
             "Voe.SX" -> voeExtractor.videoFromUrl(url)?.let(::listOf)
             "VTube", "Lulustream" -> unpackerExtractor.videosFromUrl(url, hoster)
+            "VidGuard" -> vidguardExtractor.videosFromUrl(url)
             else -> null
         } ?: emptyList()
     }
