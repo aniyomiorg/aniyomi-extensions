@@ -9,6 +9,7 @@ ext {
     extClass = '.AnimeBase'
     extVersionCode = 15
     libVersion = '13'
+    containsNsfw = true
 }
 
 dependencies {
