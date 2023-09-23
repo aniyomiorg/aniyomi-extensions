@@ -57,7 +57,22 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
         val doc = getRealDoc(response.asJsoup())
-        return doc.select(episodeListSelector()).map(::episodeFromElement)
+        val pagination = doc.selectFirst("ul.content-pagination")
+        return if (pagination != null) {
+            val episodes = emptyList<SEpisode>().toMutableList()
+            episodes += doc.select(episodeListSelector()).map(::episodeFromElement)
+            val lastPage = doc.selectFirst("ul.content-pagination > li:nth-last-child(2) > span")!!.text().toInt()
+            for (i in 2..lastPage) {
+                val request = Request.Builder()
+                    .url(response.request.url.toString() + "/page/$i")
+                    .addHeader("Referer", baseUrl)
+                    .build()
+                val res = client.newCall(request).execute()
+                val pageDoc = getRealDoc(res.asJsoup())
+                episodes += pageDoc.select(episodeListSelector()).map(::episodeFromElement)
+            }
+            episodes
+        } else doc.select(episodeListSelector()).map(::episodeFromElement)
     }
 
     override fun episodeFromElement(element: Element) = SEpisode.create().apply {
