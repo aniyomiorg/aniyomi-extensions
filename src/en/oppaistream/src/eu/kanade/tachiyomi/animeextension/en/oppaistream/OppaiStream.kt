@@ -134,7 +134,7 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         // Fetch from from Anilist when "Anilist Cover" is selected in settings
         val name = document.selectFirst("div.episode-info > h1")!!.text().substringBefore(" Ep ")
         title = name
-        description = document.selectFirst("div.description")?.text()
+        description = document.selectFirst("div.description")?.text()?.substringBeforeLast(" Watch ")
         genre = document.select("div.tags a").joinToString { it.text() }
         val studios = document.select("div.episode-info a.red").eachText()
         artist = studios.joinToString()
