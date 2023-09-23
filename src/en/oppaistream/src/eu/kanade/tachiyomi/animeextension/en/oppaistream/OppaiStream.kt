@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -140,8 +141,6 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
     // Function to fetch thumbnail URL using AniList GraphQL API
     // Only use in animeDetailsParse.
     private fun fetchThumbnailUrlByTitle(title: String): Pair<String?, MutableList<String>>? {
-        val client = OkHttpClient()
-
         val query = """
             query {
                 Media(search: "$title", type: ANIME, isAdult: true) {
@@ -162,19 +161,16 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             .add("query", query)
             .build()
 
-        val request = Request.Builder()
-            .url("https://graphql.anilist.co")
-            .post(requestBody)
-            .build()
+        val request = POST("https://graphql.anilist.co", body = requestBody)
 
         val response = client.newCall(request).execute()
-        val responseString = response.body?.string()
+        val responseString = response.use { it.body.string() }
 
         return parseThumbnailUrlFromResponse(responseString)
     }
 
-    private fun parseThumbnailUrlFromResponse(responseString: String?): Pair<String?, MutableList<String>>? {
-        val responseJson = Json.parseToJsonElement(responseString ?: "") as? JsonObject ?: return null
+    private fun parseThumbnailUrlFromResponse(responseString: String): Pair<String?, MutableList<String>>? {
+        val responseJson = Json.parseToJsonElement(responseString) as? JsonObject ?: return null
         val data = responseJson["data"] as? JsonObject ?: return null
         val media = data["Media"] as? JsonObject ?: return null
         val coverImage = media["coverImage"] as? JsonObject ?: return null
@@ -204,25 +200,25 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         return SAnime.create().apply {
             // Fetch from from Anilist when "Anilist Cover" is selected in settings
             val selectedCoverSource = preferences.getString(PREF_COVER_SOURCE, "Anilist-Cover")
-            val newTitle = document.select("div.effect-title").text().replace(Regex("[^a-zA-Z0-9\\s!.:\"]"), " ")
+            val name = document.selectFirst("div.episode-info > h1")!!.text().substringBefore(" Ep ")
+            val newTitle = name.replace(Regex("[^a-zA-Z0-9\\s!.:\"]"), " ")
             val thumbnailUrl = if (selectedCoverSource == "Anilist-Cover") {
                 fetchThumbnailUrlByTitle(newTitle)
             } else {
                 null // Use default cover
             }
 
-            title = document.select("div.effect-title").text()
-            description = document.select("div.description").text()
+            title = name
+            description = document.selectFirst("div.description")?.text()
             genre = document.select("div.tags a").joinToString { it.text() }
-            author = document.select("div.content a.red").joinToString { it.text() }
-
-            // thumbnail_url = document.select("#player").attr("data-poster")
+            val studios = document.select("div.episode-info a.red").eachText()
+            artist = studios.joinToString()
 
             // Match local studios with anilist studios to increase the accuracy of the poster
-            val matchingStudios = document.select("div.content a.red").map { it.text() }
-            val matchedStudio = thumbnailUrl?.second?.find { it in matchingStudios }
+            val matchedStudio = thumbnailUrl?.second?.find { it in studios }
 
-            thumbnail_url = if (matchedStudio != null) thumbnailUrl.first else document.select("#player").attr("data-poster")
+            thumbnail_url = matchedStudio?.let { thumbnailUrl.first }
+                ?: document.selectFirst("video#episode")?.attr("poster")
         }
     }
 
