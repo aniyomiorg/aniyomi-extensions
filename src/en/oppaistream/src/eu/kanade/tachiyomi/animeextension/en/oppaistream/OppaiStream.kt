@@ -252,22 +252,28 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         scanlator = element.selectFirst("h6 > a")?.text()
     }
 
-    override fun videoListSelector() = "#player source"
-
-    override fun videoFromElement(element: Element): Video {
-        val url = element.attr("src")
-        val quality = element.attr("size") + "p"
-        val subtitles = element.parent()!!.select("track").map {
+    override fun videoListParse(response: Response): List<Video> {
+        val doc = response.use { it.asJsoup() }
+        val script = doc.selectFirst("script:containsData(var availableres)")!!.data()
+        val subtitles = doc.select("track[kind=captions]").map {
             Track(it.attr("src"), it.attr("label"))
         }
 
-        return Video(
-            url = url,
-            quality = quality,
-            videoUrl = url,
-            subtitleTracks = subtitles,
-        )
+        return script.substringAfter("var availableres = {").substringBefore('}')
+            .split(',')
+            .map {
+                val (resolution, url) = it.replace("\"", "").replace("\\", "").split(':', limit = 2)
+                val fixedResolution = when (resolution) {
+                    "4k" -> "2160p"
+                    else -> "${resolution}p"
+                }
+                Video(url, fixedResolution, url, headers, subtitles)
+            }
     }
+
+    override fun videoListSelector() = throw Exception("Not used")
+
+    override fun videoFromElement(element: Element) = throw Exception("Not used")
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY, "720")!!
