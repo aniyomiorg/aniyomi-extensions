@@ -142,7 +142,7 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         val useAnilistCover = preferences.getBoolean(PREF_ANILIST_COVER_KEY, PREF_ANILIST_COVER_DEFAULT)
         val thumbnailUrl = if (useAnilistCover) {
             val newTitle = name.replace(Regex("[^a-zA-Z0-9\\s!.:\"]"), " ")
-            fetchThumbnailUrlByTitle(newTitle)
+            runCatching { fetchThumbnailUrlByTitle(newTitle) }.getOrNull()
         } else {
             null // Use default cover (episode preview)
         }
