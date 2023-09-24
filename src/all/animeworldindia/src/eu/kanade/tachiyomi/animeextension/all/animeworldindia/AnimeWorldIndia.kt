@@ -132,7 +132,7 @@ class AnimeWorldIndia(
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.asJsoup()
+        val document = response.use { it.asJsoup() }
         val isMovie = document.selectFirst("nav li > a[href*=\"type/movies/\"]") != null
 
         val seasonsJson = json.decodeFromString<List<SeasonDto>>(
@@ -143,11 +143,11 @@ class AnimeWorldIndia(
         )
 
         var episodeNumberFallback = 1F
-        return seasonsJson.reversed().flatMapIndexed { seasonNumber, season ->
-            val isSingleSeason = seasonsJson.size == 1
+        val isSingleSeason = seasonsJson.size == 1
+        return seasonsJson.flatMapIndexed { seasonNumber, season ->
             val seasonName = if (isSingleSeason) "" else "Season ${seasonNumber + 1}"
 
-            season.episodes.all.map { episode ->
+            season.episodes.all.reversed().map { episode ->
                 val episodeTitle = episode.metadata.title
                 val epNum = episode.metadata.number.toIntOrNull() ?: episodeNumberFallback.toInt()
 
@@ -171,7 +171,7 @@ class AnimeWorldIndia(
                     date_upload = episode.metadata.released?.toLongOrNull()?.times(1000) ?: 0L
                 }
             }
-        }
+        }.sortedByDescending { it.episode_number }
     }
 
     // ============================ Video Links =============================
