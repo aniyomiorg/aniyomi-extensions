@@ -13,6 +13,7 @@ ext {
 }
 
 dependencies {
+    implementation(project(":lib-playlist-utils"))
     implementation(project(":lib-dood-extractor"))
     implementation(project(":lib-filemoon-extractor"))
     implementation(project(":lib-gdriveplayer-extractor"))
