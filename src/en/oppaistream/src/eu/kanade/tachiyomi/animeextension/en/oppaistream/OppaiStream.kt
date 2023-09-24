@@ -307,7 +307,7 @@ class OppaiStream : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
 
         val coverURL = when (preferences.getString(PREF_COVER_QUALITY_KEY, PREF_COVER_QUALITY_DEFAULT)) {
             "extraLarge" -> media.coverImage.extraLarge
-            else -> media.coverImage.extraLarge
+            else -> media.coverImage.large
         }
 
         val studiosList = media.studios.names
