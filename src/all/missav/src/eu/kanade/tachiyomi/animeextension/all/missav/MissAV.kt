@@ -101,7 +101,10 @@ class MissAV : AnimeHttpSource(), ConfigurableAnimeSource {
         return SAnime.create().apply {
             title = document.selectFirst("h1.text-base")!!.text()
             genre = document.getInfo("/genres/")
-            author = document.getInfo("/makers/")
+            author = listOfNotNull(
+                document.getInfo("/directors/"),
+                document.getInfo("/makers/"),
+            ).joinToString()
             artist = document.getInfo("/actresses/")
             status = SAnime.COMPLETED
             thumbnail_url = document.selectFirst("video.player")?.attr("abs:data-poster")
@@ -110,6 +113,7 @@ class MissAV : AnimeHttpSource(), ConfigurableAnimeSource {
                 document.selectFirst("div.mb-1")?.text()?.also { append("$it\n") }
 
                 document.getInfo("/labels/")?.also { append("\nLabel: $it") }
+                document.getInfo("/series/")?.also { append("\nSeries: $it") }
 
                 document.select("div.text-secondary:not(:has(a)):has(span)")
                     .eachText()
