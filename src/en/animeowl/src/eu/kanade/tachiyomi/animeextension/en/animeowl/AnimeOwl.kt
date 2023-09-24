@@ -46,7 +46,7 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "AnimeOwl"
 
-    override val baseUrl by lazy { preferences.getString("preferred_domain", "https://anime-owl.net")!! }
+    override val baseUrl = "https://anime-owl.net"
 
     override val lang = "en"
 
@@ -334,21 +334,6 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val domainPref = ListPreference(screen.context).apply {
-            key = "preferred_domain"
-            title = "Preferred domain (requires app restart)"
-            entries = arrayOf("animeowl.net")
-            entryValues = arrayOf("https://animeowl.net")
-            setDefaultValue("https://animeowl.net")
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
@@ -379,7 +364,6 @@ class AnimeOwl : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 preferences.edit().putString(key, entry).commit()
             }
         }
-        screen.addPreference(domainPref)
         screen.addPreference(videoQualityPref)
         screen.addPreference(videoLangPref)
     }
