@@ -201,12 +201,12 @@ class AnimeWorldIndia(
         val playersList = json.decodeFromString<List<PlayerDto>>(documentTrimmed)
             .filter { it.type == "stream" && it.url.isNotBlank() }
             .also { require(it.isNotEmpty()) { "No streams available!" } }
-            .filter { it.language.equals(language) }
+            .filter { language.isEmpty() || it.language.equals(language) }
             .also { require(it.isNotEmpty()) { "No videos for your language!" } }
 
         return playersList.flatMap {
             when (it.server) {
-                "Mystream" -> mystreamExtractor.videosFromUrl(it.url)
+                "Mystream" -> mystreamExtractor.videosFromUrl(it.url, it.language)
                 else -> emptyList()
             }
         }
