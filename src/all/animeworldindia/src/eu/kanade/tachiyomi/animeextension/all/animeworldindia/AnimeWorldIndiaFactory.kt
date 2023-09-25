@@ -5,6 +5,7 @@ import eu.kanade.tachiyomi.animesource.AnimeSourceFactory
 class AnimeWorldIndiaFactory : AnimeSourceFactory {
 
     override fun createSources() = listOf(
+        AnimeWorldIndia("all", ""),
         AnimeWorldIndia("bn", "bengali"),
         AnimeWorldIndia("en", "english"),
         AnimeWorldIndia("hi", "hindi"),

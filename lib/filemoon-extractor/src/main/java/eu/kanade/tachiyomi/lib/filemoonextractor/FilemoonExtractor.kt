@@ -15,9 +15,9 @@ import uy.kohesive.injekt.injectLazy
 class FilemoonExtractor(private val client: OkHttpClient) {
     private val json: Json by injectLazy()
 
-    fun videosFromUrl(url: String, prefix: String = "Filemoon - ", headers: Headers? = null): List<Video> {
+    fun videosFromUrl(url: String, prefix: String = "Filemoon - ", headers: Headers? = null, useHeadersForHtml: Boolean = false): List<Video> {
         return runCatching {
-            val doc = client.newCall(GET(url)).execute().asJsoup()
+            val doc = if (useHeadersForHtml) client.newCall(GET(url, headers = (headers?.newBuilder() ?: Headers.Builder()).build())).execute().asJsoup() else client.newCall(GET(url)).execute().asJsoup()
             val jsEval = doc.selectFirst("script:containsData(eval):containsData(m3u8)")!!.data()
             val unpacked = JsUnpacker.unpackAndCombine(jsEval).orEmpty()
             val masterUrl = unpacked.takeIf(String::isNotBlank)
