@@ -7,8 +7,9 @@ ext {
     extName = 'Anime-Base'
     pkgNameSuffix = 'de.animebase'
     extClass = '.AnimeBase'
-    extVersionCode = 14
+    extVersionCode = 15
     libVersion = '13'
+    containsNsfw = true
 }
 
 dependencies {
