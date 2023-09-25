@@ -211,6 +211,8 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
             videos.addAll(getSelfVideo(document))
         }
 
+        if (videos.isEmpty()) throw Exception("Failed to get Videos")
+
         return videos
     }
 
@@ -284,6 +286,7 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
     companion object {
         private const val LIMIT = 20
 
+        // TODO: find way to dynamically extract password and iv
         private val PASSWORD = "93422192433952489752342908585752".toByteArray()
         private val IV = "9262859232435825".toByteArray()
 
