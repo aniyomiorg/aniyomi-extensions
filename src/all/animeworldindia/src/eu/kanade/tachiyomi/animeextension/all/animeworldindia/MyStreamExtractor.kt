@@ -10,7 +10,7 @@ class MyStreamExtractor(private val client: OkHttpClient, private val headers: H
 
     private val playlistUtils by lazy { PlaylistUtils(client, headers) }
 
-    fun videosFromUrl(url: String): List<Video> {
+    fun videosFromUrl(url: String, language: String): List<Video> {
         val host = url.substringBefore("/watch")
 
         return runCatching {
@@ -37,7 +37,7 @@ class MyStreamExtractor(private val client: OkHttpClient, private val headers: H
                 streamUrl,
                 masterHeaders = newHeaders,
                 videoHeaders = newHeaders,
-                videoNameGen = { "MyStream: $it" },
+                videoNameGen = { "[$language] MyStream: $it" },
             )
         }.getOrElse { emptyList<Video>() }
     }
