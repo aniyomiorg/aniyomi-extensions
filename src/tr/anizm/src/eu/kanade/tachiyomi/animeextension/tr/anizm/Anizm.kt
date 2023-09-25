@@ -7,6 +7,7 @@ import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.tr.anizm.AnizmFilters.applyFilterParams
+import eu.kanade.tachiyomi.animeextension.tr.anizm.extractors.AincradExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -208,7 +209,10 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
                     .let(Jsoup::parse)
                     .select("a.videoPlayerButtons")
                     .toList()
-                    .filter { it.text().trim() in chosenHosts }
+                    .filter { host ->
+                        val hostName = host.text().trim()
+                        chosenHosts.any { hostName.contains(it, true) }
+                    }
                     .map { fansub to it.attr("video").replace("/video/", "/player/") }
             }.getOrElse { emptyList() }
         }
@@ -236,6 +240,7 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         client.newBuilder().followRedirects(false).build()
     }
 
+    private val aincradExtractor by lazy { AincradExtractor(client, headers, json) }
     private val doodExtractor by lazy { DoodExtractor(client) }
     private val filemoonExtractor by lazy { FilemoonExtractor(client) }
     private val gdrivePlayerExtractor by lazy { GdrivePlayerExtractor(client) }
@@ -270,6 +275,7 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
             }
             "uqload" in url -> uqloadExtractor.videosFromUrl(url)
             "voe.sx" in url -> voeExtractor.videoFromUrl(url)?.let(::listOf)
+            "anizmplayer.com" in url -> aincradExtractor.videosFromUrl(url)
             else -> null
         } ?: emptyList()
     }
@@ -449,6 +455,7 @@ class Anizm : ParsedAnimeHttpSource(), ConfigurableAnimeSource {
         private const val PREF_HOSTS_SELECTION_KEY = "pref_hosts_selection"
         private const val PREF_HOSTS_SELECTION_TITLE = "Disable/enable video hosts"
         private val PREF_HOSTS_SELECTION_ENTRIES = arrayOf(
+            "Aincrad",
             "DoodStream",
             "FileMoon",
             "GDrive",
