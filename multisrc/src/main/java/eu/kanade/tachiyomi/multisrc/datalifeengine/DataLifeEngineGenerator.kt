@@ -11,7 +11,7 @@ class DataLifeEngineGenerator : ThemeSourceGenerator {
     override val baseVersionCode = 1
 
     override val sources = listOf(
-        SingleLang("Wiflix", "https://wiflix.voto", "fr"),
+        SingleLang("Wiflix", "https://wiflix.voto", "fr", overrideVersionCode = 1),
         SingleLang("French Anime", "https://french-anime.com", "fr", overrideVersionCode = 5),
     )
 
