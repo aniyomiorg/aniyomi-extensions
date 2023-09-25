@@ -17,6 +17,7 @@ import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -48,11 +49,11 @@ class MissAV : AnimeHttpSource(), ConfigurableAnimeSource {
         GET("$baseUrl/en/today-hot?page=$page", headers)
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val document = response.asJsoup()
+        val document = response.use { it.asJsoup() }
 
         val entries = document.select("div.thumbnail").map { element ->
             SAnime.create().apply {
-                element.select("a.text-secondary").let {
+                element.select("a.text-secondary").also {
                     setUrlWithoutDomain(it.attr("href"))
                     title = it.text()
                 }
@@ -95,18 +96,37 @@ class MissAV : AnimeHttpSource(), ConfigurableAnimeSource {
     override fun searchAnimeParse(response: Response) = popularAnimeParse(response)
 
     override fun animeDetailsParse(response: Response): SAnime {
-        val document = response.asJsoup()
+        val document = response.use { it.asJsoup() }
 
         return SAnime.create().apply {
-            title = document.select("h1.text-base").text()
-            genre = document.select("div.text-secondary > a[href*=/genres/]").joinToString { it.text() }
-            description = document.select("div.mb-1").text()
-            author = document.select("div.text-secondary > a[href*=/makers/]").joinToString { it.text() }
-            artist = document.select("div.text-secondary > a[href*=/actresses/]").joinToString { it.text() }
+            title = document.selectFirst("h1.text-base")!!.text()
+            genre = document.getInfo("/genres/")
+            author = listOfNotNull(
+                document.getInfo("/directors/"),
+                document.getInfo("/makers/"),
+            ).joinToString()
+            artist = document.getInfo("/actresses/")
             status = SAnime.COMPLETED
-            thumbnail_url = document.select("video.player").attr("abs:data-poster")
+            thumbnail_url = document.selectFirst("video.player")?.attr("abs:data-poster")
+
+            description = buildString {
+                document.selectFirst("div.mb-1")?.text()?.also { append("$it\n") }
+
+                document.getInfo("/labels/")?.also { append("\nLabel: $it") }
+                document.getInfo("/series/")?.also { append("\nSeries: $it") }
+
+                document.select("div.text-secondary:not(:has(a)):has(span)")
+                    .eachText()
+                    .forEach { append("\n$it") }
+            }
         }
     }
+
+    private fun Element.getInfo(urlPart: String) =
+        select("div.text-secondary > a[href*=$urlPart]")
+            .eachText()
+            .joinToString()
+            .takeIf(String::isNotBlank)
 
     override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
         return Observable.just(
@@ -120,9 +140,10 @@ class MissAV : AnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
+        val document = response.use { it.asJsoup() }
 
-        val playlists = document.selectFirst("script:containsData(function(p,a,c,k,e,d))")?.html()
+        val playlists = document.selectFirst("script:containsData(function(p,a,c,k,e,d))")
+            ?.data()
             ?.let(Unpacker::unpack)?.ifEmpty { null }
             ?: return emptyList()
 
@@ -134,7 +155,7 @@ class MissAV : AnimeHttpSource(), ConfigurableAnimeSource {
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY, PREF_QUALITY_DEFAULT)!!
 
-        return this.sortedWith(
+        return sortedWith(
             compareBy { it.quality.contains(quality) },
         ).reversed()
     }
