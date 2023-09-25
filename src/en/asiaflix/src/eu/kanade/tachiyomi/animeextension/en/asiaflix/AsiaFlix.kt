@@ -74,6 +74,7 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int): Request {
         val url = "$apiUrl/drama/explore/full?schedule=0&sort=1&fields=name,+image,+altNames,+synopsis,+genre,+tvStatus&limit=$LIMIT&page=$page"
 
@@ -90,6 +91,7 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
         return AnimesPage(entries, hasNextPage)
     }
 
+    // =============================== Latest ===============================
     override fun latestUpdatesRequest(page: Int): Request {
         val url = "$apiUrl/drama/explore/full?schedule=0&sort=3&fields=name,+image,+altNames,+synopsis,+genre,+tvStatus&limit=$LIMIT&page=$page"
 
@@ -98,6 +100,7 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
 
     override fun latestUpdatesParse(response: Response) = popularAnimeParse(response)
 
+    // =============================== Search ===============================
     private lateinit var searchEntries: SearchDto
 
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
@@ -130,16 +133,17 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
         return AnimesPage(entries, end < searchEntries.size)
     }
 
-    // workaround to get correct WebView url
-    override fun animeDetailsRequest(anime: SAnime): Request {
-        val slug = anime.title.titleToSlug()
-        return GET("$baseUrl/show-details/$slug/${anime.url}")
-    }
-
+    // =========================== Anime Details ============================
     override fun fetchAnimeDetails(anime: SAnime): Observable<SAnime> {
         return client.newCall(internalAnimeDetailsRequest(anime))
             .asObservableSuccess()
             .map(::animeDetailsParse)
+    }
+
+    // workaround to get correct WebView url
+    override fun animeDetailsRequest(anime: SAnime): Request {
+        val slug = anime.title.titleToSlug()
+        return GET("$baseUrl/show-details/$slug/${anime.url}")
     }
 
     private fun internalAnimeDetailsRequest(anime: SAnime): Request {
@@ -150,6 +154,7 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
         return response.parseAs<DetailsResponseDto>().toSAnime()
     }
 
+    // ============================== Episodes ==============================
     override fun episodeListRequest(anime: SAnime) = internalAnimeDetailsRequest(anime)
 
     override fun episodeListParse(response: Response): List<SEpisode> {
@@ -165,6 +170,7 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
         }.sortedByDescending { it.episode_number }
     }
 
+    // ============================ Video Links =============================
     private val streamHead by lazy {
         client.newCall(GET("$apiUrl/utility/get-stream-headers", apiHeaders))
             .execute()
@@ -247,6 +253,7 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
         ).reversed()
     }
 
+    // ============================ Preference =============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
@@ -265,6 +272,7 @@ class AsiaFlix : AnimeHttpSource(), ConfigurableAnimeSource {
         }.also(screen::addPreference)
     }
 
+    // ============================ Utilities =============================
     private inline fun <reified T> String.parseAs(): T =
         json.decodeFromString(this)
 
