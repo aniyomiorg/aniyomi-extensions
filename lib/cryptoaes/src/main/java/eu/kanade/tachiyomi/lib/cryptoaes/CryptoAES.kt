@@ -106,7 +106,7 @@ object CryptoAES {
             val cipherTextBytes = plainText.toByteArray()
             encryptAES(cipherTextBytes, keyBytes, ivBytes)
         } catch (e: Exception) {
-            e.stackTraceToString()
+            ""
         }
     }
 
@@ -146,7 +146,7 @@ object CryptoAES {
             cipher.init(Cipher.ENCRYPT_MODE, keyS, IvParameterSpec(ivBytes))
             Base64.encodeToString(cipher.doFinal(plainTextBytes), Base64.DEFAULT)
         } catch (e: Exception) {
-            e.stackTraceToString()
+            ""
         }
     }
 
