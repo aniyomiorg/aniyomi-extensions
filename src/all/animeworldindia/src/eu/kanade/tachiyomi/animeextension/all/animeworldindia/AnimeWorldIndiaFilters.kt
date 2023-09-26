@@ -132,7 +132,7 @@ class AnimeWorldIndiaFilters {
         Genre("TV Movie"),
     )
 
-    val filters = AnimeFilterList(
+    val filters: AnimeFilterList get() = AnimeFilterList(
         TypeList(typesName),
         StatusList(statusesName),
         StyleList(stylesName),
@@ -142,41 +142,37 @@ class AnimeWorldIndiaFilters {
     )
 
     fun getSearchParams(filters: AnimeFilterList): String {
-        var params = ""
-        filters.forEach { filter ->
+        return "&" + filters.mapNotNull { filter ->
             when (filter) {
                 is TypeList -> {
                     val type = getTypeList()[filter.state].query
-                    params = "$params&s_type=$type"
+                    "s_type=$type"
                 }
                 is StatusList -> {
                     val status = getStatusesList()[filter.state].query
-                    params = "$params&s_status=$status"
+                    "s_status=$status"
                 }
                 is StyleList -> {
                     val style = getStyleList()[filter.state].query
-                    params = "$params&s_sub_type=$style"
+                    "s_sub_type=$style"
                 }
                 is YearList -> {
                     val year = getYearList()[filter.state].query
-                    params = "$params&s_year=$year"
+                    "s_year=$year"
                 }
                 is SortList -> {
                     val sort = getSortList()[filter.state].query
-                    params = "$params&s_orderby=$sort"
+                    "s_orderby=$sort"
                 }
                 is GenreList -> {
-                    params = "$params&s_genre="
-                    filter.state.forEach {
-                        if (it.state) {
+                    "s_genre=" + filter.state.filter { it.state }
+                        .joinToString("%2C") {
                             val genre = it.id.replace(" ", "-")
-                            params = "$params$genre%2C"
+                            "$genre%2C"
                         }
-                    }
                 }
-                else -> {}
+                else -> null
             }
-        }
-        return params
+        }.joinToString("&")
     }
 }

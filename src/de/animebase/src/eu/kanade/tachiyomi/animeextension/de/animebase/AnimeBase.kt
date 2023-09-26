@@ -4,8 +4,10 @@ import android.app.Application
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.de.animebase.extractors.UnpackerExtractor
+import eu.kanade.tachiyomi.animeextension.de.animebase.extractors.VidGuardExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
+import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
@@ -67,6 +69,8 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesNextPageSelector() = null
 
     // =============================== Search ===============================
+    override fun getFilterList() = AnimeBaseFilters.FILTER_LIST
+
     private val searchToken by lazy {
         client.newCall(GET("$baseUrl/searching", headers)).execute()
             .use { it.asJsoup() }
@@ -75,20 +79,49 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val body = FormBody.Builder()
-            .add("_token", searchToken)
-            .add("_token", searchToken)
-            .add("name_serie", query)
-            .add("jahr", "")
-            .build()
-        return POST("$baseUrl/searching", headers, body)
+        val params = AnimeBaseFilters.getSearchParameters(filters)
+
+        return when {
+            params.list.isEmpty() -> {
+                val body = FormBody.Builder()
+                    .add("_token", searchToken)
+                    .add("_token", searchToken)
+                    .add("name_serie", query)
+                    .add("jahr", params.year.toIntOrNull()?.toString() ?: "")
+                    .apply {
+                        params.languages.forEach { add("dubsub[]", it) }
+                        params.genres.forEach { add("genre[]", it) }
+                    }.build()
+                POST("$baseUrl/searching", headers, body)
+            }
+
+            else -> {
+                GET("$baseUrl/${params.list}${params.letter}?page=$page", headers)
+            }
+        }
     }
 
-    override fun searchAnimeSelector(): String = "div.col-lg-9.col-md-8 div.box-body a"
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        val doc = response.use { it.asJsoup() }
+
+        return when {
+            doc.location().contains("/searching") -> {
+                val animes = doc.select(searchAnimeSelector()).map(::searchAnimeFromElement)
+                AnimesPage(animes, false)
+            }
+            else -> { // pages like filmlist or animelist
+                val animes = doc.select(popularAnimeSelector()).map(::popularAnimeFromElement)
+                val hasNext = doc.selectFirst(searchAnimeNextPageSelector()) != null
+                AnimesPage(animes, hasNext)
+            }
+        }
+    }
+
+    override fun searchAnimeSelector() = "div.col-lg-9.col-md-8 div.box-body > a"
 
     override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun searchAnimeNextPageSelector() = null
+    override fun searchAnimeNextPageSelector() = "ul.pagination li > a[rel=next]"
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document) = SAnime.create().apply {
@@ -154,6 +187,7 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "Voe.SX" to "https://voe.sx/e/",
             "Lulustream" to "https://lulustream.com/e/",
             "VTube" to "https://vtbe.to/embed-",
+            "VidGuard" to "https://vembed.net/e/",
         )
     }
 
@@ -182,13 +216,14 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                 video.audioTracks,
                             )
                         }
-                }.getOrElse { emptyList() }
+                }.onFailure { it.printStackTrace() }.getOrElse { emptyList() }
             }.flatten().ifEmpty { throw Exception("No videos xDDDDDD") }
     }
 
     private val streamWishExtractor by lazy { StreamWishExtractor(client, headers) }
     private val voeExtractor by lazy { VoeExtractor(client) }
     private val unpackerExtractor by lazy { UnpackerExtractor(client, headers) }
+    private val vidguardExtractor by lazy { VidGuardExtractor(client) }
 
     private fun getVideosFromHoster(hoster: String, urlpart: String): List<Video> {
         val url = hosterSettings.get(hoster)!! + urlpart
@@ -196,6 +231,7 @@ class AnimeBase : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "Streamwish" -> streamWishExtractor.videosFromUrl(url)
             "Voe.SX" -> voeExtractor.videoFromUrl(url)?.let(::listOf)
             "VTube", "Lulustream" -> unpackerExtractor.videosFromUrl(url, hoster)
+            "VidGuard" -> vidguardExtractor.videosFromUrl(url)
             else -> null
         } ?: emptyList()
     }

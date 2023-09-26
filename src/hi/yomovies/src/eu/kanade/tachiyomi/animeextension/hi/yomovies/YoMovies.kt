@@ -1,12 +1,12 @@
 package eu.kanade.tachiyomi.animeextension.hi.yomovies
 
 import android.app.Application
-import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.animeextension.hi.yomovies.extractors.MinoplresExtractor
 import eu.kanade.tachiyomi.animeextension.hi.yomovies.extractors.MovembedExtractor
 import eu.kanade.tachiyomi.animeextension.hi.yomovies.extractors.SpeedostreamExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -44,7 +44,7 @@ class YoMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val client: OkHttpClient = network.cloudflareClient
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -108,7 +108,7 @@ class YoMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================== Episodes ==============================
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val document = response.asJsoup()
+        val document = response.use { it.asJsoup() }
         val episodeList = mutableListOf<SEpisode>()
 
         val seasonList = document.select("div#seasons > div.tvseason")
@@ -149,7 +149,7 @@ class YoMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
 
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
+        val document = response.use { it.asJsoup() }
 
         val videoList = document.select("div[id*=tab]:has(div.movieplay > iframe)").parallelMap { server ->
             val iframe = server.selectFirst("div.movieplay > iframe")!!
@@ -175,6 +175,10 @@ class YoMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             // since it doesn't do different episodes for different servers from what I can tell
             iframeUrl.contains("movembed.cc") -> {
                 MovembedExtractor(client, headers).videosFromUrl(iframeUrl)
+            }
+
+            iframeUrl.contains("minoplres") -> {
+                MinoplresExtractor(client, headers).videosFromUrl(iframeUrl, name)
             }
             else -> emptyList()
         }
@@ -202,7 +206,7 @@ class YoMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
 
-        return this.sortedWith(
+        return sortedWith(
             compareBy(
                 { it.quality.contains(quality) },
                 { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
@@ -211,7 +215,7 @@ class YoMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // From Dopebox
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
         runBlocking {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }
@@ -219,7 +223,7 @@ class YoMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     companion object {
         private val PREF_DOMAIN_KEY = "preferred_domain_name_v${AppInfo.getVersionName()}"
         private const val PREF_DOMAIN_TITLE = "Override BaseUrl"
-        private const val PREF_DOMAIN_DEFAULT = "https://yomovies.baby"
+        private const val PREF_DOMAIN_DEFAULT = "https://yomovies.cheap"
         private const val PREF_DOMAIN_SUMMARY = "For temporary uses. Updating the extension will erase this setting."
 
         private const val PREF_QUALITY_KEY = "preferred_quality"
