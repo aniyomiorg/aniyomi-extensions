@@ -95,6 +95,22 @@ object CryptoAES {
     }
 
     /**
+     * Encrypt using CryptoJS defaults compatible method.
+     *
+     * @param plainText plaintext
+     * @param keyBytes key as a bytearray
+     * @param ivBytes iv as a bytearray
+     */
+    fun encrypt(plainText: String, keyBytes: ByteArray, ivBytes: ByteArray): String {
+        return try {
+            val cipherTextBytes = plainText.toByteArray()
+            encryptAES(cipherTextBytes, keyBytes, ivBytes)
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
+    /**
      * Decrypt using CryptoJS defaults compatible method.
      *
      * @param cipherTextBytes encrypted text as a bytearray
@@ -109,6 +125,26 @@ object CryptoAES {
             val keyS = SecretKeySpec(keyBytes, AES)
             cipher.init(Cipher.DECRYPT_MODE, keyS, IvParameterSpec(ivBytes))
             cipher.doFinal(cipherTextBytes).toString(Charsets.UTF_8)
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
+    /**
+     * Encrypt using CryptoJS defaults compatible method.
+     *
+     * @param plainTextBytes encrypted text as a bytearray
+     * @param keyBytes key as a bytearray
+     * @param ivBytes iv as a bytearray
+     */
+    private fun encryptAES(plainTextBytes: ByteArray, keyBytes: ByteArray, ivBytes: ByteArray): String {
+        return try {
+            val cipher = try {
+                Cipher.getInstance(HASH_CIPHER)
+            } catch (e: Throwable) { Cipher.getInstance(HASH_CIPHER_FALLBACK) }
+            val keyS = SecretKeySpec(keyBytes, AES)
+            cipher.init(Cipher.ENCRYPT_MODE, keyS, IvParameterSpec(ivBytes))
+            Base64.encodeToString(cipher.doFinal(plainTextBytes), Base64.DEFAULT)
         } catch (e: Exception) {
             ""
         }
