@@ -26,7 +26,7 @@ ext {
     extName = 'Türk Anime TV'
     pkgNameSuffix = 'tr.turkanime'
     extClass = '.TurkAnime'
-    extVersionCode = 12
+    extVersionCode = 13
     libVersion = '13'
 }
 

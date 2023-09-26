@@ -8,7 +8,7 @@ ext {
     extName = 'AniWatch.to'
     pkgNameSuffix = 'en.zoro'
     extClass = '.AniWatch'
-    extVersionCode = 34
+    extVersionCode = 35
     libVersion = '13'
 }
 
