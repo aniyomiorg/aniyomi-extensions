@@ -162,7 +162,7 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val document = response.use { it.asJsoup() }
 
-        return document.select("div.video_tools div:nth-child(3) div a.tag_item")
+        return document.select("div.label:contains(Download) ~ a.tag_item")
             .mapNotNull { element ->
                 val originalUrl = element.attr("href")
                 // We need to do that because this url returns a http 403 error
