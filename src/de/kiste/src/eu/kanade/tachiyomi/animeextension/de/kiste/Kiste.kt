@@ -26,21 +26,17 @@ class Kiste : ParsedAnimeHttpSource() {
     override val supportsLatest = false
 
     // ============================== Popular ===============================
-    override fun popularAnimeRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/search?sort=imdb:desc&page=$page")
+
+    override fun popularAnimeSelector() = "div.filmlist > div.item > a"
+
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        title = element.attr("title")
+        thumbnail_url = element.selectFirst("img")?.absUrl("src")
     }
 
-    override fun popularAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun popularAnimeNextPageSelector() = "li > a[rel=next]"
 
     // =============================== Latest ===============================
     override fun latestUpdatesRequest(page: Int): Request {
@@ -63,7 +59,7 @@ class Kiste : ParsedAnimeHttpSource() {
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val path = query.removePrefix(PREFIX_SEARCH)
-            client.newCall(GET("$baseUrl/$slug"))
+            client.newCall(GET("$baseUrl/$path"))
                 .asObservableSuccess()
                 .map(::searchAnimeByIdParse)
         } else {
