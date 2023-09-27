@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.rule34video
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -13,11 +12,11 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.lang.Exception
@@ -34,12 +33,12 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val ddgInterceptor = DdosGuardInterceptor(network.client)
 
-    override val client: OkHttpClient = network.client
+    override val client = network.client
         .newBuilder()
         .addInterceptor(ddgInterceptor)
         .build()
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -62,25 +61,29 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeNextPageSelector(): String = "div.item.pager.next a"
 
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        val episodes = mutableListOf<SEpisode>()
-
-        val episode = SEpisode.create().apply {
-            name = "Video"
-            date_upload = System.currentTimeMillis()
-        }
-        episode.setUrlWithoutDomain(response.request.url.toString())
-        episodes.add(episode)
-
-        return episodes
+    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+        return Observable.just(
+            listOf(
+                SEpisode.create().apply {
+                    url = anime.url
+                    name = "Video"
+                },
+            ),
+        )
     }
+
+    override fun episodeListParse(response: Response) = throw Exception("not used")
 
     override fun episodeListSelector() = throw Exception("not used")
 
     override fun episodeFromElement(element: Element) = throw Exception("not used")
 
+    private val noRedirectClient by lazy {
+        client.newBuilder().followRedirects(false).build()
+    }
+
     override fun videoListParse(response: Response): List<Video> {
-        val headersBuilder = headers.newBuilder()
+        val headers = headersBuilder()
             .apply {
                 val cookies = client.cookieJar.loadForRequest(response.request.url)
                     .filterNot { it.name in listOf("__ddgid_", "__ddgmark_") }
@@ -92,15 +95,22 @@ class Rule34Video : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 add("Accept", "video/webm,video/ogg,video/*;q=0.9,application/ogg;q=0.7,audio/*;q=0.6,*/*;q=0.5")
                 add("Referer", response.request.url.toString())
                 add("Accept-Language", "en-US,en;q=0.5")
-            }
+            }.build()
 
-        val document = response.asJsoup()
+        val document = response.use { it.asJsoup() }
 
         return document.select("div.video_tools div:nth-child(3) div a.tag_item")
-            .map { element ->
-                val url = element.attr("href")
+            .mapNotNull { element ->
+                val originalUrl = element.attr("href")
+                // We need to do that because this url returns a http 403 error
+                // if you try to connect using http/1.1, which is the protocol
+                // that the player uses. OkHttp uses http/2 by default, so we
+                // fetch the video url first via okhttp and then pass it for the player.
+                val url = noRedirectClient.newCall(GET(originalUrl, headers)).execute()
+                    .use { it.headers["location"] }
+                    ?: return@mapNotNull null
                 val quality = element.text().substringAfter(" ")
-                Video(url, quality, url, headers = headersBuilder.build())
+                Video(url, quality, url, headers)
             }
     }
 
