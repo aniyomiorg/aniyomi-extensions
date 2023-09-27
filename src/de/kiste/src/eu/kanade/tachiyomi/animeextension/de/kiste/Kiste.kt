@@ -87,8 +87,15 @@ class Kiste : ParsedAnimeHttpSource() {
     override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        throw UnsupportedOperationException("Not used.")
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        val section = document.selectFirst("section.info")!!
+        thumbnail_url = section.selectFirst("img")?.absUrl("src")
+        title = section.selectFirst("h1.title")!!.text()
+        genre = section.select("span:containsOwn(Genre:) + span > a")
+            .eachText()
+            .joinToString()
+            .takeIf(String::isNotBlank)
+        description = section.selectFirst("div.desc")?.text()
     }
 
     // ============================== Episodes ==============================
