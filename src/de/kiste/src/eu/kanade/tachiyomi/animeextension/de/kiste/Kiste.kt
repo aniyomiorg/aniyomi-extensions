@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.de.kiste
 
+import android.util.Base64
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -9,11 +10,18 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import okhttp3.Request
 import okhttp3.Response
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.injectLazy
+import javax.crypto.Cipher
+import javax.crypto.spec.SecretKeySpec
 
 class Kiste : ParsedAnimeHttpSource() {
 
@@ -24,6 +32,8 @@ class Kiste : ParsedAnimeHttpSource() {
     override val lang = "de"
 
     override val supportsLatest = true
+
+    private val json: Json by injectLazy()
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/search?sort=imdb:desc&page=$page")
@@ -99,12 +109,34 @@ class Kiste : ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector(): String {
-        throw UnsupportedOperationException("Not used.")
+    @Serializable data class HtmlData(val html: String)
+
+    override fun fetchEpisodeList(anime: SAnime): Observable<List<SEpisode>> {
+        val slug = anime.url.substringAfterLast("/")
+        val vrf = encryptRC4(slug)
+        val newDoc = client.newCall(GET("$baseUrl/ajax/film/servers.php?id=$slug&vrf=$vrf&episode=1-1&token="))
+            .execute()
+            .use { json.decodeFromString<HtmlData>(it.body.string()).html }
+            .let(Jsoup::parse)
+
+        val episodes = newDoc.select(episodeListSelector())
+            .map(::episodeFromElement)
+            .sortedByDescending { it.episode_number }
+
+        return Observable.just(episodes)
     }
 
-    override fun episodeFromElement(element: Element): SEpisode {
-        throw UnsupportedOperationException("Not used.")
+    override fun episodeListParse(response: Response) = throw Exception("not used")
+
+    override fun episodeListSelector() = "div.episode > a"
+
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        val id = element.attr("data-ep").substringAfter("\":\"").substringBefore('"')
+        setUrlWithoutDomain(element.attr("href") + "?id=$id")
+        val kname = element.attr("data-kname")
+        val (seasonNum, epNum) = kname.split("-", limit = 2)
+        name = "Staffel $seasonNum - Episode $epNum"
+        episode_number = "$seasonNum.${epNum.padStart(3, '0')}".toFloatOrNull() ?: 1F
     }
 
     // ============================ Video Links =============================
@@ -124,7 +156,17 @@ class Kiste : ParsedAnimeHttpSource() {
         throw UnsupportedOperationException("Not used.")
     }
 
+    // ============================= Utilities ==============================
+    private fun encryptRC4(data: String): String {
+        val rc4Key = SecretKeySpec(KISTE_KEY, "RC4")
+        val cipher = Cipher.getInstance("RC4")
+        cipher.init(Cipher.ENCRYPT_MODE, rc4Key, cipher.getParameters())
+        return Base64.encodeToString(cipher.doFinal(data.toByteArray()), Base64.DEFAULT)
+    }
+
     companion object {
         const val PREFIX_SEARCH = "path:"
+
+        private val KISTE_KEY = "DZmuZuXqa9O0z3b7".toByteArray()
     }
 }
