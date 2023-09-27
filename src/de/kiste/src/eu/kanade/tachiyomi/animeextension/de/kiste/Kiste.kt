@@ -48,6 +48,8 @@ class Kiste : ParsedAnimeHttpSource() {
     override fun latestUpdatesNextPageSelector() = null
 
     // =============================== Search ===============================
+    override fun getFilterList() = KisteFilters.FILTER_LIST
+
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
         return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
             val path = query.removePrefix(PREFIX_SEARCH)
@@ -65,20 +67,24 @@ class Kiste : ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        throw UnsupportedOperationException("Not used.")
+        val params = KisteFilters.getSearchParameters(filters)
+        val url = buildString {
+            append("$baseUrl/search?page=$page")
+            if (query.isNotBlank()) append("&keyword=$query")
+            with(params) {
+                listOf(genres, types, countries, years, qualities)
+                    .filter(String::isNotBlank)
+                    .forEach { append("&$it") }
+            }
+        }
+        return GET(url, headers)
     }
 
-    override fun searchAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeSelector() = popularAnimeSelector()
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun searchAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeNextPageSelector() = popularAnimeNextPageSelector()
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
