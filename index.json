@@ -311,27 +311,6 @@
     ]
   },
   {
-    "name": "Aniyomi: NetFlix Mirror",
-    "pkg": "eu.kanade.tachiyomi.animeextension.all.netflixmirror",
-    "apk": "aniyomi-all.netflixmirror-v13.1.apk",
-    "lang": "all",
-    "code": 1,
-    "version": "13.1",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "NetFlix Mirror",
-        "lang": "all",
-        "id": "6022529718636522228",
-        "baseUrl": "https://m.netflixmirror.com",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: أكوام",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.akwam",
     "apk": "aniyomi-ar.akwam-v13.8.apk",
