@@ -7,6 +7,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
@@ -140,6 +141,28 @@ class Kiste : ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
+    private val playlistUtils by lazy { PlaylistUtils(client, headers) }
+
+    override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
+        val id = episode.url.substringAfter("?id=")
+        val headers = headersBuilder()
+            .add("Referer", episode.url)
+            .add("X-Requested-With", "XMLHttpRequest")
+            .build()
+
+        val url = client.newCall(GET("$baseUrl/ajax/episode/info.php?id=$id", headers))
+            .execute()
+            .use { it.body.string().substringAfter(":\"").substringBefore('"') }
+            .let(::decryptRC4)
+
+        val playlistUrl = baseUrl + client.newCall(GET(url, headers)).execute()
+            .use { it.body.string() }
+            .substringAfter("file: \"", "")
+            .substringBefore('"')
+
+        return Observable.just(playlistUtils.extractFromHls(playlistUrl, baseUrl + episode.url))
+    }
+
     override fun videoListParse(response: Response): List<Video> {
         throw UnsupportedOperationException("Not used.")
     }
@@ -157,6 +180,14 @@ class Kiste : ParsedAnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
+    private fun decryptRC4(data: String): String {
+        val b64decoded = Base64.decode(data, Base64.DEFAULT)
+        val rc4Key = SecretKeySpec(KISTE_KEY, "RC4")
+        val cipher = Cipher.getInstance("RC4")
+        cipher.init(Cipher.DECRYPT_MODE, rc4Key, cipher.getParameters())
+        return cipher.doFinal(b64decoded).toString(Charsets.UTF_8)
+    }
+
     private fun encryptRC4(data: String): String {
         val rc4Key = SecretKeySpec(KISTE_KEY, "RC4")
         val cipher = Cipher.getInstance("RC4")
