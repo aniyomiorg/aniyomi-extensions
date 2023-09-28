@@ -983,6 +983,27 @@
     ]
   },
   {
+    "name": "Aniyomi: Kiste",
+    "pkg": "eu.kanade.tachiyomi.animeextension.de.kiste",
+    "apk": "aniyomi-de.kiste-v13.1.apk",
+    "lang": "de",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "Kiste",
+        "lang": "de",
+        "id": "7853074400168594",
+        "baseUrl": "https://kiste.to",
+        "versionId": 1,
+        "hasCloudflare": 0
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Kool",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.kool",
     "apk": "aniyomi-de.kool-v13.5.apk",
