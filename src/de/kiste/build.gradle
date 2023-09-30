@@ -5,14 +5,16 @@ plugins {
 }
 
 ext {
-    extName = 'NetFlix Mirror'
-    pkgNameSuffix = 'all.netflixmirror'
-    extClass = '.NetFlixMirror'
+    extName = 'Kiste'
+    pkgNameSuffix = 'de.kiste'
+    extClass = '.Kiste'
     extVersionCode = 1
+    libVersion = '13'
+    containsNsfw = true
 }
 
 dependencies {
-    implementation(project(':lib-playlist-utils'))
+    implementation(project(":lib-playlist-utils"))
 }
 
 apply from: "$rootDir/common.gradle"
