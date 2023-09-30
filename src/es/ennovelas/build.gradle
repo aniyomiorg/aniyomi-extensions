@@ -5,8 +5,18 @@ ext {
     extName = 'EnNovelas'
     pkgNameSuffix = 'es.ennovelas'
     extClass = '.EnNovelas'
-    extVersionCode = 4
+    extVersionCode = 5
     libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-streamtape-extractor'))
+    implementation(project(':lib-okru-extractor'))
+    implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib-voe-extractor'))
+    implementation(project(':lib-streamlare-extractor'))
+    implementation(project(':lib-uqload-extractor'))
+    implementation(project(':lib-vudeo-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

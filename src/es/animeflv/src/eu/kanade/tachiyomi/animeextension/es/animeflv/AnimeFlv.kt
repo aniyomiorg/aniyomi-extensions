@@ -14,10 +14,10 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
@@ -113,19 +113,22 @@ class AnimeFlv : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 jObject["SUB"]!!.jsonArray!!.forEach { servers ->
                     val json = servers!!.jsonObject
                     val quality = json!!["title"]!!.jsonPrimitive!!.content
-                    var url = json!!["code"]!!.jsonPrimitive!!.content
+                    val url = json!!["code"]!!.jsonPrimitive!!.content
                     val extractedVideos = runCatching {
                         when (quality) {
                             "Stape" -> {
                                 val stapeUrl = json!!["url"]!!.jsonPrimitive!!.content
-                                StreamTapeExtractor(client).videoFromUrl(stapeUrl)
-                                    ?.let(::listOf)
+                                StreamTapeExtractor(client).videoFromUrl(stapeUrl)?.let(::listOf)
                             }
-                            "Doodstream" ->
-                                DoodExtractor(client).videoFromUrl(url, "DoodStream", false)
-                                    ?.let(::listOf)
+                            "Doodstream" -> DoodExtractor(client).videoFromUrl(url, "DoodStream", false)?.let(::listOf)
                             "Okru" -> OkruExtractor(client).videosFromUrl(url)
                             "YourUpload" -> YourUploadExtractor(client).videoFromUrl(url, headers = headers)
+                            "SW" -> {
+                                val docHeaders = headers.newBuilder()
+                                    .add("Referer", "$baseUrl/")
+                                    .build()
+                                StreamWishExtractor(client, docHeaders).videosFromUrl(url, "StreamWish")
+                            }
                             else -> null
                         }
                     }.getOrNull() ?: emptyList<Video>()

@@ -5,8 +5,11 @@ ext {
     extName = 'Animeyt'
     pkgNameSuffix = 'es.animeyt'
     extClass = '.Animeyt'
-    extVersionCode = 5
+    extVersionCode = 6
     libVersion = '13'
+}
+dependencies {
+    implementation(project(':lib-fastream-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"
