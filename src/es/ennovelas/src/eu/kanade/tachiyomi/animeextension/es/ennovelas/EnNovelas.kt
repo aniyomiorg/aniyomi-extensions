@@ -31,6 +31,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.util.concurrent.TimeUnit
 import kotlin.Exception
 
 class EnNovelas : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
@@ -71,25 +72,38 @@ class EnNovelas : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         var noEp = 1F
         if (seasonIds.any()) {
             seasonIds.reversed().map {
-                val headers = headers.newBuilder()
-                    .add("authority", response.request.url.host)
-                    .add("referer", response.request.url.toString())
-                    .add("accept", "*/*")
-                    .add("accept-language", "es-MX,es;q=0.9,en;q=0.8")
-                    .add("sec-fetch-mode", "cors")
-                    .add("x-requested-with", "XMLHttpRequest")
-                    .build()
-                val season = getNumberFromEpsString(it.text())
-                client.newCall(GET("$baseUrl/wp-content/themes/vo2022/temp/ajax/seasons.php?seriesID=${it.attr("data-season")}", headers = headers))
-                    .execute().asJsoup().select(".block-post").forEach { element ->
-                        val ep = SEpisode.create()
-                        val noEpisode = getNumberFromEpsString(element.selectFirst("a .episodeNum span:nth-child(2)")!!.text()).ifEmpty { noEp }
-                        ep.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
-                        ep.name = "T$season - E$noEpisode - Cap" + element.selectFirst("a .title")!!.text().substringAfter("Cap")
-                        ep.episode_number = noEp
-                        episodeList.add(ep)
-                        noEp += 1
-                    }
+                try {
+                    val headers = headers.newBuilder()
+                        .add("authority", response.request.url.toString().substringAfter("https://").substringBefore("/wp-content"))
+                        .add("referer", response.request.url.toString())
+                        .add("accept", "*/*")
+                        .add("accept-language", "es-MX,es;q=0.9,en;q=0.8")
+                        .add("sec-ch-ua", "\"Google Chrome\";v=\"119\", \"Chromium\";v=\"119\", \"Not?A_Brand\";v=\"24\"")
+                        .add("sec-ch-ua-mobile", "?0")
+                        .add("sec-ch-ua-platform", "\"Windows\"")
+                        .add("sec-fetch-dest", "empty")
+                        .add("sec-fetch-mode", "cors")
+                        .add("sec-fetch-site", "same-origin")
+                        .add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36")
+                        .add("x-requested-with", "XMLHttpRequest")
+                        .build()
+                    val season = getNumberFromEpsString(it.text())
+                    val tmpClient = client.newBuilder()
+                        .connectTimeout(30, TimeUnit.SECONDS)
+                        .writeTimeout(35, TimeUnit.SECONDS)
+                        .readTimeout(35, TimeUnit.SECONDS)
+                        .build()
+                    tmpClient.newCall(GET("$baseUrl/wp-content/themes/vo2022/temp/ajax/seasons.php?seriesID=${it.attr("data-season")}", headers = headers))
+                        .execute().asJsoup().select(".block-post").forEach { element ->
+                            val ep = SEpisode.create()
+                            val noEpisode = getNumberFromEpsString(element.selectFirst("a .episodeNum span:nth-child(2)")!!.text()).ifEmpty { noEp }
+                            ep.setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+                            ep.name = "T$season - E$noEpisode - Cap" + element.selectFirst("a .title")!!.text().substringAfter("Cap")
+                            ep.episode_number = noEp
+                            episodeList.add(ep)
+                            noEp += 1
+                        }
+                } catch (_: Exception) { }
             }
         } else {
             document.select(".block-post").forEach { element ->
@@ -165,23 +179,7 @@ class EnNovelas : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 } catch (_: Exception) {}
             }
             if (link.contains("uqload")) {
-                // uqload.co/embed-rxkjujtas0po.html
                 try {
-                    val headers = headers.newBuilder()
-                        .add("Accept", "*/*")
-                        .add("authority", "uqload.co")
-                        .add("Accept-Language", "es-MX,es;q=0.9,en;q=0.8")
-                        .add("Connection", "keep-alive")
-                        .add("Range", "bytes=0-")
-                        .add("Referer", "https://uqload.co/")
-                        .add("Sec-Fetch-Dest", "video")
-                        .add("Sec-Fetch-Mode", "no-cors")
-                        .add("Sec-Fetch-Site", "same-site")
-                        .add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
-                        .add("sec-ch-ua", "\"Google Chrome\";v=\"111\", \"Not(A:Brand\";v=\"8\", \"Chromium\";v=\"111\"")
-                        .add("sec-ch-ua-mobile", "?0")
-                        .add("sec-ch-ua-platform", "\"Windows\"")
-                        .build()
                     UqloadExtractor(client).videosFromUrl(if (link.contains(".html")) link else "$link.html", "Uqload").let { videoList.addAll(it) }
                 } catch (_: Exception) {}
             }
@@ -253,18 +251,13 @@ class EnNovelas : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         val title = document.selectFirst("[itemprop=\"name\"] a")?.text() ?: ""
-        val description = document.selectFirst(".postDesc .post-entry div")?.text() ?: ""
-        val genres = document.select("ul.postlist li:nth-child(1) span a").joinToString { it.text() }
-        val author = document.selectFirst("ul.postlist li:nth-child(3) span a")?.text() ?: ""
-        val status = parseStatus(document.select("ul.postlist li:nth-child(8) .getMeta span a").text().trim())
-        val actor = document.selectFirst(".postInfo > .getMeta > span:nth-child(2) > a")?.text() ?: ""
 
         anime.title = title
-        anime.description = description.ifEmpty { title }
-        anime.genre = genres
-        anime.status = status
-        anime.artist = actor
-        anime.author = author
+        anime.description = document.selectFirst(".postDesc .post-entry div")?.text() ?: title
+        anime.genre = document.select("ul.postlist li:nth-child(1) span a").joinToString { it.text() }
+        anime.status = parseStatus(document.select("ul.postlist li:nth-child(8) .getMeta span a").text().trim())
+        anime.artist = document.selectFirst(".postInfo > .getMeta > span:nth-child(2) > a")?.text() ?: ""
+        anime.author = document.selectFirst("ul.postlist li:nth-child(3) span a")?.text() ?: ""
         return anime
     }
 
