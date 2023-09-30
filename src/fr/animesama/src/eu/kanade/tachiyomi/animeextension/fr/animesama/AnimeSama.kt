@@ -11,13 +11,16 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
-import eu.kanade.tachiyomi.lib.mytvextractor.MytvExtractor
 import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
 import eu.kanade.tachiyomi.lib.vkextractor.VkExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
@@ -34,7 +37,7 @@ class AnimeSama : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "Anime-Sama"
 
-    override val baseUrl = "https://www.anime-sama.fr"
+    override val baseUrl = "https://anime-sama.fr"
 
     override val lang = "fr"
 
@@ -116,12 +119,12 @@ class AnimeSama : ConfigurableAnimeSource, AnimeHttpSource() {
         val playerUrls = json.decodeFromString<List<List<String>>>(episode.url)
         val videos = playerUrls.flatMapIndexed { i, it ->
             val prefix = "(${VOICES_VALUES[i].uppercase()}) "
-            it.flatMap { playerUrl ->
+            it.parallelCatchingFlatMap { playerUrl ->
                 with(playerUrl) {
                     when {
                         contains("anime-sama.fr") -> listOf(Video(playerUrl, "${prefix}AS Player", playerUrl))
                         contains("sibnet.ru") -> SibnetExtractor(client).videosFromUrl(playerUrl, prefix)
-                        contains("myvi.") -> MytvExtractor(client).videosFromUrl(playerUrl, prefix)
+                        // contains("myvi.") -> MytvExtractor(client).videosFromUrl(playerUrl, prefix)
                         contains("vk.") -> VkExtractor(client, headers).videosFromUrl(playerUrl, prefix)
                         contains("sendvid.com") -> SendvidExtractor(client, headers).videosFromUrl(playerUrl, prefix)
                         else -> emptyList()
@@ -133,6 +136,11 @@ class AnimeSama : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================ Utils =============================
+    inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { runCatching { f(it) }.getOrElse { emptyList() } } }.awaitAll().flatten()
+        }
+
     private fun removeDiacritics(string: String) = Normalizer.normalize(string, Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
     private fun sanitizeEpisodesJs(doc: String) = doc
         .replace(Regex("[\"\t]"), "") // Fix trash format
