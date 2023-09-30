@@ -14,7 +14,6 @@ ext {
 }
 
 dependencies {
-    implementation(project(':lib-mytv-extractor'))
     implementation(project(':lib-sibnet-extractor'))
     implementation(project(':lib-vk-extractor'))
     implementation(project(':lib-sendvid-extractor'))
