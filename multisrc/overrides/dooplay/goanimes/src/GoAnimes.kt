@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.animeextension.pt.goanimes
 import eu.kanade.tachiyomi.animeextension.pt.goanimes.extractors.BloggerJWPlayerExtractor
 import eu.kanade.tachiyomi.animeextension.pt.goanimes.extractors.GoAnimesExtractor
 import eu.kanade.tachiyomi.animeextension.pt.goanimes.extractors.JsDecoder
+import eu.kanade.tachiyomi.animeextension.pt.goanimes.extractors.LinkfunBypasser
 import eu.kanade.tachiyomi.animeextension.pt.goanimes.extractors.PlaylistExtractor
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
@@ -19,6 +20,9 @@ class GoAnimes : DooPlay(
 ) {
     // ============================== Popular ===============================
     override fun popularAnimeSelector() = "div#featured-titles article.item.tvshows > div.poster"
+
+    // =============================== Latest ===============================
+    override val latestUpdatesPath = "lancamentos"
 
     // ============================== Episodes ==============================
     override val seasonListSelector = "div#seasons > *"
@@ -60,6 +64,9 @@ class GoAnimes : DooPlay(
     override val prefQualityValues = arrayOf("240p", "360p", "480p", "720p", "1080p")
     override val prefQualityEntries = prefQualityValues
 
+    private val goanimesExtractor by lazy { GoAnimesExtractor(client, headers) }
+    private val linkfunBypasser by lazy { LinkfunBypasser(client) }
+
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
         val players = document.select("ul#playeroptionsul li")
@@ -69,11 +76,10 @@ class GoAnimes : DooPlay(
     private fun getPlayerVideos(player: Element): List<Video> {
         val url = getPlayerUrl(player)
         return when {
-            "player5.goanimes.net" in url ->
-                GoAnimesExtractor(client).videosFromUrl(url)
+            "player5.goanimes.net" in url -> goanimesExtractor.videosFromUrl(url)
             listOf("/bloggerjwplayer", "/m3u8", "/multivideo").any { it in url } -> {
                 val script = client.newCall(GET(url)).execute()
-                    .body.string()
+                    .use { it.body.string() }
                     .let(JsDecoder::decodeScript)
                 when {
                     "/bloggerjwplayer" in url ->
@@ -84,7 +90,7 @@ class GoAnimes : DooPlay(
                         script.substringAfter("attr")
                             .substringAfter(" \"")
                             .substringBefore('"')
-                            .let { GoAnimesExtractor(client).videosFromUrl(it) }
+                            .let(goanimesExtractor::videosFromUrl)
                     else -> emptyList<Video>()
                 }
             }
@@ -96,14 +102,23 @@ class GoAnimes : DooPlay(
         val type = player.attr("data-type")
         val id = player.attr("data-post")
         val num = player.attr("data-nume")
-        return client.newCall(GET("$baseUrl/wp-json/dooplayer/v2/$id/$type/$num"))
+        val url = client.newCall(GET("$baseUrl/wp-json/dooplayer/v2/$id/$type/$num"))
             .execute()
-            .body.string()
+            .use { it.body.string() }
             .substringAfter("\"embed_url\":\"")
             .substringBefore("\",")
             .replace("\\", "")
-    }
 
-    // =============================== Latest ===============================
-    override val latestUpdatesPath = "lancamentos"
+        return when {
+            "/protetorlinks/" in url -> {
+                val link = client.newCall(GET(url)).execute()
+                    .use { it.asJsoup() }
+                    .selectFirst("a[href]")!!.attr("href")
+
+                client.newCall(GET(link)).execute()
+                    .use(linkfunBypasser::getIframeUrl)
+            }
+            else -> url
+        }
+    }
 }
