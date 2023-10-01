@@ -10,7 +10,7 @@ import dev.datlag.jsunpacker.JsUnpacker
 class Mp4uploadExtractor(private val client: OkHttpClient) {
     fun videosFromUrl(url: String, headers: Headers, prefix: String = "", suffix: String = ""): List<Video> {
         val newHeaders = headers.newBuilder()
-            .add("referer", REFERER)
+            .set("referer", REFERER)
             .build()
 
         val doc = client.newCall(GET(url, newHeaders)).execute().use { it.asJsoup() }
