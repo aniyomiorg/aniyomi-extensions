@@ -11,9 +11,14 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.burstcloudextractor.BurstCloudExtractor
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
+import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
+import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
@@ -90,40 +95,34 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     .data().substringAfter("src=\"").substringBefore("\"")
             } catch (e: Exception) { "" }
 
-            when {
-                realUrl.contains("ok.ru") -> {
-                    val okruVideos = OkruExtractor(client).videosFromUrl(realUrl)
-                    videoList.addAll(okruVideos)
-                }
-                realUrl.contains("/stream/amz.php?") -> {
-                    val video = amazonExtractor(baseUrl + realUrl.substringAfter(".."))
-                    if (video.isNotBlank()) {
-                        if (realUrl.contains("&ext=es")) {
-                            videoList.add(Video(video, "Amazon ES", video))
-                        } else {
-                            videoList.add(Video(video, "Amazon", video))
+            try {
+                when {
+                    realUrl.contains("ok.ru") || realUrl.contains("okru") -> OkruExtractor(client).videosFromUrl(realUrl).let { videoList.addAll(it) }
+                    realUrl.contains("filemoon") || realUrl.contains("moonplayer") -> FilemoonExtractor(client).videosFromUrl(realUrl, headers = headers).let { videoList.addAll(it) }
+                    realUrl.contains("burstcloud") || realUrl.contains("burst") -> BurstCloudExtractor(client).videoFromUrl(realUrl, headers = headers).let { videoList.addAll(it) }
+                    realUrl.contains("streamwish") || realUrl.contains("embedwish") -> StreamWishExtractor(client, headers).videosFromUrl(realUrl).let { videoList.addAll(it) }
+                    realUrl.contains("streamtape") -> StreamTapeExtractor(client).videoFromUrl(realUrl, "StreamTape")?.let { videoList.add(it) }
+                    realUrl.contains("mp4upload") -> Mp4uploadExtractor(client).videosFromUrl(realUrl, headers).let { videoList.addAll(it) }
+                    realUrl.contains("yourupload") -> YourUploadExtractor(client).videoFromUrl(realUrl, headers = headers).let { videoList.addAll(it) }
+                    realUrl.contains("voe") -> VoeExtractor(client).videoFromUrl(realUrl)?.let { videoList.add(it) }
+                    realUrl.contains("/stream/amz.php?") -> {
+                        val video = amazonExtractor(baseUrl + realUrl.substringAfter(".."))
+                        if (video.isNotBlank()) {
+                            if (realUrl.contains("&ext=es")) {
+                                videoList.add(Video(video, "Amazon ES", video))
+                            } else {
+                                videoList.add(Video(video, "Amazon", video))
+                            }
                         }
                     }
-                }
-                realUrl.contains("/stream/fl.php") -> {
-                    val video = realUrl.substringAfter("/stream/fl.php?v=")
-                    try {
+                    realUrl.contains("/stream/fl.php") -> {
+                        val video = realUrl.substringAfter("/stream/fl.php?v=")
                         if (client.newCall(GET(video)).execute().code == 200) {
                             videoList.add(Video(video, "FireLoad", video))
                         }
-                    } catch (e: Exception) {}
-                }
-                realUrl.contains("streamtape") -> {
-                    val video = StreamTapeExtractor(client).videoFromUrl(realUrl, "StreamTape")
-                    if (video != null) {
-                        videoList.add(video)
                     }
                 }
-                realUrl.contains("mp4upload") -> {
-                    val videos = Mp4uploadExtractor(client).videosFromUrl(realUrl, headers)
-                    videoList.addAll(videos)
-                }
-            }
+            } catch (_: Exception) { }
         }
         return videoList.filter { it.url.contains("https") || it.url.contains("http") }
     }
@@ -159,6 +158,7 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val yearFilter = filters.find { it is YearFilter } as YearFilter
         val stateFilter = filters.find { it is StateFilter } as StateFilter
         val typeFilter = filters.find { it is TypeFilter } as TypeFilter
+        val orderByFilter = filters.find { it is OrderByFilter } as OrderByFilter
 
         val genreFilter = (filters.find { it is TagFilter } as TagFilter).state.filter { it.state }
 
@@ -180,6 +180,7 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         if (typeFilter.state != 0) {
             filterUrl += "&type[]=${typeFilter.toUriPart()}"
         } // search by type
+        filterUrl += "&order=${orderByFilter.toUriPart()}"
         filterUrl += "&page=$page" // add page
 
         return when {
@@ -188,6 +189,7 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> GET("$baseUrl/animes?order=likes&page=$page ")
         }
     }
+
     override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
 
     override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
@@ -236,6 +238,7 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         TagFilter("Generos", checkboxesFrom(genreList)),
         StateFilter(),
         TypeFilter(),
+        OrderByFilter(),
         YearFilter(),
     )
 
@@ -292,9 +295,11 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun checkboxesFrom(tagArray: Array<Pair<String, String>>): List<TagCheckBox> = tagArray.map { TagCheckBox(it.second) }
 
     class TagCheckBox(tag: String) : AnimeFilter.CheckBox(tag, false)
+
     class TagFilter(name: String, checkBoxes: List<TagCheckBox>) : AnimeFilter.Group<TagCheckBox>(name, checkBoxes)
 
-    private class YearFilter : AnimeFilter.Text("Año", "2022")
+    private class YearFilter : AnimeFilter.Text("Año")
+
     private class StateFilter : UriPartFilter(
         "Estado",
         arrayOf(
@@ -305,6 +310,7 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             Pair("En Cuarentena", "4"),
         ),
     )
+
     private class TypeFilter : UriPartFilter(
         "Tipo",
         arrayOf(
@@ -316,23 +322,33 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         ),
     )
 
+    private class OrderByFilter : UriPartFilter(
+        "Ordenar Por",
+        arrayOf(
+            Pair("Por defecto", "default"),
+            Pair("Recientemente Actualizados", "updated"),
+            Pair("Recientemente Agregados", "added"),
+            Pair("Nombre A-Z", "title"),
+            Pair("Calificación", "likes"),
+            Pair("Más vistos", "visits"),
+        ),
+    )
+
     private open class UriPartFilter(displayName: String, val vals: Array<Pair<String, String>>) :
         AnimeFilter.Select<String>(displayName, vals.map { it.first }.toTypedArray()) {
         fun toUriPart() = vals[state].second
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val qualities = arrayOf(
+            "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
+            "Amazon", "AmazonES", "StreamTape", "Fireload", "Mp4upload", "YourUpload", "StreamWish"
+        )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
             title = "Preferred quality"
-            entries = arrayOf(
-                "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
-                "Amazon", "AmazonES", "StreamTape", "Fireload", "Mp4upload",
-            )
-            entryValues = arrayOf(
-                "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
-                "Amazon", "AmazonES", "StreamTape", "Fireload", "Mp4upload",
-            )
+            entries = qualities
+            entryValues = qualities
             setDefaultValue("Amazon")
             summary = "%s"
 
