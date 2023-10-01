@@ -10,6 +10,10 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.Response
 import org.jsoup.nodes.Element
 
@@ -35,9 +39,9 @@ class GoAnimes : DooPlay(
 
         // Episodes are listed at another page
         val url = season.attr("href")
-        return client.newCall(GET(url))
+        return client.newCall(GET(url, headers))
             .execute()
-            .asJsoup()
+            .use { it.asJsoup() }
             .let(::getSeasonEpisodes)
     }
 
@@ -68,9 +72,13 @@ class GoAnimes : DooPlay(
     private val linkfunBypasser by lazy { LinkfunBypasser(client) }
 
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
+        val document = response.use { it.asJsoup() }
         val players = document.select("ul#playeroptionsul li")
-        return players.flatMap(::getPlayerVideos)
+        return players.parallelMap {
+            runCatching {
+                getPlayerVideos(it)
+            }.getOrElse { emptyList() }
+        }.flatten().ifEmpty { throw Exception("Nenhum vídeo encontrado.") }
     }
 
     private fun getPlayerVideos(player: Element): List<Video> {
@@ -121,4 +129,10 @@ class GoAnimes : DooPlay(
             else -> url
         }
     }
+
+    // ============================= Utilities ==============================
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 }
