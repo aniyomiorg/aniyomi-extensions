@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.es.mundodonghua
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.es.mundodonghua.extractors.JsUnpacker
@@ -19,7 +18,6 @@ import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -34,27 +32,36 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val lang = "es"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client = network.cloudflareClient
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun popularAnimeSelector(): String = "div.container.new-donghua-grid.sm-row div.col-md-9 div.sm-row.bg-white.pt-20.pr-20.pb-15.pl-20.br-8.of-a div.row div.item"
+    override fun popularAnimeSelector() = "div > div.row > div.item > a"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/lista-donghuas/$page")
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/lista-donghuas/$page")
 
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        val anime = SAnime.create()
-        anime.setUrlWithoutDomain(element.select("a.angled-img").attr("href"))
-        anime.title = element.select("a.angled-img div.bottom-info.white h5").text().removeSurrounding("\"")
-        anime.thumbnail_url = element.select("a.angled-img div.img img").attr("abs:src")
-        return anime
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.attr("href"))
+        title = element.selectFirst("h5")!!.text().removeSurrounding("\"")
+        thumbnail_url = element.selectFirst("img")?.attr("abs:src")
     }
 
-    override fun popularAnimeNextPageSelector(): String = "ul.pagination li:last-child a"
+    override fun popularAnimeNextPageSelector() = "ul.pagination li:last-child a"
+
+    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
+
+    override fun latestUpdatesFromElement(element: Element) =
+        popularAnimeFromElement(element).apply {
+            url = url.replace("/ver/", "/donghua/").substringBeforeLast("/")
+        }
+
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/lista-episodios/$page")
+
+    override fun latestUpdatesSelector() = popularAnimeSelector()
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
@@ -269,14 +276,6 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             else -> SAnime.UNKNOWN
         }
     }
-
-    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
-
-    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
-
-    override fun latestUpdatesRequest(page: Int) = popularAnimeRequest(page)
-
-    override fun latestUpdatesSelector() = popularAnimeSelector()
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
