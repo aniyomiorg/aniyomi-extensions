@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.all.javguru
 
 import android.app.Application
 import android.util.Base64
+import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.all.javguru.extractors.EmTurboExtractor
 import eu.kanade.tachiyomi.animeextension.all.javguru.extractors.MaxStreamExtractor
@@ -17,10 +18,10 @@ import eu.kanade.tachiyomi.lib.javcoverfetcher.JavCoverFetcher
 import eu.kanade.tachiyomi.lib.javcoverfetcher.JavCoverFetcher.fetchHDCovers
 import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservable
 import eu.kanade.tachiyomi.network.asObservableSuccess
-import eu.kanade.tachiyomi.network.interceptor.rateLimit
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -47,16 +48,11 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
 
     override val supportsLatest = true
 
-    override val client = network.cloudflareClient.newBuilder()
-        .rateLimit(2)
-        .build()
+    override val client = network.cloudflareClient
 
     private val noRedirectClient = client.newBuilder()
         .followRedirects(false)
         .build()
-
-    override fun headersBuilder() = super.headersBuilder()
-        .add("Referer", "$baseUrl/")
 
     private val preference by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
@@ -275,7 +271,7 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
             .build()
 
         val redirectUrl = noRedirectClient.newCall(GET(olidUrl, newHeaders))
-            .execute().header("location")
+            .execute().use { it.header("location") }
             ?: return null
 
         if (redirectUrl.toHttpUrlOrNull() == null) {
@@ -285,18 +281,22 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
         return redirectUrl
     }
 
+    private val streamWishExtractor by lazy { StreamWishExtractor(client, headers) }
     private val streamTapeExtractor by lazy { StreamTapeExtractor(client) }
     private val doodExtractor by lazy { DoodExtractor(client) }
     private val mixDropExtractor by lazy { MixDropExtractor(client) }
-    private val maxStreamExtractor by lazy { MaxStreamExtractor(client) }
-    private val emTurboExtractor by lazy { EmTurboExtractor(client) }
+    private val maxStreamExtractor by lazy { MaxStreamExtractor(client, headers) }
+    private val emTurboExtractor by lazy { EmTurboExtractor(client, headers) }
 
     private fun getVideos(hosterUrl: String): List<Video> {
         return runCatching {
             when {
+                hosterUrl.contains("javplaya") -> {
+                    streamWishExtractor.videosFromUrl(hosterUrl)
+                }
+
                 hosterUrl.contains("streamtape") -> {
-                    streamTapeExtractor.videoFromUrl(hosterUrl)
-                        ?.let(::listOf) ?: emptyList()
+                    streamTapeExtractor.videoFromUrl(hosterUrl).let(::listOfNotNull)
                 }
 
                 hosterUrl.contains("dood") -> {
@@ -320,6 +320,14 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
                 }
             }
         }.getOrDefault(emptyList())
+    }
+
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preference.getString(PREF_QUALITY, PREF_QUALITY_DEFAULT)!!
+
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
     }
 
     private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
@@ -355,6 +363,15 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY
+            title = PREF_QUALITY_TITLE
+            entries = arrayOf("1080p", "720p", "480p", "360p")
+            entryValues = arrayOf("1080", "720", "480", "360")
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+        }.also(screen::addPreference)
+
         JavCoverFetcher.addPreferenceToScreen(screen)
     }
 
@@ -369,6 +386,10 @@ class JavGuru : AnimeHttpSource(), ConfigurableAnimeSource {
             "mixdrop",
             "mixdroop",
         )
+
+        private const val PREF_QUALITY = "preferred_quality"
+        private const val PREF_QUALITY_TITLE = "Preferred quality"
+        private const val PREF_QUALITY_DEFAULT = "720"
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
