@@ -23,7 +23,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
-import okhttp3.OkHttpClient
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -35,13 +34,13 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "WIT ANIME"
 
-    override val baseUrl = "https://witanime.fun"
+    override val baseUrl = "https://witanime.rest"
 
     override val lang = "ar"
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client = network.cloudflareClient
 
     override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
 
@@ -145,7 +144,10 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return when {
             url.contains("yonaplay") -> extractFromMulti(url)
             url.contains("soraplay") -> {
-                soraPlayExtractor.videosFromUrl(url, headers)
+                when {
+                    url.contains("/mirror") -> extractFromMulti(url)
+                    else -> soraPlayExtractor.videosFromUrl(url, headers)
+                }
             }
             url.contains("dood") -> {
                 doodExtractor.videoFromUrl(url, "Dood mirror")
@@ -176,9 +178,22 @@ class WitAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun extractFromMulti(url: String): List<Video> {
-        val doc = client.newCall(GET(url, headers)).execute().asJsoup()
-        return doc.select("div.OD li").flatMap {
-            val videoUrl = it.attr("onclick").substringAfter("go_to_player('").substringBefore("')")
+        val newHeaders = when {
+            url.contains("soraplay") ->
+                super.headersBuilder().set("referer", "https://yonaplay.org").build()
+            else -> headers
+        }
+        val doc = client.newCall(GET(url, newHeaders)).execute()
+            .use { it.asJsoup() }
+        return doc.select(".OD li").flatMap { element ->
+            val videoUrl = element.attr("onclick").substringAfter("go_to_player('")
+                .substringBefore("')")
+                .let {
+                    when {
+                        it.startsWith("https:") -> it
+                        else -> "https:$it"
+                    }
+                }
             runCatching { extractVideos(videoUrl) }.getOrElse { emptyList() }
         }
     }
