@@ -4,15 +4,16 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 
-class EmTurboExtractor(private val client: OkHttpClient) {
+class EmTurboExtractor(private val client: OkHttpClient, private val headers: Headers) {
 
-    private val playlistExtractor by lazy { PlaylistUtils(client) }
+    private val playlistExtractor by lazy { PlaylistUtils(client, headers) }
 
     fun getVideos(url: String): List<Video> {
-        val document = client.newCall(GET(url)).execute().asJsoup()
+        val document = client.newCall(GET(url, headers)).execute().asJsoup()
 
         val script = document.selectFirst("script:containsData(urlplay)")
             ?.data()

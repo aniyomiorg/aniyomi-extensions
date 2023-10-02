@@ -10,6 +10,8 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
+import eu.kanade.tachiyomi.lib.javcoverfetcher.JavCoverFetcher
+import eu.kanade.tachiyomi.lib.javcoverfetcher.JavCoverFetcher.fetchHDCovers
 import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.lib.unpacker.Unpacker
 import eu.kanade.tachiyomi.network.GET
@@ -98,6 +100,9 @@ class MissAV : AnimeHttpSource(), ConfigurableAnimeSource {
     override fun animeDetailsParse(response: Response): SAnime {
         val document = response.use { it.asJsoup() }
 
+        val jpTitle = document.select("div.text-secondary span:contains(title) + span").text()
+        val siteCover = document.selectFirst("video.player")?.attr("abs:data-poster")
+
         return SAnime.create().apply {
             title = document.selectFirst("h1.text-base")!!.text()
             genre = document.getInfo("/genres/")
@@ -107,8 +112,6 @@ class MissAV : AnimeHttpSource(), ConfigurableAnimeSource {
             ).joinToString()
             artist = document.getInfo("/actresses/")
             status = SAnime.COMPLETED
-            thumbnail_url = document.selectFirst("video.player")?.attr("abs:data-poster")
-
             description = buildString {
                 document.selectFirst("div.mb-1")?.text()?.also { append("$it\n") }
 
@@ -118,6 +121,11 @@ class MissAV : AnimeHttpSource(), ConfigurableAnimeSource {
                 document.select("div.text-secondary:not(:has(a)):has(span)")
                     .eachText()
                     .forEach { append("\n$it") }
+            }
+            thumbnail_url = if (preferences.fetchHDCovers) {
+                JavCoverFetcher.getCoverByTitle(jpTitle) ?: siteCover
+            } else {
+                siteCover
             }
         }
     }
@@ -169,6 +177,8 @@ class MissAV : AnimeHttpSource(), ConfigurableAnimeSource {
             setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
         }.also(screen::addPreference)
+
+        JavCoverFetcher.addPreferenceToScreen(screen)
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
