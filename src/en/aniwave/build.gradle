@@ -8,7 +8,7 @@ ext {
     extName = 'Aniwave'
     pkgNameSuffix = 'en.nineanime'
     extClass = '.Aniwave'
-    extVersionCode = 51
+    extVersionCode = 52
     libVersion = '13'
 }
 

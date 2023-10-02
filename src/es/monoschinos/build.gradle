@@ -5,7 +5,7 @@ ext {
     extName = 'MonosChinos'
     pkgNameSuffix = 'es.monoschinos'
     extClass = '.MonosChinos'
-    extVersionCode = 22
+    extVersionCode = 23
     libVersion = '13'
 }
 
