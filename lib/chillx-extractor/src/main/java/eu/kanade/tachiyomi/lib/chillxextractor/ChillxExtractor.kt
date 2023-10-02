@@ -19,9 +19,8 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
     private val playlistUtils by lazy { PlaylistUtils(client, headers) }
 
     companion object {
-        private const val KEY = "m4H6D9%0${'$'}N&F6rQ&"
-
-        private val REGEX_MASTER_JS by lazy { Regex("""MasterJS\s*=\s*'([^']+)""") }
+        private val REGEX_MASTER_JS by lazy { Regex("""JScript\s*=\s*'([^']+)""") }
+        private val REGEX_EVAL_KEY by lazy { Regex("""eval\(\S+\("(\S+)",\d+,"(\S+)",(\d+),(\d+),""") }
         private val REGEX_SOURCES by lazy { Regex("""sources:\s*\[\{"file":"([^"]+)""") }
         private val REGEX_FILE by lazy { Regex("""file: ?"([^"]+)"""") }
         private val REGEX_SOURCE by lazy { Regex("""source = ?"([^"]+)"""")}
@@ -37,7 +36,8 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
 
         val master = REGEX_MASTER_JS.find(body)?.groupValues?.get(1) ?: return emptyList()
         val aesJson = json.decodeFromString<CryptoInfo>(master)
-        val decryptedScript = decryptWithSalt(aesJson.ciphertext, aesJson.salt, KEY)
+        val key = getKey(body)
+        val decryptedScript = decryptWithSalt(aesJson.ciphertext, aesJson.salt, key)
             .replace("\\n", "\n")
             .replace("\\", "")
 
@@ -79,6 +79,24 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
             subtitleList = subtitleList,
         )
     }
+
+    private fun getKey(body: String): String {
+        val (encrypted, pass, offset, index) = REGEX_EVAL_KEY.find(body)!!.groupValues.drop(1)
+        val decrypted = decryptScript(encrypted, pass, offset.toInt(), index.toInt())
+        return decrypted.substringAfter("'").substringBefore("'")
+    }
+
+    private fun decryptScript(encrypted: String, pass: String, offset: Int, index: Int): String {
+        val trimmedPass = pass.substring(0, index)
+        val bits = encrypted.split(pass[index]).map { item ->
+            trimmedPass.foldIndexed(item) { index, acc, it ->
+                acc.replace(it.toString(), index.toString())
+            }
+        }.filter(String::isNotBlank)
+
+        return bits.joinToString("") { Char(it.toInt(index) - offset).toString() }
+    }
+
 
     @Serializable
     data class CryptoInfo(
