@@ -280,7 +280,11 @@ class LegionAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
             }
             url.contains("jkanime") -> {
-                listOf(JkanimeExtractor(client).getDesuFromUrl(url))
+                try {
+                    listOf(JkanimeExtractor(client).getDesuFromUrl(url))
+                } catch (_: Exception) {
+                    emptyList()
+                }
             }
             url.contains("/stream/amz.php?") -> {
                 try {
