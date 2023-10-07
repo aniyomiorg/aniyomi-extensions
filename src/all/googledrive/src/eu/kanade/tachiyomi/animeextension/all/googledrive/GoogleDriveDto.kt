@@ -28,3 +28,18 @@ data class LinkDataInfo(
     val title: String,
     val size: String,
 )
+
+@Serializable
+data class DownloadResponse(
+    val downloadUrl: String,
+)
+
+@Serializable
+data class DetailsJson(
+    val title: String? = null,
+    val author: String? = null,
+    val artist: String? = null,
+    val description: String? = null,
+    val genre: List<String>? = null,
+    val status: String? = null,
+)

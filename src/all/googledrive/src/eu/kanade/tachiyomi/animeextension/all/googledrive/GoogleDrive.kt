@@ -31,6 +31,7 @@ import okhttp3.ProtocolException
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import okhttp3.internal.commonEmptyRequestBody
 import org.jsoup.nodes.Document
 import rx.Observable
 import uy.kohesive.injekt.Injekt
@@ -45,7 +46,7 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val id = 4222017068256633289
 
-    override var baseUrl = ""
+    override var baseUrl = "https://drive.google.com"
 
     // Hack to manipulate what gets opened in webview
     private val baseUrlInternal by lazy {
@@ -199,28 +200,55 @@ class GoogleDrive : ConfigurableAnimeSource, AnimeHttpSource() {
             null
         } ?: return Observable.just(anime)
 
-        if (driveDocument.selectFirst("title:contains(Error 404 \\(Not found\\))") != null) {
-            return Observable.just(anime)
+        // Get cover
+
+        val coverResponse = client.newCall(
+            createPost(driveDocument, folderId, searchReqWithType(folderId, "cover", IMAGE_MIMETYPE)),
+        ).execute().parseAs<PostResponse> { JSON_REGEX.find(it)!!.groupValues[1] }
+
+        coverResponse.items?.firstOrNull()?.let {
+            anime.thumbnail_url = "https://drive.google.com/uc?id=${it.id}"
         }
 
-        var pageToken: String? = ""
-        while (pageToken != null) {
-            val response = client.newCall(
-                createPost(driveDocument, folderId),
-            ).execute()
+        // Get details
 
-            val parsed = response.parseAs<PostResponse> {
-                JSON_REGEX.find(it)!!.groupValues[1]
+        val detailsResponse = client.newCall(
+            createPost(driveDocument, folderId, searchReqWithType(folderId, "details.json", "")),
+        ).execute().parseAs<PostResponse> { JSON_REGEX.find(it)!!.groupValues[1] }
+
+        detailsResponse.items?.firstOrNull()?.let {
+            val newPostHeaders = getHeaders.newBuilder().apply {
+                add("Content-Type", "application/x-www-form-urlencoded;charset=utf-8")
+                set("Host", "drive.usercontent.google.com")
+                add("Origin", "https://drive.google.com")
+                add("Referer", "https://drive.google.com/")
+                add("X-Drive-First-Party", "DriveWebUi")
+                add("X-Json-Requested", "true")
+            }.build()
+
+            val newPostUrl = "https://drive.usercontent.google.com/uc?id=${it.id}&authuser=0&export=download"
+
+            val newResponse = client.newCall(
+                POST(newPostUrl, headers = newPostHeaders, body = commonEmptyRequestBody),
+            ).execute().parseAs<DownloadResponse> { JSON_REGEX.find(it)!!.groupValues[1] }
+
+            val downloadHeaders = headers.newBuilder().apply {
+                add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+                add("Connection", "keep-alive")
+                add("Cookie", getCookie("https://drive.usercontent.google.com"))
+                add("Host", "drive.usercontent.google.com")
+            }.build()
+
+            client.newCall(
+                GET(newResponse.downloadUrl, headers = downloadHeaders),
+            ).execute().parseAs<DetailsJson>().let { t ->
+                t.title?.let { anime.title = it }
+                t.author?.let { anime.author = it }
+                t.artist?.let { anime.artist = it }
+                t.description?.let { anime.description = it }
+                t.genre?.let { anime.genre = it.joinToString(", ") }
+                t.status?.let { anime.status = it.toIntOrNull() ?: SAnime.UNKNOWN }
             }
-
-            if (parsed.items == null) throw Exception("Failed to load items, please log in through webview")
-            parsed.items.forEach {
-                if (it.mimeType.startsWith("image/") && it.title.startsWith("cover.")) {
-                    anime.thumbnail_url = "https://drive.google.com/uc?id=${it.id}"
-                }
-            }
-
-            pageToken = parsed.nextPageToken
         }
 
         return Observable.just(anime)
