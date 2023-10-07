@@ -136,7 +136,10 @@ class GDriveCookieJar : CookieJar {
 
     // Append rather than overwrite, what could go wrong?
     override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
-        cookieStore[url.host] = ((cookieStore[url.host] ?: emptyList()) + cookies).toMutableList()
+        val oldCookies = (cookieStore[url.host] ?: emptyList()).filter { c ->
+            !cookies.any { t -> c.name == t.name }
+        }
+        cookieStore[url.host] = (oldCookies + cookies).toMutableList()
     }
 
     override fun loadForRequest(url: HttpUrl): List<Cookie> {
