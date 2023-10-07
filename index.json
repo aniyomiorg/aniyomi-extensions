@@ -213,10 +213,10 @@
   {
     "name": "Aniyomi: Jellyfin",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.jellyfin",
-    "apk": "aniyomi-all.jellyfin-v13.10.apk",
+    "apk": "aniyomi-all.jellyfin-v13.11.apk",
     "lang": "all",
-    "code": 10,
-    "version": "13.10",
+    "code": 11,
+    "version": "13.11",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2602,6 +2602,27 @@
         "lang": "es",
         "id": "7685749277599065785",
         "baseUrl": "https://www.locopelis.com",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: MetroSeries",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.metroseries",
+    "apk": "aniyomi-es.metroseries-v13.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "MetroSeries",
+        "lang": "es",
+        "id": "302544302370133084",
+        "baseUrl": "https://metroseries.net",
         "versionId": 1,
         "hasCloudflare": 1
       }
