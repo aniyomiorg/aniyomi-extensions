@@ -150,10 +150,10 @@
   {
     "name": "Aniyomi: Google Drive",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.googledrive",
-    "apk": "aniyomi-all.googledrive-v13.10.apk",
+    "apk": "aniyomi-all.googledrive-v13.11.apk",
     "lang": "all",
-    "code": 10,
-    "version": "13.10",
+    "code": 11,
+    "version": "13.11",
     "nsfw": 0,
     "hasReadme": 1,
     "hasChangelog": 0,
@@ -1636,12 +1636,12 @@
   {
     "name": "Aniyomi: Kayoanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.kayoanime",
-    "apk": "aniyomi-en.kayoanime-v13.8.apk",
+    "apk": "aniyomi-en.kayoanime-v13.9.apk",
     "lang": "en",
-    "code": 8,
-    "version": "13.8",
+    "code": 9,
+    "version": "13.9",
     "nsfw": 0,
-    "hasReadme": 0,
+    "hasReadme": 1,
     "hasChangelog": 0,
     "sources": [
       {
@@ -1930,12 +1930,12 @@
   {
     "name": "Aniyomi: Ripcrabbyanime",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.ripcrabbyanime",
-    "apk": "aniyomi-en.ripcrabbyanime-v13.7.apk",
+    "apk": "aniyomi-en.ripcrabbyanime-v13.8.apk",
     "lang": "en",
-    "code": 7,
-    "version": "13.7",
+    "code": 8,
+    "version": "13.8",
     "nsfw": 0,
-    "hasReadme": 0,
+    "hasReadme": 1,
     "hasChangelog": 0,
     "sources": [
       {
