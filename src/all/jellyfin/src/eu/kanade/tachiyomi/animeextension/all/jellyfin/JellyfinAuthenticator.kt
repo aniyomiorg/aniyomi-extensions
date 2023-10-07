@@ -2,37 +2,42 @@ package eu.kanade.tachiyomi.animeextension.all.jellyfin
 
 import android.content.SharedPreferences
 import android.os.Build
+import android.util.Log
 import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.POST
-import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
+import uy.kohesive.injekt.injectLazy
 
 class JellyfinAuthenticator(
     private val preferences: SharedPreferences,
     private val baseUrl: String,
     private val client: OkHttpClient,
 ) {
+
+    private val json: Json by injectLazy()
+
     fun login(username: String, password: String): Pair<String?, String?> {
-        return try {
+        return runCatching {
             val authResult = authenticateWithPassword(username, password)
-                ?: throw Exception()
-            val key = authResult["AccessToken"]!!.jsonPrimitive.content
-            val userId = authResult["SessionInfo"]!!.jsonObject["UserId"]!!.jsonPrimitive.content
+            val key = authResult.AccessToken
+            val userId = authResult.SessionInfo.UserId
             saveLogin(key, userId)
             Pair(key, userId)
-        } catch (e: Exception) {
+        }.getOrElse {
+            Log.e(LOG_TAG, it.stackTraceToString())
             Pair(null, null)
         }
     }
 
-    private fun authenticateWithPassword(username: String, password: String): JsonObject? {
+    private fun authenticateWithPassword(username: String, password: String): LoginResponse {
         var deviceId = getPrefDeviceId()
         if (deviceId.isNullOrEmpty()) {
             deviceId = getRandomString()
@@ -44,13 +49,15 @@ class JellyfinAuthenticator(
             "X-Emby-Authorization",
             "MediaBrowser Client=\"$CLIENT\", Device=\"Android $androidVersion\", DeviceId=\"$deviceId\", Version=\"$aniyomiVersion\"",
         )
-        val body = """
-            {"Username":"$username","Pw":"$password"}
-        """.trimIndent()
-            .toRequestBody("application/json".toMediaType())
+        val body = json.encodeToString(
+            buildJsonObject {
+                put("Username", username)
+                put("Pw", password)
+            },
+        ).toRequestBody("application/json; charset=utf-8".toMediaType())
+
         val request = POST("$baseUrl/Users/authenticatebyname", headers = authHeader, body = body)
-        val response = client.newCall(request).execute().body.string()
-        return response?.let { Json.decodeFromString<JsonObject>(it) }
+        return client.newCall(request).execute().parseAs()
     }
 
     private fun getRandomString(): String {
@@ -76,7 +83,15 @@ class JellyfinAuthenticator(
         DEVICEID_KEY,
         value,
     ).apply()
-}
 
-private const val DEVICEID_KEY = "device_id"
-private const val CLIENT = "Aniyomi"
+    private inline fun <reified T> Response.parseAs(transform: (String) -> String = { it }): T {
+        val responseBody = use { transform(it.body.string()) }
+        return json.decodeFromString(responseBody)
+    }
+
+    companion object {
+        private const val DEVICEID_KEY = "device_id"
+        private const val CLIENT = "Aniyomi"
+        private const val LOG_TAG = "JellyfinAuthenticator"
+    }
+}

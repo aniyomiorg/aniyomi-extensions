@@ -65,3 +65,14 @@ data class LinkData(
     val seriesId: String,
     val seasonId: String,
 )
+
+@Serializable
+data class LoginResponse(
+    val AccessToken: String,
+    val SessionInfo: SessionObject,
+) {
+    @Serializable
+    data class SessionObject(
+        val UserId: String,
+    )
+}
