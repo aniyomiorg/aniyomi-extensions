@@ -1,0 +1,20 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
+}
+
+ext {
+    extName = 'AnimeParadise'
+    pkgNameSuffix = 'en.animeparadise'
+    extClass = '.AnimeParadise'
+    extVersionCode = 1
+    libVersion = '13'
+}
+
+dependencies {
+    implementation(project(':lib-playlist-utils'))
+}
+
+
+apply from: "$rootDir/common.gradle"
