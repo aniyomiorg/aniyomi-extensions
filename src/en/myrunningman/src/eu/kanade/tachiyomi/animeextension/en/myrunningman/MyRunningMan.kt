@@ -6,9 +6,16 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
+import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -158,12 +165,45 @@ class MyRunningMan : ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
+    private val doodExtractor by lazy { DoodExtractor(client) }
+    private val mixdropExtractor by lazy { MixDropExtractor(client) }
+    private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
+
     override fun videoListParse(response: Response): List<Video> {
-        throw UnsupportedOperationException("Not used.")
+        val doc = response.use { it.asJsoup() }
+
+        return doc.select("a.changePlayer")
+            .mapNotNull { getUrlById(it.attr("data-url")) }
+            .parallelMap { url ->
+                runCatching {
+                    when {
+                        url.contains("dooo") -> doodExtractor.videosFromUrl(url)
+                        url.contains("mixdro") -> mixdropExtractor.videoFromUrl(url)
+                        url.contains("streamtape.com") -> streamtapeExtractor.videoFromUrl(url)?.let(::listOf)
+                        else -> null
+                    }
+                }.getOrNull() ?: emptyList()
+            }.flatten().ifEmpty { throw Exception("No videos!") }
     }
 
     override fun videoListSelector(): String {
         throw UnsupportedOperationException("Not used.")
+    }
+
+    private fun getUrlById(id: String): String? {
+        val decoded = id.replace(Regex("[a-zA-Z]")) {
+            val item = it.value
+            val offset = if (item.lowercase().single() < 'n') 13 else -13
+            Char(item.single().code + offset).toString()
+        }
+
+        val videoId = decoded.drop(1)
+        return when (decoded.first()) {
+            'd' -> "https://dooood.com/e/$videoId"
+            'm' -> "https://mixdroop.bz/e/$videoId"
+            't' -> "https://streamtape.com/e/$videoId"
+            else -> null
+        }
     }
 
     override fun videoFromElement(element: Element): Video {
@@ -183,6 +223,11 @@ class MyRunningMan : ParsedAnimeHttpSource() {
         return runCatching { DATE_FORMATTER.parse(trim())?.time }
             .getOrNull() ?: 0L
     }
+
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 
     companion object {
         const val PREFIX_SEARCH = "id:"
