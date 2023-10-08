@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.animeextension.all.chineseanime
 
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.all.chineseanime.extractors.VatchusExtractor
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.dailymotionextractor.DailymotionExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
@@ -23,15 +24,16 @@ class ChineseAnime : AnimeStream(
     override val filtersSelector = "div.filter > ul"
 
     // ============================ Video Links =============================
+    private val dailymotionExtractor by lazy { DailymotionExtractor(client, headers) }
+    private val streamwishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val vatchusExtractor by lazy { VatchusExtractor(client, headers) }
+
     override fun getVideoList(url: String, name: String): List<Video> {
         val prefix = "$name - "
         return when {
-            url.contains("dailymotion") -> {
-                DailymotionExtractor(client, headers).videosFromUrl(url, prefix)
-            }
-            url.contains("embedwish") -> {
-                StreamWishExtractor(client, headers).videosFromUrl(url, prefix)
-            }
+            url.contains("dailymotion") -> dailymotionExtractor.videosFromUrl(url, prefix)
+            url.contains("embedwish") -> streamwishExtractor.videosFromUrl(url, prefix)
+            url.contains("vatchus") -> vatchusExtractor.videosFromUrl(url, prefix)
             else -> emptyList()
         }
     }
