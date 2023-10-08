@@ -26,21 +26,20 @@ class MyRunningMan : ParsedAnimeHttpSource() {
     override val supportsLatest = false
 
     // ============================== Popular ===============================
-    override fun popularAnimeRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/episodes/mostwatched/$page")
+
+    override fun popularAnimeSelector() = "table > tbody > tr"
+
+    override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
+        element.selectFirst("p > strong > a")!!.run {
+            title = text()
+            setUrlWithoutDomain(attr("href"))
+        }
+
+        thumbnail_url = element.selectFirst("img")?.absUrl("src")
     }
 
-    override fun popularAnimeSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
-
-    override fun popularAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun popularAnimeNextPageSelector() = "li > a[aria-label=Next]"
 
     // =============================== Latest ===============================
     override fun latestUpdatesRequest(page: Int): Request {
