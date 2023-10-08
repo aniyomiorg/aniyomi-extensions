@@ -9,11 +9,14 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.Request
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import okhttp3.Response
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
+import uy.kohesive.injekt.injectLazy
 
 class MyRunningMan : ParsedAnimeHttpSource() {
 
@@ -24,6 +27,8 @@ class MyRunningMan : ParsedAnimeHttpSource() {
     override val lang = "en"
 
     override val supportsLatest = true
+
+    private val json: Json by injectLazy()
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/episodes/mostwatched/$page")
@@ -67,8 +72,26 @@ class MyRunningMan : ParsedAnimeHttpSource() {
         return AnimesPage(listOf(details), false)
     }
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        throw UnsupportedOperationException("Not used.")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) =
+        GET("$baseUrl/_search.php?q=$query", headersBuilder().add("X-Requested-With", "XMLHttpRequest").build())
+
+    @Serializable
+    data class ResultDto(val value: String, val label: String)
+
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        val animes = response.parseAs<List<ResultDto>>().map {
+            SAnime.create().apply {
+                url = "/ep/" + it.value
+                title = it.label
+                thumbnail_url = buildString {
+                    append("$baseUrl/assets/epimg/${it.value.padStart(3, '0')}")
+                    if ((it.value.toIntOrNull() ?: 1) > 396) append("_temp")
+                    append(".jpg")
+                }
+            }
+        }
+
+        return AnimesPage(animes, false)
     }
 
     override fun searchAnimeSelector(): String {
@@ -79,9 +102,7 @@ class MyRunningMan : ParsedAnimeHttpSource() {
         throw UnsupportedOperationException("Not used.")
     }
 
-    override fun searchAnimeNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun searchAnimeNextPageSelector() = null
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
@@ -112,6 +133,11 @@ class MyRunningMan : ParsedAnimeHttpSource() {
 
     override fun videoUrlParse(document: Document): String {
         throw UnsupportedOperationException("Not used.")
+    }
+
+    // ============================= Utilities ==============================
+    private inline fun <reified T> Response.parseAs(): T {
+        return use { it.body.string() }.let(json::decodeFromString)
     }
 
     companion object {
