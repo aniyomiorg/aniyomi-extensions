@@ -178,7 +178,7 @@ class MyRunningMan : ParsedAnimeHttpSource() {
                 runCatching {
                     when {
                         url.contains("dooo") -> doodExtractor.videosFromUrl(url)
-                        url.contains("mixdro") -> mixdropExtractor.videoFromUrl(url)
+                        url.contains("mixdro") -> mixdropExtractor.videoFromUrl(url, referer = doc.location())
                         url.contains("streamtape.com") -> streamtapeExtractor.videoFromUrl(url)?.let(::listOf)
                         else -> null
                     }

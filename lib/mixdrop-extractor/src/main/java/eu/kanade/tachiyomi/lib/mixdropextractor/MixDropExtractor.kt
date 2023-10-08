@@ -15,8 +15,10 @@ class MixDropExtractor(private val client: OkHttpClient) {
         lang: String = "",
         prefix: String = "",
         externalSubs: List<Track> = emptyList(),
+        referer: String = DEFAULT_REFERER
     ): List<Video> {
-        val doc = client.newCall(GET(url)).execute().asJsoup()
+        val headers = Headers.headersOf("Referer", referer)
+        val doc = client.newCall(GET(url, headers)).execute().use { it.asJsoup() }
         val unpacked = doc.selectFirst("script:containsData(eval):containsData(MDCore)")
             ?.data()
             ?.let(Unpacker::unpack)
@@ -25,21 +27,26 @@ class MixDropExtractor(private val client: OkHttpClient) {
         val videoUrl = "https:" + unpacked.substringAfter("Core.wurl=\"")
             .substringBefore("\"")
 
-        val subs = if ("Core.remotesub" in unpacked) {
-            val subUrl = unpacked.substringAfter("Core.remotesub=\"").substringBefore("\"")
-            listOf(Track(URLDecoder.decode(subUrl, "utf-8"), "sub"))
-        } else {
-            emptyList()
+        val subs = unpacked.substringAfter("Core.remotesub=\"").substringBefore('"')
+            .takeIf(String::isNotBlank)
+            ?.let { listOf(Track(URLDecoder.decode(it, "utf-8"), "sub")) }
+            ?: emptyList()
+
+        val quality = buildString {
+            append("${prefix}MixDrop")
+            if (lang.isNotBlank()) append("($lang)")
         }
 
-        val quality = prefix + ("MixDrop").let {
-            when {
-                lang.isNotBlank() -> "$it($lang)"
-                else -> it
-            }
-        }
-
-        val headers = Headers.headersOf("Referer", "https://mixdrop.co/")
         return listOf(Video(videoUrl, quality, videoUrl, headers = headers, subtitleTracks = subs + externalSubs))
     }
+
+    fun videosFromUrl(
+        url: String,
+        lang: String = "",
+        prefix: String = "",
+        externalSubs: List<Track> = emptyList(),
+        referer: String = DEFAULT_REFERER,
+    ) = videoFromUrl(url, lang, prefix, externalSubs, referer)
 }
+
+private const val DEFAULT_REFERER = "https://mixdrop.co/"
