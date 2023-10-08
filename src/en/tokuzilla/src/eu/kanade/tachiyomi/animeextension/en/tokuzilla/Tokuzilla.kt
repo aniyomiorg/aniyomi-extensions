@@ -35,7 +35,7 @@ class Tokuzilla : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Popular ===============================
-    override fun popularAnimeSelector() = "div.col-sm-4.col-xs-12.item.post"
+    override fun popularAnimeSelector() = "div.col-sm-4.col-xs-12.item"
 
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/page/$page")
 
