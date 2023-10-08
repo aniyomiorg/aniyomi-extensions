@@ -23,7 +23,7 @@ class MyRunningMan : ParsedAnimeHttpSource() {
 
     override val lang = "en"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/episodes/mostwatched/$page")
@@ -42,21 +42,13 @@ class MyRunningMan : ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector() = "li > a[aria-label=Next]"
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/episodes/newest/$page")
 
-    override fun latestUpdatesSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesSelector() = popularAnimeSelector()
 
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun latestUpdatesNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
 
     // =============================== Search ===============================
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
