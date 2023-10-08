@@ -105,8 +105,25 @@ class MyRunningMan : ParsedAnimeHttpSource() {
     override fun searchAnimeNextPageSelector() = null
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        throw UnsupportedOperationException("Not used.")
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        title = document.selectFirst("div.container h1")!!.text()
+
+        val row = document.selectFirst("div.row")!!
+        thumbnail_url = row.selectFirst("p > img")?.absUrl("src")
+        artist = row.select("li > a[href*=guest/]").eachText().joinToString().takeIf(String::isNotBlank)
+        genre = row.select("li > a[href*=tag/]").eachText().joinToString().takeIf(String::isNotBlank)
+
+        description = row.select("p:has(i.fa)").eachText().joinToString("\n") {
+            when {
+                it.startsWith("Watches") || it.startsWith("Faves") -> it.substringBefore(" (")
+                else -> it
+            }
+        }
+
+        status = when (document.selectFirst("div.alert:contains(Coming soon)")) {
+            null -> SAnime.COMPLETED
+            else -> SAnime.ONGOING
+        }
     }
 
     // ============================== Episodes ==============================
