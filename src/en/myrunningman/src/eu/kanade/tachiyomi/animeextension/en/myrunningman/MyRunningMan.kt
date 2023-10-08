@@ -17,6 +17,8 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class MyRunningMan : ParsedAnimeHttpSource() {
 
@@ -127,6 +129,26 @@ class MyRunningMan : ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val doc = response.use { it.asJsoup() }
+        return listOf(
+            SEpisode.create().apply {
+                setUrlWithoutDomain(doc.location())
+                name = doc.selectFirst("div.container h1")!!.text()
+                episode_number = doc.selectFirst("div#userepoptions")
+                    ?.attr("data-ep")
+                    ?.toFloatOrNull()
+                    ?: 1F
+                date_upload = doc.selectFirst("p:contains(Broadcast Date)")
+                    ?.text()
+                    ?.substringAfter(": ")
+                    ?.substringBefore(" ")
+                    ?.toDate()
+                    ?: 0L
+            },
+        )
+    }
+
     override fun episodeListSelector(): String {
         throw UnsupportedOperationException("Not used.")
     }
@@ -157,7 +179,16 @@ class MyRunningMan : ParsedAnimeHttpSource() {
         return use { it.body.string() }.let(json::decodeFromString)
     }
 
+    private fun String.toDate(): Long {
+        return runCatching { DATE_FORMATTER.parse(trim())?.time }
+            .getOrNull() ?: 0L
+    }
+
     companion object {
         const val PREFIX_SEARCH = "id:"
+
+        private val DATE_FORMATTER by lazy {
+            SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH)
+        }
     }
 }
