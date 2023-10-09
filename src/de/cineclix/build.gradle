@@ -6,7 +6,7 @@ ext {
     extName = 'CineClix'
     pkgNameSuffix = 'de.cineclix'
     extClass = '.CineClix'
-    extVersionCode = 2
+    extVersionCode = 3
     libVersion = '13'
 }
 
