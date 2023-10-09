@@ -135,6 +135,15 @@ class HDFilmCehennemi : ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
+    override fun fetchEpisodeList(anime: SAnime) = Observable.just(
+        listOf(
+            SEpisode.create().apply {
+                url = anime.url
+                name = "Movie"
+            },
+        ),
+    )
+
     override fun episodeListSelector(): String {
         throw UnsupportedOperationException("Not used.")
     }
