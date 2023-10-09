@@ -129,10 +129,10 @@
   {
     "name": "Aniyomi: ChineseAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.chineseanime",
-    "apk": "aniyomi-all.chineseanime-v13.2.apk",
+    "apk": "aniyomi-all.chineseanime-v13.3.apk",
     "lang": "all",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -192,10 +192,10 @@
   {
     "name": "Aniyomi: Jav Guru",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.javguru",
-    "apk": "aniyomi-all.javguru-v13.6.apk",
+    "apk": "aniyomi-all.javguru-v13.7.apk",
     "lang": "all",
-    "code": 6,
-    "version": "13.6",
+    "code": 7,
+    "version": "13.7",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -523,10 +523,10 @@
   {
     "name": "Aniyomi: Egy Dead",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.egydead",
-    "apk": "aniyomi-ar.egydead-v13.5.apk",
+    "apk": "aniyomi-ar.egydead-v13.6.apk",
     "lang": "ar",
-    "code": 5,
-    "version": "13.5",
+    "code": 6,
+    "version": "13.6",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -859,10 +859,10 @@
   {
     "name": "Aniyomi: CineClix",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.cineclix",
-    "apk": "aniyomi-de.cineclix-v13.2.apk",
+    "apk": "aniyomi-de.cineclix-v13.3.apk",
     "lang": "de",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -922,10 +922,10 @@
   {
     "name": "Aniyomi: HDFilme",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.hdfilme",
-    "apk": "aniyomi-de.hdfilme-v13.2.apk",
+    "apk": "aniyomi-de.hdfilme-v13.3.apk",
     "lang": "de",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1006,10 +1006,10 @@
   {
     "name": "Aniyomi: Movie2k",
     "pkg": "eu.kanade.tachiyomi.animeextension.de.movie2k",
-    "apk": "aniyomi-de.movie2k-v13.3.apk",
+    "apk": "aniyomi-de.movie2k-v13.4.apk",
     "lang": "de",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1277,12 +1277,33 @@
     ]
   },
   {
+    "name": "Aniyomi: AnimeParadise",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.animeparadise",
+    "apk": "aniyomi-en.animeparadise-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimeParadise",
+        "lang": "en",
+        "id": "3319373396687010408",
+        "baseUrl": "https://www.animeparadise.moe",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: AsiaFlix",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.asiaflix",
-    "apk": "aniyomi-en.asiaflix-v13.2.apk",
+    "apk": "aniyomi-en.asiaflix-v13.3.apk",
     "lang": "en",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1300,10 +1321,10 @@
   {
     "name": "Aniyomi: AsianLoad",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.asianload",
-    "apk": "aniyomi-en.asianload-v13.35.apk",
+    "apk": "aniyomi-en.asianload-v13.36.apk",
     "lang": "en",
-    "code": 35,
-    "version": "13.35",
+    "code": 36,
+    "version": "13.36",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1783,10 +1804,10 @@
   {
     "name": "Aniyomi: Multimovies",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.multimovies",
-    "apk": "aniyomi-en.multimovies-v13.11.apk",
+    "apk": "aniyomi-en.multimovies-v13.12.apk",
     "lang": "en",
-    "code": 11,
-    "version": "13.11",
+    "code": 12,
+    "version": "13.12",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -1819,6 +1840,27 @@
         "baseUrl": "https://myanime.live",
         "versionId": 1,
         "hasCloudflare": 1
+      }
+    ]
+  },
+  {
+    "name": "Aniyomi: My Running Man",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.myrunningman",
+    "apk": "aniyomi-en.myrunningman-v13.2.apk",
+    "lang": "en",
+    "code": 2,
+    "version": "13.2",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "My Running Man",
+        "lang": "en",
+        "id": "6399273548157311628",
+        "baseUrl": "https://www.myrunningman.com",
+        "versionId": 1,
+        "hasCloudflare": 0
       }
     ]
   },
@@ -2035,10 +2077,10 @@
   {
     "name": "Aniyomi: Tokuzilla",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.tokuzilla",
-    "apk": "aniyomi-en.tokuzilla-v13.11.apk",
+    "apk": "aniyomi-en.tokuzilla-v13.12.apk",
     "lang": "en",
-    "code": 11,
-    "version": "13.11",
+    "code": 12,
+    "version": "13.12",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2098,10 +2140,10 @@
   {
     "name": "Aniyomi: Membed",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.vidembed",
-    "apk": "aniyomi-en.vidembed-v13.31.apk",
+    "apk": "aniyomi-en.vidembed-v13.32.apk",
     "lang": "en",
-    "code": 31,
-    "version": "13.31",
+    "code": 32,
+    "version": "13.32",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2264,12 +2306,33 @@
     ]
   },
   {
+    "name": "Aniyomi: AnimeMovil",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.animemovil",
+    "apk": "aniyomi-es.animemovil-v13.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimeMovil",
+        "lang": "es",
+        "id": "3892773447316414021",
+        "baseUrl": "https://animemeow.xyz",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: AnimeOnline.Ninja",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.animeonlineninja",
-    "apk": "aniyomi-es.animeonlineninja-v13.34.apk",
+    "apk": "aniyomi-es.animeonlineninja-v13.35.apk",
     "lang": "es",
-    "code": 34,
-    "version": "13.34",
+    "code": 35,
+    "version": "13.35",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2358,10 +2421,10 @@
   {
     "name": "Aniyomi: Doramasflix",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.doramasflix",
-    "apk": "aniyomi-es.doramasflix-v13.9.apk",
+    "apk": "aniyomi-es.doramasflix-v13.10.apk",
     "lang": "es",
-    "code": 9,
-    "version": "13.9",
+    "code": 10,
+    "version": "13.10",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2700,6 +2763,27 @@
     ]
   },
   {
+    "name": "Aniyomi: PelisForte",
+    "pkg": "eu.kanade.tachiyomi.animeextension.es.pelisforte",
+    "apk": "aniyomi-es.pelisforte-v13.1.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "PelisForte",
+        "lang": "es",
+        "id": "4419048029031752703",
+        "baseUrl": "https://pelisforte.nu",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: Pelisplushd",
     "pkg": "eu.kanade.tachiyomi.animeextension.es.pelisplushd",
     "apk": "aniyomi-es.pelisplushd-v13.44.apk",
@@ -2999,10 +3083,10 @@
   {
     "name": "Aniyomi: YoMovies",
     "pkg": "eu.kanade.tachiyomi.animeextension.hi.yomovies",
-    "apk": "aniyomi-hi.yomovies-v13.3.apk",
+    "apk": "aniyomi-hi.yomovies-v13.4.apk",
     "lang": "hi",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3587,10 +3671,10 @@
   {
     "name": "Aniyomi: AnimesOnline",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesgratis",
-    "apk": "aniyomi-pt.animesgratis-v13.6.apk",
+    "apk": "aniyomi-pt.animesgratis-v13.7.apk",
     "lang": "pt-BR",
-    "code": 6,
-    "version": "13.6",
+    "code": 7,
+    "version": "13.7",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3707,27 +3791,6 @@
         "baseUrl": "https://animes.vision",
         "versionId": 1,
         "hasCloudflare": 1
-      }
-    ]
-  },
-  {
-    "name": "Aniyomi: AnimeSync",
-    "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesync",
-    "apk": "aniyomi-pt.animesync-v13.1.apk",
-    "lang": "pt-BR",
-    "code": 1,
-    "version": "13.1",
-    "nsfw": 1,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "AnimeSync",
-        "lang": "pt-BR",
-        "id": "8964606233228929038",
-        "baseUrl": "https://animesync.org",
-        "versionId": 1,
-        "hasCloudflare": 0
       }
     ]
   },
@@ -3860,10 +3923,10 @@
   {
     "name": "Aniyomi: Flixei",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.flixei",
-    "apk": "aniyomi-pt.flixei-v13.3.apk",
+    "apk": "aniyomi-pt.flixei-v13.4.apk",
     "lang": "pt-BR",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3965,10 +4028,10 @@
   {
     "name": "Aniyomi: Megaflix",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.megaflix",
-    "apk": "aniyomi-pt.megaflix-v13.8.apk",
+    "apk": "aniyomi-pt.megaflix-v13.9.apk",
     "lang": "pt-BR",
-    "code": 8,
-    "version": "13.8",
+    "code": 9,
+    "version": "13.9",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -4091,10 +4154,10 @@
   {
     "name": "Aniyomi: Vizer.tv",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.vizer",
-    "apk": "aniyomi-pt.vizer-v13.10.apk",
+    "apk": "aniyomi-pt.vizer-v13.11.apk",
     "lang": "pt-BR",
-    "code": 10,
-    "version": "13.10",
+    "code": 11,
+    "version": "13.11",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -4267,10 +4330,10 @@
   {
     "name": "Aniyomi: TR Anime Izle",
     "pkg": "eu.kanade.tachiyomi.animeextension.tr.tranimeizle",
-    "apk": "aniyomi-tr.tranimeizle-v13.8.apk",
+    "apk": "aniyomi-tr.tranimeizle-v13.9.apk",
     "lang": "tr",
-    "code": 8,
-    "version": "13.8",
+    "code": 9,
+    "version": "13.9",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
