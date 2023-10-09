@@ -118,8 +118,20 @@ class HDFilmCehennemi : ParsedAnimeHttpSource() {
     }
 
     // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        throw UnsupportedOperationException("Not used.")
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        status = SAnime.COMPLETED
+
+        val div = document.selectFirst("div.card-body > div.row")!!
+
+        div.selectFirst("img")!!.run {
+            thumbnail_url = absUrl("src")
+            title = attr("alt")
+        }
+
+        genre = div.select("div > a[href*=tur/]").eachText().joinToString().takeIf(String::isNotEmpty)
+        artist = div.select("a.chip[href*=oyuncu/]").eachText().joinToString().takeIf(String::isNotEmpty)
+
+        description = div.selectFirst("article > p")?.text()
     }
 
     // ============================== Episodes ==============================
