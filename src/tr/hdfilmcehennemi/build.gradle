@@ -10,6 +10,7 @@ ext {
     extClass = '.HDFilmCehennemi'
     extVersionCode = 1
     libVersion = '13'
+    containsNsfw = true
 }
 
 dependencies {
