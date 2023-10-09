@@ -23,12 +23,12 @@ class HDFilmCehennemi : ParsedAnimeHttpSource() {
 
     override val lang = "tr"
 
-    override val supportsLatest = false
+    override val supportsLatest = true
 
     // ============================== Popular ===============================
-    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/en-cok-begenilen-filmleri-izle/page/$page")
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/en-cok-begenilen-filmleri-izle/page/$page/")
 
-    override fun popularAnimeSelector() = "h1.page-title + div.row div.poster > a"
+    override fun popularAnimeSelector() = "div.row div.poster > a"
 
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href"))
@@ -39,21 +39,13 @@ class HDFilmCehennemi : ParsedAnimeHttpSource() {
     override fun popularAnimeNextPageSelector() = "ul.pagination > li > a[rel=next]"
 
     // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int): Request {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/page/$page/")
 
-    override fun latestUpdatesSelector(): String {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesSelector() = popularAnimeSelector()
 
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun latestUpdatesNextPageSelector(): String? {
-        throw UnsupportedOperationException("Not used.")
-    }
+    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
 
     // =============================== Search ===============================
     override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
