@@ -1,5 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.tr.hdfilmcehennemi
 
+import eu.kanade.tachiyomi.animeextension.tr.hdfilmcehennemi.extractors.RapidrameExtractor
+import eu.kanade.tachiyomi.animeextension.tr.hdfilmcehennemi.extractors.VidmolyExtractor
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -10,6 +12,10 @@ import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -32,6 +38,10 @@ class HDFilmCehennemi : ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     override val client = network.cloudflareClient
+
+    override fun headersBuilder() = super.headersBuilder()
+        .add("Referer", "$baseUrl/")
+        .add("Origin", baseUrl)
 
     private val json: Json by injectLazy()
 
@@ -153,8 +163,27 @@ class HDFilmCehennemi : ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
+    private val vidmolyExtractor by lazy { VidmolyExtractor(client, headers) }
+    private val rapidrameExtractor by lazy { RapidrameExtractor(client, headers) }
+
     override fun videoListParse(response: Response): List<Video> {
-        throw UnsupportedOperationException("Not used.")
+        val doc = response.use { it.asJsoup() }
+
+        return doc.select("div.card-body > nav > a:not([href=#])")
+            .drop(1)
+            .parallelMap { client.newCall(GET(it.attr("href") + "/")).execute().use { it.asJsoup() } }
+            .let { listOf(doc) + it }
+            .mapNotNull { it.selectFirst("div.card-video > iframe")?.attr("data-src") }
+            .filter(String::isNotBlank)
+            .parallelMap { url ->
+                runCatching {
+                    when {
+                        url.contains("vidmoly") -> vidmolyExtractor.videosFromUrl(url)
+                        url.contains("$baseUrl/playerr") -> rapidrameExtractor.videosFromUrl(url)
+                        else -> emptyList<Video>()
+                    }
+                }.getOrNull() ?: emptyList<Video>()
+            }.flatten().ifEmpty { throw Exception("No videos available xD") }
     }
 
     override fun videoListSelector(): String {
@@ -173,6 +202,11 @@ class HDFilmCehennemi : ParsedAnimeHttpSource() {
     private inline fun <reified T> Response.parseAs(): T {
         return use { it.body.string() }.let(json::decodeFromString)
     }
+
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 
     companion object {
         const val PREFIX_SEARCH = "id:"

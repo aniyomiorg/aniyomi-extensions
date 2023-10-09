@@ -12,4 +12,9 @@ ext {
     libVersion = '13'
 }
 
+dependencies {
+    implementation(project(":lib-unpacker"))
+    implementation(project(":lib-playlist-utils"))
+}
+
 apply from: "$rootDir/common.gradle"
