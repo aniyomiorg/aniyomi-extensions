@@ -97,8 +97,9 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
 
         val playlistHttpUrl = playlistUrl.toHttpUrl()
 
-        val masterBase = "https://${playlistHttpUrl.host}${playlistHttpUrl.encodedPath}"
-            .substringBeforeLast("/") + "/"
+        val masterBase = playlistHttpUrl.newBuilder().apply {
+            removePathSegment(playlistHttpUrl.pathSize - 1)
+        }.build().toString() + "/"
 
         // Get subtitles
         val subtitleTracks = subtitleList + SUBTITLE_REGEX.findAll(masterPlaylist).mapNotNull {
@@ -126,6 +127,8 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
                 getAbsoluteUrl(url, playlistUrl, masterBase)
             } ?: return@mapNotNull null
 
+
+
             Video(
                 videoUrl, videoNameGen(resolution), videoUrl,
                 headers = videoHeadersGen(headers, referer, videoUrl),
@@ -139,7 +142,8 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
             url.isEmpty() -> null
             url.startsWith("http") -> url
             url.startsWith("//") -> "https:$url"
-            url.startsWith("/") -> "https://" + playlistUrl.toHttpUrl().host + url
+            url.startsWith("/") -> playlistUrl.toHttpUrl().newBuilder().encodedPath("/").build().toString()
+                    .substringBeforeLast("/") + url
             else -> masterBase + url
         }
     }

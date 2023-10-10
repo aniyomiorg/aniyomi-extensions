@@ -1,7 +1,23 @@
-package eu.kanade.tachiyomi.animeextension.en.zoro.dto
+package eu.kanade.tachiyomi.multisrc.zorotheme.dto
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
+
+@Serializable
+data class HtmlResponse(
+    val html: String,
+) {
+    fun getHtml(): Document {
+        return Jsoup.parseBodyFragment(html)
+    }
+}
+
+@Serializable
+data class SourcesResponse(
+    val link: String? = null,
+)
 
 @Serializable
 data class VideoDto(

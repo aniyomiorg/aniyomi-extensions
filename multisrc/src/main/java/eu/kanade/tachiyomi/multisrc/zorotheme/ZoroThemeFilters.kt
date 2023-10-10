@@ -1,10 +1,9 @@
-package eu.kanade.tachiyomi.animeextension.en.zoro
+package eu.kanade.tachiyomi.multisrc.zorotheme
 
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 
-object AniWatchFilters {
-
+object ZoroThemeFilters {
     open class QueryPartFilter(
         displayName: String,
         val vals: Array<Pair<String, String>>,
@@ -24,25 +23,25 @@ object AniWatchFilters {
         }
     }
 
-    class TypeFilter : QueryPartFilter("Type", AniWatchFiltersData.TYPES)
-    class StatusFilter : QueryPartFilter("Status", AniWatchFiltersData.STATUS)
-    class RatedFilter : QueryPartFilter("Rated", AniWatchFiltersData.RATED)
-    class ScoreFilter : QueryPartFilter("Score", AniWatchFiltersData.SCORES)
-    class SeasonFilter : QueryPartFilter("Season", AniWatchFiltersData.SEASONS)
-    class LanguageFilter : QueryPartFilter("Language", AniWatchFiltersData.LANGUAGES)
-    class SortFilter : QueryPartFilter("Sort by", AniWatchFiltersData.SORTS)
+    class TypeFilter : QueryPartFilter("Type", ZoroThemeFiltersData.TYPES)
+    class StatusFilter : QueryPartFilter("Status", ZoroThemeFiltersData.STATUS)
+    class RatedFilter : QueryPartFilter("Rated", ZoroThemeFiltersData.RATED)
+    class ScoreFilter : QueryPartFilter("Score", ZoroThemeFiltersData.SCORES)
+    class SeasonFilter : QueryPartFilter("Season", ZoroThemeFiltersData.SEASONS)
+    class LanguageFilter : QueryPartFilter("Language", ZoroThemeFiltersData.LANGUAGES)
+    class SortFilter : QueryPartFilter("Sort by", ZoroThemeFiltersData.SORTS)
 
-    class StartYearFilter : QueryPartFilter("Start year", AniWatchFiltersData.YEARS)
-    class StartMonthFilter : QueryPartFilter("Start month", AniWatchFiltersData.MONTHS)
-    class StartDayFilter : QueryPartFilter("Start day", AniWatchFiltersData.DAYS)
+    class StartYearFilter : QueryPartFilter("Start year", ZoroThemeFiltersData.YEARS)
+    class StartMonthFilter : QueryPartFilter("Start month", ZoroThemeFiltersData.MONTHS)
+    class StartDayFilter : QueryPartFilter("Start day", ZoroThemeFiltersData.DAYS)
 
-    class EndYearFilter : QueryPartFilter("End year", AniWatchFiltersData.YEARS)
-    class EndMonthFilter : QueryPartFilter("End month", AniWatchFiltersData.MONTHS)
-    class EndDayFilter : QueryPartFilter("End day", AniWatchFiltersData.DAYS)
+    class EndYearFilter : QueryPartFilter("End year", ZoroThemeFiltersData.YEARS)
+    class EndMonthFilter : QueryPartFilter("End month", ZoroThemeFiltersData.MONTHS)
+    class EndDayFilter : QueryPartFilter("End day", ZoroThemeFiltersData.DAYS)
 
     class GenresFilter : CheckBoxFilterList(
         "Genres",
-        AniWatchFiltersData.GENRES.map { CheckBoxVal(it.first, false) },
+        ZoroThemeFiltersData.GENRES.map { CheckBoxVal(it.first, false) },
     )
 
     val FILTER_LIST get() = AnimeFilterList(
@@ -90,7 +89,7 @@ object AniWatchFilters {
             .first()
             .state.mapNotNull { format ->
                 if (format.state) {
-                    AniWatchFiltersData.GENRES.find { it.first == format.name }!!.second
+                    ZoroThemeFiltersData.GENRES.find { it.first == format.name }!!.second
                 } else { null }
             }.joinToString(",")
 
@@ -114,7 +113,7 @@ object AniWatchFilters {
         )
     }
 
-    private object AniWatchFiltersData {
+    private object ZoroThemeFiltersData {
 
         val ALL = Pair("All", "")
 
