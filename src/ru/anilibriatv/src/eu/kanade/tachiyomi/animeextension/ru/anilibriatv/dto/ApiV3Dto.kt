@@ -117,7 +117,7 @@ data class Team(
 
 @Serializable
 data class Season(
-    @SerialName("string") var string: String,
+    @SerialName("string") var string: String? = null,
     @SerialName("code") var code: Int,
     @SerialName("year") var year: Int,
     @SerialName("week_day") var weekDay: Int,
@@ -208,4 +208,13 @@ data class Torrents(
 data class FilteredEpisodePlayer(
     @SerialName("list") var list: ArrayList<Episode?> = arrayListOf(),
     @SerialName("host") var host: String? = null,
+)
+
+@Serializable
+data class TeamFilter(
+    @SerialName("voice") var voice: ArrayList<String> = arrayListOf(),
+    @SerialName("translator") var translator: ArrayList<String> = arrayListOf(),
+    @SerialName("editing") var editing: ArrayList<String> = arrayListOf(),
+    @SerialName("decor") var decor: ArrayList<String> = arrayListOf(),
+    @SerialName("timing") var timing: ArrayList<String> = arrayListOf(),
 )

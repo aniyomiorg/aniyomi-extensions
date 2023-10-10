@@ -8,8 +8,8 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ru.anilibriatv.dto.FilteredEpisode
 import eu.kanade.tachiyomi.animeextension.ru.anilibriatv.dto.SingleTitle
 import eu.kanade.tachiyomi.animeextension.ru.anilibriatv.dto.TitleList
+import eu.kanade.tachiyomi.animeextension.ru.anilibriatv.filter.AniLibriaTVApiV3Filter
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
-import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -26,16 +26,16 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
 data class AnimeDescription(
-        val year: String? = null,
-        val type: String? = null,
-        val rating: Int? = null,
-        val votes: Int? = null,
-        val description: String? = null,
+    val year: String? = null,
+    val type: String? = null,
+    val rating: Int? = null,
+    val votes: Int? = null,
+    val description: String? = null,
 )
 
 class AniLibriaTVApiV3(
-        override val name: String,
-        override val baseUrl: String,
+    override val name: String,
+    override val baseUrl: String,
 ) : ConfigurableAnimeSource, AnimeHttpSource() {
     override val lang: String = "ru"
 
@@ -50,11 +50,11 @@ class AniLibriaTVApiV3(
     }
 
     private val apiheaders: Headers =
-            Headers.Builder()
-                    .add("User-Agent", "Aniyomi Anilibria extension v1")
-                    .add("Accept", "application/json")
-                    .add("Charset", "UTF-8")
-                    .build()
+        Headers.Builder()
+            .add("User-Agent", "Aniyomi Anilibria extension v1.1")
+            .add("Accept", "application/json")
+            .add("Charset", "UTF-8")
+            .build()
 
     private val json = Json { ignoreUnknownKeys = true }
     companion object {
@@ -66,28 +66,46 @@ class AniLibriaTVApiV3(
             PREF_QUALITY_ENTRIES.map { it.substringBefore("p") }.toTypedArray()
         }
     }
+
+    private fun titleListParse(response: Response): AnimesPage {
+        val animes = mutableListOf<SAnime>()
+        val responseJson = json.decodeFromString<TitleList>(response.body.string())
+        responseJson.list.forEach {
+            val anime = SAnime.create()
+            anime.title = it.names?.ru ?: it.names?.en ?: it.names?.alternative ?: "Неизвестно"
+            // if it.posters?.small?.url
+            if (it.posters?.small?.url != null) {
+                anime.thumbnail_url = siteurl + it.posters?.medium?.url
+            }
+            anime.url = "/title?id=" + it.id
+            animes.add(anime)
+        }
+        val hasNextPage = responseJson.pagination.currentPage < responseJson.pagination.pages
+        return AnimesPage(animes, hasNextPage)
+    }
+
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref =
-                ListPreference(screen.context).apply {
-                    key = PREF_QUALITY_KEY
-                    title = PREF_QUALITY_TITLE
-                    entries = PREF_QUALITY_ENTRIES
-                    entryValues = PREF_QUALITY_VALUES
-                    setDefaultValue(PREF_QUALITY_DEFAULT)
-                    summary = "%s"
+            ListPreference(screen.context).apply {
+                key = PREF_QUALITY_KEY
+                title = PREF_QUALITY_TITLE
+                entries = PREF_QUALITY_ENTRIES
+                entryValues = PREF_QUALITY_VALUES
+                setDefaultValue(PREF_QUALITY_DEFAULT)
+                summary = "%s"
 
-                    setOnPreferenceChangeListener { _, newValue ->
-                        val selected = newValue as String
-                        val index = findIndexOfValue(selected)
-                        val entry = entryValues[index] as String
-                        preferences.edit().putString(key, entry).commit()
-                    }
+                setOnPreferenceChangeListener { _, newValue ->
+                    val selected = newValue as String
+                    val index = findIndexOfValue(selected)
+                    val entry = entryValues[index] as String
+                    preferences.edit().putString(key, entry).commit()
                 }
+            }
         screen.addPreference(videoQualityPref)
     }
 
     override fun popularAnimeRequest(page: Int): Request =
-            GET("$baseUrl/title/updates?page=$page&items_per_page=8", apiheaders)
+        GET("$baseUrl/title/updates?page=$page&items_per_page=8", apiheaders)
 
     fun buildDescription(details: SingleTitle): String {
         val description = StringBuilder()
@@ -117,12 +135,12 @@ class AniLibriaTVApiV3(
             thumbnail_url = siteurl + details.posters?.small?.url
             genre = details.genres.joinToString(", ")
             status =
-                    when (details.status.code) {
-                        1 -> SAnime.ONGOING
-                        2 -> SAnime.COMPLETED
-                        4 -> SAnime.ON_HIATUS
-                        else -> SAnime.UNKNOWN
-                    }
+                when (details.status.code) {
+                    1 -> SAnime.ONGOING
+                    2 -> SAnime.COMPLETED
+                    4 -> SAnime.ON_HIATUS
+                    else -> SAnime.UNKNOWN
+                }
         }
     }
 
@@ -131,8 +149,8 @@ class AniLibriaTVApiV3(
         val episodes = mutableListOf<SEpisode>()
         Log.d("episodeListParse", "------------------------")
         Log.d(
-                "episodeListParse",
-                "Title: ${details.names?.ru ?: details.names?.en ?: "Неизвестно"}",
+            "episodeListParse",
+            "Title: ${details.names?.ru ?: details.names?.en ?: "Неизвестно"}",
         )
         Log.d("episodeListParse", "Code: ${details.code}")
         Log.d("episodeListParse", "Episodes: ${details.player.list}")
@@ -140,19 +158,20 @@ class AniLibriaTVApiV3(
         details.player.list.forEach {
             val current = it.value
             episodes.add(
-                    SEpisode.create().apply {
-                        name = "Серия " + current.episode + " - " + (current.name ?: "Без названия")
-                        episode_number = current.episode.toFloat()
-                        url =
-                                "" +
-                                        response.request.url +
-                                        "&filter=player.list[\"" +
-                                        current.episode +
-                                        "\"],player.host"
-                        date_upload = current.createdTimestamp * 1000
-                    },
+                SEpisode.create().apply {
+                    name = "Серия " + current.episode + " - " + (current.name ?: "Без названия")
+                    episode_number = current.episode.toFloat()
+                    url =
+                        "" +
+                        response.request.url +
+                        "&filter=player.list[\"" +
+                        current.episode +
+                        "\"],player.host"
+                    date_upload = current.createdTimestamp * 1000
+                },
             )
         }
+        episodes.sortByDescending { it.episode_number }
         return episodes
     }
 
@@ -194,42 +213,28 @@ class AniLibriaTVApiV3(
         return sortedWith(compareBy { it.quality.contains(quality) }).reversed()
     }
 
-    override fun latestUpdatesParse(response: Response): AnimesPage =
-            throw Exception("latestUpdatesParse")
+    override fun latestUpdatesParse(response: Response): AnimesPage = titleListParse(response)
 
     override fun latestUpdatesRequest(page: Int): Request = throw Exception("latestUpdatesRequest")
 
-    override fun popularAnimeParse(response: Response): AnimesPage {
-        val animes = mutableListOf<SAnime>()
-        val responseJson = json.decodeFromString<TitleList>(response.body.string())
-        responseJson.list.forEach {
-            val anime = SAnime.create()
-            anime.title = it.names?.ru ?: it.names?.en ?: it.names?.alternative ?: "Неизвестно"
-            // if it.posters?.small?.url
-            if (it.posters?.small?.url != null) {
-                anime.thumbnail_url = siteurl + it.posters?.medium?.url
-            }
-            anime.url = "/title?id=" + it.id
-            animes.add(anime)
-        }
-        val hasNextPage = responseJson.pagination.currentPage < responseJson.pagination.pages
-        return AnimesPage(animes, hasNextPage)
-    }
+    override fun popularAnimeParse(response: Response): AnimesPage = titleListParse(response)
 
     // ============================== Search ==============================
-    
-    //TODO: add filter by year, genre, text, team, etc
-    // override fun getFilterList() =
-    //         AnimeFilterList(
-    //                 TitleFilter(),
-    //                 AnimeFilter.Separator(),
-    //         )
+    val customFilters = AniLibriaTVApiV3Filter(baseUrl, client, apiheaders)
+
+    override fun getFilterList() = customFilters.getFilterList()
 
     // private class TitleFilter : AnimeFilter.Text("Название", "")
 
-    override fun searchAnimeParse(response: Response): AnimesPage =
-            throw Exception("Еще не сделано searchAnimeParse")
+    override fun searchAnimeParse(response: Response): AnimesPage = titleListParse(response)
 
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request =
-            throw Exception("Еще не сделано searchAnimeRequest")
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val url = customFilters.getSearchParameters(page, query, filters)
+        Log.d("searchAnimeRequest", "------------------------")
+        Log.d("searchAnimeRequest", "Page: $page")
+        Log.d("searchAnimeRequest", "Query: $query")
+        Log.d("searchAnimeRequest", "Url: $url")
+        Log.d("searchAnimeRequest", "------------------------")
+        return GET(url, apiheaders)
+    }
 }
