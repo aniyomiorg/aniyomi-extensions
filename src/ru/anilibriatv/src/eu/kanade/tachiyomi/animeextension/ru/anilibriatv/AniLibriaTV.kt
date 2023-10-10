@@ -33,10 +33,11 @@ data class AnimeDescription(
     val description: String? = null,
 )
 
-class AniLibriaTVApiV3(
-    override val name: String,
-    override val baseUrl: String,
-) : ConfigurableAnimeSource, AnimeHttpSource() {
+class AniLibriaTV : ConfigurableAnimeSource, AnimeHttpSource() {
+    override val name: String = "AniLibria TV"
+
+    override val baseUrl: String = "https://api.anilibria.tv/v3"
+
     override val lang: String = "ru"
 
     override val supportsLatest: Boolean = true
