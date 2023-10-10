@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.multisrc.zorotheme
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.widget.Toast
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
@@ -48,7 +49,7 @@ abstract class ZoroTheme(
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val docHeaders = headers.newBuilder().apply {
+    private val docHeaders = headersBuilder().apply {
         add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
         add("Host", baseUrl.toHttpUrl().host)
         add("Referer", "$baseUrl/")
@@ -57,6 +58,9 @@ abstract class ZoroTheme(
     protected open val ajaxRoute = ""
 
     abstract val hosterNames: List<String>
+
+    private val useEnglish by lazy { preferences.getTitleLang == "English" }
+    private val markFiller by lazy { preferences.markFiller }
 
     // ============================== Popular ===============================
 
@@ -67,7 +71,7 @@ abstract class ZoroTheme(
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         element.selectFirst("div.film-detail a")!!.let {
             setUrlWithoutDomain(it.attr("href"))
-            title = if (preferences.getTitleLang == "English" && it.hasAttr("title")) {
+            title = if (useEnglish && it.hasAttr("title")) {
                 it.attr("title")
             } else {
                 it.attr("data-jname")
@@ -189,7 +193,7 @@ abstract class ZoroTheme(
         episode_number = element.attr("data-number").toFloatOrNull() ?: 1F
         name = "Ep. ${element.attr("data-number")}: ${element.attr("title")}"
         setUrlWithoutDomain(element.attr("href"))
-        if (element.hasClass("ssl-item-filler") && preferences.markFiller) {
+        if (element.hasClass("ssl-item-filler") && markFiller) {
             scanlator = "Filler Episode"
         }
     }
@@ -353,6 +357,7 @@ abstract class ZoroTheme(
                 val selected = newValue as String
                 val index = findIndexOfValue(selected)
                 val entry = entryValues[index] as String
+                Toast.makeText(screen.context, "Restart Aniyomi to apply new setting.", Toast.LENGTH_LONG).show()
                 preferences.edit().putString(key, entry).commit()
             }
         }.also(screen::addPreference)
@@ -362,6 +367,7 @@ abstract class ZoroTheme(
             title = "Mark filler episodes"
             setDefaultValue(MARK_FILLERS_DEFAULT)
             setOnPreferenceChangeListener { _, newValue ->
+                Toast.makeText(screen.context, "Restart Aniyomi to apply new setting.", Toast.LENGTH_LONG).show()
                 preferences.edit().putBoolean(key, newValue as Boolean).commit()
             }
         }.also(screen::addPreference)
