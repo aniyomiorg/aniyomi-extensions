@@ -49,7 +49,7 @@ abstract class ZoroTheme(
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val docHeaders = headersBuilder().apply {
+    private val docHeaders = headers.newBuilder().apply {
         add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
         add("Host", baseUrl.toHttpUrl().host)
         add("Referer", "$baseUrl/")
