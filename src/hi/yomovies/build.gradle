@@ -7,7 +7,7 @@ ext {
     extName = 'YoMovies'
     pkgNameSuffix = 'hi.yomovies'
     extClass = '.YoMovies'
-    extVersionCode = 4
+    extVersionCode = 5
     libVersion = '13'
     containsNsfw = true
 }

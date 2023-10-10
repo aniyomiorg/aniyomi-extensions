@@ -8,7 +8,7 @@ ext {
     extName = 'HDFilmCehennemi'
     pkgNameSuffix = 'tr.hdfilmcehennemi'
     extClass = '.HDFilmCehennemi'
-    extVersionCode = 1
+    extVersionCode = 2
     libVersion = '13'
     containsNsfw = true
 }
