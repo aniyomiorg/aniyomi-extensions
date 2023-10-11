@@ -42,23 +42,22 @@ class YouTubeExtractor(private val client: OkHttpClient) {
                 return emptyList()
             }
 
-        val playerUrl = "$YOUTUBE_URL/youtubei/v1/player?key=$apiKey&prettyPrint=true"
+        val playerUrl = "$YOUTUBE_URL/youtubei/v1/player?key=$apiKey&prettyPrint=false"
 
         val body = """
             {
                "context":{
                   "client":{
-                     "clientName":"ANDROID",
-                     "clientVersion":"17.31.35",
-                     "androidSdkVersion":30,
-                     "userAgent":"com.google.android.youtube/17.31.35 (Linux; U; Android 11) gzip",
-                     "hl":"en",
-                     "timeZone":"UTC",
-                     "utcOffsetMinutes":0
+                     "clientName":"IOS",
+                     "clientVersion":"17.33.2",
+                     "deviceModel": "iPhone14,3",
+                     "userAgent": "com.google.ios.youtube/17.33.2 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)",
+                     "hl": "en",
+                     "timeZone": "UTC",
+                     "utcOffsetMinutes": 0
                   }
                },
                "videoId":"$videoId",
-               "params":"8AEB",
                "playbackContext":{
                   "contentPlaybackContext":{
                      "html5Preference":"HTML5_PREF_WANTS"
@@ -69,16 +68,15 @@ class YouTubeExtractor(private val client: OkHttpClient) {
             }
         """.trimIndent().toRequestBody("application/json".toMediaType())
 
-        val headers = Headers.headersOf(
-            "X-YouTube-Client-Name",
-            "3",
-            "X-YouTube-Client-Version",
-            "17.31.35",
-            "Origin",
-            YOUTUBE_URL,
-            "User-Agent",
-            "com.google.android.youtube/17.31.35 (Linux; U; Android 11) gzip",
-        )
+        val headers = Headers.Builder().apply {
+            add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+            add("Content-Type", "application/json")
+            add("Host", "www.youtube.com")
+            add("Origin", "https://www.youtube.com")
+            add("User-Agent", "com.google.ios.youtube/17.33.2 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)")
+            add("X-Youtube-Client-Name", "5")
+            add("X-Youtube-Client-Version", "17.33.2")
+        }.build()
 
         val ytResponse = client.newCall(POST(playerUrl, headers, body)).execute()
             .use { json.decodeFromString<YoutubeResponse>(it.body.string()) }
