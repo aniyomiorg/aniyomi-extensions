@@ -33,14 +33,18 @@ class YouTubeExtractor(private val client: OkHttpClient) {
             .execute()
             .use { it.asJsoup() }
 
-        val apiKey = document.selectFirst("script:containsData(window.ytcfg=window.ytcfg)")
-            ?.data()
-            ?.substringAfter("innertubeApiKey\":\"", "")
-            ?.substringBefore('"')
-            ?: run {
+        val ytcfg = document.selectFirst("script:containsData(window.ytcfg=window.ytcfg)")
+            ?.data() ?: run {
                 Log.e("YouTubeExtractor", "Failed while trying to fetch the api key >:(")
                 return emptyList()
             }
+
+        val clientName = ytcfg.substringAfter("INNERTUBE_CONTEXT_CLIENT_NAME\":", "")
+            .substringBefore(",", "").ifEmpty { "5" }
+
+        val apiKey = ytcfg
+            .substringAfter("innertubeApiKey\":\"", "")
+            .substringBefore('"')
 
         val playerUrl = "$YOUTUBE_URL/youtubei/v1/player?key=$apiKey&prettyPrint=false"
 
@@ -74,7 +78,7 @@ class YouTubeExtractor(private val client: OkHttpClient) {
             add("Host", "www.youtube.com")
             add("Origin", "https://www.youtube.com")
             add("User-Agent", "com.google.ios.youtube/17.33.2 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)")
-            add("X-Youtube-Client-Name", "5")
+            add("X-Youtube-Client-Name", clientName)
             add("X-Youtube-Client-Version", "17.33.2")
         }.build()
 
