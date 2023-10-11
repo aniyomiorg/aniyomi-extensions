@@ -311,8 +311,7 @@ class AnimeToast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.title = document.select("h1.light-title.entry-title").text()
         anime.genre = document.select("a[rel=tag]").joinToString(", ") { it.text() }
         val height = document.select("div.item-content p img").attr("height")
-        anime.description = document.select("div.item-content").toString().substringAfter("<p> <img")
-            .substringAfter(height).substringAfter("\">").replace("</p>", "").substringBefore("<strong>Genre:").replace("<p>", "")
+        anime.description = document.select("div.item-content div + p").text()
         anime.status = parseStatus(document.select("a[rel=\"category tag\"]").text())
         return anime
     }
