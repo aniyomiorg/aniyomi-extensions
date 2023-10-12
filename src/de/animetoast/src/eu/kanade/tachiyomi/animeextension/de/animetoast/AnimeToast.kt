@@ -12,6 +12,8 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -47,8 +49,7 @@ class AnimeToast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.select("div.item-thumbnail a").attr("href"))
-        val document = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup()
-        anime.thumbnail_url = document.select(".item-content p img").attr("src")
+        anime.thumbnail_url = element.select("div.item-thumbnail a img").attr("src")
         anime.title = element.select("div.item-thumbnail a").attr("title")
         return anime
     }
@@ -64,10 +65,18 @@ class AnimeToast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val episodeList = mutableListOf<SEpisode>()
         val file = document.select("a[rel=\"category tag\"]").text()
         if (file.contains("Serie")) {
-            val elements = document.select("#multi_link_tab0")
-            elements.forEach {
-                val episode = parseEpisodesFromSeries(it)
-                episodeList.addAll(episode)
+            if (document.select("#multi_link_tab0").attr("id").isNotEmpty()) {
+                val elements = document.select("#multi_link_tab0")
+                elements.forEach {
+                    val episode = parseEpisodesFromSeries(it)
+                    episodeList.addAll(episode)
+                }
+            } else {
+                val elements = document.select("#multi_link_tab1")
+                elements.forEach {
+                    val episode = parseEpisodesFromSeries(it)
+                    episodeList.addAll(episode)
+                }
             }
         } else {
             val episode = SEpisode.create()
@@ -81,12 +90,26 @@ class AnimeToast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun parseEpisodesFromSeries(element: Element): List<SEpisode> {
         val episodeElements = element.select("div.tab-pane a")
-        return episodeElements.map { episodeFromElement(it) }
+        val epT = episodeElements.text()
+        if (epT.contains(":") || epT.contains("-")) {
+            val url = episodeElements.attr("href")
+            val document = client.newCall(GET(url)).execute().asJsoup()
+            val nUrl = document.select("#player-embed a").attr("href")
+            val nDoc = client.newCall(GET(nUrl)).execute().asJsoup()
+            val nEpEl = nDoc.select("div.tab-pane a")
+            return nEpEl.map { episodeFromElement(it) }
+        } else {
+            return episodeElements.map { episodeFromElement(it) }
+        }
     }
 
     override fun episodeFromElement(element: Element): SEpisode {
         val episode = SEpisode.create()
-        episode.episode_number = element.text().replace("Ep. ", "").toFloat()
+        episode.episode_number = try {
+            element.text().replace("Ep. ", "").toFloat()
+        } catch (e: Exception) {
+            100.0f
+        }
         episode.name = element.text()
         episode.setUrlWithoutDomain(element.attr("href"))
         return episode
@@ -101,34 +124,133 @@ class AnimeToast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private fun videosFromElement(document: Document): List<Video> {
         val videoList = mutableListOf<Video>()
-        val epcu = document.select("div.tab-pane a.current-link").text().replace("Ep. ", "").toInt()
-        val ep = document.select("div.tab-pane a")
-        ep.forEach {
-            if (it.text().replace("Ep. ", "").toInt() == epcu) {
-                val url = it.attr("href")
-                val newdoc = client.newCall(GET(url)).execute().asJsoup()
-                val element = newdoc.select("#player-embed")
-                val hosterSelection = preferences.getStringSet("hoster_selection", setOf("voe", "dood"))
-                for (elements in element) {
-                    val link = element.select("a").attr("abs:href")
-                    when {
-                        link.contains("https://voe.sx") && hosterSelection?.contains("voe") == true -> {
-                            val quality = "Voe"
-                            val video = VoeExtractor(client).videoFromUrl(link, quality)
-                            if (video != null) {
-                                videoList.add(video)
+        val hosterSelection = preferences.getStringSet("hoster_selection", setOf("voe", "dood", "fmoon", "mp4u"))
+        val fEp = document.select("div.tab-pane")
+        if (fEp.text().contains(":") || fEp.text().contains("-")) {
+            val tx = document.select("div.tab-pane")
+            var here = false
+            tx.forEach {
+                if ((it.text().contains(":") || it.text().contains("-")) && !here) {
+                    here = true
+                    val sUrl = it.select("a").attr("href")
+                    val doc = client.newCall(GET(sUrl)).execute().asJsoup()
+                    val nUrl = doc.select("#player-embed a").attr("href")
+                    val nDoc = client.newCall(GET(nUrl)).execute().asJsoup()
+                    val nEpEl = nDoc.select("div.tab-pane a")
+                    val nEpcu = try {
+                        nDoc.select("div.tab-pane a.current-link").text()
+                            .substringAfter("Ep.").toFloat()
+                    } catch (e: Exception) {
+                        100.0f
+                    }
+                    nEpEl.forEach { tIt ->
+                        if (try { tIt.text().substringAfter("Ep.").toFloat() } catch (_: Exception) {} == nEpcu) {
+                            val url = tIt.attr("href")
+                            val newdoc = client.newCall(GET(url)).execute().asJsoup()
+                            val element = newdoc.select("#player-embed")
+                            for (elements in element) {
+                                val link = element.select("a").attr("abs:href")
+                                when {
+                                    link.contains("https://voe.sx") && hosterSelection?.contains(
+                                        "voe",
+                                    ) == true -> {
+                                        val quality = "Voe"
+                                        val video =
+                                            VoeExtractor(client).videoFromUrl(link, quality)
+                                        if (video != null) {
+                                            videoList.add(video)
+                                        }
+                                    }
+                                }
+                            }
+                            for (elements in element) {
+                                val link = element.select("iframe").attr("abs:src")
+                                when {
+                                    (link.contains("https://dood") || link.contains("https://ds2play")) && hosterSelection?.contains(
+                                        "dood",
+                                    ) == true -> {
+                                        val quality = "DoodStream"
+                                        val video =
+                                            DoodExtractor(client).videoFromUrl(
+                                                link,
+                                                quality,
+                                                false,
+                                            )
+                                        if (video != null) {
+                                            videoList.add(video)
+                                        }
+                                    }
+
+                                    link.contains("https://filemoon.sx") && hosterSelection?.contains(
+                                        "fmoon",
+                                    ) == true -> {
+                                        val videos =
+                                            FilemoonExtractor(client).videosFromUrl(link)
+                                        videoList.addAll(videos)
+                                    }
+
+                                    link.contains("mp4upload") && hosterSelection?.contains("mp4u") == true -> {
+                                        val videos =
+                                            Mp4uploadExtractor(client).videosFromUrl(
+                                                link,
+                                                headers,
+                                            )
+                                        videoList.addAll(videos)
+                                    }
+                                }
                             }
                         }
                     }
                 }
-                for (elements in element) {
-                    val link = element.select("iframe").attr("abs:src")
-                    when {
-                        link.contains("https://dood") && hosterSelection?.contains("dood") == true -> {
-                            val quality = "DoodStream"
-                            val video = DoodExtractor(client).videoFromUrl(link, quality, false)
-                            if (video != null) {
-                                videoList.add(video)
+            }
+        } else {
+            val epcu = try {
+                document.select("div.tab-pane a.current-link").text().substringAfter("Ep.")
+                    .toFloat()
+            } catch (e: Exception) {
+                100.0f
+            }
+            val ep = document.select("div.tab-pane a")
+            ep.forEach {
+                if (try { it.text().substringAfter("Ep.").toFloat() } catch (_: Exception) {} == epcu) {
+                    val url = it.attr("href")
+                    val newdoc = client.newCall(GET(url)).execute().asJsoup()
+                    val element = newdoc.select("#player-embed")
+                    for (elements in element) {
+                        val link = element.select("a").attr("abs:href")
+                        when {
+                            link.contains("https://voe.sx") && hosterSelection?.contains("voe") == true -> {
+                                val quality = "Voe"
+                                val video = VoeExtractor(client).videoFromUrl(link, quality)
+                                if (video != null) {
+                                    videoList.add(video)
+                                }
+                            }
+                        }
+                    }
+                    for (elements in element) {
+                        val link = element.select("iframe").attr("abs:src")
+                        when {
+                            (link.contains("https://dood") || link.contains("https://ds2play")) && hosterSelection?.contains(
+                                "dood",
+                            ) == true -> {
+                                val quality = "DoodStream"
+                                val video =
+                                    DoodExtractor(client).videoFromUrl(link, quality, false)
+                                if (video != null) {
+                                    videoList.add(video)
+                                }
+                            }
+
+                            link.contains("https://filemoon.sx") && hosterSelection?.contains("fmoon") == true -> {
+                                val videos = FilemoonExtractor(client).videosFromUrl(link)
+                                videoList.addAll(videos)
+                            }
+
+                            link.contains("mp4upload") && hosterSelection?.contains("mp4u") == true -> {
+                                val videos =
+                                    Mp4uploadExtractor(client).videosFromUrl(link, headers)
+                                videoList.addAll(videos)
                             }
                         }
                     }
@@ -167,8 +289,7 @@ class AnimeToast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
         anime.setUrlWithoutDomain(element.attr("href"))
-        val document = client.newCall(GET(baseUrl + anime.url)).execute().asJsoup()
-        anime.thumbnail_url = document.select(".item-content p img").attr("src")
+        anime.thumbnail_url = element.select("a img").attr("src")
         anime.title = element.attr("title")
         return anime
     }
@@ -189,9 +310,8 @@ class AnimeToast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         anime.thumbnail_url = document.select(".item-content p img").attr("src")
         anime.title = document.select("h1.light-title.entry-title").text()
         anime.genre = document.select("a[rel=tag]").joinToString(", ") { it.text() }
-        val heigt = document.select("div.item-content p img").attr("height")
-        anime.description = document.select("div.item-content").toString()
-            .substringAfter("$heigt\">").replace("</p>", "").substringBefore("<strong>Genre:").replace("<p>", "")
+        val height = document.select("div.item-content p img").attr("height")
+        anime.description = document.select("div.item-content div + p").text()
         anime.status = parseStatus(document.select("a[rel=\"category tag\"]").text())
         return anime
     }
@@ -218,8 +338,8 @@ class AnimeToast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val hosterPref = ListPreference(screen.context).apply {
             key = "preferred_hoster"
             title = "Standard-Hoster"
-            entries = arrayOf("Voe", "DoodStream")
-            entryValues = arrayOf("https://voe.sx", "https://dood")
+            entries = arrayOf("Voe", "DoodStream", "Filemoon", "Mp4upload")
+            entryValues = arrayOf("https://voe.sx", "https://dood", "https://filemoon", "https://www.mp4upload")
             setDefaultValue("https://voe.sx")
             summary = "%s"
 
@@ -233,9 +353,9 @@ class AnimeToast : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val subSelection = MultiSelectListPreference(screen.context).apply {
             key = "hoster_selection"
             title = "Hoster auswählen"
-            entries = arrayOf("Voe", "DoodStream")
-            entryValues = arrayOf("voe", "dood")
-            setDefaultValue(setOf("voe", "dood"))
+            entries = arrayOf("Voe", "DoodStream", "Filemoon", "Mp4upload")
+            entryValues = arrayOf("voe", "dood", "fmoon", "mp4u")
+            setDefaultValue(setOf("voe", "dood", "fmoon", "mp4u"))
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
