@@ -108,10 +108,10 @@
   {
     "name": "Aniyomi: AnimeXin",
     "pkg": "eu.kanade.tachiyomi.animeextension.all.animexin",
-    "apk": "aniyomi-all.animexin-v13.8.apk",
+    "apk": "aniyomi-all.animexin-v13.9.apk",
     "lang": "all",
-    "code": 8,
-    "version": "13.8",
+    "code": 9,
+    "version": "13.9",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
