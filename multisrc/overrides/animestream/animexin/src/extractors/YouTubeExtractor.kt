@@ -1,18 +1,16 @@
 package eu.kanade.tachiyomi.animeextension.all.animexin.extractors
 
 import android.annotation.SuppressLint
+import android.util.Log
 import eu.kanade.tachiyomi.animesource.model.Track
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.long
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -29,39 +27,41 @@ class YouTubeExtractor(private val client: OkHttpClient) {
         // TODO: Make code prettier
         // GET KEY
 
-        var ytcfgString = ""
         val videoId = url.substringAfter("/embed/")
 
-        val document = client.newCall(
-            GET(url.replace("/embed/", "/watch?v=")),
-        ).execute().asJsoup()
+        val document = client.newCall(GET(url.replace("/embed/", "/watch?v=")))
+            .execute()
+            .use { it.asJsoup() }
 
-        for (element in document.select("script")) {
-            val scriptData = element.data()
-            if (scriptData.startsWith("(function() {window.ytplayer={};")) {
-                ytcfgString = scriptData
-            }
+        val ytcfg = document.selectFirst("script:containsData(window.ytcfg=window.ytcfg)")
+            ?.data() ?: run {
+            Log.e("YouTubeExtractor", "Failed while trying to fetch the api key >:(")
+            return emptyList()
         }
 
-        val apiKey = getKey(ytcfgString, "innertubeApiKey")
+        val clientName = ytcfg.substringAfter("INNERTUBE_CONTEXT_CLIENT_NAME\":", "")
+            .substringBefore(",", "").ifEmpty { "5" }
 
-        val playerUrl = "https://www.youtube.com/youtubei/v1/player?key=$apiKey&prettyPrint=false"
+        val apiKey = ytcfg
+            .substringAfter("innertubeApiKey\":\"", "")
+            .substringBefore('"')
+
+        val playerUrl = "$YOUTUBE_URL/youtubei/v1/player?key=$apiKey&prettyPrint=false"
 
         val body = """
             {
                "context":{
                   "client":{
-                     "clientName":"ANDROID",
-                     "clientVersion":"17.31.35",
-                     "androidSdkVersion":30,
-                     "userAgent":"com.google.android.youtube/17.31.35 (Linux; U; Android 11) gzip",
-                     "hl":"en",
-                     "timeZone":"UTC",
-                     "utcOffsetMinutes":0
+                     "clientName":"IOS",
+                     "clientVersion":"17.33.2",
+                     "deviceModel": "iPhone14,3",
+                     "userAgent": "com.google.ios.youtube/17.33.2 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)",
+                     "hl": "en",
+                     "timeZone": "UTC",
+                     "utcOffsetMinutes": 0
                   }
                },
                "videoId":"$videoId",
-               "params":"8AEB",
                "playbackContext":{
                   "contentPlaybackContext":{
                      "html5Preference":"HTML5_PREF_WANTS"
@@ -72,97 +72,39 @@ class YouTubeExtractor(private val client: OkHttpClient) {
             }
         """.trimIndent().toRequestBody("application/json".toMediaType())
 
-        val headers = Headers.headersOf(
-            "X-YouTube-Client-Name", "3",
-            "X-YouTube-Client-Version", "17.31.35",
-            "Origin", "https://www.youtube.com",
-            "User-Agent", "com.google.android.youtube/17.31.35 (Linux; U; Android 11) gzip",
-            "content-type", "application/json",
-        )
+        val headers = Headers.Builder().apply {
+            add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+            add("Origin", YOUTUBE_URL)
+            add("User-Agent", "com.google.ios.youtube/17.33.2 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)")
+            add("X-Youtube-Client-Name", clientName)
+            add("X-Youtube-Client-Version", "17.33.2")
+        }.build()
 
-        val postResponse = client.newCall(
-            POST(playerUrl, headers = headers, body = body),
-        ).execute()
+        val ytResponse = client.newCall(POST(playerUrl, headers, body)).execute()
+            .use { json.decodeFromString<YoutubeResponse>(it.body.string()) }
 
-        val responseObject = json.decodeFromString<JsonObject>(postResponse.body.string())
-        val videoList = mutableListOf<Video>()
-
-        val formats = responseObject["streamingData"]!!
-            .jsonObject["adaptiveFormats"]!!
-            .jsonArray
-
-        val audioTracks = mutableListOf<Track>()
-        val subtitleTracks = mutableListOf<Track>()
+        val formats = ytResponse.streamingData.adaptiveFormats
 
         // Get Audio
-        for (format in formats) {
-            if (format.jsonObject["mimeType"]!!.jsonPrimitive.content.startsWith("audio/webm")) {
-                try {
-                    audioTracks.add(
-                        Track(
-                            format.jsonObject["url"]!!.jsonPrimitive.content,
-                            format.jsonObject["audioQuality"]!!.jsonPrimitive.content +
-                                " (${formatBits(format.jsonObject["averageBitrate"]!!.jsonPrimitive.long)}ps)",
-                        ),
-                    )
-                } catch (a: Exception) { }
-            }
-        }
+        val audioTracks = formats.filter { it.mimeType.startsWith("audio/webm") }
+            .map { Track(it.url, it.audioQuality!! + " (${formatBits(it.averageBitrate!!)}ps)") }
 
         // Get Subtitles
-        if (responseObject.containsKey("captions")) {
-            val captionTracks = responseObject["captions"]!!
-                .jsonObject["playerCaptionsTracklistRenderer"]!!
-                .jsonObject["captionTracks"]!!
-                .jsonArray
+        val subs = ytResponse.captions?.renderer?.captionTracks?.map {
+            Track(it.baseUrl, it.label)
+        } ?: emptyList()
 
-            for (caption in captionTracks) {
-                val captionJson = caption.jsonObject
-                try {
-                    subtitleTracks.add(
-                        Track(
-                            // TODO: Would replacing srv3 with vtt work for every video?
-                            captionJson["baseUrl"]!!.jsonPrimitive.content.replace("srv3", "vtt"),
-                            captionJson["name"]!!.jsonObject["runs"]!!.jsonArray[0].jsonObject["text"]!!.jsonPrimitive.content,
-                        ),
-                    )
-                } catch (a: Exception) { }
-            }
+        // Get videos, finally
+        return formats.filter { it.mimeType.startsWith("video/mp4") }.map {
+            val codecs = it.mimeType.substringAfter("codecs=\"").substringBefore("\"")
+            Video(
+                it.url,
+                prefix + it.qualityLabel.orEmpty() + " ($codecs)",
+                it.url,
+                subtitleTracks = subs,
+                audioTracks = audioTracks,
+            )
         }
-
-        // List formats
-        for (format in formats) {
-            val mimeType = format.jsonObject["mimeType"]!!.jsonPrimitive.content
-            if (mimeType.startsWith("video/mp4")) {
-                videoList.add(
-                    try {
-                        Video(
-                            format.jsonObject["url"]!!.jsonPrimitive.content,
-                            prefix + format.jsonObject["qualityLabel"]!!.jsonPrimitive.content +
-                                " (${mimeType.substringAfter("codecs=\"").substringBefore("\"")})",
-                            format.jsonObject["url"]!!.jsonPrimitive.content,
-                            audioTracks = audioTracks,
-                            subtitleTracks = subtitleTracks,
-                        )
-                    } catch (a: Exception) {
-                        Video(
-                            format.jsonObject["url"]!!.jsonPrimitive.content,
-                            prefix + format.jsonObject["qualityLabel"]!!.jsonPrimitive.content +
-                                " (${mimeType.substringAfter("codecs=\"").substringBefore("\"")})",
-                            format.jsonObject["url"]!!.jsonPrimitive.content,
-                        )
-                    },
-
-                )
-            }
-        }
-
-        return videoList
-    }
-
-    fun getKey(string: String, key: String): String {
-        var pattern = Regex("\"$key\":\"(.*?)\"")
-        return pattern.find(string)?.groupValues?.get(1) ?: ""
     }
 
     @SuppressLint("DefaultLocale")
@@ -179,4 +121,44 @@ class YouTubeExtractor(private val client: OkHttpClient) {
         }
         return "%.0f%cb".format(bits / 1000.0, currentChar)
     }
+
+    @Serializable
+    data class YoutubeResponse(
+        val streamingData: AdaptiveDto,
+        val captions: CaptionsDto? = null,
+    )
+
+    @Serializable
+    data class AdaptiveDto(val adaptiveFormats: List<TrackDto>)
+
+    @Serializable
+    data class TrackDto(
+        val mimeType: String,
+        val url: String,
+        val averageBitrate: Long? = null,
+        val qualityLabel: String? = null,
+        val audioQuality: String? = null,
+    )
+
+    @Serializable
+    data class CaptionsDto(
+        @SerialName("playerCaptionsTracklistRenderer")
+        val renderer: CaptionsRendererDto,
+    ) {
+        @Serializable
+        data class CaptionsRendererDto(val captionTracks: List<CaptionItem>)
+
+        @Serializable
+        data class CaptionItem(val baseUrl: String, val name: NameDto) {
+            @Serializable
+            data class NameDto(val runs: List<GodDamnitYoutube>)
+
+            @Serializable
+            data class GodDamnitYoutube(val text: String)
+
+            val label by lazy { name.runs.first().text }
+        }
+    }
 }
+
+private const val YOUTUBE_URL = "https://www.youtube.com"
