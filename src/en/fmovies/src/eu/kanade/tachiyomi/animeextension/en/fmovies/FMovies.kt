@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.animeextension.en.fmovies
 
 import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
@@ -237,8 +236,6 @@ class FMovies : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 ).execute().parseAs<AjaxServerResponse>().result.url
 
                 val decrypted = vrfHelper.decrypt(encrypted)
-
-                Log.i("SOMETHING", "$name - $decrypted")
 
                 when (name) {
                     "Vidplay", "MyCloud" -> vidsrcExtractor.videosFromUrl(decrypted, name)
