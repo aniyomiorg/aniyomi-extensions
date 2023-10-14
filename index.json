@@ -1319,6 +1319,27 @@
     ]
   },
   {
+    "name": "Aniyomi: AnimeUI",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.animeui",
+    "apk": "aniyomi-en.animeui-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimeUI",
+        "lang": "en",
+        "id": "7372747480486811746",
+        "baseUrl": "https://animeui.com",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: AsiaFlix",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.asiaflix",
     "apk": "aniyomi-en.asiaflix-v13.5.apk",
