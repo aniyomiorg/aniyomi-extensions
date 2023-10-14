@@ -27,7 +27,7 @@ class VrfHelper(private val client: OkHttpClient, private val headers: Headers) 
 
     fun getVidSrc(query: String, host: String): String {
         val url = API_URL.newBuilder().apply {
-            addPathSegment("rawVizcloud")
+            addPathSegment(if (host.contains("mcloud", true)) "rawMcloud" else "rawVizcloud")
             addQueryParameter("apikey", API_KEY)
         }.build().toString()
 

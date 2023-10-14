@@ -39,7 +39,7 @@ class FMoviesHelper(private val client: OkHttpClient, private val headers: Heade
 
     fun getVidSrc(query: String, host: String): String {
         val url = API_URL.newBuilder().apply {
-            addPathSegment(if (host == "vidstream.pro") "rawVizcloud" else "rawMcloud")
+            addPathSegment(if (host.contains("mcloud", true)) "rawMcloud" else "rawVizcloud")
             addQueryParameter("apikey", API_KEY)
         }.build().toString()
 
