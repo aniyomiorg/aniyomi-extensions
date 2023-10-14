@@ -8,7 +8,7 @@ import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 
-class StreamWishExtractor(private val client: OkHttpClient, private val headers: Headers, private val mB: Boolean = true) {
+class StreamWishExtractor(private val client: OkHttpClient, private val headers: Headers, private val baseOnOff: Boolean = true) {
     private val playlistUtils by lazy { PlaylistUtils(client, headers) }
 
     fun videosFromUrl(url: String, prefix: String) = videosFromUrl(url) { "$prefix - $it" }
@@ -31,6 +31,6 @@ class StreamWishExtractor(private val client: OkHttpClient, private val headers:
             ?.takeIf(String::isNotBlank)
             ?: return emptyList()
 
-        return playlistUtils.extractFromHls(masterUrl, url, videoNameGen = videoNameGen, mB = mB)
+        return playlistUtils.extractFromHls(masterUrl, url, videoNameGen = videoNameGen, baseOnOff = baseOnOff)
     }
 }

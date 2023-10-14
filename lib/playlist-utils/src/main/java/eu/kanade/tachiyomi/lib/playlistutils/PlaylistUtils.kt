@@ -30,7 +30,7 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
     fun extractFromHls(
         playlistUrl: String,
         referer: String = "",
-        mB: Boolean = true,
+        baseOnOff: Boolean = true,
         masterHeaders: Headers,
         videoHeaders: Headers,
         videoNameGen: (String) -> String = { quality -> quality },
@@ -40,7 +40,7 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
         return extractFromHls(
             playlistUrl,
             referer,
-            mB,
+            baseOnOff,
             { _, _ -> masterHeaders },
             { _, _, _ -> videoHeaders },
             videoNameGen,
@@ -73,7 +73,7 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
     fun extractFromHls(
         playlistUrl: String,
         referer: String = "",
-        mB: Boolean = true,
+        baseOnOff: Boolean = true,
         masterHeadersGen: (Headers, String) -> Headers = { baseHeaders, referer ->
             generateMasterHeaders(baseHeaders, referer)
         },
@@ -100,7 +100,7 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
 
         val playlistHttpUrl = playlistUrl.toHttpUrl()
 
-        val masterBase = if(mB) {
+        val masterBase = if(baseOnOff) {
             playlistHttpUrl.newBuilder().apply {
                 removePathSegment(playlistHttpUrl.pathSize - 1)
             }.build().toString() + "/"
