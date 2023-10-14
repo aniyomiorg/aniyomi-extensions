@@ -8,14 +8,18 @@ import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.OkHttpClient
 
 class StreamVidExtractor(private val client: OkHttpClient) {
-    fun videosFromUrl(url: String, prefix: String = ""): List<Video> {
+    fun videosFromUrl(url: String, prefix: String = "", sourceChange: Boolean = false): List<Video> {
         return runCatching {
             val doc = client.newCall(GET(url)).execute().asJsoup()
 
             val script = doc.selectFirst("script:containsData(eval):containsData(p,a,c,k,e,d)")?.data()
                 ?.let(JsUnpacker::unpackAndCombine)
                 ?: return emptyList()
-            val masterUrl = script.substringAfter("sources:[{src:\"").substringBefore("\",")
+            val masterUrl = if(!sourceChange) {
+                script.substringAfter("sources:[{src:\"").substringBefore("\",")
+            } else {
+                script.substringAfter("sources:[{file:\"").substringBefore("\"")
+            }
             PlaylistUtils(client).extractFromHls(masterUrl, videoNameGen = { "${prefix}StreamVid - (${it}p)" })
         }.getOrElse { emptyList() }
     }
