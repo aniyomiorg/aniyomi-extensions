@@ -30,7 +30,6 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
     fun extractFromHls(
         playlistUrl: String,
         referer: String = "",
-        baseOnOff: Boolean = true,
         masterHeaders: Headers,
         videoHeaders: Headers,
         videoNameGen: (String) -> String = { quality -> quality },
@@ -40,7 +39,6 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
         return extractFromHls(
             playlistUrl,
             referer,
-            baseOnOff,
             { _, _ -> masterHeaders },
             { _, _, _ -> videoHeaders },
             videoNameGen,
@@ -73,7 +71,6 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
     fun extractFromHls(
         playlistUrl: String,
         referer: String = "",
-        baseOnOff: Boolean = true,
         masterHeadersGen: (Headers, String) -> Headers = { baseHeaders, referer ->
             generateMasterHeaders(baseHeaders, referer)
         },
@@ -100,18 +97,17 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
 
         val playlistHttpUrl = playlistUrl.toHttpUrl()
 
-        val masterBase = if(baseOnOff) {
-            playlistHttpUrl.newBuilder().apply {
-                removePathSegment(playlistHttpUrl.pathSize - 1)
-            }.build().toString() + "/"
-        } else {
-            playlistUrl
-        }
+        val masterUrlBasePath = playlistHttpUrl.newBuilder().apply {
+            removePathSegment(playlistHttpUrl.pathSize - 1)
+            addPathSegment("")
+            query(null)
+            fragment(null)
+        }.build().toString()
 
         // Get subtitles
         val subtitleTracks = subtitleList + SUBTITLE_REGEX.findAll(masterPlaylist).mapNotNull {
             Track(
-                getAbsoluteUrl(it.groupValues[2], playlistUrl, masterBase) ?: return@mapNotNull null,
+                getAbsoluteUrl(it.groupValues[2], playlistUrl, masterUrlBasePath ) ?: return@mapNotNull null,
                 it.groupValues[1]
             )
         }.toList()
@@ -119,7 +115,7 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
         // Get audio tracks
         val audioTracks = audioList + AUDIO_REGEX.findAll(masterPlaylist).mapNotNull {
             Track(
-                getAbsoluteUrl(it.groupValues[2], playlistUrl, masterBase) ?: return@mapNotNull null,
+                getAbsoluteUrl(it.groupValues[2], playlistUrl, masterUrlBasePath ) ?: return@mapNotNull null,
                 it.groupValues[1]
             )
         }.toList()
@@ -131,7 +127,7 @@ class PlaylistUtils(private val client: OkHttpClient, private val headers: Heade
                 .substringBefore(",") + "p"
 
             val videoUrl = it.substringAfter("\n").substringBefore("\n").let { url ->
-                getAbsoluteUrl(url, playlistUrl, masterBase)
+                getAbsoluteUrl(url, playlistUrl, masterUrlBasePath )
             } ?: return@mapNotNull null
 
 

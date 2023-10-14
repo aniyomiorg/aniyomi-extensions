@@ -203,7 +203,7 @@ class MoflixStream : ConfigurableAnimeSource, AnimeHttpSource() {
                         videoList.addAll(videos)
                     }
                     host.contains("Filelions") && hosterSelection?.contains("flions") == true -> {
-                        val videos = StreamWishExtractor(client, headers, baseOnOff = false).videosFromUrl(eUrl, videoNameGen = { quality -> "FileLions - $quality" })
+                        val videos = StreamWishExtractor(client, headers).videosFromUrl(eUrl, videoNameGen = { quality -> "FileLions - $quality" })
                         videoList.addAll(videos)
                     }
                     host.contains("LuluStream") && hosterSelection?.contains("lstream") == true -> {
@@ -235,7 +235,7 @@ class MoflixStream : ConfigurableAnimeSource, AnimeHttpSource() {
                         videoList.addAll(videos)
                     }
                     host.contains("Filelions") && hosterSelection?.contains("flions") == true -> {
-                        val videos = StreamWishExtractor(client, headers, baseOnOff = false).videosFromUrl(fUrl, videoNameGen = { quality -> "FileLions - $quality" })
+                        val videos = StreamWishExtractor(client, headers).videosFromUrl(fUrl, videoNameGen = { quality -> "FileLions - $quality" })
                         videoList.addAll(videos)
                     }
                     host.contains("VidGuard") && hosterSelection?.contains("vidg") == true -> {
