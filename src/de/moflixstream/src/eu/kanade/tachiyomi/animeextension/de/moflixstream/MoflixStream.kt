@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.de.moflixstream.extractors.UnpackerExtractor
 import eu.kanade.tachiyomi.animeextension.de.moflixstream.extractors.VidGuardExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -172,7 +173,7 @@ class MoflixStream : ConfigurableAnimeSource, AnimeHttpSource() {
 
     private fun videosFromJson(jsonLine: String?, url: String): List<Video> {
         val videoList = mutableListOf<Video>()
-        val hosterSelection = preferences.getStringSet("hoster_selection", setOf("stape", "vidg", "svid", "hstream", "flions"))
+        val hosterSelection = preferences.getStringSet("hoster_selection", setOf("stape", "vidg", "svid", "hstream", "flions", "lstream"))
         val jsonData = jsonLine ?: return emptyList()
         val jObject = json.decodeFromString<JsonObject>(jsonData)
         if (url.contains("episodes")) {
@@ -205,6 +206,10 @@ class MoflixStream : ConfigurableAnimeSource, AnimeHttpSource() {
                         val videos = StreamWishExtractor(client, headers, mB = false).videosFromUrl(eUrl, videoNameGen = { quality -> "FileLions - $quality" })
                         videoList.addAll(videos)
                     }
+                    host.contains("LuluStream") && hosterSelection?.contains("lstream") == true -> {
+                        val videos = UnpackerExtractor(client, headers).videosFromUrl(eUrl, "LuluStream")
+                        videoList.addAll(videos)
+                    }
                 }
             }
         } else {
@@ -235,6 +240,10 @@ class MoflixStream : ConfigurableAnimeSource, AnimeHttpSource() {
                     }
                     host.contains("VidGuard") && hosterSelection?.contains("vidg") == true -> {
                         val videos = VidGuardExtractor(client).videosFromUrl(fUrl)
+                        videoList.addAll(videos)
+                    }
+                    host.contains("LuluStream") && hosterSelection?.contains("lstream") == true -> {
+                        val videos = UnpackerExtractor(client, headers).videosFromUrl(fUrl, "LuluStream")
                         videoList.addAll(videos)
                     }
                 }
@@ -327,8 +336,8 @@ class MoflixStream : ConfigurableAnimeSource, AnimeHttpSource() {
         val hosterPref = ListPreference(screen.context).apply {
             key = "preferred_hoster"
             title = "Standard-Hoster"
-            entries = arrayOf("Streamtape", "VidGuard", "Streamvid", "Highstream", "Filelions")
-            entryValues = arrayOf("https://streamtape", "https://moflix-stream", "https://streamvid", "https://highstream", "https://moflix-stream")
+            entries = arrayOf("Streamtape", "VidGuard", "Streamvid", "Highstream", "Filelions", "LuluStream")
+            entryValues = arrayOf("https://streamtape", "https://moflix-stream", "https://streamvid", "https://highstream", "https://moflix-stream", "https://luluvdo")
             setDefaultValue("https://streamtape")
             summary = "%s"
 
@@ -342,9 +351,9 @@ class MoflixStream : ConfigurableAnimeSource, AnimeHttpSource() {
         val subSelection = MultiSelectListPreference(screen.context).apply {
             key = "hoster_selection"
             title = "Hoster auswählen"
-            entries = arrayOf("Streamtape", "VidGuard", "Streamvid", "Highstream", "Filelions")
-            entryValues = arrayOf("stape", "vidg", "svid", "hstream", "flions")
-            setDefaultValue(setOf("stape", "vidg", "svid", "hstream", "flions"))
+            entries = arrayOf("Streamtape", "VidGuard", "Streamvid", "Highstream", "Filelions", "LuluStream")
+            entryValues = arrayOf("stape", "vidg", "svid", "hstream", "flions", "lstream")
+            setDefaultValue(setOf("stape", "vidg", "svid", "hstream", "flions", "lstream"))
 
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
