@@ -1,6 +1,5 @@
 package eu.kanade.tachiyomi.animeextension.en.fmovies.extractors
 
-import android.util.Log
 import eu.kanade.tachiyomi.animeextension.en.fmovies.FMoviesHelper
 import eu.kanade.tachiyomi.animeextension.en.fmovies.FMoviesSubs
 import eu.kanade.tachiyomi.animeextension.en.fmovies.VidsrcResponse
