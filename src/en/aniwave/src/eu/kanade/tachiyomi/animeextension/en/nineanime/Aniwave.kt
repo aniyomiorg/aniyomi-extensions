@@ -301,6 +301,7 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         )
     }
 
+    @Synchronized
     private fun parseDate(dateStr: String): Long {
         return runCatching { DATE_FORMATTER.parse(dateStr)?.time }
             .getOrNull() ?: 0L
