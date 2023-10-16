@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.all.animeonsen.dto
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -21,9 +22,7 @@ data class AnimeListItem(
 )
 
 @Serializable
-data class AnimeListCursor(
-    val next: JsonArray,
-)
+data class AnimeListCursor(val next: JsonArray)
 
 @Serializable
 data class AnimeDetails(
@@ -35,6 +34,12 @@ data class AnimeDetails(
 )
 
 @Serializable
+data class EpisodeDto(
+    @SerialName("contentTitle_episode_en")
+    val name: String,
+)
+
+@Serializable
 data class MalData(
     val genres: List<Genre>?,
     val status: String?,
@@ -43,14 +48,10 @@ data class MalData(
 )
 
 @Serializable
-data class Genre(
-    val name: String,
-)
+data class Genre(val name: String)
 
 @Serializable
-data class Studio(
-    val name: String,
-)
+data class Studio(val name: String)
 
 @Serializable
 data class VideoData(
@@ -59,14 +60,12 @@ data class VideoData(
 )
 
 @Serializable
-data class MetaData(
-    val subtitles: JsonObject,
-)
+data class MetaData(val subtitles: Map<String, String>)
 
 @Serializable
 data class StreamData(
     val stream: String,
-    val subtitles: JsonObject,
+    val subtitles: Map<String, String>,
 )
 
 @Serializable
