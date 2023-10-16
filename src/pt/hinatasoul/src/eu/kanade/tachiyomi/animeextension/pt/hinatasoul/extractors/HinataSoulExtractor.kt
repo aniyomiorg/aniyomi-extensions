@@ -8,22 +8,24 @@ import okhttp3.Response
 class HinataSoulExtractor(private val headers: Headers) {
 
     fun getVideoList(response: Response): List<Video> {
-        val html = response.body.string()
-        val doc = response.asJsoup(html)
-        val hasFHD = doc.selectFirst("div.Aba:contains(FULLHD)") != null
-        val regex = Regex("""file: '(\S+?)',""")
-        return regex.findAll(html).mapNotNull {
-            val videoUrl = it.groupValues[1]
-            // prevent some http 404 due to the source returning false-positives
-            if ("appfullhd" in videoUrl && !hasFHD) {
-                null
+        val doc = response.use { it.asJsoup() }
+        val hasFHD = doc.selectFirst("div.abaItem:contains(FULLHD)") != null
+        val serverUrl = doc.selectFirst("meta[itemprop=contentURL]")!!
+            .attr("content")
+            .replace("cdn1", "cdn3")
+        val type = serverUrl.split('/').get(3)
+        val qualities = listOfNotNull("SD", "HD", "FULLHD".takeIf { hasFHD })
+        val paths = listOf("appsd", "apphd").let {
+            if (type.endsWith("2")) {
+                it.map { path -> path + "2" }
             } else {
-                val quality = videoUrl.substringAfter("app")
-                    .substringBefore("/")
-                    .substringBefore("2") // prevents "HD2", "SD2" etc
-                    .uppercase()
-                Video(videoUrl, quality, videoUrl, headers = headers)
+                it
             }
-        }.toList()
+        } + listOfNotNull("appfullhd".takeIf { hasFHD })
+        return qualities.mapIndexed { index, quality ->
+            val path = paths[index]
+            val url = serverUrl.replace(type, path)
+            Video(url, quality, url, headers = headers)
+        }.reversed()
     }
 }
