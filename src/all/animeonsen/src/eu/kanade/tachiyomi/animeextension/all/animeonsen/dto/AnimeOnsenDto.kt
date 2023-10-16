@@ -2,7 +2,10 @@ package eu.kanade.tachiyomi.animeextension.all.animeonsen.dto
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.JsonTransformingSerializer
 
 @Serializable
 data class AnimeListResponse(
@@ -27,6 +30,7 @@ data class AnimeDetails(
     val content_id: String,
     val content_title: String?,
     val content_title_en: String?,
+    @Serializable(with = MalSerializer::class)
     val mal_data: MalData?,
 )
 
@@ -70,3 +74,11 @@ data class SearchResponse(
     val status: Int,
     val result: List<AnimeListItem>,
 )
+
+object MalSerializer : JsonTransformingSerializer<MalData>(MalData.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement =
+        when (element) {
+            is JsonPrimitive -> JsonObject(emptyMap())
+            else -> element
+        }
+}

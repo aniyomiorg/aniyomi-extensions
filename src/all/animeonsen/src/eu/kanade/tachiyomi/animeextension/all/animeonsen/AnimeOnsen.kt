@@ -31,6 +31,7 @@ import okhttp3.Response
 import rx.Observable
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import kotlin.Exception
 
 class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
@@ -57,9 +58,7 @@ class AnimeOnsen : ConfigurableAnimeSource, AnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-    }
+    private val json: Json by injectLazy()
 
     override fun headersBuilder(): Headers.Builder = Headers.Builder()
         .add("user-agent", AO_USER_AGENT)
