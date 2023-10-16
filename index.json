@@ -4049,10 +4049,10 @@
   {
     "name": "Aniyomi: Hinata Soul",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.hinatasoul",
-    "apk": "aniyomi-pt.hinatasoul-v13.3.apk",
+    "apk": "aniyomi-pt.hinatasoul-v13.4.apk",
     "lang": "pt-BR",
-    "code": 3,
-    "version": "13.3",
+    "code": 4,
+    "version": "13.4",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
