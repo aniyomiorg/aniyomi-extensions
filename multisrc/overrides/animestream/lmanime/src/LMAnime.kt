@@ -7,6 +7,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.dailymotionextractor.DailymotionExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
+import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Response
 
@@ -20,7 +21,7 @@ class LMAnime : AnimeStream(
     override val prefQualityEntries = prefQualityValues
 
     override fun videoListParse(response: Response): List<Video> {
-        val items = response.asJsoup().select(videoListSelector())
+        val items = response.use { it.asJsoup() }.select(videoListSelector())
         val allowed = preferences.getStringSet(PREF_ALLOWED_LANGS_KEY, PREF_ALLOWED_LANGS_DEFAULT)!!
         return items
             .filter { element ->
@@ -30,8 +31,20 @@ class LMAnime : AnimeStream(
                 val language = it.text().substringBefore(" ")
                 val url = getHosterUrl(it)
                 getVideoList(url, language)
-            }.flatten()
+            }.flatten().ifEmpty { throw Exception("Empty video list!") }
     }
+
+    override fun getHosterUrl(encodedData: String) =
+        client.newCall(GET(encodedData, headers)).execute()
+            .use { it.asJsoup() }
+            .selectFirst("iframe[src~=.]")!!
+            .attr("src")
+            .let { // sometimes the url dont specify its protocol
+                when {
+                    it.startsWith("http") -> it
+                    else -> "https:$it"
+                }
+            }
 
     override fun getVideoList(url: String, name: String): List<Video> {
         val prefix = "$name -"
