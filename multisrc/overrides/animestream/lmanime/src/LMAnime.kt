@@ -46,13 +46,14 @@ class LMAnime : AnimeStream(
                 }
             }
 
+    private val okruExtractor by lazy { OkruExtractor(client) }
+    private val dailyExtractor by lazy { DailymotionExtractor(client, headers) }
+
     override fun getVideoList(url: String, name: String): List<Video> {
         val prefix = "$name -"
         return when {
-            "ok.ru" in url ->
-                OkruExtractor(client).videosFromUrl(url, prefix)
-            "dailymotion.com" in url ->
-                DailymotionExtractor(client, headers).videosFromUrl(url, "Dailymotion ($name)")
+            "ok.ru" in url -> okruExtractor.videosFromUrl(url, prefix)
+            "dailymotion.com" in url -> dailyExtractor.videosFromUrl(url, "Dailymotion ($name)")
             else -> emptyList()
         }
     }
@@ -61,7 +62,8 @@ class LMAnime : AnimeStream(
     @Suppress("UNCHECKED_CAST")
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         super.setupPreferenceScreen(screen) // Quality preferences
-        val langPref = ListPreference(screen.context).apply {
+
+        ListPreference(screen.context).apply {
             key = PREF_LANG_KEY
             title = PREF_LANG_TITLE
             entries = PREF_LANG_ENTRIES
@@ -74,9 +76,9 @@ class LMAnime : AnimeStream(
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
+        }.also(screen::addPreference)
 
-        val allowedPref = MultiSelectListPreference(screen.context).apply {
+        MultiSelectListPreference(screen.context).apply {
             key = PREF_ALLOWED_LANGS_KEY
             title = PREF_ALLOWED_LANGS_TITLE
             entries = PREF_ALLOWED_LANGS_ENTRIES
@@ -86,10 +88,7 @@ class LMAnime : AnimeStream(
             setOnPreferenceChangeListener { _, newValue ->
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
             }
-        }
-
-        screen.addPreference(langPref)
-        screen.addPreference(allowedPref)
+        }.also(screen::addPreference)
     }
 
     // ============================= Utilities ==============================
