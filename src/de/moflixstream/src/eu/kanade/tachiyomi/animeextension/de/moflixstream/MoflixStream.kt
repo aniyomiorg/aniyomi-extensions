@@ -7,6 +7,8 @@ import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.de.moflixstream.dto.AnimeDetailsDto
 import eu.kanade.tachiyomi.animeextension.de.moflixstream.dto.EpisodeListDto
 import eu.kanade.tachiyomi.animeextension.de.moflixstream.dto.EpisodePageDto
+import eu.kanade.tachiyomi.animeextension.de.moflixstream.dto.ItemInfo
+import eu.kanade.tachiyomi.animeextension.de.moflixstream.dto.PopularPaginationDto
 import eu.kanade.tachiyomi.animeextension.de.moflixstream.dto.SearchDto
 import eu.kanade.tachiyomi.animeextension.de.moflixstream.dto.SeasonPaginationDto
 import eu.kanade.tachiyomi.animeextension.de.moflixstream.dto.VideoResponseDto
@@ -24,13 +26,7 @@ import eu.kanade.tachiyomi.lib.streamvidextractor.StreamVidExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.network.GET
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.int
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
-import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -60,34 +56,16 @@ class MoflixStream : ConfigurableAnimeSource, AnimeHttpSource() {
     private val apiUrl = "$baseUrl/api/v1"
 
     // ============================== Popular ===============================
-    override fun popularAnimeRequest(page: Int): Request = GET(
+    override fun popularAnimeRequest(page: Int) = GET(
         "$apiUrl/channel/345?returnContentOnly=true&restriction=&order=rating:desc&paginate=simple&perPage=50&query=&page=$page",
         headers = Headers.headersOf("referer", "$baseUrl/movies?order=rating%3Adesc"),
     )
 
     override fun popularAnimeParse(response: Response): AnimesPage {
-        val responseString = response.body.string()
-        return parsePopularAnimeJson(responseString)
-    }
+        val pagination = response.parseAs<PopularPaginationDto>().pagination
 
-    private fun parsePopularAnimeJson(jsonLine: String?): AnimesPage {
-        val jsonData = jsonLine ?: return AnimesPage(emptyList(), false)
-        val jObject = json.decodeFromString<JsonObject>(jsonData)
-        val jO = jObject.jsonObject["pagination"]!!.jsonObject
-        val nextPage = jO.jsonObject["next_page_url"]!!.jsonPrimitive.content
-            .substringAfter("page=").toInt()
-        val page = jO.jsonObject["current_page"]!!.jsonPrimitive.int
-        val hasNextPage = page < nextPage
-        val array = jO["data"]!!.jsonArray
-        val animeList = mutableListOf<SAnime>()
-        for (item in array) {
-            val anime = SAnime.create()
-            anime.title = item.jsonObject["name"]!!.jsonPrimitive.content
-            val animeId = item.jsonObject["id"]!!.jsonPrimitive.content
-            anime.setUrlWithoutDomain("$apiUrl/titles/$animeId?load=images,genres,productionCountries,keywords,videos,primaryVideo,seasons,compactCredits")
-            anime.thumbnail_url = item.jsonObject["poster"]?.jsonPrimitive?.content ?: item.jsonObject["backdrop"]?.jsonPrimitive?.content
-            animeList.add(anime)
-        }
+        val animeList = pagination.data.parseItems()
+        val hasNextPage = pagination.current_page < (pagination.next_page ?: 1)
         return AnimesPage(animeList, hasNextPage)
     }
 
@@ -104,14 +82,8 @@ class MoflixStream : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun searchAnimeParse(response: Response): AnimesPage {
         val data = response.parseAs<SearchDto>()
-        val animeList = data.results.map {
-            SAnime.create().apply {
-                title = it.name
-                setUrlWithoutDomain("$apiUrl/titles/${it.id}?$ANIME_URL_QUERIES")
-                thumbnail_url = it.thumbnail
-            }
-        }
-        return AnimesPage(animeList, hasNextPage = false)
+        val animeList = data.results.parseItems()
+        return AnimesPage(animeList, false)
     }
 
     // =========================== Anime Details ============================
@@ -261,6 +233,14 @@ class MoflixStream : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================= Utilities ==============================
     private inline fun <reified T> Response.parseAs(): T {
         return use { it.body.string() }.let(json::decodeFromString)
+    }
+
+    private fun List<ItemInfo>.parseItems() = map {
+        SAnime.create().apply {
+            title = it.name
+            setUrlWithoutDomain("$apiUrl/titles/${it.id}?$ANIME_URL_QUERIES")
+            thumbnail_url = it.thumbnail
+        }
     }
 
     companion object {

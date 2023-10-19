@@ -8,6 +8,12 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonTransformingSerializer
 
 @Serializable
+data class PopularPaginationDto(val pagination: PopularData) {
+    @Serializable
+    data class PopularData(val data: List<ItemInfo>, val next_page: Int? = null, val current_page: Int)
+}
+
+@Serializable
 data class ItemInfo(
     val poster: String?,
     val backdrop: String?,
