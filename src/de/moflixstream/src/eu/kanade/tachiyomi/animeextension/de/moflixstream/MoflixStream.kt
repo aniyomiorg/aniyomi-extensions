@@ -1,10 +1,15 @@
 package eu.kanade.tachiyomi.animeextension.de.moflixstream
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.de.moflixstream.dto.AnimeDetailsDto
+import eu.kanade.tachiyomi.animeextension.de.moflixstream.dto.EpisodeListDto
+import eu.kanade.tachiyomi.animeextension.de.moflixstream.dto.EpisodePageDto
+import eu.kanade.tachiyomi.animeextension.de.moflixstream.dto.SearchDto
+import eu.kanade.tachiyomi.animeextension.de.moflixstream.dto.SeasonPaginationDto
+import eu.kanade.tachiyomi.animeextension.de.moflixstream.dto.VideoResponseDto
 import eu.kanade.tachiyomi.animeextension.de.moflixstream.extractors.UnpackerExtractor
 import eu.kanade.tachiyomi.animeextension.de.moflixstream.extractors.VidGuardExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
@@ -25,11 +30,11 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Headers
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 import kotlin.Exception
 
 class MoflixStream : ConfigurableAnimeSource, AnimeHttpSource() {
@@ -42,19 +47,21 @@ class MoflixStream : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val supportsLatest = false
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client = network.cloudflareClient
 
-    private val preferences: SharedPreferences by lazy {
+    override fun headersBuilder() = super.headersBuilder().add("Referer", "$baseUrl/")
+
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    private val json = Json {
-        isLenient = true
-        ignoreUnknownKeys = true
-    }
+    private val json: Json by injectLazy()
 
+    private val apiUrl = "$baseUrl/api/v1"
+
+    // ============================== Popular ===============================
     override fun popularAnimeRequest(page: Int): Request = GET(
-        "$baseUrl/api/v1/channel/345?returnContentOnly=true&restriction=&order=rating:desc&paginate=simple&perPage=50&query=&page=$page",
+        "$apiUrl/channel/345?returnContentOnly=true&restriction=&order=rating:desc&paginate=simple&perPage=50&query=&page=$page",
         headers = Headers.headersOf("referer", "$baseUrl/movies?order=rating%3Adesc"),
     )
 
@@ -77,268 +84,156 @@ class MoflixStream : ConfigurableAnimeSource, AnimeHttpSource() {
             val anime = SAnime.create()
             anime.title = item.jsonObject["name"]!!.jsonPrimitive.content
             val animeId = item.jsonObject["id"]!!.jsonPrimitive.content
-            anime.setUrlWithoutDomain("$baseUrl/api/v1/titles/$animeId?load=images,genres,productionCountries,keywords,videos,primaryVideo,seasons,compactCredits")
+            anime.setUrlWithoutDomain("$apiUrl/titles/$animeId?load=images,genres,productionCountries,keywords,videos,primaryVideo,seasons,compactCredits")
             anime.thumbnail_url = item.jsonObject["poster"]?.jsonPrimitive?.content ?: item.jsonObject["backdrop"]?.jsonPrimitive?.content
             animeList.add(anime)
         }
         return AnimesPage(animeList, hasNextPage)
     }
 
-    // episodes
+    // =============================== Latest ===============================
+    override fun latestUpdatesParse(response: Response) = throw Exception("not Used")
 
-    override fun episodeListRequest(anime: SAnime): Request = GET(baseUrl + anime.url, headers = Headers.headersOf("referer", baseUrl))
+    override fun latestUpdatesRequest(page: Int) = throw Exception("Not used")
 
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        val responseString = response.body.string()
-        val url = response.request.url.toString()
-        return parseEpisodeAnimeJson(responseString, url)
-    }
-
-    private fun parseEpisodeAnimeJson(jsonLine: String?, url: String): List<SEpisode> {
-        val jsonData = jsonLine ?: return emptyList()
-        val jObject = json.decodeFromString<JsonObject>(jsonData)
-        val episodeList = mutableListOf<SEpisode>()
-        val mId = jObject.jsonObject["title"]!!.jsonObject["id"]!!.jsonPrimitive.content
-        val season = jObject.jsonObject["seasons"]?.jsonObject
-        if (season != null) {
-            val dataArray = season.jsonObject["data"]!!.jsonArray
-            val next = season.jsonObject["next_page"]?.jsonPrimitive?.content
-            if (next != null) {
-                val seNextJsonData = client.newCall(GET("$baseUrl/api/v1/titles/$mId/seasons?perPage=8&query=&page=$next", headers = Headers.headersOf("referer", baseUrl))).execute().body.string()
-                val seNextJObject = json.decodeFromString<JsonObject>(seNextJsonData)
-                val seasonNext = seNextJObject.jsonObject["pagination"]!!.jsonObject
-                val dataNextArray = seasonNext.jsonObject["data"]!!.jsonArray
-                val dataAllArray = dataArray.plus(dataNextArray)
-                for (item in dataAllArray) {
-                    val id = item.jsonObject["title_id"]!!.jsonPrimitive.content
-                    val num = item.jsonObject["number"]!!.jsonPrimitive.content
-                    val seUrl = "$baseUrl/api/v1/titles/$id/seasons/$num?load=episodes,primaryVideo"
-                    val seJsonData = client.newCall(GET(seUrl, headers = Headers.headersOf("referer", baseUrl))).execute().body.string()
-                    val seJObject = json.decodeFromString<JsonObject>(seJsonData)
-                    val epObject = seJObject.jsonObject["episodes"]!!.jsonObject
-                    val epDataArray = epObject.jsonObject["data"]!!.jsonArray.reversed()
-                    for (epItem in epDataArray) {
-                        val episode = SEpisode.create()
-                        val seNum = epItem.jsonObject["season_number"]!!.jsonPrimitive.content
-                        val epNum = epItem.jsonObject["episode_number"]!!.jsonPrimitive.content
-                        episode.name = "Staffel $seNum Folge $epNum : " + epItem.jsonObject["name"]!!.jsonPrimitive.content
-                        episode.episode_number = epNum.toFloat()
-                        val epId = epItem.jsonObject["title_id"]!!.jsonPrimitive.content
-                        episode.setUrlWithoutDomain("$baseUrl/api/v1/titles/$epId/seasons/$seNum/episodes/$epNum?load=videos,compactCredits,primaryVideo")
-                        episodeList.add(episode)
-                    }
-                }
-            } else {
-                for (item in dataArray) {
-                    val id = item.jsonObject["title_id"]!!.jsonPrimitive.content
-                    val num = item.jsonObject["number"]!!.jsonPrimitive.content
-                    val seUrl = "$baseUrl/api/v1/titles/$id/seasons/$num?load=episodes,primaryVideo"
-                    val seJsonData = client.newCall(GET(seUrl, headers = Headers.headersOf("referer", baseUrl))).execute().body.string()
-                    val seJObject = json.decodeFromString<JsonObject>(seJsonData)
-                    val epObject = seJObject.jsonObject["episodes"]!!.jsonObject
-                    val epDataArray = epObject.jsonObject["data"]!!.jsonArray.reversed()
-                    for (epItem in epDataArray) {
-                        val episode = SEpisode.create()
-                        val seNum = epItem.jsonObject["season_number"]!!.jsonPrimitive.content
-                        val epNum = epItem.jsonObject["episode_number"]!!.jsonPrimitive.content
-                        episode.name = "Staffel $seNum Folge $epNum : " + epItem.jsonObject["name"]!!.jsonPrimitive.content
-                        episode.episode_number = epNum.toFloat()
-                        val epId = epItem.jsonObject["title_id"]!!.jsonPrimitive.content
-                        episode.setUrlWithoutDomain("$baseUrl/api/v1/titles/$epId/seasons/$seNum/episodes/$epNum?load=videos,compactCredits,primaryVideo")
-                        episodeList.add(episode)
-                    }
-                }
-            }
-        } else {
-            val episode = SEpisode.create()
-            episode.episode_number = 1F
-            episode.name = "Film"
-            episode.setUrlWithoutDomain(url)
-            episodeList.add(episode)
-        }
-        return episodeList
-    }
-
-    // Video Extractor
-
-    override fun videoListRequest(episode: SEpisode): Request {
-        return GET(baseUrl + episode.url, headers = Headers.headersOf("referer", baseUrl))
-    }
-
-    override fun videoListParse(response: Response): List<Video> {
-        val responseString = response.body.string()
-        val url = response.request.url.toString()
-        return videosFromJson(responseString, url)
-    }
-
-    private fun videosFromJson(jsonLine: String?, url: String): List<Video> {
-        val videoList = mutableListOf<Video>()
-        val hosterSelection = preferences.getStringSet("hoster_selection", setOf("stape", "vidg", "svid", "hstream", "flions", "lstream"))
-        val jsonData = jsonLine ?: return emptyList()
-        val jObject = json.decodeFromString<JsonObject>(jsonData)
-        if (url.contains("episodes")) {
-            val epObject = jObject.jsonObject["episode"]!!.jsonObject
-            val videoArray = epObject.jsonObject["videos"]!!.jsonArray
-            for (item in videoArray) {
-                val host = item.jsonObject["name"]!!.jsonPrimitive.content
-                val eUrl = item.jsonObject["src"]!!.jsonPrimitive.content
-                when {
-                    host.contains("Streamtape") && hosterSelection?.contains("stape") == true -> {
-                        val quality = "Streamtape"
-                        val video = StreamTapeExtractor(client).videoFromUrl(eUrl, quality)
-                        if (video != null) {
-                            videoList.add(video)
-                        }
-                    }
-                    host.contains("Streamvid") && hosterSelection?.contains("svid") == true -> {
-                        val video = StreamVidExtractor(client).videosFromUrl(eUrl)
-                        videoList.addAll(video)
-                    }
-                    host.contains("Highstream") && hosterSelection?.contains("hstream") == true -> {
-                        val videos = StreamVidExtractor(client).videosFromUrl(eUrl, prefix = "Highstream - ")
-                        videoList.addAll(videos)
-                    }
-                    host.contains("VidGuard") && hosterSelection?.contains("vidg") == true -> {
-                        val videos = VidGuardExtractor(client).videosFromUrl(eUrl)
-                        videoList.addAll(videos)
-                    }
-                    host.contains("Filelions") && hosterSelection?.contains("flions") == true -> {
-                        val videos = StreamWishExtractor(client, headers).videosFromUrl(eUrl, videoNameGen = { quality -> "FileLions - $quality" })
-                        videoList.addAll(videos)
-                    }
-                    host.contains("LuluStream") && hosterSelection?.contains("lstream") == true -> {
-                        val videos = UnpackerExtractor(client, headers).videosFromUrl(eUrl, "LuluStream")
-                        videoList.addAll(videos)
-                    }
-                }
-            }
-        } else {
-            val titleObject = jObject.jsonObject["title"]!!.jsonObject
-            val videoArray = titleObject.jsonObject["videos"]!!.jsonArray
-            for (item in videoArray) {
-                val host = item.jsonObject["name"]!!.jsonPrimitive.content
-                val fUrl = item.jsonObject["src"]!!.jsonPrimitive.content
-                when {
-                    host.contains("Streamtape") && hosterSelection?.contains("stape") == true -> {
-                        val quality = "Streamtape"
-                        val video = StreamTapeExtractor(client).videoFromUrl(fUrl, quality)
-                        if (video != null) {
-                            videoList.add(video)
-                        }
-                    }
-                    host.contains("Streamvid") && hosterSelection?.contains("svid") == true -> {
-                        val video = StreamVidExtractor(client).videosFromUrl(fUrl)
-                        videoList.addAll(video)
-                    }
-                    host.contains("Highstream") && hosterSelection?.contains("hstream") == true -> {
-                        val videos = StreamVidExtractor(client).videosFromUrl(fUrl, prefix = "Highstream - ", sourceChange = true)
-                        videoList.addAll(videos)
-                    }
-                    host.contains("Filelions") && hosterSelection?.contains("flions") == true -> {
-                        val videos = StreamWishExtractor(client, headers).videosFromUrl(fUrl, videoNameGen = { quality -> "FileLions - $quality" })
-                        videoList.addAll(videos)
-                    }
-                    host.contains("VidGuard") && hosterSelection?.contains("vidg") == true -> {
-                        val videos = VidGuardExtractor(client).videosFromUrl(fUrl)
-                        videoList.addAll(videos)
-                    }
-                    host.contains("LuluStream") && hosterSelection?.contains("lstream") == true -> {
-                        val videos = UnpackerExtractor(client, headers).videosFromUrl(fUrl, "LuluStream")
-                        videoList.addAll(videos)
-                    }
-                }
-            }
-        }
-        return videoList
-    }
-
-    override fun List<Video>.sort(): List<Video> {
-        val hoster = preferences.getString("preferred_hoster", null)
-        if (hoster != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.url.contains(hoster)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
-    }
-
-    // Search
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request = GET(
-        "$baseUrl/api/v1/search/$query?query=$query",
+    // =============================== Search ===============================
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) = GET(
+        "$apiUrl/search/$query?query=$query",
         headers = Headers.headersOf("referer", "$baseUrl/search/$query"),
     )
 
     override fun searchAnimeParse(response: Response): AnimesPage {
-        val responseString = response.body.string()
-        return parseSearchAnimeJson(responseString)
-    }
-
-    private fun parseSearchAnimeJson(jsonLine: String?): AnimesPage {
-        val jsonData = jsonLine ?: return AnimesPage(emptyList(), false)
-        val jObject = json.decodeFromString<JsonObject>(jsonData)
-        val array = jObject["results"]!!.jsonArray
-        val animeList = mutableListOf<SAnime>()
-        for (item in array) {
-            val anime = SAnime.create()
-            anime.title = item.jsonObject["name"]!!.jsonPrimitive.content
-            val animeId = item.jsonObject["id"]!!.jsonPrimitive.content
-            anime.setUrlWithoutDomain("$baseUrl/api/v1/titles/$animeId?load=images,genres,productionCountries,keywords,videos,primaryVideo,seasons,compactCredits")
-            anime.thumbnail_url = item.jsonObject["poster"]?.jsonPrimitive?.content ?: item.jsonObject["backdrop"]?.jsonPrimitive?.content
-            animeList.add(anime)
+        val data = response.parseAs<SearchDto>()
+        val animeList = data.results.map {
+            SAnime.create().apply {
+                title = it.name
+                setUrlWithoutDomain("$apiUrl/titles/${it.id}?$ANIME_URL_QUERIES")
+                thumbnail_url = it.thumbnail
+            }
         }
         return AnimesPage(animeList, hasNextPage = false)
     }
-    // Details
 
-    override fun animeDetailsRequest(anime: SAnime): Request = GET(baseUrl + anime.url, headers = Headers.headersOf("referer", baseUrl))
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(response: Response) = SAnime.create().apply {
+        val data = response.parseAs<AnimeDetailsDto>().title
 
-    override fun animeDetailsParse(response: Response): SAnime {
-        val responseString = response.body.string()
-        return parseAnimeDetailsParseJson(responseString)
+        setUrlWithoutDomain("$apiUrl/titles/${data.id}?$ANIME_URL_QUERIES")
+        title = data.name
+        thumbnail_url = data.thumbnail
+        genre = data.genres.joinToString { it.name }
+        description = data.description
     }
 
-    private fun parseAnimeDetailsParseJson(jsonLine: String?): SAnime {
-        val anime = SAnime.create()
-        val jsonData = jsonLine ?: return anime
-        val jObject = json.decodeFromString<JsonObject>(jsonData)
-        val jO = jObject.jsonObject["title"]!!.jsonObject
-        anime.title = jO.jsonObject["name"]!!.jsonPrimitive.content
-        anime.description = jO.jsonObject["description"]!!.jsonPrimitive.content
-        val genArray = jO.jsonObject["genres"]!!.jsonArray
-        val genres = mutableListOf<String>()
-        for (item in genArray) {
-            val genre = item.jsonObject["display_name"]!!.jsonPrimitive.content
-            genres.add(genre)
+    // ============================== Episodes ==============================
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val data = response.parseAs<EpisodePageDto>()
+        val id = data.title.id
+        val seasonsUrl = "$apiUrl/titles/$id/seasons"
+
+        val seasons = data.seasons
+
+        return when (seasons) {
+            null -> {
+                SEpisode.create().apply {
+                    name = "Film"
+                    episode_number = 1F
+                    setUrlWithoutDomain(response.request.url.toString())
+                }.let(::listOf)
+            }
+            else -> {
+                val seasonsList = buildList {
+                    addAll(seasons.data)
+
+                    var nextPage = seasons.next_page
+                    while (nextPage != null) {
+                        val req = GET("$seasonsUrl?perPage=8&query=&page=$nextPage", headers)
+                        val res = client.newCall(req).execute().parseAs<SeasonPaginationDto>()
+                        addAll(res.pagination.data)
+                        nextPage = res.pagination.next_page
+                    }
+                }
+
+                seasonsList.flatMap { season ->
+                    val seasonNum = season.number
+                    val episodesRequest = GET("$seasonsUrl/$seasonNum?load=episodes,primaryVideo", headers)
+                    val episodesData = client.newCall(episodesRequest).execute()
+                        .parseAs<EpisodeListDto>()
+                        .episodes
+                        .data
+                        .reversed()
+
+                    episodesData.map { episode ->
+                        SEpisode.create().apply {
+                            val epNum = episode.episode_number
+                            episode_number = epNum.toFloat()
+                            name = "Staffel $seasonNum Folge $epNum : " + episode.name
+                            setUrlWithoutDomain("$seasonsUrl/$seasonNum/episodes/$epNum?load=videos,compactCredits,primaryVideo")
+                        }
+                    }
+                }
+            }
         }
-        anime.genre = genres.joinToString { it }
-        anime.thumbnail_url = jO.jsonObject["poster"]?.jsonPrimitive?.content ?: jO.jsonObject["backdrop"]?.jsonPrimitive?.content
-        return anime
     }
 
-    // Latest
+    // ============================ Video Links =============================
+    private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val streamvidExtractor by lazy { StreamVidExtractor(client) }
+    private val vidguardExtractor by lazy { VidGuardExtractor(client) }
+    private val streamwishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val luluExtractor by lazy { UnpackerExtractor(client, headers) }
 
-    override fun latestUpdatesParse(response: Response): AnimesPage = throw Exception("not Used")
+    override fun videoListParse(response: Response): List<Video> {
+        val selection = preferences.getStringSet(PREF_HOSTER_SELECTION_KEY, PREF_HOSTER_SELECTION_DEFAULT)!!
+        val data = response.parseAs<VideoResponseDto>().run { episode ?: title }
 
-    override fun latestUpdatesRequest(page: Int): Request = throw Exception("Not used")
+        return data!!.videos.flatMap { video ->
+            val name = video.name
+            val url = video.src
+            runCatching { getVideosFromUrl(url, name, selection) }.getOrElse { emptyList() }
+        }.ifEmpty { throw Exception("No videos!") }
+    }
 
-    // Preferences
+    private fun getVideosFromUrl(url: String, name: String, selection: Set<String>): List<Video> {
+        return when {
+            name.contains("Streamtape") && selection.contains("stape") -> {
+                streamtapeExtractor.videoFromUrl(url)?.let(::listOf) ?: emptyList()
+            }
+            name.contains("Streamvid") && selection.contains("svid") -> {
+                streamvidExtractor.videosFromUrl(url)
+            }
+            name.contains("Highstream") && selection.contains("hstream") -> {
+                streamvidExtractor.videosFromUrl(url, prefix = "Highstream - ")
+            }
+            name.contains("VidGuard") && selection.contains("vidg") -> {
+                vidguardExtractor.videosFromUrl(url)
+            }
+            name.contains("Filelions") && selection.contains("flions") -> {
+                streamwishExtractor.videosFromUrl(url, videoNameGen = { "FileLions - $it" })
+            }
+            name.contains("LuluStream") && selection.contains("lstream") -> {
+                luluExtractor.videosFromUrl(url, "LuluStream")
+            }
+            else -> emptyList()
+        }
+    }
 
+    override fun List<Video>.sort(): List<Video> {
+        val hoster = preferences.getString(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
+
+        return sortedWith(
+            compareBy { it.quality.contains(hoster) },
+        ).reversed()
+    }
+
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val hosterPref = ListPreference(screen.context).apply {
-            key = "preferred_hoster"
-            title = "Standard-Hoster"
-            entries = arrayOf("Streamtape", "VidGuard", "Streamvid", "Highstream", "Filelions", "LuluStream")
-            entryValues = arrayOf("https://streamtape", "https://moflix-stream", "https://streamvid", "https://highstream", "https://moflix-stream", "https://luluvdo")
-            setDefaultValue("https://streamtape")
+        ListPreference(screen.context).apply {
+            key = PREF_HOSTER_KEY
+            title = PREF_HOSTER_TITLE
+            entries = PREF_HOSTER_ENTRIES
+            entryValues = PREF_HOSTER_VALUES
+            setDefaultValue(PREF_HOSTER_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -347,19 +242,40 @@ class MoflixStream : ConfigurableAnimeSource, AnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        val subSelection = MultiSelectListPreference(screen.context).apply {
-            key = "hoster_selection"
-            title = "Hoster auswählen"
-            entries = arrayOf("Streamtape", "VidGuard", "Streamvid", "Highstream", "Filelions", "LuluStream")
-            entryValues = arrayOf("stape", "vidg", "svid", "hstream", "flions", "lstream")
-            setDefaultValue(setOf("stape", "vidg", "svid", "hstream", "flions", "lstream"))
+        }.also(screen::addPreference)
+
+        MultiSelectListPreference(screen.context).apply {
+            key = PREF_HOSTER_SELECTION_KEY
+            title = PREF_HOSTER_SELECTION_TITLE
+            entries = PREF_HOSTER_SELECTION_ENTRIES
+            entryValues = PREF_HOSTER_SELECTION_ENTRIES
+            setDefaultValue(PREF_HOSTER_SELECTION_DEFAULT)
 
             setOnPreferenceChangeListener { _, newValue ->
+                @Suppress("UNCHECKED_CAST")
                 preferences.edit().putStringSet(key, newValue as Set<String>).commit()
             }
-        }
-        screen.addPreference(hosterPref)
-        screen.addPreference(subSelection)
+        }.also(screen::addPreference)
+    }
+
+    // ============================= Utilities ==============================
+    private inline fun <reified T> Response.parseAs(): T {
+        return use { it.body.string() }.let(json::decodeFromString)
+    }
+
+    companion object {
+        private const val ANIME_URL_QUERIES = "load=images,genres,productionCountries,keywords,videos,primaryVideo,seasons,compactCredits"
+
+        private const val PREF_HOSTER_KEY = "preferred_hoster"
+        private const val PREF_HOSTER_TITLE = "Standard-Hoster"
+        private const val PREF_HOSTER_DEFAULT = "https://streamtape"
+        private val PREF_HOSTER_ENTRIES = arrayOf("Streamtape", "VidGuard", "Streamvid", "Highstream", "Filelions", "LuluStream")
+        private val PREF_HOSTER_VALUES = arrayOf("https://streamtape", "https://moflix-stream", "https://streamvid", "https://highstream", "https://moflix-stream", "https://luluvdo")
+
+        private const val PREF_HOSTER_SELECTION_KEY = "hoster_selection"
+        private const val PREF_HOSTER_SELECTION_TITLE = "auswählen"
+        private val PREF_HOSTER_SELECTION_ENTRIES = arrayOf("Streamtape", "VidGuard", "Streamvid", "Highstream", "Filelions", "LuluStream")
+        private val PREF_HOSTER_SELECTION_VALUES = arrayOf("stape", "vidg", "svid", "hstream", "flions", "lstream")
+        private val PREF_HOSTER_SELECTION_DEFAULT by lazy { PREF_HOSTER_SELECTION_VALUES.toSet() }
     }
 }
