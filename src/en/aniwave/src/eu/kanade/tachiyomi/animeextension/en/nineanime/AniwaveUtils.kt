@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.nineanime
 
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import kotlinx.serialization.json.Json
@@ -12,6 +13,11 @@ import uy.kohesive.injekt.injectLazy
 class AniwaveUtils(private val client: OkHttpClient, private val headers: Headers) {
 
     val json: Json by injectLazy()
+
+    private val userAgent = Headers.headersOf(
+        "User-Agent",
+        "Aniyomi/${AppInfo.getVersionName()} (AniWave)",
+    )
 
     fun callEnimax(query: String, action: String): String {
         return if (action in listOf("rawVizcloud", "rawMcloud")) {
@@ -27,11 +33,12 @@ class AniwaveUtils(private val client: OkHttpClient, private val headers: Header
                 POST(
                     url = "https://9anime.eltik.net/$action?apikey=aniyomi",
                     body = formBody,
+                    headers = userAgent,
                 ),
             ).execute().parseAs<RawResponse>().rawURL
         } else {
             client.newCall(
-                GET("https://9anime.eltik.net/$action?query=$query&apikey=aniyomi"),
+                GET("https://9anime.eltik.net/$action?query=$query&apikey=aniyomi", userAgent),
             ).execute().use {
                 val body = it.body.string()
                 when (action) {

@@ -63,6 +63,8 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         add("Referer", "$baseUrl/")
     }.build()
 
+    private val markFiller by lazy { preferences.getBoolean(PREF_MARK_FILLERS_KEY, PREF_MARK_FILLERS_DEFAULT) }
+
     // ============================== Popular ===============================
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/filter?sort=trending&page=$page", refererHeaders)
@@ -177,7 +179,7 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val dub = if (element.attr("data-dub").toInt().toBoolean()) "Dub" else ""
         val softSub = if (SOFTSUB_REGEX.find(title) != null) "SoftSub" else ""
 
-        val extraInfo = if (element.hasClass("filler") && preferences.getBoolean(PREF_MARK_FILLERS_KEY, PREF_MARK_FILLERS_DEFAULT)) {
+        val extraInfo = if (element.hasClass("filler") && markFiller) {
             " • Filler Episode"
         } else {
             ""
@@ -226,7 +228,7 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val hosterSelection = preferences.getStringSet(PREF_HOSTER_KEY, PREF_HOSTER_DEFAULT)!!
         val typeSelection = preferences.getStringSet(PREF_TYPE_TOGGLE_KEY, PREF_TYPES_TOGGLE_DEFAULT)!!
 
-        return document.select("div.servers > div").parallelMap { elem ->
+        return document.select("div.servers > div").parallelFlatMap { elem ->
             val type = elem.attr("data-type").replaceFirstChar { it.uppercase() }
             elem.select("li").mapNotNull { serverElement ->
                 val serverId = serverElement.attr("data-link-id")
@@ -237,9 +239,7 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 VideoData(type, serverId, serverName)
             }
         }
-            .flatten()
-            .parallelMap { extractVideo(it, epurl) }
-            .flatten()
+            .parallelFlatMap { extractVideo(it, epurl) }
             .ifEmpty { throw Exception("Failed to fetch videos") }
     }
 
@@ -275,7 +275,7 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val embedLink = utils.callEnimax(parsed.result.url, "decrypt")
             when (server.serverName) {
                 "vidplay", "mycloud" -> vidsrcExtractor.videosFromUrl(embedLink, server.serverName, server.type)
-                "filemoon" -> filemoonExtractor.videosFromUrl(embedLink, "Filemoon - ${server.type}")
+                "filemoon" -> filemoonExtractor.videosFromUrl(embedLink, "Filemoon - ${server.type} - ")
                 "streamtape" -> streamtapeExtractor.videoFromUrl(embedLink, "StreamTape - ${server.type}")?.let(::listOf) ?: emptyList()
                 "mp4upload" -> mp4uploadExtractor.videosFromUrl(embedLink, headers, suffix = " - ${server.type}")
                 else -> emptyList()
@@ -295,9 +295,9 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
 
         return this.sortedWith(
-            compareByDescending<Video> { it.quality.contains(quality) }
-                .thenByDescending { it.quality.contains(server, true) }
-                .thenByDescending { it.quality.contains(lang) },
+            compareByDescending<Video> { it.quality.contains(lang) }
+                .thenByDescending { it.quality.contains(quality) }
+                .thenByDescending { it.quality.contains(server, true) },
         )
     }
 
@@ -318,6 +318,11 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> = runBlocking {
         map { async(Dispatchers.Default) { f(it) } }.awaitAll()
     }
+
+    inline fun <A, B> Iterable<A>.parallelFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll().flatten()
+        }
 
     private inline fun <reified T> Response.parseAs(): T {
         val responseBody = use { it.body.string() }
@@ -442,6 +447,7 @@ class Aniwave : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             title = "Mark filler episodes"
             setDefaultValue(PREF_MARK_FILLERS_DEFAULT)
             setOnPreferenceChangeListener { _, newValue ->
+                Toast.makeText(screen.context, "Restart Aniyomi to apply new setting.", Toast.LENGTH_LONG).show()
                 preferences.edit().putBoolean(key, newValue as Boolean).commit()
             }
         }.also(screen::addPreference)
