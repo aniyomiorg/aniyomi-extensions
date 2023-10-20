@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.en.fmovies
 
+import eu.kanade.tachiyomi.AppInfo
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import kotlinx.serialization.json.Json
@@ -15,6 +16,11 @@ class FMoviesHelper(private val client: OkHttpClient, private val headers: Heade
 
     private val json: Json by injectLazy()
 
+    private val userAgent = Headers.headersOf(
+        "User-Agent",
+        "Aniyomi/${AppInfo.getVersionName()} (FMovies)",
+    )
+
     fun getVrf(id: String): String {
         val url = API_URL.newBuilder().apply {
             addPathSegment("fmovies-vrf")
@@ -22,7 +28,7 @@ class FMoviesHelper(private val client: OkHttpClient, private val headers: Heade
             addQueryParameter("apikey", API_KEY)
         }.build().toString()
 
-        return client.newCall(GET(url)).execute().parseAs<VrfResponse>().let {
+        return client.newCall(GET(url, userAgent)).execute().parseAs<VrfResponse>().let {
             URLEncoder.encode(it.url, "utf-8")
         }
     }
@@ -34,7 +40,7 @@ class FMoviesHelper(private val client: OkHttpClient, private val headers: Heade
             addQueryParameter("apikey", API_KEY)
         }.build().toString()
 
-        return client.newCall(GET(url)).execute().parseAs<VrfResponse>().url
+        return client.newCall(GET(url, userAgent)).execute().parseAs<VrfResponse>().url
     }
 
     fun getVidSrc(query: String, host: String): String {
@@ -53,7 +59,7 @@ class FMoviesHelper(private val client: OkHttpClient, private val headers: Heade
         }.build()
 
         return client.newCall(
-            POST(url, body = body),
+            POST(url, body = body, headers = userAgent),
         ).execute().parseAs<RawResponse>().rawURL
     }
 
