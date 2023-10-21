@@ -21,14 +21,17 @@ import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.json.Json
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.FormBody
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import uy.kohesive.injekt.injectLazy
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -40,14 +43,31 @@ class MetroSeries : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val lang = "es"
 
-    private val json: Json by injectLazy()
-
     override val supportsLatest = false
 
     override val client: OkHttpClient = network.cloudflareClient
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    companion object {
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
+        private val QUALITY_LIST = arrayOf("1080", "720", "480", "360")
+
+        private const val PREF_SERVER_KEY = "preferred_server"
+        private const val PREF_SERVER_DEFAULT = "YourUpload"
+        private val SERVER_LIST = arrayOf(
+            "YourUpload",
+            "BurstCloud",
+            "Voe",
+            "StreamWish",
+            "Mp4Upload",
+            "Fastream",
+            "Upstream",
+            "Filemoon",
+        )
     }
 
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/series/page/$page", headers)
@@ -86,44 +106,84 @@ class MetroSeries : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val episodes = mutableListOf<SEpisode>()
         val document = response.asJsoup()
-        document.select(".season-list li a")
-            .sortedByDescending { it.attr("data-season") }.map {
-                val post = it.attr("data-post")
-                val season = it.attr("data-season")
-                val objectNumber = document.select("#aa-season").attr("data-object")
-
-                val formBody = FormBody.Builder()
-                    .add("action", "action_select_season")
-                    .add("season", season)
-                    .add("post", post)
-                    .add("object", objectNumber)
-                    .build()
-
-                val request = Request.Builder()
-                    .url("https://metroseries.net/wp-admin/admin-ajax.php")
-                    .post(formBody)
-                    .header("Origin", baseUrl)
-                    .header("Referer", response.request.url.toString())
-                    .header("Content-Type", "application/x-www-form-urlencoded")
-                    .build()
-                val docEpisodes = client.newCall(request).execute().asJsoup()
-
-                docEpisodes.select(".episodes-list li a").reversed().map {
-                    val epNumber = it.ownText().substringAfter("x").substringBefore("–").trim()
-                    val episode = SEpisode.create().apply {
-                        setUrlWithoutDomain(it.attr("abs:href"))
-                        name = "T$season - E$epNumber - ${it.ownText().substringAfter("–").trim()}"
-                        date_upload = try {
-                            SimpleDateFormat("dd-MM-yyyy", Locale.ENGLISH).parse(it.select("span").text()).time
-                        } catch (_: Exception) { System.currentTimeMillis() }
-                    }
-                    episodes.add(episode)
-                }
-            }
+        val referer = response.request.url.toString()
+        val chunkSize = Runtime.getRuntime().availableProcessors()
+        val objectNumber = document.select("#aa-season").attr("data-object")
+        val episodes = document.select(".season-list li a")
+            .sortedByDescending { it.attr("data-season") }
+            .chunked(chunkSize).flatMap { chunk ->
+                chunk.parallelMap { season ->
+                    runCatching {
+                        val pages = getDetailSeason(season, objectNumber, referer)
+                        getPageEpisodeList(pages, referer, objectNumber, season.attr("data-season"))
+                    }.getOrNull()
+                }.filterNotNull().flatten()
+            }.sortedByDescending {
+                it.name.substringBeforeLast("-")
+            }.ifEmpty { emptyList() }
         return episodes
     }
+
+    private fun getDetailSeason(element: org.jsoup.nodes.Element, objectNumber: String, referer: String): IntRange {
+        try {
+            val post = element.attr("data-post")
+            val season = element.attr("data-season")
+            val formBody = FormBody.Builder()
+                .add("action", "action_select_season")
+                .add("season", season)
+                .add("post", post)
+                .add("object", objectNumber)
+                .build()
+
+            val request = Request.Builder()
+                .url("https://metroseries.net/wp-admin/admin-ajax.php")
+                .post(formBody)
+                .header("Origin", baseUrl)
+                .header("Referer", referer)
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .build()
+            val detail = client.newCall(request).execute().asJsoup()
+
+            val firstPage = try { detail.selectFirst("#aa-season > nav > span.page-numbers")?.text()?.toInt() ?: 1 } catch (_: Exception) { 1 }
+            val lastPage = try { detail.select(".pagination a.page-numbers:not(.next)").last()?.text()?.toInt() ?: firstPage } catch (_: Exception) { firstPage }
+
+            return firstPage.rangeTo(lastPage)
+        } catch (_: Exception) {
+            return 1..1
+        }
+    }
+
+    private fun getPageEpisodeList(pages: IntRange, referer: String, objectNumber: String, season: String): List<SEpisode> {
+        val episodes = mutableListOf<SEpisode>()
+        try {
+            pages.parallelMap {
+                val formBody = FormBody.Builder()
+                    .add("action", "action_pagination_ep")
+                    .add("page", "$it")
+                    .add("object", objectNumber)
+                    .add("season", season)
+                    .build()
+
+                val requestPage = Request.Builder()
+                    .url("https://metroseries.net/wp-admin/admin-ajax.php")
+                    .post(formBody)
+                    .header("authority", baseUrl.toHttpUrl().host)
+                    .header("Origin", "https://${baseUrl.toHttpUrl().host}")
+                    .header("Referer", referer)
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .build()
+
+                client.newCall(requestPage).execute().parseAsEpisodeList().also(episodes::addAll)
+            }
+        } catch (_: Exception) { }
+        return episodes
+    }
+
+    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.asJsoup()
@@ -180,7 +240,7 @@ class MetroSeries : ConfigurableAnimeSource, AnimeHttpSource() {
                         BurstCloudExtractor(client).videoFromUrl(src, headers = headers).let { videoList.addAll(it) }
                     }
                     if (src.contains("filemoon") || src.contains("moonplayer")) {
-                        FilemoonExtractor(client).videosFromUrl(src, headers = headers).let { videoList.addAll(it) }
+                        FilemoonExtractor(client).videosFromUrl(src, headers = headers, prefix = "Filemoon:").let { videoList.addAll(it) }
                     }
                 } catch (_: Exception) {}
             }
@@ -189,41 +249,24 @@ class MetroSeries : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "Fastream:1080p")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality == quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
+        return this.sortedWith(
+            compareBy(
+                { it.quality.contains(server, true) },
+                { it.quality.contains(quality) },
+                { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
+            ),
+        ).reversed()
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val qualities = arrayOf(
-            "YourUpload",
-            "BurstCloud",
-            "Voe",
-            "StreamWish",
-            "Mp4Upload",
-            "Fastream:1080p",
-            "Fastream:720p",
-            "Fastream:480p",
-            "Fastream:360p",
-        )
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = qualities
-            entryValues = qualities
-            setDefaultValue("Fastream:1080p")
+        ListPreference(screen.context).apply {
+            key = PREF_SERVER_KEY
+            title = "Preferred server"
+            entries = SERVER_LIST
+            entryValues = SERVER_LIST
+            setDefaultValue(PREF_SERVER_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -232,7 +275,39 @@ class MetroSeries : ConfigurableAnimeSource, AnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = "Preferred quality"
+            entries = QUALITY_LIST
+            entryValues = QUALITY_LIST
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+    }
+
+    private fun Response.parseAsEpisodeList(): List<SEpisode> {
+        return asJsoup().select(".episodes-list li a").reversed().mapIndexed { idx, it ->
+            val epNumber = try { it.ownText().substringAfter("x").substringBefore("–").trim() } catch (_: Exception) { "${idx + 1}" }
+            val season = it.ownText().substringBefore("x").trim()
+            SEpisode.create().apply {
+                setUrlWithoutDomain(it.attr("abs:href"))
+                name = "T$season - E$epNumber - ${it.ownText().substringAfter("–").trim()}"
+                episode_number = epNumber.toFloat()
+                date_upload = try {
+                    SimpleDateFormat("dd-MM-yyyy", Locale.ENGLISH).parse(it.select("span").text()).time
+                } catch (_: Exception) {
+                    System.currentTimeMillis()
+                }
+            }
         }
-        screen.addPreference(videoQualityPref)
     }
 }

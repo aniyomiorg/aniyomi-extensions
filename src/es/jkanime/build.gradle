@@ -5,12 +5,13 @@ ext {
     extName = 'Jkanime'
     pkgNameSuffix = 'es.jkanime'
     extClass = '.Jkanime'
-    extVersionCode = 16
+    extVersionCode = 17
     libVersion = '13'
 }
 
 dependencies {
     implementation(project(':lib-okru-extractor'))
+    implementation(project(':lib-mixdrop-extractor'))
 }
 
 

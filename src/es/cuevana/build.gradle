@@ -6,18 +6,26 @@ ext {
     extName = 'Cuevana'
     pkgNameSuffix = 'es.cuevana'
     extClass = '.CuevanaFactory'
-    extVersionCode = 23
+    extVersionCode = 24
     libVersion = '13'
 }
 
 dependencies {
+    implementation(project(':lib-vudeo-extractor'))
+    implementation(project(':lib-uqload-extractor'))
     implementation(project(':lib-streamwish-extractor'))
+    implementation(project(':lib-filemoon-extractor'))
+    implementation(project(':lib-streamlare-extractor'))
     implementation(project(':lib-yourupload-extractor'))
+    implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-dood-extractor'))
-    implementation project(path: ':lib-okru-extractor')
-    implementation project(path: ':lib-voe-extractor')
-    implementation project(path: ':lib-streamtape-extractor')
-    implementation project(path: ':lib-filemoon-extractor')
+    implementation(project(':lib-voe-extractor'))
+    implementation(project(':lib-okru-extractor'))
+    implementation(project(':lib-mp4upload-extractor'))
+    implementation(project(':lib-mixdrop-extractor'))
+    implementation(project(':lib-burstcloud-extractor'))
+    implementation(project(':lib-fastream-extractor'))
+    implementation(project(':lib-upstream-extractor'))
     implementation "dev.datlag.jsunpacker:jsunpacker:1.0.1"
 }
 

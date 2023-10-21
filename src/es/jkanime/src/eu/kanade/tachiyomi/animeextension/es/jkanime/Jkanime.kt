@@ -13,6 +13,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.mixdropextractor.MixDropExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -23,7 +24,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.lang.Exception
 
 class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
@@ -39,6 +39,26 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
+    }
+
+    companion object {
+        private const val PREF_LANGUAGE_KEY = "preferred_language"
+        private const val PREF_LANGUAGE_DEFAULT = "[JAP]"
+        private val LANGUAGE_LIST = arrayOf("[JAP]", "[LAT]")
+
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
+        private val QUALITY_LIST = arrayOf("1080", "720", "480", "360")
+
+        private const val PREF_SERVER_KEY = "preferred_server"
+        private const val PREF_SERVER_DEFAULT = "Nozomi"
+        private val SERVER_LIST = arrayOf(
+            "Okru",
+            "Xtreme S",
+            "HentaiJk",
+            "Nozomi",
+            "Desu",
+        )
     }
 
     override fun popularAnimeSelector(): String = "div.col-lg-12 div.list"
@@ -99,7 +119,8 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videos = mutableListOf<Video>()
         document.select("div.col-lg-12.rounded.bg-servers.text-white.p-3.mt-2 a").forEach { it ->
             val serverId = it.attr("data-id")
-            val lang = if (it.attr("class").contains("lg_3")) "[LAT]" else ""
+            val langClass = it.attr("class")
+            val lang = if (langClass.contains("lg_3")) "[LAT]" else if (langClass.contains("lg_1")) "[JAP]" else ""
             val scriptServers = document.selectFirst("script:containsData(var video = [];)")!!
             val url = scriptServers.data().substringAfter("video[$serverId] = '<iframe class=\"player_conte\" src=\"")
                 .substringBefore("\"")
@@ -107,12 +128,15 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .replace("/jkvmixdrop.php?u=", "https://mixdrop.co/e/")
                 .replace("/jk.php?u=", "$baseUrl/")
 
-            when {
-                "ok" in url -> OkruExtractor(client).videosFromUrl(url, lang).forEach { videos.add(it) }
-                "stream/jkmedia" in url -> videos.add(Video(url, "${lang}Xtreme S", url))
-                "um2.php" in url -> JkanimeExtractor(client).getNozomiFromUrl(baseUrl + url, lang).let { if (it != null) videos.add(it) }
-                "um.php" in url -> JkanimeExtractor(client).getDesuFromUrl(baseUrl + url, lang).let { if (it != null) videos.add(it) }
-            }
+            try {
+                when {
+                    "ok" in url -> OkruExtractor(client).videosFromUrl(url, "$lang ").forEach { videos.add(it) }
+                    "mixdrop" in url -> MixDropExtractor(client).videosFromUrl(url, prefix = "$lang ").forEach { videos.add(it) }
+                    "stream/jkmedia" in url -> videos.add(Video(url, "$lang Xtreme S", url))
+                    "um2.php" in url -> JkanimeExtractor(client).getNozomiFromUrl(baseUrl + url, "$lang ").let { if (it != null) videos.add(it) }
+                    "um.php" in url -> JkanimeExtractor(client).getDesuFromUrl(baseUrl + url, "$lang ").let { if (it != null) videos.add(it) }
+                }
+            } catch (_: Exception) {}
         }
         return videos
     }
@@ -121,21 +145,18 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document) = throw Exception("not used")
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
-    private fun List<Video>.sortIfContains(item: String): List<Video> {
-        val newList = mutableListOf<Video>()
-        for (video in this) {
-            if (item in video.quality) {
-                newList.add(0, video)
-            } else {
-                newList.add(video)
-            }
-        }
-        return newList
-    }
-
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "Nozomi")!!
-        return sortIfContains(quality)
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
+        val lang = preferences.getString(PREF_LANGUAGE_KEY, PREF_LANGUAGE_DEFAULT)!!
+        return this.sortedWith(
+            compareBy(
+                { it.quality.contains(lang) },
+                { it.quality.contains(server, true) },
+                { it.quality.contains(quality) },
+                { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
+            ),
+        ).reversed()
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -248,12 +269,10 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element): SAnime {
         val anime = SAnime.create()
-        anime.setUrlWithoutDomain(
-            element.select("div.row.g-0 div.col-md-5.custom_thumb2 a").attr("href"),
-        )
-        anime.title = element.select("div.row.g-0 div.col-md-7 div.card-body h5.card-title a").text()
-        anime.thumbnail_url = element.select("div.row.g-0 div.col-md-5.custom_thumb2 a img").attr("src")
-        anime.description = element.select("div.row.g-0 div.col-md-7 div.card-body p.card-text.synopsis").text()
+        anime.setUrlWithoutDomain(element.select(".custom_thumb2 > a").attr("abs:href"))
+        anime.title = element.select(".card-title > a").text()
+        anime.thumbnail_url = element.select(".custom_thumb2 a img").attr("abs:src")
+        anime.description = element.select(".synopsis").text()
         return anime
     }
 
@@ -393,16 +412,12 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val qualities = arrayOf(
-            "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", // Okru
-            "Xtreme S", "HentaiJk", "Nozomi", "Desu", // video servers without resolution
-        )
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = qualities
-            entryValues = qualities
-            setDefaultValue("Nozomi")
+        ListPreference(screen.context).apply {
+            key = PREF_SERVER_KEY
+            title = "Preferred server"
+            entries = SERVER_LIST
+            entryValues = SERVER_LIST
+            setDefaultValue(PREF_SERVER_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -411,7 +426,38 @@ class Jkanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = "Preferred quality"
+            entries = QUALITY_LIST
+            entryValues = QUALITY_LIST
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_LANGUAGE_KEY
+            title = "Preferred language"
+            entries = LANGUAGE_LIST
+            entryValues = LANGUAGE_LIST
+            setDefaultValue(PREF_LANGUAGE_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
     }
 }

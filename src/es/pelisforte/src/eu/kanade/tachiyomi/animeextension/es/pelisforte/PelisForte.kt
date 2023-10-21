@@ -167,7 +167,7 @@ open class PelisForte : ConfigurableAnimeSource, AnimeHttpSource() {
                     lang.contains("Castellano", true) -> "[CAST]"
                     else -> ""
                 }
-                val locationsDdh = client.newCall(GET(player,headers = headers.newBuilder().add("referer", src).build()))
+                val locationsDdh = client.newCall(GET(player, headers = headers.newBuilder().add("referer", src).build()))
                     .execute().networkResponse.toString()
 
                 fetchUrls(locationsDdh).forEach {
@@ -183,7 +183,7 @@ open class PelisForte : ConfigurableAnimeSource, AnimeHttpSource() {
         val embedUrl = url.lowercase()
         try {
             if (embedUrl.contains("voe")) {
-                VoeExtractor(client).videoFromUrl(url, "${prefix}Voe")?.let { videoList.add(it) }
+                VoeExtractor(client).videoFromUrl(url, prefix = "${prefix}Voe:")?.let { videoList.add(it) }
             }
             if (embedUrl.contains("ok.ru") || embedUrl.contains("okru")) {
                 OkruExtractor(client).videosFromUrl(url, prefix).also(videoList::addAll)
@@ -203,7 +203,7 @@ open class PelisForte : ConfigurableAnimeSource, AnimeHttpSource() {
                 val docHeaders = headers.newBuilder()
                     .add("Referer", referer)
                     .build()
-                StreamWishExtractor(client, docHeaders).videosFromUrl(url, "${prefix}StreamWish").also(videoList::addAll)
+                StreamWishExtractor(client, docHeaders).videosFromUrl(url, videoNameGen = { "${prefix}StreamWish:$it" }).also(videoList::addAll)
             }
             if (embedUrl.contains("doodstream") || embedUrl.contains("dood.")) {
                 DoodExtractor(client).videoFromUrl(url, "${prefix}DoodStream", false)?.let { videoList.add(it) }
@@ -316,7 +316,7 @@ open class PelisForte : ConfigurableAnimeSource, AnimeHttpSource() {
 
         ListPreference(screen.context).apply {
             key = PREF_LANGUAGE_KEY
-            title = "Preferred server"
+            title = "Preferred language"
             entries = LANGUAGE_LIST
             entryValues = LANGUAGE_LIST
             setDefaultValue(PREF_LANGUAGE_DEFAULT)
