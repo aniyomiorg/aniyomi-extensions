@@ -6,7 +6,7 @@ ext {
     extName = 'StreamingCommunity'
     pkgNameSuffix = 'it.streamingcommunity'
     extClass = '.StreamingCommunity'
-    extVersionCode = 1
+    extVersionCode = 2
     libVersion = '13'
 }
 

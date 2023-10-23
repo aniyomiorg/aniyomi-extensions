@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.en.fmovies
 
 import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.animeextension.BuildConfig
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import kotlinx.serialization.json.Json
@@ -18,7 +19,7 @@ class FMoviesHelper(private val client: OkHttpClient, private val headers: Heade
 
     private val userAgent = Headers.headersOf(
         "User-Agent",
-        "Aniyomi/${AppInfo.getVersionName()} (FMovies)",
+        "Aniyomi/${AppInfo.getVersionName()} (FMovies; ${BuildConfig.VERSION_CODE})",
     )
 
     fun getVrf(id: String): String {

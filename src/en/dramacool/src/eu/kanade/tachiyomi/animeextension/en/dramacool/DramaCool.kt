@@ -6,7 +6,7 @@ import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.animeextension.BuildConfig
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
@@ -34,7 +34,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "DramaCool"
 
-    private val defaultBaseUrl = "https://dramacool.hr"
+    private val defaultBaseUrl = "https://dramacool.pa"
 
     override val baseUrl by lazy { getPrefBaseUrl() }
 
@@ -218,7 +218,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         private const val BASE_URL_PREF_TITLE = "Override BaseUrl"
 
-        private val BASE_URL_PREF = "overrideBaseUrl_v${AppInfo.getVersionName()}"
+        private val BASE_URL_PREF = "overrideBaseUrl_v${BuildConfig.VERSION_CODE}"
 
         private const val BASE_URL_PREF_SUMMARY = "For temporary uses. Update extension will erase this setting."
 
