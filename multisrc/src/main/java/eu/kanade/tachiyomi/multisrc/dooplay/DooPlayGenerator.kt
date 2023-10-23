@@ -23,7 +23,7 @@ class DooPlayGenerator : ThemeSourceGenerator {
         SingleLang("GoAnimes", "https://goanimes.net", "pt-BR", isNsfw = true, overrideVersionCode = 5),
         SingleLang("JetAnime", "https://ssl.jetanimes.com", "fr", isNsfw = false, overrideVersionCode = 2),
         SingleLang("Kinoking", "https://kinoking.cc", "de", isNsfw = false, overrideVersionCode = 17),
-        SingleLang("Multimovies", "https://multimovies.shop", "en", isNsfw = false, overrideVersionCode = 11),
+        SingleLang("Multimovies", "https://multimovies.live", "en", isNsfw = false, overrideVersionCode = 12),
         SingleLang("Pi Fansubs", "https://pifansubs.org", "pt-BR", isNsfw = true, overrideVersionCode = 17),
         SingleLang("Pobreflix", "https://pobreflix.biz", "pt-BR", isNsfw = true, overrideVersionCode = 1),
         SingleLang("UniqueStream", "https://uniquestream.net", "en", isNsfw = false, overrideVersionCode = 2),

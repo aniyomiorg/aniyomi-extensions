@@ -6,7 +6,7 @@ import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreferenceCompat
-import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.animeextension.BuildConfig
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -422,7 +422,7 @@ class Ripcrabbyanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         private const val TRIM_EPISODE_NAME_KEY = "trim_episode"
         private const val TRIM_EPISODE_NAME_DEFAULT = true
 
-        private val PREF_DOMAIN_KEY = "preferred_domain_name_v${AppInfo.getVersionName()}"
+        private val PREF_DOMAIN_KEY = "preferred_domain_name_v${BuildConfig.VERSION_CODE}"
         private const val PREF_DOMAIN_TITLE = "Override BaseUrl"
         private const val PREF_DOMAIN_DEFAULT = "https://ripcrabbyanimes.com"
         private const val PREF_DOMAIN_SUMMARY = "For temporary uses. Updating the extension will erase this setting."
