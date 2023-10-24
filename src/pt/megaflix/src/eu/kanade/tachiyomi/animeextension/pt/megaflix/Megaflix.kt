@@ -152,7 +152,7 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             ?.let {
                 val season = it.first().toFloatOrNull() ?: 0F
                 val episode = it.last().toFloatOrNull() ?: 0F
-                (season * 100F) + episode
+                season * 100F + episode
             }
             ?: 0F
     }

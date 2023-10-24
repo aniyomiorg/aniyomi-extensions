@@ -571,7 +571,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
         var b = false
         val mSize = m.size
 
-        while ((!b) && o < mSize) {
+        while (!b && o < mSize) {
             var n = m[o] shl 2
             o++
             var k = -1

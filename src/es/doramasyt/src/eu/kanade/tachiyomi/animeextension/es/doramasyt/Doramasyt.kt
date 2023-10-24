@@ -70,7 +70,7 @@ class Doramasyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val epNum = getNumberFromEpsString(element.select("a div.flimss div.dtlsflim p").text())
         Log.i("bruh ep", element.select("a").attr("href"))
         val formatedEp = when {
-            (epNum.isNotEmpty()) -> epNum.toFloat()
+            epNum.isNotEmpty() -> epNum.toFloatOrNull() ?: 1F
             else -> 1F
         }
         episode.setUrlWithoutDomain(element.select("a").attr("href"))

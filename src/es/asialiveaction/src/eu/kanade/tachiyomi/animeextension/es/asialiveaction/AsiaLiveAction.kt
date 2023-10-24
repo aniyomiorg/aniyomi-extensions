@@ -63,8 +63,8 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val year = document.select("header div.asia-post-main p.Info span.Date a").text().toInt()
         val currentYear = Calendar.getInstance().get(Calendar.YEAR)
         anime.status = when {
-            (year < currentYear) -> SAnime.COMPLETED
-            (year == currentYear) -> SAnime.ONGOING
+            year < currentYear -> SAnime.COMPLETED
+            year == currentYear -> SAnime.ONGOING
             else -> SAnime.UNKNOWN
         }
         return anime
@@ -81,7 +81,7 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val epNum = getNumberFromEpsString(element.select("div.flex-grow-1 p").text())
         episode.setUrlWithoutDomain(element.attr("href"))
         episode.episode_number = when {
-            (epNum.isNotEmpty()) -> epNum.toFloat()
+            epNum.isNotEmpty() -> epNum.toFloatOrNull() ?: 1F
             else -> 1F
         }
         episode.name = element.select("div.flex-grow-1 p").text().trim()

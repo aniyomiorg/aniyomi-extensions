@@ -188,7 +188,7 @@ class AllAnimeExtractor(private val client: OkHttpClient, private val headers: H
                 if (videos != null) {
                     videoList.addAll(videos)
                 }
-            } else {}
+            }
         }
 
         return videoList

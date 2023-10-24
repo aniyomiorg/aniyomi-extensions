@@ -125,7 +125,7 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             setUrlWithoutDomain(element.attr("abs:href"))
             name = element.select("span.type").text() + ": Episode " + element.select("h3").text().substringAfter("Episode ")
             episode_number = when {
-                (epNum.isNotEmpty()) -> epNum.toFloat()
+                epNum.isNotEmpty() -> epNum.toFloatOrNull() ?: 1F
                 else -> 1F
             }
             date_upload = parseDate(element.select("span.time").text())
@@ -163,13 +163,6 @@ class DramaCool : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 url.contains("dwish") -> {
                     val video = StreamWishExtractor(client, headers).videosFromUrl(url)
                     videoList.addAll(video)
-                }
-
-                url.contains("streamtape") -> {
-                    val video = StreamTapeExtractor(client).videoFromUrl(url)
-                    if (video != null) {
-                        videoList.add(video)
-                    }
                 }
 
                 url.contains("streamtape") -> {

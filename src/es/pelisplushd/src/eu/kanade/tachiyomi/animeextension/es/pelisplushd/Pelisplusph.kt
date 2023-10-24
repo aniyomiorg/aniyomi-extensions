@@ -79,14 +79,14 @@ class Pelisplusph(override val name: String, override val baseUrl: String) : Pel
         } else {
             var index = 0
             jsoup.select(".item-season").reversed().mapIndexed { idxSeas, season ->
-                val seasonNumber = try {
+                val seasonNumber = runCatching {
                     getNumberFromString(season.selectFirst(".item-season-title")!!.ownText())
-                } catch (_: Exception) { idxSeas + 1 }
+                }.getOrElse { idxSeas + 1 }
                 season.select(".item-season-episodes a").reversed().mapIndexed { idx, ep ->
                     index += 1
-                    val noEp = try {
+                    val noEp = runCatching {
                         getNumberFromString(ep.ownText())
-                    } catch (_: Exception) { idx + 1 }
+                    }.getOrElse { idx + 1 }
 
                     val episode = SEpisode.create()
                     episode.episode_number = index.toFloat()
@@ -130,7 +130,7 @@ class Pelisplusph(override val name: String, override val baseUrl: String) : Pel
         val videoList = mutableListOf<Video>()
         val embedUrl = url.lowercase()
         if (embedUrl.contains("tomatomatela")) {
-            try {
+            runCatching {
                 val mainUrl = url.substringBefore("/embed.html#").substringAfter("https://")
                 val headers = headers.newBuilder()
                     .set("authority", mainUrl)
@@ -152,7 +152,7 @@ class Pelisplusph(override val name: String, override val baseUrl: String) : Pel
                 val status = json["status"]!!.jsonPrimitive!!.content
                 val file = json["file"]!!.jsonPrimitive!!.content
                 if (status == "200") { videoList.add(Video(file, "$prefix Tomatomatela", file, headers = null)) }
-            } catch (e: Exception) { }
+            }
         }
         if (embedUrl.contains("yourupload")) {
             val videos = YourUploadExtractor(client).videoFromUrl(url, headers = headers)

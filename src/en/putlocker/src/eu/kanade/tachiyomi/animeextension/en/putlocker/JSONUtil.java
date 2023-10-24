@@ -42,12 +42,15 @@ public class JSONUtil {
 
         int i = 0;
         while (i < input.length()) {
-            char delimiter = input.charAt(i); i++; // consume letter or backslash
+            // consume letter or backslash
+            char delimiter = input.charAt(i);
+            i++;
 
             if(delimiter == '\\' && i < input.length()) {
 
                 // consume first after backslash
-                char ch = input.charAt(i); i++;
+                char ch = input.charAt(i);
+                i++;
 
                 if(ch == '\\' || ch == '/' || ch == '"' || ch == '\'') {
                     builder.append(ch);

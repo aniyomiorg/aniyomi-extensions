@@ -65,7 +65,7 @@ class KwikExtractor(private val client: OkHttpClient) {
             .header("location")!!.substringAfterLast("https://")
         val fContent =
             client.newCall(GET(kwikUrl, Headers.headersOf("referer", "https://kwik.cx/"))).execute()
-        cookies += (fContent.header("set-cookie")!!)
+        cookies += fContent.header("set-cookie")!!
         val fContentString = fContent.body.string()
 
         val (fullString, key, v1, v2) = kwikParamsRegex.find(fContentString)!!.destructured
@@ -138,12 +138,10 @@ class KwikExtractor(private val client: OkHttpClient) {
         var acc: Long = 0
 
         for ((n, i) in content.reversed().withIndex()) {
-            acc += (
-                when (isNumber("$i")) {
-                    true -> "$i".toLong()
-                    false -> "0".toLong()
-                }
-                ) * s1.toDouble().pow(n.toDouble()).toInt()
+            acc += when (isNumber("$i")) {
+                true -> "$i".toLong()
+                false -> 0L
+            } * s1.toDouble().pow(n.toDouble()).toInt()
         }
 
         var k = ""

@@ -83,7 +83,7 @@ class WCOStream : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         episode.setUrlWithoutDomain(element.select("a").attr("href").toHttpUrl().encodedPath)
         episode.name = "Episode: " + element.select("a").text()
         episode.episode_number = when {
-            (epNum.isNotEmpty()) -> epNum.toFloat()
+            epNum.isNotEmpty() -> epNum.toFloatOrNull() ?: 1F
             else -> 1F
         }
         return episode

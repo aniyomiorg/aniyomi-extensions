@@ -131,7 +131,7 @@ class AnimeBlkom : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val eptitle = element.selectFirst("span:nth-child(3)")!!.text()
             val epNum = eptitle.filter { it.isDigit() }
             episode_number = when {
-                (epNum.isNotEmpty()) -> epNum.toFloatOrNull() ?: 1F
+                epNum.isNotEmpty() -> epNum.toFloatOrNull() ?: 1F
                 else -> 1F
             }
             name = eptitle + " :" + element.selectFirst("span:nth-child(1)")!!.text()

@@ -342,7 +342,7 @@ class Animefenix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val qualities = arrayOf(
             "Okru:1080p", "Okru:720p", "Okru:480p", "Okru:360p", "Okru:240p", "Okru:144p", // Okru
-            "Amazon", "AmazonES", "StreamTape", "Fireload", "Mp4upload", "YourUpload", "StreamWish"
+            "Amazon", "AmazonES", "StreamTape", "Fireload", "Mp4upload", "YourUpload", "StreamWish",
         )
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"

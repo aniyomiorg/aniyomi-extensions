@@ -204,7 +204,7 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val videoList = mutableListOf<Video>()
         val embedUrl = url.lowercase()
         if (embedUrl.contains("tomatomatela")) {
-            try {
+            runCatching {
                 val mainUrl = url.substringBefore("/embed.html#").substringAfter("https://")
                 val headers = headers.newBuilder()
                     .set("authority", mainUrl)
@@ -226,7 +226,7 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val status = json["status"]!!.jsonPrimitive!!.content
                 val file = json["file"]!!.jsonPrimitive!!.content
                 if (status == "200") { videoList.add(Video(file, "$prefix Tomatomatela", file, headers = null)) }
-            } catch (e: Exception) { }
+            }
         }
         if (embedUrl.contains("yourupload")) {
             val videos = YourUploadExtractor(client).videoFromUrl(url, headers = headers)

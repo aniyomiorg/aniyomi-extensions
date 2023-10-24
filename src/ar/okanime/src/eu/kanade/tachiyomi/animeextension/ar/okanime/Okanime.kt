@@ -86,7 +86,7 @@ class Okanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList) =
-        ("$baseUrl/search/?s=$query")
+        "$baseUrl/search/?s=$query"
             .let { if (page > 1) "$it&page=$page" else it }
             .let(::GET)
 

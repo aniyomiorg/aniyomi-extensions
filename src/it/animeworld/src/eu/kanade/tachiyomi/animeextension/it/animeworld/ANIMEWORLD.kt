@@ -76,7 +76,7 @@ class ANIMEWORLD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         episode.name = "Episode: " + element.text()
         val epNum = getNumberFromEpsString(element.text())
         episode.episode_number = when {
-            (epNum.isNotEmpty()) -> epNum.toFloat()
+            epNum.isNotEmpty() -> epNum.toFloatOrNull() ?: 1F
             else -> 1F
         }
         return episode

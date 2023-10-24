@@ -238,17 +238,6 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element): SEpisode = throw Exception("Not used")
 
-//    private fun episodeFromElement(element: Element, seasonName: String): SEpisode {
-//        return SEpisode.create().apply {
-//            name = "[$seasonName] ${element.selectFirst("td a").text()}"
-//            episode_number = if (episodeName.contains("Episode ", true)) {
-//                episodeName.substringAfter("Episode ").substringBefore(" ").toFloatOrNull() ?: 0F
-//            } else { 0F }
-//            date_upload = element.selectFirst("span.date")?.let { parseDate(it.text()) } ?: 0L
-//            setUrlWithoutDomain(element.selectFirst("a[href]")!!.attr("href"))
-//        }
-//    }
-
     // ============================ Video Links =============================
 
     override fun fetchVideoList(episode: SEpisode): Observable<List<Video>> {
@@ -275,7 +264,7 @@ class Wbijam : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                             ?: serverDoc.selectFirst("span.odtwarzaj_vk")?.let { t -> "https://vk.com/video${t.attr("rel")}_${t.attr("id")}" } ?: "",
                     )
                 }
-            } else {}
+            }
         }
 
         videoList.addAll(

@@ -770,9 +770,6 @@ class AutoEmbedExtractor(private val client: OkHttpClient) {
                     videoUrl.contains("rabbitstream") -> {
                         RabbitStreamExtractor(client).videosFromUrl(videoUrl, headers = videoHeaders, prefix = prefix)
                     }
-                    videoUrl.contains("mixdrop") -> {
-                        MixDropExtractor(client).videoFromUrl(videoUrl, prefix = prefix)
-                    }
                     videoUrl.contains("https://dood") -> {
                         DoodExtractor(client).videoFromUrl(videoUrl, server.name, false)
                             ?.let(::listOf)
@@ -863,7 +860,7 @@ class AutoEmbedExtractor(private val client: OkHttpClient) {
     private fun getCaptchaToken(url: String, key: String): String? {
         return runCatching {
             val httpUrl = url.toHttpUrl()
-            val pureDomain = (httpUrl.scheme + "://" + httpUrl.host + ":443")
+            val pureDomain = httpUrl.scheme + "://" + httpUrl.host + ":443"
             val domain = Base64.encodeToString(pureDomain.encodeToByteArray(), Base64.DEFAULT)
                 .replace("\n", "")
                 .replace("=", ".")

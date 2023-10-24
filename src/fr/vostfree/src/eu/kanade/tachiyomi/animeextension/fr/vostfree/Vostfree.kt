@@ -72,7 +72,7 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     episode_number = "1".toFloat()
                     name = "Film"
                 }
-                episode.url = ("?episode:${0}/${response.request.url}")
+                episode.url = "?episode:0/${response.request.url}"
                 episodes.add(episode)
             } else {
                 val episode = SEpisode.create().apply {
@@ -104,10 +104,10 @@ class Vostfree : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             if (server.lowercase() == "vudeo") {
                 val playerId = it.attr("id")
                 val url = document.select("div#player-tabs div.tab-blocks div.tab-content div div#content_$playerId").text()
-                try {
+                runCatching {
                     val video = VudeoExtractor(client).videosFromUrl(url)
                     videoList.addAll(video)
-                } catch (e: Exception) {}
+                }
             }
             if (server.lowercase() == "ok") {
                 val playerId = it.attr("id")
