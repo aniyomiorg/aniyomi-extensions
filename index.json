@@ -1655,27 +1655,6 @@
     ]
   },
   {
-    "name": "Aniyomi: PobMovies",
-    "pkg": "eu.kanade.tachiyomi.animeextension.en.holamovies",
-    "apk": "aniyomi-en.holamovies-v13.6.apk",
-    "lang": "en",
-    "code": 6,
-    "version": "13.6",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "PobMovies",
-        "lang": "en",
-        "id": "8957317977172284857",
-        "baseUrl": "https://pobmovies.cam",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: Hstream",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.hstream",
     "apk": "aniyomi-en.hstream-v13.5.apk",
@@ -2224,10 +2203,10 @@
   {
     "name": "Aniyomi: Wcofun",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.wcofun",
-    "apk": "aniyomi-en.wcofun-v13.11.apk",
+    "apk": "aniyomi-en.wcofun-v13.12.apk",
     "lang": "en",
-    "code": 11,
-    "version": "13.11",
+    "code": 12,
+    "version": "13.12",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -2236,7 +2215,7 @@
         "name": "Wcofun",
         "lang": "en",
         "id": "1677488626877212634",
-        "baseUrl": "https://www.wcofun.org",
+        "baseUrl": "https://www.wcofun.tv",
         "versionId": 1,
         "hasCloudflare": 1
       }
