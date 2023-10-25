@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.animeextension.en.animetake.extractors.VidstreamingExtractor
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
@@ -13,6 +12,7 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
+import eu.kanade.tachiyomi.lib.gogostreamextractor.GogoStreamExtractor
 import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
@@ -153,7 +153,7 @@ class AnimeTake : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     // ============================ Video Links =============================
     private val doodExtractor by lazy { DoodExtractor(client) }
     private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
-    private val vidstreamingExtractor by lazy { VidstreamingExtractor(client) }
+    private val gogoStreamExtractor by lazy { GogoStreamExtractor(client) }
     private val filemoonExtractor by lazy { FilemoonExtractor(client) }
 
     override fun videoListParse(response: Response): List<Video> {
@@ -181,7 +181,7 @@ class AnimeTake : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun extractVideo(url: String): List<Video> {
-        val videos = vidstreamingExtractor.videosFromUrl(url, "Vidstreaming - ")
+        val videos = gogoStreamExtractor.videosFromUrl(url)
 
         val request = GET(url)
         val response = client.newCall(request).execute()
