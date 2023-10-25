@@ -32,7 +32,7 @@ class Wcofun : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Wcofun"
 
-    override val baseUrl = "https://www.wcofun.org"
+    override val baseUrl = "https://www.wcofun.tv"
 
     override val lang = "en"
 
