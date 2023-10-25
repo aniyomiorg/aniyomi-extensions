@@ -1319,6 +1319,27 @@
     ]
   },
   {
+    "name": "Aniyomi: AnimeTake",
+    "pkg": "eu.kanade.tachiyomi.animeextension.en.animetake",
+    "apk": "aniyomi-en.animetake-v13.1.apk",
+    "lang": "en",
+    "code": 1,
+    "version": "13.1",
+    "nsfw": 0,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "sources": [
+      {
+        "name": "AnimeTake",
+        "lang": "en",
+        "id": "7460925030423755739",
+        "baseUrl": "https://animetake.tv",
+        "versionId": 1,
+        "hasCloudflare": 1
+      }
+    ]
+  },
+  {
     "name": "Aniyomi: AnimeUI",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.animeui",
     "apk": "aniyomi-en.animeui-v13.1.apk",
