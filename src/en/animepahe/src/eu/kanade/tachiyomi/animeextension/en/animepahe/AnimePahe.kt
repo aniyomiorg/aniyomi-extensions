@@ -218,12 +218,12 @@ class AnimePahe : ConfigurableAnimeSource, AnimeHttpSource() {
         val subPreference = preferences.getString(PREF_SUB_KEY, PREF_SUB_DEFAULT)!!
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
         val shouldBeAv1 = preferences.getBoolean(PREF_AV1_KEY, PREF_AV1_DEFAULT)
-        val shouldEndWithEng = (subPreference == "eng")
+        val shouldEndWithEng = subPreference == "eng"
 
         return this.sortedWith(
             compareBy(
                 { it.quality.contains(quality) },
-                { (Regex("""\beng\b""").find(it.quality.lowercase()) != null) == shouldEndWithEng },
+                { Regex("""\beng\b""").containsMatchIn(it.quality.lowercase()) == shouldEndWithEng },
                 { it.quality.lowercase().contains("av1") == shouldBeAv1 },
             ),
         ).reversed()

@@ -61,7 +61,7 @@ class Kuramanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val epsNum = getNumberFromEpsString(element.text())
         episode.setUrlWithoutDomain(element.attr("href"))
         episode.episode_number = when {
-            (epsNum.isNotEmpty()) -> epsNum.toFloat()
+            epsNum.isNotEmpty() -> epsNum.toFloatOrNull() ?: 1F
             else -> 1F
         }
         episode.name = element.text()

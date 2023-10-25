@@ -663,60 +663,59 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
     }
 
     private fun medialibPreference(screen: PreferenceScreen) =
-        (
-            object : MediaLibPreference(screen.context) {
-                override fun reload() {
-                    this.apply {
-                        key = JFConstants.MEDIALIB_KEY
-                        title = JFConstants.MEDIALIB_TITLE
-                        summary = "%s"
+        object : MediaLibPreference(screen.context) {
+            override fun reload() {
+                this.apply {
+                    key = JFConstants.MEDIALIB_KEY
+                    title = JFConstants.MEDIALIB_TITLE
+                    summary = "%s"
 
-                        Thread {
-                            try {
-                                val mediaLibsResponse = client.newCall(
-                                    GET("$baseUrl/Users/$userId/Items?api_key=$apiKey"),
-                                ).execute()
-                                val mediaJson = mediaLibsResponse.body.let { json.decodeFromString<ItemsResponse>(it.string()) }?.Items
+                    Thread {
+                        try {
+                            val mediaLibsResponse = client.newCall(
+                                GET("$baseUrl/Users/$userId/Items?api_key=$apiKey"),
+                            ).execute()
+                            val mediaJson = mediaLibsResponse.body.let { json.decodeFromString<ItemsResponse>(it.string()) }?.Items
 
-                                val entriesArray = mutableListOf<String>()
-                                val entriesValueArray = mutableListOf<String>()
+                            val entriesArray = mutableListOf<String>()
+                            val entriesValueArray = mutableListOf<String>()
 
-                                if (mediaJson != null) {
-                                    for (media in mediaJson) {
-                                        entriesArray.add(media.Name)
-                                        entriesValueArray.add(media.Id)
-                                    }
+                            if (mediaJson != null) {
+                                for (media in mediaJson) {
+                                    entriesArray.add(media.Name)
+                                    entriesValueArray.add(media.Id)
                                 }
-
-                                entries = entriesArray.toTypedArray()
-                                entryValues = entriesValueArray.toTypedArray()
-                            } catch (ex: Exception) {
-                                entries = emptyArray()
-                                entryValues = emptyArray()
                             }
-                        }.start()
 
-                        setOnPreferenceChangeListener { _, newValue ->
-                            val selected = newValue as String
-                            val index = findIndexOfValue(selected)
-                            val entry = entryValues[index] as String
-                            parentId = entry
-                            preferences.edit().putString(key, entry).commit()
+                            entries = entriesArray.toTypedArray()
+                            entryValues = entriesValueArray.toTypedArray()
+                        } catch (ex: Exception) {
+                            entries = emptyArray()
+                            entryValues = emptyArray()
                         }
+                    }.start()
+
+                    setOnPreferenceChangeListener { _, newValue ->
+                        val selected = newValue as String
+                        val index = findIndexOfValue(selected)
+                        val entry = entryValues[index] as String
+                        parentId = entry
+                        preferences.edit().putString(key, entry).commit()
                     }
                 }
             }
-            ).apply { reload() }
+        }.apply { reload() }
+
+    private fun getSummary(isPassword: Boolean, value: String, placeholder: String) = when {
+        isPassword && value.isNotEmpty() || !isPassword && value.isEmpty() -> placeholder
+        else -> value
+    }
 
     private fun PreferenceScreen.editTextPreference(key: String, title: String, default: String, value: String, isPassword: Boolean = false, placeholder: String, mediaLibPref: MediaLibPreference): EditTextPreference {
         return EditTextPreference(context).apply {
             this.key = key
             this.title = title
-            summary = if ((isPassword && value.isNotEmpty()) || (!isPassword && value.isEmpty())) {
-                placeholder
-            } else {
-                value
-            }
+            summary = getSummary(isPassword, value, placeholder)
             this.setDefaultValue(default)
             dialogTitle = title
 
@@ -732,11 +731,7 @@ class Jellyfin(private val suffix: String) : ConfigurableAnimeSource, AnimeHttpS
                 try {
                     val newValueString = newValue as String
                     val res = preferences.edit().putString(key, newValueString).commit()
-                    summary = if ((isPassword && newValueString.isNotEmpty()) || (!isPassword && newValueString.isEmpty())) {
-                        placeholder
-                    } else {
-                        newValueString
-                    }
+                    summary = getSummary(isPassword, newValueString, placeholder)
                     val loginRes = login(true, context)
                     if (loginRes == true) {
                         mediaLibPref.reload()

@@ -955,20 +955,20 @@ class SuperStreamAPI(val json: Json) {
         if (isMovie) { // 1 = Movie
             val apiQuery =
                 """{"childmode":"$hideNsfw","uid":"","app_version":"11.5","appid":"$appId","module":"Movie_detail","channel":"Website","mid":"${loadData.id}","lang":"en","expired_date":"${getExpiryDate()}","platform":"android","oss":"","group":""}"""
-            val data = (queryApiParsed<MovieDataProp>(apiQuery, altApi)).data
+            val data = queryApiParsed<MovieDataProp>(apiQuery, altApi).data
                 ?: throw RuntimeException("API error")
 
             return Pair(data, Pair(null, null))
         } else { // 2 Series
             val apiQuery =
                 """{"childmode":"$hideNsfw","uid":"","app_version":"11.5","appid":"$appId","module":"TV_detail_1","display_all":"1","channel":"Website","lang":"en","expired_date":"${getExpiryDate()}","platform":"android","tid":"${loadData.id}"}"""
-            val data = (queryApiParsed<SeriesDataProp>(apiQuery, altApi)).data
+            val data = queryApiParsed<SeriesDataProp>(apiQuery, altApi).data
                 ?: throw RuntimeException("API error")
 
             val episodes = data.season.mapNotNull {
                 val seasonQuery =
                     """{"childmode":"$hideNsfw","app_version":"11.5","year":"0","appid":"$appId","module":"TV_episode","display_all":"1","channel":"Website","season":"$it","lang":"en","expired_date":"${getExpiryDate()}","platform":"android","tid":"${loadData.id}"}"""
-                (queryApiParsed<SeriesSeasonProp>(seasonQuery)).data
+                queryApiParsed<SeriesSeasonProp>(seasonQuery).data
             }.flatten().reversed()
 
             return Pair(null, Pair(data, episodes))

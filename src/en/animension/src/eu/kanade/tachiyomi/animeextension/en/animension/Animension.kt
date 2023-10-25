@@ -68,7 +68,7 @@ class Animension() : ConfigurableAnimeSource, AnimeHttpSource() {
 
     // Episode
     override fun episodeListRequest(anime: SAnime): Request {
-        return (GET("$apiUrl/episodes.php?id=${anime.url}", headers))
+        return GET("$apiUrl/episodes.php?id=${anime.url}", headers)
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {

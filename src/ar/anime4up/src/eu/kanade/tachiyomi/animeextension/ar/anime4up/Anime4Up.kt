@@ -97,7 +97,7 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         episode.setUrlWithoutDomain(element.select("div.episodes-card-container div.episodes-card div.ehover6 h3 a").attr("href"))
         // episode.episode_number = element.select("span:nth-child(3)").text().replace(" - ", "").toFloat()
         episode.episode_number = when {
-            (epNum.isNotEmpty()) -> epNum.toFloat()
+            epNum.isNotEmpty() -> epNum.toFloatOrNull() ?: 1F
             else -> 1F
         }
         episode.name = element.select("div.episodes-card-container div.episodes-card div.ehover6 h3 a").text()

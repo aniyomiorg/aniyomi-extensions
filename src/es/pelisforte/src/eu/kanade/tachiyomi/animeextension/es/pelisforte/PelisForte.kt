@@ -167,7 +167,7 @@ open class PelisForte : ConfigurableAnimeSource, AnimeHttpSource() {
                     lang.contains("Castellano", true) -> "[CAST]"
                     else -> ""
                 }
-                val locationsDdh = client.newCall(GET(player,headers = headers.newBuilder().add("referer", src).build()))
+                val locationsDdh = client.newCall(GET(player, headers = headers.newBuilder().add("referer", src).build()))
                     .execute().networkResponse.toString()
 
                 fetchUrls(locationsDdh).forEach {

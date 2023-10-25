@@ -188,7 +188,7 @@ class NeoNime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val epsNum = getNumberFromEpsString(element.select("div.episodiotitle > a").text())
         episode.setUrlWithoutDomain(element.select("div.episodiotitle > a").attr("href"))
         episode.episode_number = when {
-            (epsNum.isNotEmpty()) -> epsNum.toFloat()
+            epsNum.isNotEmpty() -> epsNum.toFloat()
             else -> 1F
         }
         episode.name = element.select("div.episodiotitle > a").text()

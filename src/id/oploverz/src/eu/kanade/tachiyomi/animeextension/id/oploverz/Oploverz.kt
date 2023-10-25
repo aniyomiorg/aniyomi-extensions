@@ -71,7 +71,7 @@ class Oploverz : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val epsNum = getNumberFromEpsString(element.select(".epl-num").text())
         episode.setUrlWithoutDomain(element.select("a").attr("href"))
         episode.episode_number = when {
-            (epsNum.isNotEmpty()) -> epsNum.toFloat()
+            epsNum.isNotEmpty() -> epsNum.toFloatOrNull() ?: 1F
             else -> 1F
         }
         episode.name = element.select(".epl-title").text()

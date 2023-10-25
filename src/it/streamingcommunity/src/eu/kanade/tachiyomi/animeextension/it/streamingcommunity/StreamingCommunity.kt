@@ -92,8 +92,9 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
-        val hasNextPage = (response.request.url.queryParameter("offset")?.let { it.toInt() < 120 } ?: true) &&
-            animeList.size == 60
+        val hasNextPage = response.request.url.queryParameter("offset")
+            ?.toIntOrNull()
+            ?.let { it < 120 } ?: true && animeList.size == 60
 
         return AnimesPage(animeList, hasNextPage)
     }
@@ -174,8 +175,9 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
-        val hasNextPage = (response.request.url.queryParameter("offset")?.let { it.toInt() < 120 } ?: true) &&
-            animeList.size == 60
+        val hasNextPage = response.request.url.queryParameter("offset")
+            ?.toIntOrNull()
+            ?.let { it < 120 } ?: true && animeList.size == 60
 
         return AnimesPage(animeList, hasNextPage)
     }

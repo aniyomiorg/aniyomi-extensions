@@ -44,7 +44,7 @@ class KickAssAnimeExtractor(
     fun videosFromUrl(url: String, name: String): List<Video> {
         val host = url.toHttpUrl().host
         val mid = if (name == "DuckStream") "mid" else "id"
-        val isBird = (name == "BirdStream")
+        val isBird = name == "BirdStream"
 
         val query = url.toHttpUrl().queryParameter(mid)!!
 
@@ -134,7 +134,7 @@ class KickAssAnimeExtractor(
         }
 
         val cid = String(html.substringAfter("cid: '").substringBefore("'").decodeHex()).split("|")
-        val timeStamp = ((System.currentTimeMillis() / 1000) + 60).toString()
+        val timeStamp = (System.currentTimeMillis() / 1000 + 60).toString()
         val route = cid[1].replace("player.php", "source.php")
 
         val signature = buildString {

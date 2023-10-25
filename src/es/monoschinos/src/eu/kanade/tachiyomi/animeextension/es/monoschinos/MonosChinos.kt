@@ -129,7 +129,7 @@ class MonosChinos : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val genreFilter = (filters.find { it is GenreFilter } as? GenreFilter?) ?: GenreFilter()
+        val genreFilter = filters.filterIsInstance<GenreFilter>().firstOrNull() ?: GenreFilter()
         val yearFilter = try {
             (filters.find { it is YearFilter } as YearFilter).state.toInt()
         } catch (e: Exception) {

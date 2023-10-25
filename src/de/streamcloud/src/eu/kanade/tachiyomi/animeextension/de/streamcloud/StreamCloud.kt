@@ -96,7 +96,7 @@ class StreamCloud : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             when {
                 li.text().contains("streamtape.com") && hosterSelection?.contains("stape") == true -> {
                     val url = li.attr("data-link")
-                    try {
+                    runCatching {
                         with(
                             client.newCall(GET(url, headers = Headers.headersOf("Referer", baseUrl, "Cookie", "Fuck Streamtape because they add concatenation to fuck up scrapers")))
                                 .execute().asJsoup(),
@@ -108,7 +108,6 @@ class StreamCloud : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                 videoList.add(Video(videoUrl, quality, videoUrl))
                             }
                         }
-                    } catch (e: Exception) {
                     }
                 }
 
