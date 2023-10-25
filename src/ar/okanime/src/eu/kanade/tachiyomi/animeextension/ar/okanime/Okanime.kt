@@ -165,7 +165,7 @@ class Okanime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun extractVideosFromUrl(url: String, quality: String, selection: Set<String>): List<Video> {
         return runCatching {
             when {
-                ("https://doo" in url && "/e/" in url) && selection.contains("Dood") -> {
+                "https://doo" in url && "/e/" in url && selection.contains("Dood") -> {
                     doodExtractor.videoFromUrl(url, "DoodStream - $quality")
                         ?.let(::listOf)
                 }

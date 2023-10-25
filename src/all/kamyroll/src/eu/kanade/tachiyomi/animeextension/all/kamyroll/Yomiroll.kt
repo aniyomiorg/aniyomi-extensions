@@ -379,7 +379,7 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
                     }
                     ) +
                 (
-                    if ((series_metadata?.audio_locales?.size ?: 0) > 1 ||
+                    if (series_metadata?.audio_locales?.size ?: 0 > 1 ||
                         movie_metadata?.is_dubbed == true
                     ) {
                         " Dub"
@@ -501,33 +501,31 @@ class Yomiroll : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun localSubsPreference(screen: PreferenceScreen) =
-        (
-            object : LocalSubsPreference(screen.context) {
-                override fun reload() {
-                    this.apply {
-                        key = PREF_USE_LOCAL_TOKEN_KEY
-                        title = PREF_USE_LOCAL_TOKEN_TITLE
-                        summary = runBlocking {
-                            withContext(Dispatchers.IO) { getTokenDetail() }
-                        }
-                        setDefaultValue(false)
-                        setOnPreferenceChangeListener { _, newValue ->
-                            val new = newValue as Boolean
-                            preferences.edit().putBoolean(key, new).commit().also {
-                                Thread {
-                                    summary = runBlocking {
-                                        withContext(Dispatchers.IO) { getTokenDetail(true) }
-                                    }
-                                }.start()
-                            }
+        object : LocalSubsPreference(screen.context) {
+            override fun reload() {
+                this.apply {
+                    key = PREF_USE_LOCAL_TOKEN_KEY
+                    title = PREF_USE_LOCAL_TOKEN_TITLE
+                    summary = runBlocking {
+                        withContext(Dispatchers.IO) { getTokenDetail() }
+                    }
+                    setDefaultValue(false)
+                    setOnPreferenceChangeListener { _, newValue ->
+                        val new = newValue as Boolean
+                        preferences.edit().putBoolean(key, new).commit().also {
+                            Thread {
+                                summary = runBlocking {
+                                    withContext(Dispatchers.IO) { getTokenDetail(true) }
+                                }
+                            }.start()
                         }
                     }
                 }
             }
-            ).apply { reload() }
+        }.apply { reload() }
 
     // From Dopebox
-    private fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B): List<B> =
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
         runBlocking {
             map { async(Dispatchers.Default) { f(it) } }.awaitAll()
         }

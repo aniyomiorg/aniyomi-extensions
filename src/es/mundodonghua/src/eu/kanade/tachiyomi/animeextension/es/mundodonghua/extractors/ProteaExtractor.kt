@@ -16,7 +16,7 @@ class ProteaExtractor() {
     private val json: Json by injectLazy()
     fun videosFromUrl(url: String, qualityPrefix: String = "Protea", headers: Headers): List<Video> {
         val videoList = mutableListOf<Video>()
-        try {
+        runCatching {
             val document = Jsoup.connect(url).headers(headers.toMap()).ignoreContentType(true).method(Connection.Method.POST).execute()
             if (document!!.body()!!.isNotEmpty()) {
                 val responseString = document.body().removePrefix("[").removeSuffix("]")
@@ -44,7 +44,6 @@ class ProteaExtractor() {
                     videoList.add(Video("https://$urlVideo", quality, "https://$urlVideo", headers = newHeaders))
                 }
             }
-        } catch (e: Exception) {
         }
         return videoList
     }

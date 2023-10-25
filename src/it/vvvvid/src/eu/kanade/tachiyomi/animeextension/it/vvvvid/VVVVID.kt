@@ -547,7 +547,7 @@ class VVVVID : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun getRandomIntString(): String {
-        val allowedChars = ('0'..'9')
+        val allowedChars = '0'..'9'
         return (1..16)
             .map { allowedChars.random() }
             .joinToString("")
