@@ -1,0 +1,18 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+
+ext {
+    extName = 'AnimeTake'
+    pkgNameSuffix = 'en.animetake'
+    extClass = '.AnimeTake'
+    extVersionCode = 1
+    containsNsfw = false
+}
+
+dependencies {
+    implementation(project(":lib-dood-extractor"))
+    implementation(project(":lib-mp4upload-extractor"))
+    implementation(project(":lib-filemoon-extractor"))
+}
+
+apply from: "$rootDir/common.gradle"
