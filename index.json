@@ -1844,27 +1844,6 @@
     ]
   },
   {
-    "name": "Aniyomi: marin.moe",
-    "pkg": "eu.kanade.tachiyomi.animeextension.en.marinmoe",
-    "apk": "aniyomi-en.marinmoe-v13.9.apk",
-    "lang": "en",
-    "code": 9,
-    "version": "13.9",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "marin.moe",
-        "lang": "en",
-        "id": "5712161630458401041",
-        "baseUrl": "https://marin.moe",
-        "versionId": 1,
-        "hasCloudflare": 0
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: Multimovies",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.multimovies",
     "apk": "aniyomi-en.multimovies-v13.13.apk",
