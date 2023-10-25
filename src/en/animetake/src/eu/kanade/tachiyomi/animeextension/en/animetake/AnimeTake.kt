@@ -119,22 +119,34 @@ class AnimeTake : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================== Episodes ==============================
-    override fun episodeListSelector() = "div#eps > div > a[href]"
+    override fun episodeListSelector() = "div.tab-content"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
         val episodesLink = document.select(episodeListSelector())
-        return episodesLink.map(::episodeFromElement).reversed()
+        val episodes = mutableListOf<SEpisode>()
+
+        val specialsDiv = episodesLink.select("div#specials")
+        if (specialsDiv.isNotEmpty()) {
+            episodes.addAll(specialsDiv.select("a[href]").map(::episodeFromElement).reversed())
+        }
+        episodes.addAll(
+            episodesLink.select("div#eps").select("a[href]")
+                .map(::episodeFromElement).reversed(),
+        )
+
+        return episodes.toList()
     }
 
     override fun episodeFromElement(element: Element): SEpisode {
         return SEpisode.create().apply {
             setUrlWithoutDomain(element.attr("href"))
-            val upDate = element.select("div.col-xs-12 > span.label").text()
+            val upDate = element.select("div.col-xs-12 > span.front_time").text().trim()
             date_upload = parseDate(upDate)
-            val epName = element.select("div.col-xs-12 > div.anime-title > b").text()
+            val epName = element.select("div.col-xs-12 > div.anime-title > b").text().trim()
+            val epNum = epName.split(" ").last()
             name = epName
-            episode_number = 0F
+            episode_number = epNum.toFloatOrNull() ?: 0F
         }
     }
 
