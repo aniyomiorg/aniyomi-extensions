@@ -5,7 +5,7 @@ ext {
     extName = 'AnimeTake'
     pkgNameSuffix = 'en.animetake'
     extClass = '.AnimeTake'
-    extVersionCode = 1
+    extVersionCode = 2
     containsNsfw = false
 }
 
@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":lib-dood-extractor"))
     implementation(project(":lib-mp4upload-extractor"))
     implementation(project(":lib-filemoon-extractor"))
+    implementation(project(":lib-gogostream-extractor"))
 }
 
 apply from: "$rootDir/common.gradle"
