@@ -29,7 +29,7 @@ class AnimesGames : ParsedAnimeHttpSource() {
 
     override val name = "Animes Games"
 
-    override val baseUrl = "https://animesgames.net"
+    override val baseUrl = "https://animesgames.cc"
 
     override val lang = "pt-BR"
 
