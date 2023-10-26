@@ -5,6 +5,7 @@ import eu.kanade.tachiyomi.lib.bloggerextractor.BloggerExtractor
 import eu.kanade.tachiyomi.multisrc.dooplay.DooPlay
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Response
 
 class AnimePlayer : DooPlay(
@@ -28,9 +29,17 @@ class AnimePlayer : DooPlay(
     override val prefQualityValues = arrayOf("360p", "720p")
     override val prefQualityEntries = prefQualityValues
 
+    private val bloggerExtractor by lazy { BloggerExtractor(client) }
+
     override fun videoListParse(response: Response): List<Video> {
-        val player = response.asJsoup().selectFirst("div.playex iframe") ?: return emptyList()
-        return BloggerExtractor(client).videosFromUrl(player.attr("src"), headers)
+        val playerUrl = response.use { it.asJsoup() }
+            .selectFirst("div.playex iframe")
+            ?.attr("abs:src")
+            ?.toHttpUrlOrNull()
+            ?: return emptyList()
+
+        val url = playerUrl.queryParameter("link") ?: playerUrl.toString()
+        return bloggerExtractor.videosFromUrl(url, headers)
     }
 
     // ============================== Filters ===============================
