@@ -149,7 +149,7 @@ abstract class AnimeStream(
         return SAnime.create().apply {
             setUrlWithoutDomain(document.location())
             title = document.selectFirst(animeTitleSelector)!!.text()
-            thumbnail_url = document.selectFirst(animeThumbnailSelector)!!.getImageUrl()
+            thumbnail_url = document.selectFirst(animeThumbnailSelector)?.getImageUrl()
 
             val infos = document.selectFirst(animeDetailsSelector)!!
             genre = infos.select(animeGenresSelector).eachText().joinToString()
@@ -226,7 +226,7 @@ abstract class AnimeStream(
         return SAnime.create().apply {
             setUrlWithoutDomain(element.attr("abs:href"))
             title = element.selectFirst("div.tt, div.ttl")!!.ownText()
-            thumbnail_url = element.selectFirst("img")!!.getImageUrl()
+            thumbnail_url = element.selectFirst("img")?.getImageUrl()
         }
     }
 
