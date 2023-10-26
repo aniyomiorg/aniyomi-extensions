@@ -78,34 +78,41 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector() = "ul.server-list-menu li"
 
     override fun videoListRequest(episode: SEpisode): Request {
-        val document = client.newCall(GET(baseUrl + episode.url)).execute().asJsoup()
+        val document = client.newCall(GET(baseUrl + episode.url)).execute()
+            .use { it.asJsoup() }
         val link = document.selectFirst("div.loop-episode a.current")!!.attr("href")
         return GET(link)
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val document = response.asJsoup()
-        val videoList = mutableListOf<Video>()
-        document.select(videoListSelector()).forEach {
+        val document = response.use { it.asJsoup() }
+        return document.select(videoListSelector()).flatMap {
             val url = it.attr("data-server")
-            if (url.contains("dood")) {
-                val videosFromURL = DoodExtractor(client).videoFromUrl(url)
-                if (videosFromURL != null) videoList.add(videosFromURL)
-            } else if (url.contains("ok")) {
-                val videosFromURL = OkruExtractor(client).videosFromUrl(url)
-                videoList.addAll(videosFromURL)
-            } else if (url.contains("streamtape")) {
-                val videosFromURL = StreamTapeExtractor(client).videoFromUrl(url)
-                if (videosFromURL != null) videoList.add(videosFromURL)
-            } else if (url.contains("yodbox")) {
-                val html = client.newCall(GET(url)).execute().asJsoup()
-                val videoFromURL = html.select("source").attr("src")
-                if (videoFromURL.isNotEmpty()) {
-                    videoList.add(Video(videoFromURL, "Yodbox: mirror", videoFromURL))
+            runCatching { getVideosFromUrl(url) }.getOrElse { emptyList() }
+        }
+    }
+
+    private val doodExtractor by lazy { DoodExtractor(client) }
+    private val okruExtractor by lazy { OkruExtractor(client) }
+    private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
+
+    private fun getVideosFromUrl(url: String): List<Video> {
+        return when {
+            "dood" in url || "ds2play" in url -> doodExtractor.videosFromUrl(url)
+            "ok.ru" in url || "odnoklassniki.ru" in url -> okruExtractor.videosFromUrl(url)
+            "streamtape" in url -> streamtapeExtractor.videoFromUrl(url)?.let(::listOf)
+            "youdbox" in url || "yodbox" in url -> {
+                client.newCall(GET(url)).execute().use {
+                    val doc = it.asJsoup()
+                    val videoUrl = doc.selectFirst("source")?.attr("abs:src")
+                    when (videoUrl) {
+                        null -> emptyList()
+                        else -> listOf(Video(videoUrl, "Yodbox: mirror", videoUrl))
+                    }
                 }
             }
-        }
-        return videoList
+            else -> null
+        } ?: emptyList()
     }
 
     override fun videoFromElement(element: Element): Video = throw Exception("not used")
