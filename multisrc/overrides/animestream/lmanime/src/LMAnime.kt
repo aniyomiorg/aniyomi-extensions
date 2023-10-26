@@ -7,7 +7,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.dailymotionextractor.DailymotionExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.multisrc.animestream.AnimeStream
-import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Response
 
@@ -33,18 +32,6 @@ class LMAnime : AnimeStream(
                 getVideoList(url, language)
             }.flatten().ifEmpty { throw Exception("Empty video list!") }
     }
-
-    override fun getHosterUrl(encodedData: String) =
-        client.newCall(GET(encodedData, headers)).execute()
-            .use { it.asJsoup() }
-            .selectFirst("iframe[src~=.]")!!
-            .attr("src")
-            .let { // sometimes the url dont specify its protocol
-                when {
-                    it.startsWith("http") -> it
-                    else -> "https:$it"
-                }
-            }
 
     private val okruExtractor by lazy { OkruExtractor(client) }
     private val dailyExtractor by lazy { DailymotionExtractor(client, headers) }

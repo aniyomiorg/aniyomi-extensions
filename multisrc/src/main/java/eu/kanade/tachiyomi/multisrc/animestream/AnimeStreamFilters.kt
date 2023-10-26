@@ -59,7 +59,7 @@ object AnimeStreamFilters {
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
-        if (filters.isEmpty()) return FilterSearchParams()
+        if (filters.isEmpty() || !filterInitialized()) return FilterSearchParams()
 
         return FilterSearchParams(
             filters.parseCheckbox<GenresFilter>(GENRES_LIST, "genre"),
