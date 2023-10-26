@@ -18,6 +18,10 @@ import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -93,11 +97,11 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector() = "div.containerServers ul li"
 
     private fun videosFromElement(document: Document): List<Video> {
-        return document.select(videoListSelector()).flatMap { element ->
+        return document.select(videoListSelector()).parallelMap { element ->
             val quality = element.text()
             val embedUrl = element.attr("data-link")
             runCatching { getVideosFromUrl(embedUrl, quality) }.getOrElse { emptyList() }
-        }
+        }.flatten()
     }
 
     private val doodExtractor by lazy { DoodExtractor(client) }
@@ -245,6 +249,12 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         screen.addPreference(defaultDomainPref)
         screen.addPreference(videoQualityPref)
     }
+
+    // ============================= Utilities ==============================
+    private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
+        runBlocking {
+            map { async(Dispatchers.Default) { f(it) } }.awaitAll()
+        }
 
     companion object {
         // From egydead(ar)
