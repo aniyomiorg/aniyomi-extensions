@@ -28,6 +28,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
@@ -338,18 +339,18 @@ abstract class AnimeStream(
         return getHosterUrl(encodedData)
     }
 
+    // Taken from LuciferDonghua
     protected open fun getHosterUrl(encodedData: String): String {
-        return Base64.decode(encodedData, Base64.DEFAULT)
-            .let(::String) // bytearray -> string
-            .let(Jsoup::parse) // string -> document
-            .selectFirst("iframe[src~=.]")!!
-            .attr("src")
-            .let { // sometimes the url dont specify its protocol
-                when {
-                    it.startsWith("http") -> it
-                    else -> "https:$it"
-                }
-            }
+        val doc = if (encodedData.toHttpUrlOrNull() == null) {
+            Base64.decode(encodedData, Base64.DEFAULT)
+                .let(::String) // bytearray -> string
+                .let(Jsoup::parse) // string -> document
+        } else {
+            client.newCall(GET(encodedData, headers)).execute().use { it.asJsoup() }
+        }
+
+        return doc.selectFirst("iframe[src~=.]")?.attr("abs:src")
+            ?: doc.selectFirst("meta[content~=.][itemprop=embedUrl]")!!.attr("abs:content")
     }
 
     protected open fun getVideoList(url: String, name: String): List<Video> {
