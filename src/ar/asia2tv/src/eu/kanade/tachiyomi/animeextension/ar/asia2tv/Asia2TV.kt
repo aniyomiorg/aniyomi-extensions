@@ -19,6 +19,10 @@ import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -45,8 +49,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    // ========================== popular =======================
-
+    // ============================== Popular ===============================
     override fun popularAnimeSelector(): String = "div.postmovie-photo a[title]"
 
     override fun popularAnimeNextPageSelector(): String = "div.nav-links a.next"
@@ -61,8 +64,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    // ========================== episodes =======================
-
+    // ============================== Episodes ==============================
     override fun episodeListSelector() = "div.loop-episode a"
 
     override fun episodeListParse(response: Response): List<SEpisode> {
@@ -76,8 +78,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episode
     }
 
-    // ========================== video urls =======================
-
+    // ============================ Video Links =============================
     override fun videoListSelector() = "ul.server-list-menu li"
 
     override fun videoListRequest(episode: SEpisode): Request {
@@ -89,9 +90,9 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoListParse(response: Response): List<Video> {
         val document = response.use { it.asJsoup() }
-        return document.select(videoListSelector()).flatMap {
+        return document.select(videoListSelector()).parallelCatchingFlatMap {
             val url = it.attr("data-server")
-            runCatching { getVideosFromUrl(url) }.getOrElse { emptyList() }
+            getVideosFromUrl(url)
         }
     }
 
@@ -146,8 +147,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return this
     }
 
-    // ========================== search =======================
-
+    // =============================== Search ===============================
     override fun searchAnimeSelector(): String = "div.postmovie-photo a[title]"
 
     override fun searchAnimeNextPageSelector(): String = "div.nav-links a.next"
@@ -188,8 +188,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return GET(url, headers)
     }
 
-    // ========================== details =======================
-
+    // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
         anime.title = document.select("h1 span.title").text()
@@ -200,8 +199,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return anime
     }
 
-    // ========================== latest =======================
-
+    // =============================== Latest ===============================
     override fun latestUpdatesNextPageSelector(): String = throw Exception("Not used")
 
     override fun latestUpdatesFromElement(element: Element): SAnime = throw Exception("Not used")
@@ -210,8 +208,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesSelector(): String = throw Exception("Not used")
 
-    // ========================== filters =======================
-
+    // ============================== Filters ===============================
     override fun getFilterList() = AnimeFilterList(
         AnimeFilter.Header("الفلترات مش هتشتغل لو بتبحث او وهي فاضيه"),
         TypeList(typesName),
@@ -247,8 +244,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     )
 
-    // Preferences
-
+    // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         val videoQualityPref = ListPreference(screen.context).apply {
             key = "preferred_quality"
@@ -267,6 +263,16 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         screen.addPreference(videoQualityPref)
     }
+
+    // ============================= Utilities ==============================
+    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMap(crossinline f: suspend (A) -> Iterable<B>): List<B> =
+        runBlocking {
+            map {
+                async(Dispatchers.Default) {
+                    runCatching { f(it) }.getOrElse { emptyList() }
+                }
+            }.awaitAll().flatten()
+        }
 
     companion object {
         private val STREAM_WISH_DOMAINS by lazy { listOf("wishfast", "fviplions", "filelions", "streamwish", "dwish") }
