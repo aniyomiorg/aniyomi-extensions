@@ -1,11 +1,13 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
 
 ext {
     extName = 'asia2tv'
     pkgNameSuffix = 'ar.asia2tv'
     extClass = '.Asia2TV'
-    extVersionCode = 14
+    extVersionCode = 15
     libVersion = '13'
 }
 
