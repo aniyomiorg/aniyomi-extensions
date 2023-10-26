@@ -13,6 +13,9 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
+import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Request
@@ -90,18 +93,30 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun videoListSelector() = "div.containerServers ul li"
 
     private fun videosFromElement(document: Document): List<Video> {
-        return document.select(videoListSelector()).mapNotNull { element ->
-            val dataQu = element.text()
+        return document.select(videoListSelector()).flatMap { element ->
+            val quality = element.text()
             val embedUrl = element.attr("data-link")
-            when {
-                "reviewtech" in embedUrl || "reviewrate" in embedUrl -> {
-                    val iframeResponse = client.newCall(GET(embedUrl)).execute().asJsoup()
-                    val videoUrl = iframeResponse.selectFirst("source")!!.attr("src")
-                    Video(embedUrl, dataQu + "p", videoUrl.replace("https", "http"))
-                }
-                else -> null
-            }
+            runCatching { getVideosFromUrl(embedUrl, quality) }.getOrElse { emptyList() }
         }
+    }
+
+    private val doodExtractor by lazy { DoodExtractor(client) }
+    private val streamwishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val voeExtractor by lazy { VoeExtractor(client) }
+
+    private fun getVideosFromUrl(url: String, quality: String): List<Video> {
+        return when {
+            "reviewtech" in url || "reviewrate" in url -> {
+                val iframeResponse = client.newCall(GET(url)).execute()
+                    .use { it.asJsoup() }
+                val videoUrl = iframeResponse.selectFirst("source")!!.attr("abs:src")
+                listOf(Video(videoUrl, quality + "p", videoUrl))
+            }
+            "dood" in url -> doodExtractor.videosFromUrl(url)
+            "fviplions" in url || "wish" in url -> streamwishExtractor.videosFromUrl(url)
+            "voe.sx" in url -> voeExtractor.videoFromUrl(url)?.let(::listOf)
+            else -> null
+        } ?: emptyList()
     }
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
