@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.id.otakudesu
 
 import android.app.Application
-import android.content.SharedPreferences
 import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
@@ -13,6 +12,7 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.lib.youruploadextractor.YourUploadExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
@@ -22,7 +22,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import okhttp3.FormBody
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.Jsoup
@@ -44,9 +43,9 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client = network.cloudflareClient
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -61,9 +60,9 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             author = info.getInfo("Produser")
 
             description = buildString {
-                info.getInfo("Japanese", false)?.let { append("$it\n") }
-                info.getInfo("Skor", false)?.let { append("$it\n") }
-                info.getInfo("Total Episode", false)?.let { append("$it\n") }
+                info.getInfo("Japanese", false)?.also { append("$it\n") }
+                info.getInfo("Skor", false)?.also { append("$it\n") }
+                info.getInfo("Total Episode", false)?.also { append("$it\n") }
                 append("\n\nSynopsis:\n")
                 document.select("div.sinopc > p").eachText().forEach { append("$it\n\n") }
             }
@@ -217,7 +216,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
         val doc = client.newCall(POST("$baseUrl/wp-admin/admin-ajax.php", body = form))
             .execute()
-            .body.string()
+            .use { it.body.string() }
             .substringAfter(":\"")
             .substringBefore('"')
             .b64Decode()
@@ -228,12 +227,18 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return Pair(quality, url)
     }
 
+    private val filelionsExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val yourUploadExtractor by lazy { YourUploadExtractor(client) }
+
     private fun getVideosFromEmbed(quality: String, link: String): List<Video> {
         return when {
+            "filelions" in link -> {
+                filelionsExtractor.videosFromUrl(link, videoNameGen = { "FileLions - $it" })
+            }
             "yourupload" in link -> {
                 val id = link.substringAfter("id=").substringBefore("&")
                 val url = "https://yourupload.com/embed/$id"
-                YourUploadExtractor(client).videoFromUrl(url, headers, "YourUpload - $quality")
+                yourUploadExtractor.videoFromUrl(url, headers, "YourUpload - $quality")
             }
             "desustream" in link -> {
                 client.newCall(GET(link, headers)).execute().use {
@@ -361,7 +366,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
         return sortedWith(
-            compareByDescending { it.quality.equals(quality) },
+            compareByDescending { it.quality.contains(quality) },
         )
     }
 
