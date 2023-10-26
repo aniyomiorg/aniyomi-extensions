@@ -481,10 +481,10 @@
   {
     "name": "Aniyomi: عرب سيد",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.arabseed",
-    "apk": "aniyomi-ar.arabseed-v13.7.apk",
+    "apk": "aniyomi-ar.arabseed-v13.8.apk",
     "lang": "ar",
-    "code": 7,
-    "version": "13.7",
+    "code": 8,
+    "version": "13.8",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -493,7 +493,7 @@
         "name": "عرب سيد",
         "lang": "ar",
         "id": "4544379135186887077",
-        "baseUrl": "https://g20.arabseed.ink",
+        "baseUrl": "https://m95.arabseed.show",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -502,10 +502,10 @@
   {
     "name": "Aniyomi: asia2tv",
     "pkg": "eu.kanade.tachiyomi.animeextension.ar.asia2tv",
-    "apk": "aniyomi-ar.asia2tv-v13.14.apk",
+    "apk": "aniyomi-ar.asia2tv-v13.15.apk",
     "lang": "ar",
-    "code": 14,
-    "version": "13.14",
+    "code": 15,
+    "version": "13.15",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -514,7 +514,7 @@
         "name": "Asia2TV",
         "lang": "ar",
         "id": "2083042094654392493",
-        "baseUrl": "https://asia2tv.net",
+        "baseUrl": "https://ww1.asia2tv.pw",
         "versionId": 1,
         "hasCloudflare": 1
       }
@@ -3293,10 +3293,10 @@
   {
     "name": "Aniyomi: OtakuDesu",
     "pkg": "eu.kanade.tachiyomi.animeextension.id.otakudesu",
-    "apk": "aniyomi-id.otakudesu-v13.20.apk",
+    "apk": "aniyomi-id.otakudesu-v13.21.apk",
     "lang": "id",
-    "code": 20,
-    "version": "13.20",
+    "code": 21,
+    "version": "13.21",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3608,10 +3608,10 @@
   {
     "name": "Aniyomi: AnimePlayer",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animeplayer",
-    "apk": "aniyomi-pt.animeplayer-v13.2.apk",
+    "apk": "aniyomi-pt.animeplayer-v13.3.apk",
     "lang": "pt-BR",
-    "code": 2,
-    "version": "13.2",
+    "code": 3,
+    "version": "13.3",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3692,10 +3692,10 @@
   {
     "name": "Aniyomi: Animes Games",
     "pkg": "eu.kanade.tachiyomi.animeextension.pt.animesgames",
-    "apk": "aniyomi-pt.animesgames-v13.1.apk",
+    "apk": "aniyomi-pt.animesgames-v13.2.apk",
     "lang": "pt-BR",
-    "code": 1,
-    "version": "13.1",
+    "code": 2,
+    "version": "13.2",
     "nsfw": 0,
     "hasReadme": 0,
     "hasChangelog": 0,
@@ -3704,7 +3704,7 @@
         "name": "Animes Games",
         "lang": "pt-BR",
         "id": "6519826467833124450",
-        "baseUrl": "https://animesgames.net",
+        "baseUrl": "https://animesgames.cc",
         "versionId": 1,
         "hasCloudflare": 0
       }
