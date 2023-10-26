@@ -366,7 +366,7 @@ class OtakuDesu : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
         return sortedWith(
-            compareByDescending { it.quality.equals(quality) },
+            compareByDescending { it.quality.contains(quality) },
         )
     }
 
