@@ -14,6 +14,9 @@ import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
+import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
+import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -95,12 +98,18 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private val doodExtractor by lazy { DoodExtractor(client) }
     private val okruExtractor by lazy { OkruExtractor(client) }
     private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val streamwishExtractor by lazy { StreamWishExtractor(client, headers) }
+    private val uqloadExtractor by lazy { UqloadExtractor(client) }
+    private val vidbomExtractor by lazy { VidBomExtractor(client) }
 
     private fun getVideosFromUrl(url: String): List<Video> {
         return when {
             "dood" in url || "ds2play" in url -> doodExtractor.videosFromUrl(url)
             "ok.ru" in url || "odnoklassniki.ru" in url -> okruExtractor.videosFromUrl(url)
             "streamtape" in url -> streamtapeExtractor.videoFromUrl(url)?.let(::listOf)
+            STREAM_WISH_DOMAINS.any(url::contains) -> streamwishExtractor.videosFromUrl(url)
+            "uqload" in url -> uqloadExtractor.videosFromUrl(url)
+            VID_BOM_DOMAINS.any(url::contains) -> vidbomExtractor.videosFromUrl(url)
             "youdbox" in url || "yodbox" in url -> {
                 client.newCall(GET(url)).execute().use {
                     val doc = it.asJsoup()
@@ -257,5 +266,10 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
         }
         screen.addPreference(videoQualityPref)
+    }
+
+    companion object {
+        private val STREAM_WISH_DOMAINS by lazy { listOf("wishfast", "fviplions", "filelions", "streamwish", "dwish") }
+        private val VID_BOM_DOMAINS by lazy { listOf("vidbam", "vadbam", "vidbom", "vidbm") }
     }
 }
