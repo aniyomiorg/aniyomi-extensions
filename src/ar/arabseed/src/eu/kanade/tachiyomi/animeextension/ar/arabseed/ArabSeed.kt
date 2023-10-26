@@ -1,11 +1,11 @@
 package eu.kanade.tachiyomi.animeextension.ar.arabseed
 
 import android.app.Application
-import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
+import eu.kanade.tachiyomi.animeextension.BuildConfig
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -15,7 +15,6 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -36,11 +35,11 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val supportsLatest = false
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client = network.cloudflareClient
 
     override fun headersBuilder() = super.headersBuilder().add("Referer", baseUrl)
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -234,11 +233,11 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     companion object {
         // From egydead(ar)
-        private const val PREF_DOMAIN_KEY = "default_domain"
+        private const val PREF_DOMAIN_KEY = "default_domain_v${BuildConfig.VERSION_NAME}"
         private const val PREF_DOMAIN_TITLE = "Override default domain with a custom, different one"
-        private const val PREF_DOMAIN_DEFAULT = "https://g20.arabseed.ink"
+        private const val PREF_DOMAIN_DEFAULT = "https://m95.arabseed.show"
         private const val PREF_DOMAIN_DIALOG_TITLE = "Enter custom domain"
-        private const val PREF_DOMAIN_DIALOG_MESSAGE = "Default/Original domain: https://g20.arabseed.ink"
+        private const val PREF_DOMAIN_DIALOG_MESSAGE = "Default/Original domain: $PREF_DOMAIN_DEFAULT"
         private const val PREF_DOMAIN_SUMMARY = "You can change the site domain from here"
         private const val PREF_DOMAIN_TOAST = "Restart Aniyomi to apply changes"
 
