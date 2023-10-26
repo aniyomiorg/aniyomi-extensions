@@ -94,7 +94,7 @@ class ArabSeed : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val dataQu = element.text()
             val embedUrl = element.attr("data-link")
             when {
-                embedUrl.contains("reviewtech") -> {
+                "reviewtech" in embedUrl || "reviewrate" in embedUrl -> {
                     val iframeResponse = client.newCall(GET(embedUrl)).execute().asJsoup()
                     val videoUrl = iframeResponse.selectFirst("source")!!.attr("src")
                     Video(embedUrl, dataQu + "p", videoUrl.replace("https", "http"))
