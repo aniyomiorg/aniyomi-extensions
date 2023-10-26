@@ -30,7 +30,7 @@ class Asia2TV : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Asia2TV"
 
-    override val baseUrl = "https://asia2tv.net"
+    override val baseUrl = "https://ww1.asia2tv.pw"
 
     override val lang = "ar"
 
