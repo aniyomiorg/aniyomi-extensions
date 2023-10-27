@@ -430,7 +430,9 @@ class AllAnime : ConfigurableAnimeSource, AnimeHttpSource() {
                 .toByteArray().map {
                     (it.toInt() xor 56).toChar()
                 }.joinToString("")
-        } else this
+        } else {
+            this
+        }
     }
 
     private fun prioritySort(pList: List<Pair<Video, Float>>): List<Video> {

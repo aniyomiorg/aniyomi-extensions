@@ -68,7 +68,7 @@ class AnimeLek : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             name = text
             val epNum = text.filter { it.isDigit() }
             episode_number = when {
-                (epNum.isNotEmpty()) -> epNum.toFloatOrNull() ?: 1F
+                epNum.isNotEmpty() -> epNum.toFloatOrNull() ?: 1F
                 else -> 1F
             }
         }

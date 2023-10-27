@@ -1,18 +1,23 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
 
 ext {
     extName = 'asia2tv'
     pkgNameSuffix = 'ar.asia2tv'
     extClass = '.Asia2TV'
-    extVersionCode = 14
+    extVersionCode = 15
     libVersion = '13'
 }
 
 dependencies {
-    implementation(project(':lib-streamtape-extractor'))
-    implementation(project(':lib-okru-extractor'))
     implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib-okru-extractor'))
+    implementation(project(':lib-streamtape-extractor'))
+    implementation(project(':lib-streamwish-extractor'))
+    implementation(project(':lib-uqload-extractor'))
+    implementation(project(':lib-vidbom-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

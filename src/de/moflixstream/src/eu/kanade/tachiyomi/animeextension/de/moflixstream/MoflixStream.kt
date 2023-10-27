@@ -65,7 +65,7 @@ class MoflixStream : ConfigurableAnimeSource, AnimeHttpSource() {
         val pagination = response.parseAs<PopularPaginationDto>().pagination
 
         val animeList = pagination.data.parseItems()
-        val hasNextPage = pagination.current_page < (pagination.next_page ?: 1)
+        val hasNextPage = pagination.current_page < pagination.next_page ?: 1
         return AnimesPage(animeList, hasNextPage)
     }
 

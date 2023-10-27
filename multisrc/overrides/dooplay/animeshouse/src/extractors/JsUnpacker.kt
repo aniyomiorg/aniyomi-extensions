@@ -27,7 +27,7 @@ object JsUnpacker {
         val count = args[3].toInt()
         val origList = args[4].split("|")
 
-        val replaceMap = (0..(count - 1)).map {
+        val replaceMap = (0..count - 1).map {
             val key = convert(base, it)
             key to try { origList[it] } catch (e: Exception) { key }
         }.toMap()

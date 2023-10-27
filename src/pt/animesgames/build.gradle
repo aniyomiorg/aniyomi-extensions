@@ -8,7 +8,7 @@ ext {
     extName = 'Animes Games'
     pkgNameSuffix = 'pt.animesgames'
     extClass = '.AnimesGames'
-    extVersionCode = 1
+    extVersionCode = 2
     libVersion = '13'
 }
 

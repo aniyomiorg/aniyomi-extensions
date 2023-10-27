@@ -89,7 +89,7 @@ class SeriesflixClass : Pelisflix("Seriesflix", "https://seriesflix.video") {
                     val iframe = it.attr("src")
                     if (iframe.contains("https://sc.seriesflix.video/index.php")) {
                         val postKey = iframe.replace("https://sc.seriesflix.video/index.php?h=", "")
-                        val mediaType = ("application/x-www-form-urlencoded").toMediaType()
+                        val mediaType = "application/x-www-form-urlencoded".toMediaType()
                         val body: RequestBody = "h=$postKey".toRequestBody(mediaType)
                         val newClient = OkHttpClient().newBuilder().build()
                         val requestServer = Request.Builder()

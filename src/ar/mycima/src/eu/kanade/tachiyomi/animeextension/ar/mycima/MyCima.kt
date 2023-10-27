@@ -102,7 +102,7 @@ class MyCima : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         episode.setUrlWithoutDomain(if (type == "mSeries") element.select("a").attr("href") else element.attr("abs:href"))
         if (type == "series") {
             episode.episode_number = when {
-                (epNum.isNotEmpty()) -> epNum.toFloat()
+                epNum.isNotEmpty() -> epNum.toFloatOrNull() ?: 1F
                 else -> 1F
             }
         }

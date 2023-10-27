@@ -8,7 +8,7 @@ import android.util.Log
 import kotlin.system.exitProcess
 
 /**
- * Springboard that accepts https://animesgames.net/animes/<item> intents
+ * Springboard that accepts https://animesgames.cc/animes/<item> intents
  * and redirects them to the main Aniyomi process.
  */
 class AnimesGamesUrlActivity : Activity() {

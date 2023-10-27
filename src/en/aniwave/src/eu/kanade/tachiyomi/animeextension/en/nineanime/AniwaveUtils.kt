@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.en.nineanime
 
 import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.animeextension.BuildConfig
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.POST
 import kotlinx.serialization.json.Json
@@ -16,7 +17,7 @@ class AniwaveUtils(private val client: OkHttpClient, private val headers: Header
 
     private val userAgent = Headers.headersOf(
         "User-Agent",
-        "Aniyomi/${AppInfo.getVersionName()} (AniWave)",
+        "Aniyomi/${AppInfo.getVersionName()} (AniWave; ${BuildConfig.VERSION_CODE})",
     )
 
     fun callEnimax(query: String, action: String): String {

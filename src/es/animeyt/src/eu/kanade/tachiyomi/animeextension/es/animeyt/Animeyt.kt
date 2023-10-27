@@ -63,7 +63,7 @@ class Animeyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val epNum = getNumberFromEpsString(element.select("span.sa-series-link__number").text())
         episode.setUrlWithoutDomain(element.attr("href"))
         val epParsed = when {
-            (epNum.isNotEmpty()) -> epNum.toFloat()
+            epNum.isNotEmpty() -> epNum.toFloatOrNull() ?: 1F
             else -> 1F
         }
         episode.episode_number = epParsed

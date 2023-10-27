@@ -94,7 +94,7 @@ class MyRunningMan : ParsedAnimeHttpSource() {
                 title = it.label
                 thumbnail_url = buildString {
                     append("$baseUrl/assets/epimg/${it.value.padStart(3, '0')}")
-                    if ((it.value.toIntOrNull() ?: 1) > 396) append("_temp")
+                    if (it.value.toIntOrNull() ?: 1 > 396) append("_temp")
                     append(".jpg")
                 }
             }

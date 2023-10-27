@@ -6,7 +6,7 @@ import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
-import eu.kanade.tachiyomi.AppInfo
+import eu.kanade.tachiyomi.animeextension.BuildConfig
 import eu.kanade.tachiyomi.animesource.ConfigurableAnimeSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
@@ -92,8 +92,9 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
-        val hasNextPage = (response.request.url.queryParameter("offset")?.let { it.toInt() < 120 } ?: true) &&
-            animeList.size == 60
+        val hasNextPage = response.request.url.queryParameter("offset")
+            ?.toIntOrNull()
+            ?.let { it < 120 } ?: true && animeList.size == 60
 
         return AnimesPage(animeList, hasNextPage)
     }
@@ -174,8 +175,9 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
-        val hasNextPage = (response.request.url.queryParameter("offset")?.let { it.toInt() < 120 } ?: true) &&
-            animeList.size == 60
+        val hasNextPage = response.request.url.queryParameter("offset")
+            ?.toIntOrNull()
+            ?.let { it < 120 } ?: true && animeList.size == 60
 
         return AnimesPage(animeList, hasNextPage)
     }
@@ -346,9 +348,9 @@ class StreamingCommunity : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     companion object {
-        private val PREF_DOMAIN_KEY = "preferred_domain_name_v${AppInfo.getVersionName()}"
+        private val PREF_DOMAIN_KEY = "preferred_domain_name_v${BuildConfig.VERSION_CODE}"
         private const val PREF_DOMAIN_TITLE = "Override BaseUrl"
-        private const val PREF_DOMAIN_DEFAULT = "https://streamingcommunity.codes"
+        private const val PREF_DOMAIN_DEFAULT = "https://streamingcommunity.at"
         private const val PREF_DOMAIN_SUMMARY = "For temporary uses. Updating the extension will erase this setting."
 
         private const val PREF_QUALITY_KEY = "preferred_quality"

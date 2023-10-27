@@ -64,7 +64,7 @@ class XsAnime : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         episode.setUrlWithoutDomain(element.attr("abs:href"))
         episode.name = element.select("a > em").text()
         episode.episode_number = when {
-            (epNum.isNotEmpty()) -> epNum.toFloat()
+            epNum.isNotEmpty() -> epNum.toFloatOrNull() ?: 1F
             else -> 1F
         }
 
