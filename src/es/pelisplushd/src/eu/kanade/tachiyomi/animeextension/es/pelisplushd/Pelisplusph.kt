@@ -100,9 +100,9 @@ class Pelisplusph(override val name: String, override val baseUrl: String) : Pel
         } else {
             var index = 0
             jsoup.select(".item-season").reversed().mapIndexed { idxSeas, season ->
-                val seasonNumber = try {
+                val seasonNumber = runCatching {
                     getNumberFromString(season.selectFirst(".item-season-title")!!.ownText())
-                } catch (_: Exception) { idxSeas + 1 }
+                }.getOrElse { idxSeas + 1 }
                 season.select(".item-season-episodes a").reversed().mapIndexed { idx, ep ->
                     index += 1
                     val noEp = try {
