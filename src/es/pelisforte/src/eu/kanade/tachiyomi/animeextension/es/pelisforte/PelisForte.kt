@@ -62,8 +62,8 @@ open class PelisForte : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_SERVER_KEY = "preferred_server"
         private const val PREF_SERVER_DEFAULT = "StreamWish"
         private val SERVER_LIST = arrayOf(
-            "YourUpload", "BurstCloud", "Voe", "Mp4Upload", "Doodstream",
-            "Upload", "BurstCloud", "Upstream", "StreamTape", "Doodstream",
+            "YourUpload", "Voe", "Mp4Upload", "Doodstream",
+            "Upload", "BurstCloud", "Upstream", "StreamTape",
             "Fastream", "Filemoon", "StreamWish", "Okru",
         )
     }
