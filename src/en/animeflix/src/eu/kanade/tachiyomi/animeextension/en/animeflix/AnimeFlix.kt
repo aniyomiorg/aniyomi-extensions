@@ -252,7 +252,13 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 if (url.url.toHttpUrl().encodedPath == "/404") return@runCatching null
                 val (videos, mediaUrl) = extractVideo(url)
                 when {
-                    videos.isEmpty() -> extractGDriveLink(mediaUrl, url.quality)
+                    videos.isEmpty() -> {
+                        extractGDriveLink(mediaUrl, url.quality).ifEmpty {
+                            getDirectLink(mediaUrl, "instant", "/mfile/")?.let {
+                                listOf(Video(it, "${url.quality}p - GDrive Instant link", it))
+                            } ?: emptyList()
+                        }
+                    }
                     else -> videos
                 }
             }.getOrNull()
@@ -295,7 +301,7 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
             Video(
                 url = decodedLink,
-                quality = "$quality - CF $type Worker ${index + 1}$size",
+                quality = "${quality}p - CF $type Worker ${index + 1}$size",
                 videoUrl = decodedLink,
             )
         }
