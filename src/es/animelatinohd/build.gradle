@@ -14,6 +14,7 @@ dependencies {
     implementation(project(':lib-streamtape-extractor'))
     implementation(project(':lib-okru-extractor'))
     implementation(project(':lib-dood-extractor'))
+    implementation(project(':lib-streamwish-extractor'))
 }
 
 apply from: "$rootDir/common.gradle"

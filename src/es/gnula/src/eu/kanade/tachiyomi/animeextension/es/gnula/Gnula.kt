@@ -66,7 +66,7 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     companion object {
         const val PREF_QUALITY_KEY = "preferred_quality"
         const val PREF_QUALITY_DEFAULT = "1080"
-        val QUALITY_LIST = arrayOf("1080", "720", "480", "360")
+        private val QUALITY_LIST = arrayOf("1080", "720", "480", "360")
 
         private const val PREF_SERVER_KEY = "preferred_server"
         private const val PREF_SERVER_DEFAULT = "Voe"
@@ -412,11 +412,11 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }.also(screen::addPreference)
 
         ListPreference(screen.context).apply {
-            key = PREF_SERVER_KEY
-            title = "Preferred server"
-            entries = SERVER_LIST
-            entryValues = SERVER_LIST
-            setDefaultValue(PREF_SERVER_DEFAULT)
+            key = PREF_QUALITY_KEY
+            title = "Preferred quality"
+            entries = QUALITY_LIST
+            entryValues = QUALITY_LIST
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -428,11 +428,11 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }.also(screen::addPreference)
 
         ListPreference(screen.context).apply {
-            key = PREF_QUALITY_KEY
-            title = "Preferred quality"
-            entries = QUALITY_LIST
-            entryValues = QUALITY_LIST
-            setDefaultValue(PREF_QUALITY_DEFAULT)
+            key = PREF_SERVER_KEY
+            title = "Preferred server"
+            entries = SERVER_LIST
+            entryValues = SERVER_LIST
+            setDefaultValue(PREF_SERVER_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
