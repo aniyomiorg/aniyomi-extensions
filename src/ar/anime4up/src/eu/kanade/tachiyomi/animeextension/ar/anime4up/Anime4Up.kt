@@ -14,8 +14,10 @@ import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.gdriveplayerextractor.GdrivePlayerExtractor
+import eu.kanade.tachiyomi.lib.mp4uploadextractor.Mp4uploadExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
+import eu.kanade.tachiyomi.lib.uqloadextractor.UqloadExtractor
 import eu.kanade.tachiyomi.lib.vidbomextractor.VidBomExtractor
 import eu.kanade.tachiyomi.lib.voeextractor.VoeExtractor
 import eu.kanade.tachiyomi.network.GET
@@ -160,8 +162,10 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return streamLinks.values.distinct().parallelCatchingFlatMap(::extractVideos)
     }
 
+    private val uqloadExtractor by lazy { UqloadExtractor(client) }
     private val doodExtractor by lazy { DoodExtractor(client) }
     private val gdriveplayerExtractor by lazy { GdrivePlayerExtractor(client) }
+    private val mp4uploadExtractor by lazy { Mp4uploadExtractor(client) }
     private val okruExtractor by lazy { OkruExtractor(client) }
     private val sharedExtractor by lazy { SharedExtractor(client) }
     private val streamwishExtractor by lazy { StreamWishExtractor(client, headers) }
@@ -177,6 +181,8 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             url.contains("vidyard") -> vidyardExtractor.videosFromUrl(url)
             url.contains("ok.ru") -> okruExtractor.videosFromUrl(url)
+            url.contains("mp4upload") -> mp4uploadExtractor.videosFromUrl(url, headers)
+            url.contains("uqload") -> uqloadExtractor.videosFromUrl(url)
             url.contains("voe") -> voeExtractor.videoFromUrl(url)?.let(::listOf)
             url.contains("shared") -> sharedExtractor.videosFromUrl(url)?.let(::listOf)
             DOOD_REGEX.containsMatchIn(url) -> doodExtractor.videosFromUrl(url, "Dood mirror")
