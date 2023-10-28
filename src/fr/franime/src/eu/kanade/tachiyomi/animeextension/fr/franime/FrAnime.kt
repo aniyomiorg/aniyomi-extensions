@@ -7,10 +7,14 @@ import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
-import eu.kanade.tachiyomi.lib.mytvextractor.MytvExtractor
 import eu.kanade.tachiyomi.lib.sendvidextractor.SendvidExtractor
 import eu.kanade.tachiyomi.lib.sibnetextractor.SibnetExtractor
+import eu.kanade.tachiyomi.lib.vkextractor.VkExtractor
 import eu.kanade.tachiyomi.network.GET
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -126,22 +130,26 @@ class FrAnime : AnimeHttpSource() {
 
         val players = if (episodeLang == "vo") episodeData.languages.vo.players else episodeData.languages.vf.players
 
-        val videos = players.flatMapIndexed { index, playerName ->
+        val videos = players.parallelCatchingFlatMapIndexed { index, playerName ->
             val apiUrl = "$videoBaseUrl/$episodeLang/$index"
             val playerUrl = client.newCall(GET(apiUrl, headers)).execute().body.string()
             when (playerName) {
-                "franime_myvi" -> listOf(Video(playerUrl, "FRAnime", playerUrl))
-                "myvi" -> MytvExtractor(client).videosFromUrl(playerUrl)
+                "vido" -> listOf(Video(playerUrl, "FRAnime (Vido)", playerUrl))
                 "sendvid" -> SendvidExtractor(client, headers).videosFromUrl(playerUrl)
                 "sibnet" -> SibnetExtractor(client).videosFromUrl(playerUrl)
+                "vk" -> VkExtractor(client, headers).videosFromUrl(playerUrl)
                 else -> emptyList()
             }
         }
-
         return Observable.just(videos)
     }
 
     // ============================= Utilities ==============================
+    private inline fun <A, B> Iterable<A>.parallelCatchingFlatMapIndexed(crossinline f: suspend (Int, A) -> Iterable<B>): List<B> =
+        runBlocking {
+            mapIndexed { index, it -> async(Dispatchers.Default) { runCatching { f(index, it) }.getOrElse { emptyList() } } }.awaitAll().flatten()
+        }
+
     private fun pagesToAnimesPage(pages: List<Anime>, page: Int): Observable<AnimesPage> {
         val chunks = pages.chunked(50)
         val hasNextPage = chunks.size > page
