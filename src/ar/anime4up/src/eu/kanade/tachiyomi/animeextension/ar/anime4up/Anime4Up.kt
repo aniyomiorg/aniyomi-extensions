@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.ar.anime4up
 
 import android.app.Application
-import android.content.SharedPreferences
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.preference.ListPreference
@@ -30,9 +29,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
-import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -46,26 +43,23 @@ class Anime4Up : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "Anime4Up"
 
-    override val baseUrl = "https://w1.anime4up.tv"
+    override val baseUrl = "https://anime4up.cam"
 
     override val lang = "ar"
 
     override val supportsLatest = false
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client = network.cloudflareClient
 
     private val json = Json {
         ignoreUnknownKeys = true
     }
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun headersBuilder(): Headers.Builder {
-        return super.headersBuilder()
-            .add("Referer", "https://w1.anime4up.tv/") // https://s12.gemzawy.com https://moshahda.net
-    }
+    override fun headersBuilder() = super.headersBuilder().add("Referer", "$baseUrl/")
 
     // Popular
 
