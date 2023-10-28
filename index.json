@@ -2180,27 +2180,6 @@
     ]
   },
   {
-    "name": "Aniyomi: Membed",
-    "pkg": "eu.kanade.tachiyomi.animeextension.en.vidembed",
-    "apk": "aniyomi-en.vidembed-v13.32.apk",
-    "lang": "en",
-    "code": 32,
-    "version": "13.32",
-    "nsfw": 0,
-    "hasReadme": 0,
-    "hasChangelog": 0,
-    "sources": [
-      {
-        "name": "Membed",
-        "lang": "en",
-        "id": "8093842542096095331",
-        "baseUrl": "https://membed1.com",
-        "versionId": 1,
-        "hasCloudflare": 1
-      }
-    ]
-  },
-  {
     "name": "Aniyomi: Wcofun",
     "pkg": "eu.kanade.tachiyomi.animeextension.en.wcofun",
     "apk": "aniyomi-en.wcofun-v13.12.apk",
@@ -2957,10 +2936,10 @@
   {
     "name": "Aniyomi: FrAnime",
     "pkg": "eu.kanade.tachiyomi.animeextension.fr.franime",
-    "apk": "aniyomi-fr.franime-v13.8.apk",
+    "apk": "aniyomi-fr.franime-v13.9.apk",
     "lang": "fr",
-    "code": 8,
-    "version": "13.8",
+    "code": 9,
+    "version": "13.9",
     "nsfw": 1,
     "hasReadme": 0,
     "hasChangelog": 0,
