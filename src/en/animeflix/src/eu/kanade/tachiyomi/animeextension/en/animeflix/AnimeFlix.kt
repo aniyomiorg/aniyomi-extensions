@@ -12,6 +12,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -21,6 +22,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
@@ -299,9 +301,31 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
+    private fun getDirectLink(url: String, action: String = "direct", newPath: String = "/file/"): String? {
+        val doc = client.newCall(GET(url, headers)).execute().use { it.asJsoup() }
+        val script = doc.selectFirst("script:containsData(async function taskaction)")
+            ?.data()
+            ?: return url
+
+        val key = script.substringAfter("key\", \"").substringBefore('"')
+        val form = MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("action", action)
+            .addFormDataPart("key", key)
+            .addFormDataPart("action_token", "")
+            .build()
+
+        val headers = headersBuilder().set("x-token", url.toHttpUrl().host).build()
+
+        val req = client.newCall(POST(url.replace("/file/", newPath), headers, form)).execute()
+        return runCatching {
+            json.decodeFromString<DriveLeechDirect>(req.use { it.body.string() }).url
+        }.getOrNull()
+    }
+
     private fun extractGDriveLink(mediaUrl: String, quality: String): List<Video> {
-        val tokenClient = client.newBuilder().addInterceptor(TokenInterceptor()).build()
-        val response = tokenClient.newCall(GET(mediaUrl)).execute().use { it.asJsoup() }
+        val neoUrl = getDirectLink(mediaUrl) ?: mediaUrl
+        val response = client.newCall(GET(neoUrl)).execute().use { it.asJsoup() }
         val gdBtn = response.selectFirst("div.card-body a.btn")!!
         val gdLink = gdBtn.attr("href")
         val sizeMatch = SIZE_REGEX.find(gdBtn.text())
@@ -344,6 +368,9 @@ class AnimeFlix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val url: String,
         val name: String,
     )
+
+    @Serializable
+    data class DriveLeechDirect(val url: String? = null)
 
     // From Dopebox
     private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =
