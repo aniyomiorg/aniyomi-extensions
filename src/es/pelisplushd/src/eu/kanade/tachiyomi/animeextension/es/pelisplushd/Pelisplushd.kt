@@ -239,6 +239,9 @@ open class Pelisplushd(override val name: String, override val baseUrl: String) 
             if (embedUrl.contains("ahvsh") || embedUrl.contains("streamhide")) {
                 StreamHideExtractor(client).videosFromUrl(url, "StreamHide").let { videoList.addAll(it) }
             }
+            if (embedUrl.contains("filelions") || embedUrl.contains("lion")) {
+                StreamWishExtractor(client, headers).videosFromUrl(url, videoNameGen = { "FileLions:$it" }).also(videoList::addAll)
+            }
             if (embedUrl.contains("tomatomatela")) {
                 runCatching {
                     val mainUrl = url.substringBefore("/embed.html#").substringAfter("https://")
