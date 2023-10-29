@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.animeextension.ar.arabanime
 
 import android.app.Application
+import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.arabanime.dto.AnimeItem
@@ -48,13 +49,15 @@ class ArabAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     // ============================== Popular ===============================
     override fun popularAnimeParse(response: Response): AnimesPage {
         val responseJson = json.decodeFromString<PopularAnimeResponse>(response.body.string())
-        val animeList = responseJson.Shows.map {
-            val animeJson = json.decodeFromString<AnimeItem>(it.decodeBase64())
-            SAnime.create().apply {
-                setUrlWithoutDomain(animeJson.info_src)
-                title = animeJson.anime_name
-                thumbnail_url = animeJson.anime_cover_image_url
-            }
+        val animeList = responseJson.Shows.mapNotNull {
+            runCatching {
+                val animeJson = json.decodeFromString<AnimeItem>(it.decodeBase64())
+                SAnime.create().apply {
+                    setUrlWithoutDomain(animeJson.info_src)
+                    title = animeJson.anime_name
+                    thumbnail_url = animeJson.anime_cover_image_url
+                }
+            }.getOrNull()
         }
         val hasNextPage = responseJson.current_page < responseJson.last_page
         return AnimesPage(animeList, hasNextPage)
@@ -245,6 +248,8 @@ class ArabAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         }
         screen.addPreference(videoQualityPref)
     }
+
+    private fun String.decodeBase64() = String(Base64.decode(this, Base64.DEFAULT))
 
     companion object {
         private const val PREF_QUALITY_KEY = "preferred_quality"
