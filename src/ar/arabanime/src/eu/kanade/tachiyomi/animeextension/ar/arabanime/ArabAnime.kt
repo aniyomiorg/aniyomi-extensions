@@ -47,6 +47,8 @@ class ArabAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     // ============================== Popular ===============================
+    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/api?page=$page")
+
     override fun popularAnimeParse(response: Response): AnimesPage {
         val responseJson = json.decodeFromString<PopularAnimeResponse>(response.body.string())
         val animeList = responseJson.Shows.mapNotNull {
@@ -63,60 +65,85 @@ class ArabAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         return AnimesPage(animeList, hasNextPage)
     }
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/api?page=$page")
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int) = GET(baseUrl)
 
-    // ============================== Episodes ==============================
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        val showData = response.asJsoup().select("div#data").text().decodeBase64()
-        val episodesJson = json.decodeFromString<ShowItem>(showData)
-        return episodesJson.EPS.map {
-            SEpisode.create().apply {
-                name = it.episode_name
-                episode_number = it.episode_number.toFloat()
-                setUrlWithoutDomain(it.`info-src`)
-            }
-        }.reversed()
-    }
+    override fun latestUpdatesParse(response: Response): AnimesPage {
+        val latestEpisodes = response.use { it.asJsoup() }.select("div.as-episode")
+        val animeList = latestEpisodes.map {
+            SAnime.create().apply {
+                val ahref = it.selectFirst("a.as-info")!!
+                title = ahref.text()
+                val url = ahref.attr("href").replace("watch", "show").substringBeforeLast("/")
+                setUrlWithoutDomain(url)
 
-    // ============================ Video Links =============================
-    override fun videoListRequest(episode: SEpisode): Request = GET("$baseUrl/${episode.url}")
-
-    override fun videoListParse(response: Response): List<Video> {
-        val watchData = response.asJsoup().select("div#datawatch").text().decodeBase64()
-        val serversJson = json.decodeFromString<Episode>(watchData)
-        val selectServer = serversJson.ep_info[0].stream_servers[0].decodeBase64()
-        val watchPage = client.newCall(GET(selectServer)).execute().asJsoup()
-        val videoList = mutableListOf<Video>()
-        watchPage.select("option").forEach { it ->
-            val link = it.attr("data-src").decodeBase64()
-            if (link.contains("www.arabanime.net/embed")) {
-                val sources = client.newCall(GET(link)).execute().asJsoup().select("source")
-                sources.forEach { source ->
-                    if (!source.attr("src").contains("static")) {
-                        val quality = source.attr("label").let { q ->
-                            if (q.contains("p")) q else q + "p"
-                        }
-                        videoList.add(
-                            Video(source.attr("src"), "${it.text()}: $quality", source.attr("src")),
-                        )
-                    }
-                }
+                thumbnail_url = it.selectFirst("img")?.absUrl("src")
             }
         }
-        return videoList
+        return AnimesPage(animeList, false)
     }
 
-    override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
-        return sortedWith(
-            compareBy { it.quality.contains(quality) },
-        ).reversed()
+    // =============================== Search ===============================
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        return if (query.isNotEmpty()) {
+            val body = FormBody.Builder().add("searchq", query).build()
+            POST("$baseUrl/searchq", body = body)
+        } else {
+            val type = filters.asQueryPart<TypeFilter>()
+            val status = filters.asQueryPart<StatusFilter>()
+            val order = filters.asQueryPart<OrderFilter>()
+            GET("$baseUrl/api?order=$order&type=$type&stat=$status&tags=&page=$page")
+        }
     }
+
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        return if (response.body.contentType() == "application/json".toMediaType()) {
+            popularAnimeParse(response)
+        } else {
+            val searchResult = response.use { it.asJsoup() }.select("div.show")
+            val animeList = searchResult.map {
+                SAnime.create().apply {
+                    setUrlWithoutDomain(it.selectFirst("a")!!.attr("href"))
+                    title = it.selectFirst("h3")!!.text()
+                    thumbnail_url = it.selectFirst("img")?.absUrl("src")
+                }
+            }
+            return AnimesPage(animeList, false)
+        }
+    }
+
+    // ============================== filters ==============================
+    override fun getFilterList() = AnimeFilterList(
+        AnimeFilter.Header("فلترة الموقع"),
+        OrderFilter(),
+        TypeFilter(),
+        StatusFilter(),
+    )
+
+    open class QueryPartFilter(
+        displayName: String,
+        val vals: Array<Pair<String, String>>,
+    ) : AnimeFilter.Select<String>(
+        displayName,
+        vals.map { it.first }.toTypedArray(),
+    ) {
+        fun toQueryPart() = vals[state].second
+    }
+
+    private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
+        return (firstOrNull { it is R } as? QueryPartFilter)?.toQueryPart() ?: ""
+    }
+
+    private class OrderFilter : QueryPartFilter("ترتيب", ORDER_LIST)
+    private class TypeFilter : QueryPartFilter("النوع", TYPE_LIST)
+    private class StatusFilter : QueryPartFilter("الحالة", STATUS_LIST)
 
     // =========================== Anime Details ============================
-
     override fun animeDetailsParse(response: Response): SAnime {
-        val showData = response.asJsoup().select("div#data").text().decodeBase64()
+        val showData = response.use { it.asJsoup() }.selectFirst("div#data")!!
+            .text()
+            .decodeBase64()
+
         val details = json.decodeFromString<ShowItem>(showData).show[0]
         return SAnime.create().apply {
             url = "/show-${details.anime_id}/${details.anime_slug}"
@@ -132,102 +159,61 @@ class ArabAnime : ConfigurableAnimeSource, AnimeHttpSource() {
         }
     }
 
-    // =============================== Search ===============================
+    // ============================== Episodes ==============================
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val showData = response.use { it.asJsoup() }.selectFirst("div#data")
+            ?.text()
+            ?.decodeBase64()
+            ?: return emptyList()
 
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        return if (response.body.contentType() == "application/json".toMediaType()) {
-            popularAnimeParse(response)
-        } else {
-            val searchResult = response.asJsoup().select("div.show")
-            val animeList = searchResult.map {
-                SAnime.create().apply {
-                    setUrlWithoutDomain(it.select("a").attr("href"))
-                    title = it.select("h3").text()
-                    thumbnail_url = it.select("img").attr("src")
-                }
+        val episodesJson = json.decodeFromString<ShowItem>(showData)
+        return episodesJson.EPS.map {
+            SEpisode.create().apply {
+                name = it.episode_name
+                episode_number = it.episode_number.toFloat()
+                setUrlWithoutDomain(it.`info-src`)
             }
-            return AnimesPage(animeList, false)
-        }
-    }
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        if (query.isNotEmpty()) {
-            val body = FormBody.Builder().add("searchq", query).build()
-            return POST("$baseUrl/searchq", body = body)
-        } else {
-            var type = ""
-            var status = ""
-            var order = ""
-            (if (filters.isEmpty()) getFilterList() else filters).forEach { filter ->
-                when (filter) {
-                    is OrderCategoryList -> {
-                        order = getOrderFilterList()[filter.state].query
-                    }
-                    is TypeCategoryList -> {
-                        type = getTypeFilterList()[filter.state].query
-                    }
-                    is StatCategoryList -> {
-                        status = getStatFilterList()[filter.state].query
-                    }
-                    else -> {}
-                }
-            }
-            return GET("$baseUrl/api?order=$order&type=$type&stat=$status&tags=&page=$page")
-        }
+        }.reversed()
     }
 
-    // =============================== Latest ===============================
-    override fun latestUpdatesParse(response: Response): AnimesPage {
-        val latestEpisodes = response.asJsoup().select("div.as-episode")
-        val animeList = latestEpisodes.map {
-            SAnime.create().apply {
-                val url = it.select("a.as-info").attr("href")
-                    .replace("watch", "show").substringBeforeLast("/")
-                setUrlWithoutDomain(url)
-                title = it.select("a.as-info").text()
-                thumbnail_url = it.select("img").attr("src")
+    // ============================ Video Links =============================
+    override fun videoListParse(response: Response): List<Video> {
+        val watchData = response.use { it.asJsoup() }.selectFirst("div#datawatch")
+            ?.text()
+            ?.decodeBase64()
+            ?: return emptyList()
+
+        val serversJson = json.decodeFromString<Episode>(watchData)
+        val selectServer = serversJson.ep_info[0].stream_servers[0].decodeBase64()
+
+        val watchPage = client.newCall(GET(selectServer)).execute().use { it.asJsoup() }
+        return watchPage.select("option")
+            .map { it.text() to it.attr("data-src").decodeBase64() } // server : url
+            .filter { it.second.contains("$baseUrl/embed") } // filter urls
+            .flatMap { (name, url) ->
+                client.newCall(GET(url)).execute()
+                    .use { it.asJsoup() }
+                    .select("source")
+                    .mapNotNull { source ->
+                        val videoUrl = source.attr("src")
+                        if (!videoUrl.contains("static")) {
+                            val quality = source.attr("label").let { q ->
+                                if (q.contains("p")) q else q + "p"
+                            }
+                            Video(videoUrl, "$name: $quality", videoUrl)
+                        } else {
+                            null
+                        }
+                    }
             }
-        }
-        return AnimesPage(animeList, false)
     }
 
-    override fun latestUpdatesRequest(page: Int): Request = GET(baseUrl)
-
-    // ============================== filters ==============================
-    override fun getFilterList() = AnimeFilterList(
-        AnimeFilter.Header("فلترة الموقع"),
-        OrderCategoryList(orderFilterList),
-        TypeCategoryList(typeFilterList),
-        StatCategoryList(statFilterList),
-    )
-    private class OrderCategoryList(categories: Array<String>) : AnimeFilter.Select<String>("ترتيب", categories)
-    private class TypeCategoryList(categories: Array<String>) : AnimeFilter.Select<String>("النوع", categories)
-    private class StatCategoryList(categories: Array<String>) : AnimeFilter.Select<String>("الحالة", categories)
-
-    private data class CatUnit(val name: String, val query: String)
-
-    private val orderFilterList = getOrderFilterList().map { it.name }.toTypedArray()
-    private val typeFilterList = getTypeFilterList().map { it.name }.toTypedArray()
-    private val statFilterList = getStatFilterList().map { it.name }.toTypedArray()
-
-    private fun getOrderFilterList() = listOf(
-        CatUnit("اختر", ""),
-        CatUnit("التقييم", "2"),
-        CatUnit("اخر الانميات المضافة", "1"),
-        CatUnit("الابجدية", "0"),
-    )
-
-    private fun getTypeFilterList() = listOf(
-        CatUnit("اختر", ""),
-        CatUnit("الكل", ""),
-        CatUnit("فيلم", "0"),
-        CatUnit("انمى", "1"),
-    )
-    private fun getStatFilterList() = listOf(
-        CatUnit("اختر", ""),
-        CatUnit("الكل", ""),
-        CatUnit("مستمر", "1"),
-        CatUnit("مكتمل", "0"),
-    )
+    override fun List<Video>.sort(): List<Video> {
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        return sortedWith(
+            compareBy { it.quality.contains(quality) },
+        ).reversed()
+    }
 
     // =============================== Preferences ===============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -252,6 +238,27 @@ class ArabAnime : ConfigurableAnimeSource, AnimeHttpSource() {
     private fun String.decodeBase64() = String(Base64.decode(this, Base64.DEFAULT))
 
     companion object {
+        private val ORDER_LIST = arrayOf(
+            Pair("اختر", ""),
+            Pair("التقييم", "2"),
+            Pair("اخر الانميات المضافة", "1"),
+            Pair("الابجدية", "0"),
+        )
+
+        private val TYPE_LIST = arrayOf(
+            Pair("اختر", ""),
+            Pair("الكل", ""),
+            Pair("فيلم", "0"),
+            Pair("انمى", "1"),
+        )
+
+        private val STATUS_LIST = arrayOf(
+            Pair("اختر", ""),
+            Pair("الكل", ""),
+            Pair("مستمر", "1"),
+            Pair("مكتمل", "0"),
+        )
+
         private const val PREF_QUALITY_KEY = "preferred_quality"
         private const val PREF_QUALITY_TITLE = "Preferred quality"
         private const val PREF_QUALITY_DEFAULT = "1080"
