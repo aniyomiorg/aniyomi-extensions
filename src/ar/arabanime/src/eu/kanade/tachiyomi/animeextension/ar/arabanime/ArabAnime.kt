@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.ar.arabanime
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.ar.arabanime.dto.AnimeItem
@@ -26,6 +25,7 @@ import okhttp3.Request
 import okhttp3.Response
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import uy.kohesive.injekt.injectLazy
 
 class ArabAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
@@ -37,11 +37,11 @@ class ArabAnime : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val supportsLatest = true
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-    }
+    override val client = network.cloudflareClient
 
-    private val preferences: SharedPreferences by lazy {
+    private val json: Json by injectLazy()
+
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
