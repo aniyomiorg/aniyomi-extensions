@@ -68,8 +68,8 @@ class AnimeMovil : ConfigurableAnimeSource, AnimeHttpSource() {
         private val SERVER_LIST = arrayOf(
             "PlusTube", "PlusVid", "PlusIm", "PlusWish", "PlusHub", "PlusDex",
             "YourUpload", "Voe", "StreamWish", "Mp4Upload", "Doodstream",
-            "Upload", "BurstCloud", "Upstream", "StreamTape", "PlusFilm",
-            "Fastream",
+            "Uqload", "BurstCloud", "Upstream", "StreamTape", "PlusFilm",
+            "Fastream", "FileLions"
         )
     }
 
@@ -276,6 +276,9 @@ class AnimeMovil : ConfigurableAnimeSource, AnimeHttpSource() {
             if (embedUrl.contains("streamtape")) {
                 StreamTapeExtractor(client).videoFromUrl(url)?.also(videoList::add)
             }
+            if (embedUrl.contains("filelions") || embedUrl.contains("lion")) {
+                StreamWishExtractor(client, headers).videosFromUrl(url, videoNameGen = { "FileLions:$it" }).also(videoList::addAll)
+            }
         } catch (_: Exception) {}
         return videoList
     }
@@ -406,11 +409,11 @@ class AnimeMovil : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
-            key = PREF_SERVER_KEY
-            title = "Preferred server"
-            entries = SERVER_LIST
-            entryValues = SERVER_LIST
-            setDefaultValue(PREF_SERVER_DEFAULT)
+            key = PREF_QUALITY_KEY
+            title = "Preferred quality"
+            entries = QUALITY_LIST
+            entryValues = QUALITY_LIST
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -422,11 +425,11 @@ class AnimeMovil : ConfigurableAnimeSource, AnimeHttpSource() {
         }.also(screen::addPreference)
 
         ListPreference(screen.context).apply {
-            key = PREF_QUALITY_KEY
-            title = "Preferred quality"
-            entries = QUALITY_LIST
-            entryValues = QUALITY_LIST
-            setDefaultValue(PREF_QUALITY_DEFAULT)
+            key = PREF_SERVER_KEY
+            title = "Preferred server"
+            entries = SERVER_LIST
+            entryValues = SERVER_LIST
+            setDefaultValue(PREF_SERVER_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
