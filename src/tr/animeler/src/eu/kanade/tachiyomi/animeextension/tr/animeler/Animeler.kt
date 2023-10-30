@@ -227,6 +227,10 @@ class Animeler : AnimeHttpSource(), ConfigurableAnimeSource {
         val doc = response.use { it.asJsoup() }
         val iframeUrl = doc.selectFirst("div.episode-player-box > iframe")
             ?.attr("src")
+            ?: doc.selectFirst("script:containsData(embedUrl)")
+                ?.data()
+                ?.substringAfter("\"embedUrl\": \"")
+                ?.substringBefore('"')
             ?: throw Exception("No video available.")
 
         val playerBody = { it: String ->
