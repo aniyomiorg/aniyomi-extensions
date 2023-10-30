@@ -19,7 +19,7 @@ class ChillxExtractor(private val client: OkHttpClient, private val headers: Hea
     private val playlistUtils by lazy { PlaylistUtils(client, headers) }
 
     companion object {
-        private val REGEX_MASTER_JS by lazy { Regex("""JScript\s*=\s*'([^']+)""") }
+        private val REGEX_MASTER_JS by lazy { Regex("""JScript[\w+]?\s*=\s*'([^']+)""") }
         private val REGEX_EVAL_KEY by lazy { Regex("""eval\(\S+\("(\S+)",\d+,"(\S+)",(\d+),(\d+),""") }
         private val REGEX_SOURCES by lazy { Regex("""sources:\s*\[\{"file":"([^"]+)""") }
         private val REGEX_FILE by lazy { Regex("""file: ?"([^"]+)"""") }
