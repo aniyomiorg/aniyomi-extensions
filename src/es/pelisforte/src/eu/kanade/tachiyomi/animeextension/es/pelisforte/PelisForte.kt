@@ -62,8 +62,8 @@ open class PelisForte : ConfigurableAnimeSource, AnimeHttpSource() {
         private const val PREF_SERVER_KEY = "preferred_server"
         private const val PREF_SERVER_DEFAULT = "StreamWish"
         private val SERVER_LIST = arrayOf(
-            "YourUpload", "BurstCloud", "Voe", "Mp4Upload", "Doodstream",
-            "Upload", "BurstCloud", "Upstream", "StreamTape", "Doodstream",
+            "YourUpload", "Voe", "Mp4Upload", "Doodstream",
+            "Upload", "BurstCloud", "Upstream", "StreamTape",
             "Fastream", "Filemoon", "StreamWish", "Okru",
         )
     }
@@ -183,7 +183,7 @@ open class PelisForte : ConfigurableAnimeSource, AnimeHttpSource() {
         val embedUrl = url.lowercase()
         try {
             if (embedUrl.contains("voe")) {
-                VoeExtractor(client).videoFromUrl(url, "${prefix}Voe")?.let { videoList.add(it) }
+                VoeExtractor(client).videoFromUrl(url, prefix = "${prefix}Voe:")?.let { videoList.add(it) }
             }
             if (embedUrl.contains("ok.ru") || embedUrl.contains("okru")) {
                 OkruExtractor(client).videosFromUrl(url, prefix).also(videoList::addAll)
@@ -203,7 +203,7 @@ open class PelisForte : ConfigurableAnimeSource, AnimeHttpSource() {
                 val docHeaders = headers.newBuilder()
                     .add("Referer", referer)
                     .build()
-                StreamWishExtractor(client, docHeaders).videosFromUrl(url, "${prefix}StreamWish").also(videoList::addAll)
+                StreamWishExtractor(client, docHeaders).videosFromUrl(url, videoNameGen = { "${prefix}StreamWish:$it" }).also(videoList::addAll)
             }
             if (embedUrl.contains("doodstream") || embedUrl.contains("dood.")) {
                 DoodExtractor(client).videoFromUrl(url, "${prefix}DoodStream", false)?.let { videoList.add(it) }
@@ -283,6 +283,22 @@ open class PelisForte : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
+            key = PREF_LANGUAGE_KEY
+            title = "Preferred language"
+            entries = LANGUAGE_LIST
+            entryValues = LANGUAGE_LIST
+            setDefaultValue(PREF_LANGUAGE_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
             key = PREF_QUALITY_KEY
             title = "Preferred quality"
             entries = QUALITY_LIST
@@ -304,22 +320,6 @@ open class PelisForte : ConfigurableAnimeSource, AnimeHttpSource() {
             entries = SERVER_LIST
             entryValues = SERVER_LIST
             setDefaultValue(PREF_SERVER_DEFAULT)
-            summary = "%s"
-
-            setOnPreferenceChangeListener { _, newValue ->
-                val selected = newValue as String
-                val index = findIndexOfValue(selected)
-                val entry = entryValues[index] as String
-                preferences.edit().putString(key, entry).commit()
-            }
-        }.also(screen::addPreference)
-
-        ListPreference(screen.context).apply {
-            key = PREF_LANGUAGE_KEY
-            title = "Preferred server"
-            entries = LANGUAGE_LIST
-            entryValues = LANGUAGE_LIST
-            setDefaultValue(PREF_LANGUAGE_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->

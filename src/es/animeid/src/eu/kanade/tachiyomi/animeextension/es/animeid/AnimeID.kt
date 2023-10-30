@@ -28,7 +28,6 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
-import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -52,7 +51,7 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String = "#result article.item"
 
-    override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/series?sort=newest&pag=$page")
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/series?sort=views&pag=$page")
 
     override fun popularAnimeFromElement(element: Element): SAnime {
         val anime = SAnime.create()
@@ -65,12 +64,11 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeNextPageSelector(): String = "#paginas ul li:nth-last-child(2) a"
 
-    // override fun episodeListSelector() = "ul.ListCaps li a"
     override fun episodeListSelector() = throw Exception("not used")
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
-        var animeId = document.select("#ord").attr("data-id")
+        val animeId = document.select("#ord").attr("data-id")
         return episodeJsonParse(response.request.url.toString(), animeId)
     }
 
@@ -86,15 +84,15 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 .set("Accept-Language", "es-MX,es-419;q=0.9,es;q=0.8,en;q=0.7")
                 .build()
 
-            var responseString = client.newCall(GET("https://www.animeid.tv/ajax/caps?id=$animeId&ord=DESC&pag=$nextPage", headers))
+            val responseString = client.newCall(GET("https://www.animeid.tv/ajax/caps?id=$animeId&ord=DESC&pag=$nextPage", headers))
                 .execute().asJsoup().body()!!.toString().substringAfter("<body>").substringBefore("</body>")
             val jObject = json.decodeFromString<JsonObject>(responseString)
-            var listCaps = jObject["list"]!!.jsonArray
+            val listCaps = jObject["list"]!!.jsonArray
             listCaps!!.forEach { cap ->
-                var capParsed = cap.jsonObject
+                val capParsed = cap.jsonObject
                 val epNum = capParsed["numero"]!!.jsonPrimitive.content!!.toFloat()
                 val episode = SEpisode.create()
-                var dateUpload = manualDateParse(capParsed["date"]!!.jsonPrimitive.content!!.toString())
+                val dateUpload = manualDateParse(capParsed["date"]!!.jsonPrimitive.content!!.toString())
                 episode.episode_number = epNum
                 episode.name = "Episodio $epNum"
                 dateUpload!!.also { episode.date_upload = it }
@@ -126,28 +124,17 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         val document = response.asJsoup()
         val videoList = mutableListOf<Video>()
         document.select("#partes div.container li.subtab div.parte").forEach { script ->
-            var jsonString = script.attr("data")
+            val jsonString = script.attr("data")
             val jsonUnescape = unescapeJava(jsonString)!!.replace("\\", "")
-            val url = jsonUnescape!!.substringAfter("src=\"").substringBefore("\"").replace("\\\\", "\\")
-            val quality = getDomainName(url)
-            if (quality == "streamtape") {
-                val video = StreamTapeExtractor(client).videoFromUrl(url, "Streamtape")
-                if (video != null) {
-                    videoList.add(video)
-                }
+            val url = jsonUnescape.substringAfter("src=\"").substringBefore("\"").replace("\\\\", "\\")
+            if (url.contains("streamtape")) {
+                StreamTapeExtractor(client).videoFromUrl(url)?.let { videoList.add(it) }
             }
         }
         return videoList
     }
 
-    private fun getDomainName(url: String?): String? {
-        val uri = URI(url)
-        val domain: String = uri.host
-        val preDomain = if (domain.startsWith("www.")) domain.substring(4)!!.split(".") else domain!!.split(".")
-        return if (preDomain.count() == 3) preDomain[1] else preDomain[0]
-    }
-
-    private fun unescapeJava(escaped: String): String? {
+    private fun unescapeJava(escaped: String): String {
         var escaped = escaped
         if (escaped.indexOf("\\u") == -1) return escaped
         var processed = ""
@@ -165,9 +152,7 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun animeDetailsParse(document: Document): SAnime {
         val anime = SAnime.create()
-        anime.thumbnail_url = externalOrInternalImg(
-            document.selectFirst("#anime figure img.cover")!!.attr("src"),
-        )
+        anime.thumbnail_url = document.selectFirst("#anime figure img.cover")!!.attr("abs:src")
         anime.title = document.selectFirst("#anime section hgroup h1")!!.text()
         anime.description = document.selectFirst("#anime section p.sinopsis")!!.text().removeSurrounding("\"")
         anime.genre = document.select("#anime section ul.tags li a").joinToString { it.text() }
@@ -181,37 +166,17 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun videoFromElement(element: Element) = throw Exception("not used")
 
-    override fun List<Video>.sort(): List<Video> {
-        return try {
-            val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
-            ).toTypedArray()
-            val userPreferredQuality = preferences.getString("preferred_quality", "StreamTape")
-            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
-            if (preferredIdx != -1) {
-                videoSorted.drop(preferredIdx + 1)
-                videoSorted[0] = videoSorted[preferredIdx]
-            }
-            videoSorted.toList()
-        } catch (e: Exception) {
-            this
-        }
-    }
-
-    private fun getNumberFromString(epsStr: String): String {
-        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
-    }
-
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
         val genreFilter = filterList.find { it is GenreFilter } as GenreFilter
+        val orderByFilter = filters.find { it is OrderByFilter } as OrderByFilter
 
-        var request = when {
-            query.isNotBlank() -> GET("$baseUrl/buscar?q=$query&pag=$page&sort=newest")
-            genreFilter.state != 0 -> GET("$baseUrl/genero/${genreFilter.toUriPart()}?pag=$page&sort=newest")
-            else -> GET("$baseUrl/series?sort=newest&pag=$page")
+        return when {
+            query.isNotBlank() -> GET("$baseUrl/buscar?q=$query&pag=$page&sort=${orderByFilter.toUriPart()}")
+            genreFilter.state != 0 -> GET("$baseUrl/genero/${genreFilter.toUriPart()}?pag=$page&sort=${orderByFilter.toUriPart()}")
+            orderByFilter.state != 0 -> GET("$baseUrl/series?sort=${orderByFilter.toUriPart()}&pag=$page")
+            else -> popularAnimeRequest(page)
         }
-        return request
     }
 
     override fun searchAnimeFromElement(element: Element): SAnime = popularAnimeFromElement(element)
@@ -223,10 +188,11 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
         AnimeFilter.Header("La busqueda por texto ignora el filtro"),
         GenreFilter(),
+        OrderByFilter(),
     )
 
     private class GenreFilter : UriPartFilter(
-        "Generos",
+        "Géneros",
         arrayOf(
             Pair("<Selecionar>", ""),
             Pair("+18", "18"),
@@ -356,9 +322,15 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         fun toUriPart() = vals[state].second
     }
 
-    private fun externalOrInternalImg(url: String): String {
-        return if (url.contains("https")) url else "$baseUrl/$url"
-    }
+    private class OrderByFilter : UriPartFilter(
+        "Ordenar Por",
+        arrayOf(
+            Pair("<Seleccionar>", ""),
+            Pair("Recientes", "newest"),
+            Pair("A-Z", "asc"),
+            Pair("Más vistos", "views"),
+        ),
+    )
 
     private fun parseStatus(statusString: String): Int {
         return when {
@@ -372,17 +344,17 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
 
-    override fun latestUpdatesRequest(page: Int) = popularAnimeRequest(page)
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/series?sort=newest&pag=$page")
 
     override fun latestUpdatesSelector() = popularAnimeSelector()
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val videoQualityPref = ListPreference(screen.context).apply {
+        ListPreference(screen.context).apply {
             key = "preferred_quality"
-            title = "Preferred quality"
-            entries = arrayOf("Stape", "Streamtape", "hd", "sd", "low", "lowest", "mobile")
-            entryValues = arrayOf("Stape", "Streamtape", "hd", "sd", "low", "lowest", "mobile")
-            setDefaultValue("Streamtape")
+            title = "Preferred server"
+            entries = arrayOf("StreamTape")
+            entryValues = arrayOf("StreamTape")
+            setDefaultValue("StreamTape")
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -391,7 +363,6 @@ class AnimeID : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
     }
 }

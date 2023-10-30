@@ -12,14 +12,14 @@ import eu.kanade.tachiyomi.animesource.model.AnimesPage
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
-import eu.kanade.tachiyomi.animesource.online.ParsedAnimeHttpSource
+import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.lib.filemoonextractor.FilemoonExtractor
 import eu.kanade.tachiyomi.lib.okruextractor.OkruExtractor
 import eu.kanade.tachiyomi.lib.streamtapeextractor.StreamTapeExtractor
+import eu.kanade.tachiyomi.lib.streamwishextractor.StreamWishExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -27,16 +27,15 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.nodes.Document
-import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 
-class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
+class AnimeLatinoHD : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val name = "AnimeLatinoHD"
 
@@ -54,13 +53,31 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun popularAnimeSelector(): String = "#__next main[class*='Animes_container'] div[class*='ListAnimes_box'] div[class*='ListAnimes'] div[class*='AnimeCard_anime']"
+    companion object {
+        const val PREF_QUALITY_KEY = "preferred_quality"
+        const val PREF_QUALITY_DEFAULT = "1080"
+        private val QUALITY_LIST = arrayOf("1080", "720", "480", "360")
+
+        private const val PREF_SERVER_KEY = "preferred_server"
+        private const val PREF_SERVER_DEFAULT = "FileLions"
+        private val SERVER_LIST = arrayOf(
+            "YourUpload", "BurstCloud", "Voe", "Mp4Upload", "Doodstream",
+            "Upload", "BurstCloud", "Upstream", "StreamTape", "Amazon",
+            "Fastream", "Filemoon", "StreamWish", "Okru", "Streamlare",
+            "FileLions", "StreamHideVid", "SolidFiles", "Od.lk", "CldUp",
+        )
+
+        private const val PREF_LANGUAGE_KEY = "preferred_language"
+        private const val PREF_LANGUAGE_DEFAULT = "[LAT]"
+        private val LANGUAGE_LIST = arrayOf("[LAT]", "[SUB]")
+    }
 
     override fun popularAnimeRequest(page: Int): Request = GET("$baseUrl/animes/populares")
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
         val animeList = mutableListOf<SAnime>()
+        val url = response.request.url.toString().lowercase()
         val hasNextPage = document.select("#__next > main > div > div[class*=\"Animes_paginate\"] a:last-child svg").any()
         document.select("script").forEach { script ->
             if (script.data().contains("{\"props\":{\"pageProps\":")) {
@@ -68,23 +85,35 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val props = jObject["props"]!!.jsonObject
                 val pageProps = props["pageProps"]!!.jsonObject
                 val data = pageProps["data"]!!.jsonObject
-                val popularToday = data["popular_today"]!!.jsonArray
-                popularToday.forEach { item ->
-                    val animeItem = item!!.jsonObject
-                    val anime = SAnime.create()
-                    anime.setUrlWithoutDomain(externalOrInternalImg("anime/${animeItem["slug"]!!.jsonPrimitive!!.content}"))
-                    anime.thumbnail_url = "https://image.tmdb.org/t/p/w200${animeItem["poster"]!!.jsonPrimitive!!.content}"
-                    anime.title = animeItem["name"]!!.jsonPrimitive!!.content
-                    animeList.add(anime)
+                if (url.contains("status=1")) {
+                    val latestData = data["data"]!!.jsonArray
+                    latestData.forEach { item ->
+                        val animeItem = item!!.jsonObject
+                        val anime = SAnime.create()
+                        anime.setUrlWithoutDomain(externalOrInternalImg("anime/${animeItem["slug"]!!.jsonPrimitive!!.content}"))
+                        anime.thumbnail_url = "https://image.tmdb.org/t/p/w200${animeItem["poster"]!!.jsonPrimitive!!.content}"
+                        anime.title = animeItem["name"]!!.jsonPrimitive!!.content
+                        animeList.add(anime)
+                    }
+                } else {
+                    val popularToday = data["popular_today"]!!.jsonArray
+                    popularToday.forEach { item ->
+                        val animeItem = item!!.jsonObject
+                        val anime = SAnime.create()
+                        anime.setUrlWithoutDomain(externalOrInternalImg("anime/${animeItem["slug"]!!.jsonPrimitive!!.content}"))
+                        anime.thumbnail_url = "https://image.tmdb.org/t/p/w200${animeItem["poster"]!!.jsonPrimitive!!.content}"
+                        anime.title = animeItem["name"]!!.jsonPrimitive!!.content
+                        animeList.add(anime)
+                    }
                 }
             }
         }
         return AnimesPage(animeList, hasNextPage)
     }
 
-    override fun popularAnimeFromElement(element: Element) = throw Exception("not used")
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/animes?page=$page&status=1")
 
-    override fun popularAnimeNextPageSelector(): String = "uwu"
+    override fun latestUpdatesParse(response: Response) = popularAnimeParse(response)
 
     override fun animeDetailsParse(response: Response): SAnime {
         val document = response.asJsoup()
@@ -106,8 +135,6 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         return newAnime
     }
-
-    override fun animeDetailsParse(document: Document) = throw Exception("not used")
 
     override fun episodeListParse(response: Response): List<SEpisode> {
         val document = response.asJsoup()
@@ -132,12 +159,8 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return episodeList
     }
 
-    override fun episodeListSelector() = "uwu"
-
-    override fun episodeFromElement(element: Element) = throw Exception("not used")
-
     private fun parseJsonArray(json: JsonElement?): List<JsonElement> {
-        var list = mutableListOf<JsonElement>()
+        val list = mutableListOf<JsonElement>()
         json!!.jsonObject!!.entries!!.forEach { list.add(it.value) }
         return list
     }
@@ -175,35 +198,29 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         ).execute()
                         val locationsDdh = request!!.networkResponse.toString()
                         fetchUrls(locationsDdh).map { url ->
-                            val language = if (item["languaje"]!!.jsonPrimitive!!.content == "1") "[Lat] " else "[Sub] "
+                            val language = if (item["languaje"]!!.jsonPrimitive!!.content == "1") "[LAT]" else "[SUB]"
                             val embedUrl = url.lowercase()
                             if (embedUrl.contains("filemoon")) {
-                                FilemoonExtractor(client).videosFromUrl(url, language)
-                                    .also(videoList::addAll)
+                                val vidHeaders = headers.newBuilder()
+                                    .add("Origin", "https://${url.toHttpUrl().host}")
+                                    .add("Referer", "https://${url.toHttpUrl().host}/")
+                                    .build()
+                                FilemoonExtractor(client).videosFromUrl(url, prefix = "$language Filemoon:", headers = vidHeaders).also(videoList::addAll)
+                            }
+                            if (embedUrl.contains("filelions") || embedUrl.contains("lion")) {
+                                StreamWishExtractor(client, headers).videosFromUrl(url, videoNameGen = { "$language FileLions:$it" }).also(videoList::addAll)
                             }
                             if (embedUrl.contains("streamtape")) {
-                                val video = StreamTapeExtractor(client).videoFromUrl(url, language + "Streamtape")
-                                if (video != null) {
-                                    videoList.add(video)
-                                }
+                                StreamTapeExtractor(client).videoFromUrl(url, "$language Streamtape")?.let { videoList.add(it) }
                             }
                             if (embedUrl.contains("dood")) {
-                                val video = try {
-                                    DoodExtractor(client).videoFromUrl(url, language + "DoodStream")
-                                } catch (e: Exception) {
-                                    null
-                                }
-                                if (video != null) {
-                                    videoList.add(video)
-                                }
+                                DoodExtractor(client).videoFromUrl(url, "$language DoodStream")?.let { videoList.add(it) }
                             }
                             if (embedUrl.contains("okru") || embedUrl.contains("ok.ru")) {
-                                val videos = OkruExtractor(client).videosFromUrl(url, language)
-                                videoList.addAll(videos)
+                                OkruExtractor(client).videosFromUrl(url, language).also(videoList::addAll)
                             }
                             if (embedUrl.contains("solidfiles")) {
-                                val videos = SolidFilesExtractor(client).videosFromUrl(url, language)
-                                videoList.addAll(videos)
+                                SolidFilesExtractor(client).videosFromUrl(url, language).also(videoList::addAll)
                             }
                             if (embedUrl.contains("od.lk")) {
                                 videoList.add(Video(url, language + "Od.lk", url))
@@ -219,31 +236,18 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return videoList
     }
 
-    override fun videoListSelector() = throw Exception("not used")
-
-    override fun videoUrlParse(document: Document) = throw Exception("not used")
-
-    override fun videoFromElement(element: Element) = throw Exception("not used")
-
     override fun List<Video>.sort(): List<Video> {
-        return try {
-            val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
-            ).toTypedArray()
-            val userPreferredQuality = preferences.getString("preferred_quality", "[Sub] Okru:720p")
-            val preferredIdx = videoSorted.indexOfFirst { x -> x.quality == userPreferredQuality }
-            if (preferredIdx != -1) {
-                videoSorted.drop(preferredIdx + 1)
-                videoSorted[0] = videoSorted[preferredIdx]
-            }
-            videoSorted.toList()
-        } catch (e: Exception) {
-            this
-        }
-    }
-
-    private fun getNumberFromString(epsStr: String): String {
-        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
+        val lang = preferences.getString(PREF_LANGUAGE_KEY, PREF_LANGUAGE_DEFAULT)!!
+        return this.sortedWith(
+            compareBy(
+                { it.quality.contains(lang) },
+                { it.quality.contains(server, true) },
+                { it.quality.contains(quality) },
+                { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
+            ),
+        ).reversed()
     }
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
@@ -268,10 +272,6 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         TypeFilter(),
     )
 
-    override fun searchAnimeFromElement(element: Element): SAnime {
-        return popularAnimeFromElement(element)
-    }
-
     override fun searchAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
         val animeList = mutableListOf<SAnime>()
@@ -295,10 +295,6 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
         return AnimesPage(animeList, hasNextPage)
     }
-
-    override fun searchAnimeNextPageSelector(): String = popularAnimeNextPageSelector()
-
-    override fun searchAnimeSelector(): String = popularAnimeSelector()
 
     private class GenreFilter : UriPartFilter(
         "Géneros",
@@ -390,32 +386,13 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         }
     }
 
-    override fun latestUpdatesSelector() = popularAnimeSelector()
-
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/animes?page=$page&status=1")
-
-    override fun latestUpdatesParse(response: Response) = popularAnimeParse(response)
-
-    override fun latestUpdatesFromElement(element: Element) = popularAnimeFromElement(element)
-
-    override fun latestUpdatesNextPageSelector() = popularAnimeNextPageSelector()
-
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val options = arrayOf(
-            "[Sub] Okru:1080p", "[Sub] Okru:720p", "[Sub] Okru:480p", "[Sub] Okru:360p", "[Sub] Okru:240p", // Okru [Sub]
-            "[Lat] Okru:1080p", "[Lat] Okru:720p", "[Lat] Okru:480p", "[Lat] Okru:360p", "[Lat] Okru:240p", // Okru [Lat]
-            "[Sub] StreamTape", "[Lat] StreamTape", // video servers without resolution
-            "[Sub] DoodStream", "[Lat] DoodStream", // video servers without resolution
-            "[Sub] SolidFiles", "[Lat] SolidFiles", // video servers without resolution
-            "[Sub] Od.lk", "[Lat] Od.lk", // video servers without resolution
-            "[Sub] CldUp", "[Lat] CldUp",
-        ) // video servers without resolution
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = options
-            entryValues = options
-            setDefaultValue("[Sub] Okru:720p")
+        ListPreference(screen.context).apply {
+            key = PREF_LANGUAGE_KEY
+            title = "Preferred language"
+            entries = LANGUAGE_LIST
+            entryValues = LANGUAGE_LIST
+            setDefaultValue(PREF_LANGUAGE_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -424,7 +401,38 @@ class AnimeLatinoHD : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = "Preferred quality"
+            entries = QUALITY_LIST
+            entryValues = QUALITY_LIST
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_SERVER_KEY
+            title = "Preferred server"
+            entries = SERVER_LIST
+            entryValues = SERVER_LIST
+            setDefaultValue(PREF_SERVER_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
     }
 }

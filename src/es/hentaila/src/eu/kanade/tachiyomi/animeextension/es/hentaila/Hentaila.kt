@@ -31,6 +31,8 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.io.IOException
 import java.lang.Exception
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
 
@@ -50,35 +52,42 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
-    override fun popularAnimeRequest(page: Int) = GET(baseUrl, headers)
+    companion object {
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
+        private val QUALITY_LIST = arrayOf("1080", "720", "480", "360")
+
+        private const val PREF_SERVER_KEY = "preferred_server"
+        private const val PREF_SERVER_DEFAULT = "Voe"
+        private val SERVER_LIST = arrayOf(
+            "StreamWish",
+            "Voe",
+            "Arc",
+            "YourUpload",
+            "Mp4Upload",
+            "BurstCloud",
+        )
+    }
+
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/directorio?filter=popular&p=$page", headers)
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val document = response.asJsoup()
-        val elements = document.select("section.latest-hentais div.slider > div.item")
-        val animes = elements.map { element ->
-            SAnime.create().apply {
-                setUrlWithoutDomain(element.select("h2.h-title a").attr("abs:href"))
-                title = element.selectFirst("h2.h-title a")!!.text()
-                thumbnail_url = element.selectFirst("figure.bg img")!!.attr("abs:src").replace("/fondos/", "/portadas/")
-            }
-        }
-        return AnimesPage(animes, false)
-    }
-
-    override fun latestUpdatesRequest(page: Int) = GET(baseUrl, headers)
-
-    override fun latestUpdatesParse(response: Response): AnimesPage {
-        val document = response.asJsoup()
-        val elements = document.select("section.hentai-list div.hentais article.hentai")
-        val animes = elements.map { element ->
+        val elements = document.select(".hentais .hentai")
+        val nextPage = document.select(".pagination .fa-arrow-right").any()
+        val animeList = elements.map { element ->
             SAnime.create().apply {
                 setUrlWithoutDomain(element.select("a").attr("abs:href"))
-                title = element.selectFirst("h2.h-title")!!.text()
-                thumbnail_url = element.selectFirst("figure img")!!.attr("abs:src")
+                title = element.selectFirst(".h-header .h-title")!!.text()
+                thumbnail_url = element.selectFirst(".h-thumb img")!!.attr("abs:src").replace("/fondos/", "/portadas/")
             }
         }
-        return AnimesPage(animes, false)
+        return AnimesPage(animeList, nextPage)
     }
+
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/directorio?filter=recent&p=$page", headers)
+
+    override fun latestUpdatesParse(response: Response) = popularAnimeParse(response)
 
     override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
         val filterList = if (filters.isEmpty()) getFilterList() else filters
@@ -146,7 +155,7 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
             }
         }
 
-        val hasNextPage = document.select("a.btn.rnd.npd.fa-arrow-right").isEmpty().not()
+        val hasNextPage = document.select("a.btn.rnd.npd.fa-arrow-right").any()
 
         return AnimesPage(animes, hasNextPage)
     }
@@ -179,6 +188,10 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
                 episode_number = epNum.toFloat()
                 name = "Episodio $epNum"
                 url = "/ver/$animeId-$epNum"
+                date_upload = try {
+                    val date = it.select(".h-header time").text()
+                    SimpleDateFormat("MMMMM dd, yyyy", Locale.ENGLISH).parse(date).time
+                } catch (_: Exception) { System.currentTimeMillis() }
             }
             episodes.add(episode)
         }
@@ -199,10 +212,10 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
 
             when (nameServer.lowercase()) {
                 "streamwish" -> {
-                    videoList.addAll(StreamWishExtractor(client, headers).videosFromUrl(urlServer, "StreamWish "))
+                    videoList.addAll(StreamWishExtractor(client, headers).videosFromUrl(urlServer, videoNameGen = { "StreamWish:$it" }))
                 }
                 "voe" -> {
-                    val video = VoeExtractor(client).videoFromUrl(urlServer)
+                    val video = VoeExtractor(client).videoFromUrl(urlServer, prefix = "Voe:")
                     if (video != null) videoList.add(video)
                 }
                 "arc" -> {
@@ -225,29 +238,15 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun List<Video>.sort(): List<Video> {
-        return try {
-            val videoSorted = this.sortedWith(
-                compareBy<Video> { it.quality.replace("[0-9]".toRegex(), "") }.thenByDescending { getNumberFromString(it.quality) },
-            ).toMutableList()
-            val userPreferredQuality = preferences.getString("preferred_quality", "YourUpload")
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in videoSorted) {
-                if (video.quality.startsWith(userPreferredQuality!!)) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            newList.toList()
-        } catch (e: Exception) {
-            this
-        }
-    }
-
-    private fun getNumberFromString(epsStr: String): Int {
-        return epsStr.filter { it.isDigit() }.ifEmpty { "0" }.toInt()
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
+        return this.sortedWith(
+            compareBy(
+                { it.quality.contains(server, true) },
+                { it.quality.contains(quality) },
+                { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
+            ),
+        ).reversed()
     }
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
@@ -321,19 +320,12 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val qualities = arrayOf(
-            "YourUpload",
-            "BurstCloud",
-            "Voe",
-            "StreamWish",
-            "Mp4Upload",
-        )
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
-            title = "Preferred quality"
-            entries = qualities
-            entryValues = qualities
-            setDefaultValue("YourUpload")
+        ListPreference(screen.context).apply {
+            key = PREF_SERVER_KEY
+            title = "Preferred server"
+            entries = SERVER_LIST
+            entryValues = SERVER_LIST
+            setDefaultValue(PREF_SERVER_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -342,7 +334,22 @@ class Hentaila : ConfigurableAnimeSource, AnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
+            title = "Preferred quality"
+            entries = QUALITY_LIST
+            entryValues = QUALITY_LIST
+            setDefaultValue(PREF_QUALITY_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
     }
 }

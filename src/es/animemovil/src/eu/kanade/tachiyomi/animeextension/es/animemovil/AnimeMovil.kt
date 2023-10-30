@@ -58,6 +58,21 @@ class AnimeMovil : ConfigurableAnimeSource, AnimeHttpSource() {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
+    companion object {
+        private const val PREF_QUALITY_KEY = "preferred_quality"
+        private const val PREF_QUALITY_DEFAULT = "1080"
+        private val QUALITY_LIST = arrayOf("1080", "720", "480", "360")
+
+        private const val PREF_SERVER_KEY = "preferred_server"
+        private const val PREF_SERVER_DEFAULT = "Voe"
+        private val SERVER_LIST = arrayOf(
+            "PlusTube", "PlusVid", "PlusIm", "PlusWish", "PlusHub", "PlusDex",
+            "YourUpload", "Voe", "StreamWish", "Mp4Upload", "Doodstream",
+            "Uqload", "BurstCloud", "Upstream", "StreamTape", "PlusFilm",
+            "Fastream", "FileLions"
+        )
+    }
+
     override fun popularAnimeRequest(page: Int) = GET("$baseUrl/directorio/?p=$page", headers)
 
     override fun popularAnimeParse(response: Response): AnimesPage {
@@ -203,7 +218,7 @@ class AnimeMovil : ConfigurableAnimeSource, AnimeHttpSource() {
                                 videoList.add(Video(fileSrc, "$serverName:HLS", fileSrc, headers = null))
                             }
                             if (fileSrc.contains(".mp4")) {
-                                videoList.add(Video(fileSrc, serverName, fileSrc, headers = null))
+                                videoList.add(Video(fileSrc, "$serverName:MP4", fileSrc, headers = null))
                             }
                         }
                     } else {
@@ -222,65 +237,62 @@ class AnimeMovil : ConfigurableAnimeSource, AnimeHttpSource() {
         val embedUrl = url.lowercase()
         try {
             if (embedUrl.contains("voe")) {
-                VoeExtractor(client).videoFromUrl(url, "Voe")?.let { videoList.add(it) }
+                VoeExtractor(client).videoFromUrl(url, prefix = "Voe:")?.let { videoList.add(it) }
             }
             if (embedUrl.contains("filemoon") || embedUrl.contains("moonplayer")) {
-                FilemoonExtractor(client).videosFromUrl(url).also(videoList::addAll)
+                FilemoonExtractor(client).videosFromUrl(url, prefix = "Filemoon:").also(videoList::addAll)
             }
             if (embedUrl.contains("uqload")) {
-                UqloadExtractor(client).videosFromUrl(url)
+                UqloadExtractor(client).videosFromUrl(url).also(videoList::addAll)
             }
             if (embedUrl.contains("mp4upload")) {
                 val newHeaders = headers.newBuilder().add("referer", "https://re.animepelix.net/").build()
-                Mp4uploadExtractor(client).videosFromUrl(url, newHeaders).let { videoList.addAll(it) }
+                Mp4uploadExtractor(client).videosFromUrl(url, newHeaders).also(videoList::addAll)
             }
             if (embedUrl.contains("wishembed") || embedUrl.contains("streamwish") || embedUrl.contains("wish")) {
                 val docHeaders = headers.newBuilder()
                     .add("Referer", "$baseUrl/")
                     .build()
-                StreamWishExtractor(client, docHeaders).videosFromUrl(url, "StreamWish")
+                StreamWishExtractor(client, docHeaders).videosFromUrl(url, videoNameGen = { "StreamWish:$it" }).also(videoList::addAll)
             }
             if (embedUrl.contains("doodstream") || embedUrl.contains("dood.")) {
                 DoodExtractor(client).videoFromUrl(url, "DoodStream", false)?.let { videoList.add(it) }
             }
             if (embedUrl.contains("streamlare")) {
-                videoList.addAll(StreamlareExtractor(client).videosFromUrl(url))
+                StreamlareExtractor(client).videosFromUrl(url).also(videoList::addAll)
             }
             if (embedUrl.contains("yourupload")) {
-                YourUploadExtractor(client).videoFromUrl(url, headers = headers).let { videoList.addAll(it) }
+                YourUploadExtractor(client).videoFromUrl(url, headers = headers).also(videoList::addAll)
             }
             if (embedUrl.contains("burstcloud") || embedUrl.contains("burst")) {
-                BurstCloudExtractor(client).videoFromUrl(url, headers = headers).let { videoList.addAll(it) }
+                BurstCloudExtractor(client).videoFromUrl(url, headers = headers).also(videoList::addAll)
             }
             if (embedUrl.contains("fastream")) {
-                FastreamExtractor(client).videoFromUrl(url).forEach { videoList.add(it) }
+                FastreamExtractor(client).videoFromUrl(url).also(videoList::addAll)
             }
             if (embedUrl.contains("upstream")) {
-                UpstreamExtractor(client).videosFromUrl(url).let { videoList.addAll(it) }
+                UpstreamExtractor(client).videosFromUrl(url).also(videoList::addAll)
             }
             if (embedUrl.contains("streamtape")) {
-                StreamTapeExtractor(client).videoFromUrl(url)?.let { videoList.add(it) }
+                StreamTapeExtractor(client).videoFromUrl(url)?.also(videoList::add)
+            }
+            if (embedUrl.contains("filelions") || embedUrl.contains("lion")) {
+                StreamWishExtractor(client, headers).videosFromUrl(url, videoNameGen = { "FileLions:$it" }).also(videoList::addAll)
             }
         } catch (_: Exception) {}
         return videoList
     }
 
     override fun List<Video>.sort(): List<Video> {
-        val quality = preferences.getString("preferred_quality", "Voe")
-        if (quality != null) {
-            val newList = mutableListOf<Video>()
-            var preferred = 0
-            for (video in this) {
-                if (video.quality == quality) {
-                    newList.add(preferred, video)
-                    preferred++
-                } else {
-                    newList.add(video)
-                }
-            }
-            return newList
-        }
-        return this
+        val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
+        val server = preferences.getString(PREF_SERVER_KEY, PREF_SERVER_DEFAULT)!!
+        return this.sortedWith(
+            compareBy(
+                { it.quality.contains(server, true) },
+                { it.quality.contains(quality) },
+                { Regex("""(\d+)p""").find(it.quality)?.groupValues?.get(1)?.toIntOrNull() ?: 0 },
+            ),
+        ).reversed()
     }
 
     override fun getFilterList(): AnimeFilterList = AnimeFilterList(
@@ -396,19 +408,12 @@ class AnimeMovil : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val qualities = arrayOf(
-            "PlusTube", "PlusVid", "PlusIm", "PlusWish", "PlusHub", "PlusDex",
-            "YourUpload", "BurstCloud", "Voe", "StreamWish", "Mp4Upload", "Doodstream",
-            "Upload", "BurstCloud", "Upstream", "StreamTape", "PlusFilm", "Doodstream",
-            "Fastream:1080p", "Fastream:720p", "Fastream:480p", "Fastream:360p",
-            "Filemoon:1080p", "Filemoon:720p", "Filemoon:480p", "Filemoon:360p",
-        )
-        val videoQualityPref = ListPreference(screen.context).apply {
-            key = "preferred_quality"
+        ListPreference(screen.context).apply {
+            key = PREF_QUALITY_KEY
             title = "Preferred quality"
-            entries = qualities
-            entryValues = qualities
-            setDefaultValue("Voe")
+            entries = QUALITY_LIST
+            entryValues = QUALITY_LIST
+            setDefaultValue(PREF_QUALITY_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -417,8 +422,23 @@ class AnimeMovil : ConfigurableAnimeSource, AnimeHttpSource() {
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(videoQualityPref)
+        }.also(screen::addPreference)
+
+        ListPreference(screen.context).apply {
+            key = PREF_SERVER_KEY
+            title = "Preferred server"
+            entries = SERVER_LIST
+            entryValues = SERVER_LIST
+            setDefaultValue(PREF_SERVER_DEFAULT)
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = findIndexOfValue(selected)
+                val entry = entryValues[index] as String
+                preferences.edit().putString(key, entry).commit()
+            }
+        }.also(screen::addPreference)
     }
 
     @Serializable

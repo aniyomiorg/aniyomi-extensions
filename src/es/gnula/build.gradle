@@ -5,7 +5,7 @@ ext {
     extName = 'Gnula'
     pkgNameSuffix = 'es.gnula'
     extClass = '.Gnula'
-    extVersionCode = 8
+    extVersionCode = 9
     libVersion = '13'
 }
 
@@ -15,6 +15,15 @@ dependencies {
     implementation project(path: ':lib-yourupload-extractor')
     implementation project(path: ':lib-voe-extractor')
     implementation project(path: ':lib-dood-extractor')
+    implementation(project(':lib-uqload-extractor'))
+    implementation(project(':lib-mp4upload-extractor'))
+    implementation(project(':lib-streamlare-extractor'))
+    implementation(project(':lib-fastream-extractor'))
+    implementation(project(':lib-upstream-extractor'))
+    implementation(project(':lib-burstcloud-extractor'))
+    implementation(project(':lib-streamhidevid-extractor'))
+    implementation(project(':lib-filemoon-extractor'))
+    implementation(project(':lib-streamwish-extractor'))
 }
 
 
