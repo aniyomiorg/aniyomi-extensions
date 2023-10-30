@@ -251,6 +251,9 @@ class CuevanaCh(override val name: String, override val baseUrl: String) : Confi
                     if (status == "200") { videoList.add(Video(file, "$prefix Tomatomatela", file, headers = null)) }
                 }
             }
+            if (embedUrl.contains("filelions") || embedUrl.contains("lion")) {
+                StreamWishExtractor(client, headers).videosFromUrl(url, videoNameGen = { "$prefix FileLions:$it" }).also(videoList::addAll)
+            }
         } catch (_: Exception) { }
         return videoList
     }
@@ -348,11 +351,11 @@ class CuevanaCh(override val name: String, override val baseUrl: String) : Confi
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
         ListPreference(screen.context).apply {
-            key = PREF_SERVER_KEY
-            title = "Preferred server"
-            entries = SERVER_LIST
-            entryValues = SERVER_LIST
-            setDefaultValue(PREF_SERVER_DEFAULT)
+            key = PREF_LANGUAGE_KEY
+            title = "Preferred language"
+            entries = LANGUAGE_LIST
+            entryValues = LANGUAGE_LIST
+            setDefaultValue(PREF_LANGUAGE_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
@@ -380,11 +383,11 @@ class CuevanaCh(override val name: String, override val baseUrl: String) : Confi
         }.also(screen::addPreference)
 
         ListPreference(screen.context).apply {
-            key = PREF_LANGUAGE_KEY
-            title = "Preferred language"
-            entries = LANGUAGE_LIST
-            entryValues = LANGUAGE_LIST
-            setDefaultValue(PREF_LANGUAGE_DEFAULT)
+            key = PREF_SERVER_KEY
+            title = "Preferred server"
+            entries = SERVER_LIST
+            entryValues = SERVER_LIST
+            setDefaultValue(PREF_SERVER_DEFAULT)
             summary = "%s"
 
             setOnPreferenceChangeListener { _, newValue ->
