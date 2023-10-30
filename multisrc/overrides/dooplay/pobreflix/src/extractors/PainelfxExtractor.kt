@@ -9,8 +9,12 @@ import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 
-class PainelfxExtractor(private val client: OkHttpClient) {
-    fun videosFromUrl(url: String, headers: Headers): List<Video> {
+class PainelfxExtractor(
+    private val client: OkHttpClient,
+    private val headers: Headers,
+    private val genericExtractor: (String, String) -> List<Video>,
+) {
+    fun videosFromUrl(url: String): List<Video> {
         val docHeaders = headers.newBuilder().set("Referer", "https://gastronomiabrasileira.net/").build()
         val doc = client.newCall(GET(url, docHeaders)).execute().use { it.asJsoup() }
         val lang = when (url.substringAfterLast("/")) {
@@ -61,7 +65,8 @@ class PainelfxExtractor(private val client: OkHttpClient) {
                 Video(videoUrl, "$lang - $quality", videoUrl, videoHeaders)
             }
         } else {
-            emptyList()
+            val url = decoded.substringAfter("\"url\":\"").substringBefore('"')
+            genericExtractor(url, lang)
         }
     }
 
