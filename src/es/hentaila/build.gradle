@@ -3,10 +3,10 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlinx-serialization'
 
 ext {
-    extName = 'Hentaila'
+    extName = 'HentaiLA'
     pkgNameSuffix = 'es.hentaila'
     extClass = '.Hentaila'
-    extVersionCode = 17
+    extVersionCode = 19
     libVersion = '13'
     containsNsfw = true
 }

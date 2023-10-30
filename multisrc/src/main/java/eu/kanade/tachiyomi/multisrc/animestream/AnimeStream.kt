@@ -349,8 +349,17 @@ abstract class AnimeStream(
             client.newCall(GET(encodedData, headers)).execute().use { it.asJsoup() }
         }
 
-        return doc.selectFirst("iframe[src~=.]")?.attr("abs:src")
-            ?: doc.selectFirst("meta[content~=.][itemprop=embedUrl]")!!.attr("abs:content")
+        return doc.selectFirst("iframe[src~=.]")?.safeUrl()
+            ?: doc.selectFirst("meta[content~=.][itemprop=embedUrl]")!!.safeUrl("content")
+    }
+
+    private fun Element.safeUrl(attribute: String = "src"): String {
+        val value = attr(attribute)
+        return when {
+            value.startsWith("http") -> value
+            value.startsWith("//") -> "https:$value"
+            else -> absUrl(attribute).ifEmpty { value }
+        }
     }
 
     protected open fun getVideoList(url: String, name: String): List<Video> {
