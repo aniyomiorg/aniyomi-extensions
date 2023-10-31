@@ -7,8 +7,8 @@ import okhttp3.OkHttpClient
 
 class VoeExtractor(private val client: OkHttpClient) {
     fun videoFromUrl(url: String, quality: String? = null, prefix: String = ""): Video? {
-        val document = client.newCall(GET(url)).execute().asJsoup()
-        val script = document.selectFirst("script:containsData(const sources),script:containsData(var sources)")
+        val document = client.newCall(GET(url)).execute().use { it.asJsoup() }
+        val script = document.selectFirst("script:containsData(const sources), script:containsData(var sources)")
             ?.data()
             ?: return null
         val videoUrl = script.substringAfter("hls': '").substringBefore("'")
@@ -18,5 +18,9 @@ class VoeExtractor(private val client: OkHttpClient) {
             else -> quality ?: "VoeCDN(${resolution}p)"
         }
         return Video(url, qualityStr, videoUrl)
+    }
+
+    fun videosFromUrl(url: String, quality: String? = null, prefix: String = ""): List<Video> {
+        return videoFromUrl(url, quality, prefix)?.let(::listOf).orEmpty()
     }
 }
