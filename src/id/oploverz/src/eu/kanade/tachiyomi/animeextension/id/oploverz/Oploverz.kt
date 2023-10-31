@@ -164,11 +164,15 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun hasNextPage(document: Document): Boolean {
-        val pagination = document.selectFirst("div.pagination")!!
-        val totalPage =
-            pagination.selectFirst("span:nth-child(1)")!!.text().split(" ").last().toInt()
-        val currentPage = pagination.selectFirst("span.page-numbers.current")!!.text().toInt()
-        return currentPage > totalPage
+        try {
+            val pagination = document.selectFirst("div.pagination")!!
+            val totalPage =
+                pagination.selectFirst("span:nth-child(1)")!!.text().split(" ").last().toInt()
+            val currentPage = pagination.selectFirst("span.page-numbers.current")!!.text().toInt()
+            return currentPage > totalPage
+        } catch (_: Exception) {
+            return false
+        }
     }
 
     private fun parseStatus(status: String?): Int {
