@@ -7,27 +7,33 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 
 class VkExtractor(private val client: OkHttpClient, private val headers: Headers) {
-    fun videosFromUrl(url: String, prefix: String = ""): List<Video> {
-        val documentHeaders = headers.newBuilder()
+    private val documentHeaders by lazy {
+        headers.newBuilder()
             .add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
-            .add("Host", "vk.com")
             .build()
+    }
 
-        val data = client.newCall(
-            GET(url, headers = documentHeaders),
-        ).execute().body.string()
+    private val videoHeaders by lazy {
+        headers.newBuilder()
+            .add("Accept", "*/*")
+            .add("Origin", VK_URL)
+            .add("Referer", "$VK_URL/")
+            .build()
+    }
 
-        val videoRegex = """"url(\d+)":"(.*?)"""".toRegex()
-        return videoRegex.findAll(data).map {
+    fun videosFromUrl(url: String, prefix: String = ""): List<Video> {
+        val data = client.newCall(GET(url, documentHeaders)).execute()
+            .use { it.body.string() }
+
+        return REGEX_VIDEO.findAll(data).map {
             val quality = it.groupValues[1]
             val videoUrl = it.groupValues[2].replace("\\/", "/")
-            val videoHeaders = headers.newBuilder()
-                .add("Accept", "*/*")
-                .add("Host", videoUrl.toHttpUrl().host)
-                .add("Origin", "https://vk.com")
-                .add("Referer", "https://vk.com/")
-                .build()
-            Video(videoUrl, "${prefix}vk.com - ${quality}p", videoUrl, headers = videoHeaders)
+            Video(videoUrl, "${prefix}vk.com - ${quality}p", videoUrl, videoHeaders)
         }.toList()
+    }
+
+    companion object {
+        private const val VK_URL = "https://vk.com"
+        private val REGEX_VIDEO = """"url(\d+)":"(.*?)"""".toRegex()
     }
 }
