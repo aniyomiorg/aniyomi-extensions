@@ -96,7 +96,7 @@ class Animeyt : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                     val key = url.split("/").last()
                     url = "https://fastream.to/embed-$key.html"
                 }
-                FastreamExtractor(client).videoFromUrl(url).forEach { videoList.add(it) }
+                FastreamExtractor(client, headers).videosFromUrl(url).also(videoList::addAll)
             }
         }
         return videoList

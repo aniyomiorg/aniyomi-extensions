@@ -69,7 +69,7 @@ class AnimeMovil : ConfigurableAnimeSource, AnimeHttpSource() {
             "PlusTube", "PlusVid", "PlusIm", "PlusWish", "PlusHub", "PlusDex",
             "YourUpload", "Voe", "StreamWish", "Mp4Upload", "Doodstream",
             "Uqload", "BurstCloud", "Upstream", "StreamTape", "PlusFilm",
-            "Fastream", "FileLions"
+            "Fastream", "FileLions",
         )
     }
 
@@ -268,7 +268,7 @@ class AnimeMovil : ConfigurableAnimeSource, AnimeHttpSource() {
                 BurstCloudExtractor(client).videoFromUrl(url, headers = headers).also(videoList::addAll)
             }
             if (embedUrl.contains("fastream")) {
-                FastreamExtractor(client).videoFromUrl(url).also(videoList::addAll)
+                FastreamExtractor(client, headers).videosFromUrl(url).also(videoList::addAll)
             }
             if (embedUrl.contains("upstream")) {
                 UpstreamExtractor(client).videosFromUrl(url).also(videoList::addAll)

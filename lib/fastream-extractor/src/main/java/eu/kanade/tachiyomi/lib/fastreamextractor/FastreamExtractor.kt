@@ -3,44 +3,61 @@ package eu.kanade.tachiyomi.lib.fastreamextractor
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.lib.playlistutils.PlaylistUtils
 import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.POST
+import okhttp3.FormBody
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.json.Json
 import okhttp3.Headers
 import okhttp3.OkHttpClient
-import uy.kohesive.injekt.injectLazy
+import okhttp3.internal.commonEmptyHeaders
+import dev.datlag.jsunpacker.JsUnpacker
 
-class FastreamExtractor(private val client: OkHttpClient) {
-    private val json: Json by injectLazy()
-    private fun fetchUrls(text: String?): List<String> {
-        if (text.isNullOrEmpty()) return listOf()
-        val linkRegex = "(http|ftp|https):\\/\\/([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:\\/~+#-]*[\\w@?^=%&\\/~+#-])".toRegex()
-        return linkRegex.findAll(text).map { it.value.trim().removeSurrounding("\"") }.toList()
+class FastreamExtractor(private val client: OkHttpClient, private val headers: Headers = commonEmptyHeaders) {
+    private val videoHeaders by lazy {
+        headers.newBuilder()
+            .set("Referer", "$FASTREAM_URL/")
+            .set("Origin", FASTREAM_URL)
+            .build()
     }
 
-    fun videoFromUrl(url: String, prefix: String = "Fastream:", headers: Headers? = null): List<Video> {
-        val videoList = mutableListOf<Video>()
-        try {
-            val document = client.newCall(GET(url)).execute().asJsoup()
-            val videoHeaders = (headers?.newBuilder() ?: Headers.Builder())
-                .set("Referer", "https://fastream.to/")
-                .set("Origin", "https://fastream.to")
-                .build()
-            document.select("script").forEach {
-                if (it!!.data().contains("jwplayer(jwplayer(\"vplayer\").setup({")) {
-                    val basicUrl = it.data().substringAfter("file: '").substringBefore("',")
-                    videoList.add(Video(basicUrl, prefix, basicUrl, headers = videoHeaders))
-                } else {
-                    val packedRegex = "eval\\(function\\(p,a,c,k,e,.*\\)\\)".toRegex()
-                    packedRegex.findAll(it.data()).map { packed -> packed.value }.toList().map { eval ->
-                        val unpack = JsUnpacker.unpack(eval)
-                        val serverRegex = "fastream.*?\\.m3u8([^&\">]?)".toRegex()
-                        fetchUrls(unpack.first()).filter { serverRegex.containsMatchIn(it) }.map { url ->
-                            PlaylistUtils(client, videoHeaders).extractFromHls(url, videoNameGen = { "$prefix$it" }).let { videoList.addAll(it) }
-                        }
-                    }
+    private val playlistUtils by lazy { PlaylistUtils(client, videoHeaders) }
+
+    fun videosFromUrl(url: String, prefix: String = "Fastream:", needsSleep: Boolean = true): List<Video> {
+        return runCatching {
+            val firstDoc = client.newCall(GET(url, videoHeaders)).execute().use { it.asJsoup() }
+
+            val form = FormBody.Builder().apply {
+                firstDoc.select("input[name]").forEach {
+                    add(it.attr("name"), it.attr("value"))
                 }
+            }.build()
+
+            if (needsSleep) Thread.sleep(5100L) // 5s is the minimum
+            val doc = client.newCall(POST(url, videoHeaders, body = form)).execute()
+                .use { it.asJsoup() }
+
+            val scriptElement = doc.selectFirst("script:containsData(jwplayer):containsData(vplayer)")
+                ?: return emptyList()
+
+            val scriptData = scriptElement.data().let {
+                when {
+                    it.contains("eval(function(") -> JsUnpacker.unpackAndCombine(it)
+                    else -> it
+                }
+            } ?: return emptyList()
+
+            val videoUrl = scriptData.substringAfter("file:")
+                .substringBefore('}')
+                .substringBefore(',')
+                .trim('"', '\'', ' ')
+
+            return when {
+                videoUrl.contains(".m3u8") -> {
+                    playlistUtils.extractFromHls(videoUrl, videoNameGen = { "$prefix$it" })
+                }
+                else -> listOf(Video(videoUrl, prefix, videoUrl, videoHeaders))
             }
-        } catch (_: Exception) {}
-        return videoList
+        }.getOrElse { emptyList() }
     }
 }
+
+private const val FASTREAM_URL = "https://fastream.to"

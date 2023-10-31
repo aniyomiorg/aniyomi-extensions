@@ -218,7 +218,7 @@ class MetroSeries : ConfigurableAnimeSource, AnimeHttpSource() {
                             val key = src.split("/").last()
                             src = "https://fastream.to/embed-$key.html"
                         }
-                        FastreamExtractor(client).videoFromUrl(src).let { videoList.addAll(it) }
+                        FastreamExtractor(client, headers).videosFromUrl(src).also(videoList::addAll)
                     }
 
                     if (src.contains("upstream")) {
