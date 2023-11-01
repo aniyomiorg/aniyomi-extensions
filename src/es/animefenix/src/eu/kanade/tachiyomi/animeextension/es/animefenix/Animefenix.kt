@@ -61,7 +61,7 @@ class Animefenix : ConfigurableAnimeSource, AnimeHttpSource() {
             "YourUpload", "Voe", "Mp4Upload", "Doodstream",
             "Upload", "BurstCloud", "Upstream", "StreamTape",
             "Fastream", "Filemoon", "StreamWish", "Okru",
-            "Amazon", "AmazonES", "Fireload", "FileLions"
+            "Amazon", "AmazonES", "Fireload", "FileLions",
         )
     }
 
@@ -210,7 +210,7 @@ class Animefenix : ConfigurableAnimeSource, AnimeHttpSource() {
                 BurstCloudExtractor(client).videoFromUrl(url, headers = headers).let { videoList.addAll(it) }
             }
             if (embedUrl.contains("fastream")) {
-                FastreamExtractor(client).videoFromUrl(url).let { videoList.addAll(it) }
+                FastreamExtractor(client, headers).videosFromUrl(url).also(videoList::addAll)
             }
             if (embedUrl.contains("upstream")) {
                 UpstreamExtractor(client).videosFromUrl(url).let { videoList.addAll(it) }

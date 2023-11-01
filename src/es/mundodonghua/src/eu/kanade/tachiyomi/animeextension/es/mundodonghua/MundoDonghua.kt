@@ -120,7 +120,7 @@ class MundoDonghua : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                                     .add("referer", "$baseUrl/")
                                     .add("Origin", "https://${url.toHttpUrl().host}")
                                     .build()
-                                FilemoonExtractor(client).videosFromUrl(url, prefix = "Filemoon:", headers = newHeaders, useHeadersForHtml = true).let { videoList.addAll(it) }
+                                FilemoonExtractor(client).videosFromUrl(url, prefix = "Filemoon:", headers = newHeaders).also(videoList::addAll)
                             } catch (_: Exception) {}
                         }
                     }

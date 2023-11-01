@@ -218,7 +218,7 @@ class AsiaLiveAction : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 BurstCloudExtractor(client).videoFromUrl(url, headers = headers).let { videoList.addAll(it) }
             }
             if (embedUrl.contains("fastream")) {
-                FastreamExtractor(client).videoFromUrl(url).forEach { videoList.add(it) }
+                FastreamExtractor(client, headers).videosFromUrl(url).also(videoList::addAll)
             }
             if (embedUrl.contains("upstream")) {
                 UpstreamExtractor(client).videosFromUrl(url).let { videoList.addAll(it) }

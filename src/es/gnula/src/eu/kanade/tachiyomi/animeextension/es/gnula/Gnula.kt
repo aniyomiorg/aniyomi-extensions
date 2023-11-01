@@ -272,7 +272,7 @@ class Gnula : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 BurstCloudExtractor(client).videoFromUrl(url, headers = headers, prefix = prefix).let { videoList.addAll(it) }
             }
             if (embedUrl.contains("fastream")) {
-                FastreamExtractor(client).videoFromUrl(url, prefix = "$prefix Fastream:").forEach { videoList.add(it) }
+                FastreamExtractor(client, headers).videosFromUrl(url, prefix = "$prefix Fastream:").also(videoList::addAll)
             }
             if (embedUrl.contains("upstream")) {
                 UpstreamExtractor(client).videosFromUrl(url, prefix = prefix).let { videoList.addAll(it) }
