@@ -46,8 +46,8 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun popularAnimeParse(response: Response): AnimesPage {
         val doc = response.asJsoup()
-        val animes = doc.select("div.relat > article").map { element ->
-            getAnimeFromAnimeElement(element)
+        val animes = doc.select("div.relat > article").map {
+            getAnimeFromAnimeElement(it)
         }
         return AnimesPage(animes, hasNextPage(doc))
     }
@@ -59,8 +59,8 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun latestUpdatesParse(response: Response): AnimesPage {
         val doc = response.asJsoup()
-        val animes = doc.select("div.relat > article").map { element ->
-            getAnimeFromAnimeElement(element)
+        val animes = doc.select("div.relat > article").map {
+            getAnimeFromAnimeElement(it)
         }
         return AnimesPage(animes, hasNextPage(doc))
     }
@@ -72,8 +72,8 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun searchAnimeParse(response: Response): AnimesPage {
         val doc = response.asJsoup()
-        val animes = doc.select("main.site-main.relat > article").map { element ->
-            getAnimeFromAnimeElement(element)
+        val animes = doc.select("main.site-main.relat > article").map {
+            getAnimeFromAnimeElement(it)
         }
         return AnimesPage(animes, hasNextPage(doc))
     }
@@ -128,9 +128,7 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override fun List<Video>.sort(): List<Video> {
         val quality = preferences.getString(PREF_QUALITY_KEY, PREF_QUALITY_DEFAULT)!!
-        return sortedWith(
-            compareByDescending { it.quality.contains(quality) },
-        )
+        return sortedWith(compareByDescending { it.quality.contains(quality) })
     }
 
     private fun String?.toDate(): Long {
@@ -164,14 +162,14 @@ class Oploverz : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private fun hasNextPage(document: Document): Boolean {
-        try {
+        return try {
             val pagination = document.selectFirst("div.pagination")!!
             val totalPage =
                 pagination.selectFirst("span:nth-child(1)")!!.text().split(" ").last().toInt()
             val currentPage = pagination.selectFirst("span.page-numbers.current")!!.text().toInt()
-            return currentPage > totalPage
+            currentPage < totalPage
         } catch (_: Exception) {
-            return false
+            false
         }
     }
 
