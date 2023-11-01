@@ -24,9 +24,7 @@ object BAFilters {
     }
 
     private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return getFirst<R>().let {
-            (it as QueryPartFilter).toQueryPart()
-        }
+        return (getFirst<R>() as QueryPartFilter).toQueryPart()
     }
 
     class LanguageFilter : QueryPartFilter("Idioma", BAFiltersData.LANGUAGES)

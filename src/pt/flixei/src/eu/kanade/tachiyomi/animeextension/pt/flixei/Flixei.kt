@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.flixei
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.flixei.dto.AnimeDto
@@ -25,7 +24,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
@@ -52,7 +50,7 @@ class Flixei : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val json: Json by injectLazy()
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -223,7 +221,7 @@ class Flixei : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             "mixdrop" ->
                 MixDropExtractor(client).videoFromUrl(hostUrl, lang)
             else -> null // TODO: Add warezcdn extractor
-        } ?: emptyList()
+        }.orEmpty()
     }
 
     override fun videoFromElement(element: Element): Video {

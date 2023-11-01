@@ -16,7 +16,6 @@ import eu.kanade.tachiyomi.network.POST
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -69,7 +68,9 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 episodes += pageDoc.select(episodeListSelector()).map(::episodeFromElement)
             }
             episodes
-        } else doc.select(episodeListSelector()).map(::episodeFromElement)
+        } else {
+            doc.select(episodeListSelector()).map(::episodeFromElement)
+        }
     }
 
     override fun episodeFromElement(element: Element) = SEpisode.create().apply {
@@ -133,18 +134,18 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         }
                     }
                 client.newCall(GET(url, headers)).execute()
-                    .asJsoup()
+                    .use { it.asJsoup() }
                     .select(videoListSelector())
                     .flatMap(::videosFromElement)
             }
             "script" -> {
                 val scriptData = element.data().let {
                     when {
-                        "eval(function" in it -> Unpacker.unpack(it).ifEmpty { null }
+                        "eval(function" in it -> Unpacker.unpack(it)
                         else -> it
                     }
-                }?.replace("\\", "")
-                scriptData?.let(::videosFromScript) ?: emptyList()
+                }.ifEmpty { null }?.replace("\\", "")
+                scriptData?.let(::videosFromScript).orEmpty()
             }
             else -> emptyList()
         }
@@ -226,7 +227,7 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 addQueryParameter("filter_audio", params.audio)
                 addQueryParameter("filter_letter", params.initialLetter)
                 addQueryParameter("filter_order", "name")
-            }.build().encodedQuery
+            }.build().encodedQuery.orEmpty()
 
             val genres = params.genres.joinToString { "\"$it\"" }
             val delgenres = params.deleted_genres.joinToString { "\"$it\"" }
@@ -300,7 +301,7 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return document.selectFirst("div.subitem > a:contains(menu)")?.let { link ->
             client.newCall(GET(link.attr("href")))
                 .execute()
-                .asJsoup()
+                .use { it.asJsoup() }
         } ?: document
     }
 
@@ -309,15 +310,11 @@ class AnimesDigital : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     private fun Element.getInfo(key: String): String? {
-        return selectFirst("div.info:has(span:containsOwn($key))")
-            ?.ownText()
-            ?.trim()
-            ?.let {
-                when (it) {
-                    "", "?" -> null
-                    else -> it
-                }
-            }
+        return selectFirst("div.info:has(span:containsOwn($key))")?.run {
+            ownText()
+                .trim()
+                .takeUnless { it.isBlank() || it == "?" }
+        }
     }
 
     private fun String.substringAfterKey() = substringAfter(":")

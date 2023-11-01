@@ -46,7 +46,7 @@ class MeusAnimes : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Episodes ==============================
     override fun episodeFromElement(element: Element) = SEpisode.create().apply {
-        element.attr("href")!!.also {
+        element.attr("href").also {
             setUrlWithoutDomain(it)
             episode_number = it.substringAfterLast("/").toFloatOrNull() ?: 0F
         }

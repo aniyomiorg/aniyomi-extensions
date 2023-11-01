@@ -110,7 +110,7 @@ class AnimesOrion : ParsedAnimeHttpSource() {
         description = buildString {
             infos.selectFirst("h2.ttl")?.text()
                 ?.takeIf(String::isNotBlank)
-                ?.let { append("Títulos alternativos: $it\n\n") }
+                ?.also { append("Títulos alternativos: $it\n\n") }
 
             doc.select("div.entry > p").eachText().forEach {
                 append("$it\n")

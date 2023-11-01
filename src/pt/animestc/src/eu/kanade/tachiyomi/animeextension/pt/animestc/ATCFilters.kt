@@ -25,9 +25,7 @@ object ATCFilters {
     }
 
     private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return getFirst<R>().let {
-            (it as QueryPartFilter).toQueryPart()
-        }
+        return (getFirst<R>() as QueryPartFilter).toQueryPart()
     }
 
     class InitialLetterFilter : QueryPartFilter("Primeira letra", ATCFiltersData.INITIAL_LETTER)

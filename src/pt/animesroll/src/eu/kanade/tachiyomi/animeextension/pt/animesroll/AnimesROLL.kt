@@ -16,7 +16,6 @@ import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.util.asJsoup
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.Request
 import okhttp3.Response
@@ -110,20 +109,19 @@ class AnimesROLL : AnimeHttpSource() {
             else -> doc.parseAs<AnimeDataDto>()
         }
         return anime.toSAnime().apply {
-            author = if (anime.director != "0") anime.director else null
-            var desc = anime.description.ifNotEmpty { it + "\n" }
-            desc += anime.duration.ifNotEmpty { "\nDuração: $it" }
-            desc += anime.animeCalendar?.let {
-                it.ifNotEmpty { "\nLança toda(o) $it" }
-            } ?: ""
-            description = desc
-            genre = doc.select("div#generos > a").joinToString(", ") { it.text() }
+            author = anime.director.takeIf { it != "0" }
+
+            description = buildString {
+                append(anime.description.ifNotEmpty { it + "\n" })
+                append(anime.duration.ifNotEmpty { "\nDuração: $it" })
+                append(anime.animeCalendar?.ifNotEmpty { "\nLança toda(o) $it" }.orEmpty())
+            }
+            genre = doc.select("div#generos > a").eachText().joinToString()
             status = if (anime.animeCalendar == null) SAnime.COMPLETED else SAnime.ONGOING
         }
     }
 
     // =============================== Search ===============================
-
     private fun searchAnimeByPathParse(response: Response, path: String): AnimesPage {
         val details = animeDetailsParse(response)
         details.url = "/$path"

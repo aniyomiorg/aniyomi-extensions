@@ -45,7 +45,7 @@ class AnimesAria : ParsedAnimeHttpSource() {
     override fun episodeListParse(response: Response) = super.episodeListParse(response).reversed()
 
     override fun episodeFromElement(element: Element) = SEpisode.create().apply {
-        element.parent()!!.selectFirst("a > b")!!.ownText().let {
+        element.parent()!!.selectFirst("a > b")!!.ownText().also {
             name = it
             episode_number = it.substringAfter(" ").toFloatOrNull() ?: 0F
         }
@@ -68,11 +68,11 @@ class AnimesAria : ParsedAnimeHttpSource() {
             document.selectFirst("li.active > small")!!
                 .ownText()
                 .substringAfter(": ")
-                .let(::append)
+                .also(::append)
 
             append("\n\n")
 
-            row.selectFirst("h1 > small")?.text()?.let {
+            row.selectFirst("h1 > small")?.text()?.also {
                 append("Títulos Alternativos: $it\n")
             }
 

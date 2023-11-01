@@ -144,7 +144,7 @@ class HinataSoul : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 }
                 doc.select(episodeListSelector())
                     .map(::episodeFromElement)
-                    .let(::addAll)
+                    .also(::addAll)
             } while (hasNextPage(doc))
             reverse()
         }

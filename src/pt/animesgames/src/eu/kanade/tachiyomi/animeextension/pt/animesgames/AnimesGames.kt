@@ -113,7 +113,7 @@ class AnimesGames : ParsedAnimeHttpSource() {
                 addQueryParameter("filter_letter", params.letter)
                 addQueryParameter("filter_order", params.orderBy)
                 addQueryParameter("filter_sort", "abc")
-            }.build().encodedQuery
+            }.build().encodedQuery.orEmpty()
 
             val genres = params.genres.joinToString { "\"$it\"" }
             val delgenres = params.deleted_genres.joinToString { "\"$it\"" }
@@ -170,8 +170,8 @@ class AnimesGames : ParsedAnimeHttpSource() {
     }
 
     private fun Element.getInfo(info: String) =
-        selectFirst("li:has(span:contains($info))")?.let {
-            it.selectFirst("span[data]")?.text() ?: it.ownText()
+        selectFirst("li:has(span:contains($info))")?.run {
+            selectFirst("span[data]")?.text() ?: ownText()
         }
 
     // ============================== Episodes ==============================

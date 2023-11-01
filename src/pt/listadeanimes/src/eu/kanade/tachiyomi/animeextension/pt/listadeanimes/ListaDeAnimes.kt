@@ -99,7 +99,7 @@ class ListaDeAnimes : ParsedAnimeHttpSource() {
                     .replace("</b>", "")
             }
             val sinopse = document.selectFirst("div#content > *:contains(Sinopse)")?.nextElementSibling()
-            description = (if (sinopse != null) sinopse?.text() else "Sem sinopse.") + if (infosText != null) "\n\n$infosText" else ""
+            description = (sinopse?.text() ?: "Sem sinopse.") + infosText?.let { "\n\n$it" }.orEmpty()
             genre = document.select("a[rel=tag]").joinToString(", ") { it.text() }
         }
     }

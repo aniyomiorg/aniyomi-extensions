@@ -26,7 +26,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -151,8 +150,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val responseBody = response.body.string()
             val resJson = json.decodeFromString<AVResponseDto>(responseBody)
             (resJson.serverMemo?.data?.framePlay ?: resJson.effects?.html)
-                ?.let(::parsePlayerData)
-                ?: emptyList<Video>()
+                ?.let(::parsePlayerData).orEmpty()
         }.flatten()
     }
 
@@ -166,7 +164,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 VoeExtractor(client).videoFromUrl(data)?.let(::listOf)
             else -> null
         }
-    }.getOrNull() ?: emptyList<Video>()
+    }.getOrNull().orEmpty()
 
     override fun videoListSelector() = throw Exception("not used")
     override fun videoFromElement(element: Element) = throw Exception("not used")

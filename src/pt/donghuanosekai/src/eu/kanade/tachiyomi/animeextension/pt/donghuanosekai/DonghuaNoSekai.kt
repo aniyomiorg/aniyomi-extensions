@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.donghuanosekai
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.donghuanosekai.extractors.DonghuaNoSekaiExtractor
@@ -21,7 +20,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -53,7 +51,7 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val json: Json by injectLazy()
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -132,7 +130,7 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                 addQueryParameter("filter_order", params.orderBy)
                 addQueryParameter("filter_status", params.status)
                 addQueryParameter("type_url", "ONA")
-            }.build().encodedQuery
+            }.build().encodedQuery.orEmpty()
 
             val genres = params.genres.joinToString { "\"$it\"" }
             val delgenres = params.deleted_genres.joinToString { "\"$it\"" }
@@ -179,7 +177,7 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             doc.select("div.articleContent:has(div:contains(Sinopse)) > div.context > p")
                 .eachText()
                 .joinToString("\n\n")
-                .let(::append)
+                .also(::append)
 
             append("\n")
 
@@ -199,7 +197,7 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun episodeFromElement(element: Element) = SEpisode.create().apply {
         setUrlWithoutDomain(element.attr("href"))
-        element.selectFirst("span.episode")!!.text().let {
+        element.selectFirst("span.episode")!!.text().also {
             name = it
             episode_number = it.substringAfterLast(" ").toFloatOrNull() ?: 0F
         }
@@ -263,7 +261,7 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } ?: document
     }
 
-    private fun String?.parseStatus() = when (this?.trim()?.lowercase()) {
+    private fun String?.parseStatus() = when (this?.run { trim().lowercase() }) {
         "completo" -> SAnime.COMPLETED
         "em lançamento" -> SAnime.ONGOING
         "em pausa" -> SAnime.ON_HIATUS

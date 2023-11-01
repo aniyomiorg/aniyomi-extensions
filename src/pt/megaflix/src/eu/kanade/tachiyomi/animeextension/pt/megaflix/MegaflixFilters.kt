@@ -16,9 +16,7 @@ object MegaflixFilters {
     }
 
     private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return this.first { it is R }.let {
-            (it as QueryPartFilter).toQueryPart()
-        }
+        return (first { it is R } as QueryPartFilter).toQueryPart()
     }
 
     class GenreFilter : QueryPartFilter("Gênero", MegaflixFiltersData.GENRES)

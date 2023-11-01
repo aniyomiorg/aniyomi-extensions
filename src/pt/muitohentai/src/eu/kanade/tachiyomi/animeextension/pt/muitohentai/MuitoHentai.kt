@@ -102,7 +102,9 @@ class MuitoHentai : ParsedAnimeHttpSource() {
             setUrlWithoutDomain(document.location())
             val data = document.selectFirst("div.sheader > div.data")!!
             title = data.selectFirst("h1")!!.text()
-            genre = data.selectFirst("div.sgeneros")!!.children().filter { it -> !it.text().contains(title) }.joinToString(", ") { it.text() }
+            genre = data.selectFirst("div.sgeneros")!!.children()
+                .filterNot { it.text().contains(title) }
+                .joinToString { it.text() }
             description = data.selectFirst("div#info1 > div.wp-content > p")!!.text()
             thumbnail_url = document.selectFirst("div.sheader > div.poster > img")!!.attr("src")
         }

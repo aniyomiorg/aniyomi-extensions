@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.megaflix
 
 import android.app.Application
-import android.content.SharedPreferences
 import android.util.Base64
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
@@ -42,7 +41,7 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun headersBuilder() = super.headersBuilder().add("Referer", "$baseUrl/")
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -110,7 +109,7 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         setUrlWithoutDomain(document.location())
         val infos = document.selectFirst("div.bd > article.post.single")!!
         title = infos.selectFirst("h1.entry-title")!!.text()
-        thumbnail_url = "https:" + infos.selectFirst("img")!!.attr("src")
+        thumbnail_url = infos.selectFirst("img")?.absUrl("src")
         genre = infos.select("span.genres > a").eachText().joinToString()
         description = infos.selectFirst("div.description")?.text()
     }
@@ -146,33 +145,31 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun episodeFromElement(element: Element) = SEpisode.create().apply {
         name = element.selectFirst("h2.entry-title")!!.text()
         setUrlWithoutDomain(element.selectFirst("a.lnk-blk")!!.attr("href"))
-        episode_number = element.selectFirst("span.num-epi")
-            ?.text()
-            ?.split("x")
-            ?.let {
+        episode_number = element.selectFirst("span.num-epi")?.run {
+            text().split("x").let {
                 val season = it.first().toFloatOrNull() ?: 0F
                 val episode = it.last().toFloatOrNull() ?: 0F
                 season * 100F + episode
             }
-            ?: 0F
+        } ?: 0F
     }
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val items = response.asJsoup().select(videoListSelector())
+        val items = response.use { it.asJsoup() }.select(videoListSelector())
         return items
             .parallelMap { element ->
                 val language = element.text().substringAfter("-")
                 val id = element.attr("href")
-                val url = element.parents().get(5)
-                    ?.selectFirst("div$id a")
-                    ?.attr("href")
-                    ?.substringAfter("token=")
-                    ?.let { Base64.decode(it, Base64.DEFAULT).let(::String) }
-                    ?.substringAfter("||")
-                    ?: return@parallelMap emptyList()
+                val url = element.parents().get(5)?.selectFirst("div$id a")
+                    ?.run {
+                        attr("href")
+                            .substringAfter("token=")
+                            .let { String(Base64.decode(it, Base64.DEFAULT)) }
+                            .substringAfter("||")
+                    } ?: return@parallelMap emptyList()
 
-                runCatching { getVideoList(url, language) }.getOrNull() ?: emptyList()
+                runCatching { getVideoList(url, language) }.getOrNull().orEmpty()
             }.flatten()
     }
 

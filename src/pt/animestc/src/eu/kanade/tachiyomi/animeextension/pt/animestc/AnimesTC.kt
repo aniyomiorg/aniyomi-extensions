@@ -196,12 +196,14 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         val links = videoDto.links
         val allLinks = listOf(links.low, links.medium, links.high).flatten()
         val supportedPlayers = listOf("anonfiles", "send")
-        val online = links.online?.filterNot { "mega" in it }?.map {
-            Video(it, "Player ATC", it, headers)
-        } ?: emptyList<Video>()
+        val online = links.online?.run {
+            filterNot { "mega" in it }.map {
+                Video(it, "Player ATC", it, headers)
+            }
+        }.orEmpty()
         return online + allLinks.filter { it.name in supportedPlayers }.parallelMap {
             val playerUrl = LinkBypasser(client, json).bypass(it, videoDto.id)
-            if (playerUrl == null) return@parallelMap null
+                ?: return@parallelMap null
             val quality = when (it.quality) {
                 "low" -> "SD"
                 "medium" -> "HD"

@@ -125,7 +125,7 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         description = buildString {
             append(doc.selectFirst("div.sinopse_container_content")!!.text() + "\n")
             infoItems.forEach { item ->
-                infos.getInfo(item)?.let { append("\n$item: $it") }
+                infos.getInfo(item)?.also { append("\n$item: $it") }
             }
         }
     }
@@ -142,7 +142,7 @@ class Anitube : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             }
             doc.select(episodeListSelector())
                 .map(::episodeFromElement)
-                .let(::addAll)
+                .also(::addAll)
         } while (doc.selectFirst(popularAnimeNextPageSelector()) != null)
         reverse()
     }

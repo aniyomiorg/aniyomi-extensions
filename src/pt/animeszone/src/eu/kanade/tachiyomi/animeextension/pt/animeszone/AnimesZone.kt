@@ -62,9 +62,9 @@ class AnimesZone : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.selectFirst("a[href]")!!.attr("abs:href"))
-        thumbnail_url = element.selectFirst("div.cover-image")?.let {
-            it.attr("style").substringAfter("url('").substringBefore("'")
-        } ?: ""
+        thumbnail_url = element.selectFirst("div.cover-image")?.run {
+            attr("style").substringAfter("url('").substringBefore("'")
+        }
         title = element.selectFirst("span.series-title")!!.text()
     }
 
@@ -176,8 +176,8 @@ class AnimesZone : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun searchAnimeNextPageSelector(): String? = null
 
     override fun searchAnimeFromElement(element: Element) = SAnime.create().apply {
-        setUrlWithoutDomain(element.selectFirst("a[href]")!!.attr("abs:href"))
-        thumbnail_url = element.selectFirst("img[src]")?.attr("abs:src") ?: ""
+        setUrlWithoutDomain(element.selectFirst("a[href]")!!.attr("href"))
+        thumbnail_url = element.selectFirst("img[src]")?.attr("abs:src")
         title = element.selectFirst("div.aniInfos")?.text() ?: "Anime"
     }
 
@@ -249,8 +249,8 @@ class AnimesZone : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return SEpisode.create().apply {
             name = "Ep. ${epNumber?.text()?.trim() ?: counter} - ${epTitle.replace(EPISODE_REGEX, "")}"
                 .replace(" - - ", " - ")
-            episode_number = epNumber?.let {
-                it.text().trim().toFloatOrNull()
+            episode_number = epNumber?.run {
+                text().trim().toFloatOrNull()
             } ?: counter.toFloat()
             scanlator = info
             setUrlWithoutDomain(element.selectFirst("article > a")!!.attr("href"))
@@ -287,31 +287,33 @@ class AnimesZone : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
                         .selectFirst("script:containsData(sources:)")
                         ?.data()
                         ?.let(BloggerJWPlayerExtractor::videosFromScript)
-                        ?: emptyList()
+                        .orEmpty()
                 }
-                url.startsWith(baseUrl) -> {
-                    val videoDocument = client.newCall(GET(url, headers)).execute()
-                        .use { it.asJsoup() }
-
-                    val script = videoDocument.selectFirst("script:containsData(decodeURIComponent)")?.data()
-                        ?.let(::getDecrypted)
-                        ?: videoDocument.selectFirst("script:containsData(sources:)")?.data()
-                        ?: return@flatMap emptyList()
-
-                    when {
-                        "/bloggerjwplayer" in url || "jwplayer-2" in url || "/ctaplayer" in url -> {
-                            BloggerJWPlayerExtractor.videosFromScript(script)
-                        }
-                        "/m3u8" in url -> PlaylistExtractor.videosFromScript(script)
-                        else -> emptyList()
-                    }
-                }
+                url.startsWith(baseUrl) -> videosFromInternalUrl(url)
                 "blogger.com" in url -> extractBloggerVideos(url, vid.text().trim())
                 else -> emptyList()
             }
         }
 
         return videoList
+    }
+
+    private fun videosFromInternalUrl(url: String): List<Video> {
+        val videoDocument = client.newCall(GET(url, headers)).execute()
+            .use { it.asJsoup() }
+
+        val script = videoDocument.selectFirst("script:containsData(decodeURIComponent)")?.data()
+            ?.let(::getDecrypted)
+            ?: videoDocument.selectFirst("script:containsData(sources:)")?.data()
+            ?: return emptyList()
+
+        return when {
+            "/bloggerjwplayer" in url || "jwplayer-2" in url || "/ctaplayer" in url -> {
+                BloggerJWPlayerExtractor.videosFromScript(script)
+            }
+            "/m3u8" in url -> PlaylistExtractor.videosFromScript(script)
+            else -> emptyList()
+        }
     }
 
     private fun extractBloggerVideos(url: String, name: String): List<Video> {
@@ -360,14 +362,14 @@ class AnimesZone : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================= Utilities ==============================
-    private fun getDecrypted(script: String): String {
+    private fun getDecrypted(script: String): String? {
         val patchedScript = script.trim().split("\n").first()
             .replace("eval(function", "function a")
             .replace("decodeURIComponent(escape(r))}(", "r};a(")
             .substringBeforeLast(")")
 
         return QuickJs.create().use {
-            it.evaluate(patchedScript).toString()
+            it.evaluate(patchedScript)?.toString()
         }
     }
 
