@@ -29,6 +29,10 @@ class AnimesAria : ParsedAnimeHttpSource() {
     override val supportsLatest = true
 
     // ============================== Popular ===============================
+    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/novos/animes?page=$page")
+
+    override fun popularAnimeSelector() = "div.item > a"
+
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href"))
         title = element.attr("title")
@@ -37,23 +41,60 @@ class AnimesAria : ParsedAnimeHttpSource() {
 
     override fun popularAnimeNextPageSelector() = latestUpdatesNextPageSelector()
 
-    override fun popularAnimeRequest(page: Int) = GET("$baseUrl/novos/animes?page=$page")
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/novos/episodios?page=$page")
 
-    override fun popularAnimeSelector() = "div.item > a"
+    override fun latestUpdatesSelector() = "div.item > div.pos-rlt"
 
-    // ============================== Episodes ==============================
-    override fun episodeListParse(response: Response) = super.episodeListParse(response).reversed()
-
-    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
-        element.parent()!!.selectFirst("a > b")!!.ownText().also {
-            name = it
-            episode_number = it.substringAfter(" ").toFloatOrNull() ?: 0F
-        }
-        setUrlWithoutDomain(element.attr("href"))
-        scanlator = element.text().substringAfter(" ") // sub/dub
+    override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
+        thumbnail_url = element.selectFirst("img")?.attr("src")
+        val ahref = element.selectFirst("a")!!
+        title = ahref.attr("title")
+        setUrlWithoutDomain(ahref.attr("href").substringBefore("/episodio/"))
     }
 
-    override fun episodeListSelector() = "td div.clear > a.btn-xs"
+    override fun latestUpdatesNextPageSelector() = "a:containsOwn(Próximo):not(.disabled)"
+
+    // =============================== Search ===============================
+    override fun getFilterList() = AnimesAriaFilters.FILTER_LIST
+
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
+            val id = query.removePrefix(PREFIX_SEARCH)
+            client.newCall(GET("$baseUrl/anime/$id"))
+                .asObservableSuccess()
+                .map(::searchAnimeByIdParse)
+        } else {
+            super.fetchSearchAnime(page, query, filters)
+        }
+    }
+
+    private fun searchAnimeByIdParse(response: Response): AnimesPage {
+        val details = animeDetailsParse(response.use { it.asJsoup() })
+        return AnimesPage(listOf(details), false)
+    }
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val params = AnimesAriaFilters.getSearchParameters(filters)
+        val url = "$baseUrl/anime/buscar".toHttpUrl().newBuilder()
+            .addQueryParameter("q", query)
+            .addQueryParameter("page", page.toString())
+            .addQueryParameter("tipo", params.type)
+            .addQueryParameter("genero", params.genre)
+            .addQueryParameter("status", params.status)
+            .addQueryParameter("letra", params.letter)
+            .addQueryParameter("audio", params.audio)
+            .addQueryParameter("ano", params.year)
+            .addQueryParameter("temporada", params.season)
+            .build()
+        return GET(url.toString())
+    }
+
+    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
+
+    override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
+
+    override fun searchAnimeSelector() = popularAnimeSelector()
 
     // =========================== Anime Details ============================
     override fun animeDetailsParse(document: Document) = SAnime.create().apply {
@@ -61,7 +102,7 @@ class AnimesAria : ParsedAnimeHttpSource() {
         val row = document.selectFirst("div.anime_background_w div.row")!!
         title = row.selectFirst("h1 > span")!!.text()
         status = row.selectFirst("div.clear span.btn")?.text().toStatus()
-        thumbnail_url = document.selectFirst("link[as=image]")!!.attr("href")
+        thumbnail_url = document.selectFirst("link[as=image]")?.attr("href")
         genre = row.select("div.clear a.btn").eachText().joinToString()
 
         description = buildString {
@@ -84,6 +125,20 @@ class AnimesAria : ParsedAnimeHttpSource() {
             }
         }
     }
+
+    // ============================== Episodes ==============================
+    override fun episodeListParse(response: Response) = super.episodeListParse(response).reversed()
+
+    override fun episodeFromElement(element: Element) = SEpisode.create().apply {
+        element.parent()!!.selectFirst("a > b")!!.ownText().also {
+            name = it
+            episode_number = it.substringAfter(" ").toFloatOrNull() ?: 0F
+        }
+        setUrlWithoutDomain(element.attr("href"))
+        scanlator = element.text().substringAfter(" ") // sub/dub
+    }
+
+    override fun episodeListSelector() = "td div.clear > a.btn-xs"
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
@@ -118,61 +173,6 @@ class AnimesAria : ParsedAnimeHttpSource() {
     override fun videoUrlParse(document: Document): String {
         TODO("Not yet implemented")
     }
-
-    // =============================== Search ===============================
-    override fun searchAnimeFromElement(element: Element) = popularAnimeFromElement(element)
-
-    override fun searchAnimeNextPageSelector() = latestUpdatesNextPageSelector()
-
-    override fun getFilterList(): AnimeFilterList = AnimesAriaFilters.FILTER_LIST
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val params = AnimesAriaFilters.getSearchParameters(filters)
-        val url = "$baseUrl/anime/buscar".toHttpUrl().newBuilder()
-            .addQueryParameter("q", query)
-            .addQueryParameter("page", page.toString())
-            .addQueryParameter("tipo", params.type)
-            .addQueryParameter("genero", params.genre)
-            .addQueryParameter("status", params.status)
-            .addQueryParameter("letra", params.letter)
-            .addQueryParameter("audio", params.audio)
-            .addQueryParameter("ano", params.year)
-            .addQueryParameter("temporada", params.season)
-            .build()
-        return GET(url.toString())
-    }
-
-    override fun searchAnimeSelector() = popularAnimeSelector()
-
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
-            val id = query.removePrefix(PREFIX_SEARCH)
-            client.newCall(GET("$baseUrl/anime/$id"))
-                .asObservableSuccess()
-                .map(::searchAnimeByIdParse)
-        } else {
-            super.fetchSearchAnime(page, query, filters)
-        }
-    }
-
-    private fun searchAnimeByIdParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response.asJsoup())
-        return AnimesPage(listOf(details), false)
-    }
-
-    // =============================== Latest ===============================
-    override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
-        thumbnail_url = element.selectFirst("img")!!.attr("src")
-        val ahref = element.selectFirst("a")!!
-        title = ahref.attr("title")
-        setUrlWithoutDomain(ahref.attr("href").substringBefore("/episodio/"))
-    }
-
-    override fun latestUpdatesNextPageSelector() = "a:containsOwn(Próximo):not(.disabled)"
-
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/novos/episodios?page=$page")
-
-    override fun latestUpdatesSelector() = "div.item > div.pos-rlt"
 
     // ============================= Utilities ==============================
     private fun String?.toStatus() = when (this) {

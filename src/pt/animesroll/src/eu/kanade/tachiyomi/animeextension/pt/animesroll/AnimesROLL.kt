@@ -44,18 +44,75 @@ class AnimesROLL : AnimeHttpSource() {
     override fun popularAnimeRequest(page: Int) = GET(baseUrl)
     override fun popularAnimeParse(response: Response) = latestUpdatesParse(response)
 
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/lancamentos")
+
+    override fun latestUpdatesParse(response: Response): AnimesPage {
+        val parsed = response.use { it.asJsoup() }.parseAs<LatestAnimeDto>()
+        val animes = parsed.episodes.map { it.episode.anime!!.toSAnime() }
+        return AnimesPage(animes, false)
+    }
+
+    // =============================== Search ===============================
+    private fun searchAnimeByPathParse(response: Response): AnimesPage {
+        val details = animeDetailsParse(response)
+        return AnimesPage(listOf(details), false)
+    }
+
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        return if (query.startsWith(PREFIX_SEARCH)) {
+            val path = query.removePrefix(PREFIX_SEARCH)
+            client.newCall(GET("$baseUrl/$path"))
+                .asObservableSuccess()
+                .map(::searchAnimeByPathParse)
+        } else {
+            super.fetchSearchAnime(page, query, filters)
+        }
+    }
+    override fun searchAnimeParse(response: Response): AnimesPage {
+        val results = response.parseAs<SearchResultsDto>()
+        val animes = (results.animes + results.movies).map { it.toSAnime() }
+        return AnimesPage(animes, false)
+    }
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        return GET("$OLD_API_URL/search?q=$query")
+    }
+
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(response: Response): SAnime {
+        val doc = response.use { it.asJsoup() }
+        val anime = when {
+            doc.location().contains("/f/") -> doc.parseAs<MovieInfoDto>().movieData
+            else -> doc.parseAs<AnimeDataDto>()
+        }
+        return anime.toSAnime().apply {
+            setUrlWithoutDomain(doc.location())
+            author = anime.director.takeIf { it != "0" }
+
+            description = buildString {
+                append(anime.description.ifNotEmpty { it + "\n" })
+                append(anime.duration.ifNotEmpty { "\nDuração: $it" })
+                append(anime.animeCalendar?.ifNotEmpty { "\nLança toda(o) $it" }.orEmpty())
+            }
+            genre = doc.select("div#generos > a").eachText().joinToString()
+            status = if (anime.animeCalendar == null) SAnime.COMPLETED else SAnime.ONGOING
+        }
+    }
+
     // ============================== Episodes ==============================
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val originalUrl = response.request.url.toString()
+        val doc = response.use { it.asJsoup() }
+        val originalUrl = doc.location()
         return if ("/f/" in originalUrl) {
-            val od = response.asJsoup().parseAs<MovieInfoDto>().movieData.od
+            val od = doc.parseAs<MovieInfoDto>().movieData.od
             SEpisode.create().apply {
                 url = "$OLD_API_URL/od/$od/filme.mp4"
                 name = "Filme"
                 episode_number = 0F
             }.let(::listOf)
         } else {
-            val anime = response.asJsoup().parseAs<AnimeDataDto>()
+            val anime = doc.parseAs<AnimeDataDto>()
             val urlStart = "https://cdn-01.gamabunta.xyz/hls/animes/${anime.slug}"
 
             return fetchEpisodesRecursively(anime.id).map { episode ->
@@ -100,67 +157,7 @@ class AnimesROLL : AnimeHttpSource() {
         TODO("Not yet implemented")
     }
 
-    // =========================== Anime Details ============================
-    override fun animeDetailsParse(response: Response): SAnime {
-        val doc = response.asJsoup()
-        val anime = when {
-            response.request.url.toString().contains("/f/") ->
-                doc.parseAs<MovieInfoDto>().movieData
-            else -> doc.parseAs<AnimeDataDto>()
-        }
-        return anime.toSAnime().apply {
-            author = anime.director.takeIf { it != "0" }
-
-            description = buildString {
-                append(anime.description.ifNotEmpty { it + "\n" })
-                append(anime.duration.ifNotEmpty { "\nDuração: $it" })
-                append(anime.animeCalendar?.ifNotEmpty { "\nLança toda(o) $it" }.orEmpty())
-            }
-            genre = doc.select("div#generos > a").eachText().joinToString()
-            status = if (anime.animeCalendar == null) SAnime.COMPLETED else SAnime.ONGOING
-        }
-    }
-
-    // =============================== Search ===============================
-    private fun searchAnimeByPathParse(response: Response, path: String): AnimesPage {
-        val details = animeDetailsParse(response)
-        details.url = "/$path"
-        return AnimesPage(listOf(details), false)
-    }
-
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        return if (query.startsWith(PREFIX_SEARCH)) {
-            val path = query.removePrefix(PREFIX_SEARCH)
-            client.newCall(GET("$baseUrl/$path"))
-                .asObservableSuccess()
-                .map { response ->
-                    searchAnimeByPathParse(response, path)
-                }
-        } else {
-            super.fetchSearchAnime(page, query, filters)
-        }
-    }
-    override fun searchAnimeParse(response: Response): AnimesPage {
-        val results = response.parseAs<SearchResultsDto>()
-        val animes = (results.animes + results.movies).map { it.toSAnime() }
-        return AnimesPage(animes, false)
-    }
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        return GET("$OLD_API_URL/search?q=$query")
-    }
-
-    // =============================== Latest ===============================
-    override fun latestUpdatesParse(response: Response): AnimesPage {
-        val parsed = response.asJsoup().parseAs<LatestAnimeDto>()
-        val animes = parsed.episodes.map { it.episode.anime!!.toSAnime() }
-        return AnimesPage(animes, false)
-    }
-
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/lancamentos")
-
     // ============================= Utilities ==============================
-
     private inline fun <reified T> Document.parseAs(): T {
         val nextData = this.selectFirst("script#__NEXT_DATA__")!!
             .data()
@@ -170,27 +167,24 @@ class AnimesROLL : AnimeHttpSource() {
     }
 
     private inline fun <reified T> Response.parseAs(): T {
-        val responseBody = body.string()
-        return json.decodeFromString(responseBody)
+        return use { it.body.string() }.let(json::decodeFromString)
     }
 
     private fun String.ifNotEmpty(block: (String) -> String): String {
         return if (isNotEmpty() && this != "0") block(this) else ""
     }
 
-    fun AnimeDataDto.toSAnime(): SAnime {
-        return SAnime.create().apply {
-            val ismovie = slug == ""
-            url = if (ismovie) "/f/$id" else "/anime/$slug"
-            thumbnail_url = "https://static.anroll.net/images/".let {
-                if (ismovie) {
-                    it + "filmes/capas/$slug_movie.jpg"
-                } else {
-                    it + "animes/capas/$slug.jpg"
-                }
+    fun AnimeDataDto.toSAnime() = SAnime.create().apply {
+        val ismovie = slug == ""
+        url = if (ismovie) "/f/$id" else "/anime/$slug"
+        thumbnail_url = "https://static.anroll.net/images/".let {
+            if (ismovie) {
+                it + "filmes/capas/$slug_movie.jpg"
+            } else {
+                it + "animes/capas/$slug.jpg"
             }
-            title = anititle
         }
+        title = anititle
     }
 
     companion object {

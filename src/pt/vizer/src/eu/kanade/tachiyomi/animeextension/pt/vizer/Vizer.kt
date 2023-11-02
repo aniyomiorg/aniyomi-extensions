@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.vizer
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.vizer.VizerFilters.FilterSearchParams
@@ -27,7 +26,6 @@ import eu.kanade.tachiyomi.util.asJsoup
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
@@ -48,11 +46,11 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
 
     override val supportsLatest = true
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client = network.cloudflareClient
 
     private val json: Json by injectLazy()
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -88,83 +86,13 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
         thumbnail_url = "$baseUrl/content/$imgslug/posterPt/342/${item.id}.webp"
     }
 
-    // ============================== Episodes ==============================
-    private fun getSeasonEps(seasonElement: Element): List<SEpisode> {
-        val id = seasonElement.attr("data-season-id")
-        val sname = seasonElement.text()
-        val response = client.newCall(apiRequest("getEpisodes=$id")).execute()
-        val episodes = response.parseAs<EpisodeListDto>().episodes
-            .filter { it.released }
-            .map {
-                SEpisode.create().apply {
-                    name = "Temp $sname: Ep ${it.name} - ${it.title}"
-                    episode_number = it.name.toFloatOrNull() ?: 0F
-                    url = it.id
-                }
-            }
-        return episodes
-    }
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int) = apiRequest("getHomeSliderSeries=1")
 
-    override fun episodeListParse(response: Response): List<SEpisode> {
-        val doc = response.asJsoup()
-        val seasons = doc.select("div#seasonsList div.item[data-season-id]")
-        return if (seasons.size > 0) {
-            seasons.flatMap(::getSeasonEps).reversed()
-        } else {
-            listOf(
-                SEpisode.create().apply {
-                    name = "Filme"
-                    episode_number = 1F
-                    url = response.request.url.toString()
-                },
-            )
-        }
-    }
-
-    // ============================ Video Links =============================
-    override fun videoListRequest(episode: SEpisode): Request {
-        val url = episode.url
-        return if (url.startsWith("https")) {
-            // Its an real url, maybe from a movie
-            GET(url, headers)
-        } else {
-            // Fake url, its an ID that will be used to get episode languages
-            // (sub/dub) and then return the video link
-            apiRequest("getEpisodeLanguages=$url")
-        }
-    }
-
-    override fun videoListParse(response: Response): List<Video> {
-        val body = response.body.string()
-        val videoObjectList = if (body.startsWith("{")) {
-            json.decodeFromString<VideoLanguagesDto>(body).videos
-        } else {
-            val videoJson = body.substringAfterLast("videoPlayerBox(").substringBefore(");")
-            json.decodeFromString<VideoLanguagesDto>(videoJson).videos
-        }
-
-        return videoObjectList.flatMap(::getVideosFromObject)
-    }
-
-    private fun getVideosFromObject(videoObj: VideoDto): List<Video> {
-        val players = client.newCall(apiRequest("getVideoPlayers=${videoObj.id}"))
-            .execute()
-            .parseAs<PlayersDto>()
-        val langPrefix = if (videoObj.lang == "1") "LEG" else "DUB"
-        val videoList = players.iterator().mapNotNull { (name, status) ->
-            if (status == "0") return@mapNotNull null
-            val url = getPlayerUrl(videoObj.id, name)
-            when (name) {
-                "mixdrop" ->
-                    MixDropExtractor(client).videoFromUrl(url, langPrefix)
-                "streamtape" ->
-                    StreamTapeExtractor(client)
-                        .videoFromUrl(url, "StreamTape($langPrefix)")
-                        ?.let(::listOf)
-                else -> null
-            }
-        }.flatten()
-        return videoList
+    override fun latestUpdatesParse(response: Response): AnimesPage {
+        val parsedData = response.parseAs<SearchResultDto>()
+        val animes = parsedData.list.map(::animeFromObject)
+        return AnimesPage(animes, false)
     }
 
     // =============================== Search ===============================
@@ -227,77 +155,145 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
 
         description = buildString {
             append(doc.selectFirst("span.desc")!!.text() + "\n")
-            doc.selectFirst("div.year")?.let { append("\nAno: ${it.text()}") }
-            doc.selectFirst("div.tm")?.let { append("\nDuração: ${it.text()}") }
-            doc.selectFirst("a.rating")?.let { append("\nNota: ${it.text()}") }
+            doc.selectFirst("div.year")?.also { append("\nAno: ${it.text()}") }
+            doc.selectFirst("div.tm")?.also { append("\nDuração: ${it.text()}") }
+            doc.selectFirst("a.rating")?.also { append("\nNota: ${it.text()}") }
         }
     }
 
-    // =============================== Latest ===============================
-    override fun latestUpdatesRequest(page: Int) = apiRequest("getHomeSliderSeries=1")
+    // ============================== Episodes ==============================
+    private fun getSeasonEps(seasonElement: Element): List<SEpisode> {
+        val id = seasonElement.attr("data-season-id")
+        val sname = seasonElement.text()
+        val response = client.newCall(apiRequest("getEpisodes=$id")).execute()
+        val episodes = response.parseAs<EpisodeListDto>().episodes
+            .filter { it.released }
+            .map {
+                SEpisode.create().apply {
+                    name = "Temp $sname: Ep ${it.name} - ${it.title}"
+                    episode_number = it.name.toFloatOrNull() ?: 0F
+                    url = it.id
+                }
+            }
+        return episodes
+    }
 
-    override fun latestUpdatesParse(response: Response): AnimesPage {
-        val parsedData = response.parseAs<SearchResultDto>()
-        val animes = parsedData.list.map(::animeFromObject).toList()
-        return AnimesPage(animes, false)
+    override fun episodeListParse(response: Response): List<SEpisode> {
+        val doc = response.use { it.asJsoup() }
+        val seasons = doc.select("div#seasonsList div.item[data-season-id]")
+        return if (seasons.size > 0) {
+            seasons.flatMap(::getSeasonEps).reversed()
+        } else {
+            listOf(
+                SEpisode.create().apply {
+                    name = "Filme"
+                    episode_number = 1F
+                    url = response.request.url.toString()
+                },
+            )
+        }
+    }
+
+    // ============================ Video Links =============================
+    override fun videoListRequest(episode: SEpisode): Request {
+        val url = episode.url
+        return if (url.startsWith("https")) {
+            // Its an real url, maybe from a movie
+            GET(url, headers)
+        } else {
+            // Fake url, its an ID that will be used to get episode languages
+            // (sub/dub) and then return the video link
+            apiRequest("getEpisodeLanguages=$url")
+        }
+    }
+
+    override fun videoListParse(response: Response): List<Video> {
+        val body = response.use { it.body.string() }
+        val videoObjectList = if (body.startsWith("{")) {
+            json.decodeFromString<VideoLanguagesDto>(body).videos
+        } else {
+            val videoJson = body.substringAfterLast("videoPlayerBox(").substringBefore(");")
+            json.decodeFromString<VideoLanguagesDto>(videoJson).videos
+        }
+
+        return videoObjectList.flatMap(::getVideosFromObject)
+    }
+
+    private val mixdropExtractor by lazy { MixDropExtractor(client) }
+    private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
+
+    private fun getVideosFromObject(videoObj: VideoDto): List<Video> {
+        val players = client.newCall(apiRequest("getVideoPlayers=${videoObj.id}"))
+            .execute()
+            .parseAs<PlayersDto>()
+        val langPrefix = if (videoObj.lang == "1") "LEG" else "DUB"
+        val videoList = players.iterator().mapNotNull { (name, status) ->
+            if (status == "0") return@mapNotNull null
+            val url = getPlayerUrl(videoObj.id, name)
+            when (name) {
+                "mixdrop" -> mixdropExtractor.videoFromUrl(url, langPrefix)
+                "streamtape" -> streamtapeExtractor.videosFromUrl(url, "StreamTape($langPrefix)")
+                else -> null
+            }
+        }.flatten()
+        return videoList
     }
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val popularPage = ListPreference(screen.context).apply {
+        ListPreference(screen.context).apply {
             key = PREF_POPULAR_PAGE_KEY
             title = PREF_POPULAR_PAGE_TITLE
             entries = PREF_POPULAR_PAGE_ENTRIES
             entryValues = PREF_POPULAR_PAGE_VALUES
             setDefaultValue(PREF_POPULAR_PAGE_DEFAULT)
             summary = "%s"
+
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
                 val index = findIndexOfValue(selected)
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
+        }.also(screen::addPreference)
 
-        val preferredPlayer = ListPreference(screen.context).apply {
+        ListPreference(screen.context).apply {
             key = PREF_PLAYER_KEY
             title = PREF_PLAYER_TITLE
             entries = PREF_PLAYER_ARRAY
             entryValues = PREF_PLAYER_ARRAY
             setDefaultValue(PREF_PLAYER_DEFAULT)
             summary = "%s"
+
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
                 val index = findIndexOfValue(selected)
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
+        }.also(screen::addPreference)
 
-        val preferredLanguage = ListPreference(screen.context).apply {
+        ListPreference(screen.context).apply {
             key = PREF_LANGUAGE_KEY
             title = PREF_LANGUAGE_TITLE
             entries = PREF_LANGUAGE_ENTRIES
             entryValues = PREF_LANGUAGE_VALUES
             setDefaultValue(PREF_LANGUAGE_DEFAULT)
             summary = "%s"
+
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
                 val index = findIndexOfValue(selected)
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-
-        screen.addPreference(popularPage)
-        screen.addPreference(preferredPlayer)
-        screen.addPreference(preferredLanguage)
+        }.also(screen::addPreference)
     }
 
     // ============================= Utilities ==============================
     private fun getPlayerUrl(id: String, name: String): String {
         val req = GET("$baseUrl/embed/getPlay.php?id=$id&sv=$name")
-        val body = client.newCall(req).execute().body.string()
+        val body = client.newCall(req).execute().use { it.body.string() }
         return body.substringAfter("location.href=\"").substringBefore("\";")
     }
 
@@ -319,8 +315,7 @@ class Vizer : ConfigurableAnimeSource, AnimeHttpSource() {
     }
 
     private inline fun <reified T> Response.parseAs(): T {
-        val responseBody = body.string()
-        return json.decodeFromString(responseBody)
+        return use { it.body.string() }.let(json::decodeFromString)
     }
 
     companion object {

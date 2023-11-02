@@ -63,7 +63,7 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href"))
         title = element.attr("title")
-        thumbnail_url = element.selectFirst("img")!!.attr("src")
+        thumbnail_url = element.selectFirst("img")?.attr("src")
     }
 
     override fun popularAnimeNextPageSelector() = null
@@ -76,7 +76,7 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href"))
         title = element.selectFirst("div.title h3")!!.text()
-        thumbnail_url = element.selectFirst("div.thumb img")!!.attr("src")
+        thumbnail_url = element.selectFirst("div.thumb img")?.attr("src")
     }
 
     override fun latestUpdatesNextPageSelector() = "ul.content-pagination > li.next"
@@ -164,7 +164,7 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document) = SAnime.create().apply {
         val doc = getRealDoc(document)
         setUrlWithoutDomain(doc.location())
-        thumbnail_url = doc.selectFirst("div.poster > img")!!.attr("src")
+        thumbnail_url = doc.selectFirst("div.poster > img")?.attr("src")
         val infos = doc.selectFirst("div.dados")!!
 
         title = infos.selectFirst("h1")!!.text()
@@ -205,9 +205,9 @@ class DonghuaNoSekai : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     // ============================ Video Links =============================
+    private val extractor by lazy { DonghuaNoSekaiExtractor(client, headers) }
     override fun videoListParse(response: Response): List<Video> {
         val doc = response.use { it.asJsoup() }
-        val extractor = DonghuaNoSekaiExtractor(client, headers)
 
         return doc.select("div.slideItem[data-video-url]").parallelMap {
             runCatching {

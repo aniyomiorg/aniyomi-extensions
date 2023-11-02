@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.pt.animesvision
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceScreen
 import eu.kanade.tachiyomi.animeextension.pt.animesvision.dto.AVResponseDto
@@ -28,7 +27,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -58,7 +57,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     private val json: Json by injectLazy()
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
@@ -68,8 +67,8 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================== Popular ===============================
     private fun nextPageSelector() = "ul.pagination li.page-item:contains(›):not(.disabled)"
-    override fun popularAnimeSelector() = "div#anime-trending div.item > a.film-poster"
     override fun popularAnimeRequest(page: Int) = GET(baseUrl, headers)
+    override fun popularAnimeSelector() = "div#anime-trending div.item > a.film-poster"
 
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         val img = element.selectFirst("img")!!
@@ -79,6 +78,93 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun popularAnimeNextPageSelector() = null
+
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/lancamentos?page=$page")
+    override fun latestUpdatesSelector() = episodeListSelector()
+
+    override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
+        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
+        title = element.selectFirst("h3")!!.text()
+        thumbnail_url = element.selectFirst("img")?.attr("src")
+    }
+
+    override fun latestUpdatesNextPageSelector() = nextPageSelector()
+
+    // =============================== Search ===============================
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        return if (query.startsWith(PREFIX_SEARCH)) {
+            val path = query.removePrefix(PREFIX_SEARCH)
+            client.newCall(GET("$baseUrl/$path"))
+                .asObservableSuccess()
+                .map(::searchAnimeByPathParse)
+        } else {
+            super.fetchSearchAnime(page, query, filters)
+        }
+    }
+
+    private fun searchAnimeByPathParse(response: Response): AnimesPage {
+        val details = animeDetailsParse(response)
+        return AnimesPage(listOf(details), false)
+    }
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        val params = AVFilters.getSearchParameters(filters)
+        val url = "$baseUrl/search?".toHttpUrl().newBuilder()
+            .addQueryParameter("page", page.toString())
+            .addQueryParameter("nome", query)
+            .addQueryParameter("tipo", params.type)
+            .addQueryParameter("idioma", params.language)
+            .addQueryParameter("ordenar", params.sort)
+            .addQueryParameter("ano_inicial", params.initial_year)
+            .addQueryParameter("ano_final", params.last_year)
+            .addQueryParameter("fansub", params.fansub)
+            .addQueryParameter("status", params.status)
+            .addQueryParameter("temporada", params.season)
+            .addQueryParameter("estudios", params.studio)
+            .addQueryParameter("produtores", params.producer)
+            .addQueryParameter("generos", params.genres)
+            .build()
+
+        return GET(url.toString(), headers)
+    }
+
+    override fun searchAnimeSelector() = "div.film_list-wrap div.film-poster"
+
+    override fun searchAnimeFromElement(element: Element) = SAnime.create().apply {
+        val elementA = element.selectFirst("a")!!
+        title = elementA.attr("title")
+        setUrlWithoutDomain(elementA.attr("href"))
+        thumbnail_url = element.selectFirst("img")?.attr("data-src")
+    }
+
+    override fun searchAnimeNextPageSelector() = nextPageSelector()
+
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        val doc = getRealDoc(document)
+
+        val content = doc.selectFirst("div#ani_detail div.anis-content")!!
+        val detail = content.selectFirst("div.anisc-detail")!!
+        val infos = content.selectFirst("div.anisc-info")!!
+
+        thumbnail_url = content.selectFirst("img")?.attr("src")
+        title = detail.selectFirst("h2.film-name")!!.text()
+        genre = infos.getInfo("Gêneros")
+        author = infos.getInfo("Produtores")
+        artist = infos.getInfo("Estúdios")
+        status = parseStatus(infos.getInfo("Status"))
+
+        description = buildString {
+            append(infos.getInfo("Sinopse") + "\n")
+            infos.getInfo("Inglês")?.also { append("\nTítulo em inglês: $it") }
+            infos.getInfo("Japonês")?.also { append("\nTítulo em japonês: $it") }
+            infos.getInfo("Foi ao ar em")?.also { append("\nFoi ao ar em: $it") }
+            infos.getInfo("Temporada")?.also { append("\nTemporada: $it") }
+            infos.getInfo("Duração")?.also { append("\nDuração: $it") }
+            infos.getInfo("Fansub")?.also { append("\nFansub: $it") }
+        }
+    }
 
     // ============================== Episodes ==============================
     override fun episodeListSelector() = "div.container div.screen-items > div.item"
@@ -111,7 +197,7 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     // ============================ Video Links =============================
     override fun videoListParse(response: Response): List<Video> {
-        val body = response.body.string()
+        val body = response.use { it.body.string() }
         val internalVideos = GlobalVisionExtractor()
             .videoListFromHtml(body)
             .toMutableList()
@@ -147,114 +233,29 @@ class AnimesVision : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
             val reqBody = body.toRequestBody()
             val url = "$baseUrl/livewire/message/components.episodio.player-episodio-component"
             val response = client.newCall(POST(url, headers, reqBody)).execute()
-            val responseBody = response.body.string()
+            val responseBody = response.use { it.body.string() }
             val resJson = json.decodeFromString<AVResponseDto>(responseBody)
             (resJson.serverMemo?.data?.framePlay ?: resJson.effects?.html)
                 ?.let(::parsePlayerData).orEmpty()
         }.flatten()
     }
 
+    private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val doodExtractor by lazy { DoodExtractor(client) }
+    private val voeExtractor by lazy { VoeExtractor(client) }
+
     private fun parsePlayerData(data: String) = runCatching {
         when {
-            "streamtape" in data ->
-                StreamTapeExtractor(client).videoFromUrl(data)?.let(::listOf)
-            "dood" in data ->
-                DoodExtractor(client).videoFromUrl(data)?.let(::listOf)
-            "voe.sx" in data ->
-                VoeExtractor(client).videoFromUrl(data)?.let(::listOf)
-            else -> null
+            "streamtape" in data -> voeExtractor.videosFromUrl(data)
+            "dood" in data -> doodExtractor.videosFromUrl(data)
+            "voe.sx" in data -> voeExtractor.videosFromUrl(data)
+            else -> emptyList()
         }
-    }.getOrNull().orEmpty()
+    }.getOrElse { emptyList() }
 
     override fun videoListSelector() = throw Exception("not used")
     override fun videoFromElement(element: Element) = throw Exception("not used")
     override fun videoUrlParse(document: Document) = throw Exception("not used")
-
-    // =============================== Search ===============================
-    override fun searchAnimeFromElement(element: Element) = SAnime.create().apply {
-        val elementA = element.selectFirst("a")!!
-        title = elementA.attr("title")
-        setUrlWithoutDomain(elementA.attr("href"))
-        thumbnail_url = element.selectFirst("img")!!.attr("data-src")
-    }
-
-    override fun searchAnimeNextPageSelector() = nextPageSelector()
-
-    override fun searchAnimeSelector() = "div.film_list-wrap div.film-poster"
-
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        return if (query.startsWith(PREFIX_SEARCH)) {
-            val path = query.removePrefix(PREFIX_SEARCH)
-            client.newCall(GET("$baseUrl/$path"))
-                .asObservableSuccess()
-                .map(::searchAnimeByPathParse)
-        } else {
-            super.fetchSearchAnime(page, query, filters)
-        }
-    }
-
-    private fun searchAnimeByPathParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response)
-        return AnimesPage(listOf(details), false)
-    }
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        val params = AVFilters.getSearchParameters(filters)
-        val url = "$baseUrl/search?".toHttpUrlOrNull()!!.newBuilder()
-            .addQueryParameter("page", page.toString())
-            .addQueryParameter("nome", query)
-            .addQueryParameter("tipo", params.type)
-            .addQueryParameter("idioma", params.language)
-            .addQueryParameter("ordenar", params.sort)
-            .addQueryParameter("ano_inicial", params.initial_year)
-            .addQueryParameter("ano_final", params.last_year)
-            .addQueryParameter("fansub", params.fansub)
-            .addQueryParameter("status", params.status)
-            .addQueryParameter("temporada", params.season)
-            .addQueryParameter("estudios", params.studio)
-            .addQueryParameter("produtores", params.producer)
-            .addQueryParameter("generos", params.genres)
-
-        return GET(url.build().toString(), headers)
-    }
-
-    // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
-        val doc = getRealDoc(document)
-
-        val content = doc.selectFirst("div#ani_detail div.anis-content")!!
-        val detail = content.selectFirst("div.anisc-detail")!!
-        val infos = content.selectFirst("div.anisc-info")!!
-
-        thumbnail_url = content.selectFirst("img")!!.attr("src")
-        title = detail.selectFirst("h2.film-name")!!.text()
-        genre = infos.getInfo("Gêneros")
-        author = infos.getInfo("Produtores")
-        artist = infos.getInfo("Estúdios")
-        status = parseStatus(infos.getInfo("Status"))
-
-        description = buildString {
-            append(infos.getInfo("Sinopse") + "\n")
-            infos.getInfo("Inglês")?.let { append("\nTítulo em inglês: $it") }
-            infos.getInfo("Japonês")?.let { append("\nTítulo em japonês: $it") }
-            infos.getInfo("Foi ao ar em")?.let { append("\nFoi ao ar em: $it") }
-            infos.getInfo("Temporada")?.let { append("\nTemporada: $it") }
-            infos.getInfo("Duração")?.let { append("\nDuração: $it") }
-            infos.getInfo("Fansub")?.let { append("\nFansub: $it") }
-        }
-    }
-
-    // =============================== Latest ===============================
-    override fun latestUpdatesNextPageSelector() = nextPageSelector()
-    override fun latestUpdatesSelector() = episodeListSelector()
-
-    override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
-        setUrlWithoutDomain(element.selectFirst("a")!!.attr("href"))
-        title = element.selectFirst("h3")!!.text()
-        thumbnail_url = element.selectFirst("img")!!.attr("src")
-    }
-
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/lancamentos?page=$page")
 
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {

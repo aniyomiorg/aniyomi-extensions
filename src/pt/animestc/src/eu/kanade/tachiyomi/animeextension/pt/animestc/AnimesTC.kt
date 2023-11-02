@@ -260,7 +260,7 @@ class AnimesTC : ConfigurableAnimeSource, AnimeHttpSource() {
         }
 
     private fun Response.getAnimeDto(): AnimeDto {
-        val responseBody = body.string()
+        val responseBody = use { it.body.string() }
         return try {
             parseAs<AnimeDto>(responseBody)
         } catch (e: Exception) {

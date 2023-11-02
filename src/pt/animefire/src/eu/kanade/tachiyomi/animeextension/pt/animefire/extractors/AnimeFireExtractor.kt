@@ -12,13 +12,11 @@ class AnimeFireExtractor(private val client: OkHttpClient, private val json: Jso
     fun videoListFromElement(videoElement: Element): List<Video> {
         val jsonUrl = videoElement.attr("data-video-src")
         val response = client.newCall(GET(jsonUrl)).execute()
-        val responseDto = json.decodeFromString<AFResponseDto>(
-            response.body.string(),
-        )
-        val videoList = responseDto.videos.map {
+            .use { it.body.string() }
+        val responseDto = json.decodeFromString<AFResponseDto>(response)
+        return responseDto.videos.map {
             val url = it.url.replace("\\", "")
             Video(url, it.quality, url)
         }
-        return videoList
     }
 }

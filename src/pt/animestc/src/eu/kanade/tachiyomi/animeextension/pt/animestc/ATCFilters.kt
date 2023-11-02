@@ -2,11 +2,11 @@ package eu.kanade.tachiyomi.animeextension.pt.animestc
 
 import eu.kanade.tachiyomi.animeextension.pt.animestc.dto.AnimeDto
 import eu.kanade.tachiyomi.animesource.model.AnimeFilter
+import eu.kanade.tachiyomi.animesource.model.AnimeFilter.TriState
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.SAnime
 
 object ATCFilters {
-
     open class QueryPartFilter(
         displayName: String,
         val vals: Array<Pair<String, String>>,
@@ -17,15 +17,23 @@ object ATCFilters {
         fun toQueryPart() = vals[state].second
     }
 
-    open class TriStateFilterList(name: String, values: List<TriState>) : AnimeFilter.Group<AnimeFilter.TriState>(name, values)
-    private class TriStateVal(name: String) : AnimeFilter.TriState(name)
-
-    private inline fun <reified R> AnimeFilterList.getFirst(): R {
-        return first { it is R } as R
-    }
+    open class TriStateFilterList(name: String, values: List<TriState>) : AnimeFilter.Group<TriState>(name, values)
+    private class TriStateVal(name: String) : TriState(name)
 
     private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return (getFirst<R>() as QueryPartFilter).toQueryPart()
+        return (first { it is R } as QueryPartFilter).toQueryPart()
+    }
+
+    private inline fun <reified R> AnimeFilterList.parseTriFilter(): List<List<String>> {
+        return (first { it is R } as TriStateFilterList).state
+            .filterNot { it.isIgnored() }
+            .map { filter -> filter.state to filter.name }
+            .groupBy { it.first } // group by state
+            .let { dict ->
+                val included = dict.get(TriState.STATE_INCLUDE)?.map { it.second }.orEmpty()
+                val excluded = dict.get(TriState.STATE_EXCLUDE)?.map { it.second }.orEmpty()
+                listOf(included, excluded)
+            }
     }
 
     class InitialLetterFilter : QueryPartFilter("Primeira letra", ATCFiltersData.INITIAL_LETTER)
@@ -54,36 +62,32 @@ object ATCFilters {
     data class FilterSearchParams(
         val initialLetter: String = "",
         val status: String = "",
-        var orderAscending: Boolean = true,
-        var sortBy: String = "",
-        val blackListedGenres: ArrayList<String> = ArrayList(),
-        val includedGenres: ArrayList<String> = ArrayList(),
+        val orderAscending: Boolean = true,
+        val sortBy: String = "",
+        val blackListedGenres: List<String> = emptyList(),
+        val includedGenres: List<String> = emptyList(),
         var animeName: String = "",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
         if (filters.isEmpty()) return FilterSearchParams()
-        val searchParams = FilterSearchParams(
+        val (includedGenres, excludedGenres) = filters.parseTriFilter<GenresFilter>()
+
+        val sortFilter = filters.firstOrNull { it is SortFilter } as? SortFilter
+        val (orderBy, ascending) = sortFilter?.state?.run {
+            val order = ATCFiltersData.ORDERS[index].second
+            val orderAscending = ascending
+            Pair(order, orderAscending)
+        } ?: Pair("", true)
+
+        return FilterSearchParams(
             filters.asQueryPart<InitialLetterFilter>(),
             filters.asQueryPart<StatusFilter>(),
+            ascending,
+            orderBy,
+            includedGenres,
+            excludedGenres,
         )
-
-        filters.getFirst<SortFilter>().state?.let {
-            val order = ATCFiltersData.ORDERS[it.index].second
-            searchParams.orderAscending = it.ascending
-            searchParams.sortBy = order
-        }
-
-        filters.getFirst<GenresFilter>()
-            .state.forEach { genre ->
-                if (genre.isIncluded()) {
-                    searchParams.includedGenres.add(genre.name)
-                } else if (genre.isExcluded()) {
-                    searchParams.blackListedGenres.add(genre.name)
-                }
-            }
-
-        return searchParams
     }
 
     private fun mustRemove(anime: AnimeDto, params: FilterSearchParams): Boolean {

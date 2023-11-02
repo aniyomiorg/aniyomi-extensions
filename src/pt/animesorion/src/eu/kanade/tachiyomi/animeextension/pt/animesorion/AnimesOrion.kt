@@ -36,7 +36,7 @@ class AnimesOrion : ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href"))
         title = element.selectFirst("h2.ttl")!!.text()
-        thumbnail_url = element.selectFirst("img")!!.attr("src")
+        thumbnail_url = element.selectFirst("img")?.attr("src")
     }
 
     override fun popularAnimeNextPageSelector() = null
@@ -49,7 +49,7 @@ class AnimesOrion : ParsedAnimeHttpSource() {
     override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.selectFirst("a.lnk-blk")!!.attr("href"))
         title = element.selectFirst("h2")!!.text()
-        thumbnail_url = element.selectFirst("img")!!.attr("src")
+        thumbnail_url = element.selectFirst("img")?.attr("src")
     }
 
     override fun latestUpdatesNextPageSelector() = "nav.pagination > a.next"
@@ -100,7 +100,7 @@ class AnimesOrion : ParsedAnimeHttpSource() {
     override fun animeDetailsParse(document: Document) = SAnime.create().apply {
         val doc = getRealDoc(document)
         setUrlWithoutDomain(doc.location())
-        thumbnail_url = doc.selectFirst("img.lnk-blk")!!.attr("src")
+        thumbnail_url = doc.selectFirst("img.lnk-blk")?.attr("src")
 
         val infos = doc.selectFirst("header.hd > div.rght")!!
         title = infos.selectFirst("h2.title")!!.text()
@@ -159,7 +159,7 @@ class AnimesOrion : ParsedAnimeHttpSource() {
     }
 
     private fun extractVideoFromResponse(response: Response): Video {
-        val decodedBody = LinkfunBypasser.decodeAtob(response.body.string())
+        val decodedBody = LinkfunBypasser.decodeAtob(response.use { it.body.string() })
         val url = decodedBody
             .substringAfter("sources")
             .substringAfter("file: \"")
@@ -185,7 +185,8 @@ class AnimesOrion : ParsedAnimeHttpSource() {
         if (!document.location().contains("/episodio/")) return document
 
         return document.selectFirst("div.epsdsnv > a:has(i.fa-indent)")?.let {
-            client.newCall(GET(baseUrl + it.attr("href"), headers)).execute().asJsoup()
+            client.newCall(GET(it.attr("href"), headers)).execute()
+                .use { req -> req.asJsoup() }
         } ?: document
     }
 

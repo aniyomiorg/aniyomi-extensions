@@ -4,7 +4,6 @@ import eu.kanade.tachiyomi.animesource.model.AnimeFilter
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 
 object VizerFilters {
-
     open class QueryPartFilter(
         displayName: String,
         val vals: Array<Pair<String, String>>,
@@ -16,12 +15,8 @@ object VizerFilters {
         fun toQueryPart() = vals[state].second
     }
 
-    private inline fun <reified R> AnimeFilterList.getFirst(): R {
-        return first { it is R } as R
-    }
-
     private inline fun <reified R> AnimeFilterList.asQueryPart(): String {
-        return (getFirst<R>() as QueryPartFilter).toQueryPart()
+        return (first { it is R } as QueryPartFilter).toQueryPart()
     }
 
     class TypeFilter : QueryPartFilter("Tipo", VizerFiltersData.TYPES)
@@ -48,27 +43,32 @@ object VizerFilters {
         val minYear: String = "1890",
         val maxYear: String = "2022",
         val genre: String = "all",
-        var orderBy: String = "rating",
-        var orderWay: String = "desc",
+        val orderBy: String = "rating",
+        val orderWay: String = "desc",
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
-        val searchParams = FilterSearchParams(
+        if (filters.isEmpty()) return FilterSearchParams()
+
+        val sortFilter = filters.firstOrNull { it is SortFilter } as? SortFilter
+        val (orderBy, ascending) = sortFilter?.state?.run {
+            val order = VizerFiltersData.ORDERS[index].second
+            val orderWay = if (ascending) "asc" else "desc"
+
+            Pair(order, orderWay)
+        } ?: Pair("rating", "desc")
+
+        return FilterSearchParams(
             filters.asQueryPart<TypeFilter>(),
             filters.asQueryPart<MinYearFilter>(),
             filters.asQueryPart<MaxYearFilter>(),
             filters.asQueryPart<GenreFilter>(),
+            orderBy,
+            ascending,
         )
-        filters.getFirst<SortFilter>().state?.let {
-            val order = VizerFiltersData.ORDERS[it.index].second
-            searchParams.orderBy = order
-            searchParams.orderWay = if (it.ascending) "asc" else "desc"
-        }
-        return searchParams
     }
 
     private object VizerFiltersData {
-
         val TYPES = arrayOf(
             Pair("Animes", "anime"),
             Pair("Filmes", "Movies"),

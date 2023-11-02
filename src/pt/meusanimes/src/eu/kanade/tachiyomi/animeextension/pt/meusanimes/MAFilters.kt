@@ -43,6 +43,8 @@ object MAFilters {
     )
 
     internal fun getSearchParameters(filters: AnimeFilterList): FilterSearchParams {
+        if (filters.isEmpty()) return FilterSearchParams()
+
         return FilterSearchParams(
             filters.asQueryPart<LetterFilter>(),
             filters.asQueryPart<YearFilter>(),

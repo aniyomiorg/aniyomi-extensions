@@ -66,12 +66,10 @@ class Flixei : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return AnimesPage(animes, false)
     }
 
-    private fun parseAnimeFromObject(anime: AnimeDto): SAnime {
-        return SAnime.create().apply {
-            title = anime.title
-            setUrlWithoutDomain("/assistir/filme/${anime.url}/online/gratis")
-            thumbnail_url = "$baseUrl/content/movies/posterPt/185/${anime.id}.webp"
-        }
+    private fun parseAnimeFromObject(anime: AnimeDto) = SAnime.create().apply {
+        title = anime.title
+        setUrlWithoutDomain("/assistir/filme/${anime.url}/online/gratis")
+        thumbnail_url = "$baseUrl/content/movies/posterPt/185/${anime.id}.webp"
     }
 
     override fun popularAnimeFromElement(element: Element): SAnime {
@@ -84,6 +82,66 @@ class Flixei : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override fun popularAnimeSelector(): String {
         throw UnsupportedOperationException("Not used.")
+    }
+
+    // =============================== Latest ===============================
+    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/filmes/estreia/$page")
+
+    override fun latestUpdatesSelector() = "div.generalMoviesList > a.gPoster"
+
+    override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
+        title = element.selectFirst("div.i span")!!.text()
+        thumbnail_url = element.selectFirst("img")?.attr("src")
+        setUrlWithoutDomain(element.attr("abs:href"))
+    }
+
+    override fun latestUpdatesNextPageSelector() = "div.paginationSystem a.next"
+
+    // =============================== Search ===============================
+    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
+        return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
+            val path = query.removePrefix(PREFIX_SEARCH)
+            client.newCall(GET("$baseUrl/assistir/$path/online/gratis"))
+                .asObservableSuccess()
+                .map(::searchAnimeByPathParse)
+        } else {
+            super.fetchSearchAnime(page, query, filters)
+        }
+    }
+
+    private fun searchAnimeByPathParse(response: Response): AnimesPage {
+        val details = animeDetailsParse(response.use { it.asJsoup() })
+        return AnimesPage(listOf(details), false)
+    }
+
+    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
+        return GET("$baseUrl/pesquisar/$query")
+    }
+
+    override fun searchAnimeSelector() = latestUpdatesSelector()
+
+    override fun searchAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
+
+    override fun searchAnimeNextPageSelector() = null
+
+    // =========================== Anime Details ============================
+    override fun animeDetailsParse(document: Document) = SAnime.create().apply {
+        setUrlWithoutDomain(document.location())
+        thumbnail_url = document.selectFirst("meta[property=og:image]")?.attr("content")
+        val container = document.selectFirst("div.moviePresent")!!
+        with(container) {
+            title = selectFirst("h2.tit")!!.text()
+            genre = select("div.genres > span").eachText().joinToString()
+            author = getInfo("Diretor")
+            artist = getInfo("Produtoras")
+            description = buildString {
+                selectFirst("p")?.text()?.also { append(it + "\n\n") }
+                getInfo("Título")?.also { append("Título original: $it\n") }
+                getInfo("Serie de")?.also { append("ano: $it\n") }
+                getInfo("Elenco")?.also { append("Elenco: $it\n") }
+                getInfo("Qualidade")?.also { append("Qualidade: $it\n") }
+            }
+        }
     }
 
     // ============================== Episodes ==============================
@@ -103,13 +161,13 @@ class Flixei : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun episodeListParse(response: Response): List<SEpisode> {
-        val docUrl = response.asJsoup().selectFirst("div#playButton")!!
+        val docUrl = response.use { it.asJsoup() }.selectFirst("div#playButton")!!
             .attr("onclick")
             .substringAfter("'")
             .substringBefore("'")
         return if (response.request.url.toString().contains("/serie/")) {
             client.newCall(GET(docUrl)).execute()
-                .asJsoup()
+                .use { it.asJsoup() }
                 .select("div#seasons div.item[data-load-episodes]")
                 .flatMap(::getSeasonEps)
                 .reversed()
@@ -131,28 +189,6 @@ class Flixei : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         throw UnsupportedOperationException("Not used.")
     }
 
-    // =========================== Anime Details ============================
-    override fun animeDetailsParse(document: Document): SAnime {
-        return SAnime.create().apply {
-            setUrlWithoutDomain(document.location())
-            thumbnail_url = document.selectFirst("meta[property=og:image]")!!.attr("content")
-            val container = document.selectFirst("div.moviePresent")!!
-            with(container) {
-                title = selectFirst("h2.tit")!!.text()
-                genre = select("div.genres > span").eachText().joinToString()
-                author = getInfo("Diretor")
-                artist = getInfo("Produtoras")
-                description = buildString {
-                    selectFirst("p")?.text()?.let { append(it + "\n\n") }
-                    getInfo("Título")?.let { append("Título original: $it\n") }
-                    getInfo("Serie de")?.let { append("ano: $it\n") }
-                    getInfo("Elenco")?.let { append("Elenco: $it\n") }
-                    getInfo("Qualidade")?.let { append("Qualidade: $it\n") }
-                }
-            }
-        }
-    }
-
     // ============================ Video Links =============================
     override fun videoListRequest(episode: SEpisode): Request {
         val url = episode.url
@@ -165,7 +201,7 @@ class Flixei : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     }
 
     override fun videoListParse(response: Response): List<Video> {
-        val body = response.body.string()
+        val body = response.use { it.body.string() }
         // Pair<Language, Query>
         val items = if (body.startsWith("{")) {
             val data = json.decodeFromString<ApiResultsDto<PlayersDto>>(body)
@@ -201,6 +237,9 @@ class Flixei : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         return items.parallelMap(::getVideosFromItem).flatten()
     }
 
+    private val streamtapeExtractor by lazy { StreamTapeExtractor(client) }
+    private val mixdropExtractor by lazy { MixDropExtractor(client) }
+
     private fun getVideosFromItem(item: Pair<String, String>): List<Video> {
         val (lang, query) = item
         val headers = headersBuilder().set("referer", WAREZ_URL).build()
@@ -209,17 +248,14 @@ class Flixei : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         } else {
             client.newCall(GET("$WAREZ_URL/embed/getPlay.php$query", headers))
                 .execute()
-                .body.string()
+                .use { it.body.string() }
                 .substringAfter("location.href=\"")
                 .substringBefore("\";")
         }
 
         return when (query.substringAfter("sv=")) {
-            "streamtape" ->
-                StreamTapeExtractor(client).videoFromUrl(hostUrl, "Streamtape($lang)")
-                    ?.let(::listOf)
-            "mixdrop" ->
-                MixDropExtractor(client).videoFromUrl(hostUrl, lang)
+            "streamtape" -> streamtapeExtractor.videosFromUrl(hostUrl, "Streamtape($lang)")
+            "mixdrop" -> mixdropExtractor.videoFromUrl(hostUrl, lang)
             else -> null // TODO: Add warezcdn extractor
         }.orEmpty()
     }
@@ -236,86 +272,44 @@ class Flixei : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
         throw UnsupportedOperationException("Not used.")
     }
 
-    // =============================== Search ===============================
-    override fun searchAnimeFromElement(element: Element) = latestUpdatesFromElement(element)
-
-    override fun searchAnimeSelector() = latestUpdatesSelector()
-
-    override fun searchAnimeNextPageSelector() = null
-
-    override fun searchAnimeRequest(page: Int, query: String, filters: AnimeFilterList): Request {
-        return GET("$baseUrl/pesquisar/$query")
-    }
-
-    override fun fetchSearchAnime(page: Int, query: String, filters: AnimeFilterList): Observable<AnimesPage> {
-        return if (query.startsWith(PREFIX_SEARCH)) { // URL intent handler
-            val path = query.removePrefix(PREFIX_SEARCH)
-            client.newCall(GET("$baseUrl/assistir/$path/online/gratis"))
-                .asObservableSuccess()
-                .map(::searchAnimeByPathParse)
-        } else {
-            super.fetchSearchAnime(page, query, filters)
-        }
-    }
-
-    private fun searchAnimeByPathParse(response: Response): AnimesPage {
-        val details = animeDetailsParse(response.asJsoup())
-        return AnimesPage(listOf(details), false)
-    }
-
-    // =============================== Latest ===============================
-    override fun latestUpdatesFromElement(element: Element): SAnime {
-        return SAnime.create().apply {
-            title = element.selectFirst("div.i span")!!.text()
-            thumbnail_url = element.selectFirst("img")!!.attr("src")
-            setUrlWithoutDomain(element.attr("abs:href"))
-        }
-    }
-
-    override fun latestUpdatesNextPageSelector() = "div.paginationSystem a.next"
-
-    override fun latestUpdatesRequest(page: Int) = GET("$baseUrl/filmes/estreia/$page")
-
-    override fun latestUpdatesSelector() = "div.generalMoviesList > a.gPoster"
-
     // ============================== Settings ==============================
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val preferredPlayer = ListPreference(screen.context).apply {
+        ListPreference(screen.context).apply {
             key = PREF_PLAYER_KEY
             title = PREF_PLAYER_TITLE
             entries = PREF_PLAYER_ARRAY
             entryValues = PREF_PLAYER_ARRAY
             setDefaultValue(PREF_PLAYER_DEFAULT)
             summary = "%s"
+
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
                 val index = findIndexOfValue(selected)
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
+        }.also(screen::addPreference)
 
-        val preferredLanguage = ListPreference(screen.context).apply {
+        ListPreference(screen.context).apply {
             key = PREF_LANGUAGE_KEY
             title = PREF_LANGUAGE_TITLE
             entries = PREF_LANGUAGE_ENTRIES
             entryValues = PREF_LANGUAGE_VALUES
             setDefaultValue(PREF_LANGUAGE_DEFAULT)
             summary = "%s"
+
             setOnPreferenceChangeListener { _, newValue ->
                 val selected = newValue as String
                 val index = findIndexOfValue(selected)
                 val entry = entryValues[index] as String
                 preferences.edit().putString(key, entry).commit()
             }
-        }
-        screen.addPreference(preferredPlayer)
-        screen.addPreference(preferredLanguage)
+        }.also(screen::addPreference)
     }
 
     // ============================= Utilities ==============================
     private inline fun <reified T> Response.parseAs(): T {
-        return body.string().let(json::decodeFromString)
+        return use { it.body.string() }.let(json::decodeFromString)
     }
 
     private inline fun <A, B> Iterable<A>.parallelMap(crossinline f: suspend (A) -> B): List<B> =

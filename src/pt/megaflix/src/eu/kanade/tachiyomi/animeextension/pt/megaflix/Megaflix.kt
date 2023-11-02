@@ -53,7 +53,7 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     override fun popularAnimeFromElement(element: Element) = SAnime.create().apply {
         title = element.selectFirst("h2.entry-title")!!.text()
         setUrlWithoutDomain(element.selectFirst("a.lnk-blk")!!.attr("href"))
-        thumbnail_url = element.selectFirst("img")!!.attr("abs:src")
+        thumbnail_url = element.selectFirst("img")?.absUrl("src")
     }
 
     override fun popularAnimeNextPageSelector() = null
@@ -180,7 +180,7 @@ class Megaflix : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
     private fun getVideoList(url: String, language: String): List<Video>? {
         return when {
             "mixdrop.co" in url -> mixdropExtractor.videoFromUrl(url, language)
-            "streamtape.com" in url -> streamtapeExtractor.videoFromUrl(url, "StreamTape - $language")?.let(::listOf)
+            "streamtape.com" in url -> streamtapeExtractor.videosFromUrl(url, "StreamTape - $language")
             "mflix.vip" in url -> megaflixExtractor.videosFromUrl(url, language)
             else -> null
         }

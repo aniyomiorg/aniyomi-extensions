@@ -61,7 +61,7 @@ class AnimesGames : ParsedAnimeHttpSource() {
     override fun latestUpdatesFromElement(element: Element) = SAnime.create().apply {
         setUrlWithoutDomain(element.attr("href"))
         title = element.selectFirst("div.tituloEP")!!.text()
-        thumbnail_url = element.selectFirst("img")!!.attr("data-lazy-src")
+        thumbnail_url = element.selectFirst("img")?.attr("data-lazy-src")
     }
 
     override fun latestUpdatesNextPageSelector() = "ol.pagination > a:contains(>)"
@@ -155,7 +155,7 @@ class AnimesGames : ParsedAnimeHttpSource() {
         title = content.selectFirst("section > h1")!!.text()
             .removePrefix("Assistir ")
             .removeSuffix("Temporada Online")
-        thumbnail_url = content.selectFirst("img")!!.attr("data-lazy-src")
+        thumbnail_url = content.selectFirst("img")?.attr("data-lazy-src")
         description = content.select("section.sinopseEp p").eachText().joinToString("\n")
 
         val infos = content.selectFirst("div.info > ol")!!
