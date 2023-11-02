@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.animeextension.de.streamcloud
 
 import android.app.Application
-import android.content.SharedPreferences
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.PreferenceScreen
@@ -15,7 +14,6 @@ import eu.kanade.tachiyomi.lib.doodextractor.DoodExtractor
 import eu.kanade.tachiyomi.network.GET
 import eu.kanade.tachiyomi.util.asJsoup
 import okhttp3.Headers
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Document
@@ -28,15 +26,15 @@ class StreamCloud : ConfigurableAnimeSource, ParsedAnimeHttpSource() {
 
     override val name = "StreamCloud"
 
-    override val baseUrl = "https://streamcloud.cam"
+    override val baseUrl = "https://streamcloud.movie"
 
     override val lang = "de"
 
     override val supportsLatest = false
 
-    override val client: OkHttpClient = network.cloudflareClient
+    override val client = network.cloudflareClient
 
-    private val preferences: SharedPreferences by lazy {
+    private val preferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }
 
